@@ -1,0 +1,109 @@
+#!/bin/ksh
+#----------------------------------------------------------------------------- 
+# Script   : dr_makefs - make all LV except 'rootvg' in DR mode
+# Version  : 1.0.0
+# Auteur   : Marc Giguere 
+# Date     : Thu Dec 30 15:20:54 EST 2004
+#----------------------------------------------------------------------------- 
+# dr_makefs dr_cfgfile
+#----------------------------------------------------------------------------- 
+export PROGRAM_NAME=dr_makefs
+export SAMDIR=/sysadmin/sam
+#export DR_CFGFILE=/sysadmin/sam/dr_lvcfg
+export LOGFILE=sam.log
+export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin
+
+#----------------------------------------------------------------------------- 
+# fonction : do_log
+#----------------------------------------------------------------------------- 
+do_log()
+{
+  message="$1"
+  dt=`date +"%Y%m%d %H:%M:%S"`
+  echo "$dt - $PROGRAM_NAME : $message"
+###  echo "$dt - $PROGRAM_NAME : $message" >> $LOGFILE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_usage
+#----------------------------------------------------------------------------- 
+do_usage()
+{
+   echo "Usage: dr_makefs cfg_file"
+   exit 1
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_make_lv
+#----------------------------------------------------------------------------- 
+do_make_lv()
+{
+  LINE="$1"
+  VGNAME=`echo $LINE|nawk 'BEGIN{FS=":"}{print $1}'`
+  LVNAME=`echo $LINE|nawk 'BEGIN{FS=":"}{print $2}'`
+  LVSIZE=`echo $LINE|nawk 'BEGIN{FS=":"}{print $3}'`
+  FSNAME=`echo $LINE|nawk 'BEGIN{FS=":"}{print $4}'`
+  LVTYPE=`echo $LINE|nawk 'BEGIN{FS=":"}{print $5}'`
+  LVSTRIP=`echo $LINE|nawk 'BEGIN{FS=":"}{print $6}'`
+  LVSTRIPSIZE=`echo $LINE|nawk 'BEGIN{FS=":"}{print $7}'`
+  if [ "$LVSTRIP" = "" ]
+     then LVSTRIP=0
+  fi
+  if [ "$LVSTRIPSIZE" = "" ]
+     then LVSTRIPSIZE=0
+  fi
+
+  nawk ' {if ($2 == LV) { next } print $0 }
+       ' LV=$LVNAME /etc/fstab > /etc/fstab.tmp
+  mv /etc/fstab.tmp /etc/fstab
+
+  echo 
+  echo "$SAMDIR/sam_mkfs $LVSIZE $VGNAME $LVNAME $FSNAME $LVTYPE $LVSTRIP $LVSTRIPSIZE"
+  $SAMDIR/sam_mkfs $LVSIZE $VGNAME $LVNAME $FSNAME $LVTYPE $LVSTRIP $LVSTRIPSIZE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_confirm
+#----------------------------------------------------------------------------- 
+do_confirm()
+{
+
+  echo "-------------------------------------------------------------"
+  echo "Warning !!!  This is the last change to stop"
+  echo "-------------------------------------------------------------"
+  echo "Are you sure to re-built Logical Volume [yes/no]: \c"
+  read input
+  if [ "$input" != "yes" ]
+     then echo "Operation abort !!!!"
+          exit 1
+  fi
+
+  DT=`date +"%Y%m%d_%H%M%S"`
+  echo "Copy /etc/fstab to /etc/fstab.$DT"
+  cp /etc/fstab /etc/fstab.$DT
+}
+
+#----------------------------------------------------------------------------- 
+# Main
+#----------------------------------------------------------------------------- 
+
+if [ $# -ne 1 ]
+   then do_usage 
+        exit 1
+fi
+
+DR_CFGFILE="$1"
+if [ ! -a $DR_CFGFILE ]
+   then echo "Config file not found"
+        exit 1
+fi
+
+do_confirm
+
+for LINE in `nawk '{print $0}' $DR_CFGFILE`
+do
+  VGNAME=`echo $LINE|nawk 'BEGIN{FS=":"}{print $1}'`
+  if [ "$VGNAME" != "rootvg" ]
+     then do_make_lv $LINE
+  fi
+done

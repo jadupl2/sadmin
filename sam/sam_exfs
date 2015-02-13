@@ -1,0 +1,332 @@
+#!/bin/ksh
+#----------------------------------------------------------------------------- 
+# Script   : sam_exfs - Re-size Logical Volume
+# Version  : 1.0.0
+# Auteur   : Marc Giguere 
+# Date     : Wed Dec 29 16:38:19 EST 2004
+#----------------------------------------------------------------------------- 
+# sam_exfs  Size LVname 
+#----------------------------------------------------------------------------- 
+export PROGRAM_NAME="sam_exfs"
+export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin
+export SAMDIR=/sysadmin/sam
+export LOGFILE=sam.log
+
+#----------------------------------------------------------------------------- 
+# fonction : do_log
+#----------------------------------------------------------------------------- 
+do_log()
+{
+  message="$1"
+  dt=`date +"%Y%m%d %H:%M:%S"`
+  echo "$dt - $PROGRAM_NAME : $message"
+  echo "$dt - $PROGRAM_NAME : $message" >> $LOGFILE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_usage
+#----------------------------------------------------------------------------- 
+do_usage()
+{
+   echo "Usage: sam_exfs AddSize LVname"
+   exit 1
+}
+
+#-----------------------------------------------------------------------------
+# fonction : do_get_lvmtype
+#-----------------------------------------------------------------------------
+do_get_lvmtype()
+{
+  LVMTYPE=""
+  if [ -a $SAMDIR/files/sam_lvm.seq ]
+     then LVMTYPE=`nawk '{print $1}' $SAMDIR/files/sam_lvm.seq`
+     else do_log "Error file $SAMDIR/files/sam_lvm.seq not found"
+          exit 1
+  fi
+
+  case $LVMTYPE in
+     1 ) LVMTYPE=lvm1;;
+     2 ) LVMTYPE=lvm2;;
+     * ) do_log "Not LVM TYPE found in $SAMDIR/files/sam_lvm.seq"
+          exit 1;;
+  esac
+  export LVMTYPE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_verify_lv
+#----------------------------------------------------------------------------- 
+do_verify_lv()
+{
+  NAME=$1
+  LVM=$2
+  echo "Verify Logical Volume....[$NAME] \c"
+  if [ "$LVM" = "lvm1" ]
+     then IS_FOUND=`lvscan|grep $NAME| nawk '{print $4}'`
+     else IS_FOUND=`lvscan|grep $NAME| nawk '{print $2}'`
+  fi
+  if [ "$IS_FOUND" = "" ]
+     then echo "Error - $NAME not exist"
+          exit 1
+  fi
+  VGNAME=`echo $IS_FOUND|nawk 'BEGIN{FS="/"}{print $3}'`
+  LVTYPE=`grep /dev/$VGNAME/$NAME /etc/fstab |nawk '{print $3}'`
+  if [ "$LVTYPE" = "" ]
+     then echo "Error - undefine filesystem type in /etc/fstab"
+          exit 1
+  fi
+
+  echo "OK Type $LVTYPE"
+  export VGNAME
+  export LVTYPE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_verify_fs
+#----------------------------------------------------------------------------- 
+do_verify_fs()
+{
+  VG=$1
+  LV=$2
+  echo "Verify File System ......[/dev/$VG/$LV] \c"
+  FSNAME=`grep /dev/$VG/$LV /etc/fstab |nawk '{print $2}'`
+  if [ "$FSNAME" = "" ]
+     then FSNAME=`mount |grep $VG.$LV | nawk '{print $3}'` 
+          if [ "$FSNAME" = "" ]
+             then FSNAME="NONE"
+          fi
+  fi
+  echo "Mount point [$FSNAME]"
+  export FSNAME
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_umount_fs
+#----------------------------------------------------------------------------- 
+do_umount_fs()
+{
+  VG=$1
+  LV=$2
+  FS=$3
+  if [ "$FS" = "NONE" ]
+     then return
+  fi
+  echo "Umount File System ......[$FS] \c"
+  IS_MOUNT=`mount |grep $VG.$LV | nawk '{print $1}'` 
+  if [ "$IS_MOUNT" != "" ]
+     then umount $FS 1>/dev/null 2>&1
+          RTN_CODE=$?
+          if [ "$RTN_CODE" != 0 ]
+             then echo "Error [$RTN_CODE]"
+                  lsof $FS 
+                  exit $RTN_CODE
+          fi
+  fi
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_extend_lv
+#----------------------------------------------------------------------------- 
+do_extend_lv()
+{
+  VG=$1
+  LV=$2
+  SZ=$3
+  SZ="+"$SZ"M"
+  echo "Extend Logical Volume....[/dev/$VG/$LV $SZ] "
+  lvextend -L$SZ /dev/$VG/$LV
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  echo "Done"
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_fsck_lv
+#----------------------------------------------------------------------------- 
+do_fsck_lv()
+{
+  VG=$1
+  LV=$2
+  echo "Check Logical Volume ....[/dev/$VG/$LV] "
+  e2fsck -fy /dev/$VG/$LV
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  echo "Done"
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_mount_fs
+#----------------------------------------------------------------------------- 
+do_mount_fs()
+{
+  FS=$1
+  if [ "$FS" = "NONE" ]
+     then return
+  fi
+  echo "Mount File system .......[$FS] \c"
+  mount $FS 1>/dev/null 2>&1
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  echo "Done"
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_resize_lv_ext3
+#----------------------------------------------------------------------------- 
+do_resize_lv_ext3()
+{
+  VG=$1
+  LV=$2
+  TY=$3
+  SZ=$4
+  FS=$5
+  LVM=$6
+  
+  case $LVM in
+   lvm1 ) do_resize_lvm1_ext3 $VG $LV $TY $SZ $FS $LVM;;
+   lvm2 ) do_resize_lvm2_ext3 $VG $LV $TY $SZ $FS $LVM;;
+  esac
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_resize_lvm1_ext3
+#----------------------------------------------------------------------------- 
+do_resize_lvm1_ext3()
+{
+  VG=$1
+  LV=$2
+  TY=$3
+  SZ=$4
+  FS=$5
+  LVM=$6
+
+  do_umount_fs $VG $LV $FS
+  do_extend_lv $VG $LV $SZ
+  do_fsck_lv $VG $LV
+
+  echo "Resize Logical Volume....[/dev/$VG/$LV $TY] "
+  resize2fs /dev/$VG/$LV 
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+
+  do_mount_fs $FS
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_resize_lvm2_ext3
+#----------------------------------------------------------------------------- 
+do_resize_lvm2_ext3()
+{
+  VG=$1
+  LV=$2
+  TY=$3
+  SZ=$4
+  FS=$5
+  LVM=$6
+
+  do_extend_lv $VG $LV $SZ
+  echo "Resize Logical Volume....[/dev/$VG/$LV $TY] "
+  ext2online /dev/$VG/$LV 
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_resize_lv_jfs
+#----------------------------------------------------------------------------- 
+do_resize_lv_jfs()
+{
+  VG=$1
+  LV=$2
+  TY=$3
+  SZ=$4
+  FS=$5
+  LVM=$6
+
+  do_extend_lv $VG $LV $SZ
+  echo "Resize Logical Volume....[/dev/$VG/$LV $TY] "
+  mount -o remount,resize $FS
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_resize_lv_reiserfs
+#----------------------------------------------------------------------------- 
+do_resize_lv_reiserfs()
+{
+  VG=$1
+  LV=$2
+  TY=$3
+  SZ=$4
+  FS=$5
+  LVM=$6
+
+  do_extend_lv $VG $LV $SZ
+  echo "Resize Logical Volume....[/dev/$VG/$LV $TY] "
+  resize_reiserfs -f /dev/$VG/$LV
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error [$RTN_CODE]"
+          exit $RTN_CODE
+  fi
+  
+  echo "Done"
+}
+
+
+
+#----------------------------------------------------------------------------- 
+# Main
+#----------------------------------------------------------------------------- 
+
+if [ $# -ne 2 ]
+   then do_usage
+fi
+
+LVSIZE=$1
+LVNAME=$2
+
+do_get_lvmtype
+do_verify_lv $LVNAME $LVMTYPE
+do_verify_fs $VGNAME $LVNAME
+
+case $LVTYPE in
+   ext3    ) do_resize_lv_ext3 $VGNAME $LVNAME $LVTYPE $LVSIZE $FSNAME $LVMTYPE;;
+   jfs     ) do_resize_lv_jfs $VGNAME $LVNAME $LVTYPE $LVSIZE $FSNAME $LVMTYPE;;
+   reiserfs) do_resize_lv_reiserfs $VGNAME $LVNAME $LVTYPE $LVSIZE $FSNAME $LVMTYPE;;
+esac
+
+if [ $FSNAME != "NONE" ]
+   then df -k $FS
+fi
+
+do_log "extendfs $LVMTYPE /dev/$VGNAME/$LVNAME MointPoint:$FSNAME of $LVSIZE megs"
+exit 0

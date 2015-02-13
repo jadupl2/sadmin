@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svnrepos/sam/!svn/ver/1/files
+END
+sam_fs.seq
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svnrepos/sam/!svn/ver/1/files/sam_fs.seq
+END
+sam_tape.seq
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svnrepos/sam/!svn/ver/1/files/sam_tape.seq
+END
+sam_vg.seq
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svnrepos/sam/!svn/ver/1/files/sam_vg.seq
+END
+sam_lvm.seq
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svnrepos/sam/!svn/ver/1/files/sam_lvm.seq
+END
+sam_cie.seq
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svnrepos/sam/!svn/ver/1/files/sam_cie.seq
+END
+sam_weekly.seq
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svnrepos/sam/!svn/ver/1/files/sam_weekly.seq
+END
+sam_lang.seq
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svnrepos/sam/!svn/ver/1/files/sam_lang.seq
+END
+sam_daily.seq
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svnrepos/sam/!svn/ver/1/files/sam_daily.seq
+END

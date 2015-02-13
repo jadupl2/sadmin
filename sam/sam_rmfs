@@ -1,0 +1,218 @@
+#!/bin/ksh
+#----------------------------------------------------------------------------- 
+# Script   : sam_rmfs - Remove LV and FS
+# Version  : 1.0.0
+# Auteur   : Marc Giguere 
+# Date     : Wed Dec 29 16:38:19 EST 2004
+#----------------------------------------------------------------------------- 
+# sam_mkfs  LVname 
+#----------------------------------------------------------------------------- 
+export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin
+export PROGRAM_NAME=sam_rmfs
+export SAMDIR=/sysadmin/sam
+export LOGFILE=sam.log
+
+#----------------------------------------------------------------------------- 
+# fonction : do_log
+#----------------------------------------------------------------------------- 
+do_log()
+{
+  message="$1"
+  dt=`date +"%Y%m%d %H:%M:%S"`
+  echo "$dt - $PROGRAM_NAME : $message"
+  echo "$dt - $PROGRAM_NAME : $message" >> $LOGFILE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_usage
+#----------------------------------------------------------------------------- 
+do_usage()
+{
+   echo "Usage: sam_rmfs LVname [nocheck]"
+   exit 1
+}
+
+#-----------------------------------------------------------------------------
+# fonction : do_get_lvmtype
+#-----------------------------------------------------------------------------
+do_get_lvmtype()
+{
+  LVMTYPE=""
+  if [ -a $SAMDIR/files/sam_lvm.seq ]
+     then LVMTYPE=`nawk '{print $1}' $SAMDIR/files/sam_lvm.seq`
+     else do_log "Error file $SAMDIR/files/sam_lvm.seq not found"
+          exit 1
+  fi
+
+  case $LVMTYPE in
+     1 ) LVMTYPE=lvm1;;
+     2 ) LVMTYPE=lvm2;;
+     * ) do_log "Not LVM TYPE found in $SAMDIR/files/sam_lvm.seq"
+          exit 1;;
+  esac
+  export LVMTYPE
+}
+
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_verify_lvname
+#----------------------------------------------------------------------------- 
+do_verify_lvname()
+{
+  NAME=$1
+  LVM=$2
+  echo "Verify Logical Volume....[$NAME] \c"
+  if [ "$LVM" = "lvm1"  ]
+     then IS_FOUND=`lvscan|grep $NAME| nawk '{print $4}'`
+     else IS_FOUND=`lvscan|grep $NAME| nawk '{print $2}'`
+  fi
+  if [ "$IS_FOUND" = "" ]
+     then echo "Error - $NAME not exist"
+          exit 1
+  fi
+  VGNAME=`echo $IS_FOUND|nawk 'BEGIN{FS="/"}{print $3}'`
+     
+  echo "OK"
+  export VGNAME
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_verify_fsname
+#----------------------------------------------------------------------------- 
+do_verify_fsname()
+{
+  VG=$1
+  LV=$2
+  echo "Verify File System ......[/dev/$VG/$LV] \c"
+  FSNAME=`grep /dev/$VG/$LV /etc/fstab |nawk '{print $2}'`
+  if [ "$FSNAME" = "" ]
+     then FSNAME=`mount|grep $VG.$LV | nawk '{print $3}'` 
+          if [ "$FSNAME" = "" ]
+             then FSNAME="NONE"
+          fi
+  fi
+  echo "Mount point [$FSNAME]"
+  export FSNAME
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_umount_fsname
+#----------------------------------------------------------------------------- 
+do_umount_fsname()
+{
+  VG=$1
+  LV=$2
+  FS=$3
+  if [ "$FS" = "NONE" ]
+     then return
+  fi
+  echo "Umount File System ......[$FS] \c"
+  IS_MOUNT=`mount|grep $VG.$LV | nawk '{print $3}'` 
+  if [ "$IS_MOUNT" != "" ]
+     then umount $FSNAME 1>/dev/null 2>&1
+          RTN_CODE=$?
+          if [ "$RTN_CODE" != 0 ]
+             then echo "Error"
+                  exit $RTN_CODE
+          fi
+  fi
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_remove_lv
+#----------------------------------------------------------------------------- 
+do_remove_lv()
+{
+  VG=$1
+  LV=$2
+  echo "Remove logical Volume....[/dev/$VG/$LV] \c"
+  lvremove -f /dev/$VG/$LV 1>/dev/null 2>&1
+  RTN_CODE=$?
+  if [ "$RTN_CODE" != 0 ]
+     then echo "Error"
+          exit $RTN_CODE
+  fi
+  echo "Done"
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_remove_fs
+#----------------------------------------------------------------------------- 
+do_remove_fs()
+{
+  FS=$1
+  if [ "$1" = "NONE" ]
+     then return
+  fi
+  echo "Remove file system ......[$FS] \c"
+  nawk '{if ($2==NAME){next}
+         print $0}
+       ' NAME=$FS /etc/fstab > /etc/fstab.tmp
+  mv /etc/fstab /etc/fstab.old
+  mv /etc/fstab.tmp /etc/fstab
+
+  echo "Done"
+}
+
+
+#----------------------------------------------------------------------------- 
+# fonction : do_confirme
+#----------------------------------------------------------------------------- 
+do_confirme()
+{
+  VG=$1
+  LV=$2
+  FS=$3
+  LVM=$4
+  echo "-------------------------------------------------------"
+  echo "WARNING !!!! This is your last change to cancel"
+  echo "-------------------------------------------------------"
+  echo "Logical type  : $LVM"
+  echo "Volume group  : $VG"
+  echo "Logical volune: $LV"
+  echo "File system   : $FS"
+  echo "-------------------------------------------------------"
+  echo "Are you sure to remove Logical Volume [$LV] (yes/no): \c"
+  read input
+  if [ "$input" = "yes" ]
+    then return
+  fi
+
+  echo "sam_rmfs CANCELLED"
+  exit 0
+}
+
+
+#----------------------------------------------------------------------------- 
+# Main
+#----------------------------------------------------------------------------- 
+
+
+if [[ $# -gt 2  || $# -lt 1 ]]
+   then do_usage
+fi
+
+if [ $# -eq 2 ]
+   then if [ "$2" != "nocheck" ]
+           then do_usage
+        fi
+fi
+
+LVNAME=$1
+CHECKFLAG=$2
+
+do_get_lvmtype
+do_verify_lvname $LVNAME $LVMTYPE
+do_verify_fsname $VGNAME $LVNAME
+if [ "$CHECKFLAG" != "nocheck" ]
+   then do_confirme $VGNAME $LVNAME $FSNAME $LVMTYPE
+fi
+do_umount_fsname $VGNAME $LVNAME $FSNAME
+do_remove_lv $VGNAME $LVNAME 
+do_remove_fs $FSNAME
+
+do_log "`logname` remove $LVMTYPE VG=$VGNAME LV=$LVNAME FS=$FSNAME"
+exit 0

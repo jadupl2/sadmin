@@ -1,0 +1,72 @@
+#!/bin/ksh
+#----------------------------------------------------------------------------- 
+# Script   : dr_savefs - Save configuration for RE-BUILT in DR mode
+# Version  : 1.0.0
+# Auteur   : Marc Giguere 
+# Date     : Thu Dec 30 10:54:46 EST 2004
+#----------------------------------------------------------------------------- 
+# dr_savefs
+#----------------------------------------------------------------------------- 
+export HOSTNAME=`hostname -s`
+export PROGRAM_NAME=dr_savefs
+export SAMDIR=/sysadmin/sam
+export DR_CFGFILE=/sysadmin/sam/$HOSTNAME.dr_lvcfg
+export LOGFILE=sam.log
+export PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin
+
+#----------------------------------------------------------------------------- 
+# fonction : do_log
+#----------------------------------------------------------------------------- 
+do_log()
+{
+  message="$1"
+  dt=`date +"%Y%m%d %H:%M:%S"`
+  echo "$dt - $PROGRAM_NAME : $message"
+  echo "$dt - $PROGRAM_NAME : $message" >> $LOGFILE
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_usage
+#----------------------------------------------------------------------------- 
+do_usage()
+{
+   echo "Usage: dr_savefs"
+   exit 1
+}
+
+#----------------------------------------------------------------------------- 
+# fonction : do_get_lv
+#----------------------------------------------------------------------------- 
+do_get_lv()
+{
+  LV=$1
+  LVSTRIP=0
+  LVSTRIPSIZE=0
+  VGNAME=`echo $LV|nawk 'BEGIN{FS="/"}{print $3}'`
+  LVNAME=`echo $LV|nawk 'BEGIN{FS="/"}{print $4}'`
+
+  LVSIZE=`lvdisplay $LV |nawk '{if ($2=="Size")
+                                   { SIZ=$3
+                                     if ( $4 == "GB" )
+                                        { SIZ=int(SIZ*1024)}
+                                      print SIZ }}'`
+  FSNAME=`nawk '{if ($1==LVN){print $2}}' LVN=$LV /etc/fstab`
+  LVTYPE=`nawk '{if ($1==LVN){print $3}}' LVN=$LV /etc/fstab`
+  LVSTRIP=`nawk '{if ($1=="#DEFINE" && $2==FSN){print $4}}' FSN=$FSNAME /etc/fstab`
+  LVSTRIPSIZE=`nawk '{if ($1=="#DEFINE" && $2==FSN){print $6}}' FSN=$FSNAME /etc/fstab`
+
+  echo "$VGNAME:$LVNAME:$LVSIZE:$FSNAME:$LVTYPE:$LVSTRIP:$LVSTRIPSIZE" >> $DR_CFGFILE
+}
+
+
+#----------------------------------------------------------------------------- 
+# Main
+#----------------------------------------------------------------------------- 
+
+> $DR_CFGFILE
+
+for name in `lvscan |nawk 'BEGIN{FS="\042"}{print $2}'`
+do
+   do_get_lv $name
+done
+
