@@ -1,7 +1,7 @@
 #! /bin/sh
 ####################################################################################################
 # Shellscript:	install_puppet.sh
-# Version    :	2.7
+# Version    :	2.9
 # Author    :	jacques duplessis
 # Date      :	2014-05-22
 # Requires  :	bash shell
@@ -9,13 +9,13 @@
 # SCCS-Id.  :	@(#) install_puppet.sh
 ####################################################################################################
 #
-#set -x 
+#set -x
 
 # --------------------------------------------------------------------------------------------------
 #                          Script Variables Definitions
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='2.7'                                      ; export VER             # Program version
+VER='2.9'                                      ; export VER             # Program version
 DEBUG=1                                        ; export DEBUG           # Debug ON (1) or OFF (0)
 DASH=`printf %100s |tr " " "="`                ; export DASH            # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
@@ -27,27 +27,21 @@ CUR_TIME=`date +"%H_%M_%S"`                    ; export CUR_TIME        # Curren
 CPWD=`pwd`                                     ; export CPWD            # Save Current Working Dir.
 #
 #
-BASE_DIR="/sysadmin"                           ; export BASE_DIR        # Script Root Base Directory
-BASE_DIR="/home/jadupl2"                       ; export BASE_DIR        # Script Root Base Directory
+BASE_DIR="/sadmin"                             ; export BASE_DIR        # Script Root Base Directory
 BIN_DIR="$BASE_DIR/bin"                        ; export BIN_DIR         # Script Root binary directory
 TMP_DIR="$BASE_DIR/tmp"                        ; export TMP_DIR         # Script Temp directory
 LIB_DIR="$BASE_DIR/lib"                        ; export LIB_DIR         # Script Lib directory
-LOG_DIR="/var/adsmlog"	                       ; export LOG_DIR         # Script log directory
-TMP_FILE1="${TMP_DIR}/${INST}_1.$$"            ; export TMP_FILE1       # Script Tmp File1 
-TMP_FILE2="${TMP_DIR}/${INST}_2.$$"            ; export TMP_FILE2       # Script Tmp File2 
-TMP_FILE3="${TMP_DIR}/${INST}_3.$$"            ; export TMP_FILE3       # Script Tmp File3 
+LOG_DIR="$BASE_DIR/log"	                       ; export LOG_DIR         # Script log directory
+TMP_FILE1="${TMP_DIR}/${INST}_1.$$"            ; export TMP_FILE1       # Script Tmp File1
+TMP_FILE2="${TMP_DIR}/${INST}_2.$$"            ; export TMP_FILE2       # Script Tmp File2
+TMP_FILE3="${TMP_DIR}/${INST}_3.$$"            ; export TMP_FILE3       # Script Tmp File3
 LOG="${LOG_DIR}/${INST}.log"                   ; export LOG             # Script LOG filename
 RCLOG="${LOG_DIR}/rc.${HOSTNAME}.${INST}.log"  ; export RCLOG           # Script Return code filename
 GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
 #
-#NFS_SERVER="nomad.maison.ca"                   ; export NFS_SERVER      # NFS Server
-#PUPPET_DIR="batcave/software/puppet/puppet_install" ; export PUPPET_DIR # Remote Puppet RPM Dir
-#SYSADMIN="duplessis.jacques@gmail.com"         ; export SYSADMIN        # sysadmin email
-#
-NFS_SERVER="lxmq0007.slac.ca"                  ; export NFS_SERVER      # NFS Server
-PUPPET_DIR="software/puppet/puppet_install"    ; export PUPPET_DIR      # Remote Puppet RPM Dir
-SYSADMIN="aixteam@standardlife.ca"             ; export SYSADMIN        # sysadmin email
-SYSADMIN="jack.duplessis@standardlife.ca"      ; export SYSADMIN        # sysadmin email
+NFS_SERVER="nomad.maison.ca"                   ; export NFS_SERVER      # NFS Server
+PUPPET_DIR="batcave/software/puppet/puppet_install" ; export PUPPET_DIR # Remote Puppet RPM Dir
+SYSADMIN="duplessis.jacques@gmail.com"         ; export SYSADMIN        # sysadmin email
 #
 NFS_LOC_MOUNT="/mnt/nfs"                       ; export NFS_LOC_MOUNT   # NFS Local Mount Point
 NFS_REM_MOUNT="/install"                       ; export NFS_REM_MOUNT   # NFS Remote Mount Point
@@ -67,7 +61,7 @@ if [ ! -f /opt/tivoli/tsm/client/ba/bin/include-exclude-list ] 			# If TSM Exclu
 fi
 if [ "$PUPPET_ENV" != "production" ] && [ "$PUPPET_ENV" != "development" ] # If Env is not valid
    then PUPPET_ENV="production"                           				# Default Env is Production
-fi 
+fi
 export PUPPET_ENV
 
 
@@ -124,6 +118,7 @@ init_process()
 
     # If log doesn't exist, Create it and Make sure it is writable
     if [ ! -e "$LOG" ]      ; then touch $LOG  ;chmod 664 $LOG  ; export LOG  ;fi
+    > $LOG
 
     # If Return Log doesn't exist, Create it and Make sure it have right permission
     if [ ! -e "$RCLOG" ]    ; then touch $RCLOG ;chmod 664 $RCLOG ; export RCLOG ;fi
@@ -136,12 +131,12 @@ init_process()
     # Update the Return Code File
     start=`date "+%C%y.%m.%d %H:%M:%S"`
     echo "${HOSTNAME} ${start} ........ ${INST} 2" >>$RCLOG
-    
+
     # Abort Execution if OS Level is below RHEL 5
     if [ $OS_VER -lt 5 ]
         then write_log "Process Aborted - Only RHEL version greater than 4 are process"
              exit 1
-    fi 
+    fi
 
 }
 
@@ -209,24 +204,25 @@ remove_puppet()
     write_log "Backup file is name $PUPPET_BACKUP  ..."
     if [ -d "$PUPPET_CFGDIR" ]
        then cd $PUPPET_CFGDIR
-            tar -cvzf $PUPPET_BACKUP .
+            tar -cvzf $PUPPET_BACKUP . > /dev/null 2>&1
     fi
 
     # Now let' s uninstall puppet agent - rpm erase will stop puppet if it is running
-    write_log "Uninstalling puppet agent ..." 
-    rpm -e puppet >> $LOG 2>&1 
+    write_log "Uninstalling puppet agent ..."
+    rpm -e puppet >> $LOG 2>&1
 
 	# Certificate Conflict Warning
-	find /var/lib/puppet/ssl -name ${HOSTNAME}.${DOMAIN}.pem -delete > /dev/null 2>&1
+	#find /var/lib/puppet/ssl -name ${HOSTNAME}.${DOMAIN}.pem -delete > /dev/null 2>&1
+	rm -fr /var/lib/puppet
     write_log "${DASH}"
     write_log "${DASH}"
     write_log " "
 	write_log "If the server does not register automatically in Foreman."
 	write_log "Or if the server were already register and you reinstall puppet agent"
     write_log " "
-	write_log "You may need to run \'puppet cert clean ${HOSTNAME}.${DOMAIN}\' on puppet server"
-    write_log "And on agent \'find /var/lib/puppet/ssl -name ${HOSTNAME}.${DOMAIN}.pem -delete\'"
-    write_log "Then run \'puppet agent -t\' on agent."
+	write_log "You may need to run 'puppet cert clean ${HOSTNAME}.${DOMAIN}' on puppet server"
+    write_log "And on agent 'find /var/lib/puppet/ssl -name ${HOSTNAME}.${DOMAIN}.pem -delete'"
+    write_log "Then run 'puppet agent -t' on agent."
     write_log " "
     write_log "${DASH}"
     write_log "${DASH}"
@@ -238,72 +234,38 @@ remove_puppet()
 # --------------------------------------------------------------------------------------------------
 install_process()
 {
-
-    # Make sure Local mount point exist
-    if [ ! -d $NFS_LOC_MOUNT ]
-        then mkdir -p $NFS_LOC_MOUNT >/dev/null 2>&1
-             chmod 775 $NFS_LOC_MOUNT
-    fi
-
-    # NFS Mount the Puppet RPM Directory
-    umount $NFS_LOC_MOUNT >/dev/null 2>&1                               # Make sur is not mounted
-    write_log "mount ${NFS_SERVER}:${NFS_REM_MOUNT} $NFS_LOC_MOUNT ..."
-    mount ${NFS_SERVER}:${NFS_REM_MOUNT} $NFS_LOC_MOUNT                 # Mount NFS Software Dir.
-    if [ $? -ne 0 ]
-        then    write_log "Cannot mount NFS Drive (${NFS_SERVER}:${NFS_REM_MOUNT})"
-                write_log "Process aborted !"
-                exit 1
-    fi
-
-    # Change to Directory where the RPM are.
-    cd ${NFS_LOC_MOUNT}/$PUPPET_DIR
-	RPM_DIR="${NFS_LOC_MOUNT}/${PUPPET_DIR}/${OS_VER}/${OS_BITS}bits" 
-	
-    write_log "Installing Pre-requisite ..."
     write_log "The OS Major Version is $OS_VER"
     write_log "The OS is running a $OS_BITS bits kernel version."
-    write_log "Will install the rpm from this directory ${RPM_DIR}"
-    ls -l ${RPM_DIR} >> $LOG 2>&1
-    
-    # Changing to RPM Directory
-    cd ${RPM_DIR}
-    write_log "Current directory is now `pwd`"
-    
-    # Install RHEL 5 Puppet Basic Requirement
-    if [ $OS_VER -eq 5 ]
-        then write_log "yum install -y ruby ruby-libs libselinux-ruby virt-what"
-             yum install -y ruby ruby-libs libselinux-ruby virt-what >> $LOG 2>&1
-             EC=$? ; write_log "Return Code of yum install is $EC"
-             if [ $OS_BITS -eq 64 ]
-                then write_log "Need to delete ruby-libs 386 version on this 64 bits"
-                     rpm -e ruby-libs*.i386 >/dev/null 2>&1
-                else write_log " Not on a 64 bits ??"
-             fi
-    fi
 
-    # Install Puppet RPM
-    if [ $OS_VER -eq 5 ]
-        then write_log "rpm -Uvh *.rpm"
-             rpm -Uvh *.rpm >> $LOG 2>&1
-             EC=$? ; write_log "Return Code of rpm install is $EC"
-        else write_log "yum install *.rpm"
-             yum install -y *.rpm >> $LOG 2>&1
-             EC=$? ; write_log "Return Code of yum install is $EC"
-    fi
-    
-    # Keep a copy of original puppet.conf 
+    case "$OS_VER" in
+        5)  write_log "Subscribing to puppetlabs repository for RHEL $OS_VER"
+            rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-5.noarch.rpm >> $LOG 2>&1
+            ;;
+        6)  write_log "Subscribing to puppetlabs repository for RHEL $OS_VER"
+            rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-6.noarch.rpm >> $LOG 2>&1
+            ;;
+        7)  write_log "Subscribing to puppetlabs repository for RHEL $OS_VER"
+            rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm >> $LOG 2>&1
+            ;;
+        *)  echo "Version $OS_VER is not supported by this script"
+            ;;
+    esac
+    write_log "yum -y install puppet"
+    yum -y install puppet  >> $LOG
+
+    # Keep a copy of original puppet.conf
     if [ -f $PUPPET_CFGFILE ]
        then write_log "/bin/cp ${PUPPET_CFGFILE} ${PUPPET_CFGFILE}.`date +%Y_%m_%d_%H_%M_%S`"
             /bin/cp ${PUPPET_CFGFILE} ${PUPPET_CFGFILE}.`date +%Y_%m_%d_%H_%M_%S` >> $LOG 2>&1
     fi
 
-    # Apply our changes to Puppet Agent configuration file 
+    # Apply our changes to Puppet Agent configuration file
     if [ -d $PUPPET_CFGDIR ]
         then write_log "Modifying /etc/puppet to Add Custom lines ... "
              grep 'server      = puppet.slac.ca' ${PUPPET_CFGFILE} >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then echo "                           "	     >> ${PUPPET_CFGFILE}
-                     echo "    server      = puppet.slac.ca" >> ${PUPPET_CFGFILE}
+                     echo "    server      = puppet.maison.ca" >> ${PUPPET_CFGFILE}
                      echo "    report      = true"		     >> ${PUPPET_CFGFILE}
                      echo "    pluginsync  = true"	         >> ${PUPPET_CFGFILE}
                      echo "    moduledir   = /etc/puppet/modules:/var/lib/puppet/modules" >> ${PUPPET_CFGFILE}
@@ -322,10 +284,11 @@ install_process()
              service puppet restart  >> $LOG 2>&1
              write_log "service puppet status"
              service puppet status  >> $LOG 2>&1
+             service puppet status
     fi
 
 	# Create Facter Directory
-    write_log "Create Facter Directory /etc/facter/facts.d" 
+    write_log "Create Facter Directory /etc/facter/facts.d"
     mkdir -p /etc/facter/facts.d >> $LOG 2>&1
 
     # Create Facter SL File - IDate = Install Date
@@ -335,13 +298,7 @@ install_process()
     cat /etc/facter/facts.d/datacenter.txt >> $LOG 2>&1
     write_log " ";
 
-    # Back in Starting Directory
-    write_log "cd $CPWD"
-    cd $CPWD
 
-    # NFS Unmount the Puppet RPM Directory
-    write_log "umount $NFS_LOC_MOUNT"
-    umount $NFS_LOC_MOUNT
 }
 
 
@@ -353,11 +310,11 @@ install_process()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     write_log "Installation of puppet is started ..."
-	echo "You may consult the installation log at $LOG" 
+	echo "You may consult the installation log at $LOG"
 	init_process
     remove_puppet
     install_process
     end_process
     exit $GLOBAL_ERROR
 
-    
+

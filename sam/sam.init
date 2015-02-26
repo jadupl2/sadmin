@@ -53,7 +53,7 @@ blink=`tput blink`           		; export blink      # turn blinking on
 screen_color="\E[44;38m"      		; export screen_color # (BG Blue FG White) 
 
 # SAM Variables
-SAM="/sysadmin/sam"					; export SAM
+SAM="/sadmin/sam"					; export SAM
 SAMTMP="$SAM/tmp"					; export SAMTMP
 SAMFILES="$SAM/files"				; export SAMFILES 
 SAMLANG="$SAMFILES/sam_lang.seq"	; export SAMLANG

@@ -87,7 +87,7 @@ if [ ! -f "$SAM/sam" ]
 stty_orig=`stty -g`                 # Save stty setting    
 #stty erase "^H"                      # Make sure backspace work as expected
 CURDIR=`pwd` ; export CURDIR		# Save Current Directory
-SAM=/sysadmin/sam
+SAM=/sadmin/sam
 verify_env				            # Verify if SAM env. var. is defined
 cd $SAM					            # Change to manager directory
 . $SAM/sam.init				        # Load Function used by SAM
