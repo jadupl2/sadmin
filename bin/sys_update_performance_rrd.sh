@@ -16,7 +16,7 @@ PERFARC="$SYSINFO/rrd/perf_archive"     ; export PERFARC
 NMON_DIR="$SYSINFO/data/nmon"           ; export NMON_DIR
 PN=${0##*/}                             ; export PN
 VER='1.2'                               ; export VER
-RRDTOOL="/usr/bin/rrdtool";             ; export RRDTOOL
+RRDTOOL="/usr/bin/rrdtool"              ; export RRDTOOL
 
 echo "Program $PN Version $VER is starting - `date`"
 

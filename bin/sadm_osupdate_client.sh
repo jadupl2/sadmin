@@ -10,23 +10,23 @@
 #
 
 # --------------------------------------------------------------------------------------------------
-# These variables got to be defined prior to calling the initialize (sadm_init.sh) script                                    Script Variables Definitions
+# These variables got to be defined prior to calling the initialize (sadm_init.sh) script
+# These variables are use and needed by the sadm_init.sh script.
 # --------------------------------------------------------------------------------------------------
-#
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='2.9'                                      ; export VER             # Program version
-DEBUG=0                                        ; export DEBUG           # Debug ON (1) or OFF (0)
+VER='3.1'                                      ; export VER             # Program version
+OUTPUT2=1                                      ; export OUTPUT2         # Output 0=log 1=Screen+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
 MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Of Line in LOG (Trim)
-RC_MAX_LINES=100                               ; export RC_MAX_LINES    # Max Nb. Of Line in RCLOG (Trim)
+MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Of Line in RCLOG (Trim)
 GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
 
 # --------------------------------------------------------------------------------------------------
 # Source sadm variables and Load sadm functions
 # --------------------------------------------------------------------------------------------------
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
-[ -f ${BASE_DIR}/bin/sadm_init.sh ] && . ${BASE_DIR}/bin/sadm_init.sh   # Init Var. & Load sadm functions
+[ -f ${BASE_DIR}/lib/sadm_init.sh ] && . ${BASE_DIR}/lib/sadm_init.sh   # Init Var. & Load sadm functions
 
 
 # --------------------------------------------------------------------------------------------------

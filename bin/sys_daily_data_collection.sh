@@ -1,46 +1,49 @@
 #! /bin/sh
 #############################################################################################
-# Title      :  /sysinfo/bin/daily_data_collection.sh
+# Title      :  sys_daily_data_collection.sh
 # Description:  Get hardware Info & Performance Datafrom all active servers
-# Version    :  1.4
+# Version    :  2.4
 # Author     :  Jacques Duplessis
 # Date       :  2010-04-21
 # Requires   :  ksh
-# SCCS-Id.   :  @(#) daily_data_collection.sh 1.4 21-04/2010
+# SCCS-Id.   :  @(#) sys_daily_data_collection.sh 1.4 21-04/2010
 #############################################################################################
 # Description
-#
+# 2015 - Restructure and redesign for modularity - Jacques Duplessus
 #############################################################################################
 #set -x
-env | sort > /tmp/env.txt 2>&1
 
 # --------------------------------------------------------------------------------------------------
-# These variables got to be defined prior to calling the initialize (sadm_init.sh) script                                    Script Variables Definitions
+# These variables got to be defined prior to calling the initialize (sadm_init.sh) script
+# These variables are use and needed by the sadm_init.sh script.
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                    ; export PN              # Current Script name
 VER='2.9'                                      ; export VER             # Program version
-DEBUG=0                                        ; export DEBUG           # Debug ON (1) or OFF (0)
+OUTPUT2=1                                      ; export OUTPUT2         # Output 0=log 1=Screen+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
 GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
 MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Of Line in LOG (Trim)
-RC_MAX_LINES=100                               ; export RC_MAX_LINES    # Max Nb. Of Line in RCLOG (Trim)
+MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Of Line in RCLOG (Trim)
 
 # --------------------------------------------------------------------------------------------------
 # Source sadm variables and Load sadm functions
 # --------------------------------------------------------------------------------------------------
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
-[ -f ${BASE_DIR}/bin/sadm_init.sh ] && . ${BASE_DIR}/bin/sadm_init.sh   # Init Var. & Load sadm functions
+[ -x ${BASE_DIR}/lib/sadm_init.sh ] && . ${BASE_DIR}/lib/sadm_init.sh   # Init Var. & Load sadm functions
 
 
 # --------------------------------------------------------------------------------------------------
 # Script Variables definition
 # --------------------------------------------------------------------------------------------------
 #
-HWDIR="/sysinfo/www/data/hw"	           	   ; export HWDIR           # Hardware Data collected
+DAT_DIR="/sysinfo/www/data"	           	       ; export DAT_DIR         # Base Data Directory in sysinfo
+HW_DIR="$DAT_DIR/hw"	                	   ; export HW_DIR          # Hardware Data collected
+NMON_DIR="$DAT_DIR/nmon" 	                   ; export NMON_DIR	    # Where Linux nmon files are
+NMON_ARC="$NMON_DIR/archive" 	               ; export NMON_ARC	    # Where Linux nmon Archive are
 SYSPERF="/sysinfo/www/rrd/perf"                ; export SYSPERF         # Where to store Perf.Data
-REMOTE_NMON_DIR="/var/adsmlog/nmonlog"         ; export REMOTE_NMON_DIR # Remote location of nmon file
-NMON_DIR="/sysinfo/www/data/nmon/linux" 	   ; export NMON_DIR	    # Where Linux nmon files are
+NMON_REM_DIR="/var/adsmlog/nmonlog"            ; export NMON_REM_DIR    # Remote location of nmon file
+
 #
 MUSER="query"                                  ; export MUSER           # MySql User
 MPASS="query"                                  ; export MPASS           # MySql Password
@@ -62,12 +65,15 @@ TOTAL_LINUX=0                                  ; export TOTAL_LINUX     # Nb Err
 #
 get_aix_files()
 {
+    write_log " "
+    write_log "Starting to process AIX Servers ..."
     SQL1="use sysinfo; SELECT server_name, server_domain FROM servers where server_os='AIX' "
     SQL2="and server_active=1 and server_doc_only=0 ;"
     SQL="${SQL1} ${SQL2}"
     $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$TMP_FILE1
 
-    cat $TMP_FILE1 | while read wline
+#    cat $TMP_FILE1 | while read wline
+    while read wline
         do
         server=`echo $wline|awk '{ print $1 }'`
         domain=`echo $wline|awk '{ print $2 }'`
@@ -90,8 +96,8 @@ get_aix_files()
         write_log "Total Aix Error Count is at $ERROR_COUNT"
 
         write_log " " ;  write_log "${DASH2}"
-        write_log "rcp $server:/sysadmin/sysinfo/hw/* /sysinfo/www/data/hw"
-        rcp $server:/sysadmin/sysinfo/hw/*  /sysinfo/www/data/hw >>$LOG 2>&1
+        write_log "rcp $server:/sysadmin/sysinfo/hw/* $HW_DIR"
+        rcp $server:/sysadmin/sysinfo/hw/*  $HW_DIR >>$LOG 2>&1
         RC=$?
         if [ $RC -ne 0 ]
             then write_log "ERROR NUMBER $RC for $server"
@@ -102,10 +108,10 @@ get_aix_files()
 
         # Transfer OS Information - Custom report
         write_log " " ;  write_log "${DASH2}"
-        write_log "rcp $server:/sysadmin/sysinfo/log/${server}.log /sysinfo/www/data/cfg"
+        write_log "rcp $server:/sysadmin/sysinfo/log/${server}.log $DAT_DIR/cfg"
         if [ "$server" = "sxmq1222a" ]
-           then rcp $server:/sysadmin/sysinfo/log/sxmq1222*.log /sysinfo/www/data/cfg >>$LOG 2>&1
-           else rcp $server:/sysadmin/sysinfo/log/${server}.log /sysinfo/www/data/cfg >>$LOG 2>&1
+           then rcp $server:/sysadmin/sysinfo/log/sxmq1222*.log $DAT_DIR/cfg >>$LOG 2>&1
+           else rcp $server:/sysadmin/sysinfo/log/${server}.log $DAT_DIR/cfg >>$LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
@@ -118,10 +124,10 @@ get_aix_files()
 
     # Transfer OS Information - Detailled report
     write_log " " ;  write_log "${DASH2}"
-    write_log "rcp $server:/sysadmin/sysinfo/log/${server}*.html /sysinfo/www/data/cfg"
+    write_log "rcp $server:/sysadmin/sysinfo/log/${server}*.html $DAT_DIR/cfg"
     if [ "$server" = "sxmq1222a" ]
-        then rcp $server:/sysadmin/sysinfo/log/sxmq1222*.html /sysinfo/www/data/cfg >>$LOG 2>&1
-        else rcp $server:/sysadmin/sysinfo/log/${server}*.html /sysinfo/www/data/cfg >>$LOG 2>&1
+        then rcp $server:/sysadmin/sysinfo/log/sxmq1222*.html $DAT_DIR/cfg >>$LOG 2>&1
+        else rcp $server:/sysadmin/sysinfo/log/${server}*.html $DAT_DIR/cfg >>$LOG 2>&1
     fi
     RC=$?
     if [ $RC -ne 0 ]
@@ -135,17 +141,17 @@ get_aix_files()
 
     # Transfer Nmon file----------------------------------------------------------------------------
     write_log " " ;  write_log "${DASH2}"
-    if [ ! -d  /sysinfo/www/data/nmon/aix/${server} ]
-       then write_log "Directory  /sysinfo/www/data/nmon/aix/${server} was not found, it is now created"
-            mkdir -p  /sysinfo/www/data/nmon/aix/${server}
-            chmod 775  /sysinfo/www/data/nmon/aix/${server}
+    if [ ! -d  $NMON_DIR/aix/${server} ]
+       then write_log "Directory  $NMON_DIR/aix/${server} was not found, it is now created"
+            mkdir -p   $NMON_DIR/aix/${server}
+            chmod 775  $NMON_DIR/aix/${server}
     fi
     WYESTERDAY=`date --date="1 day ago" +"%y%m%d"`
     NMON_FILENAME="${server}_${WYESTERDAY}_*.nmon"
-    write_log "rcp $server:${REMOTE_NMON_DIR}/${NMON_FILENAME} /sysinfo/www/data/nmon/aix/${server}"
+    write_log "rcp $server:${NMON_REM_DIR}/${NMON_FILENAME} $NMON_DIR/aix/${server}"
     if [ "$server" = "sxmq1222a" ]
-        then rcp $server:${REMOTE_NMON_DIR}/sxmq1222_${WYESTERDAY}*.nmon /sysinfo/www/data/nmon/aix/${server} >>$LOG 2>&1
-        else rcp $server:${REMOTE_NMON_DIR}/${NMON_FILENAME} /sysinfo/www/data/nmon/aix/${server} >>$LOG 2>&1
+        then rcp $server:${NMON_REM_DIR}/sxmq1222_${WYESTERDAY}*.nmon $NMON_DIR/aix/${server} >>$LOG 2>&1
+        else rcp $server:${NMON_REM_DIR}/${NMON_FILENAME} $NMON_DIR/aix/${server} >>$LOG 2>&1
     fi
     RC=$?
     if [ $RC -ne 0 ]
@@ -154,9 +160,10 @@ get_aix_files()
        else write_log "RETURN CODE IS 0 - OK"
     fi
     write_log "Total Aix Error Count is at $ERROR_COUNT"
-    done
+    done < $TMP_FILE1
 
-    write_log "Final Total AIX Error Count is at $ERROR_COUNT"
+    write_log " "
+    write_log "Total number of AIX Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 
 }
@@ -169,12 +176,15 @@ get_aix_files()
 #
 get_linux_files()
 {
+    write_log " "
+    write_log "Starting to process Linux Servers ..."
     SQL1="use sysinfo; SELECT server_name, server_domain FROM servers where server_os='Linux' "
     SQL2="and server_active=1 and server_doc_only=0 ;"
     SQL="${SQL1} ${SQL2}"
     $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$TMP_FILE1
 
-    cat $TMP_FILE1 | while read wline
+#    cat $TMP_FILE1 | while read wline
+    while read wline
         do
         server=`echo $wline|awk '{ print $1 }'`
         domain=`echo $wline|awk '{ print $2 }'`
@@ -191,48 +201,49 @@ get_linux_files()
             then write_log "Could not ping server ${server} ..."
                  write_log "Will not be able to get the files from ${server}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
+                 write_log "Total Linux Error Count is now at $ERROR_COUNT"
                  continue
             else write_log "RETURN CODE IS 0 - OK"
         fi
-        write_log "Total Linux Error Count is at $ERROR_COUNT"
+        write_log "Total Linux Error Count is now at $ERROR_COUNT"
 
     # Transfer Hardware Info - Detailed
     write_log " " ;  write_log "${DASH2}"
-    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/hw/* /sysinfo/www/data/hw"
-    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/hw/* /sysinfo/www/data/hw >>$LOG 2>&1
+    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/hw/* $DAT_DIR/hw"
+    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/hw/* $DAT_DIR/hw >>/dev/null 2>&1
     RC=$?
     if [ $RC -ne 0 ]
        then write_log "ERROR NUMBER $RC for $server"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else write_log "RETURN CODE IS 0 - OK"
     fi
-    write_log "Total Linux Error Count is at $ERROR_COUNT"
+    write_log "Total Linux Error Count is now at $ERROR_COUNT"
 
 
     # Transfer OS Information - Custom report
     write_log " " ;  write_log "${DASH2}"
-    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}.log /sysinfo/www/data/cfg"
-    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}.log /sysinfo/www/data/cfg >>$LOG 2>&1
+    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}.log $DAT_DIR/cfg"
+    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}.log $DAT_DIR/cfg >>/dev/null 2>&1
     RC=$?
     if [ $RC -ne 0 ]
        then write_log "ERROR NUMBER $RC for $server"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else write_log "RETURN CODE IS 0 - OK"
     fi
-    write_log "Total Linux Error Count is at $ERROR_COUNT"
+    write_log "Total Linux Error Count is now at $ERROR_COUNT"
 
 
     # Transfer OS Information - Detailled report
     write_log " " ;  write_log "${DASH2}"
-    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}*.html /sysinfo/www/data/cfg"
-    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}*.html /sysinfo/www/data/cfg >>$LOG 2>&1
+    write_log "rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}*.html $DAT_DIR/cfg"
+    rsync -v -e 'ssh -qp32' $server:/sysadmin/sysinfo/log/${server}*.html $DAT_DIR/cfg >>/dev/null 2>&1
     RC=$?
     if [ $RC -ne 0 ]
        then write_log "ERROR NUMBER $RC for $server"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else write_log "RETURN CODE IS 0 - OK"
     fi
-    write_log "Total Linux Error Count is at $ERROR_COUNT"
+    write_log "Total Linux Error Count is now at $ERROR_COUNT"
 
 
     # Transfer Performance Data
@@ -245,38 +256,38 @@ get_linux_files()
     backup_vm=`echo ${server} | cut -c1-2`
 	if [ "$backup_vm" != "lb" ]
 	   then write_log "rsync -v -e 'ssh -qp32' $server:$PERFDATA_FILE $SYSPERF/${server}"
-            rsync -v -e 'ssh -qp32' $server:$PERFDATA_FILE $SYSPERF/${server} >>$LOG 2>&1
+            rsync -v -e 'ssh -qp32' $server:$PERFDATA_FILE $SYSPERF/${server} >>/dev/null 2>&1
             RC=$?
             if [ $RC -ne 0 ]
                then write_log "Performance Data - ERROR $RC for $server"
                     ERROR_COUNT=$(($ERROR_COUNT+1))
                else write_log "RETURN CODE IS 0 - OK"
             fi
-            write_log "Total Linux Error Count is at $ERROR_COUNT"
+            write_log "Total Linux Error Count is now at $ERROR_COUNT"
 	fi
 
     # Transfer Nmon file----------------------------------------------------------------------------
     write_log " " ;  write_log "${DASH2}"
-    if [ ! -d  /sysinfo/www/data/nmon/linux/${server} ]
-       then write_log "Directory  /sysinfo/www/data/nmon/linux/${server} was not found, it is now created"
-            mkdir -p  /sysinfo/www/data/nmon/linux/${server}
-            chmod 775  /sysinfo/www/data/nmon/linux/${server}
+    if [ ! -d  $NMON_ARC/linux/${server} ]
+       then write_log "Directory  $NMON_ARC/linux/${server} was not found, it is now created"
+            mkdir -p   $NMON_ARC/linux/${server}
+            chmod 775  $NMON_ARC/linux/${server}
     fi
     WYESTERDAY=`date --date="1 day ago" +"%y%m%d"`
     NMON_FILENAME="${server}_${WYESTERDAY}_*.nmon"
-    write_log "rsync -v -e 'ssh -qp32' $server:${REMOTE_NMON_DIR}/${NMON_FILENAME} /sysinfo/www/data/nmon/linux/${server}"
-    rsync -v -e 'ssh -qp32' $server:${REMOTE_NMON_DIR}/${NMON_FILENAME} /sysinfo/www/data/nmon/linux/${server} >>$LOG 2>&1
+    write_log "rsync -v -e 'ssh -qp32' $server:${NMON_REM_DIR}/${NMON_FILENAME} $NMON_ARC/linux/${server}"
+    rsync -v -e 'ssh -qp32' $server:${NMON_REM_DIR}/${NMON_FILENAME} $NMON_ARC/linux/${server} >>/dev/null 2>&1
     RC=$?
     if [ $RC -ne 0 ]
        then write_log "ERROR NUMBER $RC for $server"
             ERROR_COUNT=$(($ERROR_COUNT+1))
        else write_log "RETURN CODE IS 0 - OK"
     fi
-    write_log "Total Linux Error Count is at $ERROR_COUNT"
+    write_log "Total Linux Error Count is now at $ERROR_COUNT"
+    done < $TMP_FILE1
 
-    done
-
-    write_log "Final Total Linux Error Count is at $ERROR_COUNT"
+    write_log " "
+    write_log "Total number of LINUX Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 
 }
@@ -287,37 +298,20 @@ get_linux_files()
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Make sure Dir. Struc. exist
-    rm -f $HWDIR/*.Z > /dev/null 2>&1                                   # Del prv *.Z before getting new files
 
     get_aix_files                                                       # Collect Files from AIX Servers
-    GLOBAL_ERROR=$?                                                     # Set Nb. Errors while collecting
+    AIX_ERROR=$?                                                        # AIX Nb. Errors while collecting
+
     get_linux_files                                                     # Collect Files from Linux Servers
-    NB_ERROR=$?                                                         # Set Nb. Errors while collecting
-    GLOBAL_ERROR=$(($GLOBAL_ERROR+$NB_ERROR))                           # Set Total AIX+Linux Errors
+    LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
 
-    write_log " " ; write_log " " ;  write_log "${DASH}";               # Insert Blank lines in log
-    write_log "COPY NMON FILES TO ARCHIVE DIRECTORY"                    # Advise user - End of Processing
-    write_log "${DASH}"                                                 # Advise user that we are finish
-    if [ -d "$NMON_DIR" ]
-    	then cd $NMON_DIR
-    	     pwd >> $LOG
-	    	 write_log "cp -var . /sysinfo/www/data/nmon/archive/linux"
-		     cp -var . /sysinfo/www/data/nmon/archive/linux >> $LOG 2>&1
-
- 		     # Now that we have a copy in Archive - Delete the originals
-    	     write_log " " ; write_log "${DASH2}"
-    		 write_log "Delete all Linux nmon files in $NMON_DIR"
-    		 find . -name "*.nmon"  -exec rm -f {} \;  >> $LOG 2>&1
-    fi
-
+    GLOBAL_ERROR=$(($AIX_ERROR+$LINUX_ERROR))                           # Set Total AIX+Linux Errors
     write_log " " ; write_log " " ;                                     # Insert Blank lines in log
     write_log "${DASH}"; write_log "END OF PROCESSING"                  # Advise user - End of Processing
     write_log "${DASH}"                                                 # Advise user that we are finish
-    write_log "Final Error Count is at $GLOBAL_ERROR"                   # Advise nb. total errors.
-    if [ $GLOBAL_ERROR -gt 0 ]                                          # If at least one error
-        then RC=1                                                       # Then Set exit code to 1
-		     write_log "Error Count is at $GLOBAL_ERROR then RC = $RC"  # Advise user that RC set to 1
-        else RC=0                                                       # If no error set Exit code to 0
-    fi
+    write_log "Final Global Error count is at $GLOBAL_ERROR"            # Advise nb. total errors.
+
     sadm_stop $GLOBAL_ERROR                                             # End Process with exit Code
-    exit $rc                                                            # Exit script
+    RC=$?                                                               # Recuperate a 0 or a 1
+    write_log "The exist code is set to $RC"                            # Advise user that RC set to 1
+    exit $RC                                                            # Exit script
