@@ -1,0 +1,7 @@
+#
+# Email when error and log report are sent
+email = duplessis.jacques@gmail.com
+#
+# Company name that appear in report and email.
+cie_name = Batcave 
+
