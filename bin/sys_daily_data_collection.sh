@@ -313,5 +313,5 @@ get_linux_files()
 
     sadm_stop $GLOBAL_ERROR                                             # End Process with exit Code
     RC=$?                                                               # Recuperate a 0 or a 1
-    write_log "The exist code is set to $RC"                            # Advise user that RC set to 1
+    write_log "The exist code is set to $RC"                            # Advise user that RC set to 1 or 0
     exit $RC                                                            # Exit script

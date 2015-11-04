@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # yDNS Updater, updates your yDNS host.
 # Copyright (C) 2013 Christian Jurk <cj@ydns.eu>
@@ -24,16 +24,12 @@
 YDNS_USER="duplessis.jacques@gmail.com"
 YDNS_PASSWD="Icu@9am!"
 YDNS_HOST="batcave.ydns.eu"
-
-#YDNS_USER="user@host.xx"
-#YDNS_PASSWD="secret"
-#YDNS_HOST="myhost.ydns.eu"
 YDNS_LASTIP_FILE="/tmp/ydns_last_ip"
 
 ##
 # Don't change anything below.
 ##
-YDNS_UPD_VERSION="20150506.1"
+YDNS_UPD_VERSION="20141015.1"
 
 if ! hash curl 2>/dev/null; then
 	echo "ERROR: cURL is missing."
@@ -50,7 +46,6 @@ usage () {
 	echo "  -H HOST        YDNS host to update"
 	echo "  -u USERNAME    YDNS username for authentication"
 	echo "  -p PASSWORD    YDNS password for authentication"
-	echo "  -i INTERFACE   Use the local IP address for the given interface"
 	echo "  -v             Display version"
 	echo "  -V             Enable verbose output"
 	exit 0
@@ -64,7 +59,7 @@ update_ip_address () {
 		-u "$YDNS_USER:$YDNS_PASSWD" \
 		--silent \
 		--sslv3 \
-		https://ydns.eu/api/v1/update/?host=${YDNS_HOST}\&ip=${current_ip}`
+		https://ydns.eu/api/v1/update/?host=$YDNS_HOST`
 
 	echo $ret
 }
@@ -77,23 +72,12 @@ show_version () {
 
 ## Shorthand function to write a message
 write_msg () {
-	if [ $verbose -ne 1 ]; then
-		return
-	fi
-
-	outfile=1
-
-	if [ -n "$2" ]; then
-		outfile=$2
-	fi
-
-	echo "[`date +%Y/%m/%dT%H:%M:%S`] $1" >&$outfile
+	echo "[`date +%Y/%m/%dT%H:%M:%S`] $1" 
 }
 
 verbose=0
-local_interface_addr=
 
-while getopts "hH:i:p:u:vV" opt; do
+while getopts "hH:p:u:vV" opt; do
 	case $opt in
 		h)
 			usage
@@ -101,10 +85,6 @@ while getopts "hH:i:p:u:vV" opt; do
 
 		H)
 			YDNS_HOST=$OPTARG
-			;;
-
-		i)
-			local_interface_addr=$OPTARG
 			;;
 
 		p)
@@ -124,25 +104,9 @@ while getopts "hH:i:p:u:vV" opt; do
 			;;
 	esac
 done
- 
-if [ "$local_interface_addr" != "" ]; then
-	# Retrieve current local IP address for a given interface
-    
-    if hash ip 2>/dev/null; then
-        current_ip=$(ip addr | awk '/inet/ && /'${local_interface_addr}'/{sub(/\/.*$/,"",$2); print $2}')
-    fi
-fi
 
-if [ "$current_ip" = "" ]; then
-	# Retrieve current public IP address
-	current_ip=`curl --silent --sslv3 https://ydns.eu/api/v1/ip`
-    
-    if [ "$current_ip" = "" ]; then
-        write_msg "Error: Unable to retrieve current public IP address." 2
-        exit 92
-    fi
-fi
-
+# Retrieve current public IP address
+current_ip=`curl --silent --sslv3 https://ydns.eu/api/v1/ip`
 write_msg "Current IP: $current_ip"
 
 # Get last known IP address that was stored locally
@@ -175,4 +139,3 @@ if [ "$current_ip" != "$last_ip" ]; then
 else
 	write_msg "Not updating YDNS host $YDNS_HOST: IP address unchanged" 2
 fi
-

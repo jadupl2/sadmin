@@ -9,7 +9,7 @@ USAGE="Usage:  osupdate_main.sh nodename"
 
 # Mail Address of Sysadmin
 # --------------------------------------------------------------------------
-SYSADMIN="aixteam@standardlife.ca"
+SYSADMIN="duplessis.jacques@gmail.com"
 
 # Check for the first Parameter was Received
 # --------------------------------------------------------------------------
@@ -309,10 +309,9 @@ WDAY=`date +%w`
 # Inform Email 
 	if [ $RC -eq 0 ] 
    	then 
-		cat $LOG | mail -s "SUCCESS - Linux OS Updated on $NODE_NAME from $MYHOST" $SYSADMIN
+		cat $LOG | mail -s "SADM: SUCCESS - Linux OS Update on $NODE_NAME from $MYHOST" $SYSADMIN
    	else
-		cat $LOG | mail -s "FAILED - Linux OS Updated on $NODE_NAME from $MYHOST" $SYSADMIN
-        qpage -f $MYHOST sysadmin "Linux Update Failed on $NODE_NAME" 
+		cat $LOG | mail -s "SADM: ERROR - Linux OS Update on $NODE_NAME from $MYHOST" $SYSADMIN
 	fi
 
 exit $RC

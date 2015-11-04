@@ -164,12 +164,12 @@ process_linux_servers()
              ;;
         p|P) MSINFO=`echo "$MSINFO Prod. servers "`
              SQL3="where server_doc_only=0 and server_active=1 and server_os='Linux' and server_type='Prod' ;"
-             LINUX_TYPE="D"
+             LINUX_TYPE="P"
              break
              ;;
         b|B) MSINFO=`echo "$MSINFO servers "`
              SQL3="where server_doc_only=0 and server_active=1 and server_os='Linux' ;"
-             LINUX_TYPE="D"
+             LINUX_TYPE="B"
              break
              ;;
     esac
@@ -186,14 +186,15 @@ process_linux_servers()
         write_log "Processing Server : ${server_name}.${server_domain} ${server_os} ${server_type}"
         write_log "scp -q ${FILENAME} ${server_name}.${server_domain}:${FILENAME}"
         scp -q $FILENAME ${server_name}.${server_domain}:$FILENAME
-        RC=$? ; write_log "Return Code is $RC"
+        RC=$?
         if [ $RC -ne 0 ]
-            then write_log "Error ($RC) pushing file to ${server_name}.${server_domain}"
-                 write_log "Please correct the problem - Press [ENTER] to continue"
-                 read dummy
+            then write_log "***** ERROR ($RC) PUSHING FILE TO ${server_name}.${server_domain}"
+                 write_log "***** RETURN CODE IS $RC"
+            else write_log "Return Code is $RC"
         fi
         write_log "${DASH}"
         done < $TMP_FILE1
+
 
 }
 
@@ -241,11 +242,11 @@ process_aix_servers()
         write_log "Processing Server : ${server_name}.${server_domain} ${server_os} ${server_type}"
         write_log "rcp ${FILENAME} ${server_name}.${server_domain}:${FILENAME}"
         rcp $FILENAME ${server_name}.${server_domain}:$FILENAME
-        RC=$? ; write_log "Return Code is $RC"
+        RC=$?
         if [ $RC -ne 0 ]
-            then write_log "Error ($RC) pushing file to ${server_name}.${server_domain}"
-                 write_log "Please correct the problem - Press [ENTER] to continue"
-                 read dummy
+            then write_log "***** ERROR ($RC) PUSHING FILE TO ${server_name}.${server_domain}"
+                 write_log "***** RETURN CODE IS $RC"
+            else write_log "Return Code is $RC"
         fi
         write_log "${DASH}"
         done < $TMP_FILE1

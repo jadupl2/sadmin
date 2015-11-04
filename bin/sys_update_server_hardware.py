@@ -14,19 +14,19 @@ import MySQLdb, os, sys, pdb, socket, datetime, glob
 #############################################################################################
 #                          Global Variables
 #############################################################################################
-CURDIR      = os.getcwd()                           # Get Current Directory
-OSNAME      = os.name                               # Get OS name (nt,dos,posix,...)
-PLATFORM    = sys.platform                          # Get current platform (win32,mac,posix)
-HOSTNAME    = socket.gethostname()                  # Get current hostname
-PGM_VER     = "1.5"                                 # Program Version
-PGM_NAME    = os.path.basename(sys.argv[0])         # Program name
-PGM_ARGS    = len(sys.argv)                         # Nb. argument receive
-CNOW        = datetime.datetime.now()               # Get Current Time
-CURDATE     = CNOW.strftime("%Y.%m.%d")             # Format Current date
-CURTIME     = CNOW.strftime("%H:%M:%S")             # Format Current Time
+CURDIR      = os.getcwd()                                       # Get Current Directory
+OSNAME      = os.name                                           # Get OS name (nt,dos,posix,...)
+PLATFORM    = sys.platform                                      # Get platform (win32,mac,posix)
+HOSTNAME    = socket.gethostname()                              # Get current hostname
+PGM_VER     = "1.6"                                             # Program Version
+PGM_NAME    = os.path.basename(sys.argv[0])                     # Program name
+PGM_ARGS    = len(sys.argv)                                     # Nb. argument receive
+CNOW        = datetime.datetime.now()                           # Get Current Time
+CURDATE     = CNOW.strftime("%Y.%m.%d")                         # Format Current date
+CURTIME     = CNOW.strftime("%H:%M:%S")                         # Format Current Time
 
 # Base Directory
-BASEDIR     = '/sysinfo/www/data/hw'                # Base Dir. where Data is
+BASEDIR     = '/sysinfo/www/data/hw'                            # Where hwinfo_*.txt input file are
 
 # Database information
 print "%s" % HOSTNAME
@@ -70,12 +70,12 @@ def update_db():
    for filename in glob.glob(HWINFO):
 
       print "\nProcessing : " + filename
-      HW = open(filename,'rU' )                          # Open Hardware file
-      for hwline in HW:                                  # Loop until file is process
+      HW = open(filename,'rU' )                                 # Open Hardware file
+      for hwline in HW:                                         # Loop until file is process
          print "Processing line : " + hwline.strip()
-         hwarray       =  hwline.split(';')              # Split line based on ;
-         hw_osname     =  hwarray[0].capitalize()        # Servername OS
-         hw_servername =  hwarray[1]                     # Servername
+         hwarray       =  hwline.split(';')                     # Split line based on ;
+         hw_osname     =  hwarray[0].capitalize()               # Servername OS
+         hw_servername =  hwarray[1]                            # Servername
 
          #pdb.set_trace()
          # OS Version
@@ -89,45 +89,43 @@ def update_db():
             hw_osver2     = int(0)
             hw_osver3     = int(0)
 
-         hw_model      =  hwarray[3]                     # Hardware model
-         hw_serial     =  hwarray[4]                     # Hardware serial
-         wint          =  hwarray[5].replace('MB','')    # Hardware Memory
-         if (wint.strip() == '') :                       # if no Memory specify
-            hhw_memory  = 0                              # Default Memory=0
+         hw_model      =  hwarray[3]                            # Hardware model
+         hw_serial     =  hwarray[4]                            # Hardware serial
+         wint          =  hwarray[5].replace('MB','')           # Hardware Memory
+         if (wint.strip() == '') :                              # if no Memory specify
+            hhw_memory  = 0                                     # Default Memory=0
          else:
-            hw_memory = int(wint)                        # Use Hardware Memory
+            hw_memory = int(wint)                               # Use Hardware Memory
 
          # Number of CPU
-         if (hwarray[6].strip() == ''):                  # If Nb CPU not specify
-            hw_cpu_nb = 1                                # Assume 1 CPU
+         if (hwarray[6].strip() == ''):                         # If Nb CPU not specify
+            hw_cpu_nb = 1                                       # Assume 1 CPU
          else :
-            hw_cpu_nb =  int(hwarray[6])                 # Number of CPU specify
+            hw_cpu_nb =  int(hwarray[6])                        # Number of CPU specify
 
          # CPU Speed
          try :
-            wfloat  =  hwarray[7].replace('MHz','')         # Remove MHZ from CPU Speed
-            if (wfloat.strip() == '') :                     # If no CPU speed specify
-               hw_cpu_speed  = 0                            # Default = 0
+            print "MHZ %s " % hwarray[7]
+            #wfloat  =  float(hwarray[7].replace('MHz',''))      # Remove MHZ from CPU Speed
+            wfloat  =  hwarray[7]                               # Get CPU SPeed
+            if (wfloat.strip() == '') :                         # If no CPU speed specify
+               hw_cpu_speed  = 0                                # Default = 0
             else :
-               hw_cpu_speed = int(wfloat)                   # CPU Speed
+               hw_cpu_speed = int(wfloat)                       # CPU Speed
          except :
             hw_cpu_speed = int(0)
 
          # Internal Disk
-         wint =  hwarray[8].replace('GB','')             # Internal Disk
-         if (wint.strip() == '') :                       # No internal disk space
-            hw_disk_int   =  0                           # Default = 0 Gb
-         else :
-            hw_disk_int = int(wint)                      # Use Internal Disk
-         wint =  hwarray[9].replace('GB','')             # External Disk
-         if (wint.strip() == '') :                       # No Disk space specify
-            hw_disk_ext   =  0                           # Default is 0 GB
-         else :
-            hw_disk_ext = int(wint)                      # External Disk Specify
+         wint =  float(hwarray[8].replace('GB',''))             # Internal Disk
+         hw_disk_int = int(wint)                                # Use Internal Disk
+
+         # External Disk
+         wint =  float(hwarray[9].replace('GB',''))             # External Disk
+         hw_disk_ext = int(wint)                                # External Disk Specify
 
          # VMware
          try :
-            hw_vmware =  int(hwarray[10])                   # VMWare=0
+            hw_vmware =  int(hwarray[10])                       # VMWare=0
          except :
             hw_vmware = int(0)
 

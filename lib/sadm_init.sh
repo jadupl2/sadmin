@@ -1,6 +1,6 @@
 #! /bin/bash
 #===================================================================================================
-# Title      :  sam.init - sam initialization script
+# Title      :  sadm.init - sadmin initialization script
 # Version    :  1.0
 # Author     :  Jacques Duplessis
 # Date       :  2005-01-06
@@ -25,17 +25,20 @@ trap 'exit 0' 2   # INTERCEPTE LE ^C
 SYSADMIN="duplessis.jacques@gmail.com"          ; export SYSADMIN       # sysadmin email
 HOSTNAME=`hostname -s`                          ; export HOSTNAME       # Current Host name
 OSNAME=`uname -s|tr '[:lower:]' '[:upper:]'`    ; export OSNAME         # Get OS Name (AIX or LINUX)
-DASH=`printf %60s |tr " " "="`                  ; export DASH           # 60 dashes line
+DASH=`printf %80s |tr " " "="`                  ; export DASH           # 60 dashes line
+SA_LINE=`printf %10s |tr " " "="`               ; export SA_LINE        # 10 dashes line
 #
+BASE_DIR=${SADMIN:="/sadmin"}                   ; export BASE_DIR       # Script Root Base Directory
 BIN_DIR="$BASE_DIR/bin"                         ; export BIN_DIR        # Script Root binary directory
 TMP_DIR="$BASE_DIR/tmp"                         ; export TMP_DIR        # Script Temp  directory
 LIB_DIR="$BASE_DIR/lib"                         ; export LIB_DIR        # Script Lib directory
 LOG_DIR="$BASE_DIR/log"	                        ; export LOG_DIR	    # Script log directory
 DAT_DIR="$BASE_DIR/dat"	                        ; export DAT_DIR	    # Data directory
 CFG_DIR="$BASE_DIR/cfg"	                        ; export CFG_DIR	    # Configuration Directory
+SYS_DIR="$BASE_DIR/sys"	                        ; export SYS_DIR	    # System related scripts
 #
 CFG_FILE="$CFG_DIR/sadmin.cfg"                  ; export CFG_FILE       # Configuration file name
-EPOCH="${BASE_DIR}/bin/sadm_epoch"              ; export EPOCH          # Location of epoch pgm.
+EPOCH="${BASE_DIR}/bin/sadm_epoch"              ; export EPOCH          # Date Calculation Tool
 TMP_FILE1="${TMP_DIR}/${INST}_1.$$"             ; export TMP_FILE1      # Script Tmp File1 for processing
 TMP_FILE2="${TMP_DIR}/${INST}_2.$$"             ; export TMP_FILE2      # Script Tmp File2 for processing
 TMP_FILE3="${TMP_DIR}/${INST}_3.$$"             ; export TMP_FILE3      # Script Tmp File3 for processing
@@ -130,8 +133,11 @@ sadm_start()
     # If LIB Directory doesn't exist, create it.
     if [ ! -d "$LIB_DIR" ]  ; then mkdir -p $LIB_DIR ; chmod 2775 $LIB_DIR ; export LIB_DIR ; fi
 
-    # If Configuration Directory doesn't exist, create it.
+    # If Custom Configuration Directory doesn't exist, create it.
     if [ ! -d "$CFG_DIR" ]  ; then mkdir -p $CFG_DIR ; chmod 2775 $CFG_DIR ; export CFG_DIR ; fi
+
+    # If System Configuration Directory doesn't exist, create it.
+    if [ ! -d "$SYS_DIR" ]  ; then mkdir -p $SYS_DIR ; chmod 2775 $SYS_DIR ; export SYS_DIR ; fi
 
     # If Data Directory doesn't exist, create it.
     if [ ! -d "$DAT_DIR" ]  ; then mkdir -p $DAT_DIR ; chmod 2775 $DAT_DIR ; export DAT_DIR ; fi
@@ -157,8 +163,9 @@ sadm_start()
 
     # Write Starting Info in the Log
     write_log "${DASH}"
-    write_log "Starting ${PN} version ${VER} on ${HOSTNAME} ..."
+    write_log "Starting ${PN} version ${VER} on ${HOSTNAME}"
     write_log "${DASH}"
+    write_log " "
 
     start=`date "+%C%y.%m.%d %H:%M:%S"`
     echo "${HOSTNAME} ${start} ........ ${INST} 2" >>$RCLOG
@@ -179,6 +186,7 @@ sadm_stop()
     if [ $GLOBAL_ERROR -ne 0 ] ; then GLOBAL_ERROR=1 ; fi               # Making Sure code is 1 or 0
 
     # Maintain Backup RC File log at a reasonnable size.
+    write_log " "
     write_log "${DASH}"
     write_log "Trimming $RCLOG to ${MAX_RCLINE} lines."
     tail -${MAX_RCLINE} $RCLOG > $RCLOG.$$
@@ -202,8 +210,8 @@ sadm_stop()
 
     # Inform UnixAdmin By Email
     if [ $GLOBAL_ERROR -eq 0 ]
-        then cat $LOG | mail -s "SADMIN : SUCCESS of $PN on $HOSTNAME" $SYSADMIN
-        else cat $LOG | mail -s "SADMIN : ERROR of $PN on $HOSTNAME"  $SYSADMIN
+        then cat $LOG | mail -s "SADM : SUCCESS of $PN on $HOSTNAME" $SYSADMIN
+        else cat $LOG | mail -s "SADM : ERROR of $PN on $HOSTNAME"  $SYSADMIN
     fi
 
     # Delete PID File

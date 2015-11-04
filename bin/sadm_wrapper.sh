@@ -18,7 +18,7 @@
 PN=${0##*/}                                         ; export PN             # Program name
 VER='1.4'					                        ; export VER            # jwrapper version
 SCRIPT="$1"					                        ; export SCRIPT         # Script with pathname
-INST=`basename $1`				                    ; export INST           # Script without pathname
+INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 MAIL_ID="duplessis.jacques@gmail.com"               ; export MAIL_ID        # Sysadmin email
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Name of server
 BASE_DIR=${SADMIN:="/sadmin"}                       ; export BASE_DIR       # Script Root Base Directory
@@ -26,7 +26,7 @@ BIN_DIR="$BASE_DIR/bin"                             ; export BIN_DIR        # Sc
 TMP_DIR="$BASE_DIR/tmp"                             ; export TMP_DIR        # Script Temp  dir.
 LOG_DIR="$BASE_DIR/log"	                            ; export LOG_DIR	    # Script log dir.
 LOG_FILE="${LOG_DIR}/${HOSTNAME}_${INST}.log"       ; export LOG_FILE       # Script Log file
-LOG_STAT="${LOG_DIR}/${HOSTNAME}_${INST}_stat.log"  ; export LOG_STAT       # Script Log Stat. file
+LOG_STAT="${LOG_DIR}/rc.${HOSTNAME}_${INST}.log"    ; export LOG_STAT       # Script Log Stat. file
 USAGE="Usage : sadm_wrapper path-name/script-name"  ; export USAGE          # Script Usage
 DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
 

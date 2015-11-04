@@ -26,7 +26,7 @@ UUFILE="/tmp/dns_master_${TODAY}.uu"            ; export UUFILE
 WDAY=$(date "+%u")                              ; export WDAY
 PN=${0##*/}                                     ; export PN        # Program name
 VER='1.3'                                       ; export VER       # Program Version
-DNSADMIN="jack.duplessis@standardlife.ca,patrick.gervais@standardlife.ca" ; export DNSADMIN
+DNSADMIN="duplessis.jacques@gmail.com"          ; export DNSADMIN
 
 
 
@@ -36,7 +36,7 @@ DNSADMIN="jack.duplessis@standardlife.ca,patrick.gervais@standardlife.ca" ; expo
 tput clear
 echo "Program $PN Version $VER is starting - `date`"
 
-tar -cvf ${BASE_FILE} /etc/named.conf /etc/named.dat
+tar -cvf ${BASE_FILE} /var/named
 chmod 444 ${BASE_FILE}
 
 # Send a copy of the backup to sysadmin once a week
@@ -48,7 +48,7 @@ ls -l ${BASE_FILE}
 /usr/bin/uuencode ${GZIP_FILE} ${GZIP_FILE} > ${UUFILE} 
 echo "UUFILE=${UUFILE}"
 ls -l ${UUFILE}
-TO="jack.duplessis@standardlife.ca,patrick.gervais@standardlife.ca"
+TO="duplessis.jacques@gmail.com"
 mail -s "DNS_MASTER_${TODAY}" $DNSADMIN < ${UUFILE}
 rm -f ${UUFILE} ${GZIP_FILE}
 

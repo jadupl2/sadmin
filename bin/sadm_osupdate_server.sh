@@ -18,7 +18,7 @@
 # --------------------------------------------------------------------------------------------------
 #
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='2.9'                                      ; export VER             # Program version
+VER='3.0'                                      ; export VER             # Program version
 OUTPUT2=1                                      ; export OUTPUT2         # Output to log=0 1=Screen+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
@@ -41,7 +41,7 @@ MUSER="query"                                   ; export MUSER          # MySql 
 MPASS="query"                                   ; export MPASS          # MySql Password
 MHOST="sysinfo.maison.ca"                       ; export MHOST          # Mysql Host
 MYSQL="$(which mysql)"                          ; export MYSQL          # Location of mysql program
-USCRIPT="/sadmin/bin/sadm_osupdate_client.sh"   ; export USCRIPT        # Script to execute on nodes
+USCRIPT="${BIN_DIR}/sadm_osupdate_client.sh"    ; export USCRIPT        # Script to execute on nodes
 REMOTE_SSH="/usr/bin/ssh -qnp 32"               ; export REMOTE_SSH     # SSH command for remote node
 ERROR_COUNT=0                                   ; export ERROR_COUNT    # Nb. of update failed
 
@@ -67,9 +67,9 @@ process_linux_servers()
         server_os=`    echo $wline|awk '{ print $2 }'`
         server_domain=`echo $wline|awk '{ print $3 }'`
         server_type=`  echo $wline|awk '{ print $4 }'`
-        write_log " " ; write_log "${DASH}"
+        write_log " " ; write_log "${SA_LINE}"
         write_log "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-        write_log "${DASH}"
+        write_log "${SA_LINE}"
         write_log "Ping the selected host ${server_name}.${server_domain}"
 
         ping -c3 ${server_name}.${server_domain} >> /dev/null 2>&1
@@ -79,7 +79,7 @@ process_linux_servers()
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  write_log "Total Error Count is at $ERROR_COUNT"
                  continue
-            else write_log "OK"
+            else write_log "Ping went OK"
         fi
 
         write_log "Starting $USCRIPT on ${server_name}.${server_domain}"
@@ -93,7 +93,8 @@ process_linux_servers()
         write_log "Total Error Count is at $ERROR_COUNT"
 
         done < $TMP_FILE1
-    write_log "${DASH}"
+    write_log " "
+    write_log "${SA_LINE}"
     write_log "Final Error Count is at $ERROR_COUNT"
     return $ERROR_COUNT
 }
