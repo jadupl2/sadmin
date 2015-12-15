@@ -2,8 +2,8 @@
 # --------------------------------------------------------------------------------------------------
 #  Author:    Jacques Duplessis
 #  Title      Jlib_curse.sh
-#  Date:      December 2015
-#  Synopsis:  Screen Oriented functions
+#  Date:      November 2015
+#  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -31,7 +31,7 @@ TITLE="Standard Life Canada"                    ; export TITLE                  
 #---------------------------------------------------------------------------------------------------
 #  DISPLAY MESSAGE ON THE LINE AND POSITION RECEIVE AS PARAMETER (WRITEXY "MESSAGE" 12 50)
 #---------------------------------------------------------------------------------------------------
-writexy()
+sadm_sadm_writexy()
 {
     tput cup `expr $1 - 1`  `expr $2 - 1`                           # tput command pos. cursor
     if [ "$OSTYPE" == "AIX" ]                                       # In AIX just Echo Message
@@ -46,26 +46,26 @@ writexy()
 #---------------------------------------------------------------------------------------------------
 # ASK A QUESTION AT LINE AND POSITION SPECIFIED - RETURN 0 FOR NO AND RETURN 1 IF ANSWERED "YES"
 #---------------------------------------------------------------------------------------------------
-messok()
+sadm_messok()
 {
-    wline=$1 ; wpos=$2 ; wmess="$3 [y,n] ? "                        # Line, Position and Mess. Rcv
-    wreturn=0                                                       # Function Return Value Default
-    writexy $1 $2 "                                                "
+    wline=$1 ; wpos=$2 ; wmess="$3 [y,n] ? "                            # Line, Position and Mess. Rcv
+    wreturn=0                                                           # Function Return Value Default
+    sadm_writexy $1 $2 "                                                "
     while :
         do
-        writexy $1 $2 "$wmess  ${right}${right}"                    # Write mess rcv + [ Y/N ] ?
-        read answer                                                 # Read User answer
-        case "$answer" in                                           # Test Answer
-           Y|y ) wreturn=1                                          # Yes = Return Value of 1
-                 break                                              # Break of the loop
+        sadm_writexy $1 $2 "$wmess  ${right}${right}"                   # Write mess rcv + [ Y/N ] ?
+        read answer                                                     # Read User answer
+        case "$answer" in                                               # Test Answer
+           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+                 break                                                  # Break of the loop
+                 ;; 
+           n|N ) wreturn=0                                              # Yes = Return Value of 0
+                 break                                                  # Break of the loop
                  ;;
-           n|N ) wreturn=0                                          # Yes = Return Value of 0
-                 break                                              # Break of the loop
-                 ;;
-             * ) ;;                                                 # Other options stay in the loop
+             * ) ;;                                                     # Other options stay in the loop
       esac
     done
-   return $wreturn                                                  # Return 0=No 1=Yes
+   return $wreturn                                                      # Return 0=No 1=Yes
 }
 
 
@@ -73,12 +73,12 @@ messok()
 #---------------------------------------------------------------------------------------------------
 # DISPLAY MESSAGE RECEIVE IN BOLD (AND SOUND BELL) AT LINE 22 & WAIT FOR RETURN
 #---------------------------------------------------------------------------------------------------
-mess()
+sadm_mess()
 {
-   writexy 22 01 "${clreos}${bold}${1}${nrm}${bel}${bel}"           # Clear from lines 22 to EOS
-   writexy 23 01 "Press [ENTER] to continue."                       # Advise user to press [RETURN]
-   read dummy                                                       # Wait for user 2 press [RETURN]
-   writexy 22 01 "${clreos}"                                        # Clear from lines 22 to EOS
+   sadm_writexy 22 01 "${clreos}${bold}${1}${nrm}${bel}${bel}"          # Clear from lines 22 to EOS
+   sadm_writexy 23 01 "Press [ENTER] to continue."                      # Advise user to press [RETURN]
+   read sadm_dummy                                                      # Wait for user 2 press [RETURN]
+   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
 }
 
 
@@ -87,10 +87,10 @@ mess()
 #---------------------------------------------------------------------------------------------------
 # DISPLAY MESSAGE ON LINE 22 WITH BELL SOUND
 #---------------------------------------------------------------------------------------------------
-displayMessage()
+sadm_display_message()
 {
-   writexy 22 01 "${clreos}"                                        # Clear from lines 22 to EOS
-   writexy 22 01 "${bold}${1}${nrm}${bel}"                          # Display Mess. on Line 22
+   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
+   sadm_writexy 22 01 "${bold}${1}${nrm}${bel}"                         # Display Mess. on Line 22
 }
 
 
@@ -98,10 +98,10 @@ displayMessage()
 #---------------------------------------------------------------------------------------------------
 # CLEAR SCREEN AND DISPLAY THE 2 HEADING LINES OF SAM
 #---------------------------------------------------------------------------------------------------
-display_entete() 
+sadm_display_entete() 
 {
-    titre=`echo $1` 			                                    # Menu Title
-    eighty_spaces=`printf %80s " "`                                 # 80 white space
+    titre=`echo $1`                                                     # Menu Title
+    eighty_spaces=`printf %80s " "`                                     # 80 white space
 
     # Calculate Version Position on the Heading line
     long=`echo $OSTYPE | awk '{ printf "%d",length() }'`
@@ -113,41 +113,42 @@ display_entete()
 
     # Display 3 lines in reverse video - On line 1, 2 and 21.
     echo -e "${clr}${bold}${rvs}\c"
-    writexy 01 01 "$eighty_spaces"
-    writexy 02 01 "$eighty_spaces"
-    writexy 21 01 "$eighty_spaces"
+    sadm_writexy 01 01 "$eighty_spaces"
+    sadm_writexy 02 01 "$eighty_spaces"
+    sadm_writexy 21 01 "$eighty_spaces"
 
     # Display Line 1 (Date + Cie Name +
     wpos=`expr 80 - ${#TITLE}`                                      # 80 - lenght of title
     wpos=`expr $wpos / 2 `                                          # Divide result by 2 
-    writexy 01 01 "`date +%d/%m/%Y`"                                 # Display Date Line 1 Pos.1 
-    writexy 01 $wpos "$TITLE"                                        # Display Title Calc Position 
-    writexy 01 77 "$VER"
+    sadm_writexy 01 01 "`date +%d/%m/%Y`"                                 # Display Date Line 1 Pos.1 
+    sadm_writexy 01 $wpos "$TITLE"                                        # Display Title Calc Position 
+    sadm_writexy 01 77 "$VER"
 
     # Display Line 2 - (Host Name + OS Name and OS Version)
-    writexy 02 01 "$OSTYPE Ver.$OSVERSION"
-    writexy 02 "$HOSTNAME_POS" "$HOSTNAME"
+    sadm_writexy 02 01 "$OSTYPE Ver.$OSVERSION"
+    sadm_writexy 02 "$HOSTNAME_POS" "$HOSTNAME"
 
 # Display Titre du Menu
 # Calculer la position pour centrer le titre sur la ligne de 80 colonnes
    long=`echo $1 | awk '{ printf "%d",length() }'`
    wpos=`expr 80 - $long `
    wpos=`expr $wpos / 2 `
-   writexy 02 $wpos "$titre"
+   sadm_writexy 02 $wpos "$titre"
 
 # Reset to normal mode
    echo -e "${nrm}\c"
-   writexy 04 01 ""
+   sadm_writexy 04 01 ""
 }
+
 
 
 #---------------------------------------------------------------------------------------------------
 # ASK THE MANAGER PASSWORD
 #---------------------------------------------------------------------------------------------------
-ask_password()
+sadm_ask_password()
 {
-   writexy 22 01 "${clreos}${bel}${bel}"
-   writexy 22 01 "Please enter the manager password ...  ? "
+   sadm_writexy 22 01 "${clreos}${bel}${bel}"
+   sadm_writexy 22 01 "Please enter the manager password ...  ? "
    stty -echo
    read REPONSE
    stty echo
@@ -155,7 +156,7 @@ ask_password()
       then mess "Invalid password"
            return 0
       else
-	   return 1
+           return 1
    fi
 }
 
@@ -168,7 +169,7 @@ ask_password()
 # Param #4 = Type of accept A=AlphaNumeric N=NUmeric
 # Param #5 = Value of field just entered
 #---------------------------------------------------------------------------------------------------
-accept_data()
+sadm_accept_data()
 {
   while :
         do
@@ -188,12 +189,12 @@ accept_data()
               done
         if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi
         if [ "$WCOL" != "" ]
-           then writexy $WLINE $WCOL "${rvs}${WMASK}"
-	        writexy $WLINE $WCOL "${WDEFAULT}${nrm}"
+           then sadm_writexy $WLINE $WCOL "${rvs}${WMASK}"
+	        sadm_writexy $WLINE $WCOL "${WDEFAULT}${nrm}"
         fi
 
         # Accept the Data
-        writexy $WLINE $WCOL ""
+        sadm_writexy $WLINE $WCOL ""
         #read -n${WLEN} WDATA
         read WDATA
         if [ "$WDATA" = "" ]    ; then WDATA="$WDEFAULT"  ; fi
@@ -201,8 +202,8 @@ accept_data()
         if [ "$WDATA" = "-" ]   ; then WDATA=""           ; fi
         if [ "$WDATA" = "del" ] ; then WDATA=""           ; fi
         if [ "$WLEN" != "0" ]
-           then writexy $WLINE $WCOL "${WMASK}"
-                writexy $WLINE $WCOL "$WDATA"
+           then sadm_writexy $WLINE $WCOL "${WMASK}"
+                sadm_writexy $WLINE $WCOL "$WDATA"
         fi
 
 	    # Test if length of data excedd what was requested
@@ -224,22 +225,3 @@ accept_data()
         done
 }
 
-
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-# Test jlib_curse Library
-#---------------------------------------------------------------------------------------------------
-test_jlib_curse()
-{
-    display_entete "jlib_curses.sh"
-
-}
-
-
-#---------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------
-
-test_jlib_curse
