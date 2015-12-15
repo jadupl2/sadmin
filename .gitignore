@@ -1,2 +1,7 @@
 *.log
 tmp/
+pkg/
+www/
+log/
+dat/
+
