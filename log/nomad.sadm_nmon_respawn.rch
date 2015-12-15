@@ -1,7 +1,3 @@
-nomad 2015.12.14 13:00:01 ........ sadm_nmon_respawn 2
-nomad 2015.12.14 13:00:01 13:00:01 sadm_nmon_respawn 0
-nomad 2015.12.14 13:10:01 ........ sadm_nmon_respawn 2
-nomad 2015.12.14 13:10:01 13:10:01 sadm_nmon_respawn 0
 nomad 2015.12.14 13:20:01 ........ sadm_nmon_respawn 2
 nomad 2015.12.14 13:20:01 13:20:01 sadm_nmon_respawn 0
 nomad 2015.12.14 13:30:02 ........ sadm_nmon_respawn 2
@@ -98,3 +94,7 @@ nomad 2015.12.14 21:00:01 ........ sadm_nmon_respawn 2
 nomad 2015.12.14 21:00:01 21:00:01 sadm_nmon_respawn 0
 nomad 2015.12.14 21:10:01 ........ sadm_nmon_respawn 2
 nomad 2015.12.14 21:10:01 21:10:01 sadm_nmon_respawn 0
+nomad 2015.12.14 21:20:01 ........ sadm_nmon_respawn 2
+nomad 2015.12.14 21:20:01 21:20:02 sadm_nmon_respawn 0
+nomad 2015.12.14 21:30:01 ........ sadm_nmon_respawn 2
+nomad 2015.12.14 21:30:01 21:30:01 sadm_nmon_respawn 0
