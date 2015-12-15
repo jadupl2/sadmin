@@ -1,0 +1,4 @@
+# Company_Name - Mon Dec 14 05:06:03 EST 2015
+# Output of /sbin/pvscan command on centos5.maison.ca
+#
+  No matching physical volumes found

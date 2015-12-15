@@ -1,0 +1,12 @@
+c2h: gcc Info for node aixb50
+Mon Dec 14 05:23:22 CST 2015
+Collector: Compiler
+***************
+AIX 5.3.0.0
+5300-12-01-1016
+***************
+ 
+NO gcc compiler installed ! (not found in path)
+NO lslpp package for gcc found
+NO rpm info for gcc found
+*>>> EOF <<<

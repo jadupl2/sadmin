@@ -1,0 +1,8 @@
+# Company_Name - Mon Dec 14 05:06:02 CST 2015
+# Output of /bin/netstat -rn command on fedora23.maison.ca
+#
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+0.0.0.0         192.168.1.1     0.0.0.0         UG        0 0          0 eno16780032
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eno16780032
+192.168.124.0   0.0.0.0         255.255.255.0   U         0 0          0 virbr0

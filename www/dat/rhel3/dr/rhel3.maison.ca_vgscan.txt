@@ -1,0 +1,8 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /sbin/vgscan command on rhel3.maison.ca
+#
+vgscan -- reading all physical volumes (this may take a while...)
+vgscan -- found active volume group "rootvg"
+vgscan -- "/etc/lvmtab" and "/etc/lvmtab.d" successfully created
+vgscan -- WARNING: This program does not do a VGDA backup of your volume group
+

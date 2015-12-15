@@ -1,0 +1,9 @@
+Filesystem    MB blocks      Free %Used    Iused %Iused Mounted on
+/dev/hd4         128.00     38.06   71%     5882     9% /
+/dev/hd2        2624.00    150.85   95%    45462     7% /usr
+/dev/hd9var      128.00     40.81   69%     4678    15% /var
+/dev/hd3          64.00     57.80   10%       60     1% /tmp
+/dev/hd1          64.00     61.91    4%       24     1% /home
+/proc                 -         -    -         -     -  /proc
+/dev/hd10opt     384.00    157.68   59%     2273     3% /opt
+/dev/lv00       3072.00     80.14   98%     1070     1% /aix_update

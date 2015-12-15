@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:31 EST 2015
+# Output of /usr/sbin/pvdisplay command on gumby.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda5
+  VG Name               rootvg
+  PV Size               141.60 GB / not usable 8.00 MB
+  Allocatable           yes 
+  PE Size (KByte)       32768
+  Total PE              4531
+  Free PE               2395
+  Allocated PE          2136
+  PV UUID               KRhPjY-sh2m-Jke1-0TGO-AmQa-S2AZ-dAZKDe
+   

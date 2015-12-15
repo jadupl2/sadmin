@@ -1,0 +1,107 @@
+# Company_Name - Mon Dec 14 05:07:42 EST 2015
+# Output of /usr/bin/facter command on gotham.maison.ca
+#
+architecture => i386
+augeasversion => 1.0.0
+bios_release_date => 09/30/2014
+bios_vendor => Phoenix Technologies LTD
+bios_version => 6.00
+blockdevice_sda_model => Virtual disk
+blockdevice_sda_size => 64424509440
+blockdevice_sda_vendor => VMware
+blockdevice_sdb_model => Virtual disk
+blockdevice_sdb_size => 17179869184
+blockdevice_sdb_vendor => VMware
+blockdevice_sdc_model => Virtual disk
+blockdevice_sdc_size => 17179869184
+blockdevice_sdc_vendor => VMware
+blockdevice_sdd_model => Virtual disk
+blockdevice_sdd_size => 104857600
+blockdevice_sdd_vendor => VMware
+blockdevice_sr0_model => VMware IDE CDR10
+blockdevice_sr0_size => 1073741312
+blockdevice_sr0_vendor => NECVMWar
+blockdevices => sda,sdb,sdc,sdd,sr0
+boardmanufacturer => Intel Corporation
+boardproductname => 440BX Desktop Reference Platform
+boardserialnumber => None
+domain => maison.ca
+facterversion => 2.4.4
+filesystems => ext3,ext4,iso9660
+fqdn => gotham.maison.ca
+gid => root
+hardwareisa => i686
+hardwaremodel => i686
+hostname => gotham
+id => root
+interfaces => eth4,lo
+ipaddress => 192.168.1.108
+ipaddress6 => 2607:fa48:6c05:adc0:250:56ff:fe89:d0bf
+ipaddress6_eth4 => 2607:fa48:6c05:adc0:250:56ff:fe89:d0bf
+ipaddress_eth4 => 192.168.1.108
+ipaddress_lo => 127.0.0.1
+is_virtual => true
+kernel => Linux
+kernelmajversion => 2.6
+kernelrelease => 2.6.32-573.8.1.el6.i686
+kernelversion => 2.6.32
+lsbdistcodename => Final
+lsbdistdescription => CentOS release 6.7 (Final)
+lsbdistid => CentOS
+lsbdistrelease => 6.7
+lsbmajdistrelease => 6
+lsbminordistrelease => 7
+lsbrelease => :base-4.0-ia32:base-4.0-noarch:core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch
+macaddress => 00:50:56:89:D0:BF
+macaddress_eth4 => 00:50:56:89:D0:BF
+manufacturer => VMware, Inc.
+memoryfree => 1.16 GB
+memoryfree_mb => 1189.12
+memorysize => 1.47 GB
+memorysize_mb => 1502.21
+mtu_eth4 => 1500
+mtu_lo => 65536
+netmask => 255.255.255.0
+netmask_eth4 => 255.255.255.0
+netmask_lo => 255.0.0.0
+network_eth4 => 192.168.1.0
+network_lo => 127.0.0.0
+operatingsystem => CentOS
+operatingsystemmajrelease => 6
+operatingsystemrelease => 6.7
+os => {"family"=>"RedHat", "name"=>"CentOS", "release"=>{"minor"=>"7", "major"=>"6", "full"=>"6.7"}, "lsb"=>{"distdescription"=>"CentOS release 6.7 (Final)", "distrelease"=>"6.7", "minordistrelease"=>"7", "distid"=>"CentOS", "distcodename"=>"Final", "majdistrelease"=>"6", "release"=>":base-4.0-ia32:base-4.0-noarch:core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch"}}
+osfamily => RedHat
+partitions => {"sdb1"=>{"size"=>"33543657", "filesystem"=>"LVM2_member"}, "sdc1"=>{"size"=>"33543657", "filesystem"=>"LVM2_member"}, "sdd1"=>{"size"=>"204768", "filesystem"=>"LVM2_member"}, "sda1"=>{"label"=>"/boot", "size"=>"271057", "filesystem"=>"ext4", "mount"=>"/boot", "uuid"=>"ac0d09ed-00ee-4fe9-899c-efc8d00be7bd"}, "sda2"=>{"size"=>"116953200", "filesystem"=>"LVM2_member"}}
+path => /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+physicalprocessorcount => 1
+processor0 => Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz
+processorcount => 1
+processors => {"count"=>1, "physicalcount"=>1, "models"=>["Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz"]}
+productname => VMware Virtual Platform
+ps => ps -ef
+puppetversion => 3.8.4
+rubyplatform => i386-linux
+rubysitedir => /usr/lib/ruby/site_ruby/1.8
+rubyversion => 1.8.7
+selinux => false
+serialnumber => VMware-42 09 cd a3 09 17 b9 0f-44 f3 b0 d9 87 7d 39 04
+sshdsakey => AAAAB3NzaC1kc3MAAACBAMljol3+qJDh2hKPtNncdA0FfkS0gCzNcD4ZceK2/eMmOAcNqUtWgeMCe+bz2wGAhjKa0pAY9/n9drYptsZ5t1CNdVbr7NdSvYWCPJ2cPTvqhx7+m3S/8y1vT23jv1yK97uKdbcFRrnU8mrD62aKS4gjK1mX07X98nrbANfJgIrVAAAAFQDDzqygqNhKksfL36/YHGxL1voXjwAAAIEAqd+fUjTEEuYuBJ4OYnO04hA0XSWU4Z0FkdYZCssuPl5WIpevpWv9aqKJVlQMIhpIFXBOSi4rZtj8kl/Gk3LLuUOr+iI8VX5zLTHl7FWUIsa3B45BZNQgFNkP9/ItKTyvncmenIxFYBU9NUE0Zo4lnwmhppSDWFUx+e59NYhJkecAAACAaj/tIz0qrx86ZnqL29E0msl+TTa8qPwdMd1E7BqZjVRqKdUedv0387I2ZaYnZ26MIqhcQV5y0OCdW1hpbZmuYqaMKXpUepRsooIHPoBEfsrzIRaCWlFUrj2+xZJoglgTW/YhZzKkHQvLnzNGkBmhwALRgpzvUYtFkULgRZ/aawA=
+sshfp_dsa => SSHFP 2 1 ac4426cd23c674db4bb9d7989712b573834a9d9d
+SSHFP 2 2 b34d87555553777345a98e7ef15f0f4f8bad06bc626395dc20263a57addd9348
+sshfp_rsa => SSHFP 1 1 37cd8ee5e68e49ad3099d763e9498b4108398878
+SSHFP 1 2 e62f4e6cf94bc537316de0a008fe2487024d3e62987fea9c381d13108458edc6
+sshrsakey => AAAAB3NzaC1yc2EAAAABIwAAAQEAxaaPvu2dR3+MxTLISr40J7D71rCsGBVkXah/QIFbBaNz2fnaOZY4tia4Wt4+i0xl9g+gDWFDqsVytgotHEEW5rWEx21IhuMBtb1g/u2mk7oP8jLO7V/UHdYpjpE191EHcFLaIJIna73AWNDQ8QugpkWKqudddaw9UJc8VGL7CUZJhK/KLKWKf5k7iKsr2Uwc2oCGKvXQWjj1GsL4rhiYkKNtaJebhbGhixWnB9qpvO8FN7f/tYuPan+P777Cn1OY6wor+Ub3cmDkMekcFGN3/iGaQZWYIRNbWDSIrVRMP8CyH97geKFKDEdsGVz4u0XeP/gzqeShYXlJIbkYv8DhBw==
+swapfree => 2.00 GB
+swapfree_mb => 2048.00
+swapsize => 2.00 GB
+swapsize_mb => 2048.00
+system_uptime => {"uptime"=>"2 days", "days"=>2, "seconds"=>232233, "hours"=>64}
+timezone => EST
+type => Other
+uniqueid => a8c06c01
+uptime => 2 days
+uptime_days => 2
+uptime_hours => 64
+uptime_seconds => 232233
+uuid => 4209CDA3-0917-B90F-44F3-B0D9877D3904
+virtual => vmware

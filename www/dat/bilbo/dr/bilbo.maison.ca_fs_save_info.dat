@@ -1,0 +1,14 @@
+rootvg::swap00:swap:2048:::0000
+rootvg::test22::1413:root:root:0750
+rootvg:/:root:ext3:768:root:root:0755
+rootvg:/opt:opt:ext3:768:root:root:0755
+rootvg:/tmp:tmp:ext3:2048:root:root:1777
+rootvg:/usr:usr:ext3:5509:root:root:0755
+rootvg:/var:var:ext3:3522:root:root:0755
+rootvg:/home:home:ext3:256:root:root:0755
+rootvg:/sadmin:sadmin39:ext3 :256:root:root:0755
+rootvg:/storix:storix:ext3:256:root:root:0755
+rootvg:/mystuff:mystuff:ext3:256:root:root:0755
+rootvg:/etc/perf:perf:ext3:64:root:root:0755
+rootvg:/sysadmin:sysadmin:ext3:64:root:root:0755
+rootvg:/var/adsmlog:adsmlog:ext3:64:root:root:0775

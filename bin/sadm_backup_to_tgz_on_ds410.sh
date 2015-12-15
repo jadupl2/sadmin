@@ -19,11 +19,10 @@ BACK_SERVER="ds410.maison.ca"                       ; export BACK_SERVER    # Re
 DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Current Host name
-OSNAME=`uname -s|tr '[:lower:]' '[:upper:]'`        ; export OSNAME         # Get OS Name AIX/LINUX
 CUR_DATE=`date +"%Y_%m_%d"`                         ; export CUR_DATE       # Current Date
 CUR_TIME=`date +"%H_%M_%S"`                         ; export CUR_TIME       # Current Time
 TOTAL_ERROR=0                                       ; export TOTAL_ERROR    # Total Rsync Error
-NB_VER=6                                            ; export NB_VER         # Nb Version to keep
+NB_VER=7                                            ; export NB_VER         # Nb Version to keep
 #
 REM_BASE_DIR="/volume1/linux"                       ; export REM_BASE_DIR   # Remote Base Dir.
 BASE_DIR="/sadmin"                                  ; export BASE_DIR       # Script Root Base Dir
@@ -52,7 +51,7 @@ LOCAL_DIR="/linux"                                  ; export LOCAL_DIR
 # --------------------------------------------------------------------------------------------------
 #                         Write infornation into the log
 # --------------------------------------------------------------------------------------------------
-write_log()
+sadm_logger()
 {
   echo -e $(date "+%C%y.%m.%d %H:%M:%S") - "$@" >> $LOG_FILE
 }
@@ -65,10 +64,10 @@ write_log()
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    write_log " "
-    write_log "${DASH}"
-    write_log "Starting the Backup Process"
-    write_log "${DASH}"
+    sadm_logger " "
+    sadm_logger "${DASH}"
+    sadm_logger "Starting the Backup Process"
+    sadm_logger "${DASH}"
 
     # Save Current Working Directory
     CUR_PWD=`pwd`
@@ -80,29 +79,29 @@ create_backup()
                     BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
                     TIME_STAMP=`date "+%C%y_%m_%d_%H_%M_%S"`
                     TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"
-                    write_log "${DASH}"
-                    write_log "Current directory is `pwd`"
-                    write_log "tar -cvzf ${ARCHIVE_DIR}/${HOSTNAME}/${TGZ_FILE} ."
+                    sadm_logger "${DASH}"
+                    sadm_logger "Current directory is `pwd`"
+                    sadm_logger "tar -cvzf ${ARCHIVE_DIR}/${HOSTNAME}/${TGZ_FILE} ."
                     tar -cvzf ${ARCHIVE_DIR}/${HOSTNAME}/${TGZ_FILE} . >/dev/null 2>&1
                     RC=$?
                     if [ $RC -ne 0 ]
-                         then    write_log "RESULT : Error $RC While creating $TGZ_FILE"
+                         then    sadm_logger "RESULT : Error $RC While creating $TGZ_FILE"
                                  RC=1
-                         else    write_log "RESULT : Creation of $TGZ_FILE went OK"
+                         else    sadm_logger "RESULT : Creation of $TGZ_FILE went OK"
                                  RC=0
                     fi
-                    TOTAL_ERROR=`echo $TOTAL_ERROR + $RC | bc `
-                    write_log "Total of Error is $TOTAL_ERROR"
-            else    write_log "Directory ${WDIR} does not exist on $HOSTNAME - Skipped"
+                    TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                   # Total = AIX+Linux Errors
+                    sadm_logger "Total of Error is $TOTAL_ERROR"
+            else    sadm_logger "Directory ${WDIR} does not exist on $HOSTNAME - Skipped"
             fi
         done
     
     # Restore Current working Directory
     cd $CUR_PWD
     
-    write_log " "
-    write_log "${DASH}"
-    write_log "Total error(s) while creating the backup are $TOTAL_ERROR"
+    sadm_logger " "
+    sadm_logger "${DASH}"
+    sadm_logger "Total error(s) while creating the backup are $TOTAL_ERROR"
     return $TOTAL_ERROR
 }
 
@@ -112,16 +111,16 @@ create_backup()
 # --------------------------------------------------------------------------------------------------
 clean_backup_dir()
 {
-    write_log " "; write_log " " ; write_log "${DASH}"
-    write_log "Keep only the last $NB_VER copies of each backup in ${ARCHIVE_DIR}/${HOSTNAME}"
-    write_log "${DASH}"    
+    sadm_logger " "; sadm_logger " " ; sadm_logger "${DASH}"
+    sadm_logger "Keep only the last $NB_VER copies of each backup in ${ARCHIVE_DIR}/${HOSTNAME}"
+    sadm_logger "${DASH}"    
     TOTAL_ERROR=0
     
     # Save Current Working Directory and Move to Backup Directory
     CUR_PWD=`pwd`
     cd ${ARCHIVE_DIR}/${HOSTNAME}
-    write_log "The Current directory is `pwd`"
-    write_log " "
+    sadm_logger "The Current directory is `pwd`"
+    sadm_logger " "
     
     for WDIR in $BACKUP_DIR
         do
@@ -132,40 +131,40 @@ clean_backup_dir()
                     TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"
 
                     FILE_COUNT=`ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | wc -l`
-                    write_log "${DASH}"
-                    write_log "Number of file(s) to delete in ${WDIR} is $FILE_COUNT"
-                    #write_log "${DASH}"
+                    sadm_logger "${DASH}"
+                    sadm_logger "Number of file(s) to delete in ${WDIR} is $FILE_COUNT"
+                    #sadm_logger "${DASH}"
                     
-                    write_log "Here is a list of $BASE_NAME before the cleanup ..."
+                    sadm_logger "Here is a list of $BASE_NAME before the cleanup ..."
                     ls -t1 ${BASE_NAME}*.tgz | sort -r | nl >> $LOG_FILE
 
                     if [ "$FILE_COUNT" -ne 0 ]
-                        then    write_log "File(s) Deleted are :"
+                        then    sadm_logger "File(s) Deleted are :"
                                 ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" >>$LOG_FILE
 
                                 ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | xargs rm -f >> $LOG_FILE 2>&1
                                 RC=$?
                                 if [ $RC -ne 0 ]
-                                     then    write_log "RESULT : Error $RC returned while cleaning up ${BASE_NAME} files"
+                                     then    sadm_logger "RESULT : Error $RC returned while cleaning up ${BASE_NAME} files"
                                              RC=1
-                                     else    write_log "RESULT : Clean up of ${BASE_NAME} went OK"
+                                     else    sadm_logger "RESULT : Clean up of ${BASE_NAME} went OK"
                                              RC=0
                                 fi
                         else    RC=0
-                                write_log "RESULT : No file(s) to delete - OK"
+                                sadm_logger "RESULT : No file(s) to delete - OK"
                     fi 
-                    write_log "Here is a list of $BASE_NAME after the cleanup ..."
+                    sadm_logger "Here is a list of $BASE_NAME after the cleanup ..."
                     ls -t1 ${BASE_NAME}*.tgz | sort -r | nl >> $LOG_FILE
                 
                     TOTAL_ERROR=`echo $TOTAL_ERROR + $RC | bc `
-                    write_log "Total of Error is $TOTAL_ERROR"
+                    sadm_logger "Total of Error is $TOTAL_ERROR"
             fi
         done
     
     # Restore Current working Directory
     cd $CUR_PWD
-    write_log "${DASH}"    
-    write_log "Grand Total of Error is $TOTAL_ERROR"
+    sadm_logger "${DASH}"    
+    sadm_logger "Grand Total of Error is $TOTAL_ERROR"
     return $TOTAL_ERROR
 }
 
@@ -187,12 +186,12 @@ initialization()
     
     # Empty the log and start writing to it
     > $LOG_FILE                                                         # Start a new log
-    write_log " "
-    write_log " "
-    write_log "${DASH}"
-    write_log "Starting the script $PN on - ${MYHOST} - ${start}"
-    write_log " "
-    write_log "${DASH}"
+    sadm_logger " "
+    sadm_logger " "
+    sadm_logger "${DASH}"
+    sadm_logger "Starting the script $PN on - ${MYHOST} - ${start}"
+    sadm_logger " "
+    sadm_logger "${DASH}"
     
      
     # Make sure Local mount point exist
@@ -202,14 +201,14 @@ initialization()
     fi
     
     # Mount the NFS Drive - Where the TGZ File will reside
-    write_log "Mounting NFS Drive on $BACK_SERVER"
-    write_log "mount ${BACK_SERVER}:${REM_BASE_DIR} ${ARCHIVE_DIR}"
+    sadm_logger "Mounting NFS Drive on $BACK_SERVER"
+    sadm_logger "mount ${BACK_SERVER}:${REM_BASE_DIR} ${ARCHIVE_DIR}"
     umount ${ARCHIVE_DIR} > /dev/null 2>&1
     mount ${BACK_SERVER}:${REM_BASE_DIR} ${ARCHIVE_DIR} >>$LOG_FILE 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then RC=1
-             write_log "Mount NFS Failed Proces Aborted"
+             sadm_logger "Mount NFS Failed Proces Aborted"
              return 1
     fi
     
@@ -228,20 +227,20 @@ initialization()
 end_of_process()
 {
    RC=$1
-   write_log "Unmounting NFS mount directory"
+   sadm_logger "Unmounting NFS mount directory"
    umount ${ARCHIVE_DIR} >> $LOG_FILE 2>&1
    
    # Maintain Backup RC File log at a reasonnable size (100 Records)
-   write_log " "
-   write_log "${DASH}"
-   write_log "Trimming rc log $LOG_STAT"
+   sadm_logger " "
+   sadm_logger "${DASH}"
+   sadm_logger "Trimming rc log $LOG_STAT"
    tail -100 $LOG_STAT > $LOG_STAT.$$
    rm -f $LOG_STAT > /dev/null
    mv $LOG_STAT.$$ $LOG_STAT
    chmod 666 $LOG_STAT
 
    # Maintain Script log at a reasonnable size (1000 Records)
-   #write_log "Trimming log $LOG_FILE"
+   #sadm_logger "Trimming log $LOG_FILE"
    #tail -30000 $LOG_FILE > $LOG_FILE.$$
    #rm -f $LOG_FILE > /dev/null
    #cp $LOG_FILE.$$  $LOG_FILE
@@ -252,8 +251,8 @@ end_of_process()
    # Feed Operator Backup Monitor - Backup Failed or completed
    end=`date "+%H:%M:%S"`
    echo "$HOSTNAME $start $end $INST $RC" >>$LOG_STAT
-   write_log "Ended at ${end}"
-   write_log "${DASH}"
+   sadm_logger "Ended at ${end}"
+   sadm_logger "${DASH}"
    
    return 
 }
@@ -264,7 +263,7 @@ end_of_process()
 #
 # Create log and update result code file
     initialization			            
-    if [ $? -ne 0 ] ; then exit 1 ;fi                                   # Exit if NFS Problem 
+    if [ $? -ne 0 ] ; then end_of_process 1 ; exit 1 ;fi                # Exit if NFS Problem 
 
 # Go and create the tgz file in $BACKUP_DIR
     create_backup

@@ -1,0 +1,24 @@
+# Company_Name - Mon Dec 14 05:06:02 CST 2015
+# Output of /sbin/vgdisplay command on fedora23.maison.ca
+#
+  --- Volume group ---
+  VG Name               fedora_fedora23
+  System ID             
+  Format                lvm2
+  Metadata Areas        1
+  Metadata Sequence No  3
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                2
+  Open LV               2
+  Max PV                0
+  Cur PV                1
+  Act PV                1
+  VG Size               49.51 GiB
+  PE Size               4.00 MiB
+  Total PE              12674
+  Alloc PE / Size       12673 / 49.50 GiB
+  Free  PE / Size       1 / 4.00 MiB
+  VG UUID               S63e4g-1zcw-xisl-dX9x-9Uey-IZzt-etBIyG
+   

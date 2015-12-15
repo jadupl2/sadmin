@@ -1,0 +1,16 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/lvs command on sadmin.maison.ca
+#
+  LV     VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  admlog rootvg -wi-ao---- 128.00m                                                    
+  home   rootvg -wi-ao----   2.00g                                                    
+  opt    rootvg -wi-ao----   2.00g                                                    
+  perf   rootvg -wi-ao---- 128.00m                                                    
+  root   rootvg -wi-ao----   1.00g                                                    
+  sadmin rootvg -wi-ao---- 512.00m                                                    
+  storix rootvg -wi-ao---- 768.00m                                                    
+  swap00 rootvg -wi-ao----   4.00g                                                    
+  sysadm rootvg -wi-ao---- 256.00m                                                    
+  tmp    rootvg -wi-ao----   4.00g                                                    
+  usr    rootvg -wi-ao----   7.81g                                                    
+  var    rootvg -wi-ao----   4.00g                                                    

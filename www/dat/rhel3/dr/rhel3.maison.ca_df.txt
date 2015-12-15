@@ -1,0 +1,19 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /bin/df -h command on rhel3.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/rootvg/root      496M  393M   78M  84% /
+/dev/rootvg/opt       496M   62M  410M  14% /opt
+/dev/rootvg/tmp       496M  8.2M  463M   2% /tmp
+/dev/rootvg/usr       4.0G  3.4G  378M  91% /usr
+/dev/rootvg/var       496M  124M  347M  27% /var
+/dev/hda1             198M   47M  141M  25% /boot
+/dev/rootvg/home      248M   51M  185M  22% /home
+/dev/rootvg/sadm79     62M   21M   38M  36% /sadmin
+/dev/rootvg/storix    291M   45M  232M  16% /storix
+/dev/rootvg/mystuff   2.0G  193M  1.7G  11% /mystuff
+none                  125M     0  125M   0% /dev/shm
+/dev/rootvg/perf       16M   10M  4.8M  68% /etc/perf
+/dev/rootvg/sysadmin  186M   53M  125M  30% /sysadmin
+/dev/rootvg/adsmlog    16M   16M     0 100% /var/adsmlog
+/dev/rootvg/up2date   496M   64M  407M  14% /var/spool/up2date

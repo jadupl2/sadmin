@@ -1,0 +1,24 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/vgdisplay command on sadmin.maison.ca
+#
+  --- Volume group ---
+  VG Name               rootvg
+  System ID             
+  Format                lvm2
+  Metadata Areas        1
+  Metadata Sequence No  14
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                12
+  Open LV               12
+  Max PV                0
+  Cur PV                1
+  Act PV                1
+  VG Size               74.50 GiB
+  PE Size               4.00 MiB
+  Total PE              19071
+  Alloc PE / Size       6800 / 26.56 GiB
+  Free  PE / Size       12271 / 47.93 GiB
+  VG UUID               7Ze3NS-bEEF-Sqsm-eMvN-ElSn-8C7w-KACv6J
+   

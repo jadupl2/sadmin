@@ -9,24 +9,37 @@
 #set -x
 #
 
-# --------------------------------------------------------------------------------------------------
-# These variables got to be defined prior to calling the initialize (sadm_init.sh) script
-# These variables are use and needed by the sadm_init.sh script.
+#set -x
+#***************************************************************************************************
+#  USING SADMIN LIBRARY SETUP
+#   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
+#   THESE VARIABLES ARE USE AND NEEDED BY ALL THE SADMIN SCRIPT LIBRARY.
+#
+#   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
+#   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
+#
+#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
+#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='3.1'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Output 0=log 1=Screen+Log
+VER='1.5'                                      ; export VER             # Program version
+OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Of Line in LOG (Trim)
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Of Line in RCLOG (Trim)
 GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
-
-# --------------------------------------------------------------------------------------------------
-# Source sadm variables and Load sadm functions
-# --------------------------------------------------------------------------------------------------
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
-[ -f ${BASE_DIR}/lib/sadm_init.sh ] && . ${BASE_DIR}/lib/sadm_init.sh   # Init Var. & Load sadm functions
+#
+[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+#
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
+#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
+MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
+MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+#***************************************************************************************************
+#
+#
+#
 
 
 # --------------------------------------------------------------------------------------------------
@@ -44,43 +57,43 @@ export SELINUX USING_SELINUX                                            # Export
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    write_log "Checking if update are available for version $OSVERSION ..."
-    case "$OSVERSION" in
-      [34] ) write_log "Running \"up2date -l\""                         # Update the Log
-             write_log "${DASH}"
+    sadm_logger "Checking if update are available for version $(sadm_os_version) ..."
+    case "$(sadm_os_version)" in
+      [34] ) sadm_logger "Running \"up2date -l\""                         # Update the Log
+             sadm_logger "${DASH}"
              up2date -l >> $LOG 2>&1                                    # List update available
              rc=$?                                                      # Save Exit code
-             write_log "${DASH}"
-             write_log "Return Code after up2date -l is $rc"            # Write exit code to log
+             sadm_logger "${DASH}"
+             sadm_logger "Return Code after up2date -l is $rc"            # Write exit code to log
              case $rc in
                 0) UpdateStatus=0                                       # Update Exist
-                   write_log "Update are available ..."                 # Update log update avail.
+                   sadm_logger "Update are available ..."                 # Update log update avail.
                    ;;
                 *) UpdateStatus=2                                       # Problem Abort Update
-                   write_log "NO UPDATE AVAILABLE"                      # Update the log
+                   sadm_logger "NO UPDATE AVAILABLE"                      # Update the log
                    ;;
              esac
              ;;
-     [567] ) write_log "Running \"yum check-update\""                   # Update the log
-             write_log "${DASH}"
+     [567] ) sadm_logger "Running \"yum check-update\""                   # Update the log
+             sadm_logger "${DASH}"
              yum check-update >> $LOG 2>&1                              # List Available update
              rc=$?                                                      # Save Exit Code
-             write_log "${DASH}"
-             write_log "Return Code after yum check-update is $rc"      # Write Exit code to log
+             sadm_logger "${DASH}"
+             sadm_logger "Return Code after yum check-update is $rc"      # Write Exit code to log
              case $rc in
               100) UpdateStatus=0                                       # Update Exist
-                   write_log "Update are available"                     # Update the log
+                   sadm_logger "Update are available"                     # Update the log
                    ;;
                 0) UpdateStatus=1                                       # No Update available
-                   write_log "NO UPDATE AVAILABLE"                      # Update the log
+                   sadm_logger "NO UPDATE AVAILABLE"                      # Update the log
                    ;;
                 *) UpdateStatus=2                                       # Problem Abort Update
-                   write_log "Error Encountered - Update aborted"       # Update the log
+                   sadm_logger "Error Encountered - Update aborted"       # Update the log
                    ;;
              esac
              ;;
     esac
-    write_log "${DASH}"
+    sadm_logger "${DASH}"
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
 }
 
@@ -92,18 +105,18 @@ check_available_update()
 # --------------------------------------------------------------------------------------------------
 run_up2date()
 {
-    write_log "${DASH}"
-    write_log "Running Update."
-    write_log "Running \"up2date --nox -u\""
+    sadm_logger "${DASH}"
+    sadm_logger "Running Update."
+    sadm_logger "Running \"up2date --nox -u\""
     up2date --nox -u >>$LOG 2>&1
     rc=$?
-    write_log "Return Code after up2date -u is $rc"
+    sadm_logger "Return Code after up2date -u is $rc"
     if [ $rc -ne 0 ]
-       then write_log "Problem getting list of the update"
-            write_log "Update not performed - Processing aborted"
-       else write_log "Return Code = 0"
+       then sadm_logger "Problem getting list of the update"
+            sadm_logger "Update not performed - Processing aborted"
+       else sadm_logger "Return Code = 0"
     fi
-    write_log "${DASH}"
+    sadm_logger "${DASH}"
     return $rc
 
 }
@@ -116,13 +129,13 @@ run_up2date()
 # --------------------------------------------------------------------------------------------------
 run_yum()
 {
-    write_log "${DASH}"
-    write_log "Starting yum update process ..."
-    write_log "Running : yum -y update"
+    sadm_logger "${DASH}"
+    sadm_logger "Starting yum update process ..."
+    sadm_logger "Running : yum -y update"
     yum -y update  >>$LOG 2>&1
     rc=$?
-    write_log "Return Code after yum program update is $rc"
-    write_log "${DASH}"
+    sadm_logger "Return Code after yum program update is $rc"
+    sadm_logger "${DASH}"
     return $rc
 }
 
@@ -139,20 +152,20 @@ run_yum()
     fi
 
     # If SELinux is ON - We need to turn it off while updating O/S
-    write_log "SELinux is ${SELINUX}."
+    sadm_logger "SELinux is ${SELINUX}."
     if [ "$USING_SELINUX" == "Y" ]                                      # If SELinux is Activated
-        then write_log "Disabling SELinux while the update is running." # Advise user
+        then sadm_logger "Disabling SELinux while the update is running." # Advise user
              setenforce 0 >> $LOG 2>&1                                  # Disable SELinux
              getenforce   >> $LOG 2>&1                                  # Display SELinux Status
     fi
 
     # Run the OS Update
-    if [ $OSVERSION -lt 5 ]  ; then run_up2date ; else run_yum ; fi     # Update the Server
+    if [ $(sadm_os_version) -lt 5 ]  ; then run_up2date ; else run_yum ; fi     # Update the Server
     rc=$? ; export rc                                                   # Save Return Code
 
     # Reactivate SELINUX if it was de-activated at the beginning
     if [ "$USING_SELINUX" == "Y" ]
-        then write_log "Re-enabling SELinux ... "
+        then sadm_logger "Re-enabling SELinux ... "
              setenforce 1 >> $LOG 2>&1
              getenforce >> $LOG 2>&1
     fi

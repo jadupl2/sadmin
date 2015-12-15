@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:21 EST 2015
+# Output of /usr/sbin/lvscan command on rhel4.maison.ca
+#
+  ACTIVE            '/dev/VolGroup00/LogVol00' [7.34 GB] inherit
+  ACTIVE            '/dev/VolGroup00/LogVol01' [512.00 MB] inherit

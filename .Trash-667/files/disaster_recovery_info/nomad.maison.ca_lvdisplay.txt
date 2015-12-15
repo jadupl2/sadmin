@@ -1,0 +1,462 @@
+# Company_Name - Thu Dec 10 08:30:05 EST 2015
+# Output of /sbin/lvdisplay command on nomad.maison.ca
+#
+  --- Logical volume ---
+  LV Path                /dev/rootvg/var
+  LV Name                var
+  VG Name                rootvg
+  LV UUID                XsP5LM-EzAr-HWhe-vhdN-9brm-1GzC-tgJG9n
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:29:52 -0500
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             128
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:2
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/root
+  LV Name                root
+  VG Name                rootvg
+  LV UUID                QJsBnR-FtfX-smNt-0px9-tVUQ-oB8c-KcLZjL
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:29:55 -0500
+  LV Status              available
+  # open                 1
+  LV Size                1.00 GiB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:0
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/opt
+  LV Name                opt
+  VG Name                rootvg
+  LV UUID                2f8deo-QuiO-2U72-aKOY-GhuR-tr5c-YfH3fG
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:29:56 -0500
+  LV Status              available
+  # open                 1
+  LV Size                2.00 GiB
+  Current LE             64
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:3
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/swap00
+  LV Name                swap00
+  VG Name                rootvg
+  LV UUID                Ob2KrM-3vJ1-MTbv-SyPg-1pVl-ksES-oVzwA0
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:29:58 -0500
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             128
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:1
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/home
+  LV Name                home
+  VG Name                rootvg
+  LV UUID                TrMjW2-KJGD-iVKn-27k2-wmGk-oY7I-JLo3T7
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:29:58 -0500
+  LV Status              available
+  # open                 1
+  LV Size                7.81 GiB
+  Current LE             250
+  Segments               3
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:4
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/tmp
+  LV Name                tmp
+  VG Name                rootvg
+  LV UUID                YIIq3I-w2U8-2Uw6-YJCT-TUUP-FB8j-1fKrbN
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:00 -0500
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             128
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:5
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/usr
+  LV Name                usr
+  VG Name                rootvg
+  LV UUID                pSX0eh-AQbe-OOgz-66Wn-1x72-6jPG-kmIBta
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:01 -0500
+  LV Status              available
+  # open                 1
+  LV Size                8.00 GiB
+  Current LE             256
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:6
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/perf
+  LV Name                perf
+  VG Name                rootvg
+  LV UUID                gkctBa-N13o-lEks-OEZS-IUUL-WYdV-Fa89TC
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:05 -0500
+  LV Status              available
+  # open                 1
+  LV Size                64.00 MiB
+  Current LE             2
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:7
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/storix
+  LV Name                storix
+  VG Name                rootvg
+  LV UUID                EUQerA-nT8A-wdTj-8N5S-9OM8-F2mo-AnxGa3
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:06 -0500
+  LV Status              available
+  # open                 1
+  LV Size                512.00 MiB
+  Current LE             16
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:8
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sadmin
+  LV Name                sadmin
+  VG Name                rootvg
+  LV UUID                FKe9k7-G9JZ-baIp-1ftq-TExb-qbuJ-dY0RPS
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:07 -0500
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             8
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:9
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/adsmlog
+  LV Name                adsmlog
+  VG Name                rootvg
+  LV UUID                Y3ts1O-oIjU-49rF-c7c0-Azj7-Eh1D-dSld1S
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:08 -0500
+  LV Status              available
+  # open                 1
+  LV Size                64.00 MiB
+  Current LE             2
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:10
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/scomlv
+  LV Name                scomlv
+  VG Name                rootvg
+  LV UUID                0VQhAZ-1jSj-14Iz-CKKl-1R4Z-wOER-FeUkt2
+  LV Write Access        read/write
+  LV Creation host, time localhost.localdomain, 2014-01-30 14:30:09 -0500
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             128
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:11
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sysinfo
+  LV Name                sysinfo
+  VG Name                rootvg
+  LV UUID                jrJBCl-NCit-HUts-GgpX-TPPF-lsmK-1NeAvt
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 20:55:40 -0500
+  LV Status              available
+  # open                 1
+  LV Size                14.66 GiB
+  Current LE             469
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:12
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/oslv
+  LV Name                oslv
+  VG Name                rootvg
+  LV UUID                MNAoqu-VKkX-Wmia-Swna-Vl5I-kp0v-ePQbJX
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 20:56:22 -0500
+  LV Status              available
+  # open                 1
+  LV Size                24.44 GiB
+  Current LE             782
+  Segments               3
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:13
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/linternux
+  LV Name                linternux
+  VG Name                rootvg
+  LV UUID                dxm8Xm-UVFM-RWYk-P93N-cpON-8kfr-L11yd8
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:22:49 -0500
+  LV Status              available
+  # open                 1
+  LV Size                128.00 MiB
+  Current LE             4
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:14
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/usradm
+  LV Name                usradm
+  VG Name                rootvg
+  LV UUID                U85Aob-b93h-tejs-SobT-SFof-oYle-v14Ji4
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:23:19 -0500
+  LV Status              available
+  # open                 1
+  LV Size                320.00 MiB
+  Current LE             10
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:15
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/cadmin
+  LV Name                cadmin
+  VG Name                rootvg
+  LV UUID                ujFpcP-Eopv-V5EN-48fv-abi2-EcpU-9aA531
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:23:51 -0500
+  LV Status              available
+  # open                 1
+  LV Size                32.00 MiB
+  Current LE             1
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:16
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/aix
+  LV Name                aix
+  VG Name                rootvg
+  LV UUID                0BPS2V-zQZ2-OoSd-bYF5-y5wk-kdyd-SFu0IP
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:24:37 -0500
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             8
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:17
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/www
+  LV Name                www
+  VG Name                rootvg
+  LV UUID                XJcRwi-C6BV-9xyG-HDDP-7DzZ-5qt7-0ZQiFN
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:36:58 -0500
+  LV Status              available
+  # open                 1
+  LV Size                512.00 MiB
+  Current LE             16
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:18
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/slamlv
+  LV Name                slamlv
+  VG Name                rootvg
+  LV UUID                NeqxTP-BkOV-yZoe-ctJ2-fWM2-SM58-k3WNyP
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-01 21:38:47 -0500
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             8
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:19
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sysadmlv
+  LV Name                sysadmlv
+  VG Name                rootvg
+  LV UUID                hFGD0J-gRnn-gGzD-k3cK-H0EB-hlq6-1CkjWc
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-02-09 10:53:02 -0500
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             8
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:20
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/svnlv
+  LV Name                svnlv
+  VG Name                rootvg
+  LV UUID                jvSBny-Jwaa-bweZ-FdOt-kgZ6-wlhi-jGCHmd
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-03-23 11:29:12 -0400
+  LV Status              available
+  # open                 1
+  LV Size                2.00 GiB
+  Current LE             64
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:21
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sharelv
+  LV Name                sharelv
+  VG Name                rootvg
+  LV UUID                2KRoD5-crls-GDvu-bT5R-Kigd-2e8S-fpHYsO
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2014-08-09 08:28:48 -0400
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             8
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:22
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/gitrep
+  LV Name                gitrep
+  VG Name                rootvg
+  LV UUID                uvnGd4-c0Ed-92bi-wUpc-RWEY-M2Qf-auqPM2
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2015-03-30 18:43:17 -0400
+  LV Status              available
+  # open                 1
+  LV Size                128.00 MiB
+  Current LE             4
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:23
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/installlv
+  LV Name                installlv
+  VG Name                rootvg
+  LV UUID                ZPhGQU-eop9-0XOT-Opz5-26DS-VI4B-djgP0F
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2015-08-28 10:32:27 -0400
+  LV Status              available
+  # open                 1
+  LV Size                4.91 GiB
+  Current LE             157
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:24
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/rhellv
+  LV Name                rhellv
+  VG Name                rootvg
+  LV UUID                VSbv4F-4yrp-MjNM-wqde-bPvF-x2sK-qSJ11y
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2015-08-28 10:33:06 -0400
+  LV Status              available
+  # open                 1
+  LV Size                219.75 GiB
+  Current LE             7032
+  Segments               3
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:25
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/stbackup
+  LV Name                stbackup
+  VG Name                rootvg
+  LV UUID                ENeOeE-1SBl-Tm1i-Wnwh-pBb9-PPPG-Pxpyqs
+  LV Write Access        read/write
+  LV Creation host, time nomad.maison.ca, 2015-08-29 19:24:36 -0400
+  LV Status              available
+  # open                 1
+  LV Size                1.00 GiB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:26
+   

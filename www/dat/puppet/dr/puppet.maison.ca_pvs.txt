@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/pvs command on puppet.maison.ca
+#
+  PV         VG     Fmt  Attr PSize  PFree 
+  /dev/sda2  rootvg lvm2 a--  48.47g 21.53g

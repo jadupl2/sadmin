@@ -1,0 +1,33 @@
+# Company_Name - Mon Dec 14 05:07:00 EST 2015
+# Output of /usr/sbin/lvs command on gumby.maison.ca
+#
+  LV        VG     Attr   LSize   Origin Snap%  Move Log Copy%  Convert
+  aixdatlv  rootvg -wimao 224.00M                                      
+  cadminlv  rootvg -wimao 128.00M                                      
+  clusterlv rootvg -wimao  32.00M                                      
+  crudlv    rootvg -wimao 512.00M                                      
+  gfsadm    rootvg -wima-   5.00G                                      
+  homelv    rootvg -wimao 512.00M                                      
+  instlv    rootvg -wimao  13.62G                                      
+  linternux rootvg -wimao 128.00M                                      
+  mylv      rootvg -wimao   9.78G                                      
+  optlv     rootvg -wimao 512.00M                                      
+  oslv      rootvg -wi-ao   4.91G                                      
+  perflv    rootvg -wimao  96.00M                                      
+  pws1lv    rootvg -wimao  32.00M                                      
+  pws2lv    rootvg -wimao  32.00M                                      
+  pws3lv    rootvg -wimao  32.00M                                      
+  rootlv    rootvg -wimao   2.00G                                      
+  sadmin    rootvg -wi-ao 256.00M                                      
+  scomlv    rootvg -wimao   4.00G                                      
+  slamlv    rootvg -wimao  64.00M                                      
+  slamng    rootvg -wimao 256.00M                                      
+  storixlv  rootvg -wimao 256.00M                                      
+  sysadmlv  rootvg -wimao 256.00M                                      
+  sysinfo   rootvg -wimao   5.88G                                      
+  tmplv     rootvg -wimao   7.84G                                      
+  useradm   rootvg -wimao  32.00M                                      
+  usrlv     rootvg -wimao   5.88G                                      
+  varloglv  rootvg -wimao  64.00M                                      
+  varlv     rootvg -wimao   4.00G                                      
+  wwwlv     rootvg -wimao 512.00M                                      

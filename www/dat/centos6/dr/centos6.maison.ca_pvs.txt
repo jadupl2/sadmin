@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /sbin/pvs command on centos6.maison.ca
+#
+  PV         VG     Fmt  Attr PSize  PFree
+  /dev/sda2  rootvg lvm2 a--  55.75g 7.03g

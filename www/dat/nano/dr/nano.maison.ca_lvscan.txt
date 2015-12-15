@@ -1,0 +1,17 @@
+# Company_Name - Sun Dec 13 21:54:35 EST 2015
+# Output of /sbin/lvscan command on nano.maison.ca
+#
+  ACTIVE            '/dev/rootvg/var' [2.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/root' [1.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/opt' [1.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/swap00' [2.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/home' [13.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/tmp' [2.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/usr' [6.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/usrloc' [512.00 MiB] inherit
+  ACTIVE            '/dev/rootvg/perf' [128.00 MiB] inherit
+  ACTIVE            '/dev/rootvg/storix' [512.00 MiB] inherit
+  ACTIVE            '/dev/rootvg/sysadmin' [128.00 MiB] inherit
+  ACTIVE            '/dev/rootvg/adsmlog' [128.00 MiB] inherit
+  ACTIVE            '/dev/rootvg/scomlv' [4.00 GiB] inherit
+  ACTIVE            '/dev/rootvg/sadmin9' [256.00 MiB] inherit

@@ -1,0 +1,4 @@
+-e # Company_Name - Mon Dec 14 05:06:02 EST 2015
+-e # Output of /sbin/vgs command on ubuntu1204
+#
+  No volume groups found

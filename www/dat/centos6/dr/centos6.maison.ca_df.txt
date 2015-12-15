@@ -1,0 +1,32 @@
+# Company_Name - Mon Dec 14 05:07:40 EST 2015
+# Output of /bin/df -h command on centos6.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/rootvg-root
+                      976M  456M  469M  50% /
+tmpfs                 504M     0  504M   0% /dev/shm
+/dev/mapper/rootvg-opt
+                      976M  420M  505M  46% /opt
+/dev/mapper/rootvg-tmp
+                      2.0G  3.2M  1.9G   1% /tmp
+/dev/mapper/rootvg-usr
+                      5.8G  4.9G  675M  88% /usr
+/dev/mapper/rootvg-var
+                      2.0G  544M  1.3G  30% /var
+/dev/mapper/rootvg-home
+                       29G  4.2G   24G  16% /home
+/dev/mapper/rootvg-scomlv
+                      3.9G  8.7M  3.7G   1% /scom
+/dev/sda1             125M   69M   49M  59% /boot
+/dev/mapper/rootvg-sadmin54
+                       27M  5.9M   20M  24% /sadmin
+/dev/mapper/rootvg-storix
+                      488M  2.4M  460M   1% /storix
+/dev/mapper/rootvg-perf
+                      120M   11M  104M   9% /etc/perf
+/dev/mapper/rootvg-sysadmin
+                      120M  6.3M  108M   6% /sysadmin
+/dev/mapper/rootvg-usrloc
+                      488M  692K  462M   1% /usr/local
+/dev/mapper/rootvg-adsmlog
+                      120M   28M   87M  25% /var/adsmlog

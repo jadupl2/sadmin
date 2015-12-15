@@ -6,25 +6,40 @@
 #   Synopsis:   This script is used to delete old terabyte image from the image repository on NAS
 #   Date:       September 2015
 # --------------------------------------------------------------------------------------------------
+#
 #set -x
-
-# --------------------------------------------------------------------------------------------------
-#  These variables got to be defined prior to calling the initialize (sadm_init.sh) script
-#  These variables are use and needed by the sadm_init.sh script.
-#  Source sadm variables and Load sadm functions
+#***************************************************************************************************
+#  USING SADMIN LIBRARY SETUP
+#   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
+#   THESE VARIABLES ARE USE AND NEEDED BY ALL THE SADMIN SCRIPT LIBRARY.
+#
+#   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
+#   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
+#
+#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
+#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.0'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Output to log=0 1=Screen+Log
+VER='1.5'                                      ; export VER             # Program version
+OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Of Line in LOG (Trim)
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Of Line in RCLOG (Trim)
 GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
-#
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
-[ -f ${BASE_DIR}/lib/sadm_init.sh ] && . ${BASE_DIR}/lib/sadm_init.sh   # Init Var. & Load sadm functions
 #
+[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+#
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
+#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
+MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
+MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+#***************************************************************************************************
+#
+#
+#
+
 # This Script environment variable
 NB_COPY=4                                      ; export NB_COPY         # Nb. Copy of images to keep
 REMOTE_HOST="batnas.maison.ca"                 ; export REMOTE_HOST     # NAS BOX NAME
@@ -41,8 +56,8 @@ TERA_SERVER="holmes   watson sherlock hercule quatro"
 clean_terabyte_dir()
 {
     GLOBAL_ERROR=0
-    write_log "${SA_LINE}"
-    write_log "Keep $NB_COPY copies of TeraByte images per host"
+    sadm_logger "${SA_LINE}"
+    sadm_logger "Keep $NB_COPY copies of TeraByte images per host"
 
 
     # Check if NFS Local mount point exist - If not create it.
@@ -53,62 +68,62 @@ clean_terabyte_dir()
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
     
     # Mount the NFS drive on the NAS
-    write_log "${SA_LINE}"
-    write_log "Mount the NAS NFS"
-    write_log "mount ${REMOTE_HOST}:${NFS_REM_MOUNT} ${NFS_LOC_MOUNT}"
+    sadm_logger "${SA_LINE}"
+    sadm_logger "Mount the NAS NFS"
+    sadm_logger "mount ${REMOTE_HOST}:${NFS_REM_MOUNT} ${NFS_LOC_MOUNT}"
     mount ${REMOTE_HOST}:${NFS_REM_MOUNT} ${NFS_LOC_MOUNT}
     RC=$?
 
     # If the mount NFS did not work - Abort Script after advising user (update logs)
     if [ $RC -ne 0 ]
-        then write_log " "
-             write_log "SCRIPT ABORTED - UNABLE TO MOUNT NFS DRIVE ON THE NAS"
+        then sadm_logger " "
+             sadm_logger "SCRIPT ABORTED - UNABLE TO MOUNT NFS DRIVE ON THE NAS"
              return 1
     fi
 
     # Change to OS Image Directory
     cd ${NFS_LOC_MOUNT}
-    write_log "${SA_LINE}"
-    write_log "List of current TeraByte Images in `pwd`"
+    sadm_logger "${SA_LINE}"
+    sadm_logger "List of current TeraByte Images in `pwd`"
     ls -lt | nl >> $LOG
-    write_log " "
+    sadm_logger " "
         
     for WSERVER in $TERA_SERVER
         do
-        write_log " "
-        write_log "${SA_LINE}"
-        write_log "List of Terabyte Images for server ${WSERVER}"
+        sadm_logger " "
+        sadm_logger "${SA_LINE}"
+        sadm_logger "List of Terabyte Images for server ${WSERVER}"
         ls -lt *_${WSERVER}.TBI >> $LOG
         FILE_COUNT=`ls -t1 *_${WSERVER}.TBI | sort -r | sed 1,${NB_COPY}d | wc -l`
         if [ "$FILE_COUNT" -ne 0 ]
-            then    write_log " "
-                    write_log "Number of TBI file(s) to delete is $FILE_COUNT"
-                    write_log "Terabyte TBI File(s) Deleted :"
+            then    sadm_logger " "
+                    sadm_logger "Number of TBI file(s) to delete is $FILE_COUNT"
+                    sadm_logger "Terabyte TBI File(s) Deleted :"
                     ls -t1 *_${WSERVER}.TBI | sort -r | sed 1,${NB_COPY}d >> $LOG
                     ls -t1 *_${WSERVER}.TBI | sort -r | sed 1,${NB_COPY}d | xargs rm -f >> $LOG 2>&1
                     RC=$?
                     if [ $RC -ne 0 ]
-                        then    write_log "RESULT : Error $RC returned while cleaning up ${WSERVER} TBI files"
+                        then    sadm_logger "RESULT : Error $RC returned while cleaning up ${WSERVER} TBI files"
                                 RC=1
-                        else    write_log "RESULT : Clean up of ${WSERVER} went OK"
+                        else    sadm_logger "RESULT : Clean up of ${WSERVER} went OK"
                                 RC=0
                     fi
             else    RC=0
-                    write_log "RESULT : No file(s) to delete for ${WSERVER} - OK"
+                    sadm_logger "RESULT : No file(s) to delete for ${WSERVER} - OK"
         fi 
         GLOBAL_ERROR=`echo $GLOBAL_ERROR + $RC | bc `
-        write_log "Total of Error is $GLOBAL_ERROR"
+        sadm_logger "Total of Error is $GLOBAL_ERROR"
         done
     
      # Umount THE NFS Mount of the Terabyte Images
-    write_log "${SA_LINE}"
+    sadm_logger "${SA_LINE}"
     cd $BASE_DIR
-    write_log "Unmount NAS NFS"
-    write_log "umount ${NFS_LOC_MOUNT}"
+    sadm_logger "Unmount NAS NFS"
+    sadm_logger "umount ${NFS_LOC_MOUNT}"
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
     
-    write_log "${SA_LINE}"
-    write_log "Grand Total of Error is $GLOBAL_ERROR"
+    sadm_logger "${SA_LINE}"
+    sadm_logger "Grand Total of Error is $GLOBAL_ERROR"
     return $GLOBAL_ERROR
 }
 

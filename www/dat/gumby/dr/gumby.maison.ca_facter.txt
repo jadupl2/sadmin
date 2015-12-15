@@ -1,0 +1,103 @@
+# Company_Name - Mon Dec 14 05:07:13 EST 2015
+# Output of /usr/bin/facter command on gumby.maison.ca
+#
+architecture => i386
+augeasversion => 1.1.0
+bios_release_date => 09/30/2014
+bios_vendor => Phoenix Technologies LTD
+bios_version => 6.00
+blockdevice_fd0_size => 4096
+blockdevice_hdc_size => 4294965248
+blockdevice_sda_model => Virtual disk
+blockdevice_sda_size => 161061273600
+blockdevice_sda_vendor => VMware
+blockdevices => fd0,hdc,sda
+boardmanufacturer => Intel Corporation
+boardproductname => 440BX Desktop Reference Platform
+boardserialnumber => None
+domain => maison.ca
+facterversion => 2.4.4
+filesystems => ext2,ext3,iso9660
+fqdn => gumby.maison.ca
+gid => root
+hardwareisa => i686
+hardwaremodel => i686
+hostname => gumby
+id => root
+interfaces => eth0,lo,sit0,virbr0
+ipaddress => 192.168.1.101
+ipaddress6 => 2607:fa48:6c05:adc0:250:56ff:fe89:6f93
+ipaddress6_eth0 => 2607:fa48:6c05:adc0:250:56ff:fe89:6f93
+ipaddress_eth0 => 192.168.1.101
+ipaddress_lo => 127.0.0.1
+ipaddress_virbr0 => 192.168.122.1
+is_virtual => true
+kernel => Linux
+kernelmajversion => 2.6
+kernelrelease => 2.6.18-407.el5
+kernelversion => 2.6.18
+lsbdistcodename => Tikanga
+lsbdistdescription => Red Hat Enterprise Linux Server release 5.11 (Tikanga)
+lsbdistid => RedHatEnterpriseServer
+lsbdistrelease => 5.11
+lsbmajdistrelease => 5
+lsbminordistrelease => 11
+lsbrelease => :core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch
+macaddress => 00:50:56:89:6F:93
+macaddress_eth0 => 00:50:56:89:6F:93
+macaddress_virbr0 => 00:00:00:00:00:00
+manufacturer => VMware, Inc.
+memoryfree => 576.96 MB
+memoryfree_mb => 576.96
+memorysize => 1010.41 MB
+memorysize_mb => 1010.41
+mtu_eth0 => 1500
+mtu_lo => 16436
+mtu_sit0 => 1480
+mtu_virbr0 => 1500
+netmask => 255.255.255.0
+netmask_eth0 => 255.255.255.0
+netmask_lo => 255.0.0.0
+netmask_virbr0 => 255.255.255.0
+network_eth0 => 192.168.1.0
+network_lo => 127.0.0.0
+network_virbr0 => 192.168.122.0
+operatingsystem => RedHat
+operatingsystemmajrelease => 5
+operatingsystemrelease => 5.11
+os => {"family"=>"RedHat", "lsb"=>{"distdescription"=>"Red Hat Enterprise Linux Server release 5.11 (Tikanga)", "distrelease"=>"5.11", "majdistrelease"=>"5", "distid"=>"RedHatEnterpriseServer", "minordistrelease"=>"11", "release"=>":core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch", "distcodename"=>"Tikanga"}, "name"=>"RedHat", "release"=>{"full"=>"5.11", "major"=>"5", "minor"=>"11"}}
+osfamily => RedHat
+partitions => {"sda5"=>{"size"=>"296960000"}, "sda3"=>{"size"=>"2"}, "sda2"=>{"size"=>"4192965", "filesystem"=>"swap"}, "sda1"=>{"mount"=>"/boot", "label"=>"/boot1", "uuid"=>"584ec9b6-5088-4b9c-8f0b-56a345b499bd", "size"=>"530144", "filesystem"=>"ext3"}}
+path => /usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:
+physicalprocessorcount => 1
+processor0 => Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz
+processorcount => 1
+processors => {"models"=>["Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz"], "count"=>1, "physicalcount"=>1}
+productname => VMware Virtual Platform
+ps => ps -ef
+puppetversion => 3.8.1
+rubyplatform => i386-linux
+rubysitedir => /usr/lib/ruby/site_ruby/1.8
+rubyversion => 1.8.7
+selinux => false
+serialnumber => VMware-42 09 0a 30 c7 04 86 0b-ac cd 5a 60 97 9b d4 04
+sshdsakey => AAAAB3NzaC1kc3MAAACBAMdnX81DCJT0/+Iz6/Gn7Gy2sFZIE17y9gGcjGmK8khJi0zpGpr5OWzY+wFSvFNJfaN73CGlfvNZeJp4SygXPsjHaulCvy6ZjuA8/9Or/spp2Ta8RapJOxIo88yWpF9+7M+PG0+rnNEl8y7RhATIGKpVCbRzwEEFD95ftgChNAaPAAAAFQDa0lZPdrSPvyFkU9iSJ2vPajtWaQAAAIAzkmZU43G00xDJlkSFhZjp3S7TTQfDXY9H+Cn8KpwP8BPA9H7NE2whFzEgXGN5g4z4T205glFs5pu+1mrBuP42R4zPSD8TmDFEoCMwHUTkZE1QCtNxKgshTr+ZClVALQIbn257mx4ShCvYplBW4xuZ6coWWZ03FmnpLLpIPI2mgAAAAIBgYIow0edTrGunUa35pmUx+N3XfBKKOoJ3wnzSbJoU2XDuEL77Try/jEWDxZtnehi48ExzcNnKSFPXGLHUOapztThUjKC+HgTU68cCuM8jXeuKVnwOk9OwkHbCuoxd9TcYU/lQerNyRCvk5qQfIxDNXw1TDSbV7BuzkxUbzLfxuA==
+sshfp_dsa => SSHFP 2 1 9e05f8a856df3a554d73a0345b2ecba688030f76
+SSHFP 2 2 93111066def4aa2f0e338b366d4a09975c0438fb51c48522f7562978a281f642
+sshfp_rsa => SSHFP 1 1 93742523a2481096e07ecf0287e4c7a09da273c5
+SSHFP 1 2 96ed447a07b351f9b0cd9b761f93d0d3a2a189a27be8c9011ecf2ee7a9b55442
+sshrsakey => AAAAB3NzaC1yc2EAAAABIwAAAQEArtFM6JhUcZInX67fy1dY+LzmQwzVZNfpSmDuVeNXiqsXhLOXb+9e+Lagc/K8v4J25Mb7oK4DUbMvOjPyvi3khTHF5/WO3IpYcxevJ5r4F5xixxevHRqYkVKICzhtQ4sBcUrxpIESDkCzmJttICmiGclkAR6EudDN3ApgaXSplo3aA1nNPgjv2mPcT9pH7PND5/NzsJ67E0SzLP2dP5vj3aJuVC7fw1C1asN6dhiAh93M6YS8755ZLlPJa4iJCNkKU9Z4cOVuNPq44hqMVr/pi3XO0XjVJFWQuVjUpwm4rNjLs+j41hlSO0P0G0gc5EKDUHLS7kgYNOj5IhXIbBgmQQ==
+swapfree => 1.94 GB
+swapfree_mb => 1983.57
+swapsize => 2.00 GB
+swapsize_mb => 2047.34
+system_uptime => {"hours"=>443, "seconds"=>1597319, "uptime"=>"18 days", "days"=>18}
+timezone => EST
+type => Other
+uniqueid => a8c06501
+uptime => 18 days
+uptime_days => 18
+uptime_hours => 443
+uptime_seconds => 1597319
+uuid => 42090A30-C704-860B-ACCD-5A60979BD404
+virtual => vmware

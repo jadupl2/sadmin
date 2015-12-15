@@ -1,0 +1,18 @@
+# Company_Name - Mon Dec 14 05:06:29 EST 2015
+# Output of /usr/sbin/lvs command on bilbo.maison.ca
+#
+  LV       VG     Attr   LSize   Origin Snap%  Move Log Copy%  Convert
+  adsmlog  rootvg -wimao  64.00M                                      
+  home     rootvg -wimao 256.00M                                      
+  mystuff  rootvg -wimao 256.00M                                      
+  opt      rootvg -wimao 768.00M                                      
+  perf     rootvg -wimao  64.00M                                      
+  root     rootvg -wimao 768.00M                                      
+  sadmin39 rootvg -wi-ao 256.00M                                      
+  storix   rootvg -wimao 256.00M                                      
+  swap00   rootvg -wimao   2.00G                                      
+  sysadmin rootvg -wimao  64.00M                                      
+  test22   rootvg -wima-   1.38G                                      
+  tmp      rootvg -wimao   2.00G                                      
+  usr      rootvg -wimao   5.38G                                      
+  var      rootvg -wimao   3.44G                                      

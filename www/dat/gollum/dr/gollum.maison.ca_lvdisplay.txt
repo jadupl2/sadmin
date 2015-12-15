@@ -1,0 +1,222 @@
+# Company_Name - Mon Dec 14 05:06:35 EST 2015
+# Output of /usr/sbin/lvdisplay command on gollum.maison.ca
+#
+  --- Logical volume ---
+  LV Name                /dev/rootvg/adsmlog
+  VG Name                rootvg
+  LV UUID                Anb7H7-K65s-K6Ao-GZol-xOQu-e7wS-Tn42C0
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                64.00 MB
+  Current LE             2
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       255
+  Block device           253:255
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/home
+  VG Name                rootvg
+  LV UUID                QCthXT-1brV-MRuc-Bcjq-0gjf-kEKb-4ScgUE
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MB
+  Current LE             8
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       254
+  Block device           253:254
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/mystuff
+  VG Name                rootvg
+  LV UUID                MUiaA7-8AFh-mOzw-E8tU-Zxln-25cF-3YdOl9
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MB
+  Current LE             8
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       253
+  Block device           253:253
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/opt
+  VG Name                rootvg
+  LV UUID                KsCzEO-c5k4-Z80v-8Dwz-m1qD-TR1w-qWFlX7
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                768.00 MB
+  Current LE             24
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       252
+  Block device           253:252
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/perf
+  VG Name                rootvg
+  LV UUID                2eTQV7-MogV-Z4RV-fyB8-Vc0W-Vz7o-Tm7Joz
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                64.00 MB
+  Current LE             2
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       251
+  Block device           253:251
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/root
+  VG Name                rootvg
+  LV UUID                XaZ6YZ-Msp8-Y05I-gHCQ-Tq7p-N1bK-PAXTVZ
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                768.00 MB
+  Current LE             24
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       250
+  Block device           253:250
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/storix
+  VG Name                rootvg
+  LV UUID                bh3eiW-4G6U-7GOj-hSQC-pGYJ-RA20-8hfS0u
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                576.00 MB
+  Current LE             18
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       249
+  Block device           253:249
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/swap00
+  VG Name                rootvg
+  LV UUID                fa0KXW-nEC9-d3Y0-J9rJ-4N1V-8EVn-WrPc3x
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                1.00 GB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       248
+  Block device           253:248
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/sysadmin
+  VG Name                rootvg
+  LV UUID                mQGAyg-xCDY-GwO7-8lDo-KJSp-arv1-OJcSX3
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                64.00 MB
+  Current LE             2
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       247
+  Block device           253:247
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/tmp
+  VG Name                rootvg
+  LV UUID                uupEgK-OKag-BFCg-5tAS-OVPZ-cPlJ-2AKSEK
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                1.00 GB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       246
+  Block device           253:246
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/usr
+  VG Name                rootvg
+  LV UUID                ULKfEM-4P4p-QXeC-1KyX-iMRV-WU2p-qGOsUf
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                5.38 GB
+  Current LE             172
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       245
+  Block device           253:245
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/var
+  VG Name                rootvg
+  LV UUID                jTkRJK-IBHv-45un-AP04-B5L0-82Na-clY8U2
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                3.44 GB
+  Current LE             110
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Persistent major       253
+  Persistent minor       244
+  Block device           253:244
+   
+  --- Logical volume ---
+  LV Name                /dev/rootvg/sadmlv
+  VG Name                rootvg
+  LV UUID                tWsi3r-8aR5-1Kmf-paqQ-UHl1-a81c-rLEF0L
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                512.00 MB
+  Current LE             16
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:0
+   

@@ -1,0 +1,67 @@
+c2h: CSM-RSCT Info for node aixb50
+Mon Dec 14 05:06:18 CST 2015
+Collector: AIX/System
+***************
+AIX 5.3.0.0
+5300-12-01-1016
+***************
+ 
+  csm.client                 1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.core                   1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.deploy                 1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.diagnostics            1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.dsh                    1.7.1.0  COMMITTED  Cluster Systems Management Dsh
+  csm.gui.dcem               1.7.1.0  COMMITTED  Distributed Command Execution
+  csm.msg.EN_US.core         1.7.0.0  COMMITTED  CSM Core Func Msgs - U.S.
+  csm.msg.en_US.core         1.7.0.0  COMMITTED  CSM Core Func Msgs - U.S.
+  csm.client                 1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.core                   1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.deploy                 1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.diagnostics            1.7.1.0  COMMITTED  Cluster Systems Management
+  csm.dsh                    1.7.1.0  COMMITTED  Cluster Systems Management Dsh
+  rsct.core.auditrm         2.4.13.0  COMMITTED  RSCT Audit Log Resource
+  rsct.core.errm            2.4.13.0  COMMITTED  RSCT Event Response Resource
+  rsct.core.fsrm            2.4.13.0  COMMITTED  RSCT File System Resource
+  rsct.core.gui             2.4.13.0  COMMITTED  RSCT Graphical User Interface
+  rsct.core.hostrm          2.4.13.0  COMMITTED  RSCT Host Resource Manager
+  rsct.core.lprm            2.4.13.0  COMMITTED  RSCT Least Privilege Resource
+  rsct.core.rmc             2.4.13.0  COMMITTED  RSCT Resource Monitoring and
+  rsct.core.sec             2.4.13.0  COMMITTED  RSCT Security
+  rsct.core.sensorrm        2.4.13.0  COMMITTED  RSCT Sensor Resource Manager
+  rsct.core.sr              2.4.13.0  COMMITTED  RSCT Registry
+  rsct.core.utils           2.4.13.0  COMMITTED  RSCT Utilities
+  rsct.msg.EN_US.core.auditrm
+  rsct.msg.EN_US.core.errm   2.4.0.0  COMMITTED  RSCT Event Response RM Msgs -
+  rsct.msg.EN_US.core.fsrm   2.4.0.0  COMMITTED  RSCT File System RM Msgs -
+  rsct.msg.EN_US.core.gui    2.4.0.0  COMMITTED  RSCT GUI Msgs - U.S. English
+  rsct.msg.EN_US.core.hostrm
+  rsct.msg.EN_US.core.lprm   2.4.0.0  COMMITTED  RSCT LPRM Msgs - U.S. English
+  rsct.msg.EN_US.core.rmc    2.4.0.0  COMMITTED  RSCT RMC Msgs - U.S. English
+  rsct.msg.EN_US.core.sec    2.4.0.0  COMMITTED  RSCT Security Msgs - U.S.
+  rsct.msg.EN_US.core.sensorrm
+  rsct.msg.EN_US.core.sr     2.4.0.0  COMMITTED  RSCT Registry Msgs - U.S.
+  rsct.msg.EN_US.core.utils  2.4.0.0  COMMITTED  RSCT Utilities Msgs - U.S.
+  rsct.msg.en_US.core.auditrm
+  rsct.msg.en_US.core.errm   2.4.0.0  COMMITTED  RSCT Event Response RM Msgs -
+  rsct.msg.en_US.core.fsrm   2.4.0.0  COMMITTED  RSCT File System RM Msgs -
+  rsct.msg.en_US.core.gui    2.4.0.0  COMMITTED  RSCT GUI Msgs - U.S. English
+  rsct.msg.en_US.core.gui.com
+  rsct.msg.en_US.core.hostrm
+  rsct.msg.en_US.core.lprm   2.4.0.0  COMMITTED  RSCT LPRM Msgs - U.S. English
+  rsct.msg.en_US.core.rmc    2.4.0.0  COMMITTED  RSCT RMC Msgs - U.S. English
+  rsct.msg.en_US.core.rmc.com
+  rsct.msg.en_US.core.sec    2.4.0.0  COMMITTED  RSCT Security Msgs - U.S.
+  rsct.msg.en_US.core.sensorrm
+  rsct.msg.en_US.core.sr     2.4.0.0  COMMITTED  RSCT Registry Msgs - U.S.
+  rsct.msg.en_US.core.utils  2.4.0.0  COMMITTED  RSCT Utilities Msgs - U.S.
+  rsct.core.auditrm         2.4.13.0  COMMITTED  RSCT Audit Log Resource
+  rsct.core.errm            2.4.13.0  COMMITTED  RSCT Event Response Resource
+  rsct.core.fsrm            2.4.13.0  COMMITTED  RSCT File System Resource
+  rsct.core.gui             2.4.13.0  COMMITTED  RSCT Graphical User Interface
+  rsct.core.hostrm          2.4.13.0  COMMITTED  RSCT Host Resource Manager
+  rsct.core.lprm            2.4.13.0  COMMITTED  RSCT Least Privilege Resource
+  rsct.core.rmc             2.4.13.0  COMMITTED  RSCT Resource Monitoring and
+  rsct.core.sec             2.4.13.0  COMMITTED  RSCT Security
+  rsct.core.sensorrm        2.4.13.0  COMMITTED  RSCT Sensor Resource Manager
+  rsct.core.sr              2.4.13.0  COMMITTED  RSCT Registry
+  rsct.core.utils           2.4.13.0  COMMITTED  RSCT Utilities

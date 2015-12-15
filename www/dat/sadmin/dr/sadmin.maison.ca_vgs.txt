@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/vgs command on sadmin.maison.ca
+#
+  VG     #PV #LV #SN Attr   VSize  VFree 
+  rootvg   1  12   0 wz--n- 74.50g 47.93g

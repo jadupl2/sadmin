@@ -1,0 +1,27 @@
+# Company_Name - SysInfo Report File - Mon Dec 14 05:06:22 EST 2015
+# This file will be use to update the SADMIN Database
+#                                                    
+SADM_OS_TYPE                        : LINUX
+SADM_HOST_NAME                      : rhel4
+SADM_DOMAIN_NAME                    : maison.ca
+SADM_HOST_IP                        : 192.168.1.132
+SADM_SERVER_TYPE                    : V
+SADM_OS_VERSION                     : 4
+SADM_OS_MAJOR_VERSION               : 4
+SADM_OS_NAME                        : REDHATENTERPRISEAS
+SADM_OS_CODE_NAME                   : NahantUpdate9
+SADM_KERNEL_VERSION                 : 2.6.9-106.EL
+SADM_KERNEL_BITMODE (32 or 64)      : 32
+SADM_SERVER_MODEL                   : VM
+SADM_SERVER_SERIAL                  : N/A
+SADM_SERVER_MEMORY (in MB)          : 503
+SADM_SERVER_HARDWARE_BITMODE        : 64
+SADM_SERVER_NB_CPU                  : 
+SADM_SERVER_CPU_SPEED (in GHz)      : 2
+SADM_SERVER_NB_SOCKET               : 0
+SADM_SERVER_CORE_PER_SOCKET         : 0
+SADM_SERVER_THREAD_PER_CORE         : 1
+SADM_SERVER_IPS                     : eth0|192.168.1.132|255.255.255.0|00:50:56:89:f2:bd
+fe80::250:56ff:fe89:f2bd/64
+SADM_SERVER_DISKS (Size in MB)      : sda|8589,sda2|8480,sda1|106
+SADM_SERVER_VG(s) (Size in MB)      : VolGroup00||-|

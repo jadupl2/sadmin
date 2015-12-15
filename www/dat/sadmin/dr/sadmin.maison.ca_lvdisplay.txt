@@ -1,0 +1,207 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/lvdisplay command on sadmin.maison.ca
+#
+  --- Logical volume ---
+  LV Path                /dev/rootvg/perf
+  LV Name                perf
+  VG Name                rootvg
+  LV UUID                T9rgms-WXC9-wuWP-8fqw-CXyG-pRoB-YeXiwd
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:04 -0400
+  LV Status              available
+  # open                 1
+  LV Size                128.00 MiB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:3
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/admlog
+  LV Name                admlog
+  VG Name                rootvg
+  LV UUID                8jOaf7-Bo98-GiN1-1LHE-hWFh-mEli-PwSDZf
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:05 -0400
+  LV Status              available
+  # open                 1
+  LV Size                128.00 MiB
+  Current LE             32
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:4
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sysadm
+  LV Name                sysadm
+  VG Name                rootvg
+  LV UUID                urb7lq-e0qG-HjKB-9Gpt-zrHp-nzpp-OpwXNY
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:06 -0400
+  LV Status              available
+  # open                 1
+  LV Size                256.00 MiB
+  Current LE             64
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:5
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/sadmin
+  LV Name                sadmin
+  VG Name                rootvg
+  LV UUID                eeE9rd-r99J-s4Y7-zMPt-6133-F4Zl-TIupnv
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:06 -0400
+  LV Status              available
+  # open                 1
+  LV Size                512.00 MiB
+  Current LE             128
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:6
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/storix
+  LV Name                storix
+  VG Name                rootvg
+  LV UUID                q5fWxv-8Ts9-HYjZ-2qdt-73FC-Za20-8heIzE
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:07 -0400
+  LV Status              available
+  # open                 1
+  LV Size                768.00 MiB
+  Current LE             192
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:7
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/usr
+  LV Name                usr
+  VG Name                rootvg
+  LV UUID                P7Vg3l-fV5H-Tz8d-YlRf-7ylT-35tk-xa4QSK
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:08 -0400
+  LV Status              available
+  # open                 1
+  LV Size                7.81 GiB
+  Current LE             2000
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:0
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/tmp
+  LV Name                tmp
+  VG Name                rootvg
+  LV UUID                QWyJhm-2h8Q-Pwmb-6Odu-eZBC-ipMD-XI1jM4
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:11 -0400
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             1024
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:8
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/home
+  LV Name                home
+  VG Name                rootvg
+  LV UUID                7xv30t-x1TR-3SQn-Cnes-XzBT-yYF9-v0bemW
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:13 -0400
+  LV Status              available
+  # open                 1
+  LV Size                2.00 GiB
+  Current LE             512
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:9
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/swap00
+  LV Name                swap00
+  VG Name                rootvg
+  LV UUID                gv8p7f-l5b3-3gDZ-wWuS-W5Uj-7fwe-Sdw8i3
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:15 -0400
+  LV Status              available
+  # open                 2
+  LV Size                4.00 GiB
+  Current LE             1024
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:2
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/opt
+  LV Name                opt
+  VG Name                rootvg
+  LV UUID                qeclN3-N4p6-nKxE-G9ao-FOXv-8j6d-2dzIUi
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:15 -0400
+  LV Status              available
+  # open                 1
+  LV Size                2.00 GiB
+  Current LE             512
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:10
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/var
+  LV Name                var
+  VG Name                rootvg
+  LV UUID                cGMfSE-kdS1-485r-dt8r-LUU4-pF3F-tT3RBy
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:16 -0400
+  LV Status              available
+  # open                 1
+  LV Size                4.00 GiB
+  Current LE             1024
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:11
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/root
+  LV Name                root
+  VG Name                rootvg
+  LV UUID                Ukyi0g-pAKb-kSPA-9JXt-5sDw-lKn0-thniC0
+  LV Write Access        read/write
+  LV Creation host, time sadmin.maison.ca, 2015-10-28 16:10:18 -0400
+  LV Status              available
+  # open                 1
+  LV Size                1.00 GiB
+  Current LE             256
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:1
+   

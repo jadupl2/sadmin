@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:02 CST 2015
+# Output of /sbin/pvdisplay command on fedora23.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               fedora_fedora23
+  PV Size               49.51 GiB / not usable 3.00 MiB
+  Allocatable           yes 
+  PE Size               4.00 MiB
+  Total PE              12674
+  Free PE               1
+  Allocated PE          12673
+  PV UUID               oevxnd-C1Xz-ptUm-hIDo-P2L6-rKsd-oxfUyK
+   

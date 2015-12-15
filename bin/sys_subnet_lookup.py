@@ -15,7 +15,7 @@ import os, time, sys, pdb, socket, datetime
 #                                      Global Variables
 #############################################################################################
 CURDIR      = os.getcwd()                           # Get Current Directory
-OSNAME      = os.name                               # Get OS name (nt,dos,posix,...)
+OSTYPE      = os.name                               # Get OS name (nt,dos,posix,...)
 PLATFORM    = sys.platform                          # Get current platform (win32,mac,posix)
 HOSTNAME    = socket.gethostname()                  # Get current hostname
 PGM_VER     = "1.1"                                 # Program Version

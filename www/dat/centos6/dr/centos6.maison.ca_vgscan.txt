@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:07:25 EST 2015
+# Output of /sbin/vgscan command on centos6.maison.ca
+#
+  Reading all physical volumes.  This may take a while...
+  Found volume group "rootvg" using metadata type lvm2

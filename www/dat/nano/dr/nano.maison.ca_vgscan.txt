@@ -1,0 +1,5 @@
+# Company_Name - Sun Dec 13 21:54:34 EST 2015
+# Output of /sbin/vgscan command on nano.maison.ca
+#
+  Reading all physical volumes.  This may take a while...
+  Found volume group "rootvg" using metadata type lvm2

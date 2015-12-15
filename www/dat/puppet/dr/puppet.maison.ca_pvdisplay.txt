@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:19 EST 2015
+# Output of /sbin/pvdisplay command on puppet.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               rootvg
+  PV Size               48.50 GiB / not usable 31.00 MiB
+  Allocatable           yes 
+  PE Size               32.00 MiB
+  Total PE              1551
+  Free PE               689
+  Allocated PE          862
+  PV UUID               AOfSKC-rRo6-62Lp-KVqX-jQV6-x4sR-b3NU1o
+   

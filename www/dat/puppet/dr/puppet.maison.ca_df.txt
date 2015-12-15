@@ -1,0 +1,30 @@
+# Company_Name - Mon Dec 14 05:06:55 EST 2015
+# Output of /bin/df -h command on puppet.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/rootvg-root
+                      976M  522M  404M  57% /
+tmpfs                 939M     0  939M   0% /dev/shm
+/dev/sda1             1.5G  111M  1.3G   8% /boot
+/dev/mapper/rootvg-perf
+                       58M  9.8M   46M  18% /etc/perf
+/dev/mapper/rootvg-home
+                      976M  1.4M  924M   1% /home
+/dev/mapper/rootvg-opt
+                      2.0G  217M  1.6G  12% /opt
+/dev/mapper/rootvg-sadmin
+                      120M  5.5M  109M   5% /sadmin
+/dev/mapper/rootvg-scomlv
+                      3.9G  284M  3.4G   8% /scom
+/dev/mapper/rootvg-storix
+                      488M  2.3M  460M   1% /storix
+/dev/mapper/rootvg-sysadmin
+                      120M  9.7M  104M   9% /sysadmin
+/dev/mapper/rootvg-tmp
+                      2.0G  6.1M  1.9G   1% /tmp
+/dev/mapper/rootvg-usr
+                      7.8G  3.6G  3.9G  48% /usr
+/dev/mapper/rootvg-var
+                      3.9G  456M  3.2G  13% /var
+/dev/mapper/rootvg-adsmlog
+                      120M   28M   87M  24% /var/adsmlog

@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:02 CST 2015
+# Output of /sbin/pvscan command on fedora23.maison.ca
+#
+  PV /dev/sda2   VG fedora_fedora23   lvm2 [49.51 GiB / 4.00 MiB free]
+  Total: 1 [49.51 GiB] / in use: 1 [49.51 GiB] / in no VG: 0 [0   ]

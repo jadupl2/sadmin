@@ -1,0 +1,8 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /bin/netstat -rn command on rhel3.maison.ca
+#
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG        0 0          0 eth0

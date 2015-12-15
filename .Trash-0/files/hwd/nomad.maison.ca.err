@@ -1,0 +1,102 @@
+stderr output from "grep -vE '^#|^ *$' /etc/multipath.conf":
+    grep: /etc/multipath.conf: No such file or directory
+stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev/mapper/${MultiPath}; done":
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper/DM: No such file or directory
+    ls: cannot access /dev/mapper/multipath: No such file or directory
+    ls: cannot access /dev/mapper/kernel: No such file or directory
+    ls: cannot access /dev/mapper/driver: No such file or directory
+    ls: cannot access /dev/mapper/not: No such file or directory
+    ls: cannot access /dev/mapper/loaded: No such file or directory
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper//etc/multipath.conf: No such file or directory
+    ls: cannot access /dev/mapper/does: No such file or directory
+    ls: cannot access /dev/mapper/not: No such file or directory
+    ls: cannot access /dev/mapper/exist,: No such file or directory
+    ls: cannot access /dev/mapper/blacklisting: No such file or directory
+    ls: cannot access /dev/mapper/all: No such file or directory
+    ls: cannot access /dev/mapper/devices.: No such file or directory
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper/A: No such file or directory
+    ls: cannot access /dev/mapper/sample: No such file or directory
+    ls: cannot access /dev/mapper/multipath.conf: No such file or directory
+    ls: cannot access /dev/mapper/file: No such file or directory
+    ls: cannot access /dev/mapper/is: No such file or directory
+    ls: cannot access /dev/mapper/located: No such file or directory
+    ls: cannot access /dev/mapper/at: No such file or directory
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper//usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf: No such file or directory
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper/You: No such file or directory
+    ls: cannot access /dev/mapper/can: No such file or directory
+    ls: cannot access /dev/mapper/run: No such file or directory
+    ls: cannot access /dev/mapper//sbin/mpathconf: No such file or directory
+    ls: cannot access /dev/mapper/to: No such file or directory
+    ls: cannot access /dev/mapper/create: No such file or directory
+    ls: cannot access /dev/mapper/or: No such file or directory
+    ls: cannot access /dev/mapper/modify: No such file or directory
+    ls: cannot access /dev/mapper//etc/multipath.conf: No such file or directory
+    ls: cannot access /dev/mapper/Nov: No such file or directory
+    ls: cannot access /dev/mapper/13: No such file or directory
+    ls: cannot access /dev/mapper/09:27:15: No such file or directory
+    ls: cannot access /dev/mapper/|: No such file or directory
+    ls: cannot access /dev/mapper/DM: No such file or directory
+    ls: cannot access /dev/mapper/multipath: No such file or directory
+    ls: cannot access /dev/mapper/kernel: No such file or directory
+    ls: cannot access /dev/mapper/driver: No such file or directory
+    ls: cannot access /dev/mapper/not: No such file or directory
+    ls: cannot access /dev/mapper/loaded: No such file or directory
+stderr output from "cat /var/lib/multipath/bindings":
+    cat: /var/lib/multipath/bindings: No such file or directory
+stderr output from "vgdisplay -v | awk -F' +' '/PV Name/ {print $4}'":
+        Using volume group(s) on command line.
+        Finding all volume groups.
+stderr output from "vgdisplay -v | awk -F' +' '/LV Name/ {print $4}'":
+        Using volume group(s) on command line.
+        Finding all volume groups.
+stderr output from "vgdisplay -v":
+        Using volume group(s) on command line.
+        Finding all volume groups.
+stderr output from "PVDisplay":
+        Using physical volume(s) on command line.
+        Wiping cache of LVM-capable devices
+        Finding all volume groups.
+stderr output from "if grep -q '' /etc/sysconfig/network-scripts/route-*; then for RouteCfgFile in /etc/sysconfig/network-scripts/route-*; do printf "\n\n$(basename ${RouteCfgFile}):\n\n"; cat ${RouteCfgFile}; done; fi":
+    grep: /etc/sysconfig/network-scripts/route-*: No such file or directory
+stderr output from "/sbin/mii-tool -v":
+    No interface specified
+    usage: /sbin/mii-tool [-VvRrwl] [-A media,... | -F media] <interface> ...
+           -V, --version               display version information
+           -v, --verbose               more verbose output
+           -R, --reset                 reset MII to poweron state
+           -r, --restart               restart autonegotiation
+           -w, --watch                 monitor for link status changes
+           -l, --log                   with -w, write events to syslog
+           -A, --advertise=media,...   advertise only specified media
+           -F, --force=media           force specified media technology
+    media: 100baseT4, 100baseTx-FD, 100baseTx-HD, 10baseT-FD, 10baseT-HD,
+           (to advertise both HD and FD) 100baseTx, 10baseT
+stderr output from "/sbin/mii-diag -a":
+    No interface specified.
+    Usage: mii-diag [--help] [-aDfrRvVw] [-AF <speed+duplex>] [--watch] <interface>
+stderr output from "/sbin/ldconfig -vN":
+    /sbin/ldconfig: /etc/ld.so.conf.d/kernel-2.6.32-573.7.1.el6.i686.conf:6: duplicate hwcap 1 nosegneg
+    /sbin/ldconfig: /etc/ld.so.conf.d/kernel-2.6.32-573.8.1.el6.i686.conf:6: duplicate hwcap 1 nosegneg
+stderr output from "/usr/bin/hp-info -i | 	 	/usr/bin/col":
+    [35;01mwarning: hp-info should not be run as root/superuser.[0m
+    [31;01merror: No device selected/specified or that supports this functionality.[0m

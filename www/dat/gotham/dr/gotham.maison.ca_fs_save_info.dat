@@ -1,0 +1,21 @@
+datavg::coco4::900:root:root:0550
+datavg::datavglv:ext4 :3194:root:root:0550
+rootvg:/:root:ext4:1024:root:root:0555
+datavg:swap:swap01:swap :4096:::0000
+rootvg:/opt:opt:ext4:1024:root:root:0755
+rootvg:swap:swap00:swap :2048:::0000
+rootvg:/tmp:tmp:ext4:2048:root:root:1777
+rootvg:/usr:usr:ext4:6144:root:root:0755
+rootvg:/var:var:ext4:2048:root:root:0755
+rootvg:/home:home:ext4:30013:root:root:0755
+rootvg:/scom:scomlv:ext4:4096:root:root:2775
+datavg:/coco1:coco1:ext4 :128:root:root:0755
+datavg:/coco2:coco2:ext3 :1024:root:root:0755
+datavg:/coco3:coco3:ext4 :900:root:root:0755
+rootvg:/sadmin:admlv:ext4 :256:root:root:0755
+rootvg:/storix:storix:ext4:256:root:root:0755
+datavg_sdb:/data_sdb:datavgsdblv:ext4 :4444:root:root:0755
+rootvg:/etc/perf:perf:ext4:128:root:root:0755
+rootvg:/sysadmin:sysadmin:ext4:128:root:root:0755
+rootvg:/usr/local:usrloc:ext4:512:root:root:0755
+rootvg:/var/adsmlog:adsmlog:ext4:128:root:root:0775

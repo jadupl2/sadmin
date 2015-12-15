@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:07 EST 2015
+# Output of /sbin/ip addr command on nomad.maison.ca
+#
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 00:1e:4f:b2:ea:56 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.66/24 brd 192.168.1.255 scope global eth0
+    inet 192.168.1.126/24 brd 192.168.1.255 scope global secondary eth0:1
+    inet 192.168.1.70/24 brd 192.168.1.255 scope global secondary eth0:2
+    inet 192.168.1.69/24 brd 192.168.1.255 scope global secondary eth0:3
+    inet 192.168.1.67/24 brd 192.168.1.255 scope global secondary eth0:4
+    inet 192.168.1.68/24 brd 192.168.1.255 scope global secondary eth0:5

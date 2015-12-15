@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:06 EST 2015
+# Output of /usr/sbin/pvdisplay command on rhel4.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               VolGroup00
+  PV Size               7.90 GB / not usable 23.41 MB
+  Allocatable           yes 
+  PE Size (KByte)       32768
+  Total PE              252
+  Free PE               1
+  Allocated PE          251
+  PV UUID               4mb40l-ocQC-ymqr-eIYo-nNYZ-gi4O-2Ej3fe
+   

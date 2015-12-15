@@ -1,0 +1,58 @@
+# Company_Name - Mon Dec 14 05:06:07 EST 2015
+# Output of /bin/df -h command on nomad.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/rootvg-root
+                      976M  482M  444M  53% /
+tmpfs                 1.9G  436K  1.9G   1% /dev/shm
+/dev/mapper/rootvg-oslv
+                       24G   12G   12G  52% /os
+/dev/mapper/rootvg-opt
+                      2.0G  109M  1.8G   6% /opt
+/dev/mapper/rootvg-svnlv
+                      2.0G  3.4M  1.9G   1% /svn
+/dev/mapper/rootvg-tmp
+                      3.9G   49M  3.7G   2% /tmp
+/dev/mapper/rootvg-usr
+                      7.8G  6.0G  1.5G  81% /usr
+/dev/mapper/rootvg-var
+                      3.9G  1.4G  2.3G  39% /var
+/dev/mapper/rootvg-www
+                      488M  202M  261M  44% /www
+/dev/mapper/rootvg-home
+                      7.7G  3.8G  3.6G  52% /home
+/dev/mapper/rootvg-rhellv
+                      217G  187G   19G  91% /rhel
+/dev/mapper/rootvg-scomlv
+                      3.9G  8.6M  3.7G   1% /scom
+/dev/mapper/rootvg-slamlv
+                      248M  121M  118M  51% /slam
+/dev/sda1             976M  121M  804M  14% /boot
+/dev/mapper/rootvg-sharelv
+                      232M  164K  220M   1% /share
+/dev/mapper/rootvg-cadmin
+                       27M   11M   16M  41% /cadmin
+/dev/mapper/rootvg-sadmin
+                      244M  105M  127M  46% /sadmin
+/dev/mapper/rootvg-storix
+                      488M  5.6M  457M   2% /storix
+/dev/mapper/rootvg-gitrep
+                      108M  696K  101M   1% /gitrepo
+/dev/mapper/rootvg-installlv
+                      4.8G  3.4G  1.2G  75% /install
+/dev/mapper/rootvg-sysinfo
+                       15G  6.1G  7.6G  45% /sysinfo
+/dev/mapper/rootvg-aix
+                      232M  206M   14M  94% /aix_data
+/dev/mapper/rootvg-perf
+                       58M  9.8M   46M  18% /etc/perf
+/dev/mapper/rootvg-sysadmlv
+                      232M   61M  159M  28% /sysadmin
+/dev/mapper/rootvg-linternux
+                      108M  100K  102M   1% /linternux
+/dev/mapper/rootvg-stbackup
+                      976M  486M  440M  53% /stbackups
+/dev/mapper/rootvg-usradm
+                      313M  4.1M  298M   2% /useradmin
+/dev/mapper/rootvg-adsmlog
+                       58M   36M   19M  66% /var/adsmlog

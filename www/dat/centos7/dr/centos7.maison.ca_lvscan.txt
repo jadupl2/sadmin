@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/lvscan command on centos7.maison.ca
+#
+  ACTIVE            '/dev/rootvg/root' [37.49 GiB] inherit
+  ACTIVE            '/dev/rootvg/swap' [2.02 GiB] inherit

@@ -1,0 +1,138 @@
+c2h: xlC Info for node aixb50
+Mon Dec 14 05:23:24 CST 2015
+Collector: Compiler
+***************
+AIX 5.3.0.0
+5300-12-01-1016
+***************
+ 
+ 
+Fileset Overview
+================
+ 
+ 
+xlC Filesets
+------------
+  xlC.aix50.rte             10.1.0.3  COMMITTED  XL C/C++ Runtime for AIX 5.3 
+  xlC.cpp                    9.0.0.0  COMMITTED  C for AIX Preprocessor
+  xlC.msg.en_US.cpp          9.0.0.0  COMMITTED  C for AIX Preprocessor
+  xlC.msg.en_US.rte         10.1.0.3  COMMITTED  XL C/C++ Runtime
+  xlC.rte                   10.1.0.3  COMMITTED  XL C/C++ Runtime 
+ 
+xlopt Filesets
+--------------
+'xlopt' Not installed. lslpp RC is 1
+ 
+memdbg Filesets
+--------------
+ 
+memdbg Filesets
+--------------
+'memdbg' Not installed. lslpp RC is 1
+'memdbg' Not installed. lslpp RC is 1
+ 
+xlsmp Filesets
+--------------
+ 
+vac V8 Filesets
+---------------
+ 
+vacpp V8 Filesets
+-----------------
+ 
+vac V9 Filesets
+---------------
+ 
+vacpp V9 Filesets
+-----------------
+ 
+vac V10 Filesets
+---------------
+ 
+vacpp V10 Filesets
+-----------------
+ 
+vac V11 Filesets
+---------------
+ 
+vacpp V11 Filesets
+-----------------
+ 
+Check for FIXES
+===============
+ 
+ 
+XL C V8 RUNTIME
+---------------
+xlC8=
+xlC8 NOT found
+ 
+XL C V9 RUNTIME
+---------------
+xlC9=
+xlC9 NOT found
+ 
+XL C V10 RUNTIME
+----------------
+xlC10=/usr/lib/objrepos:xlC.rte:10.1.0.3::COMMITTED:I:XL C/C++ Runtime :
+xlC10 found
+IZ54091 * July 2009 IBM XL C++ Runtime, V10.1
+FIX IZ54091 NOT installed ! (iFIX NO)
+IZ38837 * November 2008 IBM XL C++ Runtime, V10.1
+FIX IZ38837 NOT installed ! (iFIX NO)
+ 
+XL C V11 RUNTIME
+----------------
+xlC11=
+xlC11 NOT found
+ 
+XL SMP V1.8
+-----------
+xlsmp18=
+xlsmp 1.8 NOT found
+ 
+XL SMP V2.1
+-----------
+xlsmp21=
+xlsmp 2.1 NOT found
+ 
+XL C V8
+-------
+vac8=
+vac V8 NOT found
+ 
+XL C++ V8
+---------
+vacpp8=
+vacpp V8 NOT found
+ 
+XL C V9
+-------
+vac9=
+vac V9 NOT found
+ 
+XL C++ V9
+---------
+vacpp9=
+vacpp V9 NOT found
+ 
+XL C V10
+--------
+vac10=
+vac V10 NOT found
+ 
+XL C++ V10
+----------
+vacpp10=
+vacpp V10 NOT found
+ 
+XL C V11
+--------
+vac11=
+vac V11 NOT found
+ 
+XL C++ V11
+----------
+vacpp11=
+vacpp V11 NOT found
+*>>> EOF <<<

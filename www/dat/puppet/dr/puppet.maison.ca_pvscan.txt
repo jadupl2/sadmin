@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:16 EST 2015
+# Output of /sbin/pvscan command on puppet.maison.ca
+#
+  PV /dev/sda2   VG rootvg   lvm2 [48.47 GiB / 21.53 GiB free]
+  Total: 1 [48.47 GiB] / in use: 1 [48.47 GiB] / in no VG: 0 [0   ]

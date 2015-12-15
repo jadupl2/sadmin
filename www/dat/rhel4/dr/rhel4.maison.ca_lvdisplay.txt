@@ -1,0 +1,33 @@
+# Company_Name - Mon Dec 14 05:06:21 EST 2015
+# Output of /usr/sbin/lvdisplay command on rhel4.maison.ca
+#
+  --- Logical volume ---
+  LV Name                /dev/VolGroup00/LogVol00
+  VG Name                VolGroup00
+  LV UUID                4rB5Ys-B6Gx-OXGD-ifbd-jOB7-uO11-Gu3xh2
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                7.34 GB
+  Current LE             235
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:0
+   
+  --- Logical volume ---
+  LV Name                /dev/VolGroup00/LogVol01
+  VG Name                VolGroup00
+  LV UUID                DLN9Wa-9Knu-yQPq-1Dx5-TONq-hbXX-M3HtRK
+  LV Write Access        read/write
+  LV Status              available
+  # open                 1
+  LV Size                512.00 MB
+  Current LE             16
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:1
+   

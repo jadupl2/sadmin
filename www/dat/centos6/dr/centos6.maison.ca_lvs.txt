@@ -1,0 +1,18 @@
+# Company_Name - Mon Dec 14 05:07:31 EST 2015
+# Output of /sbin/lvs command on centos6.maison.ca
+#
+  LV       VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  adsmlog  rootvg -wimao---- 128.00m                                                    
+  home     rootvg -wimao----  29.31g                                                    
+  opt      rootvg -wimao----   1.00g                                                    
+  perf     rootvg -wimao---- 128.00m                                                    
+  root     rootvg -wimao----   1.00g                                                    
+  sadmin54 rootvg -wi-ao----  32.00m                                                    
+  scomlv   rootvg -wimao----   4.00g                                                    
+  storix   rootvg -wimao---- 512.00m                                                    
+  swap00   rootvg -wimao----   2.00g                                                    
+  sysadmin rootvg -wimao---- 128.00m                                                    
+  tmp      rootvg -wimao----   2.00g                                                    
+  usr      rootvg -wimao----   6.00g                                                    
+  usrloc   rootvg -wimao---- 512.00m                                                    
+  var      rootvg -wimao----   2.00g                                                    

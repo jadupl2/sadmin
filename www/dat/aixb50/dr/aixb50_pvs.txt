@@ -1,0 +1,80 @@
+
+
+PHYSICAL VOLUME:    hdisk0                   VOLUME GROUP:     rootvg
+PV IDENTIFIER:      0002dd2f26946375 VG IDENTIFIER     0002dd2f00004c00000001303d14a7f9
+PV STATE:           active                                     
+STALE PARTITIONS:   0                        ALLOCATABLE:      yes
+PP SIZE:            64 megabyte(s)           LOGICAL VOLUMES:  20
+TOTAL PPs:          542 (34688 megabytes)    VG DESCRIPTORS:   2
+FREE PPs:           18 (1152 megabytes)      HOT SPARE:        no
+USED PPs:           524 (33536 megabytes)    MAX REQUEST:      256 kilobytes
+FREE DISTRIBUTION:  00..00..00..00..18                         
+USED DISTRIBUTION:  109..108..108..108..91                     
+
+
+0516-320 : Physical volume hdisk1 is not assigned to
+	a volume group.
+
+
+PHYSICAL VOLUME:    hdisk0                   VOLUME GROUP:     rootvg
+PV IDENTIFIER:      0002dd2f26946375 VG IDENTIFIER     0002dd2f00004c00000001303d14a7f9
+PV STATE:           active                                     
+STALE PARTITIONS:   0                        ALLOCATABLE:      yes
+PP SIZE:            64 megabyte(s)           LOGICAL VOLUMES:  20
+TOTAL PPs:          542 (34688 megabytes)    VG DESCRIPTORS:   2
+FREE PPs:           18 (1152 megabytes)      HOT SPARE:        no
+USED PPs:           524 (33536 megabytes)    MAX REQUEST:      256 kilobytes
+FREE DISTRIBUTION:  00..00..00..00..18                         
+USED DISTRIBUTION:  109..108..108..108..91                     
+
+
+0516-320 : Physical volume hdisk1 is not assigned to
+	a volume group.
+
+
+PHYSICAL VOLUME:    hdisk0                   VOLUME GROUP:     rootvg
+PV IDENTIFIER:      0002dd2f26946375 VG IDENTIFIER     0002dd2f00004c00000001303d14a7f9
+PV STATE:           active                                     
+STALE PARTITIONS:   0                        ALLOCATABLE:      yes
+PP SIZE:            64 megabyte(s)           LOGICAL VOLUMES:  20
+TOTAL PPs:          542 (34688 megabytes)    VG DESCRIPTORS:   2
+FREE PPs:           18 (1152 megabytes)      HOT SPARE:        no
+USED PPs:           524 (33536 megabytes)    MAX REQUEST:      256 kilobytes
+FREE DISTRIBUTION:  00..00..00..00..18                         
+USED DISTRIBUTION:  109..108..108..108..91                     
+
+
+0516-320 : Physical volume hdisk1 is not assigned to
+	a volume group.
+
+
+PHYSICAL VOLUME:    hdisk0                   VOLUME GROUP:     rootvg
+PV IDENTIFIER:      0002dd2f26946375 VG IDENTIFIER     0002dd2f00004c00000001303d14a7f9
+PV STATE:           active                                     
+STALE PARTITIONS:   0                        ALLOCATABLE:      yes
+PP SIZE:            64 megabyte(s)           LOGICAL VOLUMES:  20
+TOTAL PPs:          542 (34688 megabytes)    VG DESCRIPTORS:   2
+FREE PPs:           18 (1152 megabytes)      HOT SPARE:        no
+USED PPs:           524 (33536 megabytes)    MAX REQUEST:      256 kilobytes
+FREE DISTRIBUTION:  00..00..00..00..18                         
+USED DISTRIBUTION:  109..108..108..108..91                     
+
+
+0516-320 : Physical volume hdisk1 is not assigned to
+	a volume group.
+
+
+PHYSICAL VOLUME:    hdisk0                   VOLUME GROUP:     rootvg
+PV IDENTIFIER:      0002dd2f26946375 VG IDENTIFIER     0002dd2f00004c00000001303d14a7f9
+PV STATE:           active                                     
+STALE PARTITIONS:   0                        ALLOCATABLE:      yes
+PP SIZE:            64 megabyte(s)           LOGICAL VOLUMES:  20
+TOTAL PPs:          542 (34688 megabytes)    VG DESCRIPTORS:   2
+FREE PPs:           18 (1152 megabytes)      HOT SPARE:        no
+USED PPs:           524 (33536 megabytes)    MAX REQUEST:      256 kilobytes
+FREE DISTRIBUTION:  00..00..00..00..18                         
+USED DISTRIBUTION:  109..108..108..108..91                     
+
+
+0516-320 : Physical volume hdisk1 is not assigned to
+	a volume group.

@@ -1,0 +1,29 @@
+-e # Company_Name - Mon Dec 14 05:06:02 EST 2015
+-e # Output of /bin/ip addr command on ubuntu1204
+#
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UNKNOWN qlen 1000
+    link/ether 00:50:56:bc:df:03 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.117/24 brd 192.168.1.255 scope global eth0
+    inet6 2607:fa48:6c05:adc0:451c:e388:26f5:1c6f/64 scope global temporary dynamic 
+       valid_lft 502sec preferred_lft 502sec
+    inet6 2607:fa48:6c05:adc0:649f:75b2:97f3:76d6/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:56b:3c00:1b53:e8af/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:d28:2db5:f93f:dc71/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:f42e:d4a7:8766:c90b/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:a8ee:beec:fe8b:6e4/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:3d58:b7f1:c11f:26bc/64 scope global temporary deprecated dynamic 
+       valid_lft 502sec preferred_lft 0sec
+    inet6 2607:fa48:6c05:adc0:250:56ff:febc:df03/64 scope global dynamic 
+       valid_lft 502sec preferred_lft 502sec
+    inet6 fe80::250:56ff:febc:df03/64 scope link 
+       valid_lft forever preferred_lft forever

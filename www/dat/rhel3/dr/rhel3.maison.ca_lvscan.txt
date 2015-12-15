@@ -1,0 +1,20 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /sbin/lvscan command on rhel3.maison.ca
+#
+lvscan -- ACTIVE            "/dev/rootvg/adsmlog" [16 MB]
+lvscan -- ACTIVE            "/dev/rootvg/home" [256 MB]
+lvscan -- ACTIVE            "/dev/rootvg/mystuff" [2 GB]
+lvscan -- ACTIVE            "/dev/rootvg/opt" [512 MB]
+lvscan -- ACTIVE            "/dev/rootvg/perf" [16 MB]
+lvscan -- ACTIVE            "/dev/rootvg/root" [512 MB]
+lvscan -- ACTIVE            "/dev/rootvg/storix" [300 MB]
+lvscan -- ACTIVE            "/dev/rootvg/swap00" [1 GB]
+lvscan -- ACTIVE            "/dev/rootvg/sysadmin" [192 MB]
+lvscan -- ACTIVE            "/dev/rootvg/tmp" [512 MB]
+lvscan -- ACTIVE            "/dev/rootvg/up2date" [512 MB]
+lvscan -- ACTIVE            "/dev/rootvg/usr" [4 GB]
+lvscan -- ACTIVE            "/dev/rootvg/var" [512 MB]
+lvscan -- ACTIVE            "/dev/rootvg/sadm79" [64 MB]
+lvscan -- 14 logical volumes with 10.32 GB total in 1 volume group
+lvscan -- 14 active logical volumes
+

@@ -1,0 +1,27 @@
+# Company_Name - SysInfo Report File - Mon Dec 14 05:07:41 EST 2015
+# This file will be use to update the SADMIN Database
+#                                                    
+SADM_OS_TYPE                        : LINUX
+SADM_HOST_NAME                      : centos6
+SADM_DOMAIN_NAME                    : maison.ca
+SADM_HOST_IP                        : 192.168.1.138
+SADM_SERVER_TYPE                    : V
+SADM_OS_VERSION                     : 6.7
+SADM_OS_MAJOR_VERSION               : 6
+SADM_OS_NAME                        : CENTOS
+SADM_OS_CODE_NAME                   : Final
+SADM_KERNEL_VERSION                 : 2.6.32-573.8.1.el6.i686
+SADM_KERNEL_BITMODE (32 or 64)      : 32
+SADM_SERVER_MODEL                   : VM
+SADM_SERVER_SERIAL                  : N/A
+SADM_SERVER_MEMORY (in MB)          : 1006
+SADM_SERVER_HARDWARE_BITMODE        : 64
+SADM_SERVER_NB_CPU                  : 1
+SADM_SERVER_CPU_SPEED (in GHz)      : 2
+SADM_SERVER_NB_SOCKET               : 1
+SADM_SERVER_CORE_PER_SOCKET         : 1
+SADM_SERVER_THREAD_PER_CORE         : 1
+SADM_SERVER_IPS                     : eth0|192.168.1.138|255.255.255.0|00:50:56:89:40:e4
+fe80::250:56ff:fe89:40e4/64
+SADM_SERVER_DISKS (Size in MB)      : sda|65536
+SADM_SERVER_VG(s) (Size in MB)      : rootvg|57088|49890|7198

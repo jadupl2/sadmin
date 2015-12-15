@@ -1,0 +1,24 @@
+# Company_Name - Mon Dec 14 05:06:23 EST 2015
+# Output of /usr/sbin/vgdisplay command on bilbo.maison.ca
+#
+  --- Volume group ---
+  VG Name               rootvg
+  System ID             
+  Format                lvm2
+  Metadata Areas        1
+  Metadata Sequence No  15
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                255
+  Cur LV                14
+  Open LV               13
+  Max PV                1
+  Cur PV                1
+  Act PV                1
+  VG Size               29.28 GB
+  PE Size               32.00 MB
+  Total PE              937
+  Alloc PE / Size       540 / 16.88 GB
+  Free  PE / Size       397 / 12.41 GB
+  VG UUID               nQwTHc-8Ste-O2eg-UmLZ-KYHD-Rapo-h29Q3n
+   

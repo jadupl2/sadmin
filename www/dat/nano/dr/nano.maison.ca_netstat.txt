@@ -1,0 +1,7 @@
+# Company_Name - Sun Dec 13 21:54:36 EST 2015
+# Output of /bin/netstat -rn command on nano.maison.ca
+#
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG        0 0          0 eth0

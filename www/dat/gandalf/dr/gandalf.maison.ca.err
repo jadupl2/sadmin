@@ -1,0 +1,93 @@
+Disk /dev/dm-255 doesn't contain a valid partition table
+Disk /dev/dm-254 doesn't contain a valid partition table
+Disk /dev/dm-253 doesn't contain a valid partition table
+Disk /dev/dm-252 doesn't contain a valid partition table
+Disk /dev/dm-251 doesn't contain a valid partition table
+Disk /dev/dm-250 doesn't contain a valid partition table
+Disk /dev/dm-249 doesn't contain a valid partition table
+Disk /dev/dm-248 doesn't contain a valid partition table
+Disk /dev/dm-247 doesn't contain a valid partition table
+Disk /dev/dm-246 doesn't contain a valid partition table
+Disk /dev/dm-245 doesn't contain a valid partition table
+Disk /dev/dm-244 doesn't contain a valid partition table
+Disk /dev/dm-243 doesn't contain a valid partition table
+Disk /dev/dm-242 doesn't contain a valid partition table
+Disk /dev/dm-0 doesn't contain a valid partition table
+:
+    -l: unknown option
+stderr output from "my_df":
+    df: unrecognized option `--total'
+    Try `df --help' for more information.
+stderr output from "PartitionDump":
+    Disk /dev/dm-255 doesn't contain a valid partition table
+    Disk /dev/dm-254 doesn't contain a valid partition table
+    Disk /dev/dm-253 doesn't contain a valid partition table
+    Disk /dev/dm-252 doesn't contain a valid partition table
+    Disk /dev/dm-251 doesn't contain a valid partition table
+    Disk /dev/dm-250 doesn't contain a valid partition table
+    Disk /dev/dm-249 doesn't contain a valid partition table
+    Disk /dev/dm-248 doesn't contain a valid partition table
+    Disk /dev/dm-247 doesn't contain a valid partition table
+    Disk /dev/dm-246 doesn't contain a valid partition table
+    Disk /dev/dm-245 doesn't contain a valid partition table
+    Disk /dev/dm-244 doesn't contain a valid partition table
+    Disk /dev/dm-243 doesn't contain a valid partition table
+    Disk /dev/dm-242 doesn't contain a valid partition table
+    Disk /dev/dm-0 doesn't contain a valid partition table
+stderr output from "/sbin/fdisk -l|sed 's/8e \ Unknown/8e \ LVM/g'":
+    Disk /dev/dm-255 doesn't contain a valid partition table
+    Disk /dev/dm-254 doesn't contain a valid partition table
+    Disk /dev/dm-253 doesn't contain a valid partition table
+    Disk /dev/dm-252 doesn't contain a valid partition table
+    Disk /dev/dm-251 doesn't contain a valid partition table
+    Disk /dev/dm-250 doesn't contain a valid partition table
+    Disk /dev/dm-249 doesn't contain a valid partition table
+    Disk /dev/dm-248 doesn't contain a valid partition table
+    Disk /dev/dm-247 doesn't contain a valid partition table
+    Disk /dev/dm-246 doesn't contain a valid partition table
+    Disk /dev/dm-245 doesn't contain a valid partition table
+    Disk /dev/dm-244 doesn't contain a valid partition table
+    Disk /dev/dm-243 doesn't contain a valid partition table
+    Disk /dev/dm-242 doesn't contain a valid partition table
+    Disk /dev/dm-0 doesn't contain a valid partition table
+stderr output from "cat /var/lib/multipath/bindings":
+    cat: /var/lib/multipath/bindings: No such file or directory
+stderr output from "vgdisplay -v | awk -F' +' '/PV Name/ {print $4}'":
+        Finding all volume groups
+        Finding volume group "rootvg"
+stderr output from "vgdisplay -v | awk -F' +' '/LV Name/ {print $4}'":
+        Finding all volume groups
+        Finding volume group "rootvg"
+stderr output from "vgdisplay -v":
+        Finding all volume groups
+        Finding volume group "rootvg"
+stderr output from "PVDisplay":
+        Using physical volume(s) on command line
+stderr output from "/usr/sbin/ethtool eth0
+eth1 2>/dev/null; /usr/sbin/ethtool -i eth0
+eth1":
+    ethtool version 6
+    Usage:
+    ethtool DEVNAME	Display standard information about device
+stderr output from "if grep -q '' /etc/sysconfig/network-scripts/route-*; then for RouteCfgFile in /etc/sysconfig/network-scripts/route-*; do printf "\n\n$(basename ${RouteCfgFile}):\n\n"; cat ${RouteCfgFile}; done; fi":
+    grep: /etc/sysconfig/network-scripts/route-*: No such file or directory
+stderr output from "/sbin/mii-diag -a eth0
+eth1":
+    SIOCGMIIPHY on eth0 failed: Operation not supported
+stderr output from "lsblk -ta":
+    /usr/bin/cfg2html-linux: line 480: lsblk: command not found
+stderr output from "echo q | /usr/bin/hp-info -i |         /usr/bin/col":
+    [31;01merror: No devices found.[0m
+    [31;01merror: Error occured during interactive mode. Exiting.[0m
+stderr output from "/usr/bin/puppet ca list --all":
+    [1;31mError: The certificate retrieved from the master does not match the agent's private key.
+    Certificate fingerprint: 00:19:91:37:C3:13:CE:6D:A5:73:16:D3:AA:38:77:3B:04:0E:9B:4B:30:34:3F:08:B7:5B:75:C7:58:9C:DE:6E
+    To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certficate.
+    On the master:
+      puppet cert clean gandalf.maison.ca
+    On the agent:
+      1a. On most platforms: find /var/lib/puppet/ssl -name gandalf.maison.ca.pem -delete
+      1b. On Windows: del "/var/lib/puppet/ssl/gandalf.maison.ca.pem" /f
+      2. puppet agent -t
+    [0m
+    [1;31mError: Try 'puppet help ca list' for usage[0m

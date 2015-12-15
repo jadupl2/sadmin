@@ -1,0 +1,17 @@
+# Company_Name - Mon Dec 14 05:06:33 EST 2015
+# Output of /usr/sbin/lvscan command on bilbo.maison.ca
+#
+  ACTIVE            '/dev/rootvg/adsmlog' [64.00 MB] inherit
+  ACTIVE            '/dev/rootvg/home' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/mystuff' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/opt' [768.00 MB] inherit
+  ACTIVE            '/dev/rootvg/perf' [64.00 MB] inherit
+  ACTIVE            '/dev/rootvg/root' [768.00 MB] inherit
+  ACTIVE            '/dev/rootvg/storix' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/swap00' [2.00 GB] inherit
+  ACTIVE            '/dev/rootvg/sysadmin' [64.00 MB] inherit
+  ACTIVE            '/dev/rootvg/test22' [1.38 GB] inherit
+  ACTIVE            '/dev/rootvg/tmp' [2.00 GB] inherit
+  ACTIVE            '/dev/rootvg/usr' [5.38 GB] inherit
+  ACTIVE            '/dev/rootvg/var' [3.44 GB] inherit
+  ACTIVE            '/dev/rootvg/sadmin39' [256.00 MB] inherit

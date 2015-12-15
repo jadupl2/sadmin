@@ -1,0 +1,5 @@
+# Company_Name - Thu Dec 10 08:29:59 EST 2015
+# Output of /sbin/pvs command on nomad.maison.ca
+#
+  PV         VG     Fmt  Attr PSize   PFree  
+  /dev/sda2  rootvg lvm2 a--  464.75g 160.22g

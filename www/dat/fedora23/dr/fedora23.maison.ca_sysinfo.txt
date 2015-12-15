@@ -1,0 +1,27 @@
+# Company_Name - SysInfo Report File - Mon Dec 14 05:06:03 CST 2015
+# This file will be use to update the SADMIN Database
+#                                                    
+SADM_OS_TYPE                        : LINUX
+SADM_HOST_NAME                      : fedora23
+SADM_DOMAIN_NAME                    : maison.ca
+SADM_HOST_IP                        : 2607:fa48:6c05:adc0:250:56ff:fea8:8bad
+SADM_SERVER_TYPE                    : V
+SADM_OS_VERSION                     : 23
+SADM_OS_MAJOR_VERSION               : 23
+SADM_OS_NAME                        : FEDORA
+SADM_OS_CODE_NAME                   : TwentyThree
+SADM_KERNEL_VERSION                 : 4.2.6-301.fc23.x86_64
+SADM_KERNEL_BITMODE (32 or 64)      : 64
+SADM_SERVER_MODEL                   : VM
+SADM_SERVER_SERIAL                  : N/A
+SADM_SERVER_MEMORY (in MB)          : 2001
+SADM_SERVER_HARDWARE_BITMODE        : 64
+SADM_SERVER_NB_CPU                  : 1
+SADM_SERVER_CPU_SPEED (in GHz)      : 2
+SADM_SERVER_NB_SOCKET               : 1
+SADM_SERVER_CORE_PER_SOCKET         : 1
+SADM_SERVER_THREAD_PER_CORE         : 1
+SADM_SERVER_IPS                     : eno16780032|192.168.1.52|255.255.255.0|00:50:56:a8:8b:ad
+fe80::250:56ff:fea8:8bad/64,virbr0|192.168.124.1|255.255.255.0|52:54:00:73:f0:f7
+SADM_SERVER_DISKS (Size in MB)      : sda|50
+SADM_SERVER_VG(s) (Size in MB)      : fedora_fedora23|50698|50694|4

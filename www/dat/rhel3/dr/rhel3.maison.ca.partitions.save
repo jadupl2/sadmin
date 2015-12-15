@@ -1,0 +1,7 @@
+# partition table of /dev/hda
+unit: sectors
+
+/dev/hda1 : start=        1, size=   417689, Id=83, bootable
+/dev/hda2 : start=   417690, size= 38813040, Id=8e
+/dev/hda3 : start=        0, size=        0, Id= 0
+/dev/hda4 : start=        0, size=        0, Id= 0

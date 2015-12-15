@@ -1,0 +1,32 @@
+# Company_Name - Mon Dec 14 05:07:05 EST 2015
+# Output of /usr/sbin/lvscan command on gumby.maison.ca
+#
+  ACTIVE            '/dev/rootvg/aixdatlv' [224.00 MB] inherit
+  ACTIVE            '/dev/rootvg/cadminlv' [128.00 MB] inherit
+  ACTIVE            '/dev/rootvg/clusterlv' [32.00 MB] inherit
+  ACTIVE            '/dev/rootvg/crudlv' [512.00 MB] inherit
+  ACTIVE            '/dev/rootvg/gfsadm' [5.00 GB] inherit
+  ACTIVE            '/dev/rootvg/homelv' [512.00 MB] inherit
+  ACTIVE            '/dev/rootvg/instlv' [13.62 GB] inherit
+  ACTIVE            '/dev/rootvg/linternux' [128.00 MB] inherit
+  ACTIVE            '/dev/rootvg/mylv' [9.78 GB] inherit
+  ACTIVE            '/dev/rootvg/optlv' [512.00 MB] inherit
+  ACTIVE            '/dev/rootvg/perflv' [96.00 MB] inherit
+  ACTIVE            '/dev/rootvg/pws1lv' [32.00 MB] inherit
+  ACTIVE            '/dev/rootvg/pws2lv' [32.00 MB] inherit
+  ACTIVE            '/dev/rootvg/pws3lv' [32.00 MB] inherit
+  ACTIVE            '/dev/rootvg/rootlv' [2.00 GB] inherit
+  ACTIVE            '/dev/rootvg/scomlv' [4.00 GB] inherit
+  ACTIVE            '/dev/rootvg/slamlv' [64.00 MB] inherit
+  ACTIVE            '/dev/rootvg/slamng' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/storixlv' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/sysadmlv' [256.00 MB] inherit
+  ACTIVE            '/dev/rootvg/sysinfo' [5.88 GB] inherit
+  ACTIVE            '/dev/rootvg/tmplv' [7.84 GB] inherit
+  ACTIVE            '/dev/rootvg/useradm' [32.00 MB] inherit
+  ACTIVE            '/dev/rootvg/usrlv' [5.88 GB] inherit
+  ACTIVE            '/dev/rootvg/varloglv' [64.00 MB] inherit
+  ACTIVE            '/dev/rootvg/varlv' [4.00 GB] inherit
+  ACTIVE            '/dev/rootvg/wwwlv' [512.00 MB] inherit
+  ACTIVE            '/dev/rootvg/oslv' [4.91 GB] inherit
+  ACTIVE            '/dev/rootvg/sadmin' [256.00 MB] inherit

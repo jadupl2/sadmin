@@ -1,0 +1,98 @@
+# Company_Name - Mon Dec 14 05:06:55 EST 2015
+# Output of /usr/bin/facter command on puppet.maison.ca
+#
+architecture => x86_64
+augeasversion => 1.0.0
+bios_release_date => 09/30/2014
+bios_vendor => Phoenix Technologies LTD
+bios_version => 6.00
+blockdevice_sda_model => Virtual disk
+blockdevice_sda_size => 53687091200
+blockdevice_sda_vendor => VMware
+blockdevice_sr0_model => VMware IDE CDR10
+blockdevice_sr0_size => 1073741312
+blockdevice_sr0_vendor => NECVMWar
+blockdevices => sda,sr0
+boardmanufacturer => Intel Corporation
+boardproductname => 440BX Desktop Reference Platform
+boardserialnumber => None
+domain => maison.ca
+facterversion => 2.4.4
+filesystems => ext4,iso9660,vfat
+fqdn => puppet.maison.ca
+gid => root
+hardwareisa => x86_64
+hardwaremodel => x86_64
+hostname => puppet
+id => root
+interfaces => eth0,lo
+ipaddress => 192.168.1.65
+ipaddress6 => 2607:fa48:6c05:adc0:20c:29ff:fece:49c3
+ipaddress6_eth0 => 2607:fa48:6c05:adc0:20c:29ff:fece:49c3
+ipaddress_eth0 => 192.168.1.65
+ipaddress_lo => 127.0.0.1
+is_virtual => true
+kernel => Linux
+kernelmajversion => 2.6
+kernelrelease => 2.6.32-573.8.1.el6.x86_64
+kernelversion => 2.6.32
+lsbdistcodename => Final
+lsbdistdescription => CentOS release 6.7 (Final)
+lsbdistid => CentOS
+lsbdistrelease => 6.7
+lsbmajdistrelease => 6
+lsbminordistrelease => 7
+lsbrelease => :base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch
+macaddress => 00:0C:29:CE:49:C3
+macaddress_eth0 => 00:0C:29:CE:49:C3
+manufacturer => VMware, Inc.
+memoryfree => 1.24 GB
+memoryfree_mb => 1268.04
+memorysize => 1.83 GB
+memorysize_mb => 1877.14
+mtu_eth0 => 1500
+mtu_lo => 65536
+netmask => 255.255.255.0
+netmask_eth0 => 255.255.255.0
+netmask_lo => 255.0.0.0
+network_eth0 => 192.168.1.0
+network_lo => 127.0.0.0
+operatingsystem => CentOS
+operatingsystemmajrelease => 6
+operatingsystemrelease => 6.7
+os => {"release"=>{"minor"=>"7", "full"=>"6.7", "major"=>"6"}, "family"=>"RedHat", "lsb"=>{"majdistrelease"=>"6", "release"=>":base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch", "distdescription"=>"CentOS release 6.7 (Final)", "distrelease"=>"6.7", "minordistrelease"=>"7", "distcodename"=>"Final", "distid"=>"CentOS"}, "name"=>"CentOS"}
+osfamily => RedHat
+partitions => {"sda1"=>{"mount"=>"/boot", "filesystem"=>"ext4", "uuid"=>"ec5dc9f2-55d8-4abf-b17d-043128cbeea6", "size"=>"3145728"}, "sda2"=>{"filesystem"=>"LVM2_member", "size"=>"101709824"}}
+path => /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+physicalprocessorcount => 1
+processor0 => Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz
+processorcount => 1
+processors => {"count"=>1, "physicalcount"=>1, "models"=>["Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz"]}
+productname => VMware Virtual Platform
+ps => ps -ef
+puppetversion => 3.8.4
+rubyplatform => x86_64-linux
+rubysitedir => /usr/lib/ruby/site_ruby/1.8
+rubyversion => 1.8.7
+selinux => false
+serialnumber => VMware-56 4d d6 7b 94 30 06 4e-a4 9d 11 28 ce ce 49 c3
+sshdsakey => AAAAB3NzaC1kc3MAAACBALQHnfB1XB6XE2fwIjHiNh4AkRtIpSx+jWGqfE03o0tSEY82nKNBW+vPjna7MMfy5Yy29q4EeQWq/zCZiZEa2PZ1viKdUExR4m5WZUm7R5d/aOyTtjrfsDmGDTsKVrnwYUHpCnokIgrQu/Y5DTqjOcTLEIB8ZQjR9Ra1FLv61cLVAAAAFQCE/xsOYfqjTgjZI90PUaDZyjTHhwAAAIEAsfJPRBDdzsFzh2MQmAc1stoeNZEisNDcNkyefRsalhVU6Aftw7I+p8fDwsuCOp4knc00gjTtEZCoZUp+qqx9/mInIF/8vWg4KZdxqBTRzmNreWznU7FW+94SKHwnZlPOJcPmj09iK1WsdPfDEUht0zY0Wq9u8pnTCeomd7kYW18AAACAQNA+h5Ci5qbDhpWoXSQzo8e1B4vvqXWjaLdpTlk+GO1YKstExIC3v0D9RTEVbLAV2ArYGlZ0NJ14p9cw9K46X7Qukg4EGOEcV5PPGrKiYt6/D8W8RM0c/XAXAecqyOVfLpNdF7IYOisQ2jbAhml2/C1QIuwdDCRim6hYwGtXoJ8=
+sshfp_dsa => SSHFP 2 1 b98004bd8caa6328f9e6aac621175edf3a17a03e
+SSHFP 2 2 681d82b1c43e3fda97020146d85a27cd68e1fb9bc93f8d9b53330973497e26a0
+sshfp_rsa => SSHFP 1 1 224a1ed6a73be764fab6811c97ab5c55917d2c70
+SSHFP 1 2 ef9a442bb304128a84dfbe30e711a0f8137d9b985be0686da72e1ec8321a5c03
+sshrsakey => AAAAB3NzaC1yc2EAAAABIwAAAQEAlBAsxiMfiUrkdkaFczDsZ9VcmsdueUBvkxJKBWTkeP0tbRwjqTUQRQiVWFIlLGhSbYjsUvIVG/wXCAKiIv9fEU+AKM3Ud4ou9SYVcFW8wOlmhMW652E3GBQi6ACoQkVOmuXy1nY5tt1uH16iU0F+iqqsDr1zi6a/aiS1lYNfrE5FImZf1psmO8sEFHCFp2v7c+ymWIZqCYGJSIIBRbUTdbkZeNU1RYzl+Tnc0PKH8iOp0KkeJ4gC74FsOK2kpY6U1jhyGWLt6g7ymA8t2YFX/rBEGe33DEkc/f+7N9elPIcBo5WmYu4jI2blECddTWXCg5/8F2H/OEznwRJHyvxdEw==
+swapfree => 3.98 GB
+swapfree_mb => 4077.82
+swapsize => 4.00 GB
+swapsize_mb => 4096.00
+system_uptime => {"seconds"=>1597414, "days"=>18, "hours"=>443, "uptime"=>"18 days"}
+timezone => EST
+type => Other
+uniqueid => a8c04101
+uptime => 18 days
+uptime_days => 18
+uptime_hours => 443
+uptime_seconds => 1597414
+uuid => 564DD67B-9430-064E-A49D-1128CECE49C3
+virtual => vmware

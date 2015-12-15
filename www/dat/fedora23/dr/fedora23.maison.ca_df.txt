@@ -1,0 +1,13 @@
+# Company_Name - Mon Dec 14 05:06:02 CST 2015
+# Output of /bin/df -h command on fedora23.maison.ca
+#
+Filesystem                        Size  Used Avail Use% Mounted on
+devtmpfs                          991M     0  991M   0% /dev
+tmpfs                            1001M  112K 1001M   1% /dev/shm
+tmpfs                            1001M  1.3M 1000M   1% /run
+tmpfs                            1001M     0 1001M   0% /sys/fs/cgroup
+/dev/mapper/fedora_fedora23-root   47G  5.6G   39G  13% /
+tmpfs                            1001M  916K 1000M   1% /tmp
+/dev/sda1                         477M  161M  287M  36% /boot
+tmpfs                             201M   20K  201M   1% /run/user/42
+tmpfs                             201M     0  201M   0% /run/user/0

@@ -1,0 +1,9 @@
+-e # Company_Name - Mon Dec 14 05:06:02 EST 2015
+-e # Output of /bin/df -h command on ubuntu1204
+#
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        29G  3.2G   24G  12% /
+udev            494M   12K  494M   1% /dev
+tmpfs           101M  704K  100M   1% /run
+none            5.0M     0  5.0M   0% /run/lock
+none            501M  144K  501M   1% /run/shm

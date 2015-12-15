@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:11 EST 2015
+# Output of /usr/sbin/pvdisplay command on bilbo.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               rootvg
+  PV Size               29.30 GB / not usable 20.21 MB
+  Allocatable           yes 
+  PE Size (KByte)       32768
+  Total PE              937
+  Free PE               397
+  Allocated PE          540
+  PV UUID               dT6v2X-lA51-XNVz-iv11-lqOo-ZWuq-pg38j5
+   

@@ -1,0 +1,277 @@
+AAA,progname,nmon
+AAA,command,/usr/bin/nmon -s300 -c -t -m /sadmin/dat/nmon -f 
+AAA,version,14g
+AAA,disks_per_line,150
+AAA,max_disks,256,set by -d option
+AAA,disks,5,
+AAA,host,rhel4
+AAA,user,root
+AAA,OS,Linux,2.6.9-106.EL,#1 Tue Dec 16 11:22:04 EST 2014,i686
+AAA,runname,rhel4
+AAA,time,20:00.01
+AAA,date,11-DEC-2015
+AAA,interval,300
+AAA,snapshots,0
+AAA,cpus,1
+AAA,proc_stat_variables,7
+AAA,note0, Warning - use the UNIX sort command to order this file before loading into a spreadsheet
+AAA,note1, The First Column is simply to get the output sorted in the right order
+AAA,note2, The T0001-T9999 column is a snapshot number. To work out the actual time; see the ZZZ section at the end
+CPU001,CPU 1 rhel4,User%,Sys%,Wait%,Idle%
+CPU_ALL,CPU Total rhel4,User%,Sys%,Wait%,Idle%,Busy,CPUs
+MEM,Memory MB rhel4,memtotal,hightotal,lowtotal,swaptotal,memfree,highfree,lowfree,swapfree,memshared,cached,active,bigfree,buffers,swapcached,inactive
+PROC,Processes rhel4,Runnable,Blocked,pswitch,syscall,read,write,fork,exec,sem,msg
+NET,Network I/O rhel4,lo-read-KB/s,eth0-read-KB/s,sit0-read-KB/s,lo-write-KB/s,eth0-write-KB/s,sit0-write-KB/s,
+NETPACKET,Network Packets rhel4,lo-read/s,eth0-read/s,sit0-read/s,lo-write/s,eth0-write/s,sit0-write/s,
+DISKBUSY,Disk %Busy rhel4,sda,sda1,sda2,dm-0,dm-1
+DISKREAD,Disk Read KB/s rhel4,sda,sda1,sda2,dm-0,dm-1
+DISKWRITE,Disk Write KB/s rhel4,sda,sda1,sda2,dm-0,dm-1
+DISKXFER,Disk transfers per second rhel4,sda,sda1,sda2,dm-0,dm-1
+DISKBSIZE,Disk Block Size rhel4,sda,sda1,sda2,dm-0,dm-1
+DGBUSY,Disk Group Busy rhel4
+DGREAD,Disk Group Read KB/s rhel4
+DGWRITE,Disk Group Write KB/s rhel4
+DGSIZE,Disk Group Block Size KB rhel4
+DGXFER,Disk Group Transfers/s rhel4
+JFSFILE,JFS Filespace %Used rhel4,/,/boot
+BBBP,000,/etc/release
+BBBP,001,/etc/release,"Red Hat Enterprise Linux AS release 4 (Nahant Update 9)"
+BBBP,002,lsb_release
+BBBP,003,lsb_release,"LSB Version:	:core-3.0-ia32:core-3.0-noarch:graphics-3.0-ia32:graphics-3.0-noarch"
+BBBP,004,lsb_release,"Distributor ID:	RedHatEnterpriseAS"
+BBBP,005,lsb_release,"Description:	Red Hat Enterprise Linux AS release 4 (Nahant Update 9)"
+BBBP,006,lsb_release,"Release:	4"
+BBBP,007,lsb_release,"Codename:	NahantUpdate9"
+BBBP,008,fdisk-l
+BBBP,009,fdisk-l,""
+BBBP,010,fdisk-l,"Disk /dev/sda: 8589 MB, 8589934592 bytes"
+BBBP,011,fdisk-l,"255 heads, 63 sectors/track, 1044 cylinders"
+BBBP,012,fdisk-l,"Units = cylinders of 16065 * 512 = 8225280 bytes"
+BBBP,013,fdisk-l,""
+BBBP,014,fdisk-l,"   Device Boot      Start         End      Blocks   Id  System"
+BBBP,015,fdisk-l,"ddev/sda1   *           1          13      104391   83  Linux"
+BBBP,016,fdisk-l,"ddev/sda2              14        1044     8281507+  8e  Linux LVM"
+BBBP,017,/proc/cpuinfo
+BBBP,018,/proc/cpuinfo,"processor	: 0"
+BBBP,019,/proc/cpuinfo,"vendor_id	: GenuineIntel"
+BBBP,020,/proc/cpuinfo,"cpu family	: 6"
+BBBP,021,/proc/cpuinfo,"model		: 26"
+BBBP,022,/proc/cpuinfo,"model name	: Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz"
+BBBP,023,/proc/cpuinfo,"stepping	: 5"
+BBBP,024,/proc/cpuinfo,"cpu MHz		: 2801.705"
+BBBP,025,/proc/cpuinfo,"cache size	: 8192 KB"
+BBBP,026,/proc/cpuinfo,"fdiv_bug	: no"
+BBBP,027,/proc/cpuinfo,"hlt_bug		: no"
+BBBP,028,/proc/cpuinfo,"f00f_bug	: no"
+BBBP,029,/proc/cpuinfo,"coma_bug	: no"
+BBBP,030,/proc/cpuinfo,"fpu		: yes"
+BBBP,031,/proc/cpuinfo,"fpu_exception	: yes"
+BBBP,032,/proc/cpuinfo,"cpuid level	: 11"
+BBBP,033,/proc/cpuinfo,"wp		: yes"
+BBBP,034,/proc/cpuinfo,"flags		: fpu vme de pse tsc msr pae mce cx8 apic mtrr pge mca cmov pat pse36 clflush dts mmx fxsr sse sse2 ss nx rdtscp lm constant_tsc pni popcnt"
+BBBP,035,/proc/cpuinfo,"bogomips	: 5603.44"
+BBBP,036,/proc/cpuinfo,""
+BBBP,037,/proc/meminfo
+BBBP,038,/proc/meminfo,"MemTotal:       515440 kB"
+BBBP,039,/proc/meminfo,"MemFree:        298236 kB"
+BBBP,040,/proc/meminfo,"Buffers:         23656 kB"
+BBBP,041,/proc/meminfo,"Cached:         142516 kB"
+BBBP,042,/proc/meminfo,"SwapCached:          0 kB"
+BBBP,043,/proc/meminfo,"Active:          80052 kB"
+BBBP,044,/proc/meminfo,"Inactive:       110924 kB"
+BBBP,045,/proc/meminfo,"HighTotal:           0 kB"
+BBBP,046,/proc/meminfo,"HighFree:            0 kB"
+BBBP,047,/proc/meminfo,"LowTotal:       515440 kB"
+BBBP,048,/proc/meminfo,"LowFree:        298236 kB"
+BBBP,049,/proc/meminfo,"SwapTotal:      524280 kB"
+BBBP,050,/proc/meminfo,"SwapFree:       524280 kB"
+BBBP,051,/proc/meminfo,"Dirty:             184 kB"
+BBBP,052,/proc/meminfo,"Writeback:           0 kB"
+BBBP,053,/proc/meminfo,"Mapped:          45004 kB"
+BBBP,054,/proc/meminfo,"Slab:            13288 kB"
+BBBP,055,/proc/meminfo,"CommitLimit:    782000 kB"
+BBBP,056,/proc/meminfo,"Committed_AS:    77992 kB"
+BBBP,057,/proc/meminfo,"PageTables:       1128 kB"
+BBBP,058,/proc/meminfo,"VmallocTotal:   499704 kB"
+BBBP,059,/proc/meminfo,"VmallocUsed:      4044 kB"
+BBBP,060,/proc/meminfo,"VmallocChunk:   495536 kB"
+BBBP,061,/proc/meminfo,"HugePages_Total:     0"
+BBBP,062,/proc/meminfo,"HugePages_Free:      0"
+BBBP,063,/proc/meminfo,"Hugepagesize:     4096 kB"
+BBBP,064,/proc/stat
+BBBP,065,/proc/stat,"cpu  1694 0 1491 2658499 15370 13 0"
+BBBP,066,/proc/stat,"cpu0 1694 0 1491 2658499 15370 13 0"
+BBBP,067,/proc/stat,"intr 27142651 26774763 11 0 8 8 0 7 0 92 0 0 0 67 0 0 332235 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3012 0 0 0 0 0 0 0 15787 0 0 0 0 0 0 0 56 0 0 0 0 0 0 0 16605 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,068,/proc/stat,"ctxt 1130006"
+BBBP,069,/proc/stat,"btime 1449855227"
+BBBP,070,/proc/stat,"processes 20712"
+BBBP,071,/proc/stat,"procs_running 3"
+BBBP,072,/proc/stat,"procs_blocked 0"
+BBBP,073,/proc/version
+BBBP,074,/proc/version,"Linux version 2.6.9-106.EL (mockbuild@x86-029.build.eng.bos.redhat.com) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-11)) #1 Tue Dec 16 11:22:04 EST 2014"
+BBBP,075,/proc/net/dev
+BBBP,076,/proc/net/dev,"Inter-|   Receive                                                |  Transmit"
+BBBP,077,/proc/net/dev," face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed"
+BBBP,078,/proc/net/dev,"    lo: 3619260    2563    0    0    0     0          0         0  3619260    2563    0    0    0     0       0          0"
+BBBP,079,/proc/net/dev,"  eth0: 2161191   18437    0    0    0     0          0         0    37158     398    0    0    0     0       0          0"
+BBBP,080,/proc/net/dev,"  sit0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0"
+BBBP,081,/proc/diskinfo
+BBBP,082,/proc/diskstats
+BBBP,083,/proc/diskstats,"   1    0 ram0 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,084,/proc/diskstats,"   1    1 ram1 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,085,/proc/diskstats,"   1    2 ram2 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,086,/proc/diskstats,"   1    3 ram3 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,087,/proc/diskstats,"   1    4 ram4 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,088,/proc/diskstats,"   1    5 ram5 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,089,/proc/diskstats,"   1    6 ram6 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,090,/proc/diskstats,"   1    7 ram7 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,091,/proc/diskstats,"   1    8 ram8 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,092,/proc/diskstats,"   1    9 ram9 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,093,/proc/diskstats,"   1   10 ram10 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,094,/proc/diskstats,"   1   11 ram11 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,095,/proc/diskstats,"   1   12 ram12 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,096,/proc/diskstats,"   1   13 ram13 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,097,/proc/diskstats,"   1   14 ram14 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,098,/proc/diskstats,"   1   15 ram15 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,099,/proc/diskstats,"  22    0 hdc 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,100,/proc/diskstats,"   8    0 sda 5759 1620 292118 436564 10336 13318 189244 148907 0 167597 585471"
+BBBP,101,/proc/diskstats,"   8    1 sda1 48 491 1088 1894 2 0 4 1 0 1427 1895"
+BBBP,102,/proc/diskstats,"   8    2 sda2 5697 1020 290046 434479 10334 13318 189240 148906 0 166227 583385"
+BBBP,103,/proc/diskstats," 253    0 dm-0 6439 0 289402 490629 23655 0 189240 287104 0 165579 777735"
+BBBP,104,/proc/diskstats," 253    1 dm-1 45 0 360 416 0 0 0 0 0 242 416"
+BBBP,105,/proc/diskstats,"   2    0 fd0 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,106,/proc/diskstats,"   9    0 md0 0 0 0 0 0 0 0 0 0 0 0"
+BBBP,107,/sbin/multipath
+BBBP,108,/dev/mapper
+BBBP,109,/dev/mapper,"total 0"
+BBBP,110,/dev/mapper,"brw-rw----  1 root disk 253,  0 Dec 11 07:33 VolGroup00-LogVol00"
+BBBP,111,/dev/mapper,"brw-rw----  1 root disk 253,  1 Dec 11 07:33 VolGroup00-LogVol01"
+BBBP,112,/dev/mapper,"crw-------  1 root root  10, 63 Dec 11 07:33 control"
+BBBP,113,/dev/mpath
+BBBP,114,/dev/dm-*
+BBBP,115,/dev/dm-*,"brw-r-----  1 root root 253, 0 Dec 11 07:33 /dev/dm-0"
+BBBP,116,/dev/dm-*,"brw-r-----  1 root root 253, 1 Dec 11 07:33 /dev/dm-1"
+BBBP,117,/dev/md*
+BBBP,118,/dev/md*,"brw-rw----  1 root disk 9,  0 Dec 11 12:34 /dev/md0"
+BBBP,119,/dev/md*,"brw-r-----  1 root disk 9,  1 Dec 11 12:34 /dev/md1"
+BBBP,120,/dev/md*,"brw-r-----  1 root disk 9, 10 Dec 11 12:34 /dev/md10"
+BBBP,121,/dev/md*,"brw-r-----  1 root disk 9, 11 Dec 11 12:34 /dev/md11"
+BBBP,122,/dev/md*,"brw-r-----  1 root disk 9, 12 Dec 11 12:34 /dev/md12"
+BBBP,123,/dev/md*,"brw-r-----  1 root disk 9, 13 Dec 11 12:34 /dev/md13"
+BBBP,124,/dev/md*,"brw-r-----  1 root disk 9, 14 Dec 11 12:34 /dev/md14"
+BBBP,125,/dev/md*,"brw-r-----  1 root disk 9, 15 Dec 11 12:34 /dev/md15"
+BBBP,126,/dev/md*,"brw-r-----  1 root disk 9, 16 Dec 11 12:34 /dev/md16"
+BBBP,127,/dev/md*,"brw-r-----  1 root disk 9, 17 Dec 11 12:34 /dev/md17"
+BBBP,128,/dev/md*,"brw-r-----  1 root disk 9, 18 Dec 11 12:34 /dev/md18"
+BBBP,129,/dev/md*,"brw-r-----  1 root disk 9, 19 Dec 11 12:34 /dev/md19"
+BBBP,130,/dev/md*,"brw-r-----  1 root disk 9,  2 Dec 11 12:34 /dev/md2"
+BBBP,131,/dev/md*,"brw-r-----  1 root disk 9, 20 Dec 11 12:34 /dev/md20"
+BBBP,132,/dev/md*,"brw-r-----  1 root disk 9, 21 Dec 11 12:34 /dev/md21"
+BBBP,133,/dev/md*,"brw-r-----  1 root disk 9, 22 Dec 11 12:34 /dev/md22"
+BBBP,134,/dev/md*,"brw-r-----  1 root disk 9, 23 Dec 11 12:34 /dev/md23"
+BBBP,135,/dev/md*,"brw-r-----  1 root disk 9, 24 Dec 11 12:34 /dev/md24"
+BBBP,136,/dev/md*,"brw-r-----  1 root disk 9, 25 Dec 11 12:34 /dev/md25"
+BBBP,137,/dev/md*,"brw-r-----  1 root disk 9, 26 Dec 11 12:34 /dev/md26"
+BBBP,138,/dev/md*,"brw-r-----  1 root disk 9, 27 Dec 11 12:34 /dev/md27"
+BBBP,139,/dev/md*,"brw-r-----  1 root disk 9, 28 Dec 11 12:34 /dev/md28"
+BBBP,140,/dev/md*,"brw-r-----  1 root disk 9, 29 Dec 11 12:34 /dev/md29"
+BBBP,141,/dev/md*,"brw-r-----  1 root disk 9,  3 Dec 11 12:34 /dev/md3"
+BBBP,142,/dev/md*,"brw-r-----  1 root disk 9, 30 Dec 11 12:34 /dev/md30"
+BBBP,143,/dev/md*,"brw-r-----  1 root disk 9, 31 Dec 11 12:34 /dev/md31"
+BBBP,144,/dev/md*,"brw-r-----  1 root disk 9,  4 Dec 11 12:34 /dev/md4"
+BBBP,145,/dev/md*,"brw-r-----  1 root disk 9,  5 Dec 11 12:34 /dev/md5"
+BBBP,146,/dev/md*,"brw-r-----  1 root disk 9,  6 Dec 11 12:34 /dev/md6"
+BBBP,147,/dev/md*,"brw-r-----  1 root disk 9,  7 Dec 11 12:34 /dev/md7"
+BBBP,148,/dev/md*,"brw-r-----  1 root disk 9,  8 Dec 11 12:34 /dev/md8"
+BBBP,149,/dev/md*,"brw-r-----  1 root disk 9,  9 Dec 11 12:34 /dev/md9"
+BBBP,150,/dev/sd*
+BBBP,151,/dev/sd*,"brw-rw----  1 root disk 8, 0 Dec 11 07:33 /dev/sda"
+BBBP,152,/dev/sd*,"brw-rw----  1 root disk 8, 1 Dec 11 07:33 /dev/sda1"
+BBBP,153,/dev/sd*,"brw-rw----  1 root disk 8, 2 Dec 11 07:33 /dev/sda2"
+BBBP,154,/proc/partitions
+BBBP,155,/proc/partitions,"major minor  #blocks  name"
+BBBP,156,/proc/partitions,""
+BBBP,157,/proc/partitions,"   8     0    8388608 sda"
+BBBP,158,/proc/partitions,"   8     1     104391 sda1"
+BBBP,159,/proc/partitions,"   8     2    8281507 sda2"
+BBBP,160,/proc/partitions," 253     0    7700480 dm-0"
+BBBP,161,/proc/partitions," 253     1     524288 dm-1"
+BBBP,162,/proc/1/stat
+BBBP,163,/proc/1/stat,"1 (init) S 0 0 0 0 -1 4194560 481 1264965 16 538 0 75 673 431 16 0 1 0 13 2744320 135 4294967295 134512640 134541112 3220165120 3220155484 8222626 0 0 1475401980 671819267 3222816941 0 0 0 0 0 0"
+BBBP,164,/proc/1/statm
+BBBP,165,/proc/1/statm,"670 135 115 6 0 308 0"
+BBBP,166,/proc/net/rpc/nfs
+BBBP,167,/proc/net/rpc/nfsd
+BBBP,168,ifconfig
+BBBP,169,ifconfig,"eth0      Link encap:Ethernet  HWaddr 00:50:56:89:F2:BD  "
+BBBP,170,ifconfig,"          inet addr:192.168.1.132  Bcast:192.168.1.255  Mask:255.255.255.0"
+BBBP,171,ifconfig,"          inet6 addr: 2607:fa48:6c05:adc0:250:56ff:fe89:f2bd/64 Scope:Global"
+BBBP,172,ifconfig,"          inet6 addr: fe80::250:56ff:fe89:f2bd/64 Scope:Link"
+BBBP,173,ifconfig,"          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1"
+BBBP,174,ifconfig,"          RX packets:18437 errors:0 dropped:0 overruns:0 frame:0"
+BBBP,175,ifconfig,"          TX packets:398 errors:0 dropped:0 overruns:0 carrier:0"
+BBBP,176,ifconfig,"          collisions:0 txqueuelen:1000 "
+BBBP,177,ifconfig,"          RX bytes:2161191 (2.0 MiB)  TX bytes:37158 (36.2 KiB)"
+BBBP,178,ifconfig,"          Interrupt:193 Base address:0x2024 "
+BBBP,179,ifconfig,""
+BBBP,180,ifconfig,"lo        Link encap:Local Loopback  "
+BBBP,181,ifconfig,"          inet addr:127.0.0.1  Mask:255.0.0.0"
+BBBP,182,ifconfig,"          inet6 addr: ::1/128 Scope:Host"
+BBBP,183,ifconfig,"          UP LOOPBACK RUNNING  MTU:16436  Metric:1"
+BBBP,184,ifconfig,"          RX packets:2563 errors:0 dropped:0 overruns:0 frame:0"
+BBBP,185,ifconfig,"          TX packets:2563 errors:0 dropped:0 overruns:0 carrier:0"
+BBBP,186,ifconfig,"          collisions:0 txqueuelen:0 "
+BBBP,187,ifconfig,"          RX bytes:3619260 (3.4 MiB)  TX bytes:3619260 (3.4 MiB)"
+BBBP,188,ifconfig,""
+BBBP,189,/bin/df-m
+BBBP,190,/bin/df-m,"Filesystem           1M-blocks      Used Available Use% Mounted on"
+BBBP,191,/bin/df-m,"ddev/mapper/VolGroup00-LogVol00"
+BBBP,192,/bin/df-m,"                          7402      4471      2556  64% /"
+BBBP,193,/bin/df-m,"ddev/sda1                   99        75        20  80% /boot"
+BBBP,194,/bin/df-m,"none                       252         0       252   0% /dev/shm"
+BBBP,195,/bin/mount
+BBBP,196,/bin/mount,"ddev/mapper/VolGroup00-LogVol00 on / type ext3 (rw)"
+BBBP,197,/bin/mount,"none on /proc type proc (rw)"
+BBBP,198,/bin/mount,"none on /sys type sysfs (rw)"
+BBBP,199,/bin/mount,"none on /dev/pts type devpts (rw,gid=5,mode=620)"
+BBBP,200,/bin/mount,"usbfs on /proc/bus/usb type usbfs (rw)"
+BBBP,201,/bin/mount,"ddev/sda1 on /boot type ext3 (rw)"
+BBBP,202,/bin/mount,"none on /dev/shm type tmpfs (rw)"
+BBBP,203,/bin/mount,"none on /proc/sys/fs/binfmt_misc type binfmt_misc (rw)"
+BBBP,204,/bin/mount,"sunrpc on /var/lib/nfs/rpc_pipefs type rpc_pipefs (rw)"
+BBBP,205,/etc/fstab
+BBBP,206,/etc/fstab,"# This file is edited by fstab-sync - see 'man fstab-sync' for details"
+BBBP,207,/etc/fstab,"ddev/VolGroup00/LogVol00 /                       ext3    defaults        1 1"
+BBBP,208,/etc/fstab,"LABEL=/boot             /boot                   ext3    defaults        1 2"
+BBBP,209,/etc/fstab,"none                    /dev/pts                devpts  gid=5,mode=620  0 0"
+BBBP,210,/etc/fstab,"none                    /dev/shm                tmpfs   defaults        0 0"
+BBBP,211,/etc/fstab,"none                    /proc                   proc    defaults        0 0"
+BBBP,212,/etc/fstab,"none                    /sys                    sysfs   defaults        0 0"
+BBBP,213,/etc/fstab,"ddev/VolGroup00/LogVol01 swap                    swap    defaults        0 0"
+BBBP,214,/etc/fstab,"ddev/hdc                /media/cdrecorder       auto    pamconsole,exec,noauto,managed 0 0"
+BBBP,215,/etc/fstab,"ddev/fd0                /media/floppy           auto    pamconsole,exec,noauto,managed 0 0"
+BBBP,216,netstat -r
+BBBP,217,netstat -r,"Kernel IP routing table"
+BBBP,218,netstat -r,"Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface"
+BBBP,219,netstat -r,"192.168.1.0     *               255.255.255.0   U         0 0          0 eth0"
+BBBP,220,netstat -r,"169.254.0.0     *               255.255.0.0     U         0 0          0 eth0"
+BBBP,221,netstat -r,"default         batlink.maison. 0.0.0.0         UG        0 0          0 eth0"
+BBBP,222,uptime
+BBBP,223,uptime," 20:00:02 up  7:26,  1 user,  load average: 0.00, 0.00, 0.00"
+BBBP,224,getconf PAGESIZE
+BBBP,225,getconf PAGESIZE,"4096"
+ZZZZ,T0001,20:00:03,11-DEC-2015
+CPU001,T0001,4.8,7.1,0.0,88.1
+CPU_ALL,T0001,4.8,7.1,0.0,88.1,,1
+MEM,T0001,503.4,0.0,503.4,512.0,291.2,0.0,291.2,512.0,-0.0,139.2,78.0,-1.0,23.1,0.0,108.3
+VM,Paging and Virtual Memory,nr_dirty,nr_writeback,nr_unstable,nr_page_table_pages,nr_mapped,nr_slab,pgpgin,pgpgout,pswpin,pswpout,pgfree,pgactivate,pgdeactivate,pgfault,pgmajfault,pginodesteal,slabs_scanned,kswapd_steal,kswapd_inodesteal,pageoutrun,allocstall,pgrotated,pgalloc_high,pgalloc_normal,pgalloc_dma,pgrefill_high,pgrefill_normal,pgrefill_dma,pgsteal_high,pgsteal_normal,pgsteal_dma,pgscan_kswapd_high,pgscan_kswapd_normal,pgscan_kswapd_dma,pgscan_direct_high,pgscan_direct_normal,pgscan_direct_dma
+VM,T0001,50,0,0,271,11215,3322,0,0,0,0,6987,4,0,28343,0,0,0,0,0,0,0,0,0,6843,0,0,0,0,0,0,0,0,0,0,0,0,0
+PROC,T0001,1,0,0.0,-1.0,-1.0,-1.0,0.0,-1.0,-1.0,-1.0
+NET,T0001,0.0,0.2,0.0,0.0,0.1,0.0,
+NETPACKET,T0001,0.0,2.4,0.0,0.0,1.6,0.0,
+JFSFILE,T0001,60.4,75.3
+DISKBUSY,T0001,0.0,0.0,0.0,0.0,0.0
+DISKREAD,T0001,0.0,0.0,0.0,0.0,0.0
+DISKWRITE,T0001,0.0,0.0,0.0,0.0,0.0
+DISKXFER,T0001,0.0,0.0,0.0,0.0,0.0
+DISKBSIZE,T0001,0.0,0.0,0.0,0.0,0.0

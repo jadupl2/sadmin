@@ -1,0 +1,31 @@
+# Company_Name - Thu Dec 10 08:30:04 EST 2015
+# Output of /sbin/lvs command on nomad.maison.ca
+#
+  LV        VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  adsmlog   rootvg -wi-ao----  64.00m                                                    
+  aix       rootvg -wi-ao---- 256.00m                                                    
+  cadmin    rootvg -wi-ao----  32.00m                                                    
+  gitrep    rootvg -wi-ao---- 128.00m                                                    
+  home      rootvg -wi-ao----   7.81g                                                    
+  installlv rootvg -wi-ao----   4.91g                                                    
+  linternux rootvg -wi-ao---- 128.00m                                                    
+  opt       rootvg -wi-ao----   2.00g                                                    
+  oslv      rootvg -wi-ao----  24.44g                                                    
+  perf      rootvg -wi-ao----  64.00m                                                    
+  rhellv    rootvg -wi-ao---- 219.75g                                                    
+  root      rootvg -wi-ao----   1.00g                                                    
+  sadmin    rootvg -wi-ao---- 256.00m                                                    
+  scomlv    rootvg -wi-ao----   4.00g                                                    
+  sharelv   rootvg -wi-ao---- 256.00m                                                    
+  slamlv    rootvg -wi-ao---- 256.00m                                                    
+  stbackup  rootvg -wi-ao----   1.00g                                                    
+  storix    rootvg -wi-ao---- 512.00m                                                    
+  svnlv     rootvg -wi-ao----   2.00g                                                    
+  swap00    rootvg -wi-ao----   4.00g                                                    
+  sysadmlv  rootvg -wi-ao---- 256.00m                                                    
+  sysinfo   rootvg -wi-ao----  14.66g                                                    
+  tmp       rootvg -wi-ao----   4.00g                                                    
+  usr       rootvg -wi-ao----   8.00g                                                    
+  usradm    rootvg -wi-ao---- 320.00m                                                    
+  var       rootvg -wi-ao----   4.00g                                                    
+  www       rootvg -wi-ao---- 512.00m                                                    

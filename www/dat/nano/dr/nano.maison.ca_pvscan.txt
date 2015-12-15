@@ -1,0 +1,5 @@
+# Company_Name - Sun Dec 13 21:54:32 EST 2015
+# Output of /sbin/pvscan command on nano.maison.ca
+#
+  PV /dev/sda2   VG rootvg   lvm2 [55.75 GiB / 23.12 GiB free]
+  Total: 1 [55.75 GiB] / in use: 1 [55.75 GiB] / in no VG: 0 [0   ]

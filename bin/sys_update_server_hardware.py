@@ -15,7 +15,7 @@ import MySQLdb, os, sys, pdb, socket, datetime, glob
 #                          Global Variables
 #############################################################################################
 CURDIR      = os.getcwd()                                       # Get Current Directory
-OSNAME      = os.name                                           # Get OS name (nt,dos,posix,...)
+OSTYPE      = os.name                                           # Get OS name (nt,dos,posix,...)
 PLATFORM    = sys.platform                                      # Get platform (win32,mac,posix)
 HOSTNAME    = socket.gethostname()                              # Get current hostname
 PGM_VER     = "1.6"                                             # Program Version

@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /sbin/pvdisplay command on rhel3.maison.ca
+#
+pvdisplay -- please enter a physical volume path
+

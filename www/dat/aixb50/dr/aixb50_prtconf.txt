@@ -1,0 +1,73 @@
+System Model: IBM,7046-B50
+Machine Serial Number: 102DD2F
+Processor Type: PowerPC_604e
+Processor Implementation Mode: POWER 604
+Processor Version: PV_604
+Number Of Processors: 1
+Processor Clock Speed: 375 MHz
+CPU Type: 32-bit
+Kernel Type: 32-bit
+LPAR Info: -1 NULL
+Memory Size: 1024 MB
+Good Memory Size: 1024 MB
+Platform Firmware level: system:TCP09267
+Firmware Version: IBM,TCP09267
+Console Login: enable
+Auto Restart: true
+Full Core: false
+ 
+Network Information
+	Host Name: aixb50
+	IP Address: 192.168.1.102
+	Sub Netmask: 255.255.255.0
+	Gateway: 192.168.1.1
+	Name Server: 192.168.1.126
+	Domain Name: maison.ca
+ 
+Paging Space Information
+	Total Paging Space: 512MB
+	Percent Used: 1%
+ 
+Volume Groups Information
+============================================================================== 
+rootvg:
+PV_NAME           PV STATE          TOTAL PPs   FREE PPs    FREE DISTRIBUTION
+hdisk0            active            542         18          00..00..00..00..18
+============================================================================== 
+ 
+INSTALLED RESOURCE LIST
+
+The following resources are installed on the machine.
++/- = Added or deleted from Resource List.
+*   = Diagnostic support not available.
+	
+  Model Architecture: chrp
+  Model Implementation: Uni-Processor, PCI bus
+	
++ sys0                         System Object
++ sysplanar0                   System Planar
+* pci0             P1          PCI Bus
+* isa0             P1          ISA Bus
++ fda0             P1/D1       Standard I/O Diskette Adapter
++ fd0              P1-D1       Diskette Drive
+* siokma0          P1/K1       Keyboard/Mouse Adapter
++ sioka0           P1/K1       Keyboard Adapter
++ sioma0           P1/K1       Mouse Adapter
++ siota0           P1/Q1       Tablet Adapter
++ paud0            P1/Q2       Ultimedia Integrated Audio
++ ppa0             P1/R1       CHRP IEEE1284 (ECP) Parallel Port Adapter
++ sa0              P1/S1       Standard I/O Serial Port
++ tty0             P1/S1-L0    Asynchronous Terminal
++ sa1              P1/S2       Standard I/O Serial Port
++ ent0             P1/E1       IBM 10/100 Mbps Ethernet PCI Adapter (23100020)
++ scsi0            P1/Z1       Wide/Fast-20 SCSI I/O Controller
++ hdisk0           P1/Z1-A2    16 Bit LVD SCSI Disk Drive (36400 MB)
++ cd0              P1/Z1-A3    16 Bit SCSI Multimedia CD-ROM Drive (650 MB)
++ hdisk1           P1/Z1-A4    16 Bit LVD SCSI Disk Drive (36400 MB)
++ scsi1            P1.1-I2/Z1  Wide/Fast-20 SCSI I/O Controller
++ fcs0             P1.1-I1/Q1  FC Adapter
++ fscsi0           P1.1-I1/Q1  FC SCSI I/O Controller Protocol Device
+* fcnet0           P1.1-I1/Q1  Fibre Channel Network Protocol Device
++ L2cache0                     L2 Cache
++ mem0                         Memory
++ proc0            P1-C1       Processor

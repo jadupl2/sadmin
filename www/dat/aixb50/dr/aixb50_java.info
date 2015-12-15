@@ -1,0 +1,41 @@
+c2h: JAVA Info for node aixb50
+Mon Dec 14 05:23:01 CST 2015
+Collector: JAVA
+***************
+AIX 5.3.0.0
+5300-12-01-1016
+***************
+ 
+FIX IZ90388 NOT installed !! Missing Java 1.4.2 32-Bit Update 1.4.2.395 SR13FP8
+FIX IZ85932 NOT installed !! Missing Java 1.4.2 32-Bit Update 1.4.2.380 SR13FP6
+FIX IZ78401 NOT installed !! Missing Java 1.4.2 32-Bit Update 1.4.2.365 SR13FP5
+FIX IZ70828 NOT installed !! Missing Java 1.4.2 32-Bit Update 1.4.2.335 SR13FP4
+FIX IZ65489 installed. You are using Java 1.4.2 32-Bit Update 1.4.2.320 SR13FP3
+J142_32=YES J142_64=NO BIT64=NO
+FIX IZ90860 NOT installed !! Missing Java 5.0.0 32-Bit Update 5.0.0.390 SR12FP3
+FIX IZ86553 NOT installed !! Missing Java 5.0.0 32-Bit Update 5.0.0.360 SR12FP2
+FIX IZ83153 NOT installed !! Missing Java 5.0.0 32-Bit Update 5.0.0.345 SR12FP1
+FIX IZ76420 NOT installed !! Missing Java 5.0.0 32-Bit Update 5.0.0.305 SR11FP2
+FIX IZ70125 NOT installed !! Missing Java 5.0.0 32-Bit Update 5.0.0.290 SR11FP1
+FIX IZ64936 installed. You are using Java 5.0.0 32-Bit Update 5.0.0.275 SR11
+J500_32=YES J500_64=NO BIT64=NO
+FIX IZ89819 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.250 SR9
+FIX IZ78662 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.215 SR8FP1
+FIX IZ74890 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.200 SR8
+FIX IZ67337 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.175 SR7
+FIX IZ63956 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.152 SR6
+FIX IZ62667 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.150 SR6
+FIX IZ52817 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.125 SR5
+FIX IZ50170 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.110 SR4+IZ48590
+FIX IZ37672 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.75 SR3
+FIX IZ30723 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.50 SR2
+FIX IZ20750 NOT installed !! Missing Java 6.0.0 32-Bit Update 6.0.0.25 SR1
+J600_32=YES J600_64=NO BIT64=NO
+ 
+: JAVA_142_32=YES               
+: JAVA_142_64=NO               
+: JAVA_500_32=YES               
+: JAVA_500_64=NO               
+: JAVA_600_32=YES               
+: JAVA_600_64=NO               
+*>>> EOF <<<

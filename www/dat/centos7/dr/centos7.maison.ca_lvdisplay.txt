@@ -1,0 +1,37 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/lvdisplay command on centos7.maison.ca
+#
+  --- Logical volume ---
+  LV Path                /dev/rootvg/root
+  LV Name                root
+  VG Name                rootvg
+  LV UUID                wZnrC3-ID4j-JQwN-U9dc-wsim-LqWI-Dqk61W
+  LV Write Access        read/write
+  LV Creation host, time dhcp222.maison.ca, 2015-03-20 14:50:54 -0400
+  LV Status              available
+  # open                 1
+  LV Size                37.49 GiB
+  Current LE             9598
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:1
+   
+  --- Logical volume ---
+  LV Path                /dev/rootvg/swap
+  LV Name                swap
+  VG Name                rootvg
+  LV UUID                vnXBy5-TcgC-hPKr-OJrx-l0QS-6Dgl-LoZ4uI
+  LV Write Access        read/write
+  LV Creation host, time dhcp222.maison.ca, 2015-03-20 14:51:02 -0400
+  LV Status              available
+  # open                 2
+  LV Size                2.02 GiB
+  Current LE             516
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     8192
+  Block device           253:0
+   

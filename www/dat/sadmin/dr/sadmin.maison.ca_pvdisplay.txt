@@ -1,0 +1,14 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /sbin/pvdisplay command on sadmin.maison.ca
+#
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               rootvg
+  PV Size               74.50 GiB / not usable 3.00 MiB
+  Allocatable           yes 
+  PE Size               4.00 MiB
+  Total PE              19071
+  Free PE               12271
+  Allocated PE          6800
+  PV UUID               uyhZRT-004F-VoiH-aUaI-Rfb5-JpUA-yY7bYf
+   

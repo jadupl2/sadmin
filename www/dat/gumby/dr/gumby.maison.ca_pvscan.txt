@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:17 EST 2015
+# Output of /sbin/pvscan command on gumby.maison.ca
+#
+  PV /dev/sda5   VG rootvg   lvm2 [141.59 GB / 74.84 GB free]
+  Total: 1 [141.59 GB] / in use: 1 [141.59 GB] / in no VG: 0 [0   ]

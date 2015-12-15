@@ -1,0 +1,6 @@
+# Company_Name - Mon Dec 14 05:06:18 EST 2015
+# Output of /usr/sbin/lvs command on rhel4.maison.ca
+#
+  LV       VG         Attr   LSize   Origin Snap%  Move Log Copy%  Convert
+  LogVol00 VolGroup00 -wi-ao   7.34G                                      
+  LogVol01 VolGroup00 -wi-ao 512.00M                                      

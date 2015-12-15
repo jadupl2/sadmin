@@ -1,0 +1,8 @@
+# Company_Name - Mon Dec 14 05:06:31 EST 2015
+# Output of /sbin/pvscan command on gotham.maison.ca
+#
+  PV /dev/sdd1   VG data2vg      lvm2 [96.00 MiB / 96.00 MiB free]
+  PV /dev/sdc1   VG datavg       lvm2 [15.99 GiB / 5.98 GiB free]
+  PV /dev/sdb1   VG datavg_sdb   lvm2 [15.99 GiB / 11.65 GiB free]
+  PV /dev/sda2   VG rootvg       lvm2 [55.75 GiB / 7.06 GiB free]
+  Total: 4 [87.83 GiB] / in use: 4 [87.83 GiB] / in no VG: 0 [0   ]

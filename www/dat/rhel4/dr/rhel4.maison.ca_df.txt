@@ -1,0 +1,8 @@
+# Company_Name - Mon Dec 14 05:06:21 EST 2015
+# Output of /bin/df -h command on rhel4.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/VolGroup00-LogVol00
+                      7.3G  4.4G  2.5G  64% /
+/dev/sda1              99M   75M   20M  80% /boot
+none                  252M     0  252M   0% /dev/shm

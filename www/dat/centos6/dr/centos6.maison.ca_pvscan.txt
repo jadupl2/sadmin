@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:48 EST 2015
+# Output of /sbin/pvscan command on centos6.maison.ca
+#
+  PV /dev/sda2   VG rootvg   lvm2 [55.75 GiB / 7.03 GiB free]
+  Total: 1 [55.75 GiB] / in use: 1 [55.75 GiB] / in no VG: 0 [0   ]

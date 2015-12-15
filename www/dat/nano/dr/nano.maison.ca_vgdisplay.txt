@@ -1,0 +1,24 @@
+# Company_Name - Sun Dec 13 21:54:35 EST 2015
+# Output of /sbin/vgdisplay command on nano.maison.ca
+#
+  --- Volume group ---
+  VG Name               rootvg
+  System ID             
+  Format                lvm2
+  Metadata Areas        1
+  Metadata Sequence No  22
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                14
+  Open LV               14
+  Max PV                0
+  Cur PV                1
+  Act PV                1
+  VG Size               55.75 GiB
+  PE Size               32.00 MiB
+  Total PE              1784
+  Alloc PE / Size       1044 / 32.62 GiB
+  Free  PE / Size       740 / 23.12 GiB
+  VG UUID               4L1vhM-b0ZJ-tBgk-J08W-VlVK-KSzc-Lm4qeb
+   

@@ -1,0 +1,5 @@
+# Company_Name - Thu Dec 10 08:30:03 EST 2015
+# Output of /sbin/vgscan command on nomad.maison.ca
+#
+  Reading all physical volumes.  This may take a while...
+  Found volume group "rootvg" using metadata type lvm2

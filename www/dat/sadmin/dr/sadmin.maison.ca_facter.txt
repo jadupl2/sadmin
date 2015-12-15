@@ -1,0 +1,104 @@
+# Company_Name - Mon Dec 14 05:06:02 EST 2015
+# Output of /bin/facter command on sadmin.maison.ca
+#
+adm_idate  =>  2015_10_28_16_32_47
+architecture => x86_64
+augeasversion => 1.1.0
+bios_release_date => 09/30/2014
+bios_vendor => Phoenix Technologies LTD
+bios_version => 6.00
+blockdevice_fd0_size => 0
+blockdevice_sda_model => Virtual disk
+blockdevice_sda_size => 80530636800
+blockdevice_sda_vendor => VMware
+blockdevice_sr0_model => VMware IDE CDR10
+blockdevice_sr0_size => 1073741312
+blockdevice_sr0_vendor => NECVMWar
+blockdevices => fd0,sda,sr0
+boardmanufacturer => Intel Corporation
+boardproductname => 440BX Desktop Reference Platform
+boardserialnumber => None
+dhcp_servers => {"system"=>"192.168.1.68", "eno16777728"=>"192.168.1.68"}
+domain => maison.ca
+facterversion => 2.4.1
+filesystems => ext2,ext3,ext4
+fqdn => sadmin.maison.ca
+gid => root
+hardwareisa => x86_64
+hardwaremodel => x86_64
+hostname => sadmin
+id => root
+interfaces => eno16777728,lo
+ipaddress => 192.168.1.20
+ipaddress6 => 2607:fa48:6c05:adc0:250:56ff:fea8:6d03
+ipaddress6_eno16777728 => 2607:fa48:6c05:adc0:250:56ff:fea8:6d03
+ipaddress_eno16777728 => 192.168.1.20
+ipaddress_lo => 127.0.0.1
+is_virtual => true
+kernel => Linux
+kernelmajversion => 3.10
+kernelrelease => 3.10.0-229.20.1.el7.x86_64
+kernelversion => 3.10.0
+lsbdistcodename => Core
+lsbdistdescription => CentOS Linux release 7.1.1503 (Core) 
+lsbdistid => CentOS
+lsbdistrelease => 7.1.1503
+lsbmajdistrelease => 7
+lsbminordistrelease => 1
+lsbrelease => :core-4.1-amd64:core-4.1-noarch
+macaddress => 00:50:56:a8:6d:03
+macaddress_eno16777728 => 00:50:56:a8:6d:03
+manufacturer => VMware, Inc.
+memoryfree => 824.47 MB
+memoryfree_mb => 824.47
+memorysize => 1.78 GB
+memorysize_mb => 1826.66
+mtu_eno16777728 => 1500
+mtu_lo => 65536
+netmask => 255.255.255.0
+netmask_eno16777728 => 255.255.255.0
+netmask_lo => 255.0.0.0
+network_eno16777728 => 192.168.1.0
+network_lo => 127.0.0.0
+operatingsystem => CentOS
+operatingsystemmajrelease => 7
+operatingsystemrelease => 7.1.1503
+os => {"name"=>"CentOS", "family"=>"RedHat", "release"=>{"major"=>"7", "minor"=>"1", "full"=>"7.1.1503"}, "lsb"=>{"distcodename"=>"Core", "distid"=>"CentOS", "distdescription"=>"CentOS Linux release 7.1.1503 (Core) ", "release"=>":core-4.1-amd64:core-4.1-noarch", "distrelease"=>"7.1.1503", "majdistrelease"=>"7", "minordistrelease"=>"1"}}
+osfamily => RedHat
+partitions => {"sda1"=>{"uuid"=>"91c67bf6-3882-426b-9637-a38efb71fa5c", "size"=>"1048576", "mount"=>"/boot", "filesystem"=>"ext4"}, "sda2"=>{"size"=>"156235776", "filesystem"=>"LVM2_member"}}
+path => /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+physicalprocessorcount => 1
+processor0 => Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz
+processorcount => 1
+processors => {"models"=>["Intel(R) Xeon(R) CPU           W3530  @ 2.80GHz"], "count"=>1, "physicalcount"=>1}
+productname => VMware Virtual Platform
+ps => ps -ef
+puppetversion => 3.6.2
+rubyplatform => x86_64-linux
+rubysitedir => /usr/local/share/ruby/site_ruby/
+rubyversion => 2.0.0
+selinux => false
+serialnumber => VMware-42 28 c3 fd 9b 4f be 74-84 f9 d2 3e ce ed dd cb
+sshecdsakey => AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJxfAbXfr7rMDlApoDlmA85dnsPGwXgkDGLSRYrHPdBYSNnpLTSRaGezbT6JC3Ui9Dw/o/3+NdcuDUfipvAv75U=
+sshed25519key => AAAAC3NzaC1lZDI1NTE5AAAAILH8gjaa62S8XieWtTpykIEi+IL9eN+I9h0z/KHIoBrB
+sshfp_ecdsa => SSHFP 3 1 8adcd55e1463a35b17c12cec541f60226fc25590
+SSHFP 3 2 0508d44f381452ae10f9c934257db08ba83d192d859d8f6ce63da5375b0b8b55
+sshfp_ed25519 => SSHFP 4 1 bd4bd6bd5989f5df248b9585eefa7d0daf5dc2e4
+SSHFP 4 2 6b6633e42aec131c444b772875064b3a429fc63c0112971d216ad7be9bac94e7
+sshfp_rsa => SSHFP 1 1 d793823b1185dd7e3f5e6358b8417e251bae6346
+SSHFP 1 2 c97dc2d681936c2f8026c8e7957e6e8f20dffad0352f2572a42a1b6e15d2a213
+sshrsakey => AAAAB3NzaC1yc2EAAAADAQABAAABAQC0NB+XTvqLeRozQZqfwh6ejL5dTvaNmWd/sIlpzwewI+WZMCl6icGmDXJzUJwDvVE9/3hqliZ67ME4UCR7Hxa0x4WCs8sTlClBjgI+CDxfuOjGNmxYo9gUrvi2xI8wYKG2T22Cwgv/ZNrtxjIuN2Nuk1rdvyKfWJwK84Xl8v9M6KPmJOVWvzEVWq9sgpewFHt0BH6Ydf/oX2NWxDzO0ugcq6qrTuOXQ4sK4rRdNW6iYrweSPCtQHiqGZ+/TxC/naapjHAoLtMuxcZpG3abUiM+q8LHFF1GldxBuq8QamsHK/o/82fWiAocRZiHE2Cl1vUt7a+eSCNKQKpnm8/HerRZ
+swapfree => 4.00 GB
+swapfree_mb => 4095.68
+swapsize => 4.00 GB
+swapsize_mb => 4096.00
+system_uptime => {"seconds"=>232368, "hours"=>64, "days"=>2, "uptime"=>"2 days"}
+timezone => EST
+type => Other
+uniqueid => a8c01401
+uptime => 2 days
+uptime_days => 2
+uptime_hours => 64
+uptime_seconds => 232368
+uuid => 4228C3FD-9B4F-BE74-84F9-D23ECEEDDDCB
+virtual => vmware

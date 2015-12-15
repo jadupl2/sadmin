@@ -1,0 +1,22 @@
+# Company_Name - Mon Dec 14 05:06:39 EST 2015
+# Output of /sbin/ip addr command on gandalf.maison.ca
+#
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast qlen 1000
+    link/ether 00:50:56:89:6f:95 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.103/24 brd 192.168.1.255 scope global eth0
+    inet6 2607:fa48:6c05:adc0:250:56ff:fe89:6f95/64 scope global dynamic 
+       valid_lft 582sec preferred_lft 582sec
+    inet6 fe80::250:56ff:fe89:6f95/64 scope link 
+       valid_lft forever preferred_lft forever
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast qlen 1000
+    link/ether 00:50:56:89:6f:99 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.10.103/24 brd 10.10.10.255 scope global eth1
+    inet6 fe80::250:56ff:fe89:6f99/64 scope link 
+       valid_lft forever preferred_lft forever
+4: sit0: <NOARP> mtu 1480 qdisc noop 
+    link/sit 0.0.0.0 brd 0.0.0.0

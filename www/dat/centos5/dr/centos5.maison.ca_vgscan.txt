@@ -1,0 +1,5 @@
+# Company_Name - Mon Dec 14 05:06:18 EST 2015
+# Output of /sbin/vgscan command on centos5.maison.ca
+#
+  Reading all physical volumes.  This may take a while...
+  No volume groups found

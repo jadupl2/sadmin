@@ -1,0 +1,23 @@
+# Company_Name - Mon Dec 14 05:06:01 EST 2015
+# Output of /sbin/vgdisplay command on rhel3.maison.ca
+#
+--- Volume group ---
+VG Name               rootvg
+VG Access             read/write
+VG Status             available/resizable
+VG #                  0
+MAX LV                255
+Cur LV                14
+Open LV               14
+MAX LV Size           255.99 GB
+Max PV                256
+Cur PV                1
+Act PV                1
+VG Size               18.50 GB
+PE Size               4 MB
+Total PE              4736
+Alloc PE / Size       2643 / 10.32 GB
+Free  PE / Size       2093 / 8.18 GB
+VG UUID               Zy75Bn-cYeC-dpLQ-PMbY-cCy2-KFhq-VMAJW2
+
+

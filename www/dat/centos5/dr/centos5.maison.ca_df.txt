@@ -1,0 +1,6 @@
+# Company_Name - Mon Dec 14 05:06:33 EST 2015
+# Output of /bin/df -h command on centos5.maison.ca
+#
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/sda6              29G   17G   11G  62% /
+/dev/sda1             124M   19M   99M  17% /boot
