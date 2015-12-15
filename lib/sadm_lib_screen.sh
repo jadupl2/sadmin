@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #  Author:    Jacques Duplessis
-#  Title      Jlib_curse.sh
+#  Title      sadm_lib_screen.sh
 #  Date:      November 2015
 #  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
