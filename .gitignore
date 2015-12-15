@@ -1,4 +1,5 @@
 *.log
+*.nmon
 tmp/
 pkg/
 www/
