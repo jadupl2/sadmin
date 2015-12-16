@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:01 EST 2015
-# Output of /usr/sbin/pvs command on rhel4.maison.ca
-#
-  PV         VG         Fmt  Attr PSize PFree 
-  /dev/sda2  VolGroup00 lvm2 a-   7.88G 32.00M

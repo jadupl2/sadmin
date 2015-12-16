@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:15 EST 2015
-# Output of /usr/sbin/vgs command on bilbo.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize  VFree 
-  rootvg   1  14   0 wz--n- 29.28G 12.41G

@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:02 CST 2015
-# Output of /sbin/pvs command on fedora23.maison.ca
-#
-  PV         VG              Fmt  Attr PSize  PFree
-  /dev/sda2  fedora_fedora23 lvm2 a--  49.51g 4.00m

@@ -1,5 +1,0 @@
-# Company_Name - Sun Dec 13 21:54:31 EST 2015
-# Output of /sbin/pvs command on nano.maison.ca
-#
-  PV         VG     Fmt  Attr PSize  PFree 
-  /dev/sda2  rootvg lvm2 a--  55.75g 23.12g

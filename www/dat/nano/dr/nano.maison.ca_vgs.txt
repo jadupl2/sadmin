@@ -1,5 +1,0 @@
-# Company_Name - Sun Dec 13 21:54:34 EST 2015
-# Output of /sbin/vgs command on nano.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize  VFree 
-  rootvg   1  14   0 wz--n- 55.75g 23.12g

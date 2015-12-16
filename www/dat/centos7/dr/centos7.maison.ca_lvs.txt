@@ -1,6 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:02 EST 2015
-# Output of /sbin/lvs command on centos7.maison.ca
-#
-  LV   VG     Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
-  root rootvg -wi-ao---- 37.49g                                                    
-  swap rootvg -wi-ao----  2.02g                                                    

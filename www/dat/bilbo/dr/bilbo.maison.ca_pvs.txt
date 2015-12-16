@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:04 EST 2015
-# Output of /usr/sbin/pvs command on bilbo.maison.ca
-#
-  PV         VG     Fmt  Attr PSize  PFree 
-  /dev/sda2  rootvg lvm2 a--  29.28G 12.41G

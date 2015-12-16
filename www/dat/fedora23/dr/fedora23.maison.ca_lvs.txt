@@ -1,6 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:02 CST 2015
-# Output of /sbin/lvs command on fedora23.maison.ca
-#
-  LV   VG              Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
-  root fedora_fedora23 -wi-ao---- 47.50g                                                    
-  swap fedora_fedora23 -wi-ao----  2.00g                                                    

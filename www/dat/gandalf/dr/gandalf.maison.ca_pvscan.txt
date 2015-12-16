@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:06 EST 2015
-# Output of /sbin/pvscan command on gandalf.maison.ca
-#
-  PV /dev/sda2   VG rootvg   lvm2 [29.28 GB / 11.28 GB free]
-  Total: 1 [29.28 GB] / in use: 1 [29.28 GB] / in no VG: 0 [0   ]

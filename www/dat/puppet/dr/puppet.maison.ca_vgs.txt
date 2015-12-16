@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:31 EST 2015
-# Output of /sbin/vgs command on puppet.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize  VFree 
-  rootvg   1  13   0 wz--n- 48.47g 21.53g

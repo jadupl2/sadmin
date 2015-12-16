@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:02 EST 2015
-# Output of /sbin/pvscan command on sadmin.maison.ca
-#
-  PV /dev/sda2   VG rootvg   lvm2 [74.50 GiB / 47.93 GiB free]
-  Total: 1 [74.50 GiB] / in use: 1 [74.50 GiB] / in no VG: 0 [0   ]

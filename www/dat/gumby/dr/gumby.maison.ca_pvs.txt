@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:03 EST 2015
-# Output of /usr/sbin/pvs command on gumby.maison.ca
-#
-  PV         VG     Fmt  Attr PSize   PFree 
-  /dev/sda5  rootvg lvm2 a--  141.59G 74.84G

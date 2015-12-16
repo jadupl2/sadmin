@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:04 EST 2015
-# Output of /sbin/vgs command on nomad.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize   VFree  
-  rootvg   1  27   0 wz--n- 464.75g 160.22g

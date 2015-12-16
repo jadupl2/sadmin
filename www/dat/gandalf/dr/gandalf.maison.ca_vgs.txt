@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:14 EST 2015
-# Output of /usr/sbin/vgs command on gandalf.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize  VFree 
-  rootvg   1  15   0 wz--n- 29.28G 11.28G

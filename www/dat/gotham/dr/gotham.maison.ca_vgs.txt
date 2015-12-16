@@ -1,8 +1,0 @@
-# Company_Name - Mon Dec 14 05:07:17 EST 2015
-# Output of /sbin/vgs command on gotham.maison.ca
-#
-  VG         #PV #LV #SN Attr   VSize  VFree 
-  data2vg      1   0   0 wz--n- 96.00m 96.00m
-  datavg       1   6   0 wz--n- 15.99g  5.98g
-  datavg_sdb   1   1   0 wz--n- 15.99g 11.65g
-  rootvg       1  14   0 wz--n- 55.75g  7.06g

@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:09 EST 2015
-# Output of /sbin/vgscan command on rhel4.maison.ca
-#
-  Reading all physical volumes.  This may take a while...
-  Found volume group "VolGroup00" using metadata type lvm2

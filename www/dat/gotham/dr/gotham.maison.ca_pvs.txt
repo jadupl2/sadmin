@@ -1,8 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:04 EST 2015
-# Output of /sbin/pvs command on gotham.maison.ca
-#
-  PV         VG         Fmt  Attr PSize  PFree 
-  /dev/sda2  rootvg     lvm2 a--  55.75g  7.06g
-  /dev/sdb1  datavg_sdb lvm2 a--  15.99g 11.65g
-  /dev/sdc1  datavg     lvm2 a--  15.99g  5.98g
-  /dev/sdd1  data2vg    lvm2 a--  96.00m 96.00m

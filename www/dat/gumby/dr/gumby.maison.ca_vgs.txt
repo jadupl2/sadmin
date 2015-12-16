@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:38 EST 2015
-# Output of /usr/sbin/vgs command on gumby.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize   VFree 
-  rootvg   1  29   0 wz--n- 141.59G 74.84G

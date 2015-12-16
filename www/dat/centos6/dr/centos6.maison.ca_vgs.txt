@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:07:20 EST 2015
-# Output of /sbin/vgs command on centos6.maison.ca
-#
-  VG     #PV #LV #SN Attr   VSize  VFree
-  rootvg   1  14   0 wz--n- 55.75g 7.03g

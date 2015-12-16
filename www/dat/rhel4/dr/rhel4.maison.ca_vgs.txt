@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:06 EST 2015
-# Output of /usr/sbin/vgs command on rhel4.maison.ca
-#
-  VG         #PV #LV #SN Attr   VSize VFree 
-  VolGroup00   1   2   0 wz--n- 7.88G 32.00M

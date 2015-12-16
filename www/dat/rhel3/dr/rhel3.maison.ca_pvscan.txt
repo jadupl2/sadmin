@@ -1,7 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:01 EST 2015
-# Output of /sbin/pvscan command on rhel3.maison.ca
-#
-pvscan -- reading all physical volumes (this may take a while...)
-pvscan -- ACTIVE   PV "/dev/hda2" of VG "rootvg" [18.50 GB / 8.18 GB free]
-pvscan -- total: 1 [18.51 GB] / in use: 1 [18.51 GB] / in no VG: 0 [0]
-

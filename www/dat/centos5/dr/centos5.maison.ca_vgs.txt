@@ -1,4 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:12 EST 2015
-# Output of /usr/sbin/vgs command on centos5.maison.ca
-#
-  No volume groups found

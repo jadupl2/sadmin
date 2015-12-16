@@ -1,5 +1,0 @@
-# Company_Name - Mon Dec 14 05:06:02 CST 2015
-# Output of /sbin/vgscan command on fedora23.maison.ca
-#
-  Reading all physical volumes.  This may take a while...
-  Found volume group "fedora_fedora23" using metadata type lvm2
