@@ -95,7 +95,7 @@ sadm_server_ips() {
                         32)     SADM_MASK="255.255.255.255"
                                 ;;
                     esac
-                    SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' | awk '{ print $2 }'` 
+                    SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' |head -1 | awk '{ print $2 }'` 
                     sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
                     index=`expr $index + 1`                                         # Increment Index by 1
                    done < $TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
@@ -188,7 +188,7 @@ sadm_server_memory() {
         "LINUX") sadm_server_memory=`grep -i "memtotal:" /proc/meminfo | awk '{ print $2 }'`
                  sadm_server_memory=`echo "$sadm_server_memory / 1024" | bc`
                  ;;
-        "AIX")   sadm_server_memory=`lsattr -El sys0 -a realmem | awk '{ print $2 }'`
+        "AIX")   sadm_server_memory=`bootinfo -r`
                  sadm_server_memory=`echo "${sadm_server_memory} /1024" | $SADM_BC` 
                  ;;
     esac
@@ -215,16 +215,16 @@ sadm_server_nb_cpu() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                         RETURN THE SERVER NUMBER OF CPU SOCKET
+#                             RETURN THE SERVER NUMBER OF CPU SOCKET
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_socket() { 
     case "$(sadm_os_type)" in
        "LINUX") sadm_server_nb_socket=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
                 ;;
         "AIX")  sadm_server_nb_socket=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
-                if [ "$sadm_server_mb_socket" -eq 0 ] ; then sadm_server_nb_socket=1 ; fi
                 ;;
     esac
+    if [ "$sadm_server_nb_socket" -eq 0 ] ; then sadm_server_nb_socket=1 ; fi
     echo "$sadm_server_nb_socket"
 }
 
@@ -235,6 +235,7 @@ sadm_server_nb_socket() {
 sadm_server_core_per_socket() {
     case "$(sadm_os_type)" in
        "LINUX") sadm_server_core_per_socket=`cat /proc/cpuinfo |egrep "core id|physical id" |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
+                if [ "$sadm_server_core_per_socket" -eq 0 ] ;then sadm_server_core_per_socket=1 ; fi
                 ;;
         "AIX")  sadm_server_core_per_socket=1
                 ;;
@@ -252,7 +253,9 @@ sadm_server_thread_per_core() {
     case "$(sadm_os_type)" in
         "LINUX") sadm_wht=`cat /proc/cpuinfo |grep -E "cpu cores|siblings|physical id" |xargs -n 11 echo |sort |uniq |head -1`
                  sadm_sibbling=`echo $sadm_wht | awk -F: '{ print $3 }' | awk '{ print $1 }'`
+                 if [ -z "$sadm_sibbling" ] ; then sadm_sibbling=0 ; fi
                  sadm_cores=`echo $sadm_wht | awk -F: '{ print $4 }' | tr -d ' '`
+                 if [ -z "$sadm_cores" ] ; then sadm_cores=0 ; fi
                  if [ "$sadm_sibbling" -gt 0 ] && [ "$sadm_cores" -gt 0 ]
                     then sadm_server_thread_per_core=`echo "$sadm_sibbling / $sadm_cores" | bc`
                     else sadm_server_thread_per_core=1
@@ -296,7 +299,7 @@ sadm_server_hardware_bitmode() {
                        else sadm_server_hardware_bitmode=32
                    fi
                    ;;
-        "AIX")     sadm_server_hardware_bitmode=`getconf HARDWARE_BITMODE`
+        "AIX")     sadm_server_hardware_bitmode=`bootinfo -y`
                    ;;
     esac
     echo "$sadm_server_hardware_bitmode"
@@ -310,38 +313,36 @@ sadm_server_hardware_bitmode() {
 #        IF THEY ARE MULTIPLE DISKS ON THE SERVER EACH DISK INFO IS SEPARATED BY A ";"
 # --------------------------------------------------------------------------------------------------
 sadm_server_disks() {
-    index=0 ; sadm_server_disks=""                                      # Init Variables at Start
+    index=0 ; sadm_server_disks=""                                                  # Init Variables
     case "$(sadm_os_type)" in
         "LINUX")    for wdisk in `find /sys/block -name "sd*" -exec basename {} \;` # Get Disk Name 
                         do
-                        if [ "$index" -ne 0 ]                                   # Don't add , for 1st Disk
-                            then sadm_server_disks="${sadm_server_disks},"      # For others disks add ","
+                        if [ "$index" -ne 0 ]                                       # Don't add , for 1st Disk
+                            then sadm_server_disks="${sadm_server_disks},"          # For others disks add ","
                         fi
-                        wsize=`$SADM_FDISK -l /dev/${wdisk} | grep -i "^Disk" | grep -i $wdisk | awk '{ print $3 }'`
-                        wsize=`echo $wsize / 1 | $SADM_BC`                      # Get rid of Decimal
+                        wsize=`$SADM_FDISK -l /dev/${wdisk} |grep -i "^Disk" |grep -i $wdisk |awk '{ print $3 }'`
+                        wsize=`echo $wsize / 1 | $SADM_BC`                          # Get rid of Decimal
 
                         wunit=`$SADM_FDISK -l /dev/${wdisk} | grep -i "^Disk" | grep -i $wdisk | awk '{ print $4 }'`
-                        if [ "$wunit" = "GB," ]                                 # If Disk Size in GB
-                           then wsize=`echo "($wsize * 1024) / 1" | $SADM_BC`   # Convert GB into MB 
-                           else wsize=`echo "$wsize * 1" | $SADM_BC`            # If MB Get Rid of Decimal
+                        if [ "$wunit" = "GB," ]                                     # If Disk Size in GB
+                           then wsize=`echo "($wsize * 1024) / 1" | $SADM_BC`       # Convert GB into MB 
+                           else wsize=`echo "$wsize * 1" | $SADM_BC`                # If MB Get Rid of Decimal
                         fi
-                        sadm_server_disks="${sadm_server_disks}${wdisk}|${wsize}" # Combine Disk Name & Size
-                        index=`expr $index + 1`                                 # Increment Index by 1
+                        sadm_server_disks="${sadm_server_disks}${wdisk}|${wsize}"   # Combine Disk Name & Size
+                        index=`expr $index + 1`                                     # Increment Index by 1
                     done
                     ;;
         "AIX")      for wdisk in `find /dev -name "hdisk*"`
                         do
-                        if [ "$index" -ne 0 ]                              # Don't add , for 1st Disk
-                            then sadm_server_disks="${sadm_server_disks}," # For others disks add ","
-                        fi
+                        if [ "$index" -ne 0 ] ; then sadm_server_disks="${sadm_server_disks}," ; fi
                         sadm_disk_name=`basename $wdisk`
                         sadm_disk_size=`getconf DISK_SIZE ${wdisk}` 
                         sadm_server_disks="${sadm_server_disks}${sadm_disk_name}|${sadm_disk_size}"
-                        index=`expr $index + 1`                         # Increment Index by 1
+                        index=`expr $index + 1`                                    
                     done
                     ;;
     esac
-    echo "$sadm_server_disks"                                           # Return Disk Info to Caller
+    echo "$sadm_server_disks"                                                      
 }
 
 

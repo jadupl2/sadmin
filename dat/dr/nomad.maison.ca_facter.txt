@@ -1,4 +1,4 @@
-# Company_Name - Mon Dec 14 05:06:07 EST 2015
+#  - Wed Dec 16 05:06:08 EST 2015
 # Output of /usr/bin/facter command on nomad.maison.ca
 #
 architecture => i386
@@ -54,8 +54,8 @@ macaddress_eth0_3 => 00:1E:4F:B2:EA:56
 macaddress_eth0_4 => 00:1E:4F:B2:EA:56
 macaddress_eth0_5 => 00:1E:4F:B2:EA:56
 manufacturer => Dell Inc.
-memoryfree => 2.88 GB
-memoryfree_mb => 2949.04
+memoryfree => 2.89 GB
+memoryfree_mb => 2954.59
 memorysize => 3.70 GB
 memorysize_mb => 3790.98
 mtu_eth0 => 1500
@@ -83,15 +83,15 @@ network_lo => 127.0.0.0
 operatingsystem => CentOS
 operatingsystemmajrelease => 6
 operatingsystemrelease => 6.7
-os => {"release"=>{"minor"=>"7", "major"=>"6", "full"=>"6.7"}, "lsb"=>{"distrelease"=>"6.7", "release"=>":base-4.0-ia32:base-4.0-noarch:core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch", "distcodename"=>"Final", "distdescription"=>"CentOS release 6.7 (Final)", "minordistrelease"=>"7", "distid"=>"CentOS", "majdistrelease"=>"6"}, "name"=>"CentOS", "family"=>"RedHat"}
+os => {"lsb"=>{"distcodename"=>"Final", "distrelease"=>"6.7", "release"=>":base-4.0-ia32:base-4.0-noarch:core-4.0-ia32:core-4.0-noarch:graphics-4.0-ia32:graphics-4.0-noarch:printing-4.0-ia32:printing-4.0-noarch", "minordistrelease"=>"7", "distdescription"=>"CentOS release 6.7 (Final)", "distid"=>"CentOS", "majdistrelease"=>"6"}, "release"=>{"major"=>"6", "minor"=>"7", "full"=>"6.7"}, "name"=>"CentOS", "family"=>"RedHat"}
 osfamily => RedHat
-partitions => {"sda1"=>{"uuid"=>"581822a3-03d4-46e2-b839-149e84cd744c", "size"=>"2097152", "filesystem"=>"ext4", "mount"=>"/boot"}, "sda2"=>{"size"=>"974673920", "filesystem"=>"LVM2_member"}}
+partitions => {"sda1"=>{"mount"=>"/boot", "size"=>"2097152", "filesystem"=>"ext4", "uuid"=>"581822a3-03d4-46e2-b839-149e84cd744c"}, "sda2"=>{"size"=>"974673920", "filesystem"=>"LVM2_member"}}
 path => /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
 physicalprocessorcount => 1
 processor0 => Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz
 processor1 => Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz
 processorcount => 2
-processors => {"physicalcount"=>1, "count"=>2, "models"=>["Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz", "Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz"]}
+processors => {"count"=>2, "models"=>["Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz", "Intel(R) Pentium(R) Dual  CPU  E2180  @ 2.00GHz"], "physicalcount"=>1}
 productname => OptiPlex 755
 ps => ps -ef
 puppetversion => 3.7.4
@@ -107,16 +107,16 @@ sshfp_rsa => SSHFP 1 1 56eccd58de5af3f9355cd5374530704a66389913
 SSHFP 1 2 c7bbc98d803e47fea154505619c7bacfd233af2bf22d7e8eb1ac64cd77cf65fb
 sshrsakey => AAAAB3NzaC1yc2EAAAABIwAAAQEAt291CW582tld57OwRtEuL1fWte9auZDXF/9tRbsH0LeaIsyhZ31B6eiXKpFbjq0xMiUK1Or8DjtY97pBKc87QHDPXzpG9H5i/yEbpzO6ylTHgYuyCLYFo1NAify33tF2P0LujqnT7rlmCwsQBwHiNFxVZdgzu9U4RVQrns29etAGo9TWAhANkYhEjNfb220lLcx7FfMpMrHRIznIFalJfcL7xyRh54RyZE4fRxJWCeZNs0K5ckoK/mwHrbmgmQu6XQZVZAmA3Po5C7WWU/H+tg+2uSSj+oJYfiUTIirOWgLp3gWn1LVBx3qwZH7xsgrcRuUR2BTkpWm0CwTMyB+JXQ==
 swapfree => 3.97 GB
-swapfree_mb => 4068.86
+swapfree_mb => 4064.21
 swapsize => 4.00 GB
 swapsize_mb => 4096.00
-system_uptime => {"days"=>16, "seconds"=>1438474, "hours"=>399, "uptime"=>"16 days"}
+system_uptime => {"hours"=>447, "days"=>18, "seconds"=>1611274, "uptime"=>"18 days"}
 timezone => EST
 type => Desktop
 uniqueid => a8c04201
-uptime => 16 days
-uptime_days => 16
-uptime_hours => 399
-uptime_seconds => 1438474
+uptime => 18 days
+uptime_days => 18
+uptime_hours => 447
+uptime_seconds => 1611274
 uuid => 44454C4C-5300-1037-8047-B4C04F594631
 virtual => physical

@@ -1,9 +1,9 @@
-# Company_Name - SysInfo Report File - Mon Dec 14 05:06:10 EST 2015
+# Company_Name - SysInfo Report File - Wed Dec 16 05:06:10 EST 2015
 # This file will be use to update the SADMIN Database
 #                                                    
 SADM_OS_TYPE                        : LINUX
-SADM_HOST_NAME                      : nomad
-SADM_DOMAIN_NAME                    : maison.ca
+SADM_HOSTNAME                       : nomad
+SADM_DOMAINNAME                     : maison.ca
 SADM_HOST_IP                        : 192.168.1.66
 SADM_SERVER_TYPE                    : P
 SADM_OS_VERSION                     : 6.7

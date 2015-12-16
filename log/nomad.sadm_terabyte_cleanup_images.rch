@@ -16,3 +16,5 @@ nomad 2015.12.12 23:00:01 ........ sadm_terabyte_cleanup_images 2
 nomad 2015.12.12 23:00:01 23:00:02 sadm_terabyte_cleanup_images 0
 nomad 2015.12.13 23:00:02 ........ sadm_terabyte_cleanup_images 2
 nomad 2015.12.13 23:00:02 23:00:02 sadm_terabyte_cleanup_images 0
+nomad 2015.12.15 23:00:01 ........ sadm_terabyte_cleanup_images 2
+nomad 2015.12.15 23:00:01 23:00:05 sadm_terabyte_cleanup_images 0

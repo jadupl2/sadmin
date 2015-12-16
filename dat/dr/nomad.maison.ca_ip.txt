@@ -1,4 +1,4 @@
-# Company_Name - Mon Dec 14 05:06:07 EST 2015
+#  - Wed Dec 16 05:06:08 EST 2015
 # Output of /sbin/ip addr command on nomad.maison.ca
 #
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 

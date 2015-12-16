@@ -8,35 +8,69 @@
 #set -x
 
 # Screen related variables
-clreol=`tput el`             		            ; export clreol                 # Clr to end of lne
-clreos=`tput ed`             		            ; export clreos                 # Clr to end of scr
-bold=`tput bold`             		            ; export bold                   # bold attribute
-bel=`tput bel`               		            ; export bel                    # Ring the bell
-rvs=`tput rev`               		            ; export rvs                    # rev. video attrib.
-nrm=`tput sgr0`              		            ; export nrm                    # normal attribute
-unl=`tput smul`              		            ; export unl                    # UnderLine
-home=`tput home`             		            ; export home                   # home cursor
-up=`tput cuu1`               		            ; export up                     # cursor up
-down=`tput cud1`             		            ; export down                   # cursor down
-right=`tput cub1`            		            ; export right                  # cursor right
-left=`tput cuf1`             		            ; export left  	                # cursor left
-clr=`tput clear`             		            ; export clr	                # clear the screen
-blink=`tput blink`           		            ; export blink                  # turn blinking on
-screen_color="\E[44;38m"      		            ; export screen_color           # (BG Blue FG White)
-MPASSE=`date +%d%m%y` ; MPASSE=`echo "($MPASSE + 666) * 2" | bc ` ; export MPASSE  # Construct Passwd
-HOSTNAME=`hostname -s`                          ; export HOSTNAME               # Current Host name
-OSTYPE=`uname -s|tr '[:lower:]' '[:upper:]'`    ; export OSTYPE                 # OS Name AIX/LINUX
-TITLE="Standard Life Canada"                    ; export TITLE                  # Cie for Heading
+clreol=`tput el`                                ; export clreol         # Clr to end of lne
+clreos=`tput ed`                                ; export clreos         # Clr to end of scr
+bold=`tput bold`                                ; export bold           # bold attribute
+bel=`tput bel`                                  ; export bel            # Ring the bell
+rvs=`tput rev`                                  ; export rvs            # rev. video attrib.
+nrm=`tput sgr0`                                 ; export nrm            # normal attribute
+unl=`tput smul`                                 ; export unl            # UnderLine
+home=`tput home`                                ; export home           # home cursor
+up=`tput cuu1`                                  ; export up             # cursor up
+down=`tput cud1`                                ; export down           # cursor down
+right=`tput cub1`                               ; export right          # cursor right
+left=`tput cuf1`                                ; export left           # cursor left
+clr=`tput clear`                                ; export clr            # clear the screen
+blink=`tput blink`                              ; export blink          # turn blinking on
+screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
+
+#Set Colors
+#
+
+#bold=$(tput bold)
+#underline=$(tput sgr 0 1)
+#reset=$(tput sgr0)
+
+#purple=$(tput setaf 171)
+#red=$(tput setaf 1)
+#green=$(tput setaf 76)
+#tan=$(tput setaf 3)
+#blue=$(tput setaf 38)
+
+#
+# Headers and  Logging
+#
+
+#e_header() { printf "\n${bold}${purple}==========  %s  ==========${reset}\n" "$@" 
+#}
+#e_arrow() { printf "➜ $@\n"
+#}
+#e_success() { printf "${green}✔ %s${reset}\n" "$@"
+#}
+#e_error() { printf "${red}✖ %s${reset}\n" "$@"
+#}
+#e_warning() { printf "${tan}➜ %s${reset}\n" "$@"
+#}
+#e_underline() { printf "${underline}${bold}%s${reset}\n" "$@"
+#}
+#e_bold() { printf "${bold}%s${reset}\n" "$@"
+#}
+#e_note() { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${reset}\n" "$@"
+#}
+
+
+
+
 
 #---------------------------------------------------------------------------------------------------
-#  DISPLAY MESSAGE ON THE LINE AND POSITION RECEIVE AS PARAMETER (WRITEXY "MESSAGE" 12 50)
+#   DISPLAY MESSAGE ON THE LINE AND POSITION RECEIVE AS PARAMETER (SADM_WRITEXY "MESSAGE" 12 50)
 #---------------------------------------------------------------------------------------------------
 sadm_sadm_writexy()
 {
-    tput cup `expr $1 - 1`  `expr $2 - 1`                           # tput command pos. cursor
-    if [ "$OSTYPE" == "AIX" ]                                       # In AIX just Echo Message
-       then echo "$3\c"                                             # Don't need the -e in AIX
-       else echo -e "$3\c"                                          # -e enable interpretation of \
+    tput cup `expr $1 - 1`  `expr $2 - 1`                               # tput command pos. cursor
+    if [ "$(sadm_os_type)" = "AIX" ]                                    # In AIX just Echo Message
+       then echo "$3\c"                                                 # Don't need the -e in AIX
+       else echo -e "$3\c"                                              # -e enable interpretation
     fi
 }
 
@@ -104,11 +138,11 @@ sadm_display_entete()
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
     # Calculate Version Position on the Heading line
-    long=`echo $OSTYPE | awk '{ printf "%d",length() }'`
+    long=`echo $(sadm_os_type) | awk '{ printf "%d",length() }'`
     VERSION_POS=`expr 2 + $long `
 
     # Calculate HOSTNAME Position on the Heading line
-    long=`echo $HOSTNAME | awk '{ printf "%d",length() }'`
+    long=`echo $(sadm_hostname) | awk '{ printf "%d",length() }'`
     HOSTNAME_POS=`expr 81 - $long `
 
     # Display 3 lines in reverse video - On line 1, 2 and 21.
@@ -118,15 +152,15 @@ sadm_display_entete()
     sadm_writexy 21 01 "$eighty_spaces"
 
     # Display Line 1 (Date + Cie Name +
-    wpos=`expr 80 - ${#TITLE}`                                      # 80 - lenght of title
+    wpos=`expr 80 - ${#SADM_CIE_NAME}`                                      # 80 - lenght of title
     wpos=`expr $wpos / 2 `                                          # Divide result by 2 
     sadm_writexy 01 01 "`date +%d/%m/%Y`"                                 # Display Date Line 1 Pos.1 
-    sadm_writexy 01 $wpos "$TITLE"                                        # Display Title Calc Position 
+    sadm_writexy 01 $wpos "$SADM_CIE_NAME"                                        # Display Title Calc Position 
     sadm_writexy 01 77 "$VER"
 
     # Display Line 2 - (Host Name + OS Name and OS Version)
-    sadm_writexy 02 01 "$OSTYPE Ver.$OSVERSION"
-    sadm_writexy 02 "$HOSTNAME_POS" "$HOSTNAME"
+    sadm_writexy 02 01 "$(sadm_os_type) Ver.$OSVERSION"
+    sadm_writexy 02 "$HOSTNAME_POS" "$(sadm_hostname)"
 
 # Display Titre du Menu
 # Calculer la position pour centrer le titre sur la ligne de 80 colonnes
@@ -147,17 +181,17 @@ sadm_display_entete()
 #---------------------------------------------------------------------------------------------------
 sadm_ask_password()
 {
-   sadm_writexy 22 01 "${clreos}${bel}${bel}"
-   sadm_writexy 22 01 "Please enter the manager password ...  ? "
-   stty -echo
-   read REPONSE
-   stty echo
-   if [ "$REPONSE" != "$MPASSE" ] && [ "$REPONSE" != "$MPASSE2" ]
-      then mess "Invalid password"
-           return 0
-      else
-           return 1
-   fi
+    MPASSE=`date +%d%m%y` ; MPASSE=`echo "($MPASSE + 666) * 2" | bc `   # Construct Passwd
+    sadm_writexy 22 01 "${clreos}${bel}${bel}"
+    sadm_writexy 22 01 "Please enter the SADMIN password ...  ? "
+    stty -echo
+    read REPONSE
+    stty echo
+    if [ "$REPONSE" != "$MPASSE" ] && [ "$REPONSE" != "$MPASSE2" ]
+        then sadm_mess "Invalid password"
+             return 0
+        else return 1
+    fi
 }
 
 

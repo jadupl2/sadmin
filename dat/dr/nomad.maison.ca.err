@@ -2,7 +2,7 @@ stderr output from "grep -vE '^#|^ *$' /etc/multipath.conf":
     grep: /etc/multipath.conf: No such file or directory
 stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev/mapper/${MultiPath}; done":
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper/DM: No such file or directory
@@ -12,7 +12,7 @@ stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev
     ls: cannot access /dev/mapper/not: No such file or directory
     ls: cannot access /dev/mapper/loaded: No such file or directory
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper//etc/multipath.conf: No such file or directory
@@ -23,7 +23,7 @@ stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev
     ls: cannot access /dev/mapper/all: No such file or directory
     ls: cannot access /dev/mapper/devices.: No such file or directory
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper/A: No such file or directory
@@ -34,12 +34,12 @@ stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev
     ls: cannot access /dev/mapper/located: No such file or directory
     ls: cannot access /dev/mapper/at: No such file or directory
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper//usr/share/doc/device-mapper-multipath-0.4.9/multipath.conf: No such file or directory
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper/You: No such file or directory
@@ -52,7 +52,7 @@ stderr output from "for MultiPath in $(/sbin/multipath -v1 -d -l); do ls -l /dev
     ls: cannot access /dev/mapper/modify: No such file or directory
     ls: cannot access /dev/mapper//etc/multipath.conf: No such file or directory
     ls: cannot access /dev/mapper/Dec: No such file or directory
-    ls: cannot access /dev/mapper/14: No such file or directory
+    ls: cannot access /dev/mapper/16: No such file or directory
     ls: cannot access /dev/mapper/05:04:42: No such file or directory
     ls: cannot access /dev/mapper/|: No such file or directory
     ls: cannot access /dev/mapper/DM: No such file or directory

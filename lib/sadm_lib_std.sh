@@ -3,7 +3,8 @@
 #  Author:    Jacques Duplessis
 #  Title      sadm_lib_std.sh
 #  Date:      August 2015
-#  Synopsis:  SADMIN Standard Shell Script Library 
+#  Synopsis:  SADMIN Standard Shell Script Library
+#  
 # --------------------------------------------------------------------------------------------------
 #set -x
 # Description
@@ -50,9 +51,8 @@ CFG_FILE="$CFG_DIR/sadmin.cfg"                  ; export CFG_FILE       # Config
 TMP_FILE1="${TMP_DIR}/${INST}_1.$$"             ; export TMP_FILE1      # Temp Script Tmp File1 
 TMP_FILE2="${TMP_DIR}/${INST}_2.$$"             ; export TMP_FILE2      # Temp Script Tmp File2
 TMP_FILE3="${TMP_DIR}/${INST}_3.$$"             ; export TMP_FILE3      # Temp Script Tmp File3
-LOG="${LOG_DIR}/${INST}.log"                    ; export LOG            # Script Output LOG filename
-RCLOG="${LOG_DIR}/${HOSTNAME}.${INST}.rch"      ; export RCLOG          # Script Return Code History
-EPOCH="${BASE_DIR}/bin/sadm_epoch"              ; export EPOCH          # Date Calculation Tool
+LOG="${LOG_DIR}/${HOSTNAME}_${INST}.log"        ; export LOG            # Script Output LOG filename
+RCLOG="${LOG_DIR}/${HOSTNAME}_${INST}.rch"      ; export RCLOG          # Script Return Code History
 #
 # COMMANDS PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                             ; export SADM_LSB_RELEASE # Command lsb_release Path
@@ -89,9 +89,6 @@ sadm_tolower() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_logger() {
-    #echo -- -e $(date "+%C%y.%m.%d %H:%M:%S") - "$@" >> $LOG
-    #if [ $OUTPUT2 -eq 1 ] ; then echo -- -e "$@" ; fi
-#
     SADM_MSG="$(date "+%C%y.%m.%d %H:%M:%S") - $@"
     printf "%-s\n" "$SADM_MSG" >> $LOG
     if [ $OUTPUT2 -eq 1 ] ; then printf "%-s\n" "$SADM_MSG" ; fi
@@ -534,7 +531,8 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 #                                THING TO DO WHEN FIRST CALLED
 # --------------------------------------------------------------------------------------------------
-#    
+#
+    
     # Make sure basic requirement are met - If not then exit 1
     sadm_check_requirements                                             # Check Lib Requirements
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
@@ -542,4 +540,12 @@ sadm_stop() {
     # Load SADMIN Configuration file
     sadm_load_sadmin_config_file                                        # Load SADM cfg file
 
-        
+    # Date Calculation Tool
+    case "$(sadm_os_type)" in
+        "LINUX")   EPOCH="${BASE_DIR}/bin/sadm_epoch"      
+                   ;;
+        "AIX")     EPOCH="${BASE_DIR}/bin/sadm_epoch_aix"      
+                   ;;
+    esac    
+    export EPOCH
+    

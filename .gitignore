@@ -1,11 +1,7 @@
-*.log
-*.nmon
-*.rch
-tmp/
-pkg/
-www/
-log/
 dat/
+jac/
+log/
+pkg/
+tmp/
+www/dat/
 .Trash-*/
-
-

@@ -3,7 +3,7 @@
 #   Author   :  Jacques Duplessis
 #   Title    :  template.sh
 #   Synopsis : .
-#   Version  :  1.5
+#   Version  :  1.0
 #   Date     :  14 November 2015
 #   Requires :  sh
 
@@ -19,7 +19,7 @@
 # 1.6   
 #
 #set -x
-#set -x
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
