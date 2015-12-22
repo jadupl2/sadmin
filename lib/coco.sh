@@ -30,96 +30,45 @@ green=$(tput setaf 76)                          ; export green          # Green 
 tan=$(tput setaf 3)                             ; export tan            # Tan color
 blue=$(tput setaf 38)                           ; export blue           # Blue color
 
-# Headers and  Logging
 #
-
-e_header()      { printf "\n${bold}${purple}==========  %s  ==========${reset}\n" "$@" 
-}
-e_arrow()       { printf "➜ $@\n"
-}
-e_success()     { printf "${green}✔ %s${reset}\n" "$@"
-}
-e_error()       { printf "${red}✖ %s${reset}\n" "$@"
-}
-e_warning()     { printf "${tan}➜ %s${reset}\n" "$@"
-}
-e_underline()   { printf "${underline}${bold}%s${reset}\n" "$@"
-}
-e_bold()        { printf "${bold}%s${reset}\n" "$@"
-}
-e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${reset}\n" "$@"
-}
-
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-#   DISPLAY MESSAGE ON THE LINE AND POSITION RECEIVE AS PARAMETER (SADM_WRITEXY "MESSAGE" 12 50)
-#---------------------------------------------------------------------------------------------------
+#***************************************************************************************************
+#  USING SADMIN LIBRARY SETUP
+#   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
+#   THESE VARIABLES ARE USE AND NEEDED BY ALL THE SADMIN SCRIPT LIBRARY.
+#
+#   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
+#   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
+#
+#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
+#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+# --------------------------------------------------------------------------------------------------
+PN=${0##*/}                                    ; export PN              # Current Script name
+VER='1.5'                                      ; export VER             # Program version
+OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
+INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
+TPID="$$"                                      ; export TPID            # Script PID
+EXIT_CODE=0                                    ; export EXIT_CODE       # Script Error Return Code
+BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+#
+[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+#
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
+#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
+MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
+MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+#***************************************************************************************************
+#
 sadm_writexy()
 {
-    
     tput cup `expr $1 - 1`  `expr $2 - 1`                               # tput command pos. cursor
     if [ "$(sadm_os_type)" = "AIX" ]                                    # In AIX just Echo Message
        then echo "$3\c"                                                 # Don't need the -e in AIX
        else echo -e "$3\c"                                              # -e enable interpretation
     fi
 }
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-#  ASK A QUESTION AT LINE AND POSITION SPECIFIED - RETURN 0 FOR NO AND RETURN 1 IF ANSWERED "YES"
-#---------------------------------------------------------------------------------------------------
-sadm_messok()
-{
-    wline=$1 ; wpos=$2 ; wmess="$3 [y,n] ? "                            # Line, Position and Mess. Rcv
-    wreturn=0                                                           # Function Return Value Default
-    sadm_writexy $1 $2 "                                                "
-    while :
-        do
-        sadm_writexy $1 $2 "$wmess  ${right}${right}"                   # Write mess rcv + [ Y/N ] ?
-        read answer                                                     # Read User answer
-        case "$answer" in                                               # Test Answer
-           Y|y ) wreturn=1                                              # Yes = Return Value of 1
-                 break                                                  # Break of the loop
-                 ;; 
-           n|N ) wreturn=0                                              # Yes = Return Value of 0
-                 break                                                  # Break of the loop
-                 ;;
-             * ) ;;                                                     # Other stay in the loop
-         esac
-    done
-   return $wreturn                                                      # Return 0=No 1=Yes
-}
-
-
-
-#---------------------------------------------------------------------------------------------------
-# DISPLAY MESSAGE RECEIVE IN BOLD (AND SOUND BELL) AT LINE 22 & WAIT FOR RETURN
-#---------------------------------------------------------------------------------------------------
-sadm_mess()
-{
-   sadm_writexy 22 01 "${clreos}${bold}${1}${reset}${bell}${bell}"      # Clr from lines 22 to EOS
-   sadm_writexy 23 01 "Press [ENTER] to continue."                      # Ask user 2 press [RETURN]
-   read sadm_dummy                                                      # Wait for  [RETURN]
-   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
-}
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-# DISPLAY MESSAGE ON LINE 22 WITH BELL SOUND
-#---------------------------------------------------------------------------------------------------
-sadm_display_message()
-{
-   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
-   sadm_writexy 22 01 "${bold}${1}${reset}${bell}"                      # Display Mess. on Line 22
-}
-
 
 #
 #---------------------------------------------------------------------------------------------------
@@ -134,7 +83,7 @@ sadm_display_heading()
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
     # Display 3 lines in reverse video - On line 1, 2 and 21.
-    sadm_writexy 01 01  "${clr}${bold}${reverse}\c"                     # ClrScr_ Activate. Rev. Video
+    sadm_writexy 01 01  "${clr}${blue}${bold}${reverse}\c"                     # ClrScr_ Activate. Rev. Video
     sadm_writexy 01 01 "$eighty_spaces"                                 # Line 1 in Reverse Video
     sadm_writexy 02 01 "$eighty_spaces"                                 # Line 2 in Reverse Video
     sadm_writexy 21 01 "$eighty_spaces"                                 # Line 21 in Reverse Video
@@ -155,35 +104,6 @@ sadm_display_heading()
 
     sadm_writexy 04 01 "${reset}\c"                                       # Reset to Normal & Pos. Cur
 }
-
-
-
-#---------------------------------------------------------------------------------------------------
-#                               ASK THE MANAGER PASSWORD
-#---------------------------------------------------------------------------------------------------
-sadm_ask_password()
-{
-    MPASSE=`date +%d%m%y`       ; MPASSE=`expr $MPASSE + 444 `
-    MPASSE=`expr $MPASSE \* 2 `	    ; export MPASSE
-    echo "`date +%d`+`date +%m`+`date +%y`" | bc > /tmp/SAMPAS$$ 
-    MPASSE2=`cat /tmp/SAMPAS$$`         ; export MPASSE2
-    rm /tmp/SAMPAS$$
-
-    MPASSE=`date +%d%m%y` ; MPASSE=`echo "($MPASSE + 666) * 2" | bc `   # Construct Passwd
-    sadm_writexy 22 01 "${clreos}${bell}${bell}"                        # Clear Line 22 + Ring Bell
-    sadm_writexy 22 01 "Please enter the SADMIN password ...  ? "       # Inform user for Password
-    stty -echo                                                          # Turn OFF Char. echo
-    read REPONSE                                                        # Accept Password
-    stty echo                                                           # Turn Back echo ON
-    if [ "$REPONSE" != "$MPASSE" ]                                      # Validate Password
-        then sadm_mess "Invalid password"                               # Advise User Wrong Password
-             return 0                                                   # 0 = Wrong Password
-        else return 1                                                   # 1 = Good Password
-    fi
-}
-
-
-
 
 
 #
@@ -298,71 +218,69 @@ sadm_display_menu()
     return $adm_choix                                                   # Return Selected choice
 }
 
+sadm_display_heading "Filesystem Menu"
+menu_array=("Menu Item 1" \
+            "Menu Item 2" \
+            "Delete a filesystem3" \
+            "Delete a filesystem3" \
+            "Delete a filesystem4" \
+            "Delete a filesystem5" \
+            "Delete a filesystem6" \
+            "Check a filesystem7" )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "CHOICE SELECTED IS $?" ; read dummy
 
+sadm_display_heading "Menu 2"
+menu_array=("Filesystem Jacques1"  \
+            "Filesystem Jacques2"  \
+            "Filesystem Jacques3"  \
+            "Filesystem Jacques4"  \
+            "Filesystem Jacques5"  \
+            "Filesystem Jacques6"  \
+            "Filesystem Jacques7"  \
+            "Filesystem Jacques8"  \
+            "Filesystem Jacques9"  \
+            "Filesystem Jacques10" \
+            "Filesystem Jacques11" \
+            "Filesystem Jacques12" \
+            "Filesystem Jacques13" \
+            "Filesystem Jacques14" \
+            "Filesystem Jacques15" )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "CHOICE SELECTED IS $?" ; read dummy
 
-
-
-#---------------------------------------------------------------------------------------------------
-# Param #1 = Position the cursor on that line number
-# Param #2 = Cursor position on the line
-# Param #3 = Number of Character to accept
-# Param #4 = Type of accept A=AlphaNumeric N=NUmeric
-# Param #5 = Value of field just entered ("NULL"  = No Default)
-#---------------------------------------------------------------------------------------------------
-sadm_accept_data()
-{
-  while :
-        do
-        WBLANK="                              "
-        WLINE=$1                                                        # Save Line to accept Data
-        WCOL=$2                                                         # Save Column to accept data
-        WLEN=$3                                                         # Max Nb Char. to Accept
-        WTYPE=$4                                                        # AlphaNum = A, Numeric = N
-        if [ "$WTYPE" != "N" ] ; then WTYPE="A" ; fi                    # Make sure we have A or N
-        WDEFAULT=$5	                                                    # Default if press Enter
-        WDATA=$WDEFAULT                                                 # Move Default to WDATA
-        
-        # Build and Display a Mask Indicating number of Char Allowed and Display Default Value
-        a=1 ; WMASK="" ;                                                # Set Init. Val before loop
-        while [ $a -le "$WLEN" ]                                        # Len of data reached ?
-              do                                                        # Beginning of loop
-              WMASK="${WMASK} "                                         # Add Space to Mask
-              a=$(($a+1))                                               # Incr Counter by 1
-              done                                                      # Next iteration
-        if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
-        sadm_writexy $WLINE $WCOL "${reverse}${WMASK}"                      # Display Mask in Rvs Video
-        sadm_writexy $WLINE $WCOL "${WDEFAULT}${reset}"                   # Display Default Value
-
-        # Accept the Data
-        sadm_writexy $WLINE $WCOL ""                                    # Pos. Cursor Ready to Input
-        #read -n${WLEN} WDATA
-        read WDATA                                                      # Read DAta From Keyboard
-        if [ "$WDATA" = "" ]    ; then WDATA="$WDEFAULT"  ; fi          # [ENTER] = Default Value
-        if [ "$WDATA" = " " ]   ; then WDATA=""           ; fi          # [SPACE] = Clear Value
-        if [ "$WDATA" = "-" ]   ; then WDATA=""           ; fi          # [-] = Clear Value
-        if [ "$WDATA" = "del" ] ; then WDATA=""           ; fi          # [DEL] = Clear Value
-        if [ "$WLEN" != "0" ]                                           # If Length > 0 
-           then sadm_writexy $WLINE $WCOL "${WMASK}"                    # Re-Display Mask
-                sadm_writexy $WLINE $WCOL "$WDATA"                      # Re-Display Value Entered
-        fi
-
-        # Test if length of data exceed what was requested
-        if [ ${#WDATA} -gt ${WLEN} ]                                    # Data Entered Exceed Max.
-           then mess "Maximum of ${WLEN} characters are accepted for this field"
-                continue                                                # Restart Loop
-        fi
-
-        # If numeric was wanted - Test all char for numbers
-        if [ "$WTYPE" = "N" ]                                           # If Numeric was choosen
-           then echo $WDATA | grep [^0-9] > /dev/null 2>&1              # Grep for Number
-                if [ "$?" -eq "0" ]
-                   then mess "Sorry, wanted a number"                   # Error Msg on Line 22
-                   else break                                           # Ok we are finish
-                fi
-           else break                                                   # If Alpha - were finish
-        fi
-        done
-}
-
+sadm_display_heading "Menu 3"
+menu_array=("Filesystem Jacques1"  \
+            "Filesystem Jacques2"  \
+            "Filesystem Jacques3"  \
+            "Filesystem Jacques4"  \
+            "Filesystem Jacques5"  \
+            "Filesystem Jacques6"  \
+            "Filesystem Jacques7"  \
+            "Filesystem Jacques8"  \
+            "Filesystem Jacques9"  \
+            "Filesystem Jacques10" \
+            "Filesystem Jacques11" \
+            "Filesystem Jacques12" \
+            "Filesystem Jacques13" \
+            "Filesystem Jacques14" \
+            "Filesystem Jacques15" \
+            "Filesystem Jacques16" \
+            "Filesystem Jacques17" \
+            "Filesystem Jacques18" \
+            "Filesystem Jacques19" \
+            "Filesystem Jacques20" \
+            "Filesystem Jacques21" \
+            "Filesystem Jacques22" \
+            "Filesystem Jacques23" \
+            "Filesystem Jacques24" \
+            "Filesystem Jacques25" \
+            "Filesystem Jacques26" \
+            "Filesystem Jacques27" \
+            "Filesystem Jacques28" \
+            "Filesystem Jacques29" \
+            "Filesystem Jacques30" )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "CHOICE SELECTED IS $?" ; read dummy
 
 

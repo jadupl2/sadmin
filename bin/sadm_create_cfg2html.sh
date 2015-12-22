@@ -13,7 +13,7 @@
 #===================================================================================================
 #set -x
 
-#set -x
+
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -30,7 +30,7 @@ VER='2.2'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -64,6 +64,13 @@ Debug=true                                      ; export Debug          # Debug 
 #===================================================================================================
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+    
     # Make sure that cfg2html is accessible on the server
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
     if [ $? -eq 0 ]                                                     # if found
@@ -81,10 +88,10 @@ Debug=true                                      ; export Debug          # Debug 
     # Run CFG2HTML
     sadm_logger "Running : $CFG2HTML -H -o $DR_DIR"
     $CFG2HTML -H -o $DR_DIR >>$LOG 2>&1
-    GLOBAL_ERROR=$?
+    SADM_EXIT_CODE=$?
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
-    sadm_stop $GLOBAL_ERROR                                             # Upd. RCH File & Trim Log 
-    exit $GLOBAL_ERROR                                                  # Exit With Global Error (0/1)
+    sadm_stop $SADM_EXIT_CODE                                             # Upd. RCH File & Trim Log 
+    exit $SADM_EXIT_CODE                                                  # Exit With Global Error (0/1)
 
 

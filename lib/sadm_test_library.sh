@@ -23,15 +23,16 @@
 #   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.5'                                      ; export VER             # Program version
+VER='1.6'                                      ; export VER             # Program version
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
 # VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
 #ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
@@ -42,6 +43,21 @@ MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb
 #
 #
 #
+
+##############################################################################
+# Display Menu Principal
+##############################################################################
+sadm_display_main_menu()
+{
+    sadm_display_heading "System Administration Menu" 
+    sadm_writexy 05 15 "1- Filesystem tools........................"
+    sadm_writexy 07 15 "2- Create system group on Linux farm......."
+    sadm_writexy 09 15 "3- Global Filesystem Tools................."
+    sadm_writexy 11 15 "4- RPM DataBase Tools......................"
+    sadm_writexy 14 15 "Q- Quit S.A.M.............................."
+    sadm_writexy 21 29 "${reverse}Option ? ${reset}_${right}"
+    sadm_writexy 21 38 " "
+}
 
 #
 
@@ -87,6 +103,8 @@ Debug=true                                      ; export Debug          # Debug 
     sadm_logger "sadm_stop 9                  Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)"
     sadm_logger "                             Please call this function just before your script end"
     sadm_logger " "
+    echo "Press [ENTER} to Continue" ; read dummy
+    tput clear
     sadm_logger "-------------------------------------------------------------------------------------------------------------------------"
     sadm_logger "                                 FUNCTIONS AVAILABLE IN SADM_LIB_SERVER.SH"
     sadm_logger "                                                                                                      RETURN VALUE     "
@@ -106,5 +124,43 @@ Debug=true                                      ; export Debug          # Debug 
     sadm_logger "\$(sadm_server_disks)             Server disks list (MB) (Ex: DISKNAME|SIZE,DISKNAME|SIZE,...)  : ...$(sadm_server_disks)..."
     sadm_logger "\$(sadm_server_vg)                Server vg(s) list (MB) (Ex: VGNAME|SIZE|USED|FREE,...)        : ...$(sadm_server_vg)..."
     
-    sadm_stop $GLOBAL_ERROR                                             # Upd. RCH File & Trim Log
-    exit $GLOBAL_ERROR                                                  # Exit With Global Err (0/1)
+    echo "Press [ENTER} to Continue" ; read dummy
+    tput clear
+
+sadm_display_heading "Small Menu (7 Items or less)"
+menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
+            "Menu Item 6" "Menu Item 7" )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "Value Returned to Function Caller is $?" ; read dummy
+
+
+sadm_display_heading "Medium Menu (Up to 15 Items)"
+menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+            "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+            "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "Value Returned to Function Caller is $?" ; read dummy
+
+
+sadm_display_heading "Large Menu (Up to 30 Items)"
+menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+            "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+            "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
+            "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
+            "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
+            "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
+sadm_display_menu "${menu_array[@]}"
+sadm_logger "Value Returned to Function Caller is $?" ; read dummy
+
+    tput clear
+    e_header    "e_eheader"
+    e_arrow     "e_arrow"
+    e_success   "e_success"
+    e_error     "e_error"
+    e_warning   "e_warning"
+    e_underline "e_underline"
+    e_bold      "e_bold"
+    e_note      "e_note"
+
+    sadm_stop $SADM_EXIT_CODE                                             # Upd. RCH File & Trim Log
+    exit $SADM_EXIT_CODE                                                  # Exit With Global Err (0/1)

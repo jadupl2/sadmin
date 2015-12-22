@@ -26,7 +26,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -57,41 +57,41 @@ export SELINUX USING_SELINUX                                            # Export
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_logger "Checking if update are available for version $(sadm_os_version) ..."
-    case "$(sadm_os_version)" in
-      [34] ) sadm_logger "Running \"up2date -l\""                         # Update the Log
-             sadm_logger "${DASH}"
-             up2date -l >> $LOG 2>&1                                    # List update available
-             rc=$?                                                      # Save Exit code
-             sadm_logger "${DASH}"
-             sadm_logger "Return Code after up2date -l is $rc"            # Write exit code to log
-             case $rc in
-                0) UpdateStatus=0                                       # Update Exist
-                   sadm_logger "Update are available ..."                 # Update log update avail.
-                   ;;
-                *) UpdateStatus=2                                       # Problem Abort Update
-                   sadm_logger "NO UPDATE AVAILABLE"                      # Update the log
-                   ;;
-             esac
-             ;;
-     [567] ) sadm_logger "Running \"yum check-update\""                   # Update the log
-             sadm_logger "${DASH}"
-             yum check-update >> $LOG 2>&1                              # List Available update
-             rc=$?                                                      # Save Exit Code
-             sadm_logger "${DASH}"
-             sadm_logger "Return Code after yum check-update is $rc"      # Write Exit code to log
-             case $rc in
-              100) UpdateStatus=0                                       # Update Exist
-                   sadm_logger "Update are available"                     # Update the log
-                   ;;
-                0) UpdateStatus=1                                       # No Update available
-                   sadm_logger "NO UPDATE AVAILABLE"                      # Update the log
-                   ;;
-                *) UpdateStatus=2                                       # Problem Abort Update
-                   sadm_logger "Error Encountered - Update aborted"       # Update the log
-                   ;;
-             esac
-             ;;
+    sadm_logger "Checking if update are available for version $(sadm_os_major_version) ..."
+    case "$(sadm_os_major_version)" in
+      [3|4] )    sadm_logger "Running \"up2date -l\""                    # Update the Log
+                sadm_logger "${DASH}"
+                up2date -l >> $LOG 2>&1                                 # List update available
+                rc=$?                                                   # Save Exit code
+                sadm_logger "${DASH}"
+                sadm_logger "Return Code after up2date -l is $rc"       # Write exit code to log
+                case $rc in
+                   0) UpdateStatus=0                                    # Update Exist
+                      sadm_logger "Update are available ..."            # Update log update avail.
+                      ;;
+                   *) UpdateStatus=2                                    # Problem Abort Update
+                      sadm_logger "NO UPDATE AVAILABLE"                 # Update the log
+                      ;;
+                esac
+                ;;
+     [5|6|7])   sadm_logger "Running \"yum check-update\""              # Update the log
+                sadm_logger "${DASH}"
+                yum check-update >> $LOG 2>&1                           # List Available update
+                rc=$?                                                   # Save Exit Code
+                sadm_logger "${DASH}"
+                sadm_logger "Return Code after yum check-update is $rc" # Write Exit code to log
+                case $rc in
+                 100) UpdateStatus=0                                    # Update Exist
+                      sadm_logger "Update are available"                # Update the log
+                      ;;
+                   0) UpdateStatus=1                                    # No Update available
+                      sadm_logger "NO UPDATE AVAILABLE"                 # Update the log
+                      ;;
+                   *) UpdateStatus=2                                    # Problem Abort Update
+                      sadm_logger "Error Encountered - Update aborted"  # Update the log
+                      ;;
+                esac
+                ;;
     esac
     sadm_logger "${DASH}"
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
@@ -144,7 +144,14 @@ run_yum()
 #                           S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
-    sadm_start                                                          # Make sure Dir. Struc. exist
+    sadm_start                                                          # Make sure Dir. Struc. exist     
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+    
     check_available_update                                              # Check if avail. Update
     if [ $? -ne 0 ]                                                     # No update available - Exit
         then sadm_stop 0                                                # Update rc file
@@ -160,7 +167,7 @@ run_yum()
     fi
 
     # Run the OS Update
-    if [ $(sadm_os_version) -lt 5 ]  ; then run_up2date ; else run_yum ; fi     # Update the Server
+    if [ $(sadm_os_major_version) -lt 5 ]  ; then run_up2date ; else run_yum ; fi     # Update the Server
     rc=$? ; export rc                                                   # Save Return Code
 
     # Reactivate SELINUX if it was de-activated at the beginning

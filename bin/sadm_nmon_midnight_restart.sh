@@ -29,7 +29,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -121,8 +121,8 @@ restart_nmon()
              exit 1                                                     # Abort Program
     fi                             
     restart_nmon                                                        # nmon not running start it
-    GLOBAL_ERROR=$?                                                     # Recuperate error code
-    if [ $GLOBAL_ERROR -ne 0 ]                                          # if error occured
+    SADM_EXIT_CODE=$?                                                     # Recuperate error code
+    if [ $SADM_EXIT_CODE -ne 0 ]                                          # if error occured
         then sadm_logger "Problem starting nmon"                          # Advise User
     fi     
     
@@ -133,8 +133,8 @@ restart_nmon()
     find $NMON_DIR -mtime +${NMON_2_KEEP} -type f -name "*.nmon" -exec ls -l {} \; >> $LOG 2>&1
     find $NMON_DIR -mtime +${NMON_2_KEEP} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
 
-    sadm_stop $GLOBAL_ERROR                                             # Upd. RC & Trim Log & Set RC
-    exit $GLOBAL_ERROR                                                  # Exit Glob. Err.Code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
+    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
 
 
 #

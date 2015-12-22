@@ -24,7 +24,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -55,7 +55,7 @@ TERA_SERVER="holmes   watson sherlock hercule quatro"
 # ==================================================================================================
 clean_terabyte_dir()
 {
-    GLOBAL_ERROR=0
+    SADM_EXIT_CODE=0
     sadm_logger "${SA_LINE}"
     sadm_logger "Keep $NB_COPY copies of TeraByte images per host"
 
@@ -111,8 +111,8 @@ clean_terabyte_dir()
             else    RC=0
                     sadm_logger "RESULT : No file(s) to delete for ${WSERVER} - OK"
         fi 
-        GLOBAL_ERROR=`echo $GLOBAL_ERROR + $RC | bc `
-        sadm_logger "Total of Error is $GLOBAL_ERROR"
+        SADM_EXIT_CODE=`echo $SADM_EXIT_CODE + $RC | bc `
+        sadm_logger "Total of Error is $SADM_EXIT_CODE"
         done
     
      # Umount THE NFS Mount of the Terabyte Images
@@ -123,8 +123,8 @@ clean_terabyte_dir()
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
     
     sadm_logger "${SA_LINE}"
-    sadm_logger "Grand Total of Error is $GLOBAL_ERROR"
-    return $GLOBAL_ERROR
+    sadm_logger "Grand Total of Error is $SADM_EXIT_CODE"
+    return $SADM_EXIT_CODE
 }
 
 
@@ -135,6 +135,6 @@ clean_terabyte_dir()
     clean_terabyte_dir                  # Clean up old multiple copies of Storix Images
     rc=$? ; export rc                   # Save Return Code
     sadm_stop $rc                       # Saveand trim Logs
-    exit $GLOBAL_ERROR                  # Exit with Error code value
+    exit $SADM_EXIT_CODE                  # Exit with Error code value
 
 

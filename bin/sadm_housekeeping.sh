@@ -1,18 +1,25 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_sadmin.sh
-#   Synopsis : .
+#   Title    :  sadm_housekeeping.sh
+#   Synopsis : .Make some general housekeeping that we run once daily to get things running smoothly
 #   Version  :  1.0
-#   Date     :  6 September 2015
+#   Date     :  19 December 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
-#  History
-#  1.1 
-# --------------------------------------------------------------------------------------------------
-#set -x
 
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+
+#   SADMIN Tool are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+# --------------------------------------------------------------------------------------------------
+# 1.6   
+#
 #set -x
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -29,11 +36,12 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
+EXIT_CODE=0                                    ; export EXIT_CODE       # Script Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
 # VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
 #ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
@@ -46,9 +54,15 @@ MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb
 #
 
 
+
+
+
 # --------------------------------------------------------------------------------------------------
-# This Script environment variable
+#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
+#
+Debug=true                                      ; export Debug          # Debug increase Verbose
+#
 #
 MUSER="query"                                   ; export MUSER          # MySql User
 MPASS="query"                                   ; export MPASS          # MySql Password
@@ -60,16 +74,11 @@ MYSQL="$(which mysql)"                          ; export MYSQL          # Locati
 
 
 
-
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
 process_linux_servers()
 {
-    sadm_logger " "
-    sadm_logger "$DASH" 
-    sadm_logger "Processing active Linux Servers"
-    sadm_logger " "
     SQL1="use sysinfo; "
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Linux' order by server_name;"
@@ -85,64 +94,17 @@ process_linux_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger " "
-              sadm_logger "${SA_LINE}"
+              sadm_logger "${DASH}"
               sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-              
-              # Ping the server - Server or Laptop may be unplugged
-              sadm_logger "ping -c 2 ${server_name}.${server_domain}"
-              ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
-              RC=$?
-              if [ $RC -ne 0 ]
-                 then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_logger "Will not be able to process server ${server_name}"
-                      sadm_logger "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
-                      continue
-              fi
-              
-              # Do the Rsync
-              sadm_logger "rsync -var --delete /sadmin/bin/ ${server_name}.${server_domain}:/sadmin/bin/"
-              rsync -var --delete /sadmin/bin/ ${server_name}.${server_domain}:/sadmin/bin/
-              RC=$? 
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-              
-               
-              sadm_logger "rsync -var --delete /sadmin/lib/ ${server_name}.${server_domain}:/sadmin/lib/"
-              rsync -var --delete /sadmin/lib/ ${server_name}.${server_domain}:/sadmin/lib/
+              # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_logger "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_logger "RETURN CODE IS 0 - OK"
               fi
-
-               
-              sadm_logger "rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/"
-              rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-               
-              sadm_logger "rsync -var /sadmin/pkg/ ${server_name}.${server_domain}:/sadmin/pkg/"
-              rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-                                                                
               done < $TMP_FILE1
     fi
-    sadm_logger " "
-    sadm_logger "${SA_LINE}"
     return $ERROR_COUNT
 }
 
@@ -154,10 +116,6 @@ process_linux_servers()
 # --------------------------------------------------------------------------------------------------
 process_aix_servers()
 {
-    sadm_logger " "
-    sadm_logger "$DASH" 
-    sadm_logger "Processing active Aix Servers" 
-    sadm_logger " "
     SQL1="use sysinfo; "
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Aix' order by server_name;"
@@ -168,93 +126,92 @@ process_aix_servers()
     if [ -s "$TMP_FILE1" ]
        then while read wline
               do
-              xcount=`expr $xcount + 1`
+              xcount=$(($xcount+1))
               server_name=`  echo $wline|awk '{ print $1 }'`
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger " "
-              sadm_logger "${SA_LINE}"
+              sadm_logger "${DASH}"
               sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-
-              # Ping the server - Server or Laptop may be unplugged
-              sadm_logger "ping -c 2 ${server_name}.${server_domain}"
-              ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
-              RC=$?
-              if [ $RC -ne 0 ]
-                 then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_logger "Will not be able to process server ${server_name}"
-                      sadm_logger "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
-                      continue
-              fi              
-
-              sadm_logger "rsync -var /sadmin/bin/ ${server_name}.${server_domain}:/sadmin/bin/"
-              rsync -var /sadmin/bin/ ${server_name}.${server_domain}:/sadmin/bin/
+              # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_logger "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_logger "RETURN CODE IS 0 - OK"
               fi
-
-              #sadm_logger "rsh ${server_name}.${server_domain} chmod 750 /sadmin/bin/"
-              #rsh ${server_name}.${server_domain} chmod 750 /sadmin/bin/*
-              #sadm_logger "rsh ${server_name}.${server_domain} chown jacques.jacques /sadmin/bin/"
-              #rsh ${server_name}.${server_domain} chown jacques.jacques /sadmin/bin/*
-
-              sadm_logger "rsync -var /sadmin/lib/ ${server_name}.${server_domain}:/sadmin/lib/"
-              rsync -var /sadmin/lib/ ${server_name}.${server_domain}:/sadmin/lib/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-              
-               
-              sadm_logger "rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/"
-              rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-    
-                   
-              sadm_logger "rsync -var /sadmin/pkg/ ${server_name}.${server_domain}:/sadmin/pkg/"
-              rsync -var /sadmin/cfg/ ${server_name}.${server_domain}:/sadmin/cfg/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-              
               done < $TMP_FILE1
-        else  sadm_logger "No Aix Server defined in Sysinfo"
     fi
-    sadm_logger " "
-    sadm_logger "${SA_LINE}"
     return $ERROR_COUNT
 }
 
 
+# --------------------------------------------------------------------------------------------------
+#                      Development  General Housekeeping Function
+# --------------------------------------------------------------------------------------------------
+dev_housekeeping()
+{
+    sadm_logger "${DASH}"
+    sadm_logger "Development HouseKeeping"
+    sadm_logger " "
 
+    # Reset privilege on notes directories
+    sadm_logger "find $BASE_DIR/notes -type f -exec chmod -R 664 {} \;"       # Change Dir. 
+    find $BASE_DIR/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Dir. 
+
+}
+
+# --------------------------------------------------------------------------------------------------
+#                      Production General Housekeeping Function
+# --------------------------------------------------------------------------------------------------
+prod_housekeeping()
+{
+    sadm_logger "${DASH}"
+    sadm_logger "Production HouseKeeping"
+    sadm_logger " "
+    
+    
+    # Reset privilege on /sadmin files
+    sadm_logger "find $BIN_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
+    find $BIN_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
+    sadm_logger "find $LIB_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
+    find $LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
+
+    # Reset privilege on /sadmin directories
+    sadm_logger "find $BIN_DIR -type d -exec chmod -R 2775 {} \;"       # Change Dir. 
+    find $BIN_DIR -type d -exec chmod -R 2775 {} \; >/dev/null 2>&1     # Change Dir. 
+
+    # Flush files older than 7 days in $TMP_DIR
+    sadm_logger "find $TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \;"  # Change Dir. 
+    find $TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1   # Change Dir. 
+    
+    # Set the TMP directory so everyone can write to it.
+    sadm_logger "chmod -R 1777 $TMP_DIR "                               # Special tmp Privilege
+    chmod -R 1777 $TMP_DIR >/dev/null 2>&1                              # Special tmp Privilege
+    
+    # Change the owner and group of SADMIN Base Directory to sadmin.
+    find $BASE_DIR -exec chown sadmin.sadmin {} \; >/dev/null 2>&1      # Change Owner & Group 
+    chown root.root $BASE_DIR/lost+found >/dev/null 2>&1                # Make Lost+Found root Priv.
+    
+    sadm_logger "chmod 2775 $LOG_DIR"                                   # LOGDIR Writable Owner/Group
+    chmod 2775 $LOG_DIR                                                 # LOGDIR Writable Owner/Group
+    
+    
+    return 0
+}
 
 
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-        
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+    
+    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]       # Only run on SADMIN Server
         then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
              sadm_logger "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-        
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
              sadm_logger "Process aborted"                              # Abort advise message
@@ -262,16 +219,21 @@ process_aix_servers()
              exit 1                                                     # Exit To O/S
     fi
     
-    LINUX_ERROR=0; AIX_ERROR=0                                          # Initialize Error count to 0
-    
     process_linux_servers                                               # Process all Active Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-    sadm_logger "We had $LINUX_ERROR error(s) while processing Linux servers"
-
     process_aix_servers                                                 # Process all Active Aix Servers
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
-    sadm_logger "We had $AIX_ERROR error(s) while processing Aix servers"
     
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                           # Total = AIX+Linux Errors
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC to or 0
-    exit $SADM_EXIT_CODE                                                  # Exit With Global Error code (0/1)
+    prod_housekeeping
+    PCODE=$?
+    dev_housekeeping
+    DCODE=$?
+    
+    EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$PCODE+$DCODE))                # Total = AIX+Linux Errors
+
+    # Go Write Log Footer - Send email if needed - Trim the Log - Update the Return Code History file
+    sadm_stop $EXIT_CODE                                                # Upd. RCH File & Trim Log 
+    exit $EXIT_CODE                                                     # Exit With Global Err (0/1)
+
+
+

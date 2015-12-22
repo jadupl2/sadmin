@@ -27,7 +27,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -310,10 +310,18 @@ create_summary_file()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
+
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+    
     pre_validation                                                      # Input File > Cmd present ?
-    GLOBAL_ERROR=$?                                                     # Save Function Return code
-    if [ $GLOBAL_ERROR -ne 0 ]                                          # Cmd|File missing = exit
-        then sadm_stop $GLOBAL_ERROR                                    # Upd. RC & Trim Log & Set RC
+    SADM_EXIT_CODE=$?                                                   # Save Function Return code
+    if [ $SADM_EXIT_CODE -ne 0 ]                                        # Cmd|File missing = exit
+        then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & Set RC
              exit 1
     fi
     echo ""
@@ -322,6 +330,6 @@ create_summary_file()
     
     create_summary_file
     
-    sadm_stop $GLOBAL_ERROR                                             # Upd. RC & Trim Log & Set RC
-    exit $GLOBAL_ERROR                                                  # Exit Glob. Err.Code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
+    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
 

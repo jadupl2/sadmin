@@ -40,7 +40,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -90,13 +90,13 @@ if [ "$1" != "" ]
          OUT_FILE=                                                      # Output is stdout
          CLEANUP=false                                                  # No cleanup
     else >$OUT_FILE                                                     # Reset output file
-         exec 1>/dev/null                                               # Get rid of stdout
+#         exec 1>/dev/null                                               # Get rid of stdout
 fi
 
 # Generate CPU statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:CPU" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -u -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -u | tee -a $OUT_FILE
 fi
@@ -104,7 +104,7 @@ fi
 # Generate memory usage statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:MEM_USAGE" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -r -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -r | tee -a $OUT_FILE
 fi
@@ -112,7 +112,7 @@ fi
 # Generate memory demand statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:MEM_STATS" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -R -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -R | tee -a $OUT_FILE
 fi
@@ -120,7 +120,7 @@ fi
 # Generate paging statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:PAGING" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -B -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -B | tee -a $OUT_FILE
 fi
@@ -128,7 +128,7 @@ fi
 # Generate swapping statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:SWAPPING" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -W -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -W | tee -a $OUT_FILE
 fi
@@ -136,7 +136,7 @@ fi
 # Generate disk transfer statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:DISK" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -b -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -b | tee -a $OUT_FILE
 fi
@@ -144,7 +144,7 @@ fi
 # Generate run queue statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:RUNQUEUE" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -q -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -q | tee -a $OUT_FILE
 fi
@@ -152,7 +152,7 @@ fi
 # Generate network usage statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:NETWORK" | tee -a $OUT_FILE
-if [ $(sadm_os_version) -lt 5 ]
+if [ $(sadm_os_major_version) -lt 5 ]
    then sar -n DEV -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -n DEV | tee -a $OUT_FILE
 fi
@@ -160,20 +160,26 @@ fi
 
 # Clean Stat. Directory
 # --------------------------------------------------------------------------------------------------
-if [ $CLEANUP = "true" ]
+sadm_logger "CleanUp is $CLEANUP"
+
+if [ "$CLEANUP" = "true" ]
    then FILE_COUNT=`ls -lr $PERF_DIR/$OUT_PREFIX* | wc -l`
-        echo "Number of file in $PERF_DIR is $FILE_COUNT and we keep only $OUT_MAX_FILES"
-        TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
-        echo "So we do a tail ${TAIL_COUNT}"
-        if [ $TAIL_COUNT -gt 0 ]
-            then ls -1r $PERF_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
-                do
-                rm -f $file
-                done
+        sadm_logger "Number of file in $PERF_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
+        if [ "$FILE_COUNT" -gt "$OUT_MAX_FILES" ]
+            then TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
+                 sadm_logger "So we do a tail ${TAIL_COUNT}"
+                 if [ "$TAIL_COUNT" -gt 0 ]
+                   then ls -1r $PERF_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
+                        do
+                        rm -f $file
+                         done
+                fi
+            else sadm_logger "No Cleanup to do" 
+        fi
 fi
 
-# --------------------------------------------------------------------------------------------------
-    sadm_stop $RC                                                       # End Process with exit Code
-    sadm_logger "The exist code is set to $RC"                            # Advise user that RC set to 1
-    exit $RC                                                            # Exit script
-
+#---------------------------------------------------------------------------------------------------
+    SADM_EXIT_CODE=0
+    sadm_stop $SADM_EXIT_CODE
+    exit $SADM_EXIT_CODE
+    

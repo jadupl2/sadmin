@@ -33,7 +33,7 @@ TMP_FILE1="${TMP_DIR}/${INST}_1.$$"                 ; export TMP_FILE1      # Sc
 TMP_FILE2="${TMP_DIR}/${INST}_2.$$"                 ; export TMP_FILE2      # Script Tmp File2
 TMP_FILE3="${TMP_DIR}/${INST}_3.$$"                 ; export TMP_FILE3      # Script Tmp File3
 LOG_FILE="${LOG_DIR}/${HOSTNAME}_${INST}.log"       ; export LOG_FILE       # Script Log file
-LOG_STAT="${LOG_DIR}/rc.${HOSTNAME}_${INST}.log"    ; export LOG_STAT       # Script Log Statistic file
+LOG_STAT="${LOG_DIR}/${HOSTNAME}_${INST}.rch"       ; export LOG_STAT       # Script Log Statistic file
 
 # List of Directories to Backup
 BACKUP_DIR="/cadmin /sadmin /home /storix /sysadmin /sysinfo /aix_data /gitrepo "

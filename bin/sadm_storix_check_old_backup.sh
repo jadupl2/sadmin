@@ -25,7 +25,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -120,9 +120,9 @@ check_storix_date()
 # --------------------------------------------------------------------------------------------------
     sadm_start                          # Initialize the LOG and RC File - Check existence of Dir.
     check_storix_date                   # Check if got Storix Backup older than LIMIT_DAY
-    GLOBAL_ERROR=$?                     # Save Return Code
-    sadm_stop $GLOBAL_ERROR             # Saveand trim Logs
-    exit $GLOBAL_ERROR                  # Exit with Error code value
+    SADM_EXIT_CODE=$?                     # Save Return Code
+    sadm_stop $SADM_EXIT_CODE             # Saveand trim Logs
+    exit $SADM_EXIT_CODE                  # Exit with Error code value
     
 
 

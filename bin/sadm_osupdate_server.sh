@@ -29,7 +29,7 @@ VER='1.5'                                      ; export VER             # Progra
 OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
 TPID="$$"                                      ; export TPID            # Script PID
-GLOBAL_ERROR=0                                 ; export GLOBAL_ERROR    # Global Error Return Code
+SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
 BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
@@ -118,9 +118,24 @@ process_linux_servers()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start
+    
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+    
+    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+    
     process_linux_servers
     rc=$? ; export rc                                                   # Save Return Code
     sadm_stop $rc
-    exit $GLOBAL_ERROR
+    exit $SADM_EXIT_CODE
 
 

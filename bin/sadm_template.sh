@@ -41,6 +41,7 @@ BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script
 #
 [ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
 # VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
 #ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
@@ -152,11 +153,27 @@ process_aix_servers()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
+    
+    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
 
-    process_linux_servers                                               # Process all Active Linux Servers
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
+             sadm_logger "Process aborted"                              # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    process_linux_servers                                               # Process Active Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-    process_aix_servers                                                 # Process all Active Aix Servers
+
+    process_aix_servers                                                 # Process Active Aix Servers
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
+
     EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                              # Total = AIX+Linux Errors
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File

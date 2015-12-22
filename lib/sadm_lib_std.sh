@@ -156,7 +156,9 @@ sadm_check_command_availibility() {
 #
 sadm_check_requirements() {
                            
-
+# SYSTAT MUST BE INSTALLED _ nOT DEFAUT ON FEDORA 23
+                           
+                           
     # which command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                        # Try the command which 
         then SADM_WHICH=`which which`  ; export SADM_WHICH                # Save the Path of Which
@@ -231,8 +233,8 @@ sadm_os_type() {
 #                             RETURN THE OS PROJECT CODE NAME
 # --------------------------------------------------------------------------------------------------
 sadm_os_code_name() {
-    if [ "$(sadm_os_type)" = "LINUX" ]  ; then sadm_os_code_name=`$SADM_LSB_RELEASE -sc`; fi
-    if [ "$(sadm_os_type)" = "AIX"   ]  ; then sadm_os_code_name="" ; fi
+    if [ "$(sadm_os_type)" = "LINUX" ] ; then sadm_os_code_name=`$SADM_LSB_RELEASE -sc`; fi
+    if [ "$(sadm_os_type)" = "AIX" ]   ; then sadm_os_code_name="IBM_AIX" ; fi
     echo "$sadm_os_code_name"
 }
 
@@ -245,7 +247,7 @@ sadm_os_name() {
         then sadm_os_name=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
              if [ "$sadm_os_name" = "REDHATENTERPRISESERVER" ] ; then sadm_os_name="REDHAT" ; fi
     fi 
-    if [ "$(sadm_os_type)" = "AIX" ] ; then sadm_os_name="IBM_AIX" ; fi
+    if [ "$(sadm_os_type)" = "AIX" ]   ; then sadm_os_name="AIX" ; fi
     echo "$sadm_os_name"
 }
 
@@ -435,13 +437,13 @@ sadm_start() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_stop() {    
-    GLOBAL_ERROR=$1
-    if [ $GLOBAL_ERROR -ne 0 ] ; then GLOBAL_ERROR=1 ; fi               # Making Sure code is 1 or 0
+    SADM_EXIT_CODE=$1
+    if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi             # Making Sure code is 1 or 0
  
     # Maintain Backup RC File log at a reasonnable size.
     sadm_logger " "
     sadm_logger "${DASH}"
-    sadm_logger "Script return code is $GLOBAL_ERROR"
+    sadm_logger "Script return code is $SADM_EXIT_CODE"
     sadm_logger "Script took $SECONDS seconds to run"
     sadm_logger "====="
     
@@ -453,20 +455,18 @@ sadm_stop() {
              SADM_MAIL_TYPE=4
     fi
     export ADM_MAIL 
-    
+     
     # Write email choice in the log footer
     case $SADM_MAIL_TYPE in
         0)  sadm_logger "No mail is requested when script end - No Mail Sent"
             ;;
-        1)  if [ $GLOBAL_ERROR -ne 0 ]
-               then cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $ADM_MAIL_ADDR
-                    sadm_logger "Mail is requested only on Error of the script - Mail Sent"
+        1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
+               then sadm_logger "Mail is requested only on Error of the script - Mail Sent"
                else sadm_logger "Mail is requested only on Error of the script - No Mail Sent"
             fi
             ;;
-        2)  if [ $GLOBAL_ERROR -eq 0 ]
-               then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $ADM_MAIL_ADDR # On Success
-                    sadm_logger "Mail is requested only on Success of this script - Mail Sent"
+        2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
+               then sadm_logger "Mail is requested only on Success of this script - Mail Sent"
                else sadm_logger "Mail is requested only on Success of this script - No Mail Sent"
             fi 
             ;;
@@ -478,7 +478,7 @@ sadm_stop() {
     
     # Update the Return Code File
     sadm_end_time=`date "+%H:%M:%S"`
-    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $INST $GLOBAL_ERROR" >>$RCLOG
+    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $INST $SADM_EXIT_CODE" >>$RCLOG
     
     sadm_logger "====="
     sadm_logger "Trimming $RCLOG to ${MAX_RCLINE} lines."
@@ -497,20 +497,21 @@ sadm_stop() {
     sadm_logger "====="
     sadm_logger "`date` end of ${PN}."
     sadm_logger "${DASH}"
+   
 
     # Inform UnixAdmin By Email based on his slected choice
     case $SADM_MAIL_TYPE in
-        1)  if [ $GLOBAL_ERROR -ne 0 ]
-               then cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $ADM_MAIL_ADDR # On Error
+        1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
+               then cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $SADM_MAIL_ADDR # On Error
             fi
             ;;
-        2)  if [ $GLOBAL_ERROR -eq 0 ]
-               then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $ADM_MAIL_ADDR # On Success
+        2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
+               then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $SADM_MAIL_ADDR # On Success
             fi 
             ;;
-        3)  if [ $GLOBAL_ERROR -eq 0 ]                                              # Always mail
-                then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $ADM_MAIL_ADDR
-                else cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $ADM_MAIL_ADDR
+        3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                              # Always mail
+                then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $SADM_MAIL_ADDR
+                else cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $SADM_MAIL_ADDR
             fi
             ;;
     esac
@@ -524,7 +525,7 @@ sadm_stop() {
     if [ -e "$TMP_FILE2" ] ; then rm -f $TMP_FILE2 >/dev/null 2>&1 ; fi
     if [ -e "$TMP_FILE3" ] ; then rm -f $TMP_FILE3 >/dev/null 2>&1 ; fi
 
-    return $GLOBAL_ERROR
+    return $SADM_EXIT_CODE
 }
 
 
@@ -547,5 +548,8 @@ sadm_stop() {
         "AIX")     EPOCH="${BASE_DIR}/bin/sadm_epoch_aix"      
                    ;;
     esac    
+    if [ -f /etc/os-release ] && [ $(grep -i "^ID=" /etc/os-release |awk -F= '{ print $2 }') = "raspbian" ]
+        then EPOCH="${BASE_DIR}/bin/sadm_epoch_arm" 
+    fi        
     export EPOCH
     
