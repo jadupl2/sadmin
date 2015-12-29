@@ -27,6 +27,8 @@
 #set -x
 
 #set -x
+#
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -35,29 +37,29 @@
 #   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
 #   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
 #
-#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
-#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
+#   VARIABLES AND FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
-PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.5'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
-INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
-TPID="$$"                                      ; export TPID            # Script PID
-SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Global Error Return Code
-BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
+SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
+SADM_INST=`echo "$SADM_PN" |awk -F\. '{print $1}'` ; export SADM_INST   # Script name without ext.
+SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
+SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
 #
-[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
 #
-# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
-#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+#SADM_MAIL_ADDR="your_email@domain.com"        ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
 #
 #
-#
+
 
 
 
@@ -66,10 +68,10 @@ MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-DRFILE=$DR_DIR/`hostname`_fs_save_info.dat      ; export DRFILE         # Input file of program
+DRFILE=$SADM_DR_DIR/`hostname`_fs_save_info.dat ; export DRFILE         # Input file of program
 Debug=true                                      ; export Debug          # Debug increase Verbose
-STDERR="${TMP_DIR}/stderr.$$"                   ; export STDERR         # Output of Standard Error
-STDOUT="${TMP_DIR}/stdout.$$"                   ; export STDOUT         # Output of Standard Output
+STDERR="${SADM_TMP_DIR}/stderr.$$"              ; export STDERR         # Output of Standard Error
+STDOUT="${SADM_TMP_DIR}/stdout.$$"              ; export STDOUT         # Output of Standard Output
 FSTAB=/etc/fstab                                ; export FSTAB          # Filesystem Table Name
 XFS_ENABLE="N"                                  ; export XFS_ENABLE     # Disable Unless cmd are present
 

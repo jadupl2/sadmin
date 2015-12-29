@@ -7,7 +7,8 @@
 #   Date:       September 2015
 # --------------------------------------------------------------------------------------------------
 #
-#set -x
+#
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -16,27 +17,30 @@
 #   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
 #   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
 #
-#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
-#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
+#   VARIABLES AND FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
-PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.5'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
-INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
-TPID="$$"                                      ; export TPID            # Script PID
-SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
-BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
+SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
+SADM_INST=`echo "$SADM_PN" |awk -F\. '{print $1}'` ; export SADM_INST   # Script name without ext.
+SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
+SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
 #
-[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
-# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
-#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+#SADM_MAIL_ADDR="your_email@domain.com"        ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
 #
+#
+
 #
 #
 
@@ -56,7 +60,7 @@ TERA_SERVER="holmes   watson sherlock hercule quatro"
 clean_terabyte_dir()
 {
     SADM_EXIT_CODE=0
-    sadm_logger "${SA_LINE}"
+    sadm_logger "${SADM_TEN_DASH}"
     sadm_logger "Keep $NB_COPY copies of TeraByte images per host"
 
 
@@ -68,7 +72,7 @@ clean_terabyte_dir()
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
     
     # Mount the NFS drive on the NAS
-    sadm_logger "${SA_LINE}"
+    sadm_logger "${SADM_TEN_DASH}"
     sadm_logger "Mount the NAS NFS"
     sadm_logger "mount ${REMOTE_HOST}:${NFS_REM_MOUNT} ${NFS_LOC_MOUNT}"
     mount ${REMOTE_HOST}:${NFS_REM_MOUNT} ${NFS_LOC_MOUNT}
@@ -83,7 +87,7 @@ clean_terabyte_dir()
 
     # Change to OS Image Directory
     cd ${NFS_LOC_MOUNT}
-    sadm_logger "${SA_LINE}"
+    sadm_logger "${SADM_TEN_DASH}"
     sadm_logger "List of current TeraByte Images in `pwd`"
     ls -lt | nl >> $LOG
     sadm_logger " "
@@ -91,7 +95,7 @@ clean_terabyte_dir()
     for WSERVER in $TERA_SERVER
         do
         sadm_logger " "
-        sadm_logger "${SA_LINE}"
+        sadm_logger "${SADM_TEN_DASH}"
         sadm_logger "List of Terabyte Images for server ${WSERVER}"
         ls -lt *_${WSERVER}.TBI >> $LOG
         FILE_COUNT=`ls -t1 *_${WSERVER}.TBI | sort -r | sed 1,${NB_COPY}d | wc -l`
@@ -116,13 +120,13 @@ clean_terabyte_dir()
         done
     
      # Umount THE NFS Mount of the Terabyte Images
-    sadm_logger "${SA_LINE}"
+    sadm_logger "${SADM_TEN_DASH}"
     cd $BASE_DIR
     sadm_logger "Unmount NAS NFS"
     sadm_logger "umount ${NFS_LOC_MOUNT}"
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
     
-    sadm_logger "${SA_LINE}"
+    sadm_logger "${SADM_TEN_DASH}"
     sadm_logger "Grand Total of Error is $SADM_EXIT_CODE"
     return $SADM_EXIT_CODE
 }

@@ -19,8 +19,8 @@ sadm_server_ips() {
     
     index=0 ; sadm_server_ips=""                                       # Init Variables at Start
     case "$(sadm_os_type)" in
-        "LINUX") rm -f $TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
-                 ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$TMP_DIR/sadm_ips_$$
+        "LINUX") rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
+                 ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$SADM_TMP_DIR/sadm_ips_$$
                  while read sadm_wip                                                 # Read IP one per line
                    do
                     if [ "$index" -ne 0 ]                                           # Don't add ; for 1st IP
@@ -98,11 +98,11 @@ sadm_server_ips() {
                     SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' |head -1 | awk '{ print $2 }'` 
                     sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
                     index=`expr $index + 1`                                         # Increment Index by 1
-                   done < $TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
-                 rm -f $TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Remove TMP IP File Output
+                   done < $SADM_TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
+                 rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Remove TMP IP File Output
                  ;;
-        "AIX")   rm -f $TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
-                 ifconfig -a | grep 'flags' | grep -v 'lo0:' | awk -F: '{ print $1 }' >$TMP_DIR/sadm_ips_$$
+        "AIX")   rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
+                 ifconfig -a | grep 'flags' | grep -v 'lo0:' | awk -F: '{ print $1 }' >$SADM_TMP_DIR/sadm_ips_$$
                  while read sadm_wip                                                 # Read IP one per line
                    do
                     if [ "$index" -ne 0 ]                                           # Don't add ; for 1st IP
@@ -114,7 +114,7 @@ sadm_server_ips() {
                     SADM_MAC=`entstat -d $sadm_wip | grep 'Hardware Address:' | awk  '{  print $3 }'`       # Get Interface Name
                     sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
                     index=`expr $index + 1`                                         # Increment Index by 1
-                   done < $TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
+                   done < $SADM_TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
                  ;;
     esac                 
     echo "$sadm_servers_ips"
@@ -356,11 +356,11 @@ sadm_server_disks() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_vg() {
     index=0 ; sadm_server_vg=""                                         # Init Variables at Start
-    rm -f $TMP_DIR/sadm_vg_$$ > /dev/null 2>&1                          # Del TMP file - Make sure
+    rm -f $SADM_TMP_DIR/sadm_vg_$$ > /dev/null 2>&1                          # Del TMP file - Make sure
     case "$(sadm_os_type)" in
         "LINUX") ${SADM_WHICH} vgs >/dev/null 2>&1
                  if [ $? -eq 0 ]
-                    then vgs --noheadings -o vg_name,vg_size,vg_free >$TMP_DIR/sadm_vg_$$ 2>/dev/null
+                    then vgs --noheadings -o vg_name,vg_size,vg_free >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null
                          while read sadm_wvg                                                 # Read VG one per line
                             do
                             if [ "$index" -ne 0 ]                                           # Don't add ; for 1st VG
@@ -384,10 +384,10 @@ sadm_server_vg() {
                             sadm_vg_used=`expr ${sadm_vg_size} - ${sadm_vg_free}`           # Calculate VG Used MB 
                             sadm_server_vg="${sadm_server_vg}${sadm_vg_name}|${sadm_vg_size}|${sadm_vg_used}|${sadm_vg_free}"
                             index=`expr $index + 1`                                         # Increment Index by 1
-                            done < $TMP_DIR/sadm_vg_$$                                          # Read VG From Generated File
+                            done < $SADM_TMP_DIR/sadm_vg_$$                                          # Read VG From Generated File
                  fi
                  ;;
-        "AIX")   lsvg > $TMP_DIR/sadm_vg_$$
+        "AIX")   lsvg > $SADM_TMP_DIR/sadm_vg_$$
                  while read sadm_wvg
                     do
                     if [ "$index" -ne 0 ] ; then sadm_server_vg="${sadm_server_vg}," ;fi
@@ -397,10 +397,10 @@ sadm_server_vg() {
                     sadm_vg_used=`lsvg $sadm_wvg |grep 'USED PPs:'  |awk -F: '{print $3}' |awk -F"(" '{print $2}'|awk '{print $1}'`
                     sadm_server_vg="${sadm_server_vg}${sadm_vg_name}|${sadm_vg_size}|${sadm_vg_used}|${sadm_vg_free}"
                     index=`expr $index + 1`                                         # Increment Index by 1
-                    done < $TMP_DIR/sadm_vg_$$ 
+                    done < $SADM_TMP_DIR/sadm_vg_$$ 
                 ;;
     esac
     
-    rm -f $TMP_DIR/sadm_vg_$$ > /dev/null 2>&1                          # Remove TMP VG File Output
+    rm -f $SADM_TMP_DIR/sadm_vg_$$ > /dev/null 2>&1                          # Remove TMP VG File Output
     echo "$sadm_server_vg"                                              # Return VGInfo to caller
 }

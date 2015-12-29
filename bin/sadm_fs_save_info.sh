@@ -35,7 +35,8 @@
 #===================================================================================================
 #set -x
 
-#set -x
+#
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -44,28 +45,29 @@
 #   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
 #   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
 #
-#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
-#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
+#   VARIABLES AND FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
-PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.7'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
-INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
-TPID="$$"                                      ; export TPID            # Script PID
-SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Global Error Return Code
-BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
+SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
+SADM_INST=`echo "$SADM_PN" |awk -F\. '{print $1}'` ; export SADM_INST   # Script name without ext.
+SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
+SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
 #
-[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
 #
-# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
-#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+#SADM_MAIL_ADDR="your_email@domain.com"        ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
 #
 #
+
 #
 
 
@@ -73,13 +75,13 @@ MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T 
 # --------------------------------------------------------------------------------------------------
-DRFILE=$DR_DIR/`hostname`_fs_save_info.dat      ; export DRFILE         # Output file of program
-DRSORT=$DR_DIR/`hostname`_fs_save_info.srt      ; export DRSORT         # Output sorted by mnt len
-PRVFILE=$DR_DIR/`hostname`_fs_save_info.prev    ; export PRVFILE        # Output file of Yesterday
-Debug=true                                      ; export Debug          # Debug increase Verbose 
-LVMVER=0                                        ; export LVMVER         # LVM Version on server (1/2)
-LVSCAN=" "                                      ; export LVSCAN         # Full path to lvscan cmd
-FSTAB="/etc/fstab"                              ; export FSTAB          # File containing mount point
+DRFILE=$SADM_DR_DIR/`hostname`_fs_save_info.dat   ; export DRFILE       # Output file of program
+DRSORT=$SADM_DR_DIR/`hostname`_fs_save_info.srt   ; export DRSORT       # Output sorted by mnt len
+PRVFILE=$SADM_DR_DIR/`hostname`_fs_save_info.prev ; export PRVFILE      # Output file of Yesterday
+Debug=true                                        ; export Debug        # Debug increase Verbose 
+LVMVER=0                                          ; export LVMVER       # LVM Version on server (1/2)
+LVSCAN=" "                                        ; export LVSCAN       # Full path to lvscan cmd
+FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
 
 
 
@@ -119,17 +121,17 @@ check_lvm_version()
 #
 save_lvm_info()
 {
-    $LVSCAN  > $TMP_FILE1                                               # Run lvscan output to tmp
+    $LVSCAN  > $SADM_TMP_FILE1                                               # Run lvscan output to tmp
     
-    sadm_logger "There are `wc -l $TMP_FILE1 | awk '{ print $1 }'` Logical volume reported by lvscan"
+    sadm_logger "There are `wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'` Logical volume reported by lvscan"
     sadm_logger "Output file is $DRFILE" 
     sadm_logger " " ; sadm_logger " "
     
 
-    cat $TMP_FILE1 | while read LVLINE                                  # process all LV detected
+    cat $SADM_TMP_FILE1 | while read LVLINE                                  # process all LV detected
         do
         if [ $Debug ] 
-            then    sadm_logger " " ; sadm_logger "$DASH"; 
+            then    sadm_logger " " ; sadm_logger "$SADM_DASH"; 
                     sadm_logger "Processing this line              = $LVLINE"   # Display lvm line processing
         fi 
 
@@ -231,17 +233,17 @@ save_lvm_info()
 
 
         # Write data collection in order that need to be recreated 
-        echo "$LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT" >> $TMP_FILE3
+        echo "$LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT" >> $SADM_TMP_FILE3
         sadm_logger "Line written to output file       = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
         done
         
-    sadm_logger " " ; sadm_logger "$DASH"; 
+    sadm_logger " " ; sadm_logger "$SADM_DASH"; 
     sadm_logger "Backup of $DRFILE is done in $PRVFILE" 
     if [ -s $DRFILE ] ; then cp $DRFILE $PRVFILE ; fi                   # Make a backup of data file 
 
     # Sort output - Get rid of LVLEN at the same time (needed only for the sort)
     sadm_logger "Creating a new copy of $DRFILE"
-    sort -n $TMP_FILE3 | awk -F: '{ printf "%s:%s:%s:%s:%s:%s:%s:%s\n", $2,$3,$4,$5,$6,$7,$8,$9 }' >$TMP_FILE2
+    sort -n $SADM_TMP_FILE3 | awk -F: '{ printf "%s:%s:%s:%s:%s:%s:%s:%s\n", $2,$3,$4,$5,$6,$7,$8,$9 }' >$SADM_TMP_FILE2
     
     echo -e "# SADMIN - Filesystem Info. for system $(sadm_hostname).$(sadm_domainname)"   >$DRFILE
     echo -e "# File was created by sadm_fs_save_info.sh on `date`"                       >> $DRFILE
@@ -249,7 +251,7 @@ save_lvm_info()
     echo -e "# The data below is use by sadm_fs_recreate.sh to recreate filesystems"     >> $DRFILE
     echo -e "# ---------------------------------------------------------------------"    >> $DRFILE
     echo -e "# " >> $DRFILE
-    cat  $TMP_FILE2 >> $DRFILE
+    cat  $SADM_TMP_FILE2 >> $DRFILE
     return
 }
 

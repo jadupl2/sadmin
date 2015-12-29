@@ -12,7 +12,8 @@
 #
 #set -x
 
-#set -x
+#
+#
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
 #   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_std.sh) SCRIPT
@@ -21,28 +22,30 @@
 #   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
 #   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
 #
-#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
-#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
+#   VARIABLES AND FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
-PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.5'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
-INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
-TPID="$$"                                      ; export TPID            # Script PID
-SADM_EXIT_CODE=0                                 ; export SADM_EXIT_CODE    # Global Error Return Code
-BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
+SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
+SADM_INST=`echo "$SADM_PN" |awk -F\. '{print $1}'` ; export SADM_INST   # Script name without ext.
+SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
+SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
 #
-[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
-# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
-#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+#SADM_MAIL_ADDR="your_email@domain.com"        ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
 #
 #
+
 #
 
 
@@ -54,7 +57,7 @@ MUSER="query"                                   ; export MUSER          # MySql 
 MPASS="query"                                   ; export MPASS          # MySql Password
 MHOST="sysinfo.maison.ca"                       ; export MHOST          # Mysql Host
 MYSQL="$(which mysql)"                          ; export MYSQL          # Location of mysql program
-USCRIPT="${BIN_DIR}/sadm_osupdate_client.sh"    ; export USCRIPT        # Script to execute on nodes
+USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
 REMOTE_SSH="/usr/bin/ssh -qnp 32"               ; export REMOTE_SSH     # SSH command for remote node
 ERROR_COUNT=0                                   ; export ERROR_COUNT    # Nb. of update failed
 
@@ -70,7 +73,7 @@ process_linux_servers()
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers where "
     SQL3="server_doc_only=0 and server_active=1 and server_os_update='1' and server_os='Linux' ;"
     SQL="${SQL1}${SQL2}${SQL3}"
-    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$TMP_FILE1
+    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$SADM_TMP_FILE1
 
     xcount=0;
     while read wline
@@ -105,7 +108,7 @@ process_linux_servers()
         fi
         sadm_logger "Total Error Count is at $ERROR_COUNT"
 
-        done < $TMP_FILE1
+        done < $SADM_TMP_FILE1
     sadm_logger " "
     sadm_logger "${SA_LINE}"
     sadm_logger "Final Error Count is at $ERROR_COUNT"

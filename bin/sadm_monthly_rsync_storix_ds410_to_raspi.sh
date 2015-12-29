@@ -15,7 +15,7 @@ VER='2.1'                                           ; export VER            # Pr
 SYSADMIN="duplessis.jacques@gmail.com"              ; export SYSADMIN       # Sysadmin email
 FROM_SERVER="ds410.maison.ca"                       ; export FROM_SERVER    # Source Remote Server
 TO_SERVER="raspi.maison.ca"                         ; export TO_SERVER      # Destination Remote Server
-DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
+SADM_DASH=`printf %60s |tr " " "="`                      ; export SADM_DASH           # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Current Host name
 OSTYPE=`uname -s|tr '[:lower:]' '[:upper:]'`        ; export OSTYPE         # Get OS Name AIX/LINUX
@@ -69,10 +69,10 @@ initialization()
     > $LOG_FILE                                                         # Start a new log
     sadm_logger " "
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Starting the script $PN on - ${HOSTNAME}"
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     
      
     # Make sure Local mount point exist
@@ -121,7 +121,7 @@ end_of_process()
    
    # Maintain Backup RC File log at a reasonnable size (100 Records)
    sadm_logger " "
-   sadm_logger "${DASH}"
+   sadm_logger "${SADM_DASH}"
    sadm_logger "Trimming rc log $LOG_STAT"
    tail -100 $LOG_STAT > $LOG_STAT.$$
    rm -f $LOG_STAT > /dev/null
@@ -141,7 +141,7 @@ end_of_process()
    end=`date "+%H:%M:%S"`
    echo "$HOSTNAME $start $end $INST $RC" >>$LOG_STAT
    sadm_logger "Ended at ${end}"
-   sadm_logger "${DASH}"
+   sadm_logger "${SADM_DASH}"
    
    return 
 }

@@ -3,17 +3,16 @@
 #  Author:    Jacques Duplessis
 #  Title      sadm_lib_std.sh
 #  Date:      August 2015
-#  Synopsis:  SADMIN Standard Shell Script Library
+#  Synopsis:  SADMIN  Shell Script Main Library
 #  
 # --------------------------------------------------------------------------------------------------
 #set -x
 # Description
-# This file is not a stand-alone shell script; it provides functions
-# to sadm scripts that source it.
+# This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
 #
 #===================================================================================================
-trap 'exit 0' 2   # INTERCEPTE LE ^C
+trap 'exit 0' 2   # INTERCEPTE LE ^C    
 
 #set -x
 
@@ -23,36 +22,37 @@ trap 'exit 0' 2   # INTERCEPTE LE ^C
 # --------------------------------------------------------------------------------------------------
 #
 HOSTNAME=`hostname -s`                          ; export HOSTNAME       # Current Host name
-DASH=`printf %80s |tr " " "="`                  ; export DASH           # 80 dashes line
-SA_LINE=`printf %10s |tr " " "="`               ; export SA_LINE        # 10 dashes line
+SADM_DASH=`printf %80s |tr " " "="`             ; export SADM_DASH      # 80 equals sign line
+SADM_TEN_DASH=`printf %10s |tr " " "-"`         ; export SADM_TEN_DASH  # 10 dashes line
 SADM_VAR1=""                                    ; export SADM_VAR1      # Temp Dummy Variable
 #
-# SADM DIRECTORIES STRUCTURES DEFINITIONS
-BASE_DIR=${SADMIN:="/sadmin"}                   ; export BASE_DIR       # Script Root Base Directory
-BIN_DIR="$BASE_DIR/bin"                         ; export BIN_DIR        # Script Root binary directory
-TMP_DIR="$BASE_DIR/tmp"                         ; export TMP_DIR        # Script Temp  directory
-LIB_DIR="$BASE_DIR/lib"                         ; export LIB_DIR        # Script Lib directory
-LOG_DIR="$BASE_DIR/log"                         ; export LOG_DIR        # Script log directory
-CFG_DIR="$BASE_DIR/cfg"                         ; export CFG_DIR        # Configuration Directory
-SYS_DIR="$BASE_DIR/sys"                         ; export SYS_DIR        # System related scripts
-DAT_DIR="$BASE_DIR/dat"                         ; export DAT_DIR        # Data directory
-PKG_DIR="$BASE_DIR/pkg"                         ; export PKG_DIR        # Package rpm,deb  directory
-NMON_DIR="$DAT_DIR/nmon"                        ; export NMON_DIR       # Where nmon file reside
-DR_DIR="$DAT_DIR/dr"                            ; export DR_DIR         # Disaster Recovery Info files 
-PERF_DIR="$DAT_DIR/sar"                         ; export PERF_DIR       # System Activty Report Dir
+# SADMIN DIRECTORIES STRUCTURES DEFINITIONS
+SADM_BASE_DIR=${SADMIN:="/sadmin"}              ; export SADM_BASE_DIR  # Script Root Base Dir.
+SADM_BIN_DIR="$SADM_BASE_DIR/bin"               ; export SADM_BIN_DIR   # Script Root binary Dir.
+SADM_TMP_DIR="$SADM_BASE_DIR/tmp"               ; export SADM_TMP_DIR   # Script Temp  directory
+SADM_LIB_DIR="$SADM_BASE_DIR/lib"               ; export SADM_LIB_DIR   # Script Lib directory
+SADM_LOG_DIR="$SADM_BASE_DIR/log"               ; export SADM_LOG_DIR   # Script log directory
+SADM_CFG_DIR="$SADM_BASE_DIR/cfg"               ; export SADM_CFG_DIR   # Configuration Directory
+SADM_SYS_DIR="$SADM_BASE_DIR/sys"               ; export SADM_SYS_DIR   # System related scripts
+SADM_DAT_DIR="$SADM_BASE_DIR/dat"               ; export SADM_DAT_DIR   # Data directory
+SADM_PKG_DIR="$SADM_BASE_DIR/pkg"               ; export SADM_PKG_DIR   # Package rpm,deb  directory
+SADM_NMON_DIR="$SADM_DAT_DIR/nmon"              ; export SADM_NMON_DIR  # Where nmon file reside
+SADM_DR_DIR="$SADM_DAT_DIR/dr"                  ; export SADM_DR_DIR    # Disaster Recovery  files 
+SADM_PERF_DIR="$SADM_DAT_DIR/sar"               ; export SADM_PERF_DIR  # System Activty Report Dir
+SADM_RCH_DIR="$SADM_DAT_DIR/rch"                ; export SADM_RCH_DIR   # Result Code History Dir
 #
 # SADMIN WEB SITE DIRECTORY DEFINITION
-WWW_DIR="$BASE_DIR/www"                         ; export WWW_DIR        # sadmin Web Site Directory
-WWW_DIR_DAT="$BASE_DIR/www/dat"                 ; export WWW_DIR_DAT    # sadmin server Data Dir.
+SADM_WWW_DIR="$SADM_BASE_DIR/www"               ; export SADM_WWW_DIR   # sadmin Web Site Directory
+SADM_WWW_DIR_DAT="$SADM_BASE_DIR/www/dat"       ; export SADM_WWW_DIR_DAT # sadmin server Data Dir.
 #
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
-CFG_FILE="$CFG_DIR/sadmin.cfg"                  ; export CFG_FILE       # Configuration file name
-TMP_FILE1="${TMP_DIR}/${INST}_1.$$"             ; export TMP_FILE1      # Temp Script Tmp File1 
-TMP_FILE2="${TMP_DIR}/${INST}_2.$$"             ; export TMP_FILE2      # Temp Script Tmp File2
-TMP_FILE3="${TMP_DIR}/${INST}_3.$$"             ; export TMP_FILE3      # Temp Script Tmp File3
-LOG="${LOG_DIR}/${HOSTNAME}_${INST}.log"        ; export LOG            # Script Output LOG filename
-RCLOG="${LOG_DIR}/${HOSTNAME}_${INST}.rch"      ; export RCLOG          # Script Return Code History
+SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"             ; export SADM_CFG_FILE  # Config file name
+SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"   ; export SADM_TMP_FILE1 # Temp Script Tmp File1 
+SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"   ; export SADM_TMP_FILE2 # Temp Script Tmp File2
+SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"   ; export SADM_TMP_FILE3 # Temp Script Tmp File3
+LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log"   ; export LOG            # Output LOG filename
+RCLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch" ; export RCLOG          # Return Code History
 #
 # COMMANDS PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                             ; export SADM_LSB_RELEASE # Command lsb_release Path
@@ -61,6 +61,7 @@ SADM_BC=""                                      ; export SADM_BC        # Comman
 SADM_FDISK=""                                   ; export SADM_FDISK     # fdisk (Read Disk Capacity)
 SADM_WHICH=""                                   ; export SADM_WHICH     # which Path - Required
 SADM_PRTCONF=""                                 ; export SADM_PRTCONF   # prtconf  Path - Required
+SADM_PERL=""                                    ; export SADM_PERL      # perl Path (for epoch time)
 #
 
 
@@ -90,8 +91,16 @@ sadm_tolower() {
 #
 sadm_logger() {
     SADM_MSG="$(date "+%C%y.%m.%d %H:%M:%S") - $@"
-    printf "%-s\n" "$SADM_MSG" >> $LOG
-    if [ $OUTPUT2 -eq 1 ] ; then printf "%-s\n" "$SADM_MSG" ; fi
+    case "$SADM_LOG_TYPE" in
+        s|S) printf "%-s\n" "$SADM_MSG"
+             ;; 
+        l|L) printf "%-s\n" "$SADM_MSG" >> $LOG
+             ;; 
+        b|B) printf "%-s\n" "$SADM_MSG"
+             printf "%-s\n" "$SADM_MSG" >> $LOG
+             ;;
+        *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE) - Please set it correctly\n"
+    esac
 }
 
 
@@ -183,8 +192,99 @@ sadm_check_requirements() {
                     SADM_PRTCONF=$SADM_VAR1                             # Save Command Path
             fi
     fi
+    
+    # Common Requirements
+    sadm_check_command_availibility perl                                # perl needed (epoch time)
+    SADM_PERL=$SADM_VAR1                                                # Save perl path
     return 0
 }
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#                        G E T    C U R R E N T    E P O C H   T I M E           
+# --------------------------------------------------------------------------------------------------
+sadm_epoch_time() {
+    sadm_epoch_time=`${SADM_PERL} -e 'print time'`
+    echo "$sadm_epoch_time"
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+#    C O N V E R T   E P O C H   T I M E    R E C E I V E   T O    D A T E  (YYYY.MM.DD HH:MM:SS)
+# --------------------------------------------------------------------------------------------------
+sadm_epoch_to_date() {
+
+    if [ $# -ne 1 ]                                                     # Should have rcv 1 Param
+        then sadm_logger "No Parameter received by $FUNCNAME function"
+             sadm_logger "Please correct your script please - Script Aborted"
+             sadm_stop 1                                                # Prepare to exit gracefully
+             exit 1                                                     # Terminate the script
+    fi
+    wepoch=$1                                                           # Save Epoch Time Receivec
+
+    # Verify if parameter received is all numeric - If not advice user and exit
+    echo $wepoch | grep [^0-9] > /dev/null 2>&1                         # Grep for Number
+    if [ "$?" -eq "0" ]                                                 # Not All Number
+        then sadm_logger "Incorrect parameter received by \"sadm_epoch_to_date\" function"
+             sadm_logger "Should have received an epoch time and it received ($wepoch) instead"
+             sadm_logger "Please correct your script please - Script Aborted"
+             sadm_stop 1                                                # Prepare to exit gracefully
+             exit 1                                                     # Terminate the script
+    fi
+    
+    # Format the Converted Epoch time obtain from Perl 
+    WDATE=`$SADM_PERL -e "print scalar(localtime($wepoch))"`            # Convert Epoch to Date
+    YYYY=`echo    $WDATE | awk '{ print $5 }'`                          # Extract the Year 
+    HMS=`echo     $WDATE | awk '{ print $4 }'`                          # Extract Hour:Min:Sec
+    DD=`echo      $WDATE | awk '{ print $3 }'`                          # Extract Day Number
+    MON_STR=`echo $WDATE | awk '{ print $2 }'`                          # Extract Month String
+    if [ "$MON_STR" = "Jan" ] ; then MM=01 ; fi                         # Convert Jan to 01 
+    if [ "$MON_STR" = "Feb" ] ; then MM=02 ; fi                         # Convert Feb to 02
+    if [ "$MON_STR" = "Mar" ] ; then MM=03 ; fi                         # Convert Mar to 03
+    if [ "$MON_STR" = "Apr" ] ; then MM=04 ; fi                         # Convert Apr to 04
+    if [ "$MON_STR" = "May" ] ; then MM=05 ; fi                         # Convert May to 05
+    if [ "$MON_STR" = "Jun" ] ; then MM=06 ; fi                         # Convert Jun to 06
+    if [ "$MON_STR" = "Jul" ] ; then MM=07 ; fi                         # Convert Jul to 07
+    if [ "$MON_STR" = "Aug" ] ; then MM=08 ; fi                         # Convert Aug to 08
+    if [ "$MON_STR" = "Sep" ] ; then MM=09 ; fi                         # Convert Sep to 09
+    if [ "$MON_STR" = "Oct" ] ; then MM=10 ; fi                         # Convert Oct to 10
+    if [ "$MON_STR" = "Nov" ] ; then MM=11 ; fi                         # Convert Nov to 11
+    if [ "$MON_STR" = "Dec" ] ; then MM=12 ; fi                         # Convert Dec to 12
+
+    sadm_epoch_to_date="${YYYY}.${MM}.${DD} ${HMS}"                     # Combine Data to form Date
+    echo "$sadm_epoch_to_date"                                          # Return converted date
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#    C O N V E R T   D A T E  (YYYY.MM.DD HH:MM:SS)  R E C E I V E    T O    E P O C H   T I M E  
+# --------------------------------------------------------------------------------------------------
+sadm_date_to_epoch() {
+
+    if [ $# -ne 1 ]                                                     # Should have rcv 1 Param
+        then sadm_logger "No Parameter received by $FUNCNAME function"
+             sadm_logger "Please correct your script please - Script Aborted"
+             sadm_stop 1                                                # Prepare to exit gracefully
+             exit 1                                                     # Terminate the script
+    fi
+    WDATE=$1                                                            # Save Received Date
+
+    YYYY=`echo $WDATE | awk -F. '{ print $1 }'`
+    MTH=`echo   $WDATE | awk -F. '{ print $2 }'`
+    let MTH="$MTH -1"
+    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }'`
+    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }'`
+    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }'`
+    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }'`
+    #echo "perl -e \"use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})\""
+    sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})"`
+    #sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
+    echo "$sadm_date_to_epoch"
+}
+
 
 
 
@@ -328,30 +428,30 @@ sadm_kernel_version() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_load_sadmin_config_file() {
-    if [ ! -f "$CFG_FILE" ]
-       then echo "# SADMIN - Configuration file - Created on `date`"             > $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "# Email when error and log report are sent"                   >> $CFG_FILE
-            echo "SADM_MAIL_ADDR = root@localhost"                              >> $CFG_FILE        
-            echo "#"                                                            >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "# Put your Company name here"                                 >> $CFG_FILE
-            echo "SADM_CIE_NAME = Company_Name"                                 >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "# Default Option for sending email after a script is ended"   >> $CFG_FILE
-            echo "# Option Can be overridden by changing SADM_MAIL_TYPE in Script header"  >> $CFG_FILE
-            echo "# 0=No Mail Sent    1=On Error Only    2=On Success Only    3=Always send email" >> $CFG_FILE
-            echo "SADM_MAIL_TYPE = 3"                                           >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-            echo "# sadmin fully qualified server name"                         >> $CFG_FILE
-            echo "SADM_SERVER = sadmin"                                         >> $CFG_FILE
-            echo "#"                                                            >> $CFG_FILE
-       else SADM_MAIL_ADDR=`grep -i "^SADM_MAIL_ADDR" $CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
-            SADM_CIE_NAME=`grep  -i "^SADM_CIE_NAME"  $CFG_FILE |awk -F= '{print $2 }' |sed -e 's/^[ \t]*//'`
-            SADM_MAIL_TYPE=`grep -i "^SADM_MAIL_TYPE" $CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
-            SADM_SERVER=`grep -i "^SADM_SERVER"       $CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
+    if [ ! -f "$SADM_CFG_FILE" ]
+       then echo "# SADMIN - Configuration file - Created on `date`"             > $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "# Email when error and log report are sent"                   >> $SADM_CFG_FILE
+            echo "SADM_MAIL_ADDR = root@localhost"                              >> $SADM_CFG_FILE        
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "# Put your Company name here"                                 >> $SADM_CFG_FILE
+            echo "SADM_CIE_NAME = Company_Name"                                 >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "# Default Option for sending email after a script is ended"   >> $SADM_CFG_FILE
+            echo "# Option Can be overridden by changing SADM_MAIL_TYPE in Script header"  >> $SADM_CFG_FILE
+            echo "# 0=No Mail Sent    1=On Error Only    2=On Success Only    3=Always send email" >> $SADM_CFG_FILE
+            echo "SADM_MAIL_TYPE = 3"                                           >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+            echo "# sadmin fully qualified server name"                         >> $SADM_CFG_FILE
+            echo "SADM_SERVER = sadmin"                                         >> $SADM_CFG_FILE
+            echo "#"                                                            >> $SADM_CFG_FILE
+       else SADM_MAIL_ADDR=`grep -i "^SADM_MAIL_ADDR" $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
+            SADM_CIE_NAME=`grep  -i "^SADM_CIE_NAME"  $SADM_CFG_FILE |awk -F= '{print $2 }' |sed -e 's/^[ \t]*//'`
+            SADM_MAIL_TYPE=`grep -i "^SADM_MAIL_TYPE" $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
+            SADM_SERVER=`grep -i "^SADM_SERVER"       $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
     fi
     export SADM_MAIL_ADDR SADM_CIE_NAME SADM_MAIL_TYPE SADM_SERVER
 }
@@ -363,42 +463,45 @@ sadm_load_sadmin_config_file() {
 #
 sadm_start() { 
     # If log Directory doesn't exist, create it.
-    if [ ! -d "$LOG_DIR" ]  ; then mkdir -p $LOG_DIR   ; chmod 2775 $LOG_DIR  ; export LOG_DIR ; fi
+    if [ ! -d "$SADM_LOG_DIR" ]  ; then mkdir -p $SADM_LOG_DIR   ; chmod 2775 $SADM_LOG_DIR  ; export SADM_LOG_DIR ; fi
 
     # If TMP Directory doesn't exist, create it.
-    if [ ! -d "$TMP_DIR" ]  ; then mkdir -p $TMP_DIR   ; chmod 1777 $TMP_DIR  ; export TMP_DIR ; fi
+    if [ ! -d "$SADM_TMP_DIR" ]  ; then mkdir -p $SADM_TMP_DIR   ; chmod 1777 $SADM_TMP_DIR  ; export SADM_TMP_DIR ; fi
 
     # If LIB Directory doesn't exist, create it.
-    if [ ! -d "$LIB_DIR" ]  ; then mkdir -p $LIB_DIR   ; chmod 2775 $LIB_DIR  ; export LIB_DIR ; fi
+    if [ ! -d "$SADM_LIB_DIR" ]  ; then mkdir -p $SADM_LIB_DIR   ; chmod 2775 $SADM_LIB_DIR  ; export SADM_LIB_DIR ; fi
 
     # If Custom Configuration Directory doesn't exist, create it.
-    if [ ! -d "$CFG_DIR" ]  ; then mkdir -p $CFG_DIR   ; chmod 2775 $CFG_DIR  ; export CFG_DIR ; fi
+    if [ ! -d "$SADM_CFG_DIR" ]  ; then mkdir -p $SADM_CFG_DIR   ; chmod 2775 $SADM_CFG_DIR  ; export SADM_CFG_DIR ; fi
 
     # If System Configuration Directory doesn't exist, create it.
-    if [ ! -d "$SYS_DIR" ]  ; then mkdir -p $SYS_DIR   ; chmod 2775 $SYS_DIR  ; export SYS_DIR ; fi
+    if [ ! -d "$SADM_SYS_DIR" ]  ; then mkdir -p $SADM_SYS_DIR   ; chmod 2775 $SADM_SYS_DIR  ; export SADM_SYS_DIR ; fi
 
     # If Data Directory doesn't exist, create it.
-    if [ ! -d "$DAT_DIR" ]  ; then mkdir -p $DAT_DIR   ; chmod 2775 $DAT_DIR  ; export DAT_DIR ; fi
+    if [ ! -d "$SADM_DAT_DIR" ]  ; then mkdir -p $SADM_DAT_DIR   ; chmod 2775 $SADM_DAT_DIR  ; export SADM_DAT_DIR ; fi
 
     # If Package Directory doesn't exist, create it.
-    if [ ! -d "$PKG_DIR" ]  ; then mkdir -p $PKG_DIR   ; chmod 2775 $PKG_DIR  ; export DAT_DIR ; fi
+    if [ ! -d "$SADM_PKG_DIR" ]  ; then mkdir -p $SADM_PKG_DIR   ; chmod 2775 $SADM_PKG_DIR  ; export SADM_PKG_DIR ; fi
 
     # If Sysadmin Web Site Directory doesn't exist, create it.
-    if [ ! -d "$WWW_DIR" ]  ; then mkdir -p $WWW_DIR   ; chmod 2775 $WWW_DIR  ; export WWW_DIR ; fi
+    if [ ! -d "$SADM_WWW_DIR" ]  ; then mkdir -p $SADM_WWW_DIR   ; chmod 2775 $SADM_WWW_DIR  ; export SADM_WWW_DIR ; fi
 
     # If Sysadmin Web Data Directory doesn't exist, create it.
-    if [ ! -d "$WWW_DIR_DAT" ]
-        then mkdir -p $WWW_DIR_DAT ; chmod 2775 $WWW_DIR_DAT  ; export WWW_DIR_DAT
+    if [ ! -d "$SADM_WWW_DIR_DAT" ]
+        then mkdir -p $SADM_WWW_DIR_DAT ; chmod 2775 $SADM_WWW_DIR_DAT  ; export SADM_WWW_DIR_DAT
     fi
 
     # If NMON Directory doesn't exist, create it.
-    if [ ! -d "$NMON_DIR" ]  ; then mkdir -p $NMON_DIR ; chmod 2775 $NMON_DIR ; export NMON_DIR ; fi
+    if [ ! -d "$SADM_NMON_DIR" ]  ; then mkdir -p $SADM_NMON_DIR ; chmod 2775 $SADM_NMON_DIR ; export SADM_NMON_DIR ; fi
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
-    if [ ! -d "$DR_DIR" ]  ; then mkdir -p $DR_DIR ; chmod 2775 $DR_DIR    ; export DR_DIR ; fi
+    if [ ! -d "$SADM_DR_DIR" ]  ; then mkdir -p $SADM_DR_DIR ; chmod 2775 $SADM_DR_DIR    ; export SADM_DR_DIR ; fi
 
     # If Performance Server Data Directory doesn't exist, create it.
-    if [ ! -d "$PERF_DIR" ]  ; then mkdir -p $PERF_DIR ; chmod 2775 $PERF_DIR ; export PERF_DIR ; fi
+    if [ ! -d "$SADM_PERF_DIR" ]  ; then mkdir -p $SADM_PERF_DIR ; chmod 2775 $SADM_PERF_DIR ; export SADM_PERF_DIR ; fi
+
+    # If Return Code History Directory doesn't exist, create it.
+    if [ ! -d "$SADM_RCH_DIR" ]  ; then mkdir -p $SADM_RCH_DIR ; chmod 2775 $SADM_RCH_DIR ; export SADM_RCH_DIR ; fi
 
     # If LOG directory doesn't exist, Create it and Make it writable and that it is empty on startup
     if [ ! -e "$LOG" ]      ; then touch $LOG  ;chmod 664 $LOG  ;fi
@@ -407,26 +510,26 @@ sadm_start() {
     # If Return Log doesn't exist, Create it and Make sure it have right permission
     if [ ! -e "$RCLOG" ]    ; then touch $RCLOG ;chmod 664 $RCLOG ; export RCLOG ;fi
 
-    if [ -e "${TMP_DIR}/${INST}" ]
+    if [ -e "${SADM_TMP_DIR}/${SADM_INST}" ]
        then sadm_logger "Script is already running ... "
-            sadm_logger "PID File ${TMP_DIR}/${INST} exist ..."
+            sadm_logger "PID File ${SADM_TMP_DIR}/${SADM_INST} exist ..."
             sadm_logger "Will not launch a second copy of this script"
             exit 1
-       else echo "$TPID" > ${TMP_DIR}/${INST}.pid
+       else echo "$TPID" > ${SADM_TMP_DIR}/${SADM_INST}.pid
     fi
 
     # Write Starting Info in the Log
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "`date`"
-    sadm_logger "Starting ${PN} version ${VER} on $(sadm_hostname)"
+    sadm_logger "Starting ${SADM_PN} version ${SADM_VER} on $(sadm_hostname)"
     sadm_logger "$(sadm_os_type) $(sadm_os_name) $(sadm_os_version) $(sadm_os_code_name)"
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger " "
 
 
     # Record Date & Time the script is starting in the
     sadm_start_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_start_time
-    echo "$(sadm_hostname) ${sadm_start_time} ........ ${INST} 2" >>$RCLOG
+    echo "$(sadm_hostname) ${sadm_start_time} ........ ${SADM_INST} 2" >>$RCLOG
 }
 
 
@@ -442,7 +545,7 @@ sadm_stop() {
  
     # Maintain Backup RC File log at a reasonnable size.
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Script return code is $SADM_EXIT_CODE"
     sadm_logger "Script took $SECONDS seconds to run"
     sadm_logger "====="
@@ -478,52 +581,52 @@ sadm_stop() {
     
     # Update the Return Code File
     sadm_end_time=`date "+%H:%M:%S"`
-    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $INST $SADM_EXIT_CODE" >>$RCLOG
+    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $SADM_INST $SADM_EXIT_CODE" >>$RCLOG
     
     sadm_logger "====="
-    sadm_logger "Trimming $RCLOG to ${MAX_RCLINE} lines."
-    tail -${MAX_RCLINE} $RCLOG > $RCLOG.$$
+    sadm_logger "Trimming $RCLOG to ${SADM_MAX_RCLINE} lines."
+    tail -${SADM_MAX_RCLINE} $RCLOG > $RCLOG.$$
     rm -f $RCLOG > /dev/null
     mv $RCLOG.$$ $RCLOG
     chmod 666 $RCLOG
 
-    # Maintain Script log at a reasonnable size specified in ${MAX_LOGLINE}
-    sadm_logger "Trimming $LOG to ${MAX_LOGLINE} lines."
+    # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
+    sadm_logger "Trimming $LOG to ${SADM_MAX_LOGLINE} lines."
     cat $LOG >> $LOG.$$
-    tail -${MAX_LOGLINE} $LOG > $LOG.$$
+    tail -${SADM_MAX_LOGLINE} $LOG > $LOG.$$
     rm -f $LOG > /dev/null
     mv $LOG.$$ $LOG
 
     sadm_logger "====="
-    sadm_logger "`date` end of ${PN}."
-    sadm_logger "${DASH}"
+    sadm_logger "`date` end of ${SADM_PN}."
+    sadm_logger "${SADM_DASH}"
    
 
     # Inform UnixAdmin By Email based on his slected choice
     case $SADM_MAIL_TYPE in
         1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-               then cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $SADM_MAIL_ADDR # On Error
+               then cat $LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR # On Error
             fi
             ;;
         2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-               then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $SADM_MAIL_ADDR # On Success
+               then cat $LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR # On Success
             fi 
             ;;
         3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                              # Always mail
-                then cat $LOG | mail -s "SADM : SUCCESS of $PN on $(sadm_hostname)" $SADM_MAIL_ADDR
-                else cat $LOG | mail -s "SADM : ERROR of $PN on $(sadm_hostname)"  $SADM_MAIL_ADDR
+                then cat $LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR
+                else cat $LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR
             fi
             ;;
     esac
 
     # Delete PID File
-    rm -f  ${TMP_DIR}/${INST}.pid > /dev/null 2>&1
+    rm -f  ${SADM_TMP_DIR}/${SADM_INST}.pid > /dev/null 2>&1
 
     # Delete Temproray files used
-    rm -f  ${TMP_DIR}/${INST} > /dev/null 2>&1
-    if [ -e "$TMP_FILE1" ] ; then rm -f $TMP_FILE1 >/dev/null 2>&1 ; fi
-    if [ -e "$TMP_FILE2" ] ; then rm -f $TMP_FILE2 >/dev/null 2>&1 ; fi
-    if [ -e "$TMP_FILE3" ] ; then rm -f $TMP_FILE3 >/dev/null 2>&1 ; fi
+    rm -f  ${SADM_TMP_DIR}/${SADM_INST} > /dev/null 2>&1
+    if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
 
     return $SADM_EXIT_CODE
 }
@@ -543,13 +646,13 @@ sadm_stop() {
 
     # Date Calculation Tool
     case "$(sadm_os_type)" in
-        "LINUX")   EPOCH="${BASE_DIR}/bin/sadm_epoch"      
+        "LINUX")   EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch"      
                    ;;
-        "AIX")     EPOCH="${BASE_DIR}/bin/sadm_epoch_aix"      
+        "AIX")     EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch_aix"      
                    ;;
     esac    
     if [ -f /etc/os-release ] && [ $(grep -i "^ID=" /etc/os-release |awk -F= '{ print $2 }') = "raspbian" ]
-        then EPOCH="${BASE_DIR}/bin/sadm_epoch_arm" 
+        then EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch_arm" 
     fi        
     export EPOCH
     

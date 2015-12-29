@@ -18,7 +18,7 @@
 # --------------------------------------------------------------------------------------------------
 # 1.6   
 #
-#set -x
+#
 #
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP
@@ -28,28 +28,29 @@
 #   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
 #   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
 #
-#   PLEASE REFER TO THE FILE $BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH VARIABLES AND
-#   FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
+#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
+#   VARIABLES AND FUNCTIONS AVAILABLE TO SCRIPT DEVELOPPER.
 # --------------------------------------------------------------------------------------------------
-PN=${0##*/}                                    ; export PN              # Current Script name
-VER='1.5'                                      ; export VER             # Program version
-OUTPUT2=1                                      ; export OUTPUT2         # Write log 0=log 1=Scr+Log
-INST=`echo "$PN" | awk -F\. '{ print $1 }'`    ; export INST            # Get Current script name
-TPID="$$"                                      ; export TPID            # Script PID
-EXIT_CODE=0                                    ; export EXIT_CODE       # Script Error Return Code
-BASE_DIR=${SADMIN:="/sadmin"}                  ; export BASE_DIR        # Script Root Base Directory
+SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
+SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
+SADM_INST=`echo "$SADM_PN" |awk -F\. '{print $1}'` ; export SADM_INST   # Script name without ext.
+SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
+SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
+SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
 #
-[ -f ${BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${BASE_DIR}/lib/sadm_lib_server.sh ] && . ${BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-[ -f ${BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
 #
-# VARIABLES THAT CAN BE CHANGED PER SCRIPT -(SOME ARE CONFIGURABLE IS $BASE_DIR/cfg/sadmin.cfg)
-#ADM_MAIL_ADDR="root@localhost"                 ; export ADM_MAIL_ADDR  # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-MAX_LOGLINE=5000                               ; export MAX_LOGLINE     # Max Nb. Lines in LOG )
-MAX_RCLINE=100                                 ; export MAX_RCLINE      # Max Nb. Lines in RCH LOG
+# VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+#SADM_MAIL_ADDR="your_email@domain.com"        ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
 #
+#
+
 #
 #
 
@@ -83,10 +84,10 @@ process_linux_servers()
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Linux' order by server_name;"
     SQL="${SQL1}${SQL2}${SQL3}"
-    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$TMP_FILE1
+    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$SADM_TMP_FILE1
 
     xcount=0; ERROR_COUNT=0;
-    if [ -s "$TMP_FILE1" ]
+    if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
               do
               xcount=`expr $xcount + 1`
@@ -94,7 +95,7 @@ process_linux_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger "${DASH}"
+              sadm_logger "${SADM_DASH}"
               sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
               # PROCESS GOES HERE
               RC=$? ; RC=0
@@ -103,7 +104,7 @@ process_linux_servers()
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_logger "RETURN CODE IS 0 - OK"
               fi
-              done < $TMP_FILE1
+              done < $SADM_TMP_FILE1
     fi
     return $ERROR_COUNT
 }
@@ -120,10 +121,10 @@ process_aix_servers()
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Aix' order by server_name;"
     SQL="${SQL1}${SQL2}${SQL3}"
-    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$TMP_FILE1
+    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$SADM_TMP_FILE1
 
     xcount=0; ERROR_COUNT=0;
-    if [ -s "$TMP_FILE1" ]
+    if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
               do
               xcount=$(($xcount+1))
@@ -131,7 +132,7 @@ process_aix_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger "${DASH}"
+              sadm_logger "${SADM_DASH}"
               sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
               # PROCESS GOES HERE
               RC=$? ; RC=0
@@ -140,7 +141,7 @@ process_aix_servers()
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_logger "RETURN CODE IS 0 - OK"
               fi
-              done < $TMP_FILE1
+              done < $SADM_TMP_FILE1
     fi
     return $ERROR_COUNT
 }
@@ -151,13 +152,13 @@ process_aix_servers()
 # --------------------------------------------------------------------------------------------------
 dev_housekeeping()
 {
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Development HouseKeeping"
     sadm_logger " "
 
     # Reset privilege on notes directories
-    sadm_logger "find $BASE_DIR/notes -type f -exec chmod -R 664 {} \;"       # Change Dir. 
-    find $BASE_DIR/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Dir. 
+    sadm_logger "find $SADM_BASE_DIR/notes -type f -exec chmod -R 664 {} \;"       # Change Dir. 
+    find $SADM_BASE_DIR/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Dir. 
 
 }
 
@@ -166,37 +167,35 @@ dev_housekeeping()
 # --------------------------------------------------------------------------------------------------
 prod_housekeeping()
 {
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Production HouseKeeping"
     sadm_logger " "
     
     
     # Reset privilege on /sadmin files
-    sadm_logger "find $BIN_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
-    find $BIN_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
-    sadm_logger "find $LIB_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
-    find $LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
+    sadm_logger "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
+    find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
+    sadm_logger "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"        # Change Files Privilege
+    find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1      # Change Files Privilege
 
     # Reset privilege on /sadmin directories
-    sadm_logger "find $BIN_DIR -type d -exec chmod -R 2775 {} \;"       # Change Dir. 
-    find $BIN_DIR -type d -exec chmod -R 2775 {} \; >/dev/null 2>&1     # Change Dir. 
+    sadm_logger "find $SADM_BIN_DIR -type d -exec chmod -R 2775 {} \;"       # Change Dir. 
+    find $SADM_BIN_DIR -type d -exec chmod -R 2775 {} \; >/dev/null 2>&1     # Change Dir. 
 
-    # Flush files older than 7 days in $TMP_DIR
-    sadm_logger "find $TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \;"  # Change Dir. 
-    find $TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1   # Change Dir. 
+    # Flush files older than 7 days in $SADM_TMP_DIR
+    sadm_logger "find $SADM_TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \;"  # Change Dir. 
+    find $SADM_TMP_DIR -name \"sadm_*\" -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1   # Change Dir. 
     
     # Set the TMP directory so everyone can write to it.
-    sadm_logger "chmod -R 1777 $TMP_DIR "                               # Special tmp Privilege
-    chmod -R 1777 $TMP_DIR >/dev/null 2>&1                              # Special tmp Privilege
+    sadm_logger "chmod -R 1777 $SADM_TMP_DIR "                               # Special tmp Privilege
+    chmod -R 1777 $SADM_TMP_DIR >/dev/null 2>&1                              # Special tmp Privilege
     
     # Change the owner and group of SADMIN Base Directory to sadmin.
-    find $BASE_DIR -exec chown sadmin.sadmin {} \; >/dev/null 2>&1      # Change Owner & Group 
-    chown root.root $BASE_DIR/lost+found >/dev/null 2>&1                # Make Lost+Found root Priv.
+    find $SADM_BASE_DIR -exec chown sadmin.sadmin {} \; >/dev/null 2>&1      # Change Owner & Group 
+    chown root.root $SADM_BASE_DIR/lost+found >/dev/null 2>&1                # Make Lost+Found root Priv.
     
-    sadm_logger "chmod 2775 $LOG_DIR"                                   # LOGDIR Writable Owner/Group
-    chmod 2775 $LOG_DIR                                                 # LOGDIR Writable Owner/Group
-    
-    
+    sadm_logger "chmod 2775 $SADM_LOG_DIR"                                   # LOGDIR Writable Owner/Group
+    chmod 2775 $SADM_LOG_DIR                                                 # LOGDIR Writable Owner/Group
     return 0
 }
 
@@ -230,6 +229,7 @@ prod_housekeeping()
     DCODE=$?
     
     EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$PCODE+$DCODE))                # Total = AIX+Linux Errors
+
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Return Code History file
     sadm_stop $EXIT_CODE                                                # Upd. RCH File & Trim Log 

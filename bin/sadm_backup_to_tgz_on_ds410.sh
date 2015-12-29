@@ -16,7 +16,7 @@ PN=${0##*/}                                         ; export PN             # Pr
 VER='2.1'                                           ; export VER            # Program version
 SYSADMIN="duplessis.jacques@gmail.com"              ; export SYSADMIN	    # Sysadmin email
 BACK_SERVER="ds410.maison.ca"                       ; export BACK_SERVER    # Remoote Backup Name
-DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
+SADM_DASH=`printf %60s |tr " " "="`                 ; export SADM_DASH      # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Current Host name
 CUR_DATE=`date +"%Y_%m_%d"`                         ; export CUR_DATE       # Current Date
@@ -65,9 +65,9 @@ sadm_logger()
 create_backup()
 {
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Starting the Backup Process"
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
 
     # Save Current Working Directory
     CUR_PWD=`pwd`
@@ -79,7 +79,7 @@ create_backup()
                     BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
                     TIME_STAMP=`date "+%C%y_%m_%d_%H_%M_%S"`
                     TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"
-                    sadm_logger "${DASH}"
+                    sadm_logger "${SADM_DASH}"
                     sadm_logger "Current directory is `pwd`"
                     sadm_logger "tar -cvzf ${ARCHIVE_DIR}/${HOSTNAME}/${TGZ_FILE} ."
                     tar -cvzf ${ARCHIVE_DIR}/${HOSTNAME}/${TGZ_FILE} . >/dev/null 2>&1
@@ -100,7 +100,7 @@ create_backup()
     cd $CUR_PWD
     
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Total error(s) while creating the backup are $TOTAL_ERROR"
     return $TOTAL_ERROR
 }
@@ -111,9 +111,9 @@ create_backup()
 # --------------------------------------------------------------------------------------------------
 clean_backup_dir()
 {
-    sadm_logger " "; sadm_logger " " ; sadm_logger "${DASH}"
+    sadm_logger " "; sadm_logger " " ; sadm_logger "${SADM_DASH}"
     sadm_logger "Keep only the last $NB_VER copies of each backup in ${ARCHIVE_DIR}/${HOSTNAME}"
-    sadm_logger "${DASH}"    
+    sadm_logger "${SADM_DASH}"    
     TOTAL_ERROR=0
     
     # Save Current Working Directory and Move to Backup Directory
@@ -131,9 +131,9 @@ clean_backup_dir()
                     TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"
 
                     FILE_COUNT=`ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | wc -l`
-                    sadm_logger "${DASH}"
+                    sadm_logger "${SADM_DASH}"
                     sadm_logger "Number of file(s) to delete in ${WDIR} is $FILE_COUNT"
-                    #sadm_logger "${DASH}"
+                    #sadm_logger "${SADM_DASH}"
                     
                     sadm_logger "Here is a list of $BASE_NAME before the cleanup ..."
                     ls -t1 ${BASE_NAME}*.tgz | sort -r | nl >> $LOG_FILE
@@ -163,7 +163,7 @@ clean_backup_dir()
     
     # Restore Current working Directory
     cd $CUR_PWD
-    sadm_logger "${DASH}"    
+    sadm_logger "${SADM_DASH}"    
     sadm_logger "Grand Total of Error is $TOTAL_ERROR"
     return $TOTAL_ERROR
 }
@@ -188,10 +188,10 @@ initialization()
     > $LOG_FILE                                                         # Start a new log
     sadm_logger " "
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     sadm_logger "Starting the script $PN on - ${MYHOST} - ${start}"
     sadm_logger " "
-    sadm_logger "${DASH}"
+    sadm_logger "${SADM_DASH}"
     
      
     # Make sure Local mount point exist
@@ -232,7 +232,7 @@ end_of_process()
    
    # Maintain Backup RC File log at a reasonnable size (100 Records)
    sadm_logger " "
-   sadm_logger "${DASH}"
+   sadm_logger "${SADM_DASH}"
    sadm_logger "Trimming rc log $LOG_STAT"
    tail -100 $LOG_STAT > $LOG_STAT.$$
    rm -f $LOG_STAT > /dev/null
@@ -252,7 +252,7 @@ end_of_process()
    end=`date "+%H:%M:%S"`
    echo "$HOSTNAME $start $end $INST $RC" >>$LOG_STAT
    sadm_logger "Ended at ${end}"
-   sadm_logger "${DASH}"
+   sadm_logger "${SADM_DASH}"
    
    return 
 }

@@ -1,10 +1,10 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_sadmin.sh
-#   Synopsis : .
+#   Title    :  sadm_rsync_rch.sh
+#   Synopsis : .Bring all rch files from server farm to SADMIN Server
 #   Version  :  1.0
-#   Date     :  6 September 2015
+#   Date     :  December 2015
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
 #  History
@@ -101,38 +101,22 @@ process_linux_servers()
                       continue
               fi
               
-              # Do the Rsync
-              sadm_logger "rsync -var --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/"
-              rsync -var --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/
-              RC=$? 
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
+
+              # RCH (Return Code History Files
+              # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
+              #-------------------------------------------------------------------------------------------
+              WDIR="${SADM_WWW_DIR_DAT}/${server_name}/rch"                           # Local Receiving Dir.
+              sadm_logger " " 
+              sadm_logger "Make sure the directory $WDIR Exist"
+              if [ ! -d "${WDIR}" ]
+                  then sadm_logger "Creating ${WDIR} directory"
+                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
+                  else sadm_logger "Perfect ${WDIR} directory already exist"
               fi
               
-               
-              sadm_logger "rsync -var --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/"
-              rsync -var --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-
-               
-              sadm_logger "rsync -var ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/"
-              rsync -var ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-               
-              sadm_logger "rsync -var ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/"
-              rsync -var ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/
+              sadm_logger " " 
+              sadm_logger "rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
+              rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
@@ -176,7 +160,7 @@ process_aix_servers()
               server_type=`  echo $wline|awk '{ print $4 }'`
               sadm_logger " "
               sadm_logger "${SADM_TEN_DASH}"
-              sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+              sadm_logger "Processing $xcount ${server_os} ${server_type} server : ${server_name}.${server_domain}"
 
               # Ping the server - Server or Laptop may be unplugged
               sadm_logger "ping -c 2 ${server_name}.${server_domain}"
@@ -185,12 +169,25 @@ process_aix_servers()
               if [ $RC -ne 0 ]
                  then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
                       sadm_logger "Will not be able to process server ${server_name}"
-                      sadm_logger "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
+                      sadm_logger "Will consider that is ok \(May be a Laptop unplugged\) - RETURN CODE IS 0 - OK"
                       continue
               fi              
 
-              sadm_logger "rsync -var --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/"
-              rsync -var --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/
+              # RCH (Return Code History Files
+              # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
+              #-------------------------------------------------------------------------------------------
+              WDIR="${SADM_WWW_DIR_DAT}/${server_name}/rch"                           # Local Receiving Dir.
+              sadm_logger " " 
+              sadm_logger "Make sure the directory $WDIR Exist"
+              if [ ! -d "${WDIR}" ]
+                  then sadm_logger "Creating ${WDIR} directory"
+                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
+                  else sadm_logger "Perfect ${WDIR} directory already exist"
+              fi
+              
+              sadm_logger " " 
+              sadm_logger "rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
+              rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
@@ -198,35 +195,6 @@ process_aix_servers()
                  else sadm_logger "RETURN CODE IS 0 - OK"
               fi
 
-              sadm_logger "rsync -var --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/"
-              rsync -var --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-              
-               
-              sadm_logger "rsync -var ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/"
-              rsync -var ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-    
-                   
-              sadm_logger "rsync -var ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/"
-              rsync -var ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
-              fi
-              
               done < $SADM_TMP_FILE1
         else  sadm_logger "No Aix Server defined in Sysinfo"
     fi
