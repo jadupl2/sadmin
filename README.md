@@ -1,8 +1,8 @@
 # README #
-THIS VERSION IS IN PROGRESS - BETA 0.71.0 
+THIS VERSION IS IN PROGRESS - BETA 0.72.0 
 
 * SADMIN is Designed to Help Linux/Aix System Administration
-* Version 1.0
+* Version Beta 0.72.0 
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
