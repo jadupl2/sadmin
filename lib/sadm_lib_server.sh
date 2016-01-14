@@ -203,7 +203,8 @@ sadm_server_memory() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() { 
     case "$(sadm_os_type)" in
-        "LINUX")    sadm_server_nb_cpu=`nproc --all`
+        "LINUX")    #sadm_server_nb_cpu=`nproc --all`
+                    sadm_server_nb_cpu=`cat /proc/cpuinfo | grep -i processor | wc -l | tr -d ' '`
                     ;;
         "AIX")      sadm_server_nb_cpu=`lsdev -C -c processor | wc -l | tr -d ' '`
                     ;;

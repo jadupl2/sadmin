@@ -1,20 +1,24 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  template.sh
+#   Title    :  sadm_template.sh
 #   Synopsis : .
 #   Version  :  1.0
 #   Date     :  14 November 2015
 #   Requires :  sh
-
+#
+#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
 
-#   SADMIN Tool are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
 #
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # 1.6   
 #set -x
@@ -42,16 +46,17 @@ SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logge
 #
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 #
 # VARIABLES THAT CAN BE CHANGED PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
 #SADM_MAIL_ADDR="your_email@domain.com"         ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
 #SADM_DEBUG_LEVEl=5                             ; export SADM_DEBUG_LEVEL # 0=NoDebug Higher=+Verbose
-SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 1=Err 2=Succes 3=All
+SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
 SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
-SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH file
+SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE # Max Nb. Lines in RCH file
 # 
 #***************************************************************************************************
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #
 #
 
@@ -165,6 +170,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
     
+    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T NEED TO RUN ON THE SADMIN MAIN SERVER, THEN REMOVE
     if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
         then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
              sadm_logger "Process aborted"                              # Abort advise message
@@ -172,6 +178,7 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
+    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
              sadm_logger "Process aborted"                              # Abort advise message
@@ -179,6 +186,44 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
+
+#####  YOU CAN USE THIS CODE IF YOU WANT TO USE MENU IN YOUR SCRIPT #####
+    while :
+        do
+        sadm_display_heading "Your Menu Heading Here"
+        menu_array=("Your Menu Item 1" "Your Menu Item 2" "Your Menu Item 3" "Your Menu Item 4" \
+                    "Your Menu Item 5"  )
+        sadm_display_menu "${menu_array[@]}"
+        sadm_choice=$?
+        #echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+        case $sadm_choice in
+            1) # Option 1 - 
+               # Put your code HERE
+               ;;
+            2) # Option 2 - 
+               # Put your code HERE
+               ;;
+            3) # Option 3 - 
+               # Put your code HERE
+               ;;
+            4) # Option 4 - 
+               # Put your code HERE
+               ;;
+            5) # Option 5 - 
+               # Put your code HERE
+               ;;
+           99) # Option Quit -
+               # Put your code HERE 
+               break 
+               ;;
+            *) # Invalid Option #
+               mess "\'($sadm_choice)\' is an invalid option"
+               ;;
+        esac
+        done
+    
+
+##### OR USE THIS PART OF THE CODE TO PROCESS YOUR LINUX OR AIX ACTIVE SERVER #####
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     
@@ -190,9 +235,9 @@ main_process()
 
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                        # Total = AIX+Linux Errors
 
+
+
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                          # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                               # Exit With Global Err (0/1)
-
-
 

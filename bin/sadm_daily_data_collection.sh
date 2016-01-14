@@ -88,7 +88,7 @@ get_aix_files()
     SQL1="use sysinfo; SELECT server_name, server_domain FROM servers where server_os='AIX' "
     SQL2="and server_active=1 and server_doc_only=0 ;"
     SQL="${SQL1} ${SQL2}"
-    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$SADM_SADM_TMP_FILE1
+    $MYSQL -u $MUSER -h $MHOST -p$MPASS -s -e "$SQL" >$SADM_TMP_FILE1
 
     # If no file to process
     if [ ! -s "$SADM_SADM_TMP_FILE1" ]

@@ -275,7 +275,7 @@ create_summary_file()
     sadm_logger "Creating Configuration Summary File"
     sadm_logger "$HWD_FILE"
     sadm_logger " "
-    echo -e "# $SADM_CIE_NAME - SysInfo Report File - `date`"                       >  $HWD_FILE
+    echo -e "# $SADM_CIE_NAME - SysInfo Report File - `date`"                      >  $HWD_FILE
     echo -e "# This file will be use to update the SADMIN Database"                >> $HWD_FILE
     echo -e "#                                                    "                >> $HWD_FILE
     echo "SADM_OS_TYPE                        : $(sadm_os_type)"                   >> $HWD_FILE

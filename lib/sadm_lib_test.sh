@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  template.sh
@@ -43,6 +43,7 @@ SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE   # 0=No 
 SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
 SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max Nb. Lines in RCH LOG
 #***************************************************************************************************
+trap 'sadm_stop 0; exit 0' 2                                             # INTERCEPTE LE ^C
 #
 #
 
@@ -81,7 +82,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "=========================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
     printf "                                                                                                    RETURN VALUE         \n"
-    printf "VARIABLE AVAILABLE TO USE    DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS\n"
+    printf "VARIABLE AVAILABLE TO USE   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================\n"
     printf "\$(sadm_os_type)             OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...$(sadm_os_type)...\n"
     printf "\$(sadm_os_version)          OS Version (Ex: 7.2, 6.5)                                        : ...$(sadm_os_version)...\n"
@@ -114,9 +115,9 @@ Debug=true                                      ; export Debug          # Debug 
     echo "Press [ENTER} to Continue" ; read dummy
     tput clear
     printf "=========================================================================================================================\n"
-    printf "                                 FUNCTIONS AVAILABLE IN SADM_LIB_SERVER.SH                                               \n"
-    printf "                                                                                                      RETURN VALUE       \n"
-    printf "VARIABLE AVAILABLE TO USE         DESCRIPTION                                                   PREFIX & SUFFIX BY 3 DOTS\n"
+    printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
+    printf "                                                                                                    RETURN VALUE         \n"
+    printf "VARIABLE AVAILABLE TO USE   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================\n"
     printf "\$(sadm_server_ips)               All Network Interfaces IP Address and Netmask use on server   : ...$(sadm_server_ips)...\n"
     printf "\$(sadm_server_type)              Host is Physical or Virtual (P/V)                             : ...$(sadm_server_type)...\n"
@@ -171,5 +172,6 @@ Debug=true                                      ; export Debug          # Debug 
     e_bold      "e_bold"
     e_note      "e_note"
 
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                  # Exit With Global Err (0/1)
+    SDAM_EXIT_CODE=0                                                    # For Test purpose
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

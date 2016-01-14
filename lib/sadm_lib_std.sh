@@ -171,8 +171,12 @@ sadm_check_requirements() {
     # which command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                        # Try the command which 
         then SADM_WHICH=`which which`  ; export SADM_WHICH                # Save the Path of Which
-#        then SADM_WHICH=`which --skip-alias which`  ; export SADM_WHICH # Save the Path of Which
-        else sadm_logger "Error: Command 'which' isn't available - Install it and rerun this script"
+        else sadm_logger "Error : The command 'which' could not be found" 
+             sadm_logger "        This program is often used by the SADMIN tools"
+             sadm_logger "        Please install it and re-run this script"
+             sadm_logger "        To install it, use the following command depending on your distro"
+             sadm_logger "        Use 'yum install which' or 'apt-get install debianutils'"
+             sadm_logger "Script Aborted"
              return 1                                                   # Return Error to Caller
     fi
     
@@ -290,7 +294,7 @@ sadm_date_to_epoch() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                           THIS FUNCTION DETERMINE THE OS VERSION NUMBER 
+#                THIS FUNCTION DETERMINE THE OS (DISTRIBUTION) VERSION NUMBER 
 # --------------------------------------------------------------------------------------------------
 sadm_os_version() {
     sadm_os_version="0.0"                                               # Default Value
@@ -308,7 +312,7 @@ sadm_os_version() {
 }
 
 # --------------------------------------------------------------------------------------------------
-#                            RETURN THE OS MAJOR VERSION
+#                            RETURN THE OS (DISTRIBUTION) MAJOR VERSION
 # --------------------------------------------------------------------------------------------------
 sadm_os_major_version() {
     case "$(sadm_os_type)" in
@@ -346,6 +350,7 @@ sadm_os_name() {
     if [ "$(sadm_os_type)" = "LINUX" ]
         then sadm_os_name=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
              if [ "$sadm_os_name" = "REDHATENTERPRISESERVER" ] ; then sadm_os_name="REDHAT" ; fi
+             if [ "$sadm_os_name" = "REDHATENTERPRISEAS" ]     ; then sadm_os_name="REDHAT" ; fi
     fi 
     if [ "$(sadm_os_type)" = "AIX" ]   ; then sadm_os_name="AIX" ; fi
     echo "$sadm_os_name"
@@ -427,7 +432,8 @@ sadm_kernel_version() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 #
-sadm_load_sadmin_config_file() {
+sadm_load_sadmin_config_file() 
+{
     if [ ! -f "$SADM_CFG_FILE" ]
        then echo "# SADMIN - Configuration file - Created on `date`"             > $SADM_CFG_FILE
             echo "#"                                                            >> $SADM_CFG_FILE
@@ -442,7 +448,7 @@ sadm_load_sadmin_config_file() {
             echo "# Default Option for sending email after a script is ended"   >> $SADM_CFG_FILE
             echo "# Option Can be overridden by changing SADM_MAIL_TYPE in Script header"  >> $SADM_CFG_FILE
             echo "# 0=No Mail Sent    1=On Error Only    2=On Success Only    3=Always send email" >> $SADM_CFG_FILE
-            echo "SADM_MAIL_TYPE = 3"                                           >> $SADM_CFG_FILE
+            echo "SADM_MAIL_TYPE = 1"                                           >> $SADM_CFG_FILE
             echo "#"                                                            >> $SADM_CFG_FILE
             echo "#"                                                            >> $SADM_CFG_FILE
             echo "# sadmin fully qualified server name"                         >> $SADM_CFG_FILE
@@ -530,6 +536,7 @@ sadm_start() {
     # Record Date & Time the script is starting in the
     sadm_start_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_start_time
     echo "$(sadm_hostname) ${sadm_start_time} ........ ${SADM_INST} 2" >>$RCLOG
+    #printf "%-15s %-20s "
 }
 
 
@@ -576,6 +583,9 @@ sadm_stop() {
         3)  sadm_logger "Mail is requested either Success or Error of this script - Mail Sent"
             ;;
         4)  sadm_logger "No Mail can be send until the mail command is install (yum -y mailx)"
+            ;;
+        *)  sadm_logger "The SADM_MAIL_TYPE is not set properly - Should be between 1 and 4"
+            sadm_logger "It is not set to $SADM_MAIL_TYPE"
             ;;
     esac
     
@@ -643,16 +653,3 @@ sadm_stop() {
     
     # Load SADMIN Configuration file
     sadm_load_sadmin_config_file                                        # Load SADM cfg file
-
-    # Date Calculation Tool
-    case "$(sadm_os_type)" in
-        "LINUX")   EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch"      
-                   ;;
-        "AIX")     EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch_aix"      
-                   ;;
-    esac    
-    if [ -f /etc/os-release ] && [ $(grep -i "^ID=" /etc/os-release |awk -F= '{ print $2 }') = "raspbian" ]
-        then EPOCH="${SADM_BASE_DIR}/bin/sadm_epoch_arm" 
-    fi        
-    export EPOCH
-    

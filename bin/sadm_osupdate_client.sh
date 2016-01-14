@@ -47,57 +47,82 @@ SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max N
 
 
 # --------------------------------------------------------------------------------------------------
-# Script Variables definition
+#                               Script Variables definition
 # --------------------------------------------------------------------------------------------------
-SELINUX=`getenforce`                                                    # Get SELINUX Status
-if [ "$SELINUX" == "Enforcing" ] ; then USING_SELINUX="Y" ; else USING_SELINUX="N" ; fi
-export SELINUX USING_SELINUX                                            # Export SELINUX Status
-
 
 
 
 # --------------------------------------------------------------------------------------------------
 #               Function to check update available before beginning update
+# Function Return
+# - 0 IF UPDATE ARE AVAILABLE
+# - 1 IF NO UPDATE ARE AVAILABLE
+# - 2 IF PROBLEM CHECKING FOR UPDATE
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_logger "Checking if update are available for version $(sadm_os_major_version) ..."
-    case "$(sadm_os_major_version)" in
-      [3|4] )   sadm_logger "Running \"up2date -l\""                    # Update the Log
-                sadm_logger "${SADM_DASH}"
-                up2date -l >> $LOG 2>&1                                 # List update available
-                rc=$?                                                   # Save Exit code
-                sadm_logger "${SADM_DASH}"
-                sadm_logger "Return Code after up2date -l is $rc"       # Write exit code to log
-                case $rc in
-                   0) UpdateStatus=0                                    # Update Exist
-                      sadm_logger "Update are available ..."            # Update log update avail.
-                      ;;
-                   *) UpdateStatus=2                                    # Problem Abort Update
-                      sadm_logger "NO UPDATE AVAILABLE"                 # Update the log
-                      ;;
-                esac
-                ;;
-     [5|6|7])   sadm_logger "Running \"yum check-update\""              # Update the log
-                sadm_logger "${SADM_DASH}"
-                yum check-update >> $LOG 2>&1                           # List Available update
-                rc=$?                                                   # Save Exit Code
-                sadm_logger "${SADM_DASH}"
-                sadm_logger "Return Code after yum check-update is $rc" # Write Exit code to log
-                case $rc in
-                 100) UpdateStatus=0                                    # Update Exist
-                      sadm_logger "Update are available"                # Update the log
-                      ;;
-                   0) UpdateStatus=1                                    # No Update available
-                      sadm_logger "NO UPDATE AVAILABLE"                 # Update the log
-                      ;;
-                   *) UpdateStatus=2                                    # Problem Abort Update
-                      sadm_logger "Error Encountered - Update aborted"  # Update the log
-                      ;;
-                esac
-                ;;
-    esac
-    sadm_logger "${SADM_DASH}"
+    sadm_logger "Checking if update are available for $(sadm_os_name) version $(sadm_os_version) ..."
+    
+    if [ "$(sadm_os_name)" = "REDHAT" ] || [ "$(sadm_os_name)" = "CENTOS" ]
+        then case "$(sadm_os_major_version)" in
+                [3|4] )   sadm_logger "Running \"up2date -l\""          # Update the Log
+                          sadm_logger "${SADM_DASH}"
+                          up2date -l >> $LOG 2>&1                       # List update available
+                          rc=$?                                         # Save Exit code
+                          sadm_logger "${SADM_DASH}"
+                          sadm_logger "Return Code after up2date -l is $rc" # Write exit code to log
+                          case $rc in
+                             0) UpdateStatus=0                          # Update Exist
+                                sadm_logger "Update are available ..."  # Update log update avail.
+                                ;;
+                             *) UpdateStatus=2                          # Problem Abort Update
+                                sadm_logger "NO UPDATE AVAILABLE"       # Update the log
+                                ;;
+                          esac
+                          ;;
+              [5|6|7])   sadm_logger "Running \"yum check-update\""     # Update the log
+                         sadm_logger "${SADM_DASH}"
+                         yum check-update >> $LOG 2>&1                  # List Available update
+                         rc=$?                                          # Save Exit Code
+                         sadm_logger "${SADM_DASH}"
+                         sadm_logger "Return Code after yum check-update is $rc" # Write Exit code to log
+                         case $rc in
+                           100) UpdateStatus=0                          # Update Exist
+                                sadm_logger "Update are available"      # Update the log
+                                ;;
+                             0) UpdateStatus=1                          # No Update available
+                                sadm_logger "No Update available"
+                                ;;
+                             *) UpdateStatus=2                          # Problem Abort Update
+                                sadm_logger "Error Encountered - Update aborted"  # Update the log
+                                ;;
+                          esac
+                         ;;
+             esac
+    fi
+    
+    if [ "$(sadm_os_name)" = "UBUNTU" ] || [ "$(sadm_os_name)" = "DEBIAN" ]
+        then sadm_logger "Resynchronize package index files from their sources via Internet"
+             sadm_logger "Running \"apt-get update\""                   # Msg Get package list 
+             apt-get update > /dev/null 2>&1                            # Get Package List From Repo
+             rc=$?                                                      # Save Exit Code
+             if [ "$rc" -ne 0 ]
+                then UpdateStats=2
+                     sadm_logger "We had problem running the \"apt-get update\" command" 
+                     sadm_logger "We had a return code $rc" 
+                else sadm_logger "Return Code after apt-get update is $rc"      # Show  Return Code
+                     sadm_logger "Querying list of package that will be updated"
+                     NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
+                     apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
+                     if [ "$NB_UPD" -ne 0 ]
+                        then UpdateStatus=0
+                             sadm_logger "${NB_UPD} Updates are available"
+                        else UpdateStatus=1
+                             sadm_logger "No Update available"
+                     fi
+             fi
+    fi         
+    sadm_logger " "
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
 }
 
@@ -110,7 +135,7 @@ check_available_update()
 run_up2date()
 {
     sadm_logger "${SADM_DASH}"
-    sadm_logger "Running Update."
+    sadm_logger "Starting the $(sadm_os_name) update  process ..."
     sadm_logger "Running \"up2date --nox -u\""
     up2date --nox -u >>$LOG 2>&1
     rc=$?
@@ -134,13 +159,40 @@ run_up2date()
 run_yum()
 {
     sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting yum update process ..."
+    sadm_logger "Starting the $(sadm_os_name) update  process ..."
     sadm_logger "Running : yum -y update"
     yum -y update  >>$LOG 2>&1
     rc=$?
     sadm_logger "Return Code after yum program update is $rc"
     sadm_logger "${SADM_DASH}"
     return $rc
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                 Function to update the server with apt-get command
+# --------------------------------------------------------------------------------------------------
+run_apt_get()
+{
+    sadm_logger "${SADM_DASH}"
+    sadm_logger "Starting the $(sadm_os_name) update process ..."
+
+    sadm_logger "${TEN_DASH}"
+    sadm_logger "Running : apt-get -y upgrade"
+    apt-get -y upgrade | tee -a $LOG 2>&1
+    rc1=$?
+    sadm_logger "Return Code after \"apt-get -y upgrade\" is $rc1"      # Write Exit code to log
+
+    sadm_logger "${TEN_DASH}"
+    sadm_logger "Running : apt-get -y dist-upgrade "
+    apt-get -y dist-upgrade | tee -a $LOG 2>&1
+    rc2=$?
+    sadm_logger "Return Code after \"apt-get -y upgrade\" is $rc2"      # Write Exit code to log
+    RC=$(($rc1+$rc2))
+    
+    sadm_logger "${TEN_DASH}"
+    sadm_logger "Return Code after apt-get upgrade and apt-get dist-upgrade is $RC"
+    return $RC
 }
 
 
@@ -157,30 +209,26 @@ run_yum()
     fi
     
     check_available_update                                              # Check if avail. Update
-    if [ $? -ne 0 ]                                                     # No update available - Exit
-        then sadm_stop 0                                                # Update rc file
-             exit 0                                                     # Exit with 0 = normal
-    fi
+    if [ $? -ne 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # If No Update Close the Shop
 
-    # If SELinux is ON - We need to turn it off while updating O/S
-    sadm_logger "SELinux is ${SELINUX}."
-    if [ "$USING_SELINUX" == "Y" ]                                      # If SELinux is Activated
-        then sadm_logger "Disabling SELinux while the update is running." # Advise user
-             setenforce 0 >> $LOG 2>&1                                  # Disable SELinux
-             getenforce   >> $LOG 2>&1                                  # Display SELinux Status
-    fi
-
-    # Run the OS Update
-    if [ $(sadm_os_major_version) -lt 5 ]  ; then run_up2date ; else run_yum ; fi     # Update the Server
-    rc=$? ; export rc                                                   # Save Return Code
-
-    # Reactivate SELINUX if it was de-activated at the beginning
-    if [ "$USING_SELINUX" == "Y" ]
-        then sadm_logger "Re-enabling SELinux ... "
-             setenforce 1 >> $LOG 2>&1
-             getenforce >> $LOG 2>&1
-    fi
-
-    # Update and close Logs
-    sadm_stop $rc                                                       # End Process with exit Code
-    exit $rc                                                            # Exit script
+    case "$(sadm_os_name)" in                                           # Test OS Name
+        "REDHAT"|"CENTOS" )     if [ $(sadm_os_major_version) -lt 5 ]   
+                                    then run_up2date                    # Version 4 Run up2date
+                                         SADM_EXIT_CODE=$?              # Save Return Code
+                                    else run_yum                        # V 5 and above Run yum cmd
+                                         SADM_EXIT_CODE=$?              # Save Return Code
+                                fi     
+                                ;; 
+        "FEDORA"          )     run_yum
+                                SADM_EXIT_CODE=$?
+                                ;;
+        "UBUNTU"|"DEBIAN" )     run_apt_get
+                                SADM_EXIT_CODE=$?
+                                ;;
+        *)                      sadm_logger "This OS ($(sadm_os_name)) is not yet supported"
+                                sadm_logger "Please report it to SADMIN Web Site"
+                                ;;
+    esac
+   
+    sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
+    exit  "$SADM_EXIT_CODE"                                             # Exit script

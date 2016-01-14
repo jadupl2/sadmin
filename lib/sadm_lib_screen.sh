@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #  Author:    Jacques Duplessis
 #  Title      sadm_lib_screen.sh
@@ -24,11 +24,31 @@ clr=`tput clear`                                ; export clr            # clear 
 blink=`tput blink`                              ; export blink          # turn blinking on
 screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
 reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
-purple=$(tput setaf 171)                        ; export purple         # Purple color
+
+#
+# Color Foreground Text
+black=$(tput setaf 0)                           ; export black          # Black color
 red=$(tput setaf 1)                             ; export red            # Red color
-green=$(tput setaf 76)                          ; export green          # Green color
-tan=$(tput setaf 3)                             ; export tan            # Tan color
-blue=$(tput setaf 38)                           ; export blue           # Blue color
+green=$(tput setaf 2)                           ; export green          # Green color
+yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
+blue=$(tput setaf 4)                            ; export blue           # Blue color
+magentae=$(tput setaf 5)                        ; export magenta        # Magenta color
+cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
+white=$(tput setaf 7)                           ; export white          # White color
+#
+# Color Background Text
+bblack=$(tput setab 0)                           ; export bblack          # Black color
+bred=$(tput setab 1)                             ; export bred            # Red color
+bgreen=$(tput setab 2)                           ; export bgreen          # Green color
+byellow=$(tput setab 3)                          ; export byellow         # Yellow color
+bblue=$(tput setab 4)                            ; export bblue           # Blue color
+bmagentae=$(tput setab 5)                        ; export bmagenta        # Magenta color
+bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
+bwhite=$(tput setab 7)                           ; export bwhite          # White color
+
+
+
+
 
 # Headers and  Logging
 #

@@ -60,6 +60,7 @@ MYSQL="$(which mysql)"                          ; export MYSQL          # Locati
 USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
 REMOTE_SSH="/usr/bin/ssh -qnp 32"               ; export REMOTE_SSH     # SSH command for remote node
 ERROR_COUNT=0                                   ; export ERROR_COUNT    # Nb. of update failed
+WARNING_COUNT=0                                 ; export WARNING_COUNT  # Nb. of warning failed
 
 
 
@@ -83,17 +84,17 @@ process_linux_servers()
         server_os=`    echo $wline|awk '{ print $2 }'`
         server_domain=`echo $wline|awk '{ print $3 }'`
         server_type=`  echo $wline|awk '{ print $4 }'`
-        sadm_logger " " ; sadm_logger "${SA_LINE}"
+        sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
         sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-        sadm_logger "${SA_LINE}"
+        sadm_logger "${SADM_TEN_DASH}"
         sadm_logger "Ping the selected host ${server_name}.${server_domain}"
 
-        ping -c3 ${server_name}.${server_domain} >> /dev/null 2>&1
+        ping -c2 ${server_name}.${server_domain} >> /dev/null 2>&1
         if [ $? -ne 0 ]
             then sadm_logger "Error trying to ping the server ${server_name}.${server_domain}"
                  sadm_logger "Update of server ${server_name}.${server_domain} Aborted"
-                 ERROR_COUNT=$(($ERROR_COUNT+1))
-                 sadm_logger "Total Error Count is at $ERROR_COUNT"
+                 WARNING_COUNT=$(($WARNING_COUNT+1))
+                 sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
                  continue
             else sadm_logger "Ping went OK"
         fi
@@ -101,17 +102,16 @@ process_linux_servers()
         sadm_logger "Starting $USCRIPT on ${server_name}.${server_domain}"
         sadm_logger "$REMOTE_SSH ${server_name}.${server_domain} $USCRIPT"
         $REMOTE_SSH ${server_name}.${server_domain} $USCRIPT
-	    if [ $? -ne 0 ]
+        if [ $? -ne 0 ]
             then sadm_logger "Error starting $USCRIPT on ${server_name}.${server_domain}"
-	             ERROR_COUNT=$(($ERROR_COUNT+1))
+                 ERROR_COUNT=$(($ERROR_COUNT+1))
             else sadm_logger "Script was submitted with no error."
         fi
-        sadm_logger "Total Error Count is at $ERROR_COUNT"
-
+        sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
         done < $SADM_TMP_FILE1
     sadm_logger " "
-    sadm_logger "${SA_LINE}"
-    sadm_logger "Final Error Count is at $ERROR_COUNT"
+    sadm_logger "${SADM_TEN_DASH}"
+    sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
     return $ERROR_COUNT
 }
 

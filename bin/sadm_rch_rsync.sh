@@ -236,6 +236,10 @@ process_aix_servers()
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
     sadm_logger "We had $AIX_ERROR error(s) while processing Aix servers"
     
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                           # Total = AIX+Linux Errors
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC to or 0
-    exit $SADM_EXIT_CODE                                                  # Exit With Global Error code (0/1)
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC to or 0
+    
+    WDIR=`echo $SADM_SERVER | awk -F. '{ print $1 }'`                   # Remove Doman from SADM Server
+    echo "cp $RCLOG ${SADM_WWW_DIR_DAT}/${WDIR}/rch"                    # Copy finalize RCH For Summary
+    cp $RCLOG ${SADM_WWW_DIR_DAT}/${WDIR}/rch                           # Copy finalize RCH For Summary
+    exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)

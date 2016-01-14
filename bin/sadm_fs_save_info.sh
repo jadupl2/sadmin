@@ -93,23 +93,31 @@ FSTAB="/etc/fstab"                                ; export FSTAB        # File c
 #
 check_lvm_version()
 {
-    LVMVER=0                                                              # Assume lvm not install
-    sadm_logger "Currently verifying the LVM version installed on system"
+    LVMVER=0                                                            # Assume lvm not install
+    sadm_logger "Currently verifying the LVM $(sadm_os_name) version installed on system"
     
     # Check if LVM Version 2 is installed
-    rpm -qa '^lvm-2' > /dev/null 2>&1                                     # Query RPM DB
-    if [ $? -eq 0 ] ; then LVMVER=2 ; fi                                  # Found LVM V2     
-
-    # Set the Path to lvscan 
-    LVSCAN=`which lvscan`                                                 # LVM1 Path (RHEL 4 and Up)
-
-    # If LVM Not Installed
-    if [ $LVMVER -eq 0 ]                                                  # lvm wasn't found on server
-        then sadm_logger "The rpm 'lvm' or 'lvm2' is not installed"       # Advise user no lvm package
-             sadm_logger "No use in running this script - Script Aborted" # No LVM - No Script
-    fi
+    case "$(sadm_os_name)" in                                           # Test OS Name
+      "REDHAT"|"CENTOS"|"FEDORA")   sadm_logger "rpm -qa lvm-2"
+                                    rpm -qa '^lvm-2' > /dev/null 2>&1   # Query RPM DB
+                                    if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
+                                    ;; 
+      "UBUNTU"|"DEBIAN"         )   sadm_logger "dpkg --status lvm2"
+                                    dpkg --status lvm2 > /dev/null 2>&1 # Query pkg list
+                                    if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
+                                    ;; 
+      "*"                       )   sadm_logger "OS Not Supported yet ($(sadm_os_name))"
+                                    ;; 
+    esac
+    LVSCAN=`which lvscan`                                               # LVM1 Path (RHEL 4 and Up)
+    if [ $? -ne 0 ] ; then LVMVER=0 ; fi                                # If cannot locate lvscan 
     
-    return $LVMVER                                                        # Return LVM Version
+    # If LVM Not Installed
+    if [ $LVMVER -eq 0 ]                                                # lvm wasn't found on server
+        then sadm_logger "The lvm2 package is not installed"            # Advise user no lvm package
+             sadm_logger "No value running this script, Script Aborted" # No LVM - No Script
+    fi
+    return $LVMVER                                                      # Return LVM Version
 }
 
 
@@ -121,11 +129,11 @@ check_lvm_version()
 #
 save_lvm_info()
 {
-    $LVSCAN  > $SADM_TMP_FILE1                                               # Run lvscan output to tmp
+    $LVSCAN  > $SADM_TMP_FILE1 2>/dev/null                                              # Run lvscan output to tmp
     
     sadm_logger "There are `wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'` Logical volume reported by lvscan"
     sadm_logger "Output file is $DRFILE" 
-    sadm_logger " " ; sadm_logger " "
+    #sadm_logger " " ; sadm_logger " "
     
 
     cat $SADM_TMP_FILE1 | while read LVLINE                                  # process all LV detected
@@ -237,20 +245,22 @@ save_lvm_info()
         sadm_logger "Line written to output file       = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
         done
         
-    sadm_logger " " ; sadm_logger "$SADM_DASH"; 
-    sadm_logger "Backup of $DRFILE is done in $PRVFILE" 
+    sadm_logger "Backup of $DRFILE" 
     if [ -s $DRFILE ] ; then cp $DRFILE $PRVFILE ; fi                   # Make a backup of data file 
 
     # Sort output - Get rid of LVLEN at the same time (needed only for the sort)
     sadm_logger "Creating a new copy of $DRFILE"
-    sort -n $SADM_TMP_FILE3 | awk -F: '{ printf "%s:%s:%s:%s:%s:%s:%s:%s\n", $2,$3,$4,$5,$6,$7,$8,$9 }' >$SADM_TMP_FILE2
+    if [ -s $SADM_TMP_FILE3 ]
+        then sort -n $SADM_TMP_FILE3 | awk -F: '{ printf "%s:%s:%s:%s:%s:%s:%s:%s\n", $2,$3,$4,$5,$6,$7,$8,$9 }' >$SADM_TMP_FILE2
+        else touch $SADM_TMP_FILE2
+    fi 
     
-    echo -e "# SADMIN - Filesystem Info. for system $(sadm_hostname).$(sadm_domainname)"   >$DRFILE
-    echo -e "# File was created by sadm_fs_save_info.sh on `date`"                       >> $DRFILE
-    echo -e "# This file is use in a Disaster Recovery situation"                        >> $DRFILE
-    echo -e "# The data below is use by sadm_fs_recreate.sh to recreate filesystems"     >> $DRFILE
-    echo -e "# ---------------------------------------------------------------------"    >> $DRFILE
-    echo -e "# " >> $DRFILE
+    echo "# SADMIN - Filesystem Info. for system $(sadm_hostname).$(sadm_domainname)"  > $DRFILE
+    echo "# File was created by sadm_fs_save_info.sh on `date`"                       >> $DRFILE
+    echo "# This file is use in a Disaster Recovery situation"                        >> $DRFILE
+    echo "# The data below is use by sadm_fs_recreate.sh to recreate filesystems"     >> $DRFILE
+    echo "# ---------------------------------------------------------------------"    >> $DRFILE
+    echo "# " >> $DRFILE
     cat  $SADM_TMP_FILE2 >> $DRFILE
     return
 }
@@ -261,21 +271,14 @@ save_lvm_info()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-    
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
              sadm_logger "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-        
     check_lvm_version                                                   # Get LVM Version in $LVMVER
-    if [ $? -eq 0 ] ; then sadm_stop 1 ; exit 1 ; fi                    # LVM Not install - Exit
-#
-    if [ $Debug ]                                                       # If Debug Activated
-        then sadm_logger "System is using LVM version $LVMVER"          # Show LVM Version
-             sadm_logger "The Path to lvscan is $LVSCAN"                # Show LVSCAN Path
-    fi   
+    if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # LVM Not install - Exit
     save_lvm_info                                                       # Save info about all lvm's
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
-    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
+    exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)
