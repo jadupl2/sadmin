@@ -65,11 +65,6 @@ MPASS="query"                                  ; export MPASS           # MySql 
 MHOST="sysinfo.maison.ca"                      ; export MHOST           # Mysql Host
 MYSQL="$(which mysql)"                         ; export MYSQL           # Location of mysql program
 #
-DATE=`date +%y%m%d --date="yesterday"`         ; export DATE            # Yesterday Date
-PERFDATA_DIR=/etc/perf                         ; export PERFDATA_DIR    # Remote dir. of Perf.Data
-PERFDATA_FILE_PREFIX=perfdata                  ; export PERFDATA_FILE_PREFIX   # File Prefix for Perf.File
-PERFDATA_FILE=$PERFDATA_DIR/$PERFDATA_FILE_PREFIX.${DATE} ;export PERFDATA_FILE # Perf FileName on remote
-#
 ERROR_COUNT=0                                  ; export ERROR_COUNT     # Global Error Counter
 TOTAL_AIX=0                                    ; export TOTAL_AIX       # Nb Error in Aix Function
 TOTAL_LINUX=0                                  ; export TOTAL_LINUX     # Nb Error in Linux Function

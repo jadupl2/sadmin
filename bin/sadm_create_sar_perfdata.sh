@@ -62,7 +62,7 @@ SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE  # Max N
 # --------------------------------------------------------------------------------------------------
 #
 DAY=`date +%d`                                                          # Date Day Number
-DATE=`date +%y%m%d`                                                     # Year Month Day
+DATE=`date +%Y%m%d`                                                     # Year Month Day
 CLEANUP=true                                                            # Default clean output dir.
 #
 # Input File
@@ -70,8 +70,8 @@ SAR_DIR=/var/log/sa                                                     # Where 
 SAR_FILE=$SAR_DIR/sa${DAY}                                              # Name of today filename
 #
 # Output File
-OUT_PREFIX="perfdata"                                                   # Output file prefix
-OUT_FILE=$SADM_PERF_DIR/$OUT_PREFIX.${DATE}                             # Name of the output file
+OUT_PREFIX="sadm"                                                       # Output file prefix
+OUT_FILE=${SADM_PERF_DIR}/${OUT_PREFIX}_${DATE}.sar                         # Name of the output file
 OUT_MAX_FILES=30                                                        # Number Output files to keep
 
 # --------------------------------------------------------------------------------------------------
