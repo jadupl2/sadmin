@@ -7,7 +7,7 @@
 #        Like SADM_MAIL_TYPE , SADM_MAIL_ADDR overriden at the top of script
 #        See the template sadm_template.sh as an example.
 #   - If this file (sadmin.cfg) is not present when the 1st script is run,
-#     then template file .sadmin.org will be copied to sadmin.cfg
+#     then template file sadmin.org will be copied to sadmin.cfg
 #----------------------------------------------------------------------------
 #
 #
@@ -43,7 +43,7 @@ SADM_GROUP = sadmin
 #
 #
 #----------------------------------------------------------------------------
-SADM_MAX_LOGLINE=5000
+SADM_MAX_LOGLINE
 
 #----------------------------------------------------------------------------
 SADM_MAX_RCLINE=100

@@ -467,9 +467,13 @@ sadm_load_sadmin_config_file()
 #                   SADM INITIALIZE FUNCTION - EXECUTE BEFORE DOING ANYTHING
 # --------------------------------------------------------------------------------------------------
 #
-sadm_start() { 
+sadm_start() {
+
     # If log Directory doesn't exist, create it.
-    if [ ! -d "$SADM_LOG_DIR" ]  ; then mkdir -p $SADM_LOG_DIR   ; chmod 2775 $SADM_LOG_DIR  ; export SADM_LOG_DIR ; fi
+    if [ ! -d "$SADM_LOG_DIR" ]
+        then mkdir -p $SADM_LOG_DIR
+             chmod 2775 $SADM_LOG_DIR
+    fi
 
     # If TMP Directory doesn't exist, create it.
     if [ ! -d "$SADM_TMP_DIR" ]  ; then mkdir -p $SADM_TMP_DIR   ; chmod 1777 $SADM_TMP_DIR  ; export SADM_TMP_DIR ; fi
