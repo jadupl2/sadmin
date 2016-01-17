@@ -25,6 +25,8 @@
 
 #
 #
+#
+#
 #***************************************************************************************************
 #***************************************************************************************************
 #  USING SADMIN LIBRARY SETUP SECTION
@@ -38,13 +40,15 @@
 #   VARIABLES AND FUNCTIONS AVAILABLE TO YOU AS A SCRIPT DEVELOPPER.
 #
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                               ; export SADM_PN         # Current Script name
-SADM_VER='1.5'                                 ; export SADM_VER        # This Script Version
-SADM_INST=`echo "$SADM_PN" | cut -d'.' -f1`    ; export SADM_INST       # Script name without ext.
-SADM_TPID="$$"                                 ; export SADM_TPID       # Script PID
-SADM_EXIT_CODE=0                               ; export SADM_EXIT_CODE  # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}             ; export SADM_BASE_DIR   # Script Root Base Directory
-SADM_LOG_TYPE="B"                              ; export SADM_LOG_TYPE   # 4Logger S=Scr L=Log B=Both
+SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
+SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
+SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # Script Root Base Directory
+SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 #
 # Define and Load  SADMIN Shell Script Library
 SADM_LIB_STD="${SADM_BASE_DIR}/lib/sadm_lib_std.sh"                     # Location & Name of Std Lib
@@ -52,16 +56,21 @@ SADM_LIB_SERVER="${SADM_BASE_DIR}/lib/sadm_lib_server.sh"               # Loc. &
 SADM_LIB_SCREEN="${SADM_BASE_DIR}/lib/sadm_lib_screen.sh"               # Loc. & Name of Screen Lib
 [ -r "$SADM_LIB_STD" ]    && source "$SADM_LIB_STD"                     # Load Standard Libray
 [ -r "$SADM_LIB_SERVER" ] && source "$SADM_LIB_SERVER"                  # Load Server Info Library
-[ -r "$SADM_LIB_SCREEN" ] && source "$SADM_LIB_SCREEN"                  # Load Screen Related Library
+[ -r "$SADM_LIB_SCREEN" ] && source "$SADM_LIB_SCREEN"                  # Load Screen Related Lib.
 #
 #
 # --------------------------------------------------------------------------------------------------
-# VARIABLES THAT CAN BE OVERIDDEN PER SCRIPT (DEFAULT CAN BE CHANGED IN $SADM_BASE_DIR/cfg/sadmin.cfg)
-#SADM_MAIL_ADDR="your_email@domain.com"         ; export ADM_MAIL_ADDR    # Default is in sadmin.cfg
-#SADM_DEBUG_LEVEl=5                             ; export SADM_DEBUG_LEVEL # 0=NoDebug Higher=+Verbose
-#SADM_MAIL_TYPE=1                               ; export SADM_MAIL_TYPE  # 0=No 1=Err 2=Succes 3=All
-SADM_MAX_LOGLINE=5000                          ; export SADM_MAX_LOGLINE # Max Nb. Lines in LOG )
-SADM_MAX_RCLINE=100                            ; export SADM_MAX_RCLINE # Max Nb. Lines in RCH file
+# GLOBAL VARIABLES THAT CAN BE OVERIDDEN PER SCRIPT (DEFAULT ARE IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+# --------------------------------------------------------------------------------------------------
+#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
+#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
+#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
+#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
+#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
+#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
 # 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #***************************************************************************************************

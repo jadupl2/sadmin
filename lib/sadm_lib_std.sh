@@ -47,14 +47,14 @@ SADM_WWW_DIR_DAT="$SADM_BASE_DIR/www/dat"       ; export SADM_WWW_DIR_DAT # sadm
 #
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
-SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"             ; export SADM_CFG_FILE  # Config file name
-SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"   ; export SADM_TMP_FILE1 # Temp Script Tmp File1 
-SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"   ; export SADM_TMP_FILE2 # Temp Script Tmp File2
-SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"   ; export SADM_TMP_FILE3 # Temp Script Tmp File3
-LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log"   ; export LOG            # Output LOG filename
-RCLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch" ; export RCLOG          # Return Code History
+SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"              ; export SADM_CFG_FILE  # Config file name
+SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"    ; export SADM_TMP_FILE1 # Temp Script Tmp File1 
+SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"    ; export SADM_TMP_FILE2 # Temp Script Tmp File2
+SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"    ; export SADM_TMP_FILE3 # Temp Script Tmp File3
+LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log"    ; export LOG            # Output LOG filename
+RCHLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch" ; export RCHLOG         # Return Code History
 #
-# COMMANDS PATH REQUIRE TO RUN SADM
+# COMMAND PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                             ; export SADM_LSB_RELEASE # Command lsb_release Path
 SADM_DMIDECODE=""                               ; export SADM_DMIDECODE # Command dmidecode Path
 SADM_BC=""                                      ; export SADM_BC        # Command bc (Do Some Math)
@@ -94,10 +94,10 @@ sadm_logger() {
     case "$SADM_LOG_TYPE" in
         s|S) printf "%-s\n" "$SADM_MSG"
              ;; 
-        l|L) printf "%-s\n" "$SADM_MSG" >> $LOG
+        l|L) printf "%-s\n" "$SADM_MSG" >> $SADM_LOG
              ;; 
         b|B) printf "%-s\n" "$SADM_MSG"
-             printf "%-s\n" "$SADM_MSG" >> $LOG
+             printf "%-s\n" "$SADM_MSG" >> $SADM_LOG
              ;;
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE) - Please set it correctly\n"
     esac
@@ -434,32 +434,96 @@ sadm_kernel_version() {
 #
 sadm_load_sadmin_config_file() 
 {
-    if [ ! -f "$SADM_CFG_FILE" ]
-       then echo "# SADMIN - Configuration file - Created on `date`"             > $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "# Email when error and log report are sent"                   >> $SADM_CFG_FILE
-            echo "SADM_MAIL_ADDR = root@localhost"                              >> $SADM_CFG_FILE        
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "# Put your Company name here"                                 >> $SADM_CFG_FILE
-            echo "SADM_CIE_NAME = Company_Name"                                 >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "# Default Option for sending email after a script is ended"   >> $SADM_CFG_FILE
-            echo "# Option Can be overridden by changing SADM_MAIL_TYPE in Script header"  >> $SADM_CFG_FILE
-            echo "# 0=No Mail Sent    1=On Error Only    2=On Success Only    3=Always send email" >> $SADM_CFG_FILE
-            echo "SADM_MAIL_TYPE = 1"                                           >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-            echo "# sadmin fully qualified server name"                         >> $SADM_CFG_FILE
-            echo "SADM_SERVER = sadmin"                                         >> $SADM_CFG_FILE
-            echo "#"                                                            >> $SADM_CFG_FILE
-       else SADM_MAIL_ADDR=`grep -i "^SADM_MAIL_ADDR" $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
-            SADM_CIE_NAME=`grep  -i "^SADM_CIE_NAME"  $SADM_CFG_FILE |awk -F= '{print $2 }' |sed -e 's/^[ \t]*//'`
-            SADM_MAIL_TYPE=`grep -i "^SADM_MAIL_TYPE" $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
-            SADM_SERVER=`grep -i "^SADM_SERVER"       $SADM_CFG_FILE |awk -F= '{print $2 }' |tr -d ' '`
+
+    # Set the Default Values - in case we could not load the SADMIN Config File
+    SADM_MAIL_ADDR="root@localhost"           ; export SADM_MAIL_ADDR     # Default email address
+    SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME      # Company Name
+    SADM_MAIL_TYPE=3                          ; export SADM_MAIL_TYPE     # Send Email after each run
+    SADM_SERVER=`host sadmin | cut -d' ' -f1` ; export SADM_SERVER        # SADMIN server
+    SADM_USER="sadmin"                        ; export SADM_USER          # sadmin user account
+    SADM_GROUP="sadmin"                       ; export SADM_GROUP         # sadmin group account
+    SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE   # Max Line in each *.log
+    SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE    # Max Line in each *.rch
+    SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
+    SADM_SAR_KEEPDAYS=40                      ; export SADM_SAR_KEEPDAYS  # Days ro keep old *.sar
+    
+
+    # Configuration file MUST be present - If .sadm_config exist, then create sadm_config from it.
+    if [ ! -r "$SADM_CFG_FILE" ]
+        then if [ ! -r "$SADM_CFG_HIDDEN" ] 
+                then sadm_logger "****************************************************************"
+                     sadm_logger "SADMIN Configuration file is not found ($SADM_CFG_FILE)"
+                     sadm_logger "Even the config template file cannot be found ($SADM_CFG_HIDDEN)"
+                     sadm_logger "Copy both files from another system to this server"
+                     sadm_logger "Or restore the files from a backup"
+                     sadm_logger "Review the file content."
+                     sadm_logger "****************************************************************"
+                else sadm_logger "****************************************************************"
+                     sadm_logger "The configuration file $SADM_CFG_FILE does't exist."
+                     sadm_logger "Will continue using template configuration file $SADM_CFG_HIDDEN"
+                     sadm_logger "Please review the configuration file."
+                     sadm_logger "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"   # Install Default cfg  file
+                     cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg  file
+                     sadm_logger "****************************************************************"
+             fi
     fi
-    export SADM_MAIL_ADDR SADM_CIE_NAME SADM_MAIL_TYPE SADM_SERVER
+    
+    
+    # Loop for reading the sadmin configuration file
+    while read wline 
+        do 
+        if ( [ "${#wline}" = "0" ] || [ "${wline:0:1}" = "#" ] ) ; then continue ; fi
+        #echo "$wline - ${#wline}" 
+        #
+        echo "$wline" |grep -i "^SADM_MAIL_ADDR" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MAIL_ADDR=`echo "$wline"     | cut -d= -f2 |tr -d ' '` ; fi
+        #
+        echo "$wline" |grep -i "^SADM_CIE_NAME" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_CIE_NAME=`echo "$wline" |cut -d= -f2 |sed -e 's/^[ \t]*//'` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MAIL_TYPE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MAIL_TYPE=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_USER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_USER=`echo "$wline"          |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_GROUP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MAX_LOGLINE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MAX_LOGLINE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MAX_RCLINE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MAX_RCLINE=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NMON_KEEPDAYS" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NMON_KEEPDAYS=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_SAR_KEEPDAYS" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_SAR_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        done < /sadmin/cfg/sadmin.cfg
+
+ 
+        # For Debugging Purpose - Display Final Value of configuration file
+        if [ "$SADM_DEBUG_LEVEL" -gt 4 ]
+            then sadm_logger ""
+                 sadm_logger "SADM_DEBUG_LEVEL (${SADM_DEBUG_LEVEL}) Information"
+                 sadm_logger "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
+                 sadm_logger "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
+                 sadm_logger "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
+                 sadm_logger "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
+                 sadm_logger "  - SADM_USER=$SADM_USER"                   # sadmin user account
+                 sadm_logger "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
+                 sadm_logger "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
+                 sadm_logger "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
+                 sadm_logger "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
+                 sadm_logger "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
+        fi                 
+        return 0
 }
 
 
@@ -514,11 +578,11 @@ sadm_start() {
     if [ ! -d "$SADM_RCH_DIR" ]  ; then mkdir -p $SADM_RCH_DIR ; chmod 2775 $SADM_RCH_DIR ; export SADM_RCH_DIR ; fi
 
     # If LOG directory doesn't exist, Create it and Make it writable and that it is empty on startup
-    if [ ! -e "$LOG" ]      ; then touch $LOG  ;chmod 664 $LOG  ;fi
-    > $LOG
+    if [ ! -e "$SADM_LOG" ]      ; then touch $SADM_LOG  ;chmod 664 $SADM_LOG  ;fi
+    > $SADM_LOG
 
     # If Return Log doesn't exist, Create it and Make sure it have right permission
-    if [ ! -e "$RCLOG" ]    ; then touch $RCLOG ;chmod 664 $RCLOG ; export RCLOG ;fi
+    if [ ! -e "$RCHLOG" ]    ; then touch $RCHLOG ;chmod 664 $RCHLOG ; export RCHLOG ;fi
 
     if [ -e "${SADM_TMP_DIR}/${SADM_INST}" ]
        then sadm_logger "Script is already running ... "
@@ -539,7 +603,7 @@ sadm_start() {
 
     # Record Date & Time the script is starting in the
     sadm_start_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_start_time
-    echo "$(sadm_hostname) ${sadm_start_time} ........ ${SADM_INST} 2" >>$RCLOG
+    echo "$(sadm_hostname) ${sadm_start_time} ........ ${SADM_INST} 2" >>$RCHLOG
     #printf "%-15s %-20s "
 }
 
@@ -595,21 +659,21 @@ sadm_stop() {
     
     # Update the Return Code File
     sadm_end_time=`date "+%H:%M:%S"`
-    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $SADM_INST $SADM_EXIT_CODE" >>$RCLOG
+    echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $SADM_INST $SADM_EXIT_CODE" >>$RCHLOG
     
     sadm_logger "====="
-    sadm_logger "Trimming $RCLOG to ${SADM_MAX_RCLINE} lines."
-    tail -${SADM_MAX_RCLINE} $RCLOG > $RCLOG.$$
-    rm -f $RCLOG > /dev/null
-    mv $RCLOG.$$ $RCLOG
-    chmod 666 $RCLOG
+    sadm_logger "Trimming $RCHLOG to ${SADM_MAX_RCLINE} lines."
+    tail -${SADM_MAX_RCLINE} $RCHLOG > $RCHLOG.$$
+    rm -f $RCHLOG > /dev/null
+    mv $RCHLOG.$$ $RCHLOG
+    chmod 666 $RCHLOG
 
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
-    sadm_logger "Trimming $LOG to ${SADM_MAX_LOGLINE} lines."
-    cat $LOG >> $LOG.$$
-    tail -${SADM_MAX_LOGLINE} $LOG > $LOG.$$
-    rm -f $LOG > /dev/null
-    mv $LOG.$$ $LOG
+    sadm_logger "Trimming $SADM_LOG to ${SADM_MAX_LOGLINE} lines."
+    cat $SADM_LOG >> $SADM_LOG.$$
+    tail -${SADM_MAX_LOGLINE} $SADM_LOG > $SADM_LOG.$$
+    rm -f $SADM_LOG > /dev/null
+    mv $SADM_LOG.$$ $SADM_LOG
 
     sadm_logger "====="
     sadm_logger "`date` end of ${SADM_PN}."
@@ -619,16 +683,16 @@ sadm_stop() {
     # Inform UnixAdmin By Email based on his slected choice
     case $SADM_MAIL_TYPE in
         1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-               then cat $LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR # On Error
+               then cat $SADM_LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR # On Error
             fi
             ;;
         2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-               then cat $LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR # On Success
+               then cat $SADM_LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR # On Success
             fi 
             ;;
         3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                              # Always mail
-                then cat $LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR
-                else cat $LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR
+                then cat $SADM_LOG | mail -s "SADM : SUCCESS of $SADM_PN on $(sadm_hostname)" $SADM_MAIL_ADDR
+                else cat $SADM_LOG | mail -s "SADM : ERROR of $SADM_PN on $(sadm_hostname)"  $SADM_MAIL_ADDR
             fi
             ;;
     esac
