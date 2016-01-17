@@ -51,8 +51,8 @@ SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"              ; export SADM_CFG_FILE  # 
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"    ; export SADM_TMP_FILE1 # Temp Script Tmp File1 
 SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"    ; export SADM_TMP_FILE2 # Temp Script Tmp File2
 SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"    ; export SADM_TMP_FILE3 # Temp Script Tmp File3
-LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log"    ; export LOG            # Output LOG filename
-RCHLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch" ; export RCHLOG         # Return Code History
+SADM_LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log" ; export LOG          # Output LOG filename
+RCHLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch"   ; export RCHLOG       # Return Code History
 #
 # COMMAND PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                             ; export SADM_LSB_RELEASE # Command lsb_release Path
@@ -509,20 +509,20 @@ sadm_load_sadmin_config_file()
 
  
         # For Debugging Purpose - Display Final Value of configuration file
-        if [ "$SADM_DEBUG_LEVEL" -gt 4 ]
-            then sadm_logger ""
-                 sadm_logger "SADM_DEBUG_LEVEL (${SADM_DEBUG_LEVEL}) Information"
-                 sadm_logger "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
-                 sadm_logger "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
-                 sadm_logger "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
-                 sadm_logger "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
-                 sadm_logger "  - SADM_USER=$SADM_USER"                   # sadmin user account
-                 sadm_logger "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
-                 sadm_logger "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
-                 sadm_logger "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
-                 sadm_logger "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
-                 sadm_logger "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
-        fi                 
+#        if [ "$SADM_DEBUG_LEVEL" -gt "4" ]
+#            then sadm_logger ""
+#                 sadm_logger "SADM_DEBUG_LEVEL (${SADM_DEBUG_LEVEL}) Information"
+#                 sadm_logger "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
+#                 sadm_logger "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
+#                 sadm_logger "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
+#                 sadm_logger "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
+#                sadm_logger "  - SADM_USER=$SADM_USER"                   # sadmin user account
+#                sadm_logger "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
+#                 sadm_logger "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
+#                 sadm_logger "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
+#                 sadm_logger "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
+#                 sadm_logger "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
+#        fi                 
         return 0
 }
 
