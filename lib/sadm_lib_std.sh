@@ -471,9 +471,9 @@ sadm_load_sadmin_config_file()
     
     # Loop for reading the sadmin configuration file
     while read wline 
-        do 
-        if ( [ "${#wline}" = "0" ] || [ "${wline:0:1}" = "#" ] ) ; then continue ; fi
-        #echo "$wline - ${#wline}" 
+        do
+        FC=`echo $wline | cut -c1`
+        if [ "$FC" = "#" ] || [ ${#wline} -eq 0 ] ; then continue ; fi
         #
         echo "$wline" |grep -i "^SADM_MAIL_ADDR" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MAIL_ADDR=`echo "$wline"     | cut -d= -f2 |tr -d ' '` ; fi
@@ -505,7 +505,7 @@ sadm_load_sadmin_config_file()
         echo "$wline" |grep -i "^SADM_SAR_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SAR_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        done < /sadmin/cfg/sadmin.cfg
+        done < $SADM_CFG_FILE
 
  
         # For Debugging Purpose - Display Final Value of configuration file

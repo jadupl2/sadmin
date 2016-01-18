@@ -24,43 +24,35 @@
 #set -x
 
 #
-#
-#
-#
-#***************************************************************************************************
-#***************************************************************************************************
-#  USING SADMIN LIBRARY SETUP SECTION
-#   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_*.sh) SCRIPT
-#   THESE VARIABLES ARE USE AND NEEDED BY ALL THE SADMIN SCRIPT LIBRARY.
-#
-#   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
-#   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
-#
-#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
-#   VARIABLES AND FUNCTIONS AVAILABLE TO YOU AS A SCRIPT DEVELOPPER.
-#
+#===================================================================================================
+# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
+#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
+#   variables and functions available to you when using the SADMIN functions Library
+#===================================================================================================
+
+# --------------------------------------------------------------------------------------------------
+# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
+# These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
 SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # Script Root Base Directory
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-#
-# Define and Load  SADMIN Shell Script Library
-SADM_LIB_STD="${SADM_BASE_DIR}/lib/sadm_lib_std.sh"                     # Location & Name of Std Lib
-SADM_LIB_SERVER="${SADM_BASE_DIR}/lib/sadm_lib_server.sh"               # Loc. & Name of Server Lib
-SADM_LIB_SCREEN="${SADM_BASE_DIR}/lib/sadm_lib_screen.sh"               # Loc. & Name of Screen Lib
-[ -r "$SADM_LIB_STD" ]    && source "$SADM_LIB_STD"                     # Load Standard Libray
-[ -r "$SADM_LIB_SERVER" ] && source "$SADM_LIB_SERVER"                  # Load Server Info Library
-[ -r "$SADM_LIB_SCREEN" ] && source "$SADM_LIB_SCREEN"                  # Load Screen Related Lib.
-#
-#
+
 # --------------------------------------------------------------------------------------------------
-# GLOBAL VARIABLES THAT CAN BE OVERIDDEN PER SCRIPT (DEFAULT ARE IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
+# --------------------------------------------------------------------------------------------------
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
+
+# --------------------------------------------------------------------------------------------------
+# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
 # --------------------------------------------------------------------------------------------------
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
@@ -71,11 +63,12 @@ SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
 #SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
 #SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-# 
+ 
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
-#***************************************************************************************************
-#***************************************************************************************************
+#===================================================================================================
 #
+
 
 
 
@@ -84,9 +77,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-#
-Debug=true                                      ; export Debug          # Debug increase Verbose
-#
 MUSER="query"                                   ; export MUSER          # MySql User
 MPASS="query"                                   ; export MPASS          # MySql Password
 MHOST="sysinfo.maison.ca"                       ; export MHOST          # Mysql Host
@@ -246,13 +236,9 @@ main_process()
     
     process_linux_servers                                               # Process Active Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-
     process_aix_servers                                                 # Process Active Aix Servers
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
-
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                        # Total = AIX+Linux Errors
-
-
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                          # Upd. RCH File & Trim Log 
