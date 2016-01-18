@@ -39,7 +39,7 @@ SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
@@ -90,6 +90,7 @@ help()
     echo "             -p No pager"
     echo "             -e Error report only"
     echo "             -w Watch 1st page in real time"
+    echo "             -s [ServerName]"
 }
 
 
@@ -106,8 +107,8 @@ display_heading()
              echo -e "${bblue}${white}\c"
              echo -e "`date +%Y/%m/%d`                    Server Farm Scripts Summary Report \c"  
              echo -e "                   `date +%H:%M:%S`"  
-             echo -e "Count    Status     Date    Server       Script   \c"
-             echo -e "                       Start      End     "
+             echo -e "Count    Status  Server       Script   \c"
+             echo -e "                         Date     Start      End     "
              echo -e "==================================================\c"
              echo -e "==========================================${reset}"
     fi
@@ -137,8 +138,8 @@ display_detail_line()
         * ) WRDESC="CODE ${WRCODE}"                                     # Illegal Code  Desc
             ;;                                                          
     esac
-    RLINE1=`printf "[%04d] %11s %-s %-12s " "$xcount" "$WRDESC" "${WDATE1}" "${WSERVER}" `
-    RLINE2=`printf "%-30s %s  %s" "${WSCRIPT}" "${WTIME1}" "${WTIME2}"`
+    RLINE1=`printf "[%04d] %11s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
+    RLINE2=`printf "%s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}"`
     RLINE="${RLINE1}${RLINE2}"                                          # Wrap 2 lines together
     if [ "$MAIL_ONLY" = "OFF" ]                                         # No Mail include color
         then if [ $WRCODE -eq 0 ] ; then echo -e "${blue}\c" ;fi        # Blue For Good Finish Job
@@ -165,7 +166,11 @@ load_array()
     # A Temp file that containing the last line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DIR_DAT -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
-    sort -t' ' -rk6,6 -k2,2 -k1,1 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    sort -t' ' -rk6,6 -k2,3 -k5,5 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    if [ "$SERVER_NAME" != "" ]
+        then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2
+             cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1
+    fi
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
        then sadm_logger "No RCH File to process - File is empty"        # Issue message to user
             return 1                                                    # Exit Function 
@@ -258,12 +263,15 @@ main_process()
     fi
 
     PAGER="ON" ; ERROR_ONLY="OFF" ; MAIL_ONLY="OFF" ; WATCH="OFF"       # Set Switch Default Value
-    while getopts "epmhw" opt ; do                                      # Loop to process Switch
+    SERVER_NAME=""                                                      # Set Switch Default Value
+    while getopts "epmhws:" opt ; do                                    # Loop to process Switch
         case $opt in
             m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
                PAGER="OFF"                                              # Mail need pager to be off
                ;;                                       
             e) ERROR_ONLY="ON"                                          # Display Only Error file 
+               ;;
+            s) SERVER_NAME="$OPTARG"                                    # Display Only Server Name
                ;;
             w) WATCH="ON"                                               # Display 1st page Only        
                PAGER="OFF"                                              # Watch need pager to be off

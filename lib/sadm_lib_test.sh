@@ -3,7 +3,7 @@
 #   Author   :  Jacques Duplessis
 #   Title    :  template.sh
 #   Synopsis : .
-#   Version  :  1.0
+#   Version  :  1.0 
 #   Date     :  14 August 2013
 #   Requires :  sh
 #   SCCS-Id. :  @(#) template.sh 2.0 2013/08/14
@@ -33,7 +33,7 @@ SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # Script Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 #

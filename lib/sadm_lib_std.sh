@@ -279,10 +279,11 @@ sadm_date_to_epoch() {
     YYYY=`echo $WDATE | awk -F. '{ print $1 }'`
     MTH=`echo   $WDATE | awk -F. '{ print $2 }'`
     let MTH="$MTH -1"
-    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }'`
-    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }'`
-    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }'`
-    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }'`
+    if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0*//'` ; fi
+    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0*//'`
+    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0*//'`
+    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }' | sed 's/^0*//'`
+    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0*//'`
     #echo "perl -e \"use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})\""
     sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})"`
     #sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
@@ -378,10 +379,10 @@ sadm_hostname() {
 # --------------------------------------------------------------------------------------------------
 sadm_domainname() {
     case "$(sadm_os_type)" in
-        "LINUX")    sadm_domainname=`hostname -d`
-                    ;;
-        "AIX")      sadm_domainname=`namerslv -s | grep domain | awk '{ print $2 }'`
-                    ;;
+        "LINUX") sadm_domainname=`host $(sadm_hostname) |head -1 |awk '{ print $1 }' |cut -d. -f2-3` 
+                 ;;
+        "AIX")   sadm_domainname=`namerslv -s | grep domain | awk '{ print $2 }'`
+                 ;;
     esac
     echo "$sadm_domainname"
 }
@@ -394,9 +395,9 @@ sadm_domainname() {
 # --------------------------------------------------------------------------------------------------
 sadm_host_ip() {
     case "$(sadm_os_type)" in
-        "LINUX") sadm_host_ip=`getent hosts $(sadm_hostname).$(sadm_domainname) |awk '{ print $1 }' |head -1`
+        "LINUX") sadm_host_ip=`host $(sadm_hostname) |awk '{ print $4 }' |head -1` 
                  ;;
-        "AIX")   sadm_host_ip=`host $(sadm_hostname).$(sadm_domainname) | awk '{ print $3 }'` 
+        "AIX")   sadm_host_ip=`host $(sadm_hostname).$(sadm_domainname) |head -1 |awk '{ print $3 }'` 
                  ;;
     esac    
     echo "$sadm_host_ip"
@@ -423,7 +424,13 @@ sadm_kernel_bitmode() {
 #                                 RETURN KERNEL RUNNING VERSION
 # --------------------------------------------------------------------------------------------------
 sadm_kernel_version() {
-    sadm_kernel_version=`uname -r`
+    case "$(sadm_os_type)" in
+        "LINUX")   sadm_kernel_version=`uname -r | cut -d. -f1-3`
+                   ;;
+        "AIX")     sadm_kernel_version=`uname -r | cut -d. -f1-3`
+                   ;;
+    esac
+    
     echo "$sadm_kernel_version"
 }
 
