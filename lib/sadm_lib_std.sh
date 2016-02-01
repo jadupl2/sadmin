@@ -25,7 +25,6 @@ HOSTNAME=`hostname -s`                          ; export HOSTNAME       # Curren
 SADM_DASH=`printf %80s |tr " " "="`             ; export SADM_DASH      # 80 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`         ; export SADM_TEN_DASH  # 10 dashes line
 SADM_VAR1=""                                    ; export SADM_VAR1      # Temp Dummy Variable
-#SADM_DEBUG_LEVEL=8                              ; export SADM_DEBUG_LEVEL # 0=NoDebug Higher=+Verbose
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}              ; export SADM_BASE_DIR  # Script Root Base Dir.
@@ -279,38 +278,25 @@ sadm_date_to_epoch() {
              exit 1                                                     # Terminate the script
     fi
     WDATE=$1                                                            # Save Received Date
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-       then sadm_logger "In sadm_date_to_epoch"
-            sadm_logger "Date to convert to epoch is $1"
-    fi
 
-    
     YYYY=`echo $WDATE | awk -F. '{ print $1 }'`
     MTH=`echo   $WDATE | awk -F. '{ print $2 }'`
     let MTH="$MTH -1"
-    if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | | sed 's/^0//'` ; fi
+    if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi
     DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0//'`
     HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0//'`
     MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }' | sed 's/^0//'`
     SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0//'`
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-       then sadm_logger "YYYY = $YYYY  MTH = $MTH  DD = $DD  HH = $HH  MM = $MM  SS = $SS"
-    fi
 
-    
-    
-        if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-       then sadm_logger "In sadm_date_to_epoch"
-            sadm_logger "Date to convert to epoch is $1"
-    fi
-    
     #echo "perl -e \"use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})\""
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-       then sadm_logger "Date to convert to epoch is $WDATE"
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
+       then sadm_logger "In sadm_date_to_epoch"
+            sadm_logger "Date to convert to epoch is $WDATE"
+            sadm_logger "YYYY = $YYYY  MTH = $MTH  DD = $DD  HH = $HH  MM = $MM  SS = $SS"
             sadm_logger "perl -e \"use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})\""
     fi
-    sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})"`
-    #sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
+    #sadm_date_to_epoch=`perl -e  "use Time::Local; print timelocal(${SS},${MM},${HH},${DD},${MTH},${YYYY})"`
+    sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
     echo "$sadm_date_to_epoch"
 }
 
@@ -331,14 +317,22 @@ sadm_elapse_time() {
     w_starttime=$2
       
 
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
+        then echo  "-------" >> $SADM_LOG
+             echo  "sadm_elapse_time : End Time Receive is   : $w_endtime" >> $SADM_LOG
+             echo  "sadm_elapse_time : Start Time Receive is : $w_starttime" >> $SADM_LOG
+             echo  "sadm_elapse_time : Begin Calculating epoch" >> $SADM_LOG
+             echo  "-------" >> $SADM_LOG
+    fi                 
     epoch_start=`sadm_date_to_epoch "$w_starttime"`
     epoch_end=`sadm_date_to_epoch   "$w_endtime"`
     epoch_elapse=`echo "$epoch_end - $epoch_start" | $SADM_BC`    
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-        then sadm_logger ""
-             sadm_logger "End Time Receive is   : $w_endtime is $epoch_end in epoch time"
-             sadm_logger "Start Time Receive is : $w_starttime is $epoch_start in epoch time"
-             sadm_logger "So Elapse Time in seconds is $epoch_elapse"
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
+        then echo "-------" >> $SADM_LOG
+             echo "sadm_elapse_time : End Time Receive is   : $w_endtime is $epoch_end in epoch time" >> $SADM_LOG
+             echo "sadm_elapse_time : Start Time Receive is : $w_starttime is $epoch_start in epoch time" >> $SADM_LOG
+             echo "sadm_elapse_time :So Elapse Time in seconds is $epoch_elapse" >> $SADM_LOG
+             echo "-------" >> $SADM_LOG
     fi                 
     
     whour=00 ; wmin=00 ; wsec=00
@@ -348,8 +342,8 @@ sadm_elapse_time() {
         then whour=`echo "$epoch_elapse / 3600" | $SADM_BC`
              epoch_elapse=`echo "$epoch_elapse - ($whours * 3600)" | $SADM_BC`
     fi
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
-        then sadm_logger "So this is $whour"
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
+        then sadm_logger "So this is $whour hours"
              sadm_logger "epoch_elapse left is now $epoch_elapse"
     fi
 
@@ -358,14 +352,14 @@ sadm_elapse_time() {
        then  wmin=`echo "$epoch_elapse / 60" | $SADM_BC`
              epoch_elapse=`echo  "$epoch_elapse - ($wmin * 60)" | $SADM_BC`
     fi
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
         then sadm_logger "So this is $wmin minutes"
              sadm_logger "epoch_elapse left is now $epoch_elapse"
     fi
 
     # Calculate Number of seconds
     wsec=$epoch_elapse
-    if [ "$SADM_DEBUG_LEVEL" -gt "7" ]
+    if [ "$SADM_DEBUG_LEVEL" -gt "5" ]
         then sadm_logger "So this is $wsec seconds"
     fi
 
@@ -600,21 +594,21 @@ sadm_load_sadmin_config_file()
 
  
         # For Debugging Purpose - Display Final Value of configuration file
-        echo "DEBUG LEVEL IS $SADM_DEBUG_LEVEL"
-        if [ $SADM_DEBUG_LEVEL -gt 4 ]
-            then sadm_logger ""
-                 sadm_logger "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information"
-                 sadm_logger "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
-                 sadm_logger "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
-                 sadm_logger "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
-                 sadm_logger "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
-                 sadm_logger "  - SADM_USER=$SADM_USER"                   # sadmin user account
-                 sadm_logger "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
-                 sadm_logger "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
-                 sadm_logger "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
-                 sadm_logger "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
-                 sadm_logger "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
-        fi                 
+        #echo "DEBUG LEVEL IS $SADM_DEBUG_LEVEL"
+        #if [ "$SADM_DEBUG_LEVEL" -gt "8" ]
+        #    then sadm_logger ""
+        #         sadm_logger "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information"
+        #         sadm_logger "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
+        #         sadm_logger "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
+        #         sadm_logger "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
+        #         sadm_logger "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
+        #         sadm_logger "  - SADM_USER=$SADM_USER"                   # sadmin user account
+        #         sadm_logger "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
+        #         sadm_logger "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
+        #         sadm_logger "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
+        #         sadm_logger "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
+        #         sadm_logger "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
+        #fi                 
         return 0
 }
 
@@ -731,7 +725,7 @@ sadm_stop() {
              SADM_MAIL_TYPE=4
     fi
     export SADM_MAIL 
-     
+    
     # Write email choice in the log footer
     case $SADM_MAIL_TYPE in
         0)  sadm_logger "No mail is requested when script end - No Mail Sent"
@@ -758,7 +752,6 @@ sadm_stop() {
     # Update the Return Code File
     sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_end_time
     sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$sadm_start_time"`
-    #echo "$(sadm_hostname) ${sadm_start_time} ${sadm_end_time} $SADM_INST $SADM_EXIT_CODE" >>$SADM_RCHLOG
     echo "$(sadm_hostname) $sadm_start_time $sadm_end_time $sadm_elapse $SADM_INST $SADM_EXIT_CODE" >>$SADM_RCHLOG
     
     sadm_logger "====="

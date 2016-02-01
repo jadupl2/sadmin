@@ -93,10 +93,18 @@ Debug=true                                      ; export Debug          # Debug 
     tput clear
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
-    
-  
-    
-    
+    wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    echo "sleeping 5 seconds - Please wait"
+    sleep 5 
+    wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    epoch_end=`sadm_date_to_epoch "$wend_time"`
+    epoch_start=`sadm_date_to_epoch  "$wstart_time"`
+    epoch_elapse=`echo "$epoch_end - $epoch_start" | $SADM_BC`    
+    printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
+    printf "End   Date is $wend_time - Epoch is $epoch_end \n"
+    printf "Elapsed time is $epoch_elapse seconds\n"
+    echo "Press [ENTER] to Continue" ; read dummy
+    tput clear
     
     printf "=========================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
@@ -115,9 +123,9 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_domainname)          Host Domain Name                                                 : ...$(sadm_domainname)...\n"
     printf "\$(sadm_epoch_time)          Current Epoch Time                                               : ...$(sadm_epoch_time)...\n"
     EPOCH_TIME=$(sadm_epoch_time)
-    printf "\$(sadm_epoch_to_date $EPOCH_TIME)  Convert Receive epoch time to date (YYYY.MM.DD HH:MM:SS)  : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
+    printf "\$(sadm_epoch_to_date $EPOCH_TIME)  Convert epoch time to date (YYYY.MM.DD HH:MM:SS)           : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
     WDATE=$(sadm_epoch_to_date $EPOCH_TIME)
-    printf "\$(sadm_date_to_epoch \'$WDATE\')  Convert Date to epoch time (MUST BE YYYY.MM.DD HH:MM:SS)       : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
+    printf "\$(sadm_date_to_epoch \'$WDATE\')  Convert Date to epoch time (YYYY.MM.DD HH:MM:SS) : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
     printf "\$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')                              : ...$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')...\n"
     printf "sadm_toupper string         Return the string it receive in uppercase                        : ...`sadm_toupper STRING`...\n"
     printf "sadm_tolower STRING         Return the string it receive in lowercase                        : ...`sadm_tolower STRING`...\n"
