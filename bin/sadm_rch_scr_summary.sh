@@ -106,11 +106,11 @@ display_heading()
         then tput clear ; 
              echo -e "${bblue}${white}\c"
              echo -e "`date +%Y/%m/%d`                    Server Farm Scripts Summary Report \c"  
-             echo -e "                   `date +%H:%M:%S`"  
+             echo -e "                         `date +%H:%M:%S`"  
              echo -e "Count    Status  Server       Script   \c"
-             echo -e "                         Date     Start      End     "
+             echo -e "                         Date     Start      End    Elapse "
              echo -e "==================================================\c"
-             echo -e "==========================================${reset}"
+             echo -e "================================================${reset}"
     fi
 }
 
@@ -123,13 +123,13 @@ display_detail_line()
 {
     DLINE=$1                                                            # Save Line Received
     WSERVER=`echo $DLINE | awk '{ print $1 }'`                          # Extract Server Name
-    WDATE1=`echo $DLINE  | awk '{ print $2 }'`                          # Extract Date Started
-    WTIME1=`echo $DLINE  | awk '{ print $3 }'`                          # Extract Time Started
-    WDATE2=`echo $DLINE  | awk '{ print $4 }'`                          # Extract Date Started
-    WTIME2=`echo $DLINE  | awk '{ print $5 }'`                          # Extract Time Ended
+    WDATE1=` echo $DLINE | awk '{ print $2 }'`                          # Extract Date Started
+    WTIME1=` echo $DLINE | awk '{ print $3 }'`                          # Extract Time Started
+    WDATE2=` echo $DLINE | awk '{ print $4 }'`                          # Extract Date Started
+    WTIME2=` echo $DLINE | awk '{ print $5 }'`                          # Extract Time Ended
     WELAPSE=`echo $DLINE | awk '{ print $6 }'`                          # Extract Time Ended
     WSCRIPT=`echo $DLINE | awk '{ print $7 }'`                          # Extract Script Name
-    WRCODE=`echo $DLINE  | awk '{ print $8 }'`                          # Extract Return Code 
+    WRCODE=` echo $DLINE | awk '{ print $8 }'`                          # Extract Return Code 
     case "$WRCODE" in                                                   # Case on Return Code
         0 ) WRDESC="✔ Success"                                          # Code 0 = Success
             ;; 
@@ -137,11 +137,11 @@ display_detail_line()
             ;;
         2 ) WRDESC="➜ Running"                                          # Code 2 = Script Running
             ;;
-        * ) WRDESC="CODE ${WRCODE}"                                     # Illegal Code  Desc
+        * ) WRDESC="CODE $WRCODE"                                       # Illegal Code  Desc
             ;;                                                          
     esac
-    RLINE1=`printf "[%04d] %11s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
-    RLINE2=`printf "%s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}"`
+    RLINE1=`printf "[%04d] %10s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
+    RLINE2=`printf "%s %s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" ${WELAPSE}`
     RLINE="${RLINE1}${RLINE2}"                                          # Wrap 2 lines together
     if [ "$MAIL_ONLY" = "OFF" ]                                         # No Mail include color
         then if [ $WRCODE -eq 0 ] ; then echo -e "${blue}\c" ;fi        # Blue For Good Finish Job
@@ -168,7 +168,7 @@ load_array()
     # A Temp file that containing the last line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
-    sort -t' ' -rk6,6 -k2,3 -k5,5 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    sort -t' ' -rk8,8 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
     if [ "$SERVER_NAME" != "" ]
         then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2
              cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1
