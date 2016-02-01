@@ -174,25 +174,25 @@ if [ $(sadm_osmajorversion) -lt 5 ]
 fi
 
 
-# Clean Stat. Directory
+# Clean Stat. Directory CLEANUP DONE BY HOUSEKEEPING CLIENT SCRIPT
 # --------------------------------------------------------------------------------------------------
-sadm_logger "CleanUp is $CLEANUP"
-
-if [ "$CLEANUP" = "true" ]
-   then FILE_COUNT=`ls -lr $SADM_SAR_DIR/$OUT_PREFIX* | wc -l`
-        sadm_logger "Number of file in $SADM_SAR_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
-        if [ "$FILE_COUNT" -gt "$OUT_MAX_FILES" ]
-            then TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
-                 sadm_logger "So we do a tail ${TAIL_COUNT}"
-                 if [ "$TAIL_COUNT" -gt 0 ]
-                   then ls -1r $SADM_SAR_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
-                        do
-                        rm -f $file
-                         done
-                fi
-            else sadm_logger "No Cleanup to do" 
-        fi
-fi
+#sadm_logger "CleanUp is $CLEANUP"
+#
+#if [ "$CLEANUP" = "true" ]
+#   then FILE_COUNT=`ls -lr $SADM_SAR_DIR/$OUT_PREFIX* | wc -l`
+#        sadm_logger "Number of file in $SADM_SAR_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
+#        if [ "$FILE_COUNT" -gt "$OUT_MAX_FILES" ]
+#            then TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
+#                 sadm_logger "So we do a tail ${TAIL_COUNT}"
+#                 if [ "$TAIL_COUNT" -gt 0 ]
+#                   then ls -1r $SADM_SAR_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
+#                        do
+#                        rm -f $file
+#                         done
+#                fi
+#            else sadm_logger "No Cleanup to do" 
+#        fi
+#fi
 
 #---------------------------------------------------------------------------------------------------
     SADM_EXIT_CODE=0

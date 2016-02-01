@@ -216,6 +216,24 @@ file_housekeeping()
              fi
     fi
     
+    
+    # Delete old nmon files - As defined in the sadmin.cfg file
+    sadm_logger " "
+    sadm_logger "Keep nmon files for SADM_NMON_KEEPDAYS days"
+    sadm_logger "List of nmon file that will be deleted"
+    sadm_logger "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;" 
+    find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
+    find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
+  
+    
+    # Delete old sar files - As defined in the sadmin.cfg file
+    sadm_logger " "
+    sadm_logger "Keep sar files for SADM_SAR_KEEPDAYS days"
+    sadm_logger "List of sar file that will be deleted"
+    sadm_logger "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;" 
+    find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
+    find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
+ 
     return $ERROR_COUNT
 }
 

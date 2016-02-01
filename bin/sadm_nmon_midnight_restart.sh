@@ -143,13 +143,6 @@ restart_nmon()
     if [ $SADM_EXIT_CODE -ne 0 ]                                          # if error occured
         then sadm_logger "Problem starting nmon"                          # Advise User
     fi     
-    
-    # Keep on 90 Days of LOG Accessible
-    sadm_logger " "
-    sadm_logger "List of nmon file that will be deleted"
-    sadm_logger "find $SADM_NMON_DIR -mtime +${NMON_2_KEEP} -type f -name *.nmon -exec ls -l {} \;" 
-    find $SADM_NMON_DIR -mtime +${NMON_2_KEEP} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
-    find $SADM_NMON_DIR -mtime +${NMON_2_KEEP} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
 
     sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
     exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
