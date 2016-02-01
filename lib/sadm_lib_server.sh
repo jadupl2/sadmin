@@ -18,7 +18,7 @@
 sadm_server_ips() {
     
     index=0 ; sadm_server_ips=""                                       # Init Variables at Start
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
                  ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$SADM_TMP_DIR/sadm_ips_$$
                  while read sadm_wip                                                 # Read IP one per line
@@ -125,7 +125,7 @@ sadm_server_ips() {
 #                    Return a "P" if server is physical and "V" if it is Viirtual
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1                    # Search vmware in dmidecode
                  if [ $? -eq 0 ]                                                     # If vmware was found
                     then sadm_server_type="V"                                       # If VMware Server
@@ -145,7 +145,7 @@ sadm_server_type() {
 #                               RETURN THE MODEL OF THE SERVER
 # --------------------------------------------------------------------------------------------------
 sadm_server_model() {
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") sadm_sm=`${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}'`
                  sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
                  sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
@@ -165,7 +165,7 @@ sadm_server_model() {
 #                             RETURN THE SERVER SERIAL NUMBER
 # --------------------------------------------------------------------------------------------------
 sadm_server_serial() {
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") if [ "$(sadm_server_type)" = "V" ]
                     then sadm_server_serial="N/A" 
                     else sadm_server_serial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
@@ -184,7 +184,7 @@ sadm_server_serial() {
 #                     RETURN THE SERVER AMOUNT OF PHYSICAL MEMORY IN MB
 # --------------------------------------------------------------------------------------------------
 sadm_server_memory() {
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") sadm_server_memory=`grep -i "memtotal:" /proc/meminfo | awk '{ print $2 }'`
                  sadm_server_memory=`echo "$sadm_server_memory / 1024" | bc`
                  ;;
@@ -202,7 +202,7 @@ sadm_server_memory() {
 #                             RETURN THE SERVER NUMBER OF CPU
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() { 
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX")    #sadm_server_nb_cpu=`nproc --all`
                     sadm_server_nb_cpu=`cat /proc/cpuinfo | grep -i processor | wc -l | tr -d ' '`
                     ;;
@@ -219,7 +219,7 @@ sadm_server_nb_cpu() {
 #                             RETURN THE SERVER NUMBER OF CPU SOCKET
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_socket() { 
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
        "LINUX") sadm_server_nb_socket=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
                 ;;
         "AIX")  sadm_server_nb_socket=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
@@ -234,7 +234,7 @@ sadm_server_nb_socket() {
 #                         Return the Server Number of Core per Socket
 # --------------------------------------------------------------------------------------------------
 sadm_server_core_per_socket() {
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
        "LINUX") sadm_server_core_per_socket=`cat /proc/cpuinfo |egrep "core id|physical id" |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
                 if [ "$sadm_server_core_per_socket" -eq 0 ] ;then sadm_server_core_per_socket=1 ; fi
                 ;;
@@ -251,7 +251,7 @@ sadm_server_core_per_socket() {
 #                       RETURN THE SERVER NUMBER OF THREAD(S) PER CORE
 # --------------------------------------------------------------------------------------------------
 sadm_server_thread_per_core() { 
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") sadm_wht=`cat /proc/cpuinfo |grep -E "cpu cores|siblings|physical id" |xargs -n 11 echo |sort |uniq |head -1`
                  sadm_sibbling=`echo $sadm_wht | awk -F: '{ print $3 }' | awk '{ print $1 }'`
                  if [ -z "$sadm_sibbling" ] ; then sadm_sibbling=0 ; fi
@@ -275,7 +275,7 @@ sadm_server_thread_per_core() {
 #                                   Return the CPU Speed in Ghz
 # --------------------------------------------------------------------------------------------------
 sadm_server_cpu_speed() { 
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") sadm_server_cpu_speed=`cat /proc/cpuinfo | grep -i "cpu MHz" | tail -1 | awk -F: '{ print $2 }'`
                  sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | bc`
                  if [ "$sadm_server_cpu_speed" -gt 1000 ]
@@ -293,7 +293,7 @@ sadm_server_cpu_speed() {
 #                     Return 32 or 64 Bits Depending of CPU Hardware Capability
 # --------------------------------------------------------------------------------------------------
 sadm_server_hardware_bitmode() { 
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX")   sadm_server_hardware_bitmode=`grep -o -w 'lm' /proc/cpuinfo | sort -u`
                    if [ "$sadm_server_hardware_bitmode" = "lm" ]
                        then sadm_server_hardware_bitmode=64
@@ -315,7 +315,7 @@ sadm_server_hardware_bitmode() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_disks() {
     index=0 ; sadm_server_disks=""                                                  # Init Variables
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX")    for wdisk in `find /sys/block -name "sd*" -exec basename {} \;` # Get Disk Name 
                         do
                         if [ "$index" -ne 0 ]                                       # Don't add , for 1st Disk
@@ -358,7 +358,7 @@ sadm_server_disks() {
 sadm_server_vg() {
     index=0 ; sadm_server_vg=""                                         # Init Variables at Start
     rm -f $SADM_TMP_DIR/sadm_vg_$$ > /dev/null 2>&1                          # Del TMP file - Make sure
-    case "$(sadm_os_type)" in
+    case "$(sadm_ostype)" in
         "LINUX") ${SADM_WHICH} vgs >/dev/null 2>&1
                  if [ $? -eq 0 ]
                     then vgs --noheadings -o vg_name,vg_size,vg_free >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null

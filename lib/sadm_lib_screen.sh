@@ -81,7 +81,7 @@ sadm_writexy()
 {
     
     tput cup `expr $1 - 1`  `expr $2 - 1`                               # tput command pos. cursor
-    if [ "$(sadm_os_type)" = "AIX" ]                                    # In AIX just Echo Message
+    if [ "$(sadm_ostype)" = "AIX" ]                                    # In AIX just Echo Message
        then echo "$3\c"                                                 # Don't need the -e in AIX
        else echo -e "$3\c"                                              # -e enable interpretation
     fi
@@ -167,7 +167,7 @@ sadm_display_heading()
     sadm_writexy 01 "$wpos" "$(sadm_hostname)"                          # Display HostName 
 
     # Display Line 2 - (Host Name + OS Name and OS Version)
-    sadm_writexy 02 01 "$(sadm_os_name) $(sadm_os_version)"             # Display OSNAME + OS Ver.
+    sadm_writexy 02 01 "$(sadm_osname) $(sadm_osversion)"             # Display OSNAME + OS Ver.
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$titre"                                      # Display Title Centered
     let wpos="81 - ${#VER}"                                             # Calc. Pos. Line 2 on Right

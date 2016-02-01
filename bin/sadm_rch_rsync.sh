@@ -122,7 +122,7 @@ process_linux_servers()
               # RCH (Return Code History Files
               # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
               #-------------------------------------------------------------------------------------------
-              WDIR="${SADM_WWW_DIR_DAT}/${server_name}/rch"                           # Local Receiving Dir.
+              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
               sadm_logger "Make sure the directory $WDIR Exist"
               if [ ! -d "${WDIR}" ]
                   then sadm_logger "Creating ${WDIR} directory"
@@ -191,7 +191,7 @@ process_aix_servers()
               # RCH (Return Code History Files
               # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
               #-------------------------------------------------------------------------------------------
-              WDIR="${SADM_WWW_DIR_DAT}/${server_name}/rch"                           # Local Receiving Dir.
+              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
               sadm_logger "Make sure the directory $WDIR Exist"
               if [ ! -d "${WDIR}" ]
                   then sadm_logger "Creating ${WDIR} directory"
@@ -252,7 +252,7 @@ process_aix_servers()
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC to or 0
     
-    WDIR=`echo $SADM_SERVER | awk -F. '{ print $1 }'`                   # Remove Doman from SADM Server
-    echo "cp $RCHLOG ${SADM_WWW_DIR_DAT}/${WDIR}/rch"                    # Copy finalize RCH For Summary
-    cp $RCHLOG ${SADM_WWW_DIR_DAT}/${WDIR}/rch                           # Copy finalize RCH For Summary
+    WDIR=`echo $SADM_SERVER | awk -F. '{ print $1 }'`                   # Remove Domain from SADM Server
+    echo "cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${WDIR}/rch"              # Copy finalize RCH For Summary
+    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${WDIR}/rch                     # Copy finalize RCH For Summary
     exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)

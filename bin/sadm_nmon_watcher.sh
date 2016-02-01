@@ -140,7 +140,7 @@ restart_nmon()
              
  
     # Display Current Running Number of nmon process
-    nmon_count=`ps -ef | grep "$NMON" | grep 's300' | grep -v grep | wc -l`
+    nmon_count=`ps -ef | grep "$NMON" |grep -v grep |grep s300 |wc -l |tr -d ' '`
     sadm_logger "There is $nmon_count nmon process actually running"
     ps -ef | grep "$NMON" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 

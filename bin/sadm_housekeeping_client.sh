@@ -125,8 +125,13 @@ dir_housekeeping()
 
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
     if [ -d "$SADM_BASE_DIR/lost+found" ]
-        then sadm_logger "chown root.root $SADM_BASE_DIR/lost+found"        # Special tmp Privilege
-             chown root.root $SADM_BASE_DIR/lost+found >/dev/null 2>&1      # Make Lost+Found root Priv.
+        then 
+             if [ "$(sadm_ostype)" = "AIX" ] 
+                then sadm_logger "chown root.system $SADM_BASE_DIR/lost+found"   # Special Privilege
+                     chown root.system $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
+                else sadm_logger "chown root.root $SADM_BASE_DIR/lost+found"     # Special Privilege
+                     chown root.root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
+             fi 
              if [ $? -ne 0 ]
                 then sadm_logger "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -151,7 +156,7 @@ file_housekeeping()
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_logger "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
-             find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1     # Change Files Privilege
+             find $SADM_BIN_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
              if [ $? -ne 0 ]
                 then sadm_logger "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -163,7 +168,7 @@ file_housekeeping()
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_LIB_DIR" ]
         then sadm_logger "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"     
-             find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1   
+             find $SADM_LIB_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1   
              if [ $? -ne 0 ]
                 then sadm_logger "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

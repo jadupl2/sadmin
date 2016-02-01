@@ -86,12 +86,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
     if [ $? -eq 0 ]                                                     # if found
         then CFG2HTML=`which cfg2html`                                  # Save cfg2html path
-        else if [ "$(sadm_os_name)" = "AIX" ]                           # If on AIX & Not Found
+        else if [ "$(sadm_osname)" = "AIX" ]                           # If on AIX & Not Found
                 then CFG2HTML="$SADM_PKG_DIR/cfg2html/aix/cfg2html"     # Use then one in /sadmin
                 else sadm_logger "Error : The command 'cfg2html' was not found"   # Not Found inform user
                      sadm_logger "   Install it and re-run this script" # Not Found inform user
                      sadm_logger "   For Ubuntu/Debian : sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/deb/cfg2html-linux.deb"
-                     sadm_logger "   For RedHat/CentOS/Fedora : rpm -Uvh {SADM_PKG_DIR}/cfg2html/rpm/${sadm_os_major_version}/cfg2html.rpm"
+                     sadm_logger "   For RedHat/CentOS/Fedora : rpm -Uvh {SADM_PKG_DIR}/cfg2html/rpm/${sadm_osmajorversion}/cfg2html.rpm"
                      sadm_stop 1                                        # Upd. RC & Trim Log 
                      exit 1                                             # Exit With Error
              fi

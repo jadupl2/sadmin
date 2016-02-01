@@ -82,7 +82,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 DAY=`date +%d`                                                          # Date Day Number
 DATE=`date +%Y%m%d`                                                     # Year Month Day
 CLEANUP=true                                                            # Default clean output dir.
-HOSTNAME=`hostname -s`
+$(sadm_hostname)=`hostname -s`
 #
 # Input File
 SAR_DIR=/var/log/sa                                                     # Where sar report are stored
@@ -90,7 +90,7 @@ SAR_FILE=$SAR_DIR/sa${DAY}                                              # Name o
 #
 # Output File
 OUT_PREFIX="sadm"                                                       # Output file prefix
-OUT_FILE=${SADM_PERF_DIR}/${HOSTNAME}_${DATE}.sar                         # Name of the output file
+OUT_FILE="${SADM_SAR_DIR}/$(sadm_hostname)_${DATE}.sar"                 # Name of the output file
 OUT_MAX_FILES=30                                                        # Number Output files to keep
 
 # --------------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ fi
 # Generate CPU statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:CPU" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -u -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -u | tee -a $OUT_FILE
 fi
@@ -120,7 +120,7 @@ fi
 # Generate memory usage statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:MEM_USAGE" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -r -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -r | tee -a $OUT_FILE
 fi
@@ -128,7 +128,7 @@ fi
 # Generate memory demand statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:MEM_STATS" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -R -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -R | tee -a $OUT_FILE
 fi
@@ -136,7 +136,7 @@ fi
 # Generate paging statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:PAGING" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -B -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -B | tee -a $OUT_FILE
 fi
@@ -144,7 +144,7 @@ fi
 # Generate swapping statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:SWAPPING" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -W -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -W | tee -a $OUT_FILE
 fi
@@ -152,7 +152,7 @@ fi
 # Generate disk transfer statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:DISK" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -b -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -b | tee -a $OUT_FILE
 fi
@@ -160,7 +160,7 @@ fi
 # Generate run queue statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:RUNQUEUE" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -q -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -q | tee -a $OUT_FILE
 fi
@@ -168,7 +168,7 @@ fi
 # Generate network usage statistics
 # --------------------------------------------------------------------------------------------------
 echo "PERFDATA:NETWORK" | tee -a $OUT_FILE
-if [ $(sadm_os_major_version) -lt 5 ]
+if [ $(sadm_osmajorversion) -lt 5 ]
    then sar -n DEV -h -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -n DEV | tee -a $OUT_FILE
 fi
@@ -179,13 +179,13 @@ fi
 sadm_logger "CleanUp is $CLEANUP"
 
 if [ "$CLEANUP" = "true" ]
-   then FILE_COUNT=`ls -lr $SADM_PERF_DIR/$OUT_PREFIX* | wc -l`
-        sadm_logger "Number of file in $SADM_PERF_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
+   then FILE_COUNT=`ls -lr $SADM_SAR_DIR/$OUT_PREFIX* | wc -l`
+        sadm_logger "Number of file in $SADM_SAR_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
         if [ "$FILE_COUNT" -gt "$OUT_MAX_FILES" ]
             then TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
                  sadm_logger "So we do a tail ${TAIL_COUNT}"
                  if [ "$TAIL_COUNT" -gt 0 ]
-                   then ls -1r $SADM_PERF_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
+                   then ls -1r $SADM_SAR_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
                         do
                         rm -f $file
                          done

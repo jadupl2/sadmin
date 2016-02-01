@@ -78,10 +78,10 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_logger "Checking if update are available for $(sadm_os_name) version $(sadm_os_version) ..."
+    sadm_logger "Checking if update are available for $(sadm_osname) version $(sadm_osversion) ..."
     
-    if [ "$(sadm_os_name)" = "REDHAT" ] || [ "$(sadm_os_name)" = "CENTOS" ]
-        then case "$(sadm_os_major_version)" in
+    if [ "$(sadm_osname)" = "REDHAT" ] || [ "$(sadm_osname)" = "CENTOS" ]
+        then case "$(sadm_osmajorversion)" in
                 [3|4] )   sadm_logger "Running \"up2date -l\""          # Update the Log
                           sadm_logger "${SADM_DASH}"
                           up2date -l >> $SADM_LOG 2>&1                       # List update available
@@ -118,7 +118,7 @@ check_available_update()
              esac
     fi
     
-    if [ "$(sadm_os_name)" = "UBUNTU" ] || [ "$(sadm_os_name)" = "DEBIAN" ]
+    if [ "$(sadm_osname)" = "UBUNTU" ] || [ "$(sadm_osname)" = "DEBIAN" ]
         then sadm_logger "Resynchronize package index files from their sources via Internet"
              sadm_logger "Running \"apt-get update\""                   # Msg Get package list 
              apt-get update > /dev/null 2>&1                            # Get Package List From Repo
@@ -152,7 +152,7 @@ check_available_update()
 run_up2date()
 {
     sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_os_name) update  process ..."
+    sadm_logger "Starting the $(sadm_osname) update  process ..."
     sadm_logger "Running \"up2date --nox -u\""
     up2date --nox -u >>$SADM_LOG 2>&1
     rc=$?
@@ -176,7 +176,7 @@ run_up2date()
 run_yum()
 {
     sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_os_name) update  process ..."
+    sadm_logger "Starting the $(sadm_osname) update  process ..."
     sadm_logger "Running : yum -y update"
     yum -y update  >>$SADM_LOG 2>&1
     rc=$?
@@ -192,7 +192,7 @@ run_yum()
 run_apt_get()
 {
     sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_os_name) update process ..."
+    sadm_logger "Starting the $(sadm_osname) update process ..."
 
     sadm_logger "${TEN_DASH}"
     sadm_logger "Running : apt-get -y upgrade"
@@ -228,8 +228,8 @@ run_apt_get()
     check_available_update                                              # Check if avail. Update
     if [ $? -ne 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # If No Update Close the Shop
 
-    case "$(sadm_os_name)" in                                           # Test OS Name
-        "REDHAT"|"CENTOS" )     if [ $(sadm_os_major_version) -lt 5 ]   
+    case "$(sadm_osname)" in                                           # Test OS Name
+        "REDHAT"|"CENTOS" )     if [ $(sadm_osmajorversion) -lt 5 ]   
                                     then run_up2date                    # Version 4 Run up2date
                                          SADM_EXIT_CODE=$?              # Save Return Code
                                     else run_yum                        # V 5 and above Run yum cmd
@@ -242,7 +242,7 @@ run_apt_get()
         "UBUNTU"|"DEBIAN" )     run_apt_get
                                 SADM_EXIT_CODE=$?
                                 ;;
-        *)                      sadm_logger "This OS ($(sadm_os_name)) is not yet supported"
+        *)                      sadm_logger "This OS ($(sadm_osname)) is not yet supported"
                                 sadm_logger "Please report it to SADMIN Web Site"
                                 ;;
     esac

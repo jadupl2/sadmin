@@ -112,7 +112,7 @@ check_lvm_version()
     sadm_logger "Currently verifying if 'lvm2' package is installed"
     
     # Check if LVM Version 2 is installed
-    case "$(sadm_os_name)" in                                           # Test OS Name
+    case "$(sadm_osname)" in                                           # Test OS Name
       "REDHAT"|"CENTOS"|"FEDORA")   sadm_logger "rpm -qa lvm-2"
                                     rpm -qa '^lvm-2' > /dev/null 2>&1   # Query RPM DB
                                     if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
@@ -121,7 +121,7 @@ check_lvm_version()
                                     dpkg --status lvm2 > /dev/null 2>&1 # Query pkg list
                                     if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
                                     ;; 
-      "*"                       )   sadm_logger "OS Not Supported yet ($(sadm_os_name))"
+      "*"                       )   sadm_logger "OS Not Supported yet ($(sadm_osname))"
                                     ;; 
     esac
     LVSCAN=`which lvscan`                                               # LVM1 Path (RHEL 4 and Up)

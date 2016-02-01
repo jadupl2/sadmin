@@ -42,7 +42,7 @@ SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+SADM_DEBUG_LEVEL=5                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
@@ -175,6 +175,7 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
+    #sadm_load_sadmin_config_file
     sadm_start                                                          # Init Env. Dir & RC/Log File
     
     # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T NEED TO RUN ON THE SADMIN MAIN SERVER, THEN REMOVE
@@ -193,7 +194,7 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-
+    
 #####  YOU CAN USE THIS CODE IF YOU WANT TO USE MENU IN YOUR SCRIPT #####
     while :
         do

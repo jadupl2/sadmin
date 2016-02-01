@@ -292,15 +292,15 @@ create_summary_file()
     echo -e "# $SADM_CIE_NAME - SysInfo Report File - `date`"                      >  $HWD_FILE
     echo -e "# This file will be use to update the SADMIN Database"                >> $HWD_FILE
     echo -e "#                                                    "                >> $HWD_FILE
-    echo "SADM_OS_TYPE                        : $(sadm_os_type)"                   >> $HWD_FILE
+    echo "SADM_OS_TYPE                        : $(sadm_ostype)"                    >> $HWD_FILE
     echo "SADM_HOSTNAME                       : $(sadm_hostname)"                  >> $HWD_FILE
     echo "SADM_DOMAINNAME                     : $(sadm_domainname)"                >> $HWD_FILE
     echo "SADM_HOST_IP                        : $(sadm_host_ip)"                   >> $HWD_FILE
     echo "SADM_SERVER_TYPE                    : $(sadm_server_type)"               >> $HWD_FILE
-    echo "SADM_OS_VERSION                     : $(sadm_os_version)"                >> $HWD_FILE
-    echo "SADM_OS_MAJOR_VERSION               : $(sadm_os_major_version)"          >> $HWD_FILE
-    echo "SADM_OS_NAME                        : $(sadm_os_name)"                   >> $HWD_FILE
-    echo "SADM_OS_CODE_NAME                   : $(sadm_os_code_name)"              >> $HWD_FILE
+    echo "SADM_OS_VERSION                     : $(sadm_osversion)"                 >> $HWD_FILE
+    echo "SADM_OS_MAJOR_VERSION               : $(sadm_osmajorversion)"            >> $HWD_FILE
+    echo "SADM_OS_NAME                        : $(sadm_osname)"                    >> $HWD_FILE
+    echo "SADM_OS_CODE_NAME                   : $(sadm_oscodename)"                >> $HWD_FILE
     echo "SADM_KERNEL_VERSION                 : $(sadm_kernel_version)"            >> $HWD_FILE
     echo "SADM_KERNEL_BITMODE (32 or 64)      : $(sadm_kernel_bitmode)"            >> $HWD_FILE
     echo "SADM_SERVER_MODEL                   : $(sadm_server_model)"              >> $HWD_FILE
@@ -338,8 +338,8 @@ create_summary_file()
              exit 1
     fi
     echo ""
-    if [ $(sadm_os_type) = "LINUX" ] ;then create_linux_config_files ;fi
-    if [ $(sadm_os_type) = "AIX"   ] ;then create_aix_config_files   ;fi
+    if [ $(sadm_ostype) = "LINUX" ] ;then create_linux_config_files ;fi
+    if [ $(sadm_ostype) = "AIX"   ] ;then create_aix_config_files   ;fi
     
     create_summary_file
     

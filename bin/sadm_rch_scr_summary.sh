@@ -74,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 #
-FIELD_IN_RCH=6                                  ; export FIELD_IN_RCH   # Nb of field in a RCH File
+FIELD_IN_RCH=8                                  ; export FIELD_IN_RCH   # Nb of field in a RCH File
 line_per_page=20                                ; export line_per_page  # Nb of line per scr page
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
@@ -125,9 +125,11 @@ display_detail_line()
     WSERVER=`echo $DLINE | awk '{ print $1 }'`                          # Extract Server Name
     WDATE1=`echo $DLINE  | awk '{ print $2 }'`                          # Extract Date Started
     WTIME1=`echo $DLINE  | awk '{ print $3 }'`                          # Extract Time Started
-    WTIME2=`echo $DLINE  | awk '{ print $4 }'`                          # Extract Time Ended
-    WSCRIPT=`echo $DLINE | awk '{ print $5 }'`                          # Extract Script Name
-    WRCODE=`echo $DLINE  | awk '{ print $6 }'`                          # Extract Return Code 
+    WDATE2=`echo $DLINE  | awk '{ print $4 }'`                          # Extract Date Started
+    WTIME2=`echo $DLINE  | awk '{ print $5 }'`                          # Extract Time Ended
+    WELAPSE=`echo $DLINE | awk '{ print $6 }'`                          # Extract Time Ended
+    WSCRIPT=`echo $DLINE | awk '{ print $7 }'`                          # Extract Script Name
+    WRCODE=`echo $DLINE  | awk '{ print $8 }'`                          # Extract Return Code 
     case "$WRCODE" in                                                   # Case on Return Code
         0 ) WRDESC="✔ Success"                                          # Code 0 = Success
             ;; 
@@ -165,7 +167,7 @@ load_array()
     # ReturnCodeHistory (RCH) files are collected from servers farm via "sadm_rch_rsync.sh" (crontab)
     # A Temp file that containing the last line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
-    find $SADM_WWW_DIR_DAT -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
+    find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
     sort -t' ' -rk6,6 -k2,3 -k5,5 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
     if [ "$SERVER_NAME" != "" ]
         then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2

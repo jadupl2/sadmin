@@ -6,3 +6,8 @@ tmp/
 notes/
 www/dat/
 .Trash-*/
+__pycache__/
+*.pyc
+.DS_Store
+._.DS_Store
+

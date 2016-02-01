@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  template.sh
@@ -12,42 +12,38 @@
 #
 #set -x
 
+
 #
-#
-#***************************************************************************************************
-#***************************************************************************************************
-#  USING SADMIN LIBRARY SETUP SECTION
-#   THESE VARIABLES GOT TO BE DEFINED PRIOR TO LOADING THE SADM LIBRARY (sadm_lib_*.sh) SCRIPT
-#   THESE VARIABLES ARE USE AND NEEDED BY ALL THE SADMIN SCRIPT LIBRARY.
-#
-#   CALLING THE sadm_lib_std.sh SCRIPT DEFINE SOME SHELL FUNCTION AND GLOBAL VARIABLES THAT CAN BE
-#   USED BY ANY SCRIPTS TO STANDARDIZE, ADD FLEXIBILITY AND CONTROL TO SCRIPTS THAT USER CREATE.
-#
-#   PLEASE REFER TO THE FILE $SADM_BASE_DIR/lib/sadm_lib_std.txt FOR A DESCRIPTION OF EACH
-#   VARIABLES AND FUNCTIONS AVAILABLE TO YOU AS A SCRIPT DEVELOPPER.
-#
+#===================================================================================================
+# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
+#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
+#   variables and functions available to you when using the SADMIN functions Library
+#===================================================================================================
+
+# --------------------------------------------------------------------------------------------------
+# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
+# These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
 SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # Script Root Base Directory
-SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-#
-# Define and Load  SADMIN Shell Script Library
-SADM_LIB_STD="${SADM_BASE_DIR}/lib/sadm_lib_std.sh"                     # Location & Name of Std Lib
-SADM_LIB_SERVER="${SADM_BASE_DIR}/lib/sadm_lib_server.sh"               # Loc. & Name of Server Lib
-SADM_LIB_SCREEN="${SADM_BASE_DIR}/lib/sadm_lib_screen.sh"               # Loc. & Name of Screen Lib
-[ -r "$SADM_LIB_STD" ]    && source "$SADM_LIB_STD"                     # Load Standard Libray
-[ -r "$SADM_LIB_SERVER" ] && source "$SADM_LIB_SERVER"                  # Load Server Info Library
-[ -r "$SADM_LIB_SCREEN" ] && source "$SADM_LIB_SCREEN"                  # Load Screen Related Lib.
-#
-#
+
+
 # --------------------------------------------------------------------------------------------------
-# GLOBAL VARIABLES THAT CAN BE OVERIDDEN PER SCRIPT (DEFAULT ARE IN $SADM_BASE_DIR/cfg/sadmin.cfg)
+# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
+# --------------------------------------------------------------------------------------------------
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
+
+# --------------------------------------------------------------------------------------------------
+# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
 # --------------------------------------------------------------------------------------------------
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
@@ -58,11 +54,12 @@ SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
 #SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
 #SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-# 
+ 
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
-#***************************************************************************************************
-#***************************************************************************************************
+#===================================================================================================
 #
+
 
 ##############################################################################
 # Display Menu Principal
@@ -96,16 +93,21 @@ Debug=true                                      ; export Debug          # Debug 
     tput clear
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
+    
+  
+    
+    
+    
     printf "=========================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
     printf "                                                                                                    RETURN VALUE         \n"
     printf "VARIABLE AVAILABLE TO USE   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================\n"
-    printf "\$(sadm_os_type)             OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...$(sadm_os_type)...\n"
-    printf "\$(sadm_os_version)          OS Version (Ex: 7.2, 6.5)                                        : ...$(sadm_os_version)...\n"
-    printf "\$(sadm_os_major_version)    OS Major Version (Ex 7, 6)                                       : ...$(sadm_os_major_version)...\n"
-    printf "\$(sadm_os_name)             OS Distribution (Always in Uppercase) (Ex:REDHAT,CENTOS,UBUNTU)  : ...$(sadm_os_name)...\n"   
-    printf "\$(sadm_os_code_name)        OS Project Code Name                                             : ...$(sadm_os_code_name)...\n"   
+    printf "\$(sadm_ostype)              OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...$(sadm_ostype)...\n"
+    printf "\$(sadm_osversion)           OS Version (Ex: 7.2, 6.5)                                        : ...$(sadm_osversion)...\n"
+    printf "\$(sadm_osmajorversion)      OS Major Version (Ex 7, 6)                                       : ...$(sadm_osmajorversion)...\n"
+    printf "\$(sadm_osname)              OS Distribution (Always in Uppercase) (Ex:REDHAT,CENTOS,UBUNTU)  : ...$(sadm_osname)...\n"   
+    printf "\$(sadm_oscodename)          OS Project Code Name                                             : ...$(sadm_oscodename)...\n"   
     printf "\$(sadm_kernel_version)      OS Running Kernel Version (Ex: 3.10.0-229.20.1.el7.x86_64)       : ...$(sadm_kernel_version)...\n"
     printf "\$(sadm_kernel_bitmode)      OS Kernel Bit Mode is a 32 or 64 Bits                            : ...$(sadm_kernel_bitmode)...\n"
     printf "\$(sadm_hostname)            Host Name                                                        : ...$(sadm_hostname)...\n"
@@ -113,10 +115,10 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_domainname)          Host Domain Name                                                 : ...$(sadm_domainname)...\n"
     printf "\$(sadm_epoch_time)          Current Epoch Time                                               : ...$(sadm_epoch_time)...\n"
     EPOCH_TIME=$(sadm_epoch_time)
-    WDATE=`sadm_epoch_to_date $EPOCH_TIME`
-    printf "sadm_epoch_to_date [epoch]  Convert Receive epoch time to date (YYYY.MM.DD HH:MM:SS)         : ...$WDATE...\n"
-    WDATE=`sadm_date_to_epoch "$WDATE"`
-    printf "sadm_date_to_epoch [date ]  Convert Date to epoch time (MUST BE YYYY.MM.DD HH:MM:SS)         : ...$WDATE...\n"
+    printf "\$(sadm_epoch_to_date $EPOCH_TIME)  Convert Receive epoch time to date (YYYY.MM.DD HH:MM:SS)  : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
+    WDATE=$(sadm_epoch_to_date $EPOCH_TIME)
+    printf "\$(sadm_date_to_epoch \'$WDATE\')  Convert Date to epoch time (MUST BE YYYY.MM.DD HH:MM:SS)       : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
+    printf "\$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')                              : ...$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')...\n"
     printf "sadm_toupper string         Return the string it receive in uppercase                        : ...`sadm_toupper STRING`...\n"
     printf "sadm_tolower STRING         Return the string it receive in lowercase                        : ...`sadm_tolower STRING`...\n"
     if $(sadm_is_root) ; then wmess="true" ; else wmess="false" ;fi
@@ -129,7 +131,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "                             Please call this function just before your script end\n"
     printf " \n"
     printf "=========================================================================================================================\n"
-    echo "Press [ENTER} to Continue" ; read dummy
+    echo "Press [ENTER] to Continue" ; read dummy
     tput clear
     printf "=========================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
@@ -151,7 +153,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_server_vg)                Server vg(s) list (MB) (Ex: VGNAME|SIZE|USED|FREE,...)        : ...$(sadm_server_vg)...\n"
     printf " \n"
     printf "=========================================================================================================================\n"
-    echo "Press [ENTER} to Continue" ; read dummy
+    echo "Press [ENTER] to Continue" ; read dummy
 
 
     sadm_display_heading "Small Menu (7 Items or less)"

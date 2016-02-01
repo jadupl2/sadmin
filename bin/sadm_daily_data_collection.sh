@@ -137,12 +137,12 @@ get_aix_files()
         # Making sure the $SADMIN/dat/$server exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
         sadm_logger " " 
-        sadm_logger "Make sure the directory ${SADM_SADM_WWW_DIR_DAT}/${server} Exist"
-        if [ ! -d "${SADM_WWW_DIR_DAT}/${server}" ]
-            then sadm_logger "Creating ${SADM_WWW_DIR_DAT}/${server} directory"
-                 mkdir -p "${SADM_WWW_DIR_DAT}/${server}"
-                 chmod 2775 "${SADM_WWW_DIR_DAT}/${server}"
-            else sadm_logger "Perfect ${SADM_WWW_DIR_DAT}/${server} directory already exist"
+        sadm_logger "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
+        if [ ! -d "${SADM_WWW_DAT_DIR}/${server}" ]
+            then sadm_logger "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
+                 mkdir -p "${SADM_WWW_DAT_DIR}/${server}"
+                 chmod 2775 "${SADM_WWW_DAT_DIR}/${server}"
+            else sadm_logger "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
         fi
 
     
@@ -151,7 +151,7 @@ get_aix_files()
         # DR INFO FILES
         # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/dr"
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -173,7 +173,7 @@ get_aix_files()
         # NMON FILES
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/nmon"                            # Local Receiving Dir.
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -195,7 +195,7 @@ get_aix_files()
         # SAR PERF FILES
         # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/sar"                             # Local Receiving Dir.
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -203,8 +203,8 @@ get_aix_files()
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
             else sadm_logger "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_PERF_DIR}/ $WDIR/"
-        rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_PERF_DIR}/ $WDIR/
+        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
+        rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
            then sadm_logger "ERROR NUMBER $RC for $server"
@@ -264,19 +264,19 @@ get_linux_files()
         # Making sure the $SADMIN/dat/$server exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
         sadm_logger " " 
-        sadm_logger "Make sure the directory ${SADM_WWW_DIR_DAT}/${server} Exist"
-        if [ ! -d "${SADM_WWW_DIR_DAT}/${server}" ]
-            then sadm_logger "Creating ${SADM_WWW_DIR_DAT}/${server} directory"
-                 mkdir -p "${SADM_WWW_DIR_DAT}/${server}"
-                 chmod 2775 "${SADM_WWW_DIR_DAT}/${server}"
-            else sadm_logger "Perfect ${SADM_WWW_DIR_DAT}/${server} directory already exist"
+        sadm_logger "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
+        if [ ! -d "${SADM_WWW_DAT_DIR}/${server}" ]
+            then sadm_logger "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
+                 mkdir -p "${SADM_WWW_DAT_DIR}/${server}"
+                 chmod 2775 "${SADM_WWW_DAT_DIR}/${server}"
+            else sadm_logger "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
         fi
 
 
         # DR INFO FILES
         # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/dr"
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -298,7 +298,7 @@ get_linux_files()
         # NMON FILES
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/nmon"                            # Local Receiving Dir.
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -320,7 +320,7 @@ get_linux_files()
         # SAR PERF FILES
         # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
         #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DIR_DAT}/${server}/sar"                             # Local Receiving Dir.
+        WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
         sadm_logger " " 
         sadm_logger "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
@@ -328,8 +328,8 @@ get_linux_files()
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
             else sadm_logger "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_PERF_DIR}/ $WDIR/"
-        rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_PERF_DIR}/ $WDIR/
+        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
+        rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
            then sadm_logger "ERROR NUMBER $RC for $server"
