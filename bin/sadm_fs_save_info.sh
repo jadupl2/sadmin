@@ -112,7 +112,7 @@ check_lvm_version()
     sadm_logger "Currently verifying if 'lvm2' package is installed"
     
     # Check if LVM Version 2 is installed
-    case "$(sadm_osname)" in                                           # Test OS Name
+    case "$(sadm_osname)" in                                            # Test OS Name
       "REDHAT"|"CENTOS"|"FEDORA")   sadm_logger "rpm -qa lvm-2"
                                     rpm -qa '^lvm-2' > /dev/null 2>&1   # Query RPM DB
                                     if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
@@ -144,14 +144,14 @@ check_lvm_version()
 #
 save_lvm_info()
 {
-    $LVSCAN  > $SADM_TMP_FILE1 2>/dev/null                                              # Run lvscan output to tmp
+    $LVSCAN  > $SADM_TMP_FILE1 2>/dev/null                              # Run lvscan output to tmp
     
     sadm_logger "There are `wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'` Logical volume reported by lvscan"
     sadm_logger "Output file is $DRFILE" 
     #sadm_logger " " ; sadm_logger " "
     
 
-    cat $SADM_TMP_FILE1 | while read LVLINE                                  # process all LV detected
+    cat $SADM_TMP_FILE1 | while read LVLINE                             # process all LV detected
         do
         if [ $Debug ] 
             then    sadm_logger " " ; sadm_logger "$SADM_DASH"; 
@@ -260,6 +260,7 @@ save_lvm_info()
         sadm_logger "Line written to output file       = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
         done
         
+    sadm_logger " " ; sadm_logger "$SADM_DASH";
     sadm_logger "Backup of $DRFILE" 
     if [ -s $DRFILE ] ; then cp $DRFILE $PRVFILE ; fi                   # Make a backup of data file 
 

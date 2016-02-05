@@ -205,7 +205,9 @@ file_housekeeping()
     
     # Remove any *.log in SADMIN LOG Directory older than ${LIMIT_DAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
-        then sadm_logger "Find any *.log file older than ${LIMIT_DAYS} days in ${SADM_LOG_DIR} and delete them"
+        then sadm_logger " "
+             sadm_logger "Keep log files for $LIMIT_DAYS days"
+             sadm_logger "Find any *.log file older than ${LIMIT_DAYS} days in ${SADM_LOG_DIR} and delete them"
              find ${SADM_LOG_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
              find ${SADM_LOG_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
@@ -218,22 +220,37 @@ file_housekeeping()
     
     
     # Delete old nmon files - As defined in the sadmin.cfg file
-    sadm_logger " "
-    sadm_logger "Keep nmon files for SADM_NMON_KEEPDAYS days"
-    sadm_logger "List of nmon file that will be deleted"
-    sadm_logger "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;" 
-    find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
-    find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
-  
+    if [ -d "${SADM_NMON_DIR}" ]
+        then sadm_logger " "
+             sadm_logger "Keep nmon files for $SADM_NMON_KEEPDAYS days"
+             sadm_logger "List of nmon file that will be deleted"
+             sadm_logger "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;" 
+             find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
+             find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_logger "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_logger "OK"
+                     sadm_logger "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
     
     # Delete old sar files - As defined in the sadmin.cfg file
-    sadm_logger " "
-    sadm_logger "Keep sar files for SADM_SAR_KEEPDAYS days"
-    sadm_logger "List of sar file that will be deleted"
-    sadm_logger "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;" 
-    find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
-    find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
- 
+    if [ -d "${SADM_SAR_DIR}" ]
+       then sadm_logger " "
+            sadm_logger "Keep sar files for $SADM_SAR_KEEPDAYS days"
+            sadm_logger "List of sar file that will be deleted"
+            sadm_logger "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;" 
+            find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
+            find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
+            if [ $? -ne 0 ]
+                then sadm_logger "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_logger "OK"
+                     sadm_logger "Total Error Count at $ERROR_COUNT"
+            fi
+    fi
+    
     return $ERROR_COUNT
 }
 

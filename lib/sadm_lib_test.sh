@@ -32,7 +32,7 @@ SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+SADM_DEBUG_LEVEL=9                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 
 # --------------------------------------------------------------------------------------------------
@@ -93,18 +93,6 @@ Debug=true                                      ; export Debug          # Debug 
     tput clear
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
-    wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    echo "sleeping 5 seconds - Please wait"
-    sleep 5 
-    wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    epoch_end=`sadm_date_to_epoch "$wend_time"`
-    epoch_start=`sadm_date_to_epoch  "$wstart_time"`
-    epoch_elapse=`echo "$epoch_end - $epoch_start" | $SADM_BC`    
-    printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
-    printf "End   Date is $wend_time - Epoch is $epoch_end \n"
-    printf "Elapsed time is $epoch_elapse seconds\n"
-    echo "Press [ENTER] to Continue" ; read dummy
-    tput clear
     
     printf "=========================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH                                             \n"
@@ -121,9 +109,9 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_hostname)            Host Name                                                        : ...$(sadm_hostname)...\n"
     printf "\$(sadm_host_ip)             Host IP Address                                                  : ...$(sadm_host_ip)...\n"
     printf "\$(sadm_domainname)          Host Domain Name                                                 : ...$(sadm_domainname)...\n"
-    printf "\$(sadm_epoch_time)          Current Epoch Time                                               : ...$(sadm_epoch_time)...\n"
-    EPOCH_TIME=$(sadm_epoch_time)
-    printf "\$(sadm_epoch_to_date $EPOCH_TIME)  Convert epoch time to date (YYYY.MM.DD HH:MM:SS)           : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
+    printf "\$(sadm_get_epoch_time)      Get Current Epoch Time                                           : ...$(sadm_get_epoch_time)...\n"
+    EPOCH_TIME=$(sadm_get_epoch_time)
+    printf "\$(sadm_epoch_to_date $EPOCH_TIME)  Convert epoch time to date (YYYY.MM.DD HH:MM:SS)       : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
     WDATE=$(sadm_epoch_to_date $EPOCH_TIME)
     printf "\$(sadm_date_to_epoch \'$WDATE\')  Convert Date to epoch time (YYYY.MM.DD HH:MM:SS) : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
     printf "\$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')                              : ...$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')...\n"
@@ -134,9 +122,27 @@ Debug=true                                      ; export Debug          # Debug 
     printf " \n"
     printf "sadm_start                   Start and initialize sadm environment\n"
     printf "                             Please call this function when your script is starting\n"
+    printf "                             What this function do.\n" 
+    printf "                                1) Make sure All SADM Directories and sub-directories exist and they have proper permission\n"
+    printf "                                2) Make sure the log file exist with proper permission ($SADM_LOG)\n"
+    printf "                                3) Make sure the Return Code History Log exist and have the right permission\n"
+    printf "                                4) Create script PID file - If it exist and user want to run only 1 copy of script, then abort\n"
+    printf "                                5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)\n"
+    printf "                                6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)\n"
     printf "                              \n"
-    printf "sadm_stop 9                  Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)\n"
+    printf "sadm_stop 0                  Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)\n"
     printf "                             Please call this function just before your script end\n"
+    printf "                             What this function do.\n"
+    printf "                                1) If Exit Code is not zero, change it to 1.\n"
+    printf "                                2) Get Actual Time and Calculate the Execution Time.\n"
+    printf "                                3) Writing the Script Footer in the Log (Script Return code, Execution Time, ...)\n"
+    printf "                                4) Update the RCH File (Start/End/Elapse Time and the Result Code)\n"
+    printf "                                5) Trim The RCH File Based on User choice in sadmin.cfg\n"
+    printf "                                6) Write to Log the user mail alerting type choose by user (sadmin.cfg)\n"
+    printf "                                7) Trim the Log based on user selection in sadmin.cfg\n"
+    printf "                                8) Send Email to sysadmin (if user selected that option in sadmin.cfg)\n"
+    printf "                                9) Delete the PID File of the script (SADM_PID_FILE)\n"
+    printf "                               10) Delete the Uers 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)\n"
     printf " \n"
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
@@ -163,7 +169,23 @@ Debug=true                                      ; export Debug          # Debug 
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
 
+    tput clear
+    echo " "
+    echo "Testing Epoch and Elapse time calculation functions"
+    wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    epoch_start=`sadm_date_to_epoch  "$wstart_time"`
+    printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
+    echo "Please wait - Sleeping for 5 seconds"
+    sleep 5 
+    wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    epoch_end=`sadm_date_to_epoch "$wend_time"`
+    welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
+    printf "End   Date is $wend_time - Epoch is $epoch_end \n"
+    printf "Elapsed time is $welapse \n"
+    echo "Press [ENTER] to Continue" ; read dummy
+    tput clear
 
+    
     sadm_display_heading "Small Menu (7 Items or less)"
     menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
                 "Menu Item 6" "Menu Item 7" )
@@ -189,15 +211,15 @@ Debug=true                                      ; export Debug          # Debug 
     sadm_display_menu "${menu_array[@]}"
     echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
-    tput clear
-    e_header    "e_eheader"
-    e_arrow     "e_arrow"
-    e_success   "e_success"
-    e_error     "e_error"
-    e_warning   "e_warning"
-    e_underline "e_underline"
-    e_bold      "e_bold"
-    e_note      "e_note"
+    #tput clear
+    #e_header    "e_eheader"
+    #e_arrow     "e_arrow"
+    #e_success   "e_success"
+    #e_error     "e_error"
+    #e_warning   "e_warning"
+    #e_underline "e_underline"
+    #e_bold      "e_bold"
+    #e_note      "e_note"
 
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

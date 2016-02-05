@@ -70,7 +70,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # -------------------------------------------------------------------------------------
 CUR_DATE=`date +"%Y.%m.%d"`              ; export CUR_DATE          # Current Date
 NOW="$CUR_DATE 23:55:00"                 ; export NOW               # Build epoch cmd date format
-EPOCH_NOW=$(sadm_epoch_time)             ; export EPOCH_NOW         # Get Current Epoch Time
+EPOCH_NOW=$(sadm_get_epoch_time)             ; export EPOCH_NOW         # Get Current Epoch Time
 EPOCH_END=`sadm_date_to_epoch "${NOW}"`  ; export EPOCH_END         # Epoch Value of Today at 23:55
 TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`                       # Nb Sec. between now & 23:55
 TOT_MIN=`echo "${TOT_SEC}/60"| bc`                                  # Nb of Minutes till 23:55
