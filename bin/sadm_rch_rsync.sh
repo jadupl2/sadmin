@@ -84,10 +84,10 @@ MYSQL="$(which mysql)"                          ; export MYSQL          # Locati
 # --------------------------------------------------------------------------------------------------
 process_linux_servers()
 {
-    sadm_logger " "
-    sadm_logger "$SADM_DASH" 
-    sadm_logger "Processing active Linux Servers"
-    sadm_logger " "
+    sadm_writelog " "
+    sadm_writelog "$SADM_DASH" 
+    sadm_writelog "Processing active Linux Servers"
+    sadm_writelog " "
     SQL1="use sysinfo; "
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Linux' order by server_name;"
@@ -103,18 +103,18 @@ process_linux_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger " "
-              sadm_logger "${SADM_TEN_DASH}"
-              sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+              sadm_writelog " "
+              sadm_writelog "${SADM_TEN_DASH}"
+              sadm_writelog "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
               
               # Ping the server - Server or Laptop may be unplugged
-              sadm_logger "ping -c 2 ${server_name}.${server_domain}"
+              sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
               ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
               RC=$?
               if [ $RC -ne 0 ]
-                 then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_logger "Will not be able to process server ${server_name}"
-                      sadm_logger "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
+                 then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
+                      sadm_writelog "Will not be able to process server ${server_name}"
+                      sadm_writelog "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
                       continue
               fi
               
@@ -123,26 +123,26 @@ process_linux_servers()
               # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
               #-------------------------------------------------------------------------------------------
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
-              sadm_logger "Make sure the directory $WDIR Exist"
+              sadm_writelog "Make sure the directory $WDIR Exist"
               if [ ! -d "${WDIR}" ]
-                  then sadm_logger "Creating ${WDIR} directory"
+                  then sadm_writelog "Creating ${WDIR} directory"
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-                  else sadm_logger "Perfect ${WDIR} directory already exist"
+                  else sadm_writelog "Perfect ${WDIR} directory already exist"
               fi
               
-              sadm_logger "rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
+              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
               rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
                                                                 
               done < $SADM_TMP_FILE1
     fi
-    sadm_logger " "
-    sadm_logger "${SADM_TEN_DASH}"
+    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
     return $ERROR_COUNT
 }
 
@@ -154,10 +154,10 @@ process_linux_servers()
 # --------------------------------------------------------------------------------------------------
 process_aix_servers()
 {
-    sadm_logger " "
-    sadm_logger "$SADM_DASH" 
-    sadm_logger "Processing active Aix Servers" 
-    sadm_logger " "
+    sadm_writelog " "
+    sadm_writelog "$SADM_DASH" 
+    sadm_writelog "Processing active Aix Servers" 
+    sadm_writelog " "
     SQL1="use sysinfo; "
     SQL2="SELECT server_name, server_os, server_domain, server_type FROM servers "
     SQL3="where server_doc_only=0 and server_active=1 and server_os='Aix' order by server_name;"
@@ -173,18 +173,18 @@ process_aix_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger " "
-              sadm_logger "${SADM_TEN_DASH}"
-              sadm_logger "Processing $xcount ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+              sadm_writelog " "
+              sadm_writelog "${SADM_TEN_DASH}"
+              sadm_writelog "Processing $xcount ${server_os} ${server_type} server : ${server_name}.${server_domain}"
 
               # Ping the server - Server or Laptop may be unplugged
-              sadm_logger "ping -c 2 ${server_name}.${server_domain}"
+              sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
               ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
               RC=$?
               if [ $RC -ne 0 ]
-                 then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_logger "Will not be able to process server ${server_name}"
-                      sadm_logger "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
+                 then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
+                      sadm_writelog "Will not be able to process server ${server_name}"
+                      sadm_writelog "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
                       continue
               fi              
 
@@ -192,27 +192,27 @@ process_aix_servers()
               # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
               #-------------------------------------------------------------------------------------------
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
-              sadm_logger "Make sure the directory $WDIR Exist"
+              sadm_writelog "Make sure the directory $WDIR Exist"
               if [ ! -d "${WDIR}" ]
-                  then sadm_logger "Creating ${WDIR} directory"
+                  then sadm_writelog "Creating ${WDIR} directory"
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-                  else sadm_logger "Perfect ${WDIR} directory already exist"
+                  else sadm_writelog "Perfect ${WDIR} directory already exist"
               fi
               
-              sadm_logger "rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
+              sadm_writelog "rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
               rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
 
               done < $SADM_TMP_FILE1
-        else  sadm_logger "No Aix Server defined in Sysinfo"
+        else  sadm_writelog "No Aix Server defined in Sysinfo"
     fi
-    sadm_logger " "
-    sadm_logger "${SADM_TEN_DASH}"
+    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
     return $ERROR_COUNT
 }
 
@@ -225,16 +225,16 @@ process_aix_servers()
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
         
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
         
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -243,11 +243,11 @@ process_aix_servers()
     
     process_linux_servers                                               # Process all Active Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-    sadm_logger "We had $LINUX_ERROR error(s) while processing Linux servers"
+    sadm_writelog "We had $LINUX_ERROR error(s) while processing Linux servers"
 
     process_aix_servers                                                 # Process all Active Aix Servers
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
-    sadm_logger "We had $AIX_ERROR error(s) while processing Aix servers"
+    sadm_writelog "We had $AIX_ERROR error(s) while processing Aix servers"
     
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC to or 0

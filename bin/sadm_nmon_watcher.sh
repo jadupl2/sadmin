@@ -87,20 +87,20 @@ pre_validation()
 {
 
     # Verify if the nmon programe is on the system
-    sadm_logger "Verifying if nmon is accessible"
+    sadm_writelog "Verifying if nmon is accessible"
     NMON=`$SADM_WHICH nmon >/dev/null 2>&1`
     if [ $? -ne 0 ]
-        then sadm_logger "Error : The command 'nmon' could not be found" 
-             sadm_logger "        This program is need by $SADM_INST script of the SADMIN tools"
-             sadm_logger "        Please install it and re-run this script"
-             sadm_logger "        To install it, use the following command depending on your distro"
-             sadm_logger "        Use 'yum install nmon' or 'apt-get install nmon'"
-             sadm_logger "Script Aborted"
+        then sadm_writelog "Error : The command 'nmon' could not be found" 
+             sadm_writelog "        This program is need by $SADM_INST script of the SADMIN tools"
+             sadm_writelog "        Please install it and re-run this script"
+             sadm_writelog "        To install it, use the following command depending on your distro"
+             sadm_writelog "        Use 'yum install nmon' or 'apt-get install nmon'"
+             sadm_writelog "Script Aborted"
              SADM_EXIT_CODE=1
              return $SADM_EXIT_CODE                                     # Return Error to Caller
     fi
     NMON=`$SADM_WHICH nmon` ; export NMON
-    sadm_logger "The nmon command was found at $NMON"
+    sadm_writelog "The nmon command was found at $NMON"
     
 
     # If nmon started by cron - Put crontab line in comment
@@ -110,8 +110,8 @@ pre_validation()
        then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1`  # Get 1st Char Of nmon line
             if [ "$commented" = "0" ]                                   # Cron Line not in commented
                 then sed -i -e 's/^/#/' $nmon_cron                      # Then Put line in comment
-                     sadm_logger "$nmon_cron file was put in comment"   # Leave trace of this
-                else sadm_logger "$nmon_cron file is in comment - OK"   # Leave trace of this
+                     sadm_writelog "$nmon_cron file was put in comment"   # Leave trace of this
+                else sadm_writelog "$nmon_cron file is in comment - OK"   # Leave trace of this
             fi
     fi 
     
@@ -132,16 +132,16 @@ restart_nmon()
     nmon_count=`ps -ef | grep "$NMON" |grep -v grep |grep -v s300 |wc -l |tr -d ' '`
     if [ $nmon_count -ne 0 ] 
         then NMON_PID=`ps -ef | grep "$NMON" |grep -v grep |grep -v s300 |awk '{ print $2 }'`
-             sadm_logger "Found another nmon process running at $NMON_PID"
+             sadm_writelog "Found another nmon process running at $NMON_PID"
              ps -ef | grep "$NMON" |grep -v grep |grep -v s300 | tee -a $SADM_LOG 2>&1
              kill -9 "$NMON_PID"
-             sadm_logger "We just kill it - Only one nmon process should be running"
+             sadm_writelog "We just kill it - Only one nmon process should be running"
     fi
              
  
     # Display Current Running Number of nmon process
     nmon_count=`ps -ef | grep "$NMON" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_logger "There is $nmon_count nmon process actually running"
+    sadm_writelog "There is $nmon_count nmon process actually running"
     ps -ef | grep "$NMON" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
@@ -149,41 +149,41 @@ restart_nmon()
     # nmon_count = 1 = Running - Then OK
     # nmon_count = * = More than one runing ? Kill them and then we start a fresh one
     # not running nmon, start it
-    sadm_logger " "
+    sadm_writelog " "
     case $nmon_count in
-        0)  sadm_logger "The nmon process is not running - Starting nmon daemon ..."
-            sadm_logger "We will start a fresh one that will terminate at 23:55"
-            sadm_logger "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_logger "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
+        0)  sadm_writelog "The nmon process is not running - Starting nmon daemon ..."
+            sadm_writelog "We will start a fresh one that will terminate at 23:55"
+            sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
+            sadm_writelog "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
             $NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
-                then sadm_logger "Error while starting - Not Started !" 
+                then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
             fi
-            sadm_logger " "
+            sadm_writelog " "
             nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
-            sadm_logger "The number of nmon process running after restarting it is : $nmon_count"
+            sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
             ps -ef | grep $NMON | grep -v grep | nl
             ;;
-        1)  sadm_logger "Nmon already Running ... Nothing to Do."
+        1)  sadm_writelog "Nmon already Running ... Nothing to Do."
             SADM_EXIT_CODE=0
             ;;
-        *)  sadm_logger "There seems to be more than one nmon process running ??"
+        *)  sadm_writelog "There seems to be more than one nmon process running ??"
             ps -ef | grep "$NMON" | grep 's300' | grep -v grep | nl 
-            sadm_logger "We will kill them both and start a fresh one that will terminate at 23:55"
+            sadm_writelog "We will kill them both and start a fresh one that will terminate at 23:55"
             ps -ef | grep "$NMON" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
-            sadm_logger "We will start a fresh one that will terminate at 23:55"
-            sadm_logger "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_logger "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
+            sadm_writelog "We will start a fresh one that will terminate at 23:55"
+            sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
+            sadm_writelog "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
             $NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
-                then sadm_logger "Error while starting - Not Started !" 
+                then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
                 else SADM_EXIT_CODE=0
             fi
-            sadm_logger " "
+            sadm_writelog " "
             nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
-            sadm_logger "The number of nmon process running after restarting it is : $nmon_count"
+            sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
             ps -ef | grep $NMON | grep -v grep | nl
             ;;
     esac
@@ -206,7 +206,7 @@ restart_nmon()
     restart_nmon                                                        # nmon not running start it
     SADM_EXIT_CODE=$?                                                   # Recuperate error code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occured
-        then sadm_logger "Problem starting nmon"                        # Advise User
+        then sadm_writelog "Problem starting nmon"                        # Advise User
     fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

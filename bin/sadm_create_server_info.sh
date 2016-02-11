@@ -116,9 +116,9 @@ command_available()
     # Check if only one parameter was received and if parameter is not empty
     #-----------------------------------------------------------------------------------------------
     if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
-        then sadm_logger "ERROR : Invalid parameter received by command_available function"
-             sadm_logger "        Parameter received = $*"
-             sadm_logger "Please correct the script error"
+        then sadm_writelog "ERROR : Invalid parameter received by command_available function"
+             sadm_writelog "        Parameter received = $*"
+             sadm_writelog "Please correct the script error"
              return 1
     fi
 
@@ -140,7 +140,7 @@ command_available()
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
                 else SADM_MSG=`printf "%-10s %-15s : %-30s" "[WARNING]" "$SADM_PKG" "Not Found"`
              fi
-             sadm_logger "$SADM_MSG"
+             sadm_writelog "$SADM_MSG"
     fi
 
 
@@ -160,13 +160,13 @@ command_available()
 #
 pre_validation()
 {
-    sadm_logger "Validate Script Requirements before proceeding ..."
-    sadm_logger " "
+    sadm_writelog "Validate Script Requirements before proceeding ..."
+    sadm_writelog " "
 
     # The which command is needed to determine presence of command - Return Error if not found
     #-----------------------------------------------------------------------------------------------
     if ! which which >/dev/null 2>&1
-        then sadm_logger "The command 'which' isn't available - Install it and rerun this script"
+        then sadm_writelog "The command 'which' isn't available - Install it and rerun this script"
              return 1
     fi
 
@@ -190,9 +190,9 @@ pre_validation()
     command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
     command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH             # Cmd Path or Blank !found
 
-    sadm_logger " "
-    sadm_logger "----------"
-    sadm_logger " "
+    sadm_writelog " "
+    sadm_writelog "----------"
+    sadm_writelog " "
     return 0
 }
 
@@ -212,11 +212,11 @@ create_command_output()
     SCMD_TXT=$3
 
     if [ ! -z "$SCMD_PATH" ]
-        then sadm_logger "Creating $SCMD_TXT with command $SCMD_PATH"
+        then sadm_writelog "Creating $SCMD_TXT with command $SCMD_PATH"
              echo -e "# $ADM_CIE_NAME - `date`" >$SCMD_TXT 2>&1
              echo -e "# Output of $SCMD_PATH command on `hostname`\n#" >>$SCMD_TXT 2>&1
              $SCMD_PATH >> $SCMD_TXT 2>&1
-        else sadm_logger "The command $SCMD_NAME is not available"
+        else sadm_writelog "The command $SCMD_NAME is not available"
              echo -e "# $ADM_CIE_NAME - `date`\n# The $SCMD_NAME command is not available on `hostname`\n#" > $PVS_FILE 2>&1
     fi
 }
@@ -275,7 +275,7 @@ create_aix_config_files()
        then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
     fi
     
-    sadm_logger "Running $SADM_PRTCONF ..."
+    sadm_writelog "Running $SADM_PRTCONF ..."
     $SADM_PRTCONF > $PRTCONF_FILE
 }
 
@@ -286,23 +286,23 @@ create_aix_config_files()
 # ==================================================================================================
 create_summary_file()
 {
-    sadm_logger "Creating Configuration Summary File"
-    sadm_logger "$HWD_FILE"
-    sadm_logger " "
+    sadm_writelog "Creating Configuration Summary File"
+    sadm_writelog "$HWD_FILE"
+    sadm_writelog " "
     echo -e "# $SADM_CIE_NAME - SysInfo Report File - `date`"                      >  $HWD_FILE
     echo -e "# This file will be use to update the SADMIN Database"                >> $HWD_FILE
     echo -e "#                                                    "                >> $HWD_FILE
-    echo "SADM_OS_TYPE                        : $(sadm_ostype)"                    >> $HWD_FILE
-    echo "SADM_HOSTNAME                       : $(sadm_hostname)"                  >> $HWD_FILE
-    echo "SADM_DOMAINNAME                     : $(sadm_domainname)"                >> $HWD_FILE
-    echo "SADM_HOST_IP                        : $(sadm_host_ip)"                   >> $HWD_FILE
+    echo "SADM_OS_TYPE                        : $(sadm_get_ostype)"                >> $HWD_FILE
+    echo "SADM_HOSTNAME                       : $(sadm_get_hostname)"              >> $HWD_FILE
+    echo "SADM_DOMAINNAME                     : $(sadm_get_domainname)"            >> $HWD_FILE
+    echo "SADM_HOST_IP                        : $(sadm_get_host_ip)"               >> $HWD_FILE
     echo "SADM_SERVER_TYPE                    : $(sadm_server_type)"               >> $HWD_FILE
-    echo "SADM_OS_VERSION                     : $(sadm_osversion)"                 >> $HWD_FILE
-    echo "SADM_OS_MAJOR_VERSION               : $(sadm_osmajorversion)"            >> $HWD_FILE
-    echo "SADM_OS_NAME                        : $(sadm_osname)"                    >> $HWD_FILE
-    echo "SADM_OS_CODE_NAME                   : $(sadm_oscodename)"                >> $HWD_FILE
-    echo "SADM_KERNEL_VERSION                 : $(sadm_kernel_version)"            >> $HWD_FILE
-    echo "SADM_KERNEL_BITMODE (32 or 64)      : $(sadm_kernel_bitmode)"            >> $HWD_FILE
+    echo "SADM_OS_VERSION                     : $(sadm_get_osversion)"             >> $HWD_FILE
+    echo "SADM_OS_MAJOR_VERSION               : $(sadm_get_osmajorversion)"        >> $HWD_FILE
+    echo "SADM_OS_NAME                        : $(sadm_get_osname)"                >> $HWD_FILE
+    echo "SADM_OS_CODE_NAME                   : $(sadm_get_oscodename)"            >> $HWD_FILE
+    echo "SADM_KERNEL_VERSION                 : $(sadm_get_kernel_version)"        >> $HWD_FILE
+    echo "SADM_KERNEL_BITMODE (32 or 64)      : $(sadm_get_kernel_bitmode)"        >> $HWD_FILE
     echo "SADM_SERVER_MODEL                   : $(sadm_server_model)"              >> $HWD_FILE
     echo "SADM_SERVER_SERIAL                  : $(sadm_server_serial)"             >> $HWD_FILE
     echo "SADM_SERVER_MEMORY (in MB)          : $(sadm_server_memory)"             >> $HWD_FILE
@@ -325,8 +325,8 @@ create_summary_file()
     sadm_start                                                          # Init Env Dir & RC/Log File
 
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -338,8 +338,8 @@ create_summary_file()
              exit 1
     fi
     echo ""
-    if [ $(sadm_ostype) = "LINUX" ] ;then create_linux_config_files ;fi
-    if [ $(sadm_ostype) = "AIX"   ] ;then create_aix_config_files   ;fi
+    if [ $(sadm_get_ostype) = "LINUX" ] ;then create_linux_config_files ;fi
+    if [ $(sadm_get_ostype) = "AIX"   ] ;then create_aix_config_files   ;fi
     
     create_summary_file
     

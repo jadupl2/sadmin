@@ -87,9 +87,9 @@ LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RC
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
-    sadm_logger "Server Directories HouseKeeping Starting"
-    sadm_logger " "
+    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Server Directories HouseKeeping Starting"
+    sadm_writelog " "
 
 
     return $ERROR_COUNT
@@ -101,19 +101,19 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
-    sadm_logger "Server Files HouseKeeping Starting"
-    sadm_logger " "
+    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Server Files HouseKeeping Starting"
+    sadm_writelog " "
     
     if [ -d "${SADM_WWW_DIR}/dat" ]
-        then sadm_logger "Find any *.rch file older than ${LIMIT_DAYS} days in ${SADM_WWW_DIR}/dat and delete them"
+        then sadm_writelog "Find any *.rch file older than ${LIMIT_DAYS} days in ${SADM_WWW_DIR}/dat and delete them"
              find ${SADM_WWW_DIR}/dat -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
              find ${SADM_WWW_DIR}/dat -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
@@ -127,15 +127,15 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
     
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]       # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]       # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi

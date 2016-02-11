@@ -99,34 +99,34 @@ process_linux_servers()
         server_os=`    echo $wline|awk '{ print $2 }'`
         server_domain=`echo $wline|awk '{ print $3 }'`
         server_type=`  echo $wline|awk '{ print $4 }'`
-        sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
-        sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-        sadm_logger "${SADM_TEN_DASH}"
-        sadm_logger "Ping the selected host ${server_name}.${server_domain}"
+        sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+        sadm_writelog "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+        sadm_writelog "${SADM_TEN_DASH}"
+        sadm_writelog "Ping the selected host ${server_name}.${server_domain}"
 
         ping -c2 ${server_name}.${server_domain} >> /dev/null 2>&1
         if [ $? -ne 0 ]
-            then sadm_logger "Error trying to ping the server ${server_name}.${server_domain}"
-                 sadm_logger "Update of server ${server_name}.${server_domain} Aborted"
+            then sadm_writelog "Error trying to ping the server ${server_name}.${server_domain}"
+                 sadm_writelog "Update of server ${server_name}.${server_domain} Aborted"
                  WARNING_COUNT=$(($WARNING_COUNT+1))
-                 sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+                 sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
                  continue
-            else sadm_logger "Ping went OK"
+            else sadm_writelog "Ping went OK"
         fi
 
-        sadm_logger "Starting $USCRIPT on ${server_name}.${server_domain}"
-        sadm_logger "$REMOTE_SSH ${server_name}.${server_domain} $USCRIPT"
+        sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
+        sadm_writelog "$REMOTE_SSH ${server_name}.${server_domain} $USCRIPT"
         $REMOTE_SSH ${server_name}.${server_domain} $USCRIPT
         if [ $? -ne 0 ]
-            then sadm_logger "Error starting $USCRIPT on ${server_name}.${server_domain}"
+            then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
                  ERROR_COUNT=$(($ERROR_COUNT+1))
-            else sadm_logger "Script was submitted with no error."
+            else sadm_writelog "Script was submitted with no error."
         fi
-        sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+        sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
         done < $SADM_TMP_FILE1
-    sadm_logger " "
-    sadm_logger "${SADM_TEN_DASH}"
-    sadm_logger "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
+    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
     return $ERROR_COUNT
 }
 
@@ -138,15 +138,15 @@ process_linux_servers()
     sadm_start
     
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
     
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi

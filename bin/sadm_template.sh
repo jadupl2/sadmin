@@ -42,7 +42,6 @@ SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=5                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
@@ -54,15 +53,18 @@ SADM_DEBUG_LEVEL=5                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
 # --------------------------------------------------------------------------------------------------
+SADM_DEBUG_LEVEL=5                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
 #SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
 #SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
 #SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
 #SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
+#SADM_NMON_KEEPDAYS=60                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=60                      ; export SADM_SAR_KEEPDAYS    # Days to keep old *.sar
+#SADM_RCH_KEEPDAYS=60                      ; export SADM_RCH_KEEPDAYS    # Days to keep old *.rch
+#SADM_LOG_KEEPDAYS=60                      ; export SADM_LOG_KEEPDAYS    # Days to keep old *.log
  
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -108,14 +110,14 @@ process_linux_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-              sadm_logger "${SADM_DASH}"
+              sadm_writelog "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+              sadm_writelog "${SADM_DASH}"
               # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for $server"
+                 then sadm_writelog "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
               done < $SADM_TMP_FILE1
     fi
@@ -145,14 +147,14 @@ process_aix_servers()
               server_os=`    echo $wline|awk '{ print $2 }'`
               server_domain=`echo $wline|awk '{ print $3 }'`
               server_type=`  echo $wline|awk '{ print $4 }'`
-              sadm_logger "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
-              sadm_logger "${SADM_DASH}"
+              sadm_writelog "Processing ($xcount) ${server_os} ${server_type} server : ${server_name}.${server_domain}"
+              sadm_writelog "${SADM_DASH}"
               # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_logger "ERROR NUMBER $RC for $server"
+                 then sadm_writelog "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_logger "RETURN CODE IS 0 - OK"
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
               done < $SADM_TMP_FILE1
     fi
@@ -179,17 +181,17 @@ main_process()
     sadm_start                                                          # Init Env. Dir & RC/Log File
     
     # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T NEED TO RUN ON THE SADMIN MAIN SERVER, THEN REMOVE
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
     # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -239,9 +241,9 @@ main_process()
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
     process_aix_servers                                                 # Process Active Aix Servers
     AIX_ERROR=$?                                                        # Set Nb. Errors while processing
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                        # Total = AIX+Linux Errors
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
-    sadm_stop $SADM_EXIT_CODE                                          # Upd. RCH File & Trim Log 
-    exit $SADM_EXIT_CODE                                               # Exit With Global Err (0/1)
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
 

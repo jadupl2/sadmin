@@ -174,7 +174,7 @@ load_array()
              cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1
     fi
     if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
-       then sadm_logger "No RCH File to process - File is empty"        # Issue message to user
+       then sadm_writelog "No RCH File to process - File is empty"        # Issue message to user
             return 1                                                    # Exit Function 
     fi
 
@@ -187,7 +187,7 @@ load_array()
         WNB_FIELD=`echo $wline | wc -w`                                 # Check Nb. Of field in Line
         if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field ! What Expected
             then echo $wline >> $SADM_TMP_FILE3                         # Save Line in TEMP3 file
-                 sadm_logger "ERROR : Nb of field is not $FIELD_IN_RCH - Line was ignore : $wline"
+                 sadm_writelog "ERROR : Nb of field is not $FIELD_IN_RCH - Line was ignore : $wline"
                  continue                                               # Go on and read next line
         fi
         array[$xcount]="$wline"                                         # Put Line in Array
@@ -257,9 +257,9 @@ main_process()
     sadm_start                                                          # Init Env. Dir & RC/Log File
     
     # Script can only be run on the sadmin server (files needed for report are ont it)
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi

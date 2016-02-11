@@ -75,12 +75,14 @@ cfg_server         = ""                                                 # sadmin
 cfg_group          = ""                                                 # sadmin group account
 cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
 cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
-cfg_nmon_keepdays  = 40                                                 # Days to keep old *.nmon
-cfg_sar_keepdays   = 40                                                 # Days to keep old *.nmon
-cfg_smtp_server    = ""                                                 # Taken from sadmin.cfg
-cfg_smtp_port      = ""                                                 # Taken from sadmin.cfg
-cfg_smtp_user_mail = ""                                                 # Taken from sadmin.cfg
-cfg_smtp_user_pwd  = ""                                                 # Taken from sadmin.cfg
+cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
+cfg_sar_keepdays   = 60                                                 # Days to keep old *.sar
+cfg_rch_keepdays   = 60                                                 # Days to keep old *.rch
+cfg_log_keepdays   = 60                                                 # Days to keep old *.log
+#cfg_smtp_server    = ""                                                 # Taken from sadmin.cfg
+#cfg_smtp_port      = ""                                                 # Taken from sadmin.cfg
+#cfg_smtp_user_mail = ""                                                 # Taken from sadmin.cfg
+#cfg_smtp_user_pwd  = ""                                                 # Taken from sadmin.cfg
  
 # SADM Path to various commands used by SADM Tools
 lsb_release        = ""                                                 # Command lsb_release Path

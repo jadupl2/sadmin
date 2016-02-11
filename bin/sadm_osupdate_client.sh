@@ -78,68 +78,68 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_logger "Checking if update are available for $(sadm_osname) version $(sadm_osversion) ..."
+    sadm_writelog "Checking if update are available for $(sadm_get_osname) version $(sadm_get_osversion) ..."
     
-    if [ "$(sadm_osname)" = "REDHAT" ] || [ "$(sadm_osname)" = "CENTOS" ]
-        then case "$(sadm_osmajorversion)" in
-                [3|4] )   sadm_logger "Running \"up2date -l\""          # Update the Log
-                          sadm_logger "${SADM_DASH}"
+    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ]
+        then case "$(sadm_get_osmajorversion)" in
+                [3|4] )   sadm_writelog "Running \"up2date -l\""          # Update the Log
+                          sadm_writelog "${SADM_DASH}"
                           up2date -l >> $SADM_LOG 2>&1                       # List update available
                           rc=$?                                         # Save Exit code
-                          sadm_logger "${SADM_DASH}"
-                          sadm_logger "Return Code after up2date -l is $rc" # Write exit code to log
+                          sadm_writelog "${SADM_DASH}"
+                          sadm_writelog "Return Code after up2date -l is $rc" # Write exit code to log
                           case $rc in
                              0) UpdateStatus=0                          # Update Exist
-                                sadm_logger "Update are available ..."  # Update log update avail.
+                                sadm_writelog "Update are available ..."  # Update log update avail.
                                 ;;
                              *) UpdateStatus=2                          # Problem Abort Update
-                                sadm_logger "NO UPDATE AVAILABLE"       # Update the log
+                                sadm_writelog "NO UPDATE AVAILABLE"       # Update the log
                                 ;;
                           esac
                           ;;
-              [5|6|7])   sadm_logger "Running \"yum check-update\""     # Update the log
-                         sadm_logger "${SADM_DASH}"
+              [5|6|7])   sadm_writelog "Running \"yum check-update\""     # Update the log
+                         sadm_writelog "${SADM_DASH}"
                          yum check-update >> $SADM_LOG 2>&1                  # List Available update
                          rc=$?                                          # Save Exit Code
-                         sadm_logger "${SADM_DASH}"
-                         sadm_logger "Return Code after yum check-update is $rc" # Write Exit code to log
+                         sadm_writelog "${SADM_DASH}"
+                         sadm_writelog "Return Code after yum check-update is $rc" # Write Exit code to log
                          case $rc in
                            100) UpdateStatus=0                          # Update Exist
-                                sadm_logger "Update are available"      # Update the log
+                                sadm_writelog "Update are available"      # Update the log
                                 ;;
                              0) UpdateStatus=1                          # No Update available
-                                sadm_logger "No Update available"
+                                sadm_writelog "No Update available"
                                 ;;
                              *) UpdateStatus=2                          # Problem Abort Update
-                                sadm_logger "Error Encountered - Update aborted"  # Update the log
+                                sadm_writelog "Error Encountered - Update aborted"  # Update the log
                                 ;;
                           esac
                          ;;
              esac
     fi
     
-    if [ "$(sadm_osname)" = "UBUNTU" ] || [ "$(sadm_osname)" = "DEBIAN" ]
-        then sadm_logger "Resynchronize package index files from their sources via Internet"
-             sadm_logger "Running \"apt-get update\""                   # Msg Get package list 
+    if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "DEBIAN" ]
+        then sadm_writelog "Resynchronize package index files from their sources via Internet"
+             sadm_writelog "Running \"apt-get update\""                   # Msg Get package list 
              apt-get update > /dev/null 2>&1                            # Get Package List From Repo
              rc=$?                                                      # Save Exit Code
              if [ "$rc" -ne 0 ]
                 then UpdateStats=2
-                     sadm_logger "We had problem running the \"apt-get update\" command" 
-                     sadm_logger "We had a return code $rc" 
-                else sadm_logger "Return Code after apt-get update is $rc"      # Show  Return Code
-                     sadm_logger "Querying list of package that will be updated"
+                     sadm_writelog "We had problem running the \"apt-get update\" command" 
+                     sadm_writelog "We had a return code $rc" 
+                else sadm_writelog "Return Code after apt-get update is $rc"      # Show  Return Code
+                     sadm_writelog "Querying list of package that will be updated"
                      NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
                      apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
                      if [ "$NB_UPD" -ne 0 ]
                         then UpdateStatus=0
-                             sadm_logger "${NB_UPD} Updates are available"
+                             sadm_writelog "${NB_UPD} Updates are available"
                         else UpdateStatus=1
-                             sadm_logger "No Update available"
+                             sadm_writelog "No Update available"
                      fi
              fi
     fi         
-    sadm_logger " "
+    sadm_writelog " "
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
 }
 
@@ -151,18 +151,18 @@ check_available_update()
 # --------------------------------------------------------------------------------------------------
 run_up2date()
 {
-    sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_osname) update  process ..."
-    sadm_logger "Running \"up2date --nox -u\""
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "Starting the $(sadm_get_osname) update  process ..."
+    sadm_writelog "Running \"up2date --nox -u\""
     up2date --nox -u >>$SADM_LOG 2>&1
     rc=$?
-    sadm_logger "Return Code after up2date -u is $rc"
+    sadm_writelog "Return Code after up2date -u is $rc"
     if [ $rc -ne 0 ]
-       then sadm_logger "Problem getting list of the update"
-            sadm_logger "Update not performed - Processing aborted"
-       else sadm_logger "Return Code = 0"
+       then sadm_writelog "Problem getting list of the update"
+            sadm_writelog "Update not performed - Processing aborted"
+       else sadm_writelog "Return Code = 0"
     fi
-    sadm_logger "${SADM_DASH}"
+    sadm_writelog "${SADM_DASH}"
     return $rc
 
 }
@@ -175,13 +175,13 @@ run_up2date()
 # --------------------------------------------------------------------------------------------------
 run_yum()
 {
-    sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_osname) update  process ..."
-    sadm_logger "Running : yum -y update"
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "Starting the $(sadm_get_osname) update  process ..."
+    sadm_writelog "Running : yum -y update"
     yum -y update  >>$SADM_LOG 2>&1
     rc=$?
-    sadm_logger "Return Code after yum program update is $rc"
-    sadm_logger "${SADM_DASH}"
+    sadm_writelog "Return Code after yum program update is $rc"
+    sadm_writelog "${SADM_DASH}"
     return $rc
 }
 
@@ -191,24 +191,24 @@ run_yum()
 # --------------------------------------------------------------------------------------------------
 run_apt_get()
 {
-    sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting the $(sadm_osname) update process ..."
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "Starting the $(sadm_get_osname) update process ..."
 
-    sadm_logger "${TEN_DASH}"
-    sadm_logger "Running : apt-get -y upgrade"
+    sadm_writelog "${TEN_DASH}"
+    sadm_writelog "Running : apt-get -y upgrade"
     apt-get -y upgrade | tee -a $SADM_LOG 2>&1
     rc1=$?
-    sadm_logger "Return Code after \"apt-get -y upgrade\" is $rc1"      # Write Exit code to log
+    sadm_writelog "Return Code after \"apt-get -y upgrade\" is $rc1"      # Write Exit code to log
 
-    sadm_logger "${TEN_DASH}"
-    sadm_logger "Running : apt-get -y dist-upgrade "
+    sadm_writelog "${TEN_DASH}"
+    sadm_writelog "Running : apt-get -y dist-upgrade "
     apt-get -y dist-upgrade | tee -a $SADM_LOG 2>&1
     rc2=$?
-    sadm_logger "Return Code after \"apt-get -y upgrade\" is $rc2"      # Write Exit code to log
+    sadm_writelog "Return Code after \"apt-get -y upgrade\" is $rc2"      # Write Exit code to log
     RC=$(($rc1+$rc2))
     
-    sadm_logger "${TEN_DASH}"
-    sadm_logger "Return Code after apt-get upgrade and apt-get dist-upgrade is $RC"
+    sadm_writelog "${TEN_DASH}"
+    sadm_writelog "Return Code after apt-get upgrade and apt-get dist-upgrade is $RC"
     return $RC
 }
 
@@ -219,8 +219,8 @@ run_apt_get()
 #
     sadm_start                                                          # Make sure Dir. Struc. exist     
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -228,8 +228,8 @@ run_apt_get()
     check_available_update                                              # Check if avail. Update
     if [ $? -ne 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # If No Update Close the Shop
 
-    case "$(sadm_osname)" in                                           # Test OS Name
-        "REDHAT"|"CENTOS" )     if [ $(sadm_osmajorversion) -lt 5 ]   
+    case "$(sadm_get_osname)" in                                           # Test OS Name
+        "REDHAT"|"CENTOS" )     if [ $(sadm_get_osmajorversion) -lt 5 ]   
                                     then run_up2date                    # Version 4 Run up2date
                                          SADM_EXIT_CODE=$?              # Save Return Code
                                     else run_yum                        # V 5 and above Run yum cmd
@@ -242,8 +242,8 @@ run_apt_get()
         "UBUNTU"|"DEBIAN" )     run_apt_get
                                 SADM_EXIT_CODE=$?
                                 ;;
-        *)                      sadm_logger "This OS ($(sadm_osname)) is not yet supported"
-                                sadm_logger "Please report it to SADMIN Web Site"
+        *)                      sadm_writelog "This OS ($(sadm_get_osname)) is not yet supported"
+                                sadm_writelog "Please report it to SADMIN Web Site"
                                 ;;
     esac
    

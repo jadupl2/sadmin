@@ -75,34 +75,34 @@ shift
 #
 validate_parameter()
 {
-    sadm_logger " "
-    sadm_logger "Validate Parameter(s) ..."
+    sadm_writelog " "
+    sadm_writelog "Validate Parameter(s) ..."
 
     # The Script Name to run must be specified on the command line
     if [ -z "$SCRIPT" ]
-        then    sadm_logger "ERROR : Script to execute must be specified" 
-                sadm_logger "$USAGE" 
-                sadm_logger "Job aborted"
+        then    sadm_writelog "ERROR : Script to execute must be specified" 
+                sadm_writelog "$USAGE" 
+                sadm_writelog "Job aborted"
                 return 1
     fi
 
     # The script specified must exist in path specified
     if [ ! -e "$SCRIPT" ]
-       then     sadm_logger "ERROR : The script $SCRIPT doesn't exist" 
-                sadm_logger "$USAGE" 
-                sadm_logger "Job aborted"
+       then     sadm_writelog "ERROR : The script $SCRIPT doesn't exist" 
+                sadm_writelog "$USAGE" 
+                sadm_writelog "Job aborted"
                 return 1
     fi
 
     # The Script Name must executable
     if [ ! -x "$SCRIPT" ]
-       then     sadm_logger "ERROR : script $SCRIPT is not executable ?" 
-                sadm_logger "$USAGE" 
+       then     sadm_writelog "ERROR : script $SCRIPT is not executable ?" 
+                sadm_writelog "$USAGE" 
                 return 1
     fi
 
-    sadm_logger "Pass validation ..."
-    sadm_logger " "
+    sadm_writelog "Pass validation ..."
+    sadm_writelog " "
     return 0 
 }
 
@@ -120,8 +120,8 @@ validate_parameter()
              exit 1
     fi
 #    
-    sadm_logger "  "                                                    # Write white line to log
-    sadm_logger "Executing $SCRIPT $@"                                  # Write script name to log
+    sadm_writelog "  "                                                    # Write white line to log
+    sadm_writelog "Executing $SCRIPT $@"                                  # Write script name to log
     $SCRIPT "$@" >>$SADM_LOG 2>&1                                       # Run selected user script
     SADM_EXIT_CODE=$?                                                   # Capture Return Code
 

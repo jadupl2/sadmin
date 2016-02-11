@@ -108,60 +108,60 @@ LVPROT=""                                       ; export LVPROT         # Logica
 #
 pre_validation()
 {
-    sadm_logger "Validate Program Requirements before proceeding ..."
-    sadm_logger " "
+    sadm_writelog "Validate Program Requirements before proceeding ..."
+    sadm_writelog " "
 
     # Check if Input File exist
     if [ ! -r "$DRFILE" ]
-        then sadm_logger "The input file $DRFILE does not exist !"
-             sadm_logger "Process aborted"
+        then sadm_writelog "The input file $DRFILE does not exist !"
+             sadm_writelog "Process aborted"
              return 1
     fi
 
     rpm -q which > /dev/null 2>&1
     if [ $? -eq 1 ]
-        then sadm_logger "The command 'which' is not installed - Install it and rerun this script"
+        then sadm_writelog "The command 'which' is not installed - Install it and rerun this script"
              return 1
     fi
 
     LVCREATE=`which lvcreate >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then LVCREATE=`which lvcreate`
-        else sadm_logger "Error : The command 'lvcreate' was not found" ; return 1
+        else sadm_writelog "Error : The command 'lvcreate' was not found" ; return 1
     fi
-    export LVCREATE   ; if [ $Debug ] ; then sadm_logger "COMMAND LVCREATE  : $LVCREATE" ; fi
+    export LVCREATE   ; if [ $Debug ] ; then sadm_writelog "COMMAND LVCREATE  : $LVCREATE" ; fi
 
 
     TUNE2FS=`which tune2fs >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then TUNE2FS=`which tune2fs`
-        else sadm_logger "Error : The command 'tune2fs' was not found" ; return 1
+        else sadm_writelog "Error : The command 'tune2fs' was not found" ; return 1
     fi
-    export TUNE2FS    ; if [ $Debug ] ; then sadm_logger "COMMAND TUNE2FS   : $TUNE2FS" ; fi
+    export TUNE2FS    ; if [ $Debug ] ; then sadm_writelog "COMMAND TUNE2FS   : $TUNE2FS" ; fi
 
 
     MKFS_EXT2=`which mkfs.ext2 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MKFS_EXT2=`which mkfs.ext2`
-        else sadm_logger "Error : The command 'mkfs.ext2' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mkfs.ext2' was not found" ; return 1
     fi
-    export MKFS_EXT2  ; if [ $Debug ] ; then sadm_logger "COMMAND MKFS_EXT2 : $MKFS_EXT2" ; fi
+    export MKFS_EXT2  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT2 : $MKFS_EXT2" ; fi
 
 
     MKFS_EXT3=`which mkfs.ext3 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MKFS_EXT3=`which mkfs.ext3`
-        else sadm_logger "Error : The command 'mkfs.ext3' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mkfs.ext3' was not found" ; return 1
     fi
-    export MKFS_EXT3  ; if [ $Debug ] ; then sadm_logger "COMMAND MKFS_EXT3 : $MKFS_EXT3" ; fi
+    export MKFS_EXT3  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT3 : $MKFS_EXT3" ; fi
 
 
     MKFS_EXT4=`which mkfs.ext4 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MKFS_EXT4=`which mkfs.ext4`
-        else sadm_logger "Error : The command 'mkfs.ext4' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mkfs.ext4' was not found" ; return 1
     fi
-    export MKFS_EXT4  ; if [ $Debug ] ; then sadm_logger "COMMAND MKFS_EXT4 : $MKFS_EXT4" ; fi
+    export MKFS_EXT4  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT4 : $MKFS_EXT4" ; fi
 
 
     MKFS_XFS=`which mkfs.xfs >/dev/null 2>&1`
@@ -171,31 +171,31 @@ pre_validation()
         else MKFS_XFS=""
              XFS_ENABLE="N"
     fi
-    export MKFS_XFS   ; if [ $Debug ] ; then sadm_logger "COMMAND MKFS_XFS  : $MKFS_XFS" ; fi
+    export MKFS_XFS   ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_XFS  : $MKFS_XFS" ; fi
 
 
     FSCK_EXT2=`which fsck.ext2 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then FSCK_EXT2=`which fsck.ext2`
-        else sadm_logger "Error : The command 'fsck.ext2' was not found" ; return 1
+        else sadm_writelog "Error : The command 'fsck.ext2' was not found" ; return 1
     fi
-    export FSCK_EXT2  ; if [ $Debug ] ; then sadm_logger "COMMAND FSCK_EXT2 : $FSCK_EXT2" ; fi
+    export FSCK_EXT2  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT2 : $FSCK_EXT2" ; fi
 
 
     FSCK_EXT3=`which fsck.ext3 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then FSCK_EXT3=`which fsck.ext3`
-        else sadm_logger "Error : The command 'fsck.ext3' was not found" ; return 1
+        else sadm_writelog "Error : The command 'fsck.ext3' was not found" ; return 1
     fi
-    export FSCK_EXT3  ; if [ $Debug ] ; then sadm_logger "COMMAND FSCK_EXT3 : $FSCK_EXT3" ; fi
+    export FSCK_EXT3  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT3 : $FSCK_EXT3" ; fi
 
 
     FSCK_EXT4=`which fsck.ext4 >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then FSCK_EXT4=`which fsck.ext4`
-        else sadm_logger "Error : The command 'fsck.ext4' was not found" ; return 1
+        else sadm_writelog "Error : The command 'fsck.ext4' was not found" ; return 1
     fi
-    export FSCK_EXT4  ; if [ $Debug ] ; then sadm_logger "COMMAND FSCK_EXT4 : $FSCK_EXT4" ; fi
+    export FSCK_EXT4  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT4 : $FSCK_EXT4" ; fi
 
 
     FSCK_XFS=`which fsck.xfs >/dev/null 2>&1`
@@ -205,55 +205,55 @@ pre_validation()
         else FSCK_XFS=""
              XFS_ENABLE="N"
     fi
-    export FSCK_XFS   ; if [ $Debug ] ; then sadm_logger "COMMAND FSCK_XFS  : $FSCK_XFS" ; fi
+    export FSCK_XFS   ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_XFS  : $FSCK_XFS" ; fi
 
 
     MKDIR=`which mkdir >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MKDIR=`which mkdir`
-        else sadm_logger "Error : The command 'mkdir' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mkdir' was not found" ; return 1
     fi
-    export MKDIR      ; if [ $Debug ] ; then sadm_logger "COMMAND MKDIR     : $MKDIR" ; fi
+    export MKDIR      ; if [ $Debug ] ; then sadm_writelog "COMMAND MKDIR     : $MKDIR" ; fi
 
 
     MOUNT=`which mount >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MOUNT=`which mount`
-        else sadm_logger "Error : The command 'mount' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mount' was not found" ; return 1
     fi
-    export MOUNT      ; if [ $Debug ] ; then sadm_logger "COMMAND MOUNT     : $MOUNT" ; fi
+    export MOUNT      ; if [ $Debug ] ; then sadm_writelog "COMMAND MOUNT     : $MOUNT" ; fi
 
 
     CHMOD=`which chmod >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then CHMOD=`which chmod`
-        else sadm_logger "Error : The command 'chmod' was not found" ; return 1
+        else sadm_writelog "Error : The command 'chmod' was not found" ; return 1
     fi
-    export CHMOD      ; if [ $Debug ] ; then sadm_logger "COMMAND CHMOD     : $CHMOD" ; fi
+    export CHMOD      ; if [ $Debug ] ; then sadm_writelog "COMMAND CHMOD     : $CHMOD" ; fi
 
 
     CHOWN=`which chown >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then CHOWN=`which chown`
-        else sadm_logger "Error : The command 'chown' was not found" ; return 1
+        else sadm_writelog "Error : The command 'chown' was not found" ; return 1
     fi
-    export CHOWN      ; if [ $Debug ] ; then sadm_logger "COMMAND CHOWN     : $CHOWN" ; fi
+    export CHOWN      ; if [ $Debug ] ; then sadm_writelog "COMMAND CHOWN     : $CHOWN" ; fi
 
     
     MKSWAP=`which mkswap >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then MKSWAP=`which mkswap`
-        else sadm_logger "Error : The command 'mkswap' was not found" ; return 1
+        else sadm_writelog "Error : The command 'mkswap' was not found" ; return 1
     fi
-    export MKSWAP      ; if [ $Debug ] ; then sadm_logger "COMMAND MKSWAP    : $MKSWAP" ; fi
+    export MKSWAP      ; if [ $Debug ] ; then sadm_writelog "COMMAND MKSWAP    : $MKSWAP" ; fi
     
     
     SWAPON=`which swapon >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then SWAPON=`which swapon`
-        else sadm_logger "Error : The command 'swapon' was not found" ; return 1
+        else sadm_writelog "Error : The command 'swapon' was not found" ; return 1
     fi
-    export SWAPON      ; if [ $Debug ] ; then sadm_logger "COMMAND SWAPON    : $SWAPON" ; fi
+    export SWAPON      ; if [ $Debug ] ; then sadm_writelog "COMMAND SWAPON    : $SWAPON" ; fi
 
     return 0
 }
@@ -268,7 +268,7 @@ pre_validation()
 check_lvm_version()
 {
     LVMVER=0                                                            # Assume lvm not install
-    sadm_logger "Currently verifying the LVM version installed on system"
+    sadm_writelog "Currently verifying the LVM version installed on system"
 
     # Check if LVM Version 2 is installed
     rpm -qa '^lvm-2' > /dev/null 2>&1                                   # Query RPM DB
@@ -276,8 +276,8 @@ check_lvm_version()
 
     # If LVM Not Installed
     if [ $LVMVER -eq 0 ]                                                # lvm wasn't found on server
-        then sadm_logger "The rpm 'lvm' or 'lvm2' is not installed"       # Advise user no lvm package
-             sadm_logger "No use in running this script - Script Aborted" # No LVM - No Script
+        then sadm_writelog "The rpm 'lvm' or 'lvm2' is not installed"       # Advise user no lvm package
+             sadm_writelog "No use in running this script - Script Aborted" # No LVM - No Script
     fi
     return $LVMVER                                                      # Return LVM Version
 }
@@ -293,8 +293,8 @@ check_lvm_version()
 report_error()
 {
      WMESS=$1
-     sadm_logger "$WMESS"
-     sadm_logger  "\a\aPress [ENTER] to continue - CTRL-C to Abort\c"
+     sadm_writelog "$WMESS"
+     sadm_writelog  "\a\aPress [ENTER] to continue - CTRL-C to Abort\c"
      read dummy
 }
 
@@ -326,37 +326,37 @@ recreate_filesystem()
 
     
     # CREATE THE LOGICAL VOLUME - IF ERROR DETECTED THEN REPORT ERROR & EXIT FUNCTION --------------
-    sadm_logger "Running : ${LVCREATE} -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
+    sadm_writelog "Running : ${LVCREATE} -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
     ${LVCREATE} -L${LVSIZE}M -n ${LVNAME} ${VGNAME} 1> $STDOUT 2> $STDERR
     if [ $? -ne 0 ] ; then report_error "Error with lvcreate\n `cat $STDERR`" ; return 1 ;  fi
 
     
     # CREATE FILESYSTEM ON THE LOGICAL VOLUME ------------------------------------------------------
     if [ "$LVTYPE" = "ext2" ]
-        then sadm_logger "Running : ${MKFS_EXT2} -b4096 /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${MKFS_EXT2} -b4096 /dev/${VGNAME}/${LVNAME}"
              ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mkfs.ext2 error \n `cat $STDERR`" ;return 1 ;fi
     fi
     if [ "$LVTYPE" = "ext3" ]
-        then sadm_logger "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
              ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mkfs.ext3 error \n `cat $STDERR`" ;return 1 ;fi
     fi
     if [ "$LVTYPE" = "ext4" ]
-        then sadm_logger "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
              ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mkfs.ext4 error \n `cat $STDERR`" ;return 1 ;fi
     fi
     if [ "$LVTYPE" = "xfs" ]
         then if [ "$XFS_ENABLE" = "Y" ]
-                then sadm_logger "Running : ${MKFS_XFS} -b size=4k  /dev/${VGNAME}/${LVNAME}"
+                then sadm_writelog "Running : ${MKFS_XFS} -b size=4k  /dev/${VGNAME}/${LVNAME}"
                      ${MKFS_XFS} -b size=4k /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
                      if [ $? -ne 0 ] ; then report_error "mkfs.xfs error \n `cat $STDERR`" ;return 1 ;fi
                 else report_error "Can't create XFS Filesystem - Install xfsprogs\n `cat $STDERR`" ;return 1 
              fi 
     fi
     if [ "$LVTYPE" = "swap" ]
-        then sadm_logger "Running : ${MKSWAP} -c /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${MKSWAP} -c /dev/${VGNAME}/${LVNAME}"
              ${MKSWAP} -c /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mkswap error \n `cat $STDERR`" ;return 1 ;fi
     fi 
@@ -364,23 +364,23 @@ recreate_filesystem()
         
     # DO A FILESYSTEM CHECK - JUST TO BE SURE FILESYSTEM IS OK TO USE. -----------------------------
     if [ "$LVTYPE" = "ext2" ]
-        then sadm_logger "Running : ${FSCK_EXT2} -f /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${FSCK_EXT2} -f /dev/${VGNAME}/${LVNAME}"
              ${FSCK_EXT2} -fy /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "fsck.ext2 error\n `cat $STDERR`" ; return 1 ;  fi
     fi
     if [ "$LVTYPE" = "ext3" ]
-        then sadm_logger "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
              ${FSCK_EXT3} -fy /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "fsck.ext3 error\n `cat $STDERR`" ; return 1 ;  fi
     fi
     if [ "$LVTYPE" = "ext4" ]
-        then sadm_logger "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
              ${FSCK_EXT4} -fy /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "fsck.ext4 error\n `cat $STDERR`" ; return 1 ;  fi
     fi
     if [ "$LVTYPE" = "xfs" ]
         then if [ "$XFS_ENABLE" = "Y" ]
-                then sadm_logger "Running : ${FSCK_XFS} -f /dev/${VGNAME}/${LVNAME}"
+                then sadm_writelog "Running : ${FSCK_XFS} -f /dev/${VGNAME}/${LVNAME}"
                      ${FSCK_XFS} -fy /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
                      if [ $? -ne 0 ] ; then report_error "fsck.xfs error\n `cat $STDERR`" ; return 1 ;  fi
                 else report_error "Can't create XFS Filesystem - Install xfsprogs\n `cat $STDERR`" ;return 1
@@ -391,7 +391,7 @@ recreate_filesystem()
     # SET FSCK MAX-COUNT TO 0 & FSCK MAXIMAL TIME BETWEEN FSCK TO 0  ON EXT? FILESYSTEM ------------
     # PREVENT VERY LONG FSCK WHEN PRODUCTION SYSTEM REBOOT AFTER A LONG TIME.
     if [ "$LVTYPE" = "ext2" ] || [ "$LVTYPE" = "ext3" ] || [ "$LVTYPE" = "ext4" ]  
-        then sadm_logger "Running : ${TUNE2FS} -c 0 -i 0 /dev/${VGNAME}/${LVNAME}"
+        then sadm_writelog "Running : ${TUNE2FS} -c 0 -i 0 /dev/${VGNAME}/${LVNAME}"
              ${TUNE2FS} -c 0 -i 0 /dev/${VGNAME}/${LVNAME} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "tune2fs error\n `cat $STDERR`" ; return 1 ;  fi
     fi
@@ -399,29 +399,29 @@ recreate_filesystem()
     
     # CREATE THE MOUNT POINT DIRECTORY - FOR SWAP SPACE ACTIVATE IT --------------------------------
     if [ "$LVTYPE" != "swap" ]
-        then sadm_logger "Running : ${MKDIR} -p ${LVMOUNT}"
+        then sadm_writelog "Running : ${MKDIR} -p ${LVMOUNT}"
              ${MKDIR} -p ${LVMOUNT} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mkdir error\n `cat $STDERR`" ; return 1 ;  fi
-        else sadm_logger "Running : $SWAPON /dev/${VGNAME}/${LVNAME}"
+        else sadm_writelog "Running : $SWAPON /dev/${VGNAME}/${LVNAME}"
              $SWAPON /dev/${VGNAME}/${LVNAME}
              if [ $? -ne 0 ] ; then report_error "swapon error\n `cat $STDERR`" ; return 1 ;  fi
     fi
     
     # ADD MOUNT POINT IN /ETC/FSTAB ----------------------------------------------------------------
-    sadm_logger "Running : Adding entry in $FSTAB"
+    sadm_writelog "Running : Adding entry in $FSTAB"
     WDEV="/dev/mapper/${VGNAME}-${LVNAME}"
     echo "$WDEV ${LVMOUNT} $LVTYPE" |awk '{ printf "%-30s %-30s %-4s %s\n",$1,$2,$3,"defaults 1 2"}'>>$FSTAB
     
     
     # IF NOT A SWAP FILE TO CREATE - CREATE MOUNT POINT AND ISSUE CHMOD AND CHOWN COMMAND
     if [ "$LVTYPE" != "swap" ]
-        then sadm_logger "Running : ${MOUNT} ${LVMOUNT}"
+        then sadm_writelog "Running : ${MOUNT} ${LVMOUNT}"
              ${MOUNT} ${LVMOUNT} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "mount error\n `cat $STDERR`" ; return 1 ;  fi
-             sadm_logger "Running : ${CHOWN} ${LVOWNER}:${LVGROUP} ${LVMOUNT}"
+             sadm_writelog "Running : ${CHOWN} ${LVOWNER}:${LVGROUP} ${LVMOUNT}"
              ${CHOWN} ${LVOWNER}:${LVGROUP} ${LVMOUNT} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "chown error\n `cat $STDERR`" ; return 1 ;  fi
-             sadm_logger "Running : ${CHMOD} ${LVPROT} ${LVMOUNT}"
+             sadm_writelog "Running : ${CHMOD} ${LVPROT} ${LVMOUNT}"
              ${CHMOD} ${LVPROT} ${LVMOUNT} 1> $STDOUT 2> $STDERR
              if [ $? -ne 0 ] ; then report_error "chmod error\n `cat $STDERR`" ; return 1 ;  fi
     fi
@@ -444,10 +444,10 @@ ask_user_vg()
         VGDIR="/etc/lvm/backup" ;  export VGDIR
         ls -1 $VGDIR | sort >  $SADM_TMP_FILE2                          # Create VG Lits on System
         grep -v "^#" $DRFILE | awk -F: '{ print $1 }' | sort | uniq > $SADM_TMP_FILE1  # List VG in Data Input file
-        sadm_logger " "
-        sadm_logger "This is a list of the volume group that are present in $DRFILE"
+        sadm_writelog " "
+        sadm_writelog "This is a list of the volume group that are present in $DRFILE"
         sort $SADM_TMP_FILE1 | tee $SADM_LOG                            # List VG in Input File
-        sadm_logger "Enter the volume group that you want to recreate the filesystems : \c"
+        sadm_writelog "Enter the volume group that you want to recreate the filesystems : \c"
         read VG                                                         # Accept Volume Group Name
         grep -i $VG $SADM_TMP_FILE1 > /dev/null ; RC1=$?                # VG in input DAta File ?
         grep -i $VG $SADM_TMP_FILE2 > /dev/null ; RC2=$?                # VG Exist on System ?
@@ -461,11 +461,11 @@ ask_user_vg()
     # Accept final confirmation
     while :
         do
-        sadm_logger " "
-        sadm_logger "This is a list of filesystems (and swap) that will created on $VG volume group"
+        sadm_writelog " "
+        sadm_writelog "This is a list of filesystems (and swap) that will created on $VG volume group"
         grep "^${VG}:" $DRFILE > $SADM_TMP_FILE3
         awk -F: '{ printf "Type: %-4s  Mount Point: %-30s  LVName: %-20s \n",$4,$2,$3 }' $SADM_TMP_FILE3
-        sadm_logger " "
+        sadm_writelog " "
         echo -e "Do you want to proceed with the creation of all filesystems on $VG [Y/N] ? "
         read answer
         if [ "$answer" = "Y" ] || [ "$answer" = "y" ]
@@ -503,17 +503,17 @@ create_filesystem_on_vg()
         fi
     #
         if [ $Debug ]
-            then    sadm_logger " "
-                    sadm_logger "\n-----------------------------\n"
-                    sadm_logger "LINE     = ...$LVLINE..."
-                    sadm_logger "LVNAME   = ...$LVNAME..."
-                    sadm_logger "VGNAME   = ...$VGNAME..."
-                    sadm_logger "LVSIZE   = ...$LVSIZE MB..."
-                    sadm_logger "LVTYPE   = ...$LVTYPE..."
-                    sadm_logger "LVMOUNT  = ...$LVMOUNT..."
-                    sadm_logger "LVOWNER  = ...$LVOWNER..."
-                    sadm_logger "LVGROUP  = ...$LVGROUP..."
-                    sadm_logger "LVPROT   = ...$LVPROT..."
+            then    sadm_writelog " "
+                    sadm_writelog "\n-----------------------------\n"
+                    sadm_writelog "LINE     = ...$LVLINE..."
+                    sadm_writelog "LVNAME   = ...$LVNAME..."
+                    sadm_writelog "VGNAME   = ...$VGNAME..."
+                    sadm_writelog "LVSIZE   = ...$LVSIZE MB..."
+                    sadm_writelog "LVTYPE   = ...$LVTYPE..."
+                    sadm_writelog "LVMOUNT  = ...$LVMOUNT..."
+                    sadm_writelog "LVOWNER  = ...$LVOWNER..."
+                    sadm_writelog "LVGROUP  = ...$LVGROUP..."
+                    sadm_writelog "LVPROT   = ...$LVPROT..."
         fi
 
         if [ "$LVTYPE" != "swap" ] && [ "$LVMOUNT" = "" ]
@@ -527,8 +527,8 @@ create_filesystem_on_vg()
         recreate_filesystem
         RC=$?
 
-        if [ $RC -eq 0 ] ; then sadm_logger "Filesystem $LVMOUNT created successfully" ; fi
-        if [ $RC -ne 0 ] ; then sadm_logger "Filesystem $LVMOUNT ended with errors - Please verify"  ; fi
+        if [ $RC -eq 0 ] ; then sadm_writelog "Filesystem $LVMOUNT created successfully" ; fi
+        if [ $RC -ne 0 ] ; then sadm_writelog "Filesystem $LVMOUNT ended with errors - Please verify"  ; fi
         done
 }
 
@@ -545,7 +545,7 @@ create_filesystem_on_vg()
              exit 1
     fi
     if [ $Debug ]                                                       # If Debug Activated
-        then sadm_logger "We are using LVM version $LVMVER"               # Show LVM Version
+        then sadm_writelog "We are using LVM version $LVMVER"               # Show LVM Version
     fi
 #
     pre_validation                                                      # Input File > Cmd present ?

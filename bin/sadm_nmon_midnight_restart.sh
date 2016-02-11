@@ -78,14 +78,14 @@ NMON_2_KEEP=90                                  ; export NMON_2_KEEP    # NB nmo
 #
 pre_validation()
 {
-    sadm_logger "Verifying if nmon is accessible"
+    sadm_writelog "Verifying if nmon is accessible"
     NMON=`which nmon >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then NMON=`which nmon`
-        else sadm_logger "Error : The command 'nmon' was not found" ; return 1
+        else sadm_writelog "Error : The command 'nmon' was not found" ; return 1
     fi
     export NMON
-    sadm_logger "Yes it is at $NMON"
+    sadm_writelog "Yes it is at $NMON"
 }
 
 
@@ -98,30 +98,30 @@ restart_nmon()
 {
  
     # Display Current Running Number of nmon process
-    sadm_logger " "
+    sadm_writelog " "
     nmon_count=`ps -ef | grep 'nmon' | grep 's300' | grep -v grep | wc -l`
-    sadm_logger "There are $nmon_count nmon process actually running"
+    sadm_writelog "There are $nmon_count nmon process actually running"
     ps -ef | grep 'nmon' | grep 's300' | grep -v grep | nl
 
 
     # Kill Process to start the new day (New nmon File)
     if [ $nmon_count -gt 0 ]
        then NMON_ID=`ps -ef | grep -v grep | grep "$NMON" | grep 's300' | awk '{ print $2 }'`
-            sadm_logger "Killing Process $NMON_ID"
+            sadm_writelog "Killing Process $NMON_ID"
             ps -ef | grep -v grep | grep "$NMON" | grep 's300' | awk '{ print $2 }' | xargs kill -9
     fi
 
     # Start new Process
-    sadm_logger " "
-    sadm_logger "Starting nmon daemon ..."
-    sadm_logger "$NMON -s300 -c288 -t -m $SADM_NMON_DIR -f "
+    sadm_writelog " "
+    sadm_writelog "Starting nmon daemon ..."
+    sadm_writelog "$NMON -s300 -c288 -t -m $SADM_NMON_DIR -f "
     $NMON -s300 -c288 -t -m $SADM_NMON_DIR -f  >> $SADM_LOG 2>&1
-    if [ $? -ne 0 ] ; then sadm_logger "Error while starting - Not Started !" ; return 1 ; fi
+    if [ $? -ne 0 ] ; then sadm_writelog "Error while starting - Not Started !" ; return 1 ; fi
 
     # Display Process Info after starting nmon
     nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
-    sadm_logger " "
-    sadm_logger "The number of nmon process running after restarting it is : $nmon_count"
+    sadm_writelog " "
+    sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
     ps -ef | grep $NMON | grep -v grep | nl
 
     return 0   
@@ -141,7 +141,7 @@ restart_nmon()
     restart_nmon                                                        # nmon not running start it
     SADM_EXIT_CODE=$?                                                     # Recuperate error code
     if [ $SADM_EXIT_CODE -ne 0 ]                                          # if error occured
-        then sadm_logger "Problem starting nmon"                          # Advise User
+        then sadm_writelog "Problem starting nmon"                          # Advise User
     fi     
 
     sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC

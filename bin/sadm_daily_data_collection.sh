@@ -95,10 +95,10 @@ TOTAL_LINUX=0                                  ; export TOTAL_LINUX     # Nb Err
 #
 get_aix_files()
 {
-    sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting to process AIX Servers ..."
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "Starting to process AIX Servers ..."
 
-    sadm_logger "Producing a list of all AIX active servers"
+    sadm_writelog "Producing a list of all AIX active servers"
     SQL1="use sysinfo; SELECT server_name, server_domain FROM servers where server_os='AIX' "
     SQL2="and server_active=1 and server_doc_only=0 ;"
     SQL="${SQL1} ${SQL2}"
@@ -106,7 +106,7 @@ get_aix_files()
 
     # If no file to process
     if [ ! -s "$SADM_SADM_TMP_FILE1" ]
-        then sadm_logger "No AIX server to process ..."
+        then sadm_writelog "No AIX server to process ..."
     fi
     
     # Loop through the AIX actives file list just produce
@@ -117,32 +117,32 @@ get_aix_files()
 
         # Test pinging the server - if doesn t work then skip server & Log error
         #-------------------------------------------------------------------------------------------
-        sadm_logger " " ; sadm_logger " " ; sadm_logger "${SADM_DASH}"
-        sadm_logger "Starting to process the AIX server : ${server}.${domain}"
-        sadm_logger "ping -c 2 ${server}.${domain}"
+        sadm_writelog " " ; sadm_writelog " " ; sadm_writelog "${SADM_DASH}"
+        sadm_writelog "Starting to process the AIX server : ${server}.${domain}"
+        sadm_writelog "ping -c 2 ${server}.${domain}"
         ping -c 2 ${server}.${domain} >/dev/null 2>/dev/null
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "Could not ping server ${server_name}.${server_domain} ..."
-                sadm_logger " - Will not be able to process that server."
-                sadm_logger " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
-                sadm_logger "RETURN CODE IS 0 - OK"
+           then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
+                sadm_writelog " - Will not be able to process that server."
+                sadm_writelog " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
+                sadm_writelog "RETURN CODE IS 0 - OK"
                 continue
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "Linux Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
 
 
         # CREATE LOCAL RECEIVING DIR
         # Making sure the $SADMIN/dat/$server exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
-        sadm_logger " " 
-        sadm_logger "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server}" ]
-            then sadm_logger "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
+            then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server}"
                  chmod 2775 "${SADM_WWW_DAT_DIR}/${server}"
-            else sadm_logger "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
+            else sadm_writelog "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
         fi
 
     
@@ -152,70 +152,70 @@ get_aix_files()
         # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "AIX Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "AIX Total Error Count is now at $ERROR_COUNT"
 
 
         # NMON FILES
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "AIX Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "AIX Total Error Count is now at $ERROR_COUNT"
 
 
         # SAR PERF FILES
         # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "AIX Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "AIX Total Error Count is now at $ERROR_COUNT"
     done < $SADM_TMP_FILE1
 
-    sadm_logger " "
-    sadm_logger "FINAL number of AIX Error(s) detected is $ERROR_COUNT"
+    sadm_writelog " "
+    sadm_writelog "FINAL number of AIX Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 }
 
@@ -227,10 +227,10 @@ get_aix_files()
 #
 get_linux_files()
 {
-    sadm_logger "${SADM_DASH}"
-    sadm_logger "Starting to process Linux Servers ..."
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "Starting to process Linux Servers ..."
 
-    sadm_logger "Producing a list of all Linux active servers"
+    sadm_writelog "Producing a list of all Linux active servers"
     SQL1="use sysinfo; SELECT server_name, server_domain FROM servers where server_os='Linux' "
     SQL2="and server_active=1 and server_doc_only=0 ;"
     SQL="${SQL1} ${SQL2}"
@@ -244,32 +244,32 @@ get_linux_files()
 
         # Test pinging the server - if doesn t work then skip server & Log error
         #-------------------------------------------------------------------------------------------
-        sadm_logger " " ; sadm_logger " " ; sadm_logger "${SADM_DASH}"
-        sadm_logger "Starting to process the Linux server : ${server}.${domain}"
-        sadm_logger "ping -c 2 ${server}.${domain}"
+        sadm_writelog " " ; sadm_writelog " " ; sadm_writelog "${SADM_DASH}"
+        sadm_writelog "Starting to process the Linux server : ${server}.${domain}"
+        sadm_writelog "ping -c 2 ${server}.${domain}"
         ping -c 2 ${server}.${domain} >/dev/null 2>/dev/null
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "Could not ping server ${server}.${server_domain} ..."
-                sadm_logger " - Will not be able to process that server."
-                sadm_logger " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
-                sadm_logger "RETURN CODE IS 0 - OK"
+           then sadm_writelog "Could not ping server ${server}.${server_domain} ..."
+                sadm_writelog " - Will not be able to process that server."
+                sadm_writelog " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
+                sadm_writelog "RETURN CODE IS 0 - OK"
                 continue
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "Linux Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
 
 
         # CREATE LOCAL RECEIVING DIR
         # Making sure the $SADMIN/dat/$server exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
-        sadm_logger " " 
-        sadm_logger "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory ${SADM_WWW_DAT_DIR}/${server} Exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server}" ]
-            then sadm_logger "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
+            then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server}"
                  chmod 2775 "${SADM_WWW_DAT_DIR}/${server}"
-            else sadm_logger "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
+            else sadm_writelog "Perfect ${SADM_WWW_DAT_DIR}/${server} directory already exist"
         fi
 
 
@@ -277,70 +277,70 @@ get_linux_files()
         # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_DR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "Linux Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
 
 
         # NMON FILES
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_NMON_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "Linux Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
 
 
         # SAR PERF FILES
         # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
-        sadm_logger " " 
-        sadm_logger "Make sure the directory $WDIR Exist"
+        sadm_writelog " " 
+        sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_logger "Creating ${WDIR} directory"
+            then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_logger "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_logger "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
+        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/"
         rsync -var --delete -e 'ssh -qp32' ${server}:${SADM_SAR_DIR}/ $WDIR/
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_logger "ERROR NUMBER $RC for $server"
+           then sadm_writelog "ERROR NUMBER $RC for $server"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_logger "RETURN CODE IS 0 - OK"
+           else sadm_writelog "RETURN CODE IS 0 - OK"
         fi
-        sadm_logger "Linux Total Error Count is now at $ERROR_COUNT"
+        sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
     done < $SADM_TMP_FILE1
 
-    sadm_logger " "
-    sadm_logger "FINAL number of LINUX Error(s) detected is $ERROR_COUNT"
+    sadm_writelog " "
+    sadm_writelog "FINAL number of LINUX Error(s) detected is $ERROR_COUNT"
     return $ERROR_COUNT
 }
 
@@ -352,15 +352,15 @@ get_linux_files()
 
     sadm_start                                                          # Make sure Dir. Struc. exist
     
-    if [ "$(sadm_hostname).$(sadm_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_logger "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_logger "Process aborted"                              # Abort advise message
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -369,10 +369,10 @@ get_linux_files()
     get_linux_files                                                     # Collect Files from Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                           # Set Total AIX+Linux Errors
-    sadm_logger " " ; sadm_logger " " ;                                 # Insert Blank lines in log
-    sadm_logger "${SADM_DASH}"; sadm_logger "END OF PROCESSING"              # Advise user - End of Processing
-    sadm_logger "${SADM_DASH}"                                               # Advise user that we are finish
-    sadm_logger "Final Global Error count is at $SADM_EXIT_CODE"          # Advise nb. total errors.
-    sadm_logger "${SADM_DASH}"                                               # Advise user that we are finish
+    sadm_writelog " " ; sadm_writelog " " ;                                 # Insert Blank lines in log
+    sadm_writelog "${SADM_DASH}"; sadm_writelog "END OF PROCESSING"              # Advise user - End of Processing
+    sadm_writelog "${SADM_DASH}"                                               # Advise user that we are finish
+    sadm_writelog "Final Global Error count is at $SADM_EXIT_CODE"          # Advise nb. total errors.
+    sadm_writelog "${SADM_DASH}"                                               # Advise user that we are finish
     sadm_stop $SADM_EXIT_CODE                                             # End Process with exit Code
     exit $SADM_EXIT_CODE                                                  # Exit script

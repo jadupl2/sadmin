@@ -56,8 +56,10 @@ SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1
 #SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
 #SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
+#SADM_NMON_KEEPDAYS=60                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=60                      ; export SADM_SAR_KEEPDAYS    # Days to keep old *.sar
+#SADM_RCH_KEEPDAYS=60                      ; export SADM_RCH_KEEPDAYS    # Days to keep old *.rch
+#SADM_LOG_KEEPDAYS=60                      ; export SADM_LOG_KEEPDAYS    # Days to keep old *.log
  
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -77,7 +79,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 ERROR_COUNT=0                               ; export ERROR_COUNT            # Error Counter
 
 # Number of days to keep unmodified *.rch and *.log file - After that time they are deleted
-LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RCH+LOG Delete after
+LIMIT_DAYS=14                               ; export LIMIT_DAYS             # RCH+LOG Delete after
 
 
 
@@ -87,56 +89,56 @@ LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RC
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
-    sadm_logger "Client Directories HouseKeeping Starting"
-    sadm_logger " "
+    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Client Directories HouseKeeping Starting"
+    sadm_writelog " "
 
     # Reset privilege on SADMIN Base Directory
     if [ -d "$SADM_BASE_DIR" ]                                                  
-        then sadm_logger "find $SADM_BASE_DIR -type d -exec chmod -R 2775 {} \;"      
+        then sadm_writelog "find $SADM_BASE_DIR -type d -exec chmod -R 2775 {} \;"      
              find $SADM_BASE_DIR -type d -exec chmod -R 2775 {} \; >/dev/null 2>&1    
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_logger "find $SADM_BASE_DIR -exec chown sadmin.sadmin {} \;"    
+             sadm_writelog "find $SADM_BASE_DIR -exec chown sadmin.sadmin {} \;"    
              find $SADM_BASE_DIR -exec chown sadmin.sadmin {} \; >/dev/null 2>&1  
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi 
     
     # Set the $SADM_TMP_DIR directory so everyone can write to it.
     if [ -d "$SADM_TMP_DIR" ]
-        then sadm_logger "chmod 1777 $SADM_TMP_DIR"
+        then sadm_writelog "chmod 1777 $SADM_TMP_DIR"
              chmod 1777 $SADM_TMP_DIR
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi 
 
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
     if [ -d "$SADM_BASE_DIR/lost+found" ]
         then 
-             if [ "$(sadm_ostype)" = "AIX" ] 
-                then sadm_logger "chown root.system $SADM_BASE_DIR/lost+found"   # Special Privilege
+             if [ "$(sadm_get_ostype)" = "AIX" ] 
+                then sadm_writelog "chown root.system $SADM_BASE_DIR/lost+found"   # Special Privilege
                      chown root.system $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
-                else sadm_logger "chown root.root $SADM_BASE_DIR/lost+found"     # Special Privilege
+                else sadm_writelog "chown root.root $SADM_BASE_DIR/lost+found"     # Special Privilege
                      chown root.root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
              fi 
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi 
 
@@ -149,105 +151,105 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_logger " " ; sadm_logger "${SADM_TEN_DASH}"
-    sadm_logger "Client Files HouseKeeping Starting"
-    sadm_logger " "
+    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Client Files HouseKeeping Starting"
+    sadm_writelog " "
     
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_BIN_DIR" ]
-        then sadm_logger "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
+        then sadm_writelog "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
              find $SADM_BIN_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_LIB_DIR" ]
-        then sadm_logger "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"     
+        then sadm_writelog "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"     
              find $SADM_LIB_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1   
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
 
     # Remove files older than 7 days in SADMIN TEMP Directory 
     if [ -d "$SADM_TMP_DIR" ]
-        then sadm_logger "find $SADM_TMP_DIR -type f -mtime +7 -exec rm -f {} \;"
+        then sadm_writelog "find $SADM_TMP_DIR -type f -mtime +7 -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
-    # Remove *.rch (Return Code History) files older than $LIMIT_DAYS days in SADMIN/DAT/RCH Dir.
+    # Remove *.rch (Return Code History) files older than ${SADM_RCH_KEEPDAYS} days in SADMIN/DAT/RCH Dir.
     if [ -d "${SADM_RCH_DIR}" ]
-        then sadm_logger "Find any *.rch file older than ${LIMIT_DAYS} days in ${SADM_RCH_DIR} and delete them"
-             find ${SADM_RCH_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
-             find ${SADM_RCH_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
+        then sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR} and delete them"
+             find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
+             find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
-    # Remove any *.log in SADMIN LOG Directory older than ${LIMIT_DAYS} days
+    # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
-        then sadm_logger " "
-             sadm_logger "Keep log files for $LIMIT_DAYS days"
-             sadm_logger "Find any *.log file older than ${LIMIT_DAYS} days in ${SADM_LOG_DIR} and delete them"
-             find ${SADM_LOG_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
-             find ${SADM_LOG_DIR} -type f -mtime +${LIMIT_DAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
+        then sadm_writelog " "
+             sadm_writelog "Keep log files for ${SADM_LOG_KEEPDAYS} days"
+             sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR} and delete them"
+             find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
+             find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
     
     # Delete old nmon files - As defined in the sadmin.cfg file
     if [ -d "${SADM_NMON_DIR}" ]
-        then sadm_logger " "
-             sadm_logger "Keep nmon files for $SADM_NMON_KEEPDAYS days"
-             sadm_logger "List of nmon file that will be deleted"
-             sadm_logger "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;" 
+        then sadm_writelog " "
+             sadm_writelog "Keep nmon files for $SADM_NMON_KEEPDAYS days"
+             sadm_writelog "List of nmon file that will be deleted"
+             sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;" 
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
     
     # Delete old sar files - As defined in the sadmin.cfg file
     if [ -d "${SADM_SAR_DIR}" ]
-       then sadm_logger " "
-            sadm_logger "Keep sar files for $SADM_SAR_KEEPDAYS days"
-            sadm_logger "List of sar file that will be deleted"
-            sadm_logger "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;" 
+       then sadm_writelog " "
+            sadm_writelog "Keep sar files for $SADM_SAR_KEEPDAYS days"
+            sadm_writelog "List of sar file that will be deleted"
+            sadm_writelog "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;" 
             find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
             find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
             if [ $? -ne 0 ]
-                then sadm_logger "Error occured on the last operation."
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_logger "OK"
-                     sadm_logger "Total Error Count at $ERROR_COUNT"
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
             fi
     fi
     
@@ -260,8 +262,8 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_logger "This script must be run by the ROOT user"     # Advise User Message
-             sadm_logger "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
+             sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi

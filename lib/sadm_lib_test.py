@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_template.py
@@ -10,6 +10,8 @@
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, getpass, subprocess
 from subprocess import Popen, PIPE
+#pdb.set_trace()                                                       # Activate Python Debugging
+
 
 
 #===================================================================================================
@@ -27,11 +29,10 @@ import sadm_lib_std as sadm                                             # Import
 #===================================================================================================
 # SADM Variables use on a per program basis
 #===================================================================================================
-ver                = "1.0"                                              # Default Program Version
-logtype            = "B"                                                # Default S=Scr L=Log B=Both
-multiple_exec      = "N"                                                # Default Run multiple copy
-debug              = 8                                                  # Default Debug Level (0-9)
-exit_code          = 0                                                  # Script Error Return Code
+sadm.ver                = "2.0"                                         # Default Program Version
+sadm.logtype            = "B"                                           # Default S=Scr L=Log B=Both
+sadm.multiple_exec      = "N"                                           # Default Run multiple copy
+sadm.debug              = 8                                             # Default Debug Level (0-9)
 
 # SADM Configuration file - Variables were loaded form the configuration file (Can be overridden)
 #sadm.mail_type      = 1                                                # 0=No 1=Err 2=Succes 3=All
@@ -47,12 +48,7 @@ exit_code          = 0                                                  # Script
 #sadm.rch_keepdays   = 60                                               # Days to keep old *.rch
 #sadm.log_keepdays   = 60                                               # Days to keep old *.log
 
-#===================================================================================================
-#                                 Local Variables used by this script
-#===================================================================================================
-cnow               = datetime.datetime.now()                            # Get Current Time
-curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
-curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
+
 
 
 #===================================================================================================
@@ -60,12 +56,26 @@ curtime            = cnow.strftime("%H:%M:%S")                          # Format
 #===================================================================================================
 #
 def main():
-    sadm.start()
-    if debug > 4 : sadm.display_env()                              # Display Env. Variables
+    pass
+    
+#    g.sadmlog = sadmlib.log_tools()                                     # Instantiate SADM Log Tools
+#    g.sadmlog.setlogtype(g.logtype)                                     # Set the Log Type
+    
+#    sadmlib.check_requirements()                                        # All That is Needed is OK?
+#    sadmlib.start()                                                     # Open Log/Upd RCH/Make Dir
+#    if g.debug > 4 : sadmlib.display_env()                              # Display Env. Variables
+#    sadmlib.load_config_file()                                          # Load configuration file
 
-    sadm.stop(exit_code)                                           # Close log & trim 
-    sys.exit(exit_code)                                               # Exit with Error Code
+    #if rc != 0 :
+    #    g.sadmlog.write("Email problem mon Jacques")
+    
+#    sadmlib.sendmail("Test email","Ceci est un test") 
+
+    #sadmlib.trimfile("/sadmin/log/nomad_sadm_fs_save_info.log",480)
+#    sadmlib.stop(g.exit_code)                                           # Close log & trim 
+#    sys.exit(g.exit_code)                                               # Exit with Error Code
 
 # This idiom means the below code only runs when executed from command line
-if __name__ == '__main__':
-    main()
+if __name__ == '__main__':  main()
+
+
