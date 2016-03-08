@@ -144,7 +144,7 @@ display_detail_line()
     RLINE2=`printf "%s %s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" ${WELAPSE}`
     RLINE="${RLINE1}${RLINE2}"                                          # Wrap 2 lines together
     if [ "$MAIL_ONLY" = "OFF" ]                                         # No Mail include color
-        then if [ $WRCODE -eq 0 ] ; then echo -e "${blue}\c" ;fi        # Blue For Good Finish Job
+        then if [ $WRCODE -eq 0 ] ; then echo -e "${white}\c" ;fi       # white For Good Finish Job
              if [ $WRCODE -eq 1 ] ; then echo -e "${red}\c"   ;fi       # Red completed with Error
              if [ $WRCODE -eq 2 ] ; then echo -e "${green}\c"   ;fi     # Green for running job
              echo -e "${RLINE}${reset}"                                 # Display Line

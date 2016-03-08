@@ -167,7 +167,7 @@ sadm_server_model() {
 sadm_server_serial() {
     case "$(sadm_get_ostype)" in
         "LINUX") if [ "$(sadm_server_type)" = "V" ]
-                    then sadm_server_serial="N/A" 
+                    then sadm_server_serial=" " 
                     else sadm_server_serial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
                  fi 
                  ;;
@@ -316,7 +316,7 @@ sadm_server_hardware_bitmode() {
 sadm_server_disks() {
     index=0 ; sadm_server_disks=""                                                  # Init Variables
     case "$(sadm_get_ostype)" in
-        "LINUX")    for wdisk in `find /sys/block -name "sd*" -exec basename {} \;` # Get Disk Name 
+        "LINUX")    for wdisk in `find /sys/block -name "sd[a-z]" -exec basename {} \;` # Get Disk Name 
                         do
                         if [ "$index" -ne 0 ]                                       # Don't add , for 1st Disk
                             then sadm_server_disks="${sadm_server_disks},"          # For others disks add ","
@@ -369,17 +369,17 @@ sadm_server_vg() {
                             fi    
                             sadm_vg_name=`echo ${sadm_wvg} | awk '{ print $1 }'`            # Save VG Name
                             sadm_vg_size=`echo ${sadm_wvg} | awk '{ print $2 }'`            # Get VGSize from vgs output
-                            if $(echo $sadm_vg_size | grep 'g' >/dev/null 2>&1)             # If Size Specified in GB
-                                then sadm_vg_size=`echo $sadm_vg_size | sed 's/g//'`        # Get rid of "g" in size
+                            if $(echo $sadm_vg_size | grep -i 'g' >/dev/null 2>&1)             # If Size Specified in GB
+                                then sadm_vg_size=`echo $sadm_vg_size | sed 's/g//' |sed 's/G//'`        # Get rid of "g" in size
                                      sadm_vg_size=`echo "($sadm_vg_size * 1024) / 1" | $SADM_BC` # Convert in MB
                                 else sadm_vg_size=`echo $sadm_vg_size | sed 's/m//'`        # Get rid of "m" in size
                                      sadm_vg_size=`echo "$sadm_vg_size / 1" | $SADM_BC`     # Get rid of decimal
                             fi
                             sadm_vg_free=`echo ${sadm_wvg} | awk '{ print $3 }'`            # Get VGFree from vgs ouput
-                            if $(echo $sadm_vg_free | grep 'g' >/dev/null 2>&1)             # If Size Specified in GB
-                                then sadm_vg_free=`echo $sadm_vg_free | sed 's/g//'`        # Get rid of "g" in size
+                            if $(echo $sadm_vg_free | grep -i 'g' >/dev/null 2>&1)             # If Size Specified in GB
+                                then sadm_vg_free=`echo $sadm_vg_free | sed 's/g//' |sed 's/G//'|sed 's/M//'`        # Get rid of "g" in size
                                      sadm_vg_free=`echo "($sadm_vg_free * 1024) / 1" | $SADM_BC`  # Convert in MB
-                                else sadm_vg_free=`echo $sadm_vg_free | sed 's/m//'`        # Get rid of "m" in size
+                                else sadm_vg_free=`echo $sadm_vg_free | sed 's/m//' |sed 's/M//'`        # Get rid of "m" in size
                                      sadm_vg_free=`echo "$sadm_vg_free / 1" | $SADM_BC`     # Get rid of decimal
                             fi
                             sadm_vg_used=`expr ${sadm_vg_size} - ${sadm_vg_free}`           # Calculate VG Used MB 

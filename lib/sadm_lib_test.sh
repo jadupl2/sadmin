@@ -169,6 +169,39 @@ Debug=true                                      ; export Debug          # Debug 
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
 
+    # For Debugging Purpose - Display Final Value of configuration file
+    tput clear
+    printf "=========================================================================================================================\n"
+    printf ""
+    printf  "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information\n"
+    printf "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR\n"         # Default email address
+    printf "  - SADM_CIE_NAME=$SADM_CIE_NAME\n"           # Company Name
+    printf "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE\n"         # Send Email after each run
+    printf "  - SADM_SERVER=$SADM_SERVER\n"               # SADMIN server
+    printf "  - SADM_DOMAIN=$SADM_DOMAIN\n"               # SADMIN Domain Default
+    printf "  - SADM_USER=$SADM_USER\n"                   # sadmin user account
+    printf "  - SADM_GROUP=$SADM_GROUP\n"                 # sadmin group account
+    printf "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE\n"     # Max Line in each *.log
+    printf "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE\n"       # Max Line in each *.rch
+    printf "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS\n" # Days to keep old *.nmon
+    printf "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.sar
+    printf "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS\n"  # Days to keep old *.rch
+    printf "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.log
+    printf "  - SADM_PGUSER=$SADM_PGUSER\n"               # PostGres User Name
+    printf "  - SADM_PGGROUP=$SADM_PGGROUP\n"             # PostGres Group Name
+    printf "  - SADM_PGDB=$SADM_PGDB\n"                   # PostGres DataBase Name
+    printf "  - SADM_PGSCHEMA=$SADM_PGSCHEMA\n"           # PostGres DataBase Schema
+    printf "  - SADM_PGHOST=$SADM_PGHOST\n"               # PostGres DataBase Host
+    printf "  - SADM_PGPORT=$SADM_PGPORT\n"               # PostGres Listening Port
+    printf "  - SADM_RW_PGUSER=$SADM_RW_PGUSER\n"         # PostGres RW User
+    printf "  - SADM_RW_PGPWD=$SADM_RW_PGPWD\n"           # PostGres RW User Pwd
+    printf "  - SADM_RO_PGUSER=$SADM_RO_PGUSER\n"         # PostGres RO User
+    printf "  - SADM_RO_PGPWD=$SADM_RO_PGPWD\n"           # PostGres RO User Pwd
+    printf "=========================================================================================================================\n"
+    echo "Press [ENTER] to Continue" ; read dummy
+     
+
+     
     tput clear
     echo " "
     echo "Testing Epoch and Elapse time calculation functions"

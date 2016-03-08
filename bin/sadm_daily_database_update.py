@@ -1,300 +1,465 @@
-#!/usr/bin/python
-#############################################################################################
+#!/usr/bin/env python
+#===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      update_server_hardware.py
-#   Synopsis:   Read hardware file (hwinfo_*) and update server table
-#############################################################################################
-# Description
-#   Run Daily
+#   Title:      sadm_database_update.py
+#   Synopsis:   The Program need to run once a day.
+#               It read all the {FQN}_sysinfo.txt present in /sadmin/www/dat and update the
+#               server information table in the sadmin database.
+#   Date:       February 2016
+#===================================================================================================
+import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
+#pdb.set_trace()                                                       # Activate Python Debugging
+
+
+#===================================================================================================
+# SADM Library Initialization
+#===================================================================================================
+# If SADMIN environment variable is defined, use it as the SADM Base Directory else use /sadmin.
+sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
+sadm_lib_dir            = os.path.join(sadm_base_dir,'lib')             # Set SADM Library Directory
+sys.path.append(sadm_lib_dir)                                           # Add Library Dir to PyPath
+import sadm_lib_std as sadm                                             # Import SADM Tools Library
+sadm.load_config_file()                                                 # Load cfg var from sadmin.cfg
+
+
+# SADM Variables use on a per script basis
+#===================================================================================================
+sadm.ver                = "5.0"                                         # Default Program Version
+sadm.multiple_exec      = "N"                                           # Default Run multiple copy
+sadm.debug              = 0                                             # Default Debug Level (0-9)
+sadm.exit_code          = 0                                             # Script Error Return Code
+sadm.log_append         = "N"                                           # Append to Existing Log ?
+sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
+
+# SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
+cfg_mail_type      = 3                                                  # 0=No 1=Err 2=Succes 3=All
+#cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
+#cfg_cie_name       = ""                                                 # Company Name
+#cfg_user           = ""                                                 # sadmin user account
+#cfg_server         = ""                                                 # sadmin FQN Server
+#cfg_domain         = ""                                                 # sadmin Default Domain
+#cfg_group          = ""                                                 # sadmin group account
+#cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
+#cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
+#cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
+#cfg_sar_keepdays   = 60                                                 # Days to keep old *.sar
+#cfg_rch_keepdays   = 60                                                 # Days to keep old *.rch
+#cfg_log_keepdays   = 60                                                 # Days to keep old *.log
+#cfg_pguser         = ""                                                 # PostGres Database user
+#cfg_pggroup        = ""                                                 # PostGres Database Group
+#cfg_pgdb           = ""                                                 # PostGres Database Name
+#cfg_pgschema       = ""                                                 # PostGres Database Schema
+#cfg_pghost         = ""                                                 # PostGres Database Host
+#cfg_pgport         = 5432                                               # PostGres Database Port
+#cfg_rw_pguser      = ""                                                 # PostGres Read Write User
+#cfg_rw_pgpwd       = ""                                                 # PostGres Read Write Pwd
+#cfg_ro_pguser      = ""                                                 # PostGres Read Only User
+#cfg_ro_pgpwd       = ""                                                 # PostGres Read Only Pwd
+
+
+#===================================================================================================
+#                                 Local Variables used by this script
+#===================================================================================================
+row_list           = []
+cur                 = ""
+conn                = ""
+
+
+
+
+#===================================================================================================
+#  Return to the caller a list (colnames) of the column name that are part of the SADM server table
+#===================================================================================================
 #
-#############################################################################################
+def get_columns_name(wconn, wcur,tbname):
+    if sadm.debug > 4 : sadm.writelog ("Get the columns name of %s table" % (tbname))
+    try :
+        wcur.execute("SELECT * from sadm.server")
+        colnames = [desc[0] for desc in wcur.description]
+        wconn.commit()
+    except psycopg2.Error as e:
+        sadm.writelog ("Could not get the columns Name")
+        sadm.writelog ("%s" % (e))
+        sys.exit(1)
+    if sadm.debug > 4 :
+        sadm.writelog ("Columns name are : %s" % (colnames))
+        sadm.writelog ("There are %s columns in server table" % (len(colnames)))
+
+    return (colnames)
+
+    
+#===================================================================================================
+# With column name (key) of the server table received build a dictionnary with default value (value)
+# DEFINE DEFAULT VALUES OF SERVER TABLE WHEN WE NEED TO ADD A NEW SERVER INTO THE SERVER TABLE
+#===================================================================================================
 #
-import MySQLdb, os, sys, pdb, socket, datetime, glob
-#pdb.set_trace()
-#############################################################################################
-#                          Global Variables
-#############################################################################################
-CURDIR      = os.getcwd()                                       # Get Current Directory
-OSTYPE      = os.name                                           # Get OS name (nt,dos,posix,...)
-PLATFORM    = sys.platform                                      # Get platform (win32,mac,posix)
-HOSTNAME    = socket.gethostname()                              # Get current hostname
-PGM_VER     = "1.6"                                             # Program Version
-PGM_NAME    = os.path.basename(sys.argv[0])                     # Program name
-PGM_ARGS    = len(sys.argv)                                     # Nb. argument receive
-CNOW        = datetime.datetime.now()                           # Get Current Time
-CURDATE     = CNOW.strftime("%Y.%m.%d")                         # Format Current date
-CURTIME     = CNOW.strftime("%H:%M:%S")                         # Format Current Time
+def init_row_dictionnary(colnames):
+    srow = {}                                                           # Create empty Dictionnary
+    for index in range(1,len(colnames)):                                # Loop from 1 to Nb Columns
+        srow[colnames[index]] = ""                                      # Set All fields to Blank
+        
+    srow['srv_active']           = True                                 # Server Active is True
+    srow['srv_vm']               = True                                 # Server is a VM is True
+    srow['srv_osupdate']         = True                                 # Update O/S Periodically
+    srow['srv_sporadic']         = False                                # Server online sporadically
+    srow['srv_monitor']          = True                                 # Monitor Activity of server
+    srow['srv_backup']           = True                                 # Backup the server
+    srow['srv_osupdate_reboot']  = False                                # Reboot server after update
+    
+    srow['srv_osver_major']      = int(0)                               # Server OS Major Version
+    srow['srv_memory']           = int(0)                               # Server Memory in MB
+    srow['srv_kernel_bitmode']   = int(64)                              # Running Kernel 32/64 Bits
+    srow['srv_hwd_bitmode']      = int(64)                              # Hardware can run 32/64Bits
+    srow['srv_nb_cpu']           = int(0)                               # Number of CPU
+    srow['srv_cpu_speed']        = int(0)                               # Server CPU Speed
+    srow['srv_nb_socket']        = int(0)                               # Server Nb of CPU Socket
+    srow['srv_core_per_socket']  = int(0)                               # Nb. Of Core per Socket 
+    srow['srv_osupdate_day']     = int(5)                               # Day of Update 0=Sunday ...
 
-# Base Directory
-BASEDIR     = '/sysinfo/www/data/hw'                            # Where hwinfo_*.txt input file are
+    srow['srv_osupdate_period']  = 'm'                                  # m=mth w=week s=sem.b=bimen
+    srow['srv_type']  = 'p'                                             # p=prod t=test d=dev 
+    wdate = datetime.datetime.now()                                     # Get current Date
+    srow['srv_last_update'] = wdate.date()                              # Set Last Update Date
+    return (srow)
 
-# Database information
-print "%s" % HOSTNAME
 
-
-db_server   = 'sysinfo.maison.ca'
-db_user     = 'root'
-db_passwd   = 'holmes'
-db_name     = 'sysinfo'
-
-# Debug Flag - Acticate/Deactivate extra output for debugging
-#DEBUG      = False
-DEBUG       = True
-
-# ------------------------------------------------------------------------------
-#                        Open DataBase Connection
-# ------------------------------------------------------------------------------
-#def open_database(w_server, w_user, w_passwd, w_name ):
+#===================================================================================================
+#                                PRINT SERVER TABLE CONTENT
+#===================================================================================================
 #
+def print_table(wconn,wcur):
+    lineno = 1
+    sadm.writelog ("List Server Table Content")
+    try :
+        wcur.execute("SELECT * from sadm.server")
+        rows = wcur.fetchall()
+        wconn.commit()
+    except psycopg2.Error as e:
+        sadm.writelog ("Error Reading Server Table")
+        sadm.writelog (e.pgerror)
+        sadm.writelog (e.diag.message_det)
+        sys.exit(1)
+    for row in rows:
+        sadm.writelog ("%02d %s" % (lineno, row))
+        lineno += 1
+
+        
+        
+#===================================================================================================
+#  FOR DEBUGGING PURPOSE AND FOR ANALYSIS IN CASE OF ERROR - PRINT CONTENT OF DICTIONNARY SERVER_ROW
+#===================================================================================================
 #
-#   #except:
-##   #   print "Error: Unable to open database",w_name
-#   return
-
-
-# ------------------------------------------------------------------------------
-#             Process each hwinfo* file in $BASEDIR and update Database
-# ------------------------------------------------------------------------------
-def update_db():
-   try :
-      db = MySQLdb.connect(db_server, db_user, db_passwd, db_name )
-   except MySQLdb.Error, e:
-      raise e
-
-   # prepare a cursor object using cursor() method
-   cursor = db.cursor()
-   # Prepare SQL query to INSERT a record into the database.
-   #sql = "SELECT * FROM servers"
-
-   HWINFO = BASEDIR + "/hwinfo_*.txt"
-   for filename in glob.glob(HWINFO):
-
-      print "\nProcessing : " + filename
-      HW = open(filename,'rU' )                                 # Open Hardware file
-      for hwline in HW:                                         # Loop until file is process
-         print "Processing line : " + hwline.strip()
-         hwarray       =  hwline.split(';')                     # Split line based on ;
-         hw_osname     =  hwarray[0].capitalize()               # Servername OS
-         hw_servername =  hwarray[1]                            # Servername
-
-         #pdb.set_trace()
-         # OS Version
-         try :
-            (hw_osver1,hw_osver2,hw_osver3)=hwarray[2].split('.')
-            hw_osver1     = int(hw_osver1)
-            hw_osver2     = int(hw_osver2)
-            hw_osver3     = int(hw_osver3)
-         except :
-            hw_osver1     = int(0)
-            hw_osver2     = int(0)
-            hw_osver3     = int(0)
-
-         hw_model      =  hwarray[3]                            # Hardware model
-         hw_serial     =  hwarray[4]                            # Hardware serial
-         wint          =  hwarray[5].replace('MB','')           # Hardware Memory
-         if (wint.strip() == '') :                              # if no Memory specify
-            hhw_memory  = 0                                     # Default Memory=0
-         else:
-            hw_memory = int(wint)                               # Use Hardware Memory
-
-         # Number of CPU
-         if (hwarray[6].strip() == ''):                         # If Nb CPU not specify
-            hw_cpu_nb = 1                                       # Assume 1 CPU
-         else :
-            hw_cpu_nb =  int(hwarray[6])                        # Number of CPU specify
-
-         # CPU Speed
-         try :
-            print "MHZ %s " % hwarray[7]
-            #wfloat  =  float(hwarray[7].replace('MHz',''))      # Remove MHZ from CPU Speed
-            wfloat  =  hwarray[7]                               # Get CPU SPeed
-            if (wfloat.strip() == '') :                         # If no CPU speed specify
-               hw_cpu_speed  = 0                                # Default = 0
-            else :
-               hw_cpu_speed = int(wfloat)                       # CPU Speed
-         except :
-            hw_cpu_speed = int(0)
-
-         # Internal Disk
-         wint =  float(hwarray[8].replace('GB',''))             # Internal Disk
-         hw_disk_int = int(wint)                                # Use Internal Disk
-
-         # External Disk
-         wint =  float(hwarray[9].replace('GB',''))             # External Disk
-         hw_disk_ext = int(wint)                                # External Disk Specify
-
-         # VMware
-         try :
-            hw_vmware =  int(hwarray[10])                       # VMWare=0
-         except :
-            hw_vmware = int(0)
-
-         # ETH0
-         try :
-            if ( len(hwarray[11]) == 0  ):
-               hw_ip1a=int(0)
-               hw_ip1b=int(0)
-               hw_ip1c=int(0)
-               hw_ip1d=int(0)
-            else:
-               (hw_ip1a,hw_ip1b,hw_ip1c,hw_ip1d)=hwarray[11].split('.')
-               hw_ip1a = int(hw_ip1a)
-               hw_ip1b = int(hw_ip1b)
-               hw_ip1c = int(hw_ip1c)
-               hw_ip1d = int(hw_ip1d)
-         except :
-               hw_ip1a=int(0)
-               hw_ip1b=int(0)
-               hw_ip1c=int(0)
-               hw_ip1d=int(0)
-
-         # ETH1
-         try :
-             if ( len(hwarray[12]) == 0 ):
-                hw_ip2a=int(0)
-                hw_ip2b=int(0)
-                hw_ip2c=int(0)
-                hw_ip2d=int(0)
-             else:
-                (hw_ip2a,hw_ip2b,hw_ip2c,hw_ip2d)=hwarray[12].split('.')   # Split eth1 IP
-                hw_ip2a = int(hw_ip2a)
-                hw_ip2b = int(hw_ip2b)
-                hw_ip2c = int(hw_ip2c)
-                hw_ip2d = int(hw_ip2d)
-         except :
-                hw_ip2a=int(0)
-                hw_ip2b=int(0)
-                hw_ip2c=int(0)
-                hw_ip2d=int(0)
-
-         # ETH2
-         try :
-             if ( len(hwarray[13]) == 0 ):
-                hw_ip3a=int(0)
-                hw_ip3b=int(0)
-                hw_ip3c=int(0)
-                hw_ip3d=int(0)
-             else:
-                (hw_ip3a,hw_ip3b,hw_ip3c,hw_ip3d)=hwarray[13].split('.')   # Split eth1 IP
-                hw_ip3a = int(hw_ip3a)
-                hw_ip3b = int(hw_ip3b)
-                hw_ip3c = int(hw_ip3c)
-                hw_ip3d = int(hw_ip3d)
-         except :
-                hw_ip3a=int(0)
-                hw_ip3b=int(0)
-                hw_ip3c=int(0)
-                hw_ip3d=int(0)
-
-         # 32 or 64 Bits 0=32 1=64)
-         #print "hwarray[14] = %d" % int(hwarray[14])
-         try :
-             if (int(hwarray[14]) == 64) :
-                hw_bits=1
-             else :
-                hw_bits=0
-         except :
-                hw_bits=0
-
-         # Use AD 1=Yes 0=No
-         try :
-            hw_use_ad =  int(hwarray[15])
-         except :
-            hw_use_ad = int(0)
-
-         # Collect TSM Version
-         try :
-            hw_tsm_ver =  hwarray[16]
-         except :
-            hw_tsm_ver =  "N/A"
-
-         # Collect TSM TDP Version
-         try :
-            hw_tsm_tdp =  hwarray[17]
-         except :
-            hw_tsm_tdp =  "N/A"
-
-         print "server_name      = %s" % hw_servername
-         print "server_os        = %s" % hw_osname
-         print "server_vm        = %d" % hw_vmware
-         print "server_osver1    = %d" % hw_osver1
-         print "server_osver2    = %d" % hw_osver2
-         print "server_osver3    = %d" % hw_osver3
-         print "server_model     = %s" % hw_model
-         print "server_serial    = %s" % hw_serial
-         print "server_cpu_nb    = %d" % hw_cpu_nb
-         print "server_cpu_speed = %d" % hw_cpu_speed
-         print "server_disk_int  = %d" % hw_disk_int
-         print "server_disk_ext  = %d" % hw_disk_ext
-         print "server_memory    = %s" % hw_memory
-         print "server_ip1a      = %d" % hw_ip1a
-         print "server_ip1b      = %d" % hw_ip1b
-         print "server_ip1c      = %d" % hw_ip1c
-         print "server_ip1d      = %d" % hw_ip1d
-         print "server_ip2a      = %d" % hw_ip2a
-         print "server_ip2b      = %d" % hw_ip2b
-         print "server_ip2c      = %d" % hw_ip2c
-         print "server_ip2d      = %d" % hw_ip2d
-         print "server_ip3a      = %d" % hw_ip3a
-         print "server_ip3b      = %d" % hw_ip3b
-         print "server_ip3c      = %d" % hw_ip3c
-         print "server_ip3d      = %d" % hw_ip3d
-         print "server_bits      = %d" % hw_bits
-         print "server_use_as    = %d" % hw_use_ad
-         print "server_tsm_ver   = %s" % hw_tsm_ver
-         print "server_tsm_tdp   = %s" % hw_tsm_tdp
-
-
-#         # Setup SQL Update Statement
-         sql = "UPDATE servers SET server_os='%s', server_vm='%d', server_osver1='%d', server_osver2='%d', server_osver3='%d', \
-                    server_model='%s',  server_serial='%s', server_cpu_nb='%d', server_cpu_speed='%d',\
-                    server_disk_int='%d', server_disk_ext='%d', server_memory='%d', server_ip1a='%d', server_ip1b='%d', server_ip1c='%d',\
-                    server_ip1d='%d', server_ip2a='%d', server_ip2b='%d', server_ip2c='%d', server_ip2d='%d', server_ip3a='%d', \
-                    server_ip3b='%d', server_ip3c='%d', server_ip3d='%d', server_bits='%d', server_use_ad='%d', server_tsm_ver='%s', server_tsm_tdp='%s' \
-                where server_name='%s';" % \
-                (hw_osname, \
-                hw_vmware, \
-                hw_osver1, hw_osver2,   hw_osver3, \
-                hw_model,  \
-                hw_serial, \
-                hw_cpu_nb, \
-                hw_cpu_speed,\
-                hw_disk_int, \
-                hw_disk_ext, \
-                hw_memory, \
-                hw_ip1a, hw_ip1b, hw_ip1c, hw_ip1d, \
-                hw_ip2a, hw_ip2b, hw_ip2c, hw_ip2d, \
-                hw_ip3a, hw_ip3b, hw_ip3c, hw_ip3d, \
-                hw_bits, hw_use_ad, hw_tsm_ver, hw_tsm_tdp, \
-                hw_servername);
-         print "SQL = %s " % sql;
-
-         try:
-            cursor.execute(sql)
-            db.commit()
-            print "Transaction Submitted with Success for " + hw_servername
-         except:
-            db.rollback()
-            print "Error - Rolling Back transaction for " + hw_servername
-      HW.close()                             # Close Hardware info file
-   db.close()
-   return
+def print_server_row(wrow):
+    sadm.writelog (sadm.ten_dash)
+    sadm.writelog ("Print Server Dictionnary for Analysis")
+    lineno = 0
+    for k, v in wrow.iteritems():
+        print ("[%2d] %-25s ...%s..." % (lineno, k, v))
+        lineno += 1
+    sadm.writelog (sadm.ten_dash)
 
 
 
-# ------------------------------------------------------------------------------
-#                     M A I N     P R O G R A M
-# ------------------------------------------------------------------------------
+#===================================================================================================
+#     READ SERVER TABLE TO CHECK IF A KEY EXIST - SO WE KNOW IF WE WILL INSERT OR UPDATE ROW
+#                   RETURN TRUE IF EXIST AND FALSE IF KEY IS NOT FOUND
+#===================================================================================================
+#
+def read_row(wconn,wcur,wkey):
+    if sadm.debug > 4 : print ("Try Locate the server %s in server table" % (wkey))
+    try :
+        wcur.execute("SELECT srv_name FROM sadm.server WHERE srv_name = %s", [wkey])
+        wconn.commit()
+    except psycopg2.ProgrammingError as e:
+        print ("Error: Error trying to locate server %s in server table" % (wkey))
+        print ("%s" % e)
+    return wcur.fetchone() is not None
+
+
+
+#===================================================================================================
+#                      INSERT ROW INTO THE SERVER TABLE FROM THE WROW DICTIONNARY
+#===================================================================================================
+#
+def insert_row(wconn, wcur, wrow):
+    sadm.writelog ("Insert information of server %s in server table" % (wrow['srv_name']))
+    wdate = datetime.datetime.now()                                     # Get current Date
+    wrow['srv_creation_date'] = wdate.date()                            # Set Last Update Date
+    try:
+        wcur.execute("insert into sadm.server                                                   \
+        (srv_name,              srv_domain,                 srv_desc,                           \
+         srv_notes,             srv_type,                   srv_ostype,                         \
+         srv_osname,            srv_oscodename,             srv_osversion,                      \
+         srv_osver_major,       srv_kernel_version,         srv_kernel_bitmode,                 \
+         srv_hwd_bitmode,       srv_active,                 srv_creation_date,                  \
+         srv_last_update,       srv_model,                  srv_serial,                         \
+         srv_vm,                srv_memory,                 srv_nb_cpu,                         \
+         srv_nb_socket,         srv_core_per_socket,        srv_thread_per_core,                \
+         srv_ip,                srv_ips_info,               srv_disks_info,                     \
+         srv_vgs_info,          srv_sporadic,               srv_monitor,                        \
+         srv_backup,            srv_osupdate,               srv_osupdate_reboot,                \
+         srv_osupdate_day,      srv_osupdate_period)            \
+        values (%s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s,           \
+                %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s )",                               \
+        (wrow['srv_name'],          wrow['srv_domain'],            wrow['srv_desc'],            \
+         wrow['srv_notes'],         wrow['srv_type'],              wrow['srv_ostype'],          \
+         wrow['srv_osname'],        wrow['srv_oscodename'],        wrow['srv_osversion'],       \
+         wrow['srv_osver_major'],   wrow['srv_kernel_version'],    wrow['srv_kernel_bitmode'],  \
+         wrow['srv_hwd_bitmode'],   wrow['srv_active'],            wrow['srv_creation_date'],   \
+         wrow['srv_last_update'],   wrow['srv_model'],             wrow['srv_serial'],          \
+         wrow['srv_vm'],            wrow['srv_memory'],            wrow['srv_nb_cpu'],          \
+         wrow['srv_nb_socket'],     wrow['srv_core_per_socket'],   wrow['srv_thread_per_core'], \
+         wrow['srv_ip'],            wrow['srv_ips_info'],          wrow['srv_disks_info'],      \
+         wrow['srv_vgs_info'],      wrow['srv_sporadic'],          wrow['srv_monitor'],         \
+         wrow['srv_backup'],        wrow['srv_osupdate'],          wrow['srv_osupdate_reboot'], \
+         wrow['srv_osupdate_day'],  wrow['srv_osupdate_period'],                                \
+        ))
+    except (psycopg2.IntegrityError, psycopg2.ProgrammingError, KeyError, psycopg2.DataError ) , e:
+        sadm.writelog ("ERROR: Inserting server %s row into server table" % (wrow['srv_name']))
+        print ("%s" % e)
+        wconn.rollback()
+        print_server_row(wrow)
+        return 1
+    wconn.commit()
+    sadm.writelog ("Total number of rows inserted : %s " % (wcur.rowcount))
+    sadm.writelog ("Insertion of server %s Succeeded" % (wrow['srv_name']))
+    return 0
+
+
+
+
+
+
+#===================================================================================================
+#                   UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
+#===================================================================================================
+#
+def update_row(wconn, wcur, wrow):
+    sadm.writelog ("Update information of server %s in server table" % (wrow['srv_name']))
+    
+    try:
+        wcur.execute("""update sadm.server set                          \
+            srv_ostype = %s,                srv_osname = %s,            \
+            srv_oscodename  = %s,           srv_domain = %s,            \
+            srv_memory = %s,                srv_last_update = %s,       \
+            srv_osversion = %s,             srv_osver_major = %s,       \
+            srv_ip = %s ,                   srv_type = %s,              \
+            srv_kernel_version = %s ,       srv_kernel_bitmode = %s,    \
+            srv_model = %s,                 srv_serial = %s,            \
+            srv_hwd_bitmode = %s,           srv_nb_cpu = %s,            \
+            srv_cpu_speed = %s,             srv_nb_socket = %s,         \
+            srv_core_per_socket = %s,       srv_thread_per_core = %s,   \
+            srv_ips_info = %s,              srv_disks_info = %s,        \
+            srv_vgs_info = %s                                           \
+            where srv_name = %s""",                                     \
+            [wrow['srv_ostype'],            wrow['srv_osname'],         \
+             wrow['srv_oscodename'],        wrow['srv_domain'],         \
+             wrow['srv_memory'],            wrow['srv_last_update'],    \
+             wrow['srv_osversion'],         wrow['srv_osver_major'],    \
+             wrow['srv_ip'],                wrow['srv_type'],           \
+             wrow['srv_kernel_version'],    wrow['srv_kernel_bitmode'], \
+             wrow['srv_model'],             wrow['srv_serial'],         \
+             wrow['srv_hwd_bitmode'],       wrow['srv_nb_cpu'],         \
+             wrow['srv_cpu_speed'],         wrow['srv_nb_socket'],      \
+             wrow['srv_core_per_socket'],   wrow['srv_thread_per_core'],\
+             wrow['srv_ips_info'],          wrow['srv_disks_info'],     \
+             wrow['srv_vgs_info'],                                      \
+             wrow['srv_name'] ])
+
+    except (psycopg2.IntegrityError, psycopg2.DataError, psycopg2.ProgrammingError, TypeError), e:
+        sadm.writelog ("ERROR: Updating server %s row into server table" % (wrow['srv_name']))
+        sadm.writelog ("%s" % e)
+        wconn.rollback()
+        print_server_row(wrow)
+        return 1
+
+    wconn.commit()
+    sadm.writelog ("Total number of rows updated : %s " % (wcur.rowcount))
+    sadm.writelog ("Update of server %s Succeeded" % (wrow['srv_name']))
+    return 0
+
+
+
+
+#===================================================================================================
+# Process each server (FQN}_sysinfo.txt file and update the server table in the 'sadmin' Database.
+#===================================================================================================
+def update_process(wconn,wcur,wcolnames):
+    TOTAL_ERROR = 0
+    
+    # Build a list of the location of filenames of all *_sysinfo.txt in $SADMIN/www/dat
+    fileList = []                                                       # List to store Filename
+    for root, dirnames, filenames in os.walk(sadm.www_dat_dir):         # Parse www/dat directory
+        for filename in fnmatch.filter(filenames, '*_sysinfo.txt'):     # for *_sysinfo.txt file
+            fileList.append(os.path.join(root,filename))                # Add filename into filelist
+
+    # Read Each System Information filename in filelist and update Database 
+    for sysfile in fileList:                                            # Loop trough sysinfo list
+        sadm.writelog ("")                                              # Display Blank Line
+        sadm.writelog (sadm.dash)                                       # Display Dash Line
+        sadm.writelog ("Processing filename : " + sysfile)              # Display Sysinfo File
+        try:
+            FH_SYSINFO = open(sysfile,'r')                              # Open Sysinfo File
+        except IOError as e:                                            # If Can't open file
+            sadm.writelog ("Error open file %s \r\n" % sysfile)         # Print FileName
+            sadm.writelog ("Error Number : {0}\r\n.format(e.errno)")    # Print Error Number
+            sadm.writelog ("Error Text   : {0}\r\n.format(e.strerror)") # Print Error Message
+            return 1                                                    # Return Error to Caller
+
+
+        # Read Sysinfo file - Line by Line save collected information about server
+        srow = init_row_dictionnary(wcolnames)                          # Set Default Value of row
+        for cfg_line in FH_SYSINFO :                                    # Loop until all lines parse
+            wline        = cfg_line.strip()                             # Strip CR/LF & Trailing spaces
+            if ('#' in wline or len(wline) == 0) :                      # If comment or blank line
+                continue                                                # Go read the next line
+            if sadm.debug > 4 : print ("  Parsing Line : %s" % wline)   # Debug Info - Parsing Line
+            split_line  = wline.split(':')                              # Split based on equal sign
+            CFG_NAME   = split_line[0].strip()                          # Param Name Uppercase Trim
+            CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
+
+            # Save Information Found in SysInfo file into our row dictionnary (server_row)
+            try:
+                if "SADM_HOSTNAME" in CFG_NAME :
+                    srow['srv_name']           = CFG_VALUE.lower()
+                if "SADM_OS_TYPE" in CFG_NAME :
+                    srow['srv_ostype']         = CFG_VALUE.lower()
+                if "SADM_DOMAINNAME"  in CFG_NAME :
+                    srow['srv_domain']         = CFG_VALUE.lower()
+                if "SADM_HOST_IP" in CFG_NAME :
+                    srow['srv_ip']             = CFG_VALUE
+                if "SADM_SERVER_TYPE" in CFG_NAME :
+                    if CFG_VALUE == 'P' :
+                        srow['srv_vm'] = False
+                    else:
+                        srow['srv_vm'] = True
+                if "SADM_OS_VERSION" in CFG_NAME :
+                    srow['srv_osversion']      = CFG_VALUE
+                if "SADM_OS_MAJOR_VERSION" in CFG_NAME :
+                    srow['srv_osver_major']    = CFG_VALUE
+                if "SADM_OS_NAME" in CFG_NAME :
+                    srow['srv_osname']         = CFG_VALUE.lower()
+                if "SADM_OS_CODE_NAME" in CFG_NAME :
+                    srow['srv_oscodename']     = CFG_VALUE
+                if "SADM_KERNEL_VERSION" in CFG_NAME :
+                    srow['srv_kernel_version'] = CFG_VALUE
+
+                # Running Kernel is 32 or 64 Bits
+                try:
+                    if "SADM_KERNEL_BITMODE" in CFG_NAME :
+                        srow['srv_kernel_bitmode']  = int(CFG_VALUE)
+                except ValueError as e:
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_kernel_bitmode'] = int(0)
+                
+                if "SADM_SERVER_MODEL"            in CFG_NAME :
+                    srow['srv_model']           = CFG_VALUE
+                if "SADM_SERVER_SERIAL"           in CFG_NAME :
+                    srow['srv_serial']          = CFG_VALUE
+
+                # Memory Amount in Server in MB  (If Error Set Value to zero - to Spot Error)
+                try :
+                    if "SADM_SERVER_MEMORY" in CFG_NAME :
+                        srow['srv_memory'] = int(CFG_VALUE)
+                except ValueError as e:
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_memory'] = int(0)
+                
+                # Hardware Capability to run 32 or 64 Bits  
+                try :
+                    if "SADM_SERVER_HARDWARE_BITMODE" in CFG_NAME :
+                        srow['srv_hwd_bitmode'] = int(CFG_VALUE)
+                except ValueError as e:
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_hwd_bitmode'] = int(0)
+
+                # Number of CPU on the Server  (If Error Set Value to zero - to Spot Error)
+                try :
+                    if "SADM_SERVER_NB_CPU"  in CFG_NAME :
+                        srow['srv_nb_cpu'] = int(CFG_VALUE)
+                except ValueError as e:
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_nb_cpu'] = int(0)
+                    
+                # CPU SPeed  (If Error Set Value to zero - to Spot Error)
+                try :
+                    if "SADM_SERVER_CPU_SPEED"    in CFG_NAME :
+                        srow['srv_cpu_speed'] = int(CFG_VALUE)
+                except ValueError as e:
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_cpu_speed'] = int(0)  
+
+                # Number of Socket  (If Error Set Value to zero - to Spot Error)
+                try :
+                    if "SADM_SERVER_NB_SOCKET" in CFG_NAME :
+                        srow['srv_nb_socket'] = int(CFG_VALUE)
+                except :
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_nb_socket'] = int(0)
+                
+                # Number of core per Socket (If Error Set Value to zero - to Spot Error)
+                try:
+                    if "SADM_SERVER_CORE_PER_SOCKET"  in CFG_NAME :
+                        srow['srv_core_per_socket'] = int(CFG_VALUE)
+                except :
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    srow['srv_core_per_socket'] = int(0)
+                
+                # Number of Thread per core
+                try :
+                    if "SADM_SERVER_THREAD_PER_CORE"  in CFG_NAME :
+                        srow['srv_thread_per_core'] = int(CFG_VALUE)
+                except :
+                    srow['srv_thread_per_core'] = int(0)
+                    sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+
+                # All IP(s) defined on the servers with ETH Dev, IP Address, Netmask and MAC Address
+                if "SADM_SERVER_IPS"              in CFG_NAME :
+                    srow['srv_ips_info']        = CFG_VALUE
+                
+                # All Disks defined on the servers with Dev, Size
+                if "SADM_SERVER_DISKS"            in CFG_NAME :
+                    srow['srv_disks_info']      = CFG_VALUE
+
+                # All Volumes Groups defined on the servers with Name, Size, USed, Free
+                if "SADM_SERVER_VG(s)"            in CFG_NAME :
+                    srow['srv_vgs_info']        = CFG_VALUE
+                    
+                NO_ERROR_OCCUR=True
+            except IndexError as e:
+                sadm.writelog ("Error when moving data to Memory - Data Conversion Error")
+                sadm.writelog ("%s" % e)
+                TOTAL_ERROR = TOTAL_ERROR + 1                           # Add 1 To Taltal Error
+                NO_ERROR_OCCUR=False                                    # Now No "Error" is False
+        FH_SYSINFO.close()                                              # Close the Sysinfo File
+
+        # Check if the server we are processing in already in the server table of SADMIN Database
+        if NO_ERROR_OCCUR :                                             # If No Error Moving Fld
+            found_key = read_row(wconn,wcur,srow['srv_name'])           # Try To Read Server from DB
+            if found_key :                                              # If Server Found in DB
+                RC = update_row(wconn,wcur,srow)                        # Go Update Row
+                TOTAL_ERROR = TOTAL_ERROR + RC                          # RC=0=Success RC=1=Error
+            else :                                                      # If Server was not found
+                RC = insert_row(wconn,wcur,srow)                        # Go Insert new row
+                TOTAL_ERROR = TOTAL_ERROR + RC                          # RC=0=Success RC=1=Error
+
+    return (TOTAL_ERROR)
+
+
+
+#===================================================================================================
+#                                  M A I N     P R O G R A M
+#===================================================================================================
 #
 def main():
-   update_db()
-   return
+    sadm.start()                                                        # Open Log, Create Dir ...
+    if sadm.debug > 4 : sadm.display_env()                              # Display Env. Variables
+    (conn,cur) = sadm.open_sadmin_database()                            # Open Connection 2 Database
+    colnames = get_columns_name(conn,cur,"sadm.server")                 # Get Server Table Col Name
+    sadm.exit_code = update_process(conn,cur,colnames)                  # Update SADMIN DB 
+    sadm.close_sadmin_database(conn,cur)                                # Close Database Connection
+    sadm.stop(sadm.exit_code)                                           # Close log & trim
+    sys.exit(sadm.exit_code)                                            # Exit with Error Code
 
-
-# ------------------------------------------------------------------------------
 # This idiom means the below code only runs when executed from command line
-# ------------------------------------------------------------------------------
-if __name__ == '__main__':
-    main()
-
-
+if __name__ == '__main__':  main()

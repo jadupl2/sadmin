@@ -1,6 +1,7 @@
 dat/
 jac/
 log/
+pgsql/
 pkg/
 tmp/
 notes/

@@ -1,15 +1,11 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_rch.sh
-#   Synopsis : .Bring all rch files from server farm to SADMIN Server
+#   Title    :  sadm_template.sh
+#   Synopsis : .
 #   Version  :  1.0
-#   Date     :  December 2015
+#   Date     :  14 November 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
-#  History
-#  1.1 
-# --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
@@ -24,7 +20,7 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+# 1.6   
 #set -x
 
 #
@@ -45,16 +41,14 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
@@ -82,14 +76,18 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 #SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
 #SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
 
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #===================================================================================================
 #
 
 
 
 
+
+
 # --------------------------------------------------------------------------------------------------
-# This Script environment variable
+#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 PGUSER="squery"                                  ; export PGUSER        # Postgres Database User
 PGHOST="holmes.maison.ca"                        ; export PGHOST        # Postgres Database Host
@@ -101,16 +99,15 @@ PGPASSFILE=/sadmin/cfg/.pgpass                   ; export PGPASSFILE
 
 
 
-
 # --------------------------------------------------------------------------------------------------
-#                      Process Linux servers selected by the SQL
+#                               Process Linux servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
 process_linux_servers()
 {
-    sadm_writelog " "
-    sadm_writelog "$SADM_DASH" 
-    sadm_writelog "Processing active Linux Servers"
-    sadm_writelog " "
+    sadm_writelog ""
+    sadm_writelog ""
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "PROCESS LINUX SERVERS"
 
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_type, srv_active from sadm.server  "
     SQL2="where srv_ostype = 'linux' and srv_active = True "
@@ -127,48 +124,17 @@ process_linux_servers()
               server_os=`    echo $wline|awk -F, '{ print $2 }'`
               server_domain=`echo $wline|awk -F, '{ print $3 }'`
               server_type=`  echo $wline|awk -F, '{ print $4 }'`
-              sadm_writelog " "
-              sadm_writelog "${SADM_TEN_DASH}"
-              info_line="Processing ($xcount) ${server_name}.${server_domain} - "
-              info_line="${info_line}os:${server_os} - type:${server_type}"
-              sadm_writelog "$info_line"
-              
-              # Ping the server - Server or Laptop may be unplugged
-              sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
-              ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
-              RC=$?
-              if [ $RC -ne 0 ]
-                 then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_writelog "Will not be able to process server ${server_name}"
-                      sadm_writelog "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
-                      continue
-              fi
-              
-
-              # RCH (Return Code History Files
-              # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
-              #-------------------------------------------------------------------------------------------
-              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
-              sadm_writelog "Make sure the directory $WDIR Exist"
-              if [ ! -d "${WDIR}" ]
-                  then sadm_writelog "Creating ${WDIR} directory"
-                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-                  else sadm_writelog "Perfect ${WDIR} directory already exist"
-              fi
-              
-              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
-              rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
+              sadm_writelog "${SADM_DASH}"
+              sadm_writelog "Processing ($xcount) os:${server_os} - type:${server_type} - server:${server_name}.${server_domain}"
+              # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_writelog "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
-                                                                
               done < $SADM_TMP_FILE1
     fi
-    sadm_writelog " "
-    sadm_writelog "${SADM_TEN_DASH}"
     return $ERROR_COUNT
 }
 
@@ -176,14 +142,14 @@ process_linux_servers()
 
 
 # --------------------------------------------------------------------------------------------------
-#                      Process Aix servers selected by the SQL
+#                               Process Aix servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
 process_aix_servers()
 {
-    sadm_writelog " "
-    sadm_writelog "$SADM_DASH" 
-    sadm_writelog "Processing active Aix Servers" 
-    sadm_writelog " "
+    sadm_writelog ""
+    sadm_writelog ""
+    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "PROCESS AIX SERVERS"
 
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_type, srv_active from sadm.server  "
     SQL2="where srv_ostype = 'aix' and srv_active = True "
@@ -200,88 +166,87 @@ process_aix_servers()
               server_os=`    echo $wline|awk -F, '{ print $2 }'`
               server_domain=`echo $wline|awk -F, '{ print $3 }'`
               server_type=`  echo $wline|awk -F, '{ print $4 }'`
-              sadm_writelog " "
-              sadm_writelog "${SADM_TEN_DASH}"
-              info_line="Processing ($xcount) ${server_name}.${server_domain} - "
-              info_line="${info_line}os:${server_os} - type:${server_type}"
-              sadm_writelog "$info_line"
-
-              # Ping the server - Server or Laptop may be unplugged
-              sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
-              ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
-              RC=$?
-              if [ $RC -ne 0 ]
-                 then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
-                      sadm_writelog "Will not be able to process server ${server_name}"
-                      sadm_writelog "Will consider that is ok (May be a Laptop unplugged) - RETURN CODE IS 0 - OK"
-                      continue
-              fi              
-
-              # RCH (Return Code History Files
-              # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
-              #-------------------------------------------------------------------------------------------
-              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
-              sadm_writelog "Make sure the directory $WDIR Exist"
-              if [ ! -d "${WDIR}" ]
-                  then sadm_writelog "Creating ${WDIR} directory"
-                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-                  else sadm_writelog "Perfect ${WDIR} directory already exist"
-              fi
-              
-              sadm_writelog "rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
-              rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
+              sadm_writelog "${SADM_DASH}"
+              sadm_writelog "Processing ($xcount) os:${server_os} - type:${server_type} - server:${server_name}.${server_domain}"
+              # PROCESS GOES HERE
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                 then sadm_writelog "ERROR NUMBER $RC for $server"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
-
               done < $SADM_TMP_FILE1
-        else  sadm_writelog "No Aix Server defined in Sysinfo"
     fi
-    sadm_writelog " "
-    sadm_writelog "${SADM_TEN_DASH}"
     return $ERROR_COUNT
 }
 
 
 
 
+# --------------------------------------------------------------------------------------------------
+#                      S c r i p t    M a i n     P r o c e s s 
+# --------------------------------------------------------------------------------------------------
+main_process()
+{
+    
+    return 0                                                            # Return Default return code
+}
+
 
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-        
+    
+    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T NEED TO RUN ON THE SADMIN MAIN SERVER, THEN REMOVE
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
         then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                              # Abort advise message
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-        
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
-             sadm_writelog "Process aborted"                              # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-    
-    LINUX_ERROR=0; AIX_ERROR=0                                          # Initialize Error count to 0
-    
-    process_linux_servers                                               # Process all Active Linux Servers
-    LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-    sadm_writelog "We had $LINUX_ERROR error(s) while processing Linux servers"
 
-    process_aix_servers                                                 # Process all Active Aix Servers
-    AIX_ERROR=$?                                                        # Set Nb. Errors while processing
-    sadm_writelog "We had $AIX_ERROR error(s) while processing Aix servers"
-    
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC to or 0
-    
-    WDIR=`echo $SADM_SERVER | awk -F. '{ print $1 }'`                   # Remove Domain from SADM Server
-    echo "cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${WDIR}/rch"              # Copy finalize RCH For Summary
-    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${WDIR}/rch                     # Copy finalize RCH For Summary
-    exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)
+    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    # Display Main Menu     
+    while :
+        do
+        sadm_display_heading "Your Menu Heading Here"
+        menu_array=("Your Menu Item 1" "Your Menu Item 2" \
+                    "Your Menu Item 3" "Your Menu Item 4" )
+        sadm_display_menu "${menu_array[@]}"
+        sadm_choice=$?
+        case $sadm_choice in
+            1) # Option 1 - 
+               # Put your code HERE
+               ;;
+            2) # Option 2 - 
+               # Put your code HERE
+               ;;
+            3) # Option 3 - 
+               # Put your code HERE
+               ;;
+            4) # Option 4 - 
+               # Put your code HERE
+               ;;
+           99) # Option Quit -
+               # Put your code HERE 
+               break 
+               ;;
+            *) # Invalid Option #
+               mess "\'($sadm_choice)\' is an invalid option"
+               ;;
+        esac
+        done
+    SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
+
+    # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+

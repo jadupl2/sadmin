@@ -81,6 +81,46 @@ LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RC
 
 
 
+# --------------------------------------------------------------------------------------------------
+#                             General Directories Owner/Group and Privilege
+# --------------------------------------------------------------------------------------------------
+set_dir()
+{
+    VAL_DIR=$1
+    VAL_OCTAL=$2
+    VAL_OWNER=$3
+    VAL_GROUP=$4
+    RETURN_CODE=0
+    
+    if [ -d "$VAL_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Change $VAL_DIR to $VAL_OCTAL"
+             chmod $VAL_OCTAL $VAL_DIR  
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     RETURN_CODE=1                                      # Error = Return Code to 1
+             fi
+             sadm_writelog "Change chmod gou-s $VAL_DIR"
+             chmod gou-s $VAL_DIR
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     RETURN_CODE=1                                      # Error = Return Code to 1
+             fi
+             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
+             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
+                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+                     RETURN_CODE=1                                      # Error = Return Code to 1
+             fi
+             ls -ld $VAL_DIR | tee -a $SADM_LOG
+             if [ $RETURN_CODE = 0 ] ; then sadm_writelog "OK" ; fi
+    fi
+    return $RETURN_CODE    
+}
+
 
 # --------------------------------------------------------------------------------------------------
 #                               General Directories Housekeeping Function
@@ -91,7 +131,24 @@ dir_housekeeping()
     sadm_writelog "Server Directories HouseKeeping Starting"
     sadm_writelog " "
 
-
+    
+    # If on the SADMIN Server - Set Privilege on Database Directories.
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]
+       then set_dir "$SADM_PG_DIR"           "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Dir
+            set_dir "${SADM_PG_DIR}/data"    "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Data
+            set_dir "${SADM_PG_DIR}/backups" "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Backups
+            chmod -R g-s $SADM_PG_DIR                                              # No Sticky Bit on PostGres
+       #else sadm_writelog "This is an SADM Client"
+       #     sadm_writelog "  - The user 'postgres' is not present"
+       #     sadm_writelog "  - We are not on the SADM Server $SADM_SERVER"
+       #     sadm_writelog ""
+       #     sadm_writelog "Removing $SADM_PG_DIR Directories Structure"
+       #     rm -fr $SADM_PG_DIR > /dev/null 2>&1
+       #     sadm_writelog "Removing $SADM_WWW_DIR Directories Structure"
+       #     rm -fr $SADM_WWW_DIR  > /dev/null 2>&1
+    fi
+    
+ 
     return $ERROR_COUNT
 }
 
@@ -117,6 +174,19 @@ file_housekeeping()
              fi
     fi
     
+    # Make sure PostGres $SADM_PG_DIR Directory files is own by PostGres
+    if [ -d "$SADM_PG_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_PG_DIR -type f -exec chown ${SADM_PGUSER}.${SADM_PGGROUP} {} \;"
+             find $SADM_PG_DIR -type f -exec chown ${SADM_PGUSER}.${SADM_PGGROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+   
     return $ERROR_COUNT
 }
 

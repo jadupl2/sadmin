@@ -213,11 +213,14 @@ create_command_output()
 
     if [ ! -z "$SCMD_PATH" ]
         then sadm_writelog "Creating $SCMD_TXT with command $SCMD_PATH"
-             echo -e "# $ADM_CIE_NAME - `date`" >$SCMD_TXT 2>&1
-             echo -e "# Output of $SCMD_PATH command on `hostname`\n#" >>$SCMD_TXT 2>&1
+             echo "# $ADM_CIE_NAME - `date`" >$SCMD_TXT 2>&1
+             echo "# Output of $SCMD_PATH command on `hostname`" >>$SCMD_TXT 2>&1
+             echo "# " >>$SCMD_TXT 2>&1
              $SCMD_PATH >> $SCMD_TXT 2>&1
         else sadm_writelog "The command $SCMD_NAME is not available"
-             echo -e "# $ADM_CIE_NAME - `date`\n# The $SCMD_NAME command is not available on `hostname`\n#" > $PVS_FILE 2>&1
+             echo "# $ADM_CIE_NAME - `date`" > $PVS_FILE 2>&1
+             echo "# The $SCMD_NAME command is not available on `hostname`" >> $PVS_FILE 2>&1
+             echo "#" >> $PVS_FILE 2>&1
     fi
 }
 
@@ -265,7 +268,7 @@ create_aix_config_files()
 
     lspv | awk '{ print $1 }' | while read PV
         do
-        echo "\n" >>$PVS_FILE 2>&1
+        echo " " >>$PVS_FILE 2>&1
         lspv  $PV          >>$PVS_FILE 2>&1
         done
     lsvg | xargs lsvg      > $VGS_FILE 2>&1
@@ -289,32 +292,32 @@ create_summary_file()
     sadm_writelog "Creating Configuration Summary File"
     sadm_writelog "$HWD_FILE"
     sadm_writelog " "
-    echo -e "# $SADM_CIE_NAME - SysInfo Report File - `date`"                      >  $HWD_FILE
-    echo -e "# This file will be use to update the SADMIN Database"                >> $HWD_FILE
-    echo -e "#                                                    "                >> $HWD_FILE
-    echo "SADM_OS_TYPE                        : $(sadm_get_ostype)"                >> $HWD_FILE
-    echo "SADM_HOSTNAME                       : $(sadm_get_hostname)"              >> $HWD_FILE
-    echo "SADM_DOMAINNAME                     : $(sadm_get_domainname)"            >> $HWD_FILE
-    echo "SADM_HOST_IP                        : $(sadm_get_host_ip)"               >> $HWD_FILE
-    echo "SADM_SERVER_TYPE                    : $(sadm_server_type)"               >> $HWD_FILE
-    echo "SADM_OS_VERSION                     : $(sadm_get_osversion)"             >> $HWD_FILE
-    echo "SADM_OS_MAJOR_VERSION               : $(sadm_get_osmajorversion)"        >> $HWD_FILE
-    echo "SADM_OS_NAME                        : $(sadm_get_osname)"                >> $HWD_FILE
-    echo "SADM_OS_CODE_NAME                   : $(sadm_get_oscodename)"            >> $HWD_FILE
-    echo "SADM_KERNEL_VERSION                 : $(sadm_get_kernel_version)"        >> $HWD_FILE
-    echo "SADM_KERNEL_BITMODE (32 or 64)      : $(sadm_get_kernel_bitmode)"        >> $HWD_FILE
-    echo "SADM_SERVER_MODEL                   : $(sadm_server_model)"              >> $HWD_FILE
-    echo "SADM_SERVER_SERIAL                  : $(sadm_server_serial)"             >> $HWD_FILE
-    echo "SADM_SERVER_MEMORY (in MB)          : $(sadm_server_memory)"             >> $HWD_FILE
-    echo "SADM_SERVER_HARDWARE_BITMODE        : $(sadm_server_hardware_bitmode)"   >> $HWD_FILE
-    echo "SADM_SERVER_NB_CPU                  : $(sadm_server_nb_cpu)"             >> $HWD_FILE
-    echo "SADM_SERVER_CPU_SPEED (in GHz)      : $(sadm_server_cpu_speed)"          >> $HWD_FILE
-    echo "SADM_SERVER_NB_SOCKET               : $(sadm_server_nb_socket)"          >> $HWD_FILE
-    echo "SADM_SERVER_CORE_PER_SOCKET         : $(sadm_server_core_per_socket)"    >> $HWD_FILE
-    echo "SADM_SERVER_THREAD_PER_CORE         : $(sadm_server_thread_per_core)"    >> $HWD_FILE
-    echo "SADM_SERVER_IPS                     : $(sadm_server_ips)"                >> $HWD_FILE
-    echo "SADM_SERVER_DISKS (Size in MB)      : $(sadm_server_disks)"              >> $HWD_FILE
-    echo "SADM_SERVER_VG(s) (Size in MB)      : $(sadm_server_vg)"                 >> $HWD_FILE
+    echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
+    echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
+    echo "#                                                    "                     >> $HWD_FILE
+    echo "SADM_OS_TYPE                          : $(sadm_get_ostype)"                >> $HWD_FILE
+    echo "SADM_HOSTNAME                         : $(sadm_get_hostname)"              >> $HWD_FILE
+    echo "SADM_DOMAINNAME                       : $(sadm_get_domainname)"            >> $HWD_FILE
+    echo "SADM_HOST_IP                          : $(sadm_get_host_ip)"               >> $HWD_FILE
+    echo "SADM_SERVER_TYPE [V]irtual [P]hysical : $(sadm_server_type)"               >> $HWD_FILE
+    echo "SADM_OS_VERSION                       : $(sadm_get_osversion)"             >> $HWD_FILE
+    echo "SADM_OS_MAJOR_VERSION                 : $(sadm_get_osmajorversion)"        >> $HWD_FILE
+    echo "SADM_OS_NAME                          : $(sadm_get_osname)"                >> $HWD_FILE
+    echo "SADM_OS_CODE_NAME                     : $(sadm_get_oscodename)"            >> $HWD_FILE
+    echo "SADM_KERNEL_VERSION                   : $(sadm_get_kernel_version)"        >> $HWD_FILE
+    echo "SADM_KERNEL_BITMODE (32 or 64)        : $(sadm_get_kernel_bitmode)"        >> $HWD_FILE
+    echo "SADM_SERVER_MODEL                     : $(sadm_server_model)"              >> $HWD_FILE
+    echo "SADM_SERVER_SERIAL                    : $(sadm_server_serial)"             >> $HWD_FILE
+    echo "SADM_SERVER_MEMORY (in MB)            : $(sadm_server_memory)"             >> $HWD_FILE
+    echo "SADM_SERVER_HARDWARE_BITMODE          : $(sadm_server_hardware_bitmode)"   >> $HWD_FILE
+    echo "SADM_SERVER_NB_CPU                    : $(sadm_server_nb_cpu)"             >> $HWD_FILE
+    echo "SADM_SERVER_CPU_SPEED (in GHz)        : $(sadm_server_cpu_speed)"          >> $HWD_FILE
+    echo "SADM_SERVER_NB_SOCKET                 : $(sadm_server_nb_socket)"          >> $HWD_FILE
+    echo "SADM_SERVER_CORE_PER_SOCKET           : $(sadm_server_core_per_socket)"    >> $HWD_FILE
+    echo "SADM_SERVER_THREAD_PER_CORE           : $(sadm_server_thread_per_core)"    >> $HWD_FILE
+    echo "SADM_SERVER_IPS                       : $(sadm_server_ips)"                >> $HWD_FILE
+    echo "SADM_SERVER_DISKS (Size in MB)        : $(sadm_server_disks)"              >> $HWD_FILE
+    echo "SADM_SERVER_VG(s) (Size in MB)        : $(sadm_server_vg)"                 >> $HWD_FILE
 }
 
 

@@ -35,6 +35,7 @@ SADM_LOG_DIR="$SADM_BASE_DIR/log"           ; export SADM_LOG_DIR       # Script
 SADM_CFG_DIR="$SADM_BASE_DIR/cfg"           ; export SADM_CFG_DIR       # Configuration Directory
 SADM_SYS_DIR="$SADM_BASE_DIR/sys"           ; export SADM_SYS_DIR       # System related scripts
 SADM_DAT_DIR="$SADM_BASE_DIR/dat"           ; export SADM_DAT_DIR       # Data directory
+SADM_PG_DIR="$SADM_BASE_DIR/pgsql"          ; export SADM_PG_DIR        # PostGres DataBase Dir
 SADM_PKG_DIR="$SADM_BASE_DIR/pkg"           ; export SADM_PKG_DIR       # Package rpm,deb  directory
 SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where nmon file reside
 SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files 
@@ -67,7 +68,7 @@ SADM_PRTCONF=""                             ; export SADM_PRTCONF       # prtcon
 SADM_PERL=""                                ; export SADM_PERL          # perl Path (for epoch time)
 SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path 
 #
-# SADM CONFIG FILE VARIABLES (Will be overrridden by SADM CONFIG FILE Content)
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
@@ -79,7 +80,18 @@ SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days t
 SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
 SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
 SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
- 
+SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
+SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
+SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
+SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
+SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
+SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
+SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
+SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
+SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
+SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
+SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
+SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
 
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
@@ -134,7 +146,7 @@ sadm_is_root() {
 # --------------------------------------------------------------------------------------------------
 sadm_isnumeric() {
     wnum=$1
-    if [[ ! $wnum =~ ^[0-9]+$ ]] ; then return 1 ; else return 0 ; fi
+    if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
 }
 
     
@@ -160,15 +172,16 @@ sadm_trimfile() {
              return 1                                                   # Return Error to Caller
     fi
 
-    # Test if Second Parameter Received is an integer
+ #   # Test if Second Parameter Received is an integer
     sadm_isnumeric "$maxline"                                           # Test if an Integer
     if [ $? -ne 0 ]                                                     # If not an Integer
         then wreturn_code=1                                             # Return Code report error
-             sadm_writelog "sadm_trimfile : Nb of line invalid ($2)"      # Advise User
+             sadm_writelog "sadm_trimfile : Nb of line invalid ($2)"    # Advise User
              return 1                                                   # Return Error to Caller
     fi
     
-    tmpfile=`mktemp --tmpdir=${SADM_TMP_DIR}`                           # Create Temp Work File
+    #tmpfile=`mktemp --tmpdir=${SADM_TMP_DIR}`                          # Problem in RHEL4 
+    tmpfile="${SADM_TMP_DIR}/${SADM_INST}.$$"                           # Create Temp Work FileName    
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
     tail -${maxline} $wfile > $tmpfile                                  # Trim file to Desired Nb.
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
@@ -227,7 +240,7 @@ sadm_check_requirements() {
     fi
     
     # Commands require on Linux O/S
-    if [ "$(sadm_get_ostype)" = "LINUX" ]                                   # Under Linux
+    if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
        then sadm_check_command_availibility lsb_release                 # lsb_release cmd available?
             SADM_LSB_RELEASE=$SADM_VAR1                                 # Save Command Path
             sadm_check_command_availibility dmidecode                   # dmidecode cmd available?
@@ -241,7 +254,7 @@ sadm_check_requirements() {
     fi
     
     # Commands Require on Aix O/S
-    if [ "$(sadm_get_ostype)" = "AIX" ]                                     # Under Aix O/S
+    if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under Aix O/S
        then sadm_check_command_availibility bc                          # bc cmd available?
             SADM_BC=$SADM_VAR1                                          # Save Command Path
             sadm_check_command_availibility prtconf                     # prtconf cmd available?
@@ -326,7 +339,9 @@ sadm_date_to_epoch() {
     WDATE=$1                                                            # Save Received Date
     YYYY=`echo $WDATE | awk -F. '{ print $1 }'`                         # Extract Year from Rcv Date
     MTH=`echo   $WDATE | awk -F. '{ print $2 }'`                        # Extract MTH  from Rcv Date
-    let MTH="$MTH -1"                                                   # Month less one for perl
+    #let "MTH=$MTH -1"                                                   # Month less one for perl
+    MTH=$(($MTH - 1 ))                                                  # Month less one for perl
+
     if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
     DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0//'` # Extract Day
     HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0//'` # Extract Hours
@@ -443,11 +458,11 @@ sadm_get_osname() {
 #                                 RETURN THE HOSTNAME (SHORT)
 # --------------------------------------------------------------------------------------------------
 sadm_get_hostname() {
-    if [ "$(sadm_get_ostype)" = "LINUX" ]                                   # Under Linux
-        then whostname=`hostname -s`                                # Get rid of domain name
+    if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
+        then whostname=`hostname -s`                                    # Get rid of domain name
     fi
-    if [ "$(sadm_get_ostype)" = "AIX" ]                                     # Under AIX
-        then whostname=`hostname`                                   # Get HostName
+    if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under AIX
+        then whostname=`hostname | awk -F. '{ print $1 }'`              # Get HostName
     fi
     echo "$whostname"
 }
@@ -562,6 +577,9 @@ sadm_load_config_file()
         echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_DOMAIN" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DOMAIN=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
+        #
         echo "$wline" |grep -i "^SADM_USER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_USER=`echo "$wline"          |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -583,9 +601,38 @@ sadm_load_config_file()
         echo "$wline" |grep -i "^SADM_RCH_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_RCH_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        #
         echo "$wline" |grep -i "^SADM_LOG_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_LOG_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGUSER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGGROUP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGGROUP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGDB" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGDB=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGSCHEMA" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGSCHEMA=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGHOST" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_PGPORT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_PGPORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_RW_PGUSER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RW_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_RW_PGPWD" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RW_PGPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_RO_PGUSER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RO_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_RO_PGPWD" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RO_PGPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         done < $SADM_CFG_FILE
 
@@ -597,6 +644,7 @@ sadm_load_config_file()
                  sadm_writelog "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
                  sadm_writelog "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
                  sadm_writelog "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
+                 sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
                  sadm_writelog "  - SADM_USER=$SADM_USER"                   # sadmin user account
                  sadm_writelog "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
                  sadm_writelog "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
@@ -605,6 +653,16 @@ sadm_load_config_file()
                  sadm_writelog "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
                  sadm_writelog "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS"  # Days to keep old *.rch
                  sadm_writelog "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.log
+                 sadm_writelog "  - SADM_PGUSER=$SADM_PGUSER"               # PostGres User Name
+                 sadm_writelog "  - SADM_PGGROUP=$SADM_PGGROUP"             # PostGres Group Name
+                 sadm_writelog "  - SADM_PGDB=$SADM_PGDB"                   # PostGres DataBase Name
+                 sadm_writelog "  - SADM_PGSCHEMA=$SADM_PGSCHEMA"           # PostGres DataBase Schema
+                 sadm_writelog "  - SADM_PGHOST=$SADM_PGHOST"               # PostGres DataBase Host
+                 sadm_writelog "  - SADM_PGPORT=$SADM_PGPORT"               # PostGres Listening Port
+                 sadm_writelog "  - SADM_RW_PGUSER=$SADM_RW_PGUSER"         # PostGres RW User
+                 sadm_writelog "  - SADM_RW_PGPWD=$SADM_RW_PGPWD"           # PostGres RW User Pwd
+                 sadm_writelog "  - SADM_RO_PGUSER=$SADM_RO_PGUSER"         # PostGres RO User
+                 sadm_writelog "  - SADM_RO_PGPWD=$SADM_RO_PGPWD"           # PostGres RO User Pwd
         fi                 
         return 0
 }
@@ -627,7 +685,7 @@ sadm_start() {
     # If log Directory doesn't exist, create it.
     if [ ! -d "$SADM_LOG_DIR" ]
         then mkdir -p $SADM_LOG_DIR
-             chmod 2775 $SADM_LOG_DIR
+             chmod 0775 $SADM_LOG_DIR
     fi
 
     # If TMP Directory doesn't exist, create it.
@@ -639,73 +697,82 @@ sadm_start() {
     # If LIB Directory doesn't exist, create it.
     if [ ! -d "$SADM_LIB_DIR" ]
         then mkdir -p $SADM_LIB_DIR
-             chmod 2775 $SADM_LIB_DIR
+             chmod 0775 $SADM_LIB_DIR
     fi
 
     # If Custom Configuration Directory doesn't exist, create it.
     if [ ! -d "$SADM_CFG_DIR" ]
         then mkdir -p $SADM_CFG_DIR
-             chmod 2775 $SADM_CFG_DIR
+             chmod 0775 $SADM_CFG_DIR
     fi
 
     # If System Startup/Shutdown Script Directory doesn't exist, create it.
     if [ ! -d "$SADM_SYS_DIR" ]
         then mkdir -p $SADM_SYS_DIR
-             chmod 2775 $SADM_SYS_DIR
+             chmod 0775 $SADM_SYS_DIR
+    fi
+
+    # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
+    if [ ! -d "$SADM_PG_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+        then mkdir -p $SADM_PG_DIR
+             mkdir -p $SADM_PG_DIR/data
+             mkdir -p $SADM_PG_DIR/backups
+             chmod -R 0700 $SADM_PG_DIR
+             chown -R ${SADM_PGUSER}.${SADM_PGGROUP} $SADM_PG_DIR
     fi
 
     # If Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_DAT_DIR" ]
         then mkdir -p $SADM_DAT_DIR
-             chmod 2775 $SADM_DAT_DIR
+             chmod 0775 $SADM_DAT_DIR
     fi
 
     # If Package Directory doesn't exist, create it.
     if [ ! -d "$SADM_PKG_DIR" ]
         then mkdir -p $SADM_PKG_DIR
-             chmod 2775 $SADM_PKG_DIR
+             chmod 0775 $SADM_PKG_DIR
     fi
 
     # If Sysadmin Web Site Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DIR" ]
+    if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DIR
-             chmod 2775 $SADM_WWW_DIR
+             chmod 0775 $SADM_WWW_DIR
     fi
 
     # If Sysadmin Web Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DAT_DIR" ]
+    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
-             chmod 2775 $SADM_WWW_DAT_DIR  
+             chmod 0775 $SADM_WWW_DAT_DIR  
     fi
     
     # If Sysadmin Web Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_HTML_DIR" ]
+    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
-             chmod 2775 $SADM_WWW_HTML_DIR  
+             chmod 0775 $SADM_WWW_HTML_DIR  
     fi
 
     # If NMON Directory doesn't exist, create it.
     if [ ! -d "$SADM_NMON_DIR" ]
         then mkdir -p $SADM_NMON_DIR
-             chmod 2775 $SADM_NMON_DIR
+             chmod 0775 $SADM_NMON_DIR
     fi
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
     if [ ! -d "$SADM_DR_DIR" ]
         then mkdir -p $SADM_DR_DIR
-             chmod 2775 $SADM_DR_DIR
+             chmod 0775 $SADM_DR_DIR
     fi
 
     # If Performance Server Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_SAR_DIR" ]
         then mkdir -p $SADM_SAR_DIR
-             chmod 2775 $SADM_SAR_DIR
+             chmod 0775 $SADM_SAR_DIR
     fi
 
     # If Return Code History Directory doesn't exist, create it.
     if [ ! -d "$SADM_RCH_DIR" ]
         then mkdir -p $SADM_RCH_DIR
-             chmod 2775 $SADM_RCH_DIR
+             chmod 0775 $SADM_RCH_DIR
     fi
 
     # If LOG File doesn't exist, Create it and Make it writable 
@@ -714,6 +781,11 @@ sadm_start() {
              chmod 664 $SADM_LOG
     fi
 
+    # If user don't want to append to existing log - Clear it - Else we will append to it.
+    if [ "$SADM_LOG_APPEND" = "N" ]                                     # If don't want expand log
+        then echo " " > $SADM_LOG                                       # Clear LOG
+    fi
+    
     # If Return Code History Log doesn't exist, Create it and Make sure it have right permission
     if [ ! -e "$SADM_RCHLOG" ]
         then touch $SADM_RCHLOG
@@ -782,6 +854,8 @@ sadm_stop() {
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
     sadm_writelog "Trimming $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines."    # Advise user of trimm value
     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
+    chmod 664 ${SADM_RCHLOG}
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
 
     # Write email choice in the log footer
     if [ "$SADM_MAIL" = "" ] ; then SADM_MAIL_TYPE=4 ; fi               # Mail not Install - no Mail
@@ -815,6 +889,8 @@ sadm_stop() {
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                        # Trim file to Desired Nb.
+    chmod 664 ${SADM_LOG}
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
     
     # Inform UnixAdmin By Email based on his selected choice
     case $SADM_MAIL_TYPE in
