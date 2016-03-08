@@ -3,7 +3,7 @@
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_template_servers.sh
 #   Synopsis : .
-#   Version  :  1.0
+#   Version  :  1.5
 #   Date     :  14 November 2015
 #   Requires :  sh
 #
