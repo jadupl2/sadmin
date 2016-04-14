@@ -17,18 +17,18 @@
 # --------------------------------------------------------------------------------------------------
 sadm_server_ips() {
     
-    index=0 ; sadm_server_ips=""                                       # Init Variables at Start
+    index=0 ; sadm_server_ips=""                                        # Init Variables at Start
     case "$(sadm_get_ostype)" in
-        "LINUX") rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
+        "LINUX") rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1       # Del TMP file - Make sure
                  ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$SADM_TMP_DIR/sadm_ips_$$
-                 while read sadm_wip                                                 # Read IP one per line
+                 while read sadm_wip                                    # Read IP one per line
                    do
-                    if [ "$index" -ne 0 ]                                           # Don't add ; for 1st IP
-                        then sadm_servers_ips="${sadm_servers_ips},"            # For others IP add ";"
+                    if [ "$index" -ne 0 ]                               # Don't add ; for 1st IP
+                        then sadm_servers_ips="${sadm_servers_ips},"    # For others IP add ";"
                     fi
-                    SADM_IP=`echo $sadm_wip | awk -F/ '{ print $1 }'`               # Get IP Address 
+                    SADM_IP=`echo $sadm_wip | awk -F/ '{ print $1 }'`   # Get IP Address 
                     SADM_MASK_NUM=`echo $sadm_wip |awk -F/ '{ print $2 }' |awk '{ print $1 }'` # Get NetMask No
-                    SADM_IF=`echo $sadm_wip | awk '{ print $2 }'`                   # Get Interface Name
+                    SADM_IF=`echo $sadm_wip | awk '{ print $2 }'`       # Get Interface Name
                     case "$SADM_MASK_NUM" in
                         1)      SADM_MASK="128.0.0.0"
                                 ;;
@@ -97,24 +97,24 @@ sadm_server_ips() {
                     esac
                     SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' |head -1 | awk '{ print $2 }'` 
                     sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
-                    index=`expr $index + 1`                                         # Increment Index by 1
-                   done < $SADM_TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
-                 rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Remove TMP IP File Output
+                    index=`expr $index + 1`                             # Increment Index by 1
+                   done < $SADM_TMP_DIR/sadm_ips_$$                     # Read IP From Generated File
+                 rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1       # Remove TMP IP File Output
                  ;;
-        "AIX")   rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1                         # Del TMP file - Make sure
+        "AIX")   rm -f $SADM_TMP_DIR/sadm_ips_$$ > /dev/null 2>&1       # Del TMP file - Make sure
                  ifconfig -a | grep 'flags' | grep -v 'lo0:' | awk -F: '{ print $1 }' >$SADM_TMP_DIR/sadm_ips_$$
-                 while read sadm_wip                                                 # Read IP one per line
+                 while read sadm_wip                                    # Read IP one per line
                    do
-                    if [ "$index" -ne 0 ]                                           # Don't add ; for 1st IP
-                        then sadm_servers_ips="${sadm_servers_ips},"            # For others IP add ";"
+                    if [ "$index" -ne 0 ]                               # Don't add ; for 1st IP
+                        then sadm_servers_ips="${sadm_servers_ips},"    # For others IP add ";"
                     fi
                     SADM_IP=`ifconfig $sadm_wip       | grep inet | awk '{ print $2 }'` # Get IP Address 
                     SADM_MASK=`lsattr -El $sadm_wip | grep -i netmask | awk '{ print $2 }'` # Get NetMask No
                     SADM_IF="$sadm_wip"               # Get Interface Name
-                    SADM_MAC=`entstat -d $sadm_wip | grep 'Hardware Address:' | awk  '{  print $3 }'`       # Get Interface Name
+                    SADM_MAC=`entstat -d $sadm_wip | grep 'Hardware Address:' | awk  '{  print $3 }'` # Get Interface Name
                     sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
-                    index=`expr $index + 1`                                         # Increment Index by 1
-                   done < $SADM_TMP_DIR/sadm_ips_$$                                     # Read IP From Generated File
+                    index=`expr $index + 1`                             # Increment Index by 1
+                   done < $SADM_TMP_DIR/sadm_ips_$$                     # Read IP From Generated File
                  ;;
     esac                 
     echo "$sadm_servers_ips"
@@ -126,13 +126,13 @@ sadm_server_ips() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
     case "$(sadm_get_ostype)" in
-        "LINUX") $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1                    # Search vmware in dmidecode
-                 if [ $? -eq 0 ]                                                     # If vmware was found
-                    then sadm_server_type="V"                                       # If VMware Server
-                    else sadm_server_type="P"                                       # Default Assume Physical
+        "LINUX") $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1       # Search vmware in dmidecode
+                 if [ $? -eq 0 ]                                        # If vmware was found
+                    then sadm_server_type="V"                           # If VMware Server
+                    else sadm_server_type="P"                           # Default Assume Physical
                  fi
                  ;;
-        "AIX")   sadm_server_type="P"
+        "AIX")   sadm_server_type="P"                                   # Default Assume Physical
                  ;;
     esac
     echo "$sadm_server_type"
@@ -150,7 +150,15 @@ sadm_server_model() {
                  sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
                  sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
                  sadm_server_model="${sadm_sm}"
-                 if [ "$(sadm_server_type)" = "V" ] ; then sadm_server_model="VM" ; fi
+                 if [ "$(sadm_server_type)" = "V" ]
+                     then sadm_server_model="VM"
+                     else grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
+                          if [ $? -eq 0 ]
+                            then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2)` 
+                                 wrev=`echo $wrev | sed -e 's/^[ \t]*//'` #Del Lead Space
+                                 sadm_server_model="Raspberry Rev.${wrev}"
+                          fi
+                 fi
                  ;;
         "AIX")   sadm_server_model=`uname -M | sed 's/IBM,//'`
                  ;;
@@ -166,15 +174,22 @@ sadm_server_model() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_serial() {
     case "$(sadm_get_ostype)" in
-        "LINUX") if [ "$(sadm_server_type)" = "V" ]
-                    then sadm_server_serial=" " 
-                    else sadm_server_serial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
-                 fi 
-                 ;;
-        "AIX")   sadm_server_serial=`uname -u | awk -F, '{ print $2 }'`
-                 ;;
+      "LINUX") if [ "$(sadm_server_type)" = "V" ]                       # If Virtual Machine
+                  then wserial=" "                                      # VM as no serial 
+                  else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
+                       if [ -r /proc/cpuinfo ]                          # Serial in cpuinfo (raspi)
+                          then grep -i serial /proc/cpuinfo > /dev/null 2>&1
+                               if [ $? -eq 0 ]                          # If Serial found in cpuinfo
+                                  then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
+                                       wserial=`echo $wserial | sed -e 's/^[ \t]*//'` #Del Lead Space
+                               fi
+                       fi
+               fi 
+               ;;
+      "AIX")   wserial=`uname -u | awk -F, '{ print $2 }'`
+               ;;
     esac
-    echo "$sadm_server_serial"
+    echo "$wserial"
 }
 
 
@@ -203,13 +218,15 @@ sadm_server_memory() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() { 
     case "$(sadm_get_ostype)" in
-        "LINUX")    #sadm_server_nb_cpu=`nproc --all`
-                    sadm_server_nb_cpu=`cat /proc/cpuinfo | grep -i processor | wc -l | tr -d ' '`
+        "LINUX")    wnbcpu=`cat /proc/cpuinfo | grep -i '^processor' | wc -l | tr -d ' '`
+                    if [ "$SADM_LSCPU" != "" ]
+                        then wnbcpu=`$SADM_LSCPU | grep -i '^cpu(s):' | cut -d ':' -f 2 | tr -d ' '`
+                    fi
                     ;;
-        "AIX")      sadm_server_nb_cpu=`lsdev -C -c processor | wc -l | tr -d ' '`
+        "AIX")      wnbcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
                     ;;
     esac
-    echo "$sadm_server_nb_cpu"
+    echo "$wnbcpu"
 }
 
 
@@ -220,13 +237,16 @@ sadm_server_nb_cpu() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_socket() { 
     case "$(sadm_get_ostype)" in
-       "LINUX") sadm_server_nb_socket=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
+       "LINUX") wns=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
+                if [ "$SADM_LSCPU" != "" ]
+                    then wns=`$SADM_LSCPU | grep -i '^Socket(s)' | cut -d ':' -f 2 | tr -d ' '`
+                fi
                 ;;
-        "AIX")  sadm_server_nb_socket=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
+        "AIX")  wns=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
                 ;;
     esac
-    if [ "$sadm_server_nb_socket" -eq 0 ] ; then sadm_server_nb_socket=1 ; fi
-    echo "$sadm_server_nb_socket"
+    if [ "$wns" -eq 0 ] ; then wns=1 ; fi
+    echo "$wns"
 }
 
 
@@ -235,13 +255,16 @@ sadm_server_nb_socket() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_core_per_socket() {
     case "$(sadm_get_ostype)" in
-       "LINUX") sadm_server_core_per_socket=`cat /proc/cpuinfo |egrep "core id|physical id" |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
-                if [ "$sadm_server_core_per_socket" -eq 0 ] ;then sadm_server_core_per_socket=1 ; fi
+       "LINUX") wcps=`cat /proc/cpuinfo |egrep "core id|physical id" |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
+                if [ "$wcps" -eq 0 ] ;then wcps=1 ; fi
+                if [ "$SADM_LSCPU" != "" ]
+                    then wcps=`$SADM_LSCPU | grep -i '^core(s) per socket' | cut -d ':' -f 2 | tr -d ' '`
+                 fi
                 ;;
-        "AIX")  sadm_server_core_per_socket=1
+        "AIX")  wcps=1
                 ;;
     esac
-    echo "$sadm_server_core_per_socket"
+    echo "$wcps"
 }
 
 
@@ -261,6 +284,9 @@ sadm_server_thread_per_core() {
                     then sadm_server_thread_per_core=`echo "$sadm_sibbling / $sadm_cores" | bc`
                     else sadm_server_thread_per_core=1
                  fi
+                 if [ "$SADM_LSCPU" != "" ]
+                    then wnbcpu=`$SADM_LSCPU | grep -i '^thread' | cut -d ':' -f 2 | tr -d ' '`
+                 fi
                  ;;
         "AIX")   sadm_server_thread_per_core=1
                  ;;
@@ -272,14 +298,19 @@ sadm_server_thread_per_core() {
 
  
 # --------------------------------------------------------------------------------------------------
-#                                   Return the CPU Speed in Ghz
+#                                   Return the CPU Speed in Mhz
 # --------------------------------------------------------------------------------------------------
 sadm_server_cpu_speed() { 
     case "$(sadm_get_ostype)" in
-        "LINUX") sadm_server_cpu_speed=`cat /proc/cpuinfo | grep -i "cpu MHz" | tail -1 | awk -F: '{ print $2 }'`
-                 sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | bc`
-                 if [ "$sadm_server_cpu_speed" -gt 1000 ]
-                     then sadm_server_cpu_speed=`expr $sadm_server_cpu_speed / 1000`
+        "LINUX") 
+                 if [ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq ]
+                    then freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
+                         sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC`
+                    else sadm_server_cpu_speed=`cat /proc/cpuinfo | grep -i "cpu MHz" | tail -1 | awk -F: '{ print $2 }'`
+                         sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | $SADM_BC`
+                         #if [ "$sadm_server_cpu_speed" -gt 1000 ]
+                         #   then sadm_server_cpu_speed=`expr $sadm_server_cpu_speed / 1000`
+                         #fi
                  fi
                  ;;
         "AIX")   sadm_server_cpu_speed=`pmcycles -m | awk '{ print $5 }'`

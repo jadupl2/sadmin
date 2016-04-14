@@ -38,22 +38,33 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 #[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-SADM_DEBUG_LEVEL=5                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=60                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=60                      ; export SADM_SAR_KEEPDAYS    # Days to keep old *.sar
-#SADM_RCH_KEEPDAYS=60                      ; export SADM_RCH_KEEPDAYS    # Days to keep old *.rch
-#SADM_LOG_KEEPDAYS=60                      ; export SADM_LOG_KEEPDAYS    # Days to keep old *.log
- 
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
+#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
+#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
+#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
+#SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
+#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
+#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
+#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
+#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
+#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
+#SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
+#SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
+#SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
+#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
+#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
+#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
+#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
+#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
+#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
+#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
+
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #===================================================================================================
@@ -65,12 +76,10 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-#
-# This is a counter that is incremented each time an error occured
-ERROR_COUNT=0                               ; export ERROR_COUNT            # Error Counter
-
-# Number of days to keep unmodified *.rch and *.log file - After that time they are deleted
-LIMIT_DAYS=14                               ; export LIMIT_DAYS             # RCH+LOG Delete after
+ERROR_COUNT=0                               ; export ERROR_COUNT        # Error Counter
+LIMIT_DAYS=14                               ; export LIMIT_DAYS         # RCH+LOG Delete after
+DIR_ERROR=0                                 ; export DIR_ERROR          # ReturnCode = Nb. of Errors
+FILE_ERROR=0                                ; export FILE_ERROR         # ReturnCode = Nb. of Errors
 
 
 
@@ -128,22 +137,66 @@ dir_housekeeping()
     
        
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    sadm_writelog "chmod g-s $SADM_BASE_DIR"                            # Show User what is done
     chmod g-s $SADM_BASE_DIR                                            # No Sticky Bit on Base Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
     set_dir "$SADM_BIN_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN BIN Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
     set_dir "$SADM_LIB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
     set_dir "$SADM_TMP_DIR"       "1777" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN TMP Dir
-    set_dir "$SADM_LOG_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LOG Dir
-    set_dir "$SADM_CFG_DIR"       "2755" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
-    set_dir "$SADM_SYS_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SYS Dir
-    set_dir "$SADM_DAT_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DAT Dir
-    set_dir "$SADM_PKG_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN PKG Dir
-    set_dir "$SADM_WWW_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN WWW Dir
-    set_dir "$SADM_NMON_DIR"      "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN NMON Dir
-    set_dir "$SADM_DR_DIR"        "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DR Dir
-    set_dir "$SADM_SAR_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SAR Dir
-    set_dir "$SADM_RCH_DIR"       "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
-    set_dir "$SADM_WWW_DAT_DIR"   "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
-    set_dir "$SADM_WWW_HTML_DIR"  "2775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_LOG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LOG Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_CFG_DIR"       "0755" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_SYS_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SYS Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_DAT_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DAT Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_PKG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN PKG Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_NMON_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN NMON Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DR Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_SAR_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SAR Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
 
 
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
@@ -239,13 +292,29 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
+             sadm_writelog "find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
     fi
 
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_LIB_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"
-             find $SADM_LIB_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1
+             find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -297,7 +366,6 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-
 
     # Delete old nmon files - As defined in the sadmin.cfg file
     if [ -d "${SADM_NMON_DIR}" ]

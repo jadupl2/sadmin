@@ -1,0 +1,274 @@
+/* ---------------------------------------------------------------------------------------------- */
+/*   SADMIN General Purpose CSS Section                                                           */
+/* ---------------------------------------------------------------------------------------------- */
+body {
+    margin-left: 0px;
+    margin-top: 10px;
+    margin-right: 0px;
+    background-color: #EEEEEE;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+a {
+    text-decoration: none;
+    color: red;
+}
+h1, h2 {
+    margin:0; 
+}
+
+#sadm_logo {
+    float: left;
+    margin : 4px;
+}
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Body Page Heading for every page - CSS Section                                                                   */
+/* ---------------------------------------------------------------------------------------------- */
+#PageHeading {
+    color : #2D2E87;
+    font-family: Helvetica, Arial, sans-serif;
+    width: 95%;
+    padding: 1%;
+}
+#PageHeadingLeft {
+    float: left;
+    margin-left: 5%;
+    font-weight: bold;
+    font-size : 17px;
+}
+#PageHeadingRight {
+    float: right;
+    margin-right: 5%;
+    font-size : 12px;
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Page Container CSS Section                                                                   */
+/* ---------------------------------------------------------------------------------------------- */
+#Container {
+    padding: 1%;
+    width: 96%;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Header CSS Section                                                                           */
+/* ---------------------------------------------------------------------------------------------- */
+#Header {
+    height: 80px;
+    background-color: #06425C;
+    color: white;
+    text-align: left;
+    padding: 10px;
+}
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Menu CSS Section                                                                             */
+/* ---------------------------------------------------------------------------------------------- */
+#Menu {
+    height: 33px;
+    background-color: #814374;
+    position: relative;
+    left: 0px;
+    top: 0px;
+    float: none;
+}
+#Menu ul {
+    margin: 0;
+    padding: 0;
+}
+#Menu li {
+    list-style-type: none;
+    float: left;
+    display: block;
+    width: 103px;
+    height: 33px;
+    text-align: center;
+    line-height:35px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+#Menu li a {
+    text-decoration: none;
+    color: #FFF;
+}
+#Menu li:hover {
+    background-color: #483D8B;
+    height: 33px;
+}
+#Menu ul ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+}
+#Menu ul ul li {
+    min-width:150px;
+    float:none;
+    background-color: #814374;
+    display:list-item;
+    position: relative;
+    text-align: left;
+    padding: 2%;
+}
+#Menu ul li:hover > ul {
+    display:inherit;
+}
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   SideBar CSS Section                                                                          */
+/* ---------------------------------------------------------------------------------------------- */
+#SideBarAndBodyContainer {
+    width:100%;
+    background: #CDBB79;
+    float: left;
+}
+#SideBar {
+    width: 15%;
+    background: #CDBB79;
+    float: left;
+}
+#MainBody {
+    width: 85%;
+    background-color: #F2F2F2;
+    float: right;
+    font-size: 12px;
+    margin-left: auto;
+    margin-right: auto; 
+    min-height : 500px;
+}
+#SideBar ul {
+    margin: 0px;
+    padding: 5px;
+    list-style-type: none;
+    text-align: center;
+
+}
+#SideBar li {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12px;
+
+}
+#SideBar li a {
+    text-decoration: none;
+    color: green;
+    padding: 1px 0;
+    font-weight: bold;
+
+}
+#SideBar .selected {
+    font-weight: bold;
+
+}
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Footer CSS Section                                                                           */
+/* ---------------------------------------------------------------------------------------------- */
+#Footer {
+    clear: both; 
+    font-size: 10px;
+    height: 11px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #51A39D;
+    text-align: right;
+    color: white;
+}
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Tooltip CSS Section                                                                          */
+/* ---------------------------------------------------------------------------------------------- */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   Button  CSS Section                                                                          */
+/* ---------------------------------------------------------------------------------------------- */
+
+.myButton {
+	-moz-box-shadow: 0px 0px 0px 2px #9fb4f2;
+	-webkit-box-shadow: 0px 0px 0px 2px #9fb4f2;
+	box-shadow: 0px 0px 0px 2px #9fb4f2;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #7892c2), color-stop(1, #476e9e));
+	background:-moz-linear-gradient(top, #7892c2 5%, #476e9e 100%);
+	background:-webkit-linear-gradient(top, #7892c2 5%, #476e9e 100%);
+	background:-o-linear-gradient(top, #7892c2 5%, #476e9e 100%);
+	background:-ms-linear-gradient(top, #7892c2 5%, #476e9e 100%);
+	background:linear-gradient(to bottom, #7892c2 5%, #476e9e 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#7892c2', endColorstr='#476e9e',GradientType=0);
+	background-color:#7892c2;
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+	border:1px solid #4e6096;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	padding:3px 7px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #283966;
+}
+.myButton:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #476e9e), color-stop(1, #7892c2));
+	background:-moz-linear-gradient(top, #476e9e 5%, #7892c2 100%);
+	background:-webkit-linear-gradient(top, #476e9e 5%, #7892c2 100%);
+	background:-o-linear-gradient(top, #476e9e 5%, #7892c2 100%);
+	background:-ms-linear-gradient(top, #476e9e 5%, #7892c2 100%);
+	background:linear-gradient(to bottom, #476e9e 5%, #7892c2 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#476e9e', endColorstr='#7892c2',GradientType=0);
+	background-color:#476e9e;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}

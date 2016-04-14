@@ -6,18 +6,22 @@
 #   Version  :  1.0
 #   Date     :  19 December 2015
 #   Requires :  sh
-
+# --------------------------------------------------------------------------------------------------
+#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
-#   SADMIN Tool are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
 #
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-#
-#
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+#set -x
 
 #
 #===================================================================================================
@@ -37,47 +41,54 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+#
+#
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
+#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
+#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
+#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
+#SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
+#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
+#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
+#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
+#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
+#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
+#SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
+#SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
+#SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
+#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
+#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
+#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
+#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
+#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
+#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
+#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
+
 #===================================================================================================
 #
-
-
 
 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-#
-#
-# This is a counter that is incremented each time an error occured
 ERROR_COUNT=0                               ; export ERROR_COUNT            # Error Counter
-
-# Number of days to keep unmodified *.rch and *.log file - After that time they are deleted
-LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RCH+LOG Delete after
 
 
 
@@ -134,21 +145,34 @@ dir_housekeeping()
     
     # If on the SADMIN Server - Set Privilege on Database Directories.
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]
-       then set_dir "$SADM_PG_DIR"           "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Dir
-            set_dir "${SADM_PG_DIR}/data"    "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Data
-            set_dir "${SADM_PG_DIR}/backups" "0700" "$SADM_PGUSER" "$SADM_PGGROUP" # SADMIN PostGres Backups
-            chmod -R g-s $SADM_PG_DIR                                              # No Sticky Bit on PostGres
-       #else sadm_writelog "This is an SADM Client"
-       #     sadm_writelog "  - The user 'postgres' is not present"
-       #     sadm_writelog "  - We are not on the SADM Server $SADM_SERVER"
-       #     sadm_writelog ""
-       #     sadm_writelog "Removing $SADM_PG_DIR Directories Structure"
-       #     rm -fr $SADM_PG_DIR > /dev/null 2>&1
-       #     sadm_writelog "Removing $SADM_WWW_DIR Directories Structure"
-       #     rm -fr $SADM_WWW_DIR  > /dev/null 2>&1
+       then set_dir "$SADM_PG_DIR"           "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Dir
+            set_dir "${SADM_PG_DIR}/data"    "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Data
+            set_dir "${SADM_PG_DIR}/backups" "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Backups
+            chmod -R g-s $SADM_PG_DIR                                                  # No Sticky Bit on PostGres
     fi
+
+    # Reset privilege on SADMIN Bin Directory files
+    if [ -d "$SADM_WWW_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_WWW_DIR -exec chmod -R 775 {} \;"
+             find $SADM_WWW_DIR -exec chmod -R 775 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+
     
- 
     return $ERROR_COUNT
 }
 
@@ -162,10 +186,11 @@ file_housekeeping()
     sadm_writelog "Server Files HouseKeeping Starting"
     sadm_writelog " "
     
+    # Delete old RCH File in /sadmin/www/dat
     if [ -d "${SADM_WWW_DIR}/dat" ]
-        then sadm_writelog "Find any *.rch file older than ${LIMIT_DAYS} days in ${SADM_WWW_DIR}/dat and delete them"
-             find ${SADM_WWW_DIR}/dat -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
-             find ${SADM_WWW_DIR}/dat -type f -mtime +${LIMIT_DAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
+        then sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DIR}/dat and delete them"
+             find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
+             find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -199,6 +224,8 @@ file_housekeeping()
     
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]       # Only run on SADMIN Server
         then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "The current server is $(sadm_get_hostname).$(sadm_get_domainname)"
+             sadm_writelog "The SADMIN server in configuration file is $SADM_SERVER"
              sadm_writelog "Process aborted"                              # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S

@@ -7,6 +7,18 @@
 # Description
 #
 #
+#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
 #pdb.set_trace()                                                       # Activate Python Debugging
@@ -38,9 +50,11 @@ cfg_mail_type      = 3                                                  # 0=No 1
 #cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
 #cfg_cie_name       = ""                                                 # Company Name
 #cfg_user           = ""                                                 # sadmin user account
+#cfg_group          = ""                                                 # sadmin group account
+#cfg_www_user       = ""                                                 # sadmin/www user account
+#cfg_www_group      = ""                                                 # sadmin/www group owner
 #cfg_server         = ""                                                 # sadmin FQN Server
 #cfg_domain         = ""                                                 # sadmin Default Domain
-#cfg_group          = ""                                                 # sadmin group account
 #cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
 #cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
 #cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
@@ -57,6 +71,8 @@ cfg_mail_type      = 3                                                  # 0=No 1
 #cfg_rw_pgpwd       = ""                                                 # PostGres Read Write Pwd
 #cfg_ro_pguser      = ""                                                 # PostGres Read Only User
 #cfg_ro_pgpwd       = ""                                                 # PostGres Read Only Pwd
+
+
 
 #===================================================================================================
 #                                 Local Variables used by this script
@@ -168,6 +184,22 @@ def main_process(wconn,wcur):
 #
 def main():
     sadm.start()                                                        # Open Log, Create Dir ...
+
+    # Test if script is run by root (Optional Code)
+    if os.geteuid() != 0:                                               # UID of user is not zero
+       sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
+       sadm.writelog ("Process aborted")                                # Process Aborted Msg 
+       sadm.stop (1)                                                    # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
+        
+    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
+       sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
+       sadm.writelog ("Process aborted")                                # Abort advise message
+       sadm.stop (1)                                                    # Close and Trim Log
+       sys.exit(1)                                                      # Exit To O/S
+
+
     if sadm.debug > 4 : sadm.display_env()                              # Display Env. Variables
     (conn,cur) = sadm.open_sadmin_database()                            # Open Connection 2 Database
     sadm.exit_code=main_process(conn,cur)                               # Main Script Processing

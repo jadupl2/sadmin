@@ -41,11 +41,20 @@ SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where 
 SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files 
 SADM_SAR_DIR="$SADM_DAT_DIR/sar"            ; export SADM_SAR_DIR       # System Activty Report Dir
 SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
+SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 #
-# SADMIN WEB SITE DIRECTORY DEFINITION
-SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # sadmin Web Site Dir.
-SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"        ; export SADM_WWW_DAT_DIR   # sadmin server Data Dir.
-SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"      ; export SADM_WWW_HTML_DIR  # sadmin server Data Dir.
+# SADMIN WEB SITE DIRECTORIES DEFINITION
+SADM_WWW_DIR="$SADM_BASE_DIR/www"                      ; export SADM_WWW_DIR       # Web Site Dir.
+SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                 ; export SADM_WWW_HTML_DIR  # server html Dir
+SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                   ; export SADM_WWW_DAT_DIR   # server Data Dir
+SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                   ; export SADM_WWW_LIB_DIR   # server Libr Dir
+SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR   # web rch dir
+SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR   # web sar dir
+SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/net"   ; export SADM_WWW_NET_DIR   # web net dir
+SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR    # web dr dir
+SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR  # web nmon dir
+SADM_WWW_TMP_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/tmp"   ; export SADM_WWW_TMP_DIR   # web tmp dir
+SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/log"   ; export SADM_WWW_LOG_DIR   # web log dir
 #
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
@@ -66,7 +75,8 @@ SADM_FDISK=""                               ; export SADM_FDISK         # fdisk 
 SADM_WHICH=""                               ; export SADM_WHICH         # which Path - Required
 SADM_PRTCONF=""                             ; export SADM_PRTCONF       # prtconf  Path - Required
 SADM_PERL=""                                ; export SADM_PERL          # perl Path (for epoch time)
-SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path 
+SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path
+SADM_LSCPU=""                               ; export SADM_LSCPU         # Path to lscpu Command
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
@@ -74,6 +84,8 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
 SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
+SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
 SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
 SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
 SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
@@ -213,7 +225,7 @@ sadm_check_command_availibility() {
              sadm_writelog "The ${SADM_CMD} command is not available on the system"
              sadm_writelog "You need to install it before we can used functions of SADMIN Library"
              sadm_writelog "Once the software is installed, rerun this script"
-             sadm_writelog "Will continue anyway, but some functionnality may not work"
+             sadm_writelog "Will continue anyway, but some functionnality may not work as expected"
     fi  
     return 1
 }
@@ -251,6 +263,8 @@ sadm_check_requirements() {
             SADM_BC=$SADM_VAR1                                          # Save Command Path
             sadm_check_command_availibility mail                        # Mail cmd available?
             SADM_MAIL=$SADM_VAR1                                        # Save Command Path
+            sadm_check_command_availibility lscpu                       # lscpu cmd available?
+            SADM_LSCPU=$SADM_VAR1                                       # Save Command Path
     fi
     
     # Commands Require on Aix O/S
@@ -586,6 +600,12 @@ sadm_load_config_file()
         echo "$wline" |grep -i "^SADM_GROUP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_WWW_USER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_WWW_USER=`echo "$wline"          |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_WWW_GROUP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_WWW_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
+        #
         echo "$wline" |grep -i "^SADM_MAX_LOGLINE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MAX_LOGLINE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -647,6 +667,8 @@ sadm_load_config_file()
                  sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
                  sadm_writelog "  - SADM_USER=$SADM_USER"                   # sadmin user account
                  sadm_writelog "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
+                 sadm_writelog "  - SADM_WWW_USER=$SADM_WWW_USER"           # sadmin user account
+                 sadm_writelog "  - SADM_WWW_GROUP=$SADM_WWW_GROUP"         # sadmin group account
                  sadm_writelog "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
                  sadm_writelog "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
                  sadm_writelog "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
@@ -733,22 +755,27 @@ sadm_start() {
              chmod 0775 $SADM_PKG_DIR
     fi
 
-    # If Sysadmin Web Site Directory doesn't exist, create it.
+    # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
     fi
 
-    # If Sysadmin Web Data Directory doesn't exist, create it.
+    # If SADM Server Web Site Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
     fi
     
-    # If Sysadmin Web Data Directory doesn't exist, create it.
+    # If SADM Server Web Site HTML Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
+    fi
+    # If SADM Server Web Site LIB Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+        then mkdir -p $SADM_WWW_LIB_DIR
+             chmod 0775 $SADM_WWW_LIB_DIR  
     fi
 
     # If NMON Directory doesn't exist, create it.
@@ -761,6 +788,12 @@ sadm_start() {
     if [ ! -d "$SADM_DR_DIR" ]
         then mkdir -p $SADM_DR_DIR
              chmod 0775 $SADM_DR_DIR
+    fi
+
+    # If Network/Subnet Information Directory doesn't exist, create it.
+    if [ ! -d "$SADM_NET_DIR" ]
+        then mkdir -p $SADM_NET_DIR
+             chmod 0775 $SADM_NET_DIR
     fi
 
     # If Performance Server Data Directory doesn't exist, create it.
@@ -837,22 +870,22 @@ sadm_stop() {
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
  
     # Start Writing Log Footer
-    sadm_writelog " "                                                     # Blank Line
-    sadm_writelog "${SADM_DASH}"                                          # Dash Line
-    sadm_writelog "Script return code is $SADM_EXIT_CODE"                 # Final Exit Code to log
+    sadm_writelog " "                                                   # Blank Line
+    sadm_writelog "${SADM_DASH}"                                        # Dash Line
+    sadm_writelog "Script return code is $SADM_EXIT_CODE"               # Final Exit Code to log
     
     # Get End time and Calculate Elapse Time
     sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_end_time  # Get & Format End Time
     sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
-    sadm_writelog "Script execution time is $sadm_elapse"                 # Log the Elapse Time
+    sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
 
     # Update the [R]eturn [C]ode [H]istory File
-    RCHLINE="$(sadm_get_hostname) $SADM_STIME $sadm_end_time"               # Format Part1 of RCH File
+    RCHLINE="$(sadm_get_hostname) $SADM_STIME $sadm_end_time"           # Format Part1 of RCH File
     RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE"          # Format Part2 of RCH File
     echo "$RCHLINE" >>$SADM_RCHLOG                                      # Append Line to  RCH File
     
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
-    sadm_writelog "Trimming $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines."    # Advise user of trimm value
+    sadm_writelog "Trimming $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines."  # Advise user of trimm value
     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
     chmod 664 ${SADM_RCHLOG}
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}

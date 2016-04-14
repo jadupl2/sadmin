@@ -320,6 +320,8 @@ def update_process(wconn,wcur,wcolnames):
 
             # Save Information Found in SysInfo file into our row dictionnary (server_row)
             try:
+                NO_ERROR_OCCUR=True
+
                 if "SADM_HOSTNAME" in CFG_NAME :
                     srow['srv_name']           = CFG_VALUE.lower()
                 if "SADM_OS_TYPE" in CFG_NAME :
@@ -351,6 +353,8 @@ def update_process(wconn,wcur,wcolnames):
                 except ValueError as e:
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
                     srow['srv_kernel_bitmode'] = int(0)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
                 
                 if "SADM_SERVER_MODEL"            in CFG_NAME :
                     srow['srv_model']           = CFG_VALUE
@@ -364,6 +368,8 @@ def update_process(wconn,wcur,wcolnames):
                 except ValueError as e:
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
                     srow['srv_memory'] = int(0)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
                 
                 # Hardware Capability to run 32 or 64 Bits  
                 try :
@@ -372,6 +378,8 @@ def update_process(wconn,wcur,wcolnames):
                 except ValueError as e:
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
                     srow['srv_hwd_bitmode'] = int(0)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
 
                 # Number of CPU on the Server  (If Error Set Value to zero - to Spot Error)
                 try :
@@ -379,7 +387,9 @@ def update_process(wconn,wcur,wcolnames):
                         srow['srv_nb_cpu'] = int(CFG_VALUE)
                 except ValueError as e:
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
-                    srow['srv_nb_cpu'] = int(0)
+                    srow['srv_nb_cpu'] = int(1)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
                     
                 # CPU SPeed  (If Error Set Value to zero - to Spot Error)
                 try :
@@ -387,7 +397,9 @@ def update_process(wconn,wcur,wcolnames):
                         srow['srv_cpu_speed'] = int(CFG_VALUE)
                 except ValueError as e:
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
-                    srow['srv_cpu_speed'] = int(0)  
+                    srow['srv_cpu_speed'] = int(1)  
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
 
                 # Number of Socket  (If Error Set Value to zero - to Spot Error)
                 try :
@@ -396,6 +408,8 @@ def update_process(wconn,wcur,wcolnames):
                 except :
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
                     srow['srv_nb_socket'] = int(0)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
                 
                 # Number of core per Socket (If Error Set Value to zero - to Spot Error)
                 try:
@@ -404,6 +418,8 @@ def update_process(wconn,wcur,wcolnames):
                 except :
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
                     srow['srv_core_per_socket'] = int(0)
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
                 
                 # Number of Thread per core
                 try :
@@ -412,6 +428,8 @@ def update_process(wconn,wcur,wcolnames):
                 except :
                     srow['srv_thread_per_core'] = int(0)
                     sadm.writelog ("ERROR: Converting %s to an integer (%s)" % (CFG_NAME,CFG_VALUE))
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
 
                 # All IP(s) defined on the servers with ETH Dev, IP Address, Netmask and MAC Address
                 if "SADM_SERVER_IPS"              in CFG_NAME :
@@ -425,11 +443,10 @@ def update_process(wconn,wcur,wcolnames):
                 if "SADM_SERVER_VG(s)"            in CFG_NAME :
                     srow['srv_vgs_info']        = CFG_VALUE
                     
-                NO_ERROR_OCCUR=True
             except IndexError as e:
                 sadm.writelog ("Error when moving data to Memory - Data Conversion Error")
                 sadm.writelog ("%s" % e)
-                TOTAL_ERROR = TOTAL_ERROR + 1                           # Add 1 To Taltal Error
+                TOTAL_ERROR = TOTAL_ERROR + 1                           # Add 1 To Total Error
                 NO_ERROR_OCCUR=False                                    # Now No "Error" is False
         FH_SYSINFO.close()                                              # Close the Sysinfo File
 
@@ -442,6 +459,7 @@ def update_process(wconn,wcur,wcolnames):
             else :                                                      # If Server was not found
                 RC = insert_row(wconn,wcur,srow)                        # Go Insert new row
                 TOTAL_ERROR = TOTAL_ERROR + RC                          # RC=0=Success RC=1=Error
+        sadm.writelog ("Total Error Count at %d now" % (TOTAL_ERROR))   # Total Error after each Srv 
 
     return (TOTAL_ERROR)
 
@@ -453,6 +471,21 @@ def update_process(wconn,wcur,wcolnames):
 #
 def main():
     sadm.start()                                                        # Open Log, Create Dir ...
+    
+    # Test if script is run by root (Optional Code)
+    if os.geteuid() != 0:                                               # UID of user is not zero
+       sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
+       sadm.writelog ("Process aborted")                                # Process Aborted Msg 
+       sadm.stop (1)                                                    # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
+        
+    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
+       sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
+       sadm.writelog ("Process aborted")                                # Abort advise message
+       sadm.stop (1)                                                    # Close and Trim Log
+       sys.exit(1)                                                      # Exit To O/S
+    
     if sadm.debug > 4 : sadm.display_env()                              # Display Env. Variables
     (conn,cur) = sadm.open_sadmin_database()                            # Open Connection 2 Database
     colnames = get_columns_name(conn,cur,"sadm.server")                 # Get Server Table Col Name

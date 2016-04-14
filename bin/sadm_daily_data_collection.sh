@@ -1,6 +1,6 @@
 #! /bin/sh
 #############################################################################################
-# Title      :  sys_daily_data_collection.sh
+# Title      :  sadm_daily_data_collection.sh
 # Description:  Get hardware Info & Performance Datafrom all active servers
 # Version    :  2.4
 # Author     :  Jacques Duplessis
@@ -102,6 +102,7 @@ HW_DIR="$SADM_DAT_DIR/hw"	                     ; export HW_DIR        # Hardware
 ERROR_COUNT=0                                    ; export ERROR_COUNT   # Global Error Counter
 TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Error in Aix Function
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
+SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
 
 
 # --------------------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ get_aix_files()
     sadm_writelog "Starting to process AIX Servers ..."
 
     sadm_writelog "Producing a list of all Linux active servers"
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_type, srv_active from sadm.server  "
+    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_type,srv_active,srv_sporadic from sadm.server "
     SQL2="where srv_ostype = 'aix' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
@@ -127,6 +128,8 @@ get_aix_files()
             xcount=`expr $xcount + 1`
             server=`  echo $wline|awk -F, '{ print $1 }'`
             domain=`echo $wline|awk -F, '{ print $3 }'`
+            server_sporadic=` echo $wline|awk -F, '{ print $6 }'`
+
 
             # Test pinging the server - if doesn t work then skip server & Log error
             #-------------------------------------------------------------------------------------------
@@ -137,11 +140,15 @@ get_aix_files()
             RC=$?
             if [ $RC -ne 0 ]
                then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
-                    sadm_writelog " - Will not be able to process that server."
-                    sadm_writelog " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
-                    sadm_writelog "RETURN CODE IS 0 - OK"
-                    continue
-               else sadm_writelog "RETURN CODE IS 0 - OK"
+                    if [ "$server_sporadic" == "t" ]
+                        then sadm_writelog "*** SERVER CLASS IS SPORADIC - NOT CONSIDER AS AN ERROR"
+                             sadm_writelog "*** WILL CONTINUE PROCESSING WITH NEXT SERVER"
+                             sadm_writelog "RETURN CODE IS 0 - OK"
+                             continue
+                        else sadm_writelog "*** ERROR : Will not be able to process that server."
+                             sadm_writelog "*** WILL CONSIDER THAT AN ERROR (SERVER IS NOT DEFINE AS SPORADIC)"
+                             ERROR_COUNT=$(($ERROR_COUNT+1))
+                    fi
             fi
             sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
     
@@ -164,7 +171,7 @@ get_aix_files()
             # DR INFO FILES
             # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
+            WDIR="$SADM_WWW_DR_DIR"
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -186,7 +193,7 @@ get_aix_files()
             # NMON FILES
             # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
+            WDIR="$SADM_WWW_NMON_DIR"                            # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -208,7 +215,7 @@ get_aix_files()
             # SAR PERF FILES
             # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
+            WDIR="$SADM_WWW_SAR_DIR"                             # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -245,7 +252,7 @@ get_linux_files()
     sadm_writelog "Starting to process Linux Servers ..."
 
     sadm_writelog "Producing a list of all Linux active servers"
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_type, srv_active from sadm.server  "
+    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_type,srv_active,srv_sporadic from sadm.server "
     SQL2="where srv_ostype = 'linux' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
@@ -258,21 +265,27 @@ get_linux_files()
             xcount=`expr $xcount + 1`
             server=`  echo $wline|awk -F, '{ print $1 }'`
             domain=`echo $wline|awk -F, '{ print $3 }'`
+            server_sporadic=` echo $wline|awk -F, '{ print $6 }'`
+
 
             # Test pinging the server - if doesn t work then skip server & Log error
             #-------------------------------------------------------------------------------------------
             sadm_writelog " " ; sadm_writelog " " ; sadm_writelog "${SADM_DASH}"
-            sadm_writelog "Starting to process the Linux server : ${server}.${domain}"
+            sadm_writelog "Starting to process the AIX server : ${server}.${domain}"
             sadm_writelog "ping -c 2 ${server}.${domain}"
             ping -c 2 ${server}.${domain} >/dev/null 2>/dev/null
             RC=$?
             if [ $RC -ne 0 ]
-               then sadm_writelog "Could not ping server ${server}.${server_domain} ..."
-                    sadm_writelog " - Will not be able to process that server."
-                    sadm_writelog " - WILL CONSIDER THAT IS OK (MAY BE POWEROFF OR AN UNPLUGGED LAPTOP)."
-                    sadm_writelog "RETURN CODE IS 0 - OK"
-                    continue
-               else sadm_writelog "RETURN CODE IS 0 - OK"
+               then sadm_writelog "Could not ping server ${server_name}.${server_domain} ..."
+                    if [ "$server_sporadic" == "t" ]
+                        then sadm_writelog "*** SERVER CLASS IS SPORADIC - NOT CONSIDER AS AN ERROR"
+                             sadm_writelog "*** WILL CONTINUE PROCESSING WITH NEXT SERVER"
+                             sadm_writelog "RETURN CODE IS 0 - OK"
+                             continue
+                        else sadm_writelog "*** ERROR : Will not be able to process that server."
+                             sadm_writelog "*** WILL CONSIDER THAT AN ERROR (SERVER IS NOT DEFINE AS SPORADIC)"
+                             ERROR_COUNT=$(($ERROR_COUNT+1))
+                    fi
             fi
             sadm_writelog "Linux Total Error Count is now at $ERROR_COUNT"
 
@@ -293,7 +306,7 @@ get_linux_files()
             # DR INFO FILES
             # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
+            WDIR="$SADM_WWW_DR_DIR"
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -315,7 +328,7 @@ get_linux_files()
             # NMON FILES
             # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                            # Local Receiving Dir.
+            WDIR="$SADM_WWW_NMON_DIR"                            # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -337,7 +350,7 @@ get_linux_files()
             # SAR PERF FILES
             # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
             #-------------------------------------------------------------------------------------------
-            WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                             # Local Receiving Dir.
+            WDIR="$SADM_WWW_SAR_DIR"                             # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -367,29 +380,30 @@ get_linux_files()
 # --------------------------------------------------------------------------------------------------
 #
 
-    sadm_start                                                          # Make sure Dir. Struc. exist
+    sadm_start                                                          # Init Log & Dir. 
     
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                              # Abort advise message
+    # This Script should only be run on the SADMIN Server
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ] # Only run on SADM Server
+        then sadm_writelog "Script can be run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+    
+    # This Script Should only be run by the user 'root'
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
-             sadm_writelog "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+    
+    # Get Statistics and Configuration files from AIX and Linux Servers
     get_aix_files                                                       # Collect Files from AIX Servers
     AIX_ERROR=$?                                                        # AIX Nb. Errors while collecting
     get_linux_files                                                     # Collect Files from Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                           # Set Total AIX+Linux Errors
-    sadm_writelog " " ; sadm_writelog " " ;                                 # Insert Blank lines in log
-    sadm_writelog "${SADM_DASH}"; sadm_writelog "END OF PROCESSING"              # Advise user - End of Processing
-    sadm_writelog "${SADM_DASH}"                                               # Advise user that we are finish
-    sadm_writelog "Final Global Error count is at $SADM_EXIT_CODE"          # Advise nb. total errors.
-    sadm_writelog "${SADM_DASH}"                                               # Advise user that we are finish
-    sadm_stop $SADM_EXIT_CODE                                             # End Process with exit Code
-    exit $SADM_EXIT_CODE                                                  # Exit script
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Set Total AIX+Linux Errors
+
+    sadm_stop $SADM_EXIT_CODE                                           # End Process with exit Code
+    exit $SADM_EXIT_CODE                                                # Exit script

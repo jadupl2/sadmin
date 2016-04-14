@@ -24,7 +24,7 @@ pn                 = os.path.basename(sys.argv[0])                      # Progra
 inst               = os.path.basename(sys.argv[0]).split('.')[0]        # Program name without Ext.
 tpid               = str(os.getpid())                                   # Get Current Process ID.
 hostname           = socket.gethostname().split('.')[0]                 # Get current hostname
-dash          = "=" * 80                                           # Line of 80 dash
+dash          = "=" * 80                                                # Line of 80 dash
 ten_dash           = "=" * 10                                           # Line of 10 dash
 username           = getpass.getuser()                                  # Get Current User Name
 args               = len(sys.argv)                                      # Nb. argument receive
@@ -42,7 +42,6 @@ cfg_dir            = os.path.join(base_dir,'cfg')                       # SADM C
 bin_dir            = os.path.join(base_dir,'bin')                       # SADM Scripts Directory
 log_dir            = os.path.join(base_dir,'log')                       # SADM Log Directory
 pg_dir             = os.path.join(base_dir,'pgsql')                     # SADM PostGres Database Dir
-www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
 pkg_dir            = os.path.join(base_dir,'pkg')                       # SADM Package Directory
 sys_dir            = os.path.join(base_dir,'sys')                       # SADM System Scripts Dir.
 dat_dir            = os.path.join(base_dir,'dat')                       # SADM Data Directory
@@ -50,8 +49,21 @@ nmon_dir           = os.path.join(dat_dir,'nmon')                       # SADM n
 rch_dir            = os.path.join(dat_dir,'rch')                        # SADM Result Code Dir.
 dr_dir             = os.path.join(dat_dir,'dr')                         # SADM Disaster Recovery Dir
 sar_dir            = os.path.join(dat_dir,'sar')                        # SADM System Activity Rep.
+net_dir            = os.path.join(dat_dir,'net')                        # SADM Network/Subnet Dir 
+
+# SADM Web Site Directories Structure
+www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
 www_dat_dir        = os.path.join(www_dir,'dat')                        # SADM Web Site Data Dir
-www_html_dir       = os.path.join(www_dir,'html')                       # SADM Web Site Dir
+www_html_dir       = os.path.join(www_dir,'html')                       # SADM Web Site html Dir
+www_lib_dir        = os.path.join(www_dir,'lib')                        # SADM Web Site Lib Dir
+www_net_dir        = www_dat_dir + '/' + hostname + '/net'              # SADM Web Data Network Dir
+www_rch_dir        = www_dat_dir + '/' + hostname + '/rch'              # SADM Web Data RCH Dir
+www_sar_dir        = www_dat_dir + '/' + hostname + '/sar'              # SADM Web Data SAR Dir
+www_dr_dir         = www_dat_dir + '/' + hostname + '/dr'               # SADM Web Disaster Recovery
+www_nmon_dir       = www_dat_dir + '/' + hostname + '/nmon'             # SADM Web NMON Directory
+www_tmp_dir        = www_dat_dir + '/' + hostname + '/tmp'              # SADM Web tmp Directory
+www_log_dir        = www_dat_dir + '/' + hostname + '/log'              # SADM Web log Directory
+
 
 # SADM Files Definition
 log_file           = log_dir + '/' + hostname + '_' + inst + '.log'     # Log Filename
@@ -69,9 +81,11 @@ cfg_mail_type      = 1                                                  # 0=No 1
 cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
 cfg_cie_name       = ""                                                 # Company Name
 cfg_user           = ""                                                 # sadmin user account
+cfg_group          = ""                                                 # sadmin group account
+cfg_www_user       = ""                                                 # sadmin/www user account
+cfg_www_group      = ""                                                 # sadmin/www group owner
 cfg_server         = ""                                                 # sadmin FQN Server
 cfg_domain         = ""                                                 # sadmin Default Domain
-cfg_group          = ""                                                 # sadmin group account
 cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
 cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
 cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
@@ -286,6 +300,23 @@ def get_osname() :
     return osname
 
         
+# --------------------------------------------------------------------------------------------------
+#          RETURN CPU SERIAL Number (For the Raspberry - need to be check on other server)
+# --------------------------------------------------------------------------------------------------
+def get_serial():
+  # Extract serial from cpuinfo file
+  cpuserial = "0000000000000000"
+  try:
+    f = open('/proc/cpuinfo','r')
+    for line in f:
+      if line[0:6]=='Serial':
+        cpuserial = line[10:26]
+    f.close()
+  except:
+    cpuserial = "ERROR000000000"
+
+  return cpuserial
+
 
 # --------------------------------------------------------------------------------------------------
 #                             RETURN THE OS PROJECT CODE NAME
@@ -527,21 +558,31 @@ def start () :
     if not os.path.exists(dr_dir)       : os.mkdir(dr_dir,2775)         # Create SADM DR Dir.
     if not os.path.exists(sar_dir)      : os.mkdir(sar_dir,2775)        # Create SADM System Act Dir
     if not os.path.exists(rch_dir)      : os.mkdir(rch_dir,2775)        # Create SADM RCH Dir.
+    if not os.path.exists(net_dir)      : os.mkdir(net_dir,2775)        # Create SADM RCH Dir.
 
     # These Directories are only created on the SADM Server (Data Base and Web Directories)
     if get_hostname() == cfg_server :
         if not os.path.exists(pg_dir)       : os.mkdir(pg_dir,2775)     # Create SADM Database Dir.
-        if not os.path.exists(www_dir)      : os.mkdir(www_dir,2775)    # Create SADM WWW Dir.
-        if not os.path.exists(www_html_dir) : os.mkdir(www_html_dir,2775) # Create SADM HTML Dir.
-        if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,2775)  # Create Web  DAT  Dir.
+        if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,2775) # Web  Network  Dir.
+
         uid = pwd.getpwnam(cfg_user).pw_uid                             # Get UID User in sadmin.cfg 
         gid = grp.getgrnam(cfg_group).gr_gid                            # Get GID User in sadmin.cfg 
-        os.chown(www_dir, uid, gid)                                     # Change owner of log file
-        os.chown(www_html_dir, uid, gid)                                # Change owner of rch file
-        os.chown(www_html_dat, uid, gid)                                # Change owner of rch file
+
         uid = pwd.getpwnam(cfg_pguser).pw_uid                           # Get UID User in sadmin.cfg 
         gid = grp.getgrnam(cfg_pggroup).gr_gid                          # Get GID User in sadmin.cfg 
         os.chown(pg_dir, uid, gid)                                      # Change owner of rch file
+
+        if not os.path.exists(www_dir)      : os.mkdir(www_dir,2775)    # Create SADM WWW Dir.
+        if not os.path.exists(www_html_dir) : os.mkdir(www_html_dir,2775) # Create SADM HTML Dir.
+        if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,2775)  # Create Web  DAT  Dir.
+        if not os.path.exists(www_lib_dir)  : os.mkdir(www_lib_dir,2775)  # Create Web  DAT  Dir.
+        wuid = pwd.getpwnam(cfg_www_user).pw_uid                        # Get UID User of Wev User 
+        wgid = grp.getgrnam(cfg_www_group).gr_gid                       # Get GID User of Web Group 
+        os.chown(www_dir, wuid, wgid)                                   # Change owner of log file
+        os.chown(www_dat_net_dir, wuid, wgid)                           # Change owner of Net Dir
+        os.chown(www_html_dir, wuid, wgid)                              # Change owner of rch file
+        os.chown(www_dat_dir, wuid, wgid)                               # Change owner of dat file
+        os.chown(www_lib_dir, wuid, wgid)                               # Change owner of lib file
     
         
     # Write SADM Header to Script Log
@@ -574,7 +615,7 @@ def start () :
         sys.exit(1)     
     rch_line="%s %s %s %s %s" % (hostname,start_time,".......... ........ ........",inst,"2")
     FH_RCH_FILE.write ("%s\n" % (rch_line))                             # Write Line to RCH Log
-    FH_RCH_FILE.close                                                   # Close RCH File
+    FH_RCH_FILE.close()                                                 # Close RCH File
     return 0
 
         
@@ -592,10 +633,10 @@ def stop(return_code):
         exit_code=1                                                     # Making Sure code is 1 or 0
  
     # Write the Script Exit code of the script to the log
-    writelog (" ")                                                     # Space Line in the LOG
-    writelog (dash)                                               # 80 = Lines 
-    writelog ("Script return code is " + str(exit_code))               # Script ExitCode to Log
-    #time.sleep(1)                                                       # Sleep 1 seconds
+    writelog (" ")                                                      # Space Line in the LOG
+    writelog (dash)                                                     # 80 = Lines 
+    writelog ("Script return code is " + str(exit_code))                # Script ExitCode to Log
+    #time.sleep(1)                                                      # Sleep 1 seconds
 
     
     # Calculate the execution time, format it and write it to the log
@@ -615,7 +656,7 @@ def stop(return_code):
     FH_RCH_FILE=open(rch_file,'a')                                      # Open RCH Log - append mode
     rch_line="%s %s %s %s %s %s" % (hostname,start_time,stop_time,elapse_time,inst,exit_code)
     FH_RCH_FILE.write ("%s\n" % (rch_line))                             # Write Line to RCH Log
-    FH_RCH_FILE.close                                                   # Close RCH File
+    FH_RCH_FILE.close()                                                 # Close RCH File
     writelog ("Trimming %s to %s lines." %  (rch_file, str(cfg_max_rchline)))
 
 
@@ -646,6 +687,21 @@ def stop(return_code):
         MailMess="No Mail can be send - Until mail command is install"  # Message User Email Choice    
     writelog ("%s" % (MailMess))                                       # Write user choice to log
     
+          
+    # Advise user the Log will be trimm
+    writelog ("Trimming %s to %s lines." %  (log_file, str(cfg_max_logline)))
+    
+    # Write Script Log Footer
+    now = time.strftime("%c")                                           # Get Current Date & Time
+    writelog (now + " - End of " + pn)                                  # Write Final Footer to Log
+    writelog (dash)                                                     # 80 = Lines 
+    writelog (" ")                                                      # Space Line in the LOG
+    #FH_LOG_FILE.flush()                                                 # Got to do it - Missing end
+    FH_LOG_FILE.close()                                                 # Close the Log File
+
+    # Trimming the Log 
+    trimfile (log_file, cfg_max_logline)                                # Trim the Script Log 
+    trimfile (rch_file, cfg_max_rchline)                                # Trim the Script RCH Log 
     
     # Inform UnixAdmin By Email based on his selected choice
     # Now that the user email choice is written to the log, let's send the email now, if needed
@@ -667,25 +723,13 @@ def stop(return_code):
            wsubject=wsub_error                                          # Build the Subject Line
 
     if wsubject != "" :                                                 # subject = Email Needed
+        time.sleep(1)                                                   # Sleep 1 seconds
+        
         cmd = "cat %s | %s -s '%s' %s" % (log_file,mail,wsubject,cfg_mail_addr) # Format Email Cmd
         ccode, cstdout, cstderr = oscommand("%s" % (cmd))               # Go send email 
         if ccode != 0 :                                                 # If Cmd Fail
            writelog ("ERROR : Problem sending email to %s" % (cfg_mail_addr)) # Advise USer 
     
-          
-    # Advise user the Log will be trimm
-    writelog ("Trimming %s to %s lines." %  (log_file, str(cfg_max_logline)))
-    
-    # Write Script Log Footer
-    now = time.strftime("%c")                                           # Get Current Date & Time
-    writelog (now + " - End of " + pn)                                  # Write Final Footer to Log
-    writelog (dash)                                                # 80 = Lines 
-    writelog (" ")                                                      # Space Line in the LOG
-    FH_LOG_FILE.close                                                   # Close the Log File
-
-    # Trimming the Log 
-    #trimfile (log_file, cfg_max_logline)                                # Trim the Script Log 
-    #trimfile (rch_file, cfg_max_rchline)                                # Trim the Script RCH Log 
 
     # Make sure the RCH File and the Script log belong to sadmin.cfg user/group
     uid = pwd.getpwnam(cfg_user).pw_uid                                 # Get UID User in sadmin.cfg 
@@ -711,7 +755,7 @@ def stop(return_code):
 #
 def load_config_file():
     global cfg_mail_type, cfg_mail_addr, cfg_cie_name, cfg_user , cfg_group, cfg_server, cfg_domain
-    global cfg_max_logline, cfg_max_rchline
+    global cfg_max_logline, cfg_max_rchline, cfg_www_user, cfg_www_group
     global cfg_nmon_keepdays, cfg_sar_keepdays, cfg_rch_keepdays, cfg_log_keepdays
     global cfg_pguser, cfg_pggroup, cfg_pgdb, cfg_pgschema, cfg_pghost,  cfg_pgport
     global cfg_rw_pguser, cfg_rw_pgpwd, cfg_ro_pguser, cfg_ro_pgpwd
@@ -752,6 +796,8 @@ def load_config_file():
     cfg_mail_type         = 3                                           # Send Email after each run
     cfg_user              = "sadmin"                                    # sadmin user account
     cfg_group             = "sadmin"                                    # sadmin group account
+    cfg_www_user          = "apache"                                    # sadmin/www user account
+    cfg_www_group         = "apache"                                    # sadmin/www group account
     cfg_max_logline       = 5000                                        # Max Line in each *.log
     cfg_max_rchline       = 100                                         # Max Line in each *.rch
     cfg_nmon_keepdays     = 60                                          # Days to keep old *.nmon
@@ -804,6 +850,8 @@ def load_config_file():
         if "SADM_DOMAIN"        in CFG_NAME : cfg_domain         = CFG_VALUE
         if "SADM_USER"          in CFG_NAME : cfg_user           = CFG_VALUE
         if "SADM_GROUP"         in CFG_NAME : cfg_group          = CFG_VALUE
+        if "SADM_WWW_USER"      in CFG_NAME : cfg_www_user       = CFG_VALUE
+        if "SADM_WWW_GROUP"     in CFG_NAME : cfg_www_group      = CFG_VALUE
         if "SADM_MAX_LOGLINE"   in CFG_NAME : cfg_max_logline    = int(CFG_VALUE)
         if "SADM_MAX_RCHLINE"   in CFG_NAME : cfg_max_rchline    = int(CFG_VALUE)
         if "SADM_NMON_KEEPDAYS" in CFG_NAME : cfg_nmon_keepdays  = int(CFG_VALUE)
@@ -942,6 +990,8 @@ def display_env () :
     print("cfg_domain          = ..." + cfg_domain + "...")
     print("cfg_user            = ..." + cfg_user + "...")
     print("cfg_group           = ..." + cfg_group + "...")
+    print("cfg_www_user        = ..." + cfg_www_user + "...")
+    print("cfg_www_group       = ..." + cfg_www_group + "...")
     print("cfg_max_logline     = ..." + str(cfg_max_logline) + "...")
     print("cfg_max_rchline     = ..." + str(cfg_max_rchline) + "...")
     print("cfg_nmon_keepdays   = ..." + str(cfg_nmon_keepdays) + "...")

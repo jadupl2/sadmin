@@ -74,8 +74,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
-             sadm_writelog "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -86,8 +86,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
     if [ $? -eq 0 ]                                                     # if found
         then CFG2HTML=`which cfg2html`                                  # Save cfg2html path
-        else if [ "$(sadm_get_osname)" = "AIX" ]                           # If on AIX & Not Found
-                then CFG2HTML="$SADM_PKG_DIR/cfg2html/aix/cfg2html"     # Use then one in /sadmin
+        else if [ "$(sadm_get_osname)" = "AIX" ]                        # If on AIX & Not Found
+                then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"         # Use then one in /sadmin
                 else sadm_writelog "Error : The command 'cfg2html' was not found"   # Not Found inform user
                      sadm_writelog "   Install it and re-run this script" # Not Found inform user
                      sadm_writelog "   For Ubuntu/Debian : sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/deb/cfg2html-linux.deb"
@@ -98,7 +98,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
     export CFG2HTML                                                     
     if [ "$SADM_DEBUG_LEVEL" -gt 0 ]
-        then sadm_writelog "COMMAND CFG2HTML : $CFG2HTML"                 # Display Path if Debug
+        then sadm_writelog "COMMAND CFG2HTML : $CFG2HTML"               # Display Path if Debug
     fi
     
     # Run CFG2HTML

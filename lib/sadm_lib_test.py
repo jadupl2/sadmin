@@ -63,7 +63,7 @@ sadm.cfg_mail_type      = 1                                             # 0=No 1
 def main():
 
     sadm.start()                                                        # Open Log, Create Dir ...
-    #sadm.display_env()                                                  # Display Libr. Env.
+    sadm.display_env()                                                  # Display Libr. Env.
     #age = input("Check LOg")
     #age = raw_input("Check LOg")
     sadm.stop(sadm.exit_code)                                           # Close log & trim 

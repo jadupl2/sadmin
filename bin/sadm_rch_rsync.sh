@@ -146,9 +146,9 @@ process_linux_servers()
               
 
               # RCH (Return Code History Files
-              # Transfer Remote $SADMIN/log/*.rch to local $SADMIN/www/dat/$server/rch  
+              # Transfer Remote $SADMIN/dat/rch/*.rch to local $SADMIN/www/dat/$server/rch  
               #-------------------------------------------------------------------------------------------
-              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                           # Local Receiving Dir.
+              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
               sadm_writelog "Make sure the directory $WDIR Exist"
               if [ ! -d "${WDIR}" ]
                   then sadm_writelog "Creating ${WDIR} directory"
@@ -164,7 +164,27 @@ process_linux_servers()
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
-                                                                
+
+              # Server LOG File 
+              # Transfer Remote $SADMIN/log/*.log to local $SADMIN/www/dat/$server/rch  
+              #-------------------------------------------------------------------------------------------
+              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
+              sadm_writelog "Make sure the directory $WDIR Exist"
+              if [ ! -d "${WDIR}" ]
+                  then sadm_writelog "Creating ${WDIR} directory"
+                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
+                  else sadm_writelog "Perfect ${WDIR} directory already exist"
+              fi
+              
+              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
+              rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
+              RC=$? ; RC=0
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
+              fi
+                                                                 
               done < $SADM_TMP_FILE1
     fi
     sadm_writelog " "
@@ -237,6 +257,26 @@ process_aix_servers()
                  else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
 
+              # Server LOG File 
+              # Transfer Remote $SADMIN/log/*.log to local $SADMIN/www/dat/$server/rch  
+              #-------------------------------------------------------------------------------------------
+              WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
+              sadm_writelog "Make sure the directory $WDIR Exist"
+              if [ ! -d "${WDIR}" ]
+                  then sadm_writelog "Creating ${WDIR} directory"
+                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
+                  else sadm_writelog "Perfect ${WDIR} directory already exist"
+              fi
+              
+              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
+              rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
+              RC=$? ; RC=0
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                 else sadm_writelog "RETURN CODE IS 0 - OK"
+              fi
+  
               done < $SADM_TMP_FILE1
         else  sadm_writelog "No Aix Server defined in Sysinfo"
     fi

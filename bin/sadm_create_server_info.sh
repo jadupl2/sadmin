@@ -311,7 +311,7 @@ create_summary_file()
     echo "SADM_SERVER_MEMORY (in MB)            : $(sadm_server_memory)"             >> $HWD_FILE
     echo "SADM_SERVER_HARDWARE_BITMODE          : $(sadm_server_hardware_bitmode)"   >> $HWD_FILE
     echo "SADM_SERVER_NB_CPU                    : $(sadm_server_nb_cpu)"             >> $HWD_FILE
-    echo "SADM_SERVER_CPU_SPEED (in GHz)        : $(sadm_server_cpu_speed)"          >> $HWD_FILE
+    echo "SADM_SERVER_CPU_SPEED (in MHz)        : $(sadm_server_cpu_speed)"          >> $HWD_FILE
     echo "SADM_SERVER_NB_SOCKET                 : $(sadm_server_nb_socket)"          >> $HWD_FILE
     echo "SADM_SERVER_CORE_PER_SOCKET           : $(sadm_server_core_per_socket)"    >> $HWD_FILE
     echo "SADM_SERVER_THREAD_PER_CORE           : $(sadm_server_thread_per_core)"    >> $HWD_FILE

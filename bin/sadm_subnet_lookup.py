@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python  
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      ping_lookup.py
@@ -9,113 +9,123 @@
 #
 #
 #===================================================================================================
-import os, time, sys, pdb, socket, datetime, getpass, subprocess
+import os, time, sys, pdb, socket, datetime, getpass, subprocess, pwd, grp
 from subprocess import Popen, PIPE
 
-# SADM Library Add to Python Path and Import SADM Library and GLOBAL Variables
-base_dir                = os.environ.get('SADMIN','/sadmin')            # Base Dir. where appl. is
-sadm_lib_dir            = os.path.join(base_dir,'lib')                  # SADM Library Directory
-sys.path.append(sadm_lib_dir)                                           # Add /sadmin/lib to PyPath
-import sadm_lib_std    as sadmlib                                       # Import sadm Library 
-import sadm_var        as g                                             # Import GLOBAL Var 
-#pdb.set_trace() 
-
-
 #===================================================================================================
-#        Global Variables (Defined in sadm_var.py) that could be changed on a script basis
+# SADM Library Initialization
 #===================================================================================================
-g.ver                = "1.6"                                            # Default Program Version
-g.logtype            = "B"                                              # Default S=Scr L=Log B=Both
-g.multiple_exec      = "N"                                              # Default Run multiple copy
-g.debug              = 8                                                # Default Debug Level (0-9)
-g.exit_code          = 0                                                # Default Error Return Code
+# If SADMIN environment variable is defined, use it as the SADM Base Directory else use /sadmin.
+sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
+sadm_lib_dir            = os.path.join(sadm_base_dir,'lib')             # Set SADM Library Directory
+sys.path.append(sadm_lib_dir)                                           # Add Library Dir to PyPath
+import sadm_lib_std as sadm                                             # Import SADM Tools Library
+sadm.load_config_file()                                                 # Load cfg var from sadmin.cfg
 
-# SADM Configuration file - Variables were loaded form the configuration file (Can be overridden)
-g.cfg_mail_type      = 1                                                # 0=No 1=Err 2=Succes 3=All
-#g.cfg_mail_addr      = "your_email@domain.com"                          # Default is in sadmin.cfg
-#g.cfg_cie_name       = "Your Company Name"                              # Company Name
-#g.cfg_user           = "sadmin"                                         # sadmin user account
-#g.cfg_group          = "sadmin"                                         # sadmin group account
-#g.cfg_max_logline    = 5000                                             # Max Nb. Lines in LOG )
-#g.cfg_max_rcline     = 100                                              # Max Nb. Lines in RCH file
-#g.cfg_nmon_keepdays  = 40                                               # Days to keep old *.nmon
-#g.cfg_sar_keepdays   = 40                                               # Days to keep old *.nmon
- 
+
+# SADM Variables use on a per script basis
+#===================================================================================================
+sadm.ver                = "2.0"                                         # Default Program Version
+sadm.multiple_exec      = "N"                                           # Default Run multiple copy
+sadm.debug              = 0                                             # Default Debug Level (0-9)
+sadm.exit_code          = 0                                             # Script Error Return Code
+sadm.log_append         = "N"                                           # Append to Existing Log ?
+sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
+
+# SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
+cfg_mail_type      = 3                                                  # 0=No 1=Err 2=Succes 3=All
+#cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
+#cfg_cie_name       = ""                                                 # Company Name
+#cfg_user           = ""                                                 # sadmin user account
+#cfg_server         = ""                                                 # sadmin FQN Server
+#cfg_domain         = ""                                                 # sadmin Default Domain
+#cfg_group          = ""                                                 # sadmin group account
+#cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
+#cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
+#cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
+#cfg_sar_keepdays   = 60                                                 # Days to keep old *.sar
+#cfg_rch_keepdays   = 60                                                 # Days to keep old *.rch
+#cfg_log_keepdays   = 60                                                 # Days to keep old *.log
+#cfg_pguser         = ""                                                 # PostGres Database user
+#cfg_pggroup        = ""                                                 # PostGres Database Group
+#cfg_pgdb           = ""                                                 # PostGres Database Name
+#cfg_pgschema       = ""                                                 # PostGres Database Schema
+#cfg_pghost         = ""                                                 # PostGres Database Host
+#cfg_pgport         = 5432                                               # PostGres Database Port
+#cfg_rw_pguser      = ""                                                 # PostGres Read Write User
+#cfg_rw_pgpwd       = ""                                                 # PostGres Read Write Pwd
+#cfg_ro_pguser      = ""                                                 # PostGres Read Only User
+#cfg_ro_pgpwd       = ""                                                 # PostGres Read Only Pwd
+
+
 #===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
+SUBNET= ['192.168.1', '192.168.0' ]                                    # Subnet to Scan
 
-CURDIR      = os.getcwd()                           # Get Current Directory
-OSTYPE      = os.name                               # Get OS name (nt,dos,posix,...)
-PLATFORM    = sys.platform                          # Get current platform (win32,mac,posix)
-HOSTNAME    = socket.gethostname()                  # Get current hostname
-PGM_VER     = "1.1"                                 # Program Version
-PGM_NAME    = os.path.basename(sys.argv[0])         # Program name
-PGM_ARGS    = len(sys.argv)                         # Nb. argument receive
-CNOW        = datetime.datetime.now()               # Get Current Time
-CURDATE     = CNOW.strftime("%Y.%m.%d")             # Format Current date
-CURTIME     = CNOW.strftime("%H:%M:%S")             # Format Current Time
-BASEDIR     = '/sysinfo/www'                        # Base Dir.
-TMP_DIR     = BASEDIR + '/data/net/'                # Where outfile will be
-#pdb.set_trace()
-cnow               = datetime.datetime.now()                            # Get Current Time
-curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
-curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
 
-# Subnet to Scan
-SUBNET= ['192.168.1' ]
+
+
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-main_process() :
-for net in SUBNET:
-   SFILE = TMP_DIR  + 'subnet_' + net + '.txt'
-   print "Opening %s" % SFILE
-   SH=open(SFILE,'w')                              # Open Output Subnet File
-   for host in range(1,254):
-      ip = net + '.' + str(host)
-      rc = os.system("ping -c 1 " + ip + " > /dev/null 2>&1")
-      if ( rc == 0 ) : 
-         host_state = 'Yes'
-      else :
-        host_state = 'No'
+def main_process() :
+   for net in SUBNET:
+      SFILE = sadm.net_dir  + '/subnet_' + net + '.txt'                 # Construct Subnet FileName
+      sadm.writelog ("Opening %s" % SFILE)                              # Log File Name been created
+      SH=open(SFILE,'w')                                                # Open Output Subnet File
+      for host in range(1,255):                                         # Define Range IP in Subnet
+         ip = net + '.' + str(host)                                     # Cronstruct IP Address
+         rc = os.system("ping -c 1 " + ip + " > /dev/null 2>&1")        # Ping THe IP Address
+         if ( rc == 0 ) :                                               # Ping Work
+            host_state = 'Yes'                                          # State = Yes = Alive
+         else :                                                         # Ping don't work
+           host_state = 'No'                                            # State = No = No response
         
-      try:
-         line = socket.gethostbyaddr(ip)
-         hostname = line[0]
-      except:
-	    hostname = ' ' 
-	  #line = os.popen("host " + ip + " | tail -1").read()
-      #aline = line.split(' ')
-      #hostname = aline[4].rstrip()
-      #if ( hostname == "3(NXDOMAIN)" )
-      #   hostname = ' '
+         try:
+            line = socket.gethostbyaddr(ip)                             # Try to resolve IP Address
+            hostname = line[0]                                          # Save DNS Name 
+         except:
+      	    hostname = ' '                                              # No Name = Clear Name
+
+         WLINE = "%s, %s, %s" % (ip, host_state, hostname)
+         sadm.writelog ("%s" % WLINE)
+         #print "%s" % WLINE
+         SH.write ("%s\n" % (WLINE))
+      SH.close()                                                           # Close Subnet File
       
-      WLINE = ""
-      WLINE +=  "%s, %s, %s" % (ip, host_state, hostname)
-      print "%s" % WLINE
-      SH.write ("%s\n" % (WLINE))
-
-   SH.close()                                      # Close Subnet File
-
+      # Copy the resutant subnet txt file into the SADM Web Data Directory
+      sadm.writelog ("Copy %s into %s" % (SFILE,sadm.www_net_dir))
+      rc = os.system("cp " + SFILE + " " + sadm.www_net_dir + " >/dev/null 2>&1")       
+      if ( rc != 0 ) :                                                  
+         sadm.writelog ("ERROR : Could not copy %s into %s" % (SFILE,sadm.www_net_dir))
+         return (1)
+      sadm.writelog ("Change file owner and group to %s.%s" % (sadm.cfg_www_user, sadm.cfg_www_group))
+      wuid = pwd.getpwnam(sadm.cfg_www_user).pw_uid                     # Get UID User of Wev User 
+      wgid = grp.getgrnam(sadm.cfg_www_group).gr_gid                    # Get GID User of Web Group 
+      os.chown(sadm.www_net_dir + '/subnet_' + net + '.txt', wuid, wgid) # Change owner of Subnet 
+   return(0)
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
 def main():
-    g.sadmlog = sadmlib.log_tools()                                     # Instantiate SADM Log Tools
-    g.sadmlog.setlogtype(g.logtype)                                     # Set the Log Type
-    
-    sadmlib.check_requirements()                                        # All That is Needed is OK?
-    sadmlib.start()                                                     # Open Log/Upd RCH/Make Dir
-    if g.debug > 4 : sadmlib.display_env()                              # Display Env. Variables
-    sadmlib.load_config_file()                                          # Load configuration file
-    
-    main_process()
-    sadmlib.stop(g.exit_code)                                           # Close log & trim 
-    sys.exit(g.exit_code)                                               # Exit with Error Code
+    sadm.start()                                                        # Open Log, Create Dir ...
+
+    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
+       sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
+       sadm.writelog ("Process aborted")                                # Abort advise message
+       sadm.stop (1)                                                    # Close and Trim Log
+       sys.exit(1)                                                      # Exit To O/S
+
+    if sadm.debug > 4 : sadm.display_env()                              # Display Env. Variables
+    sadm.exit_code=main_process()                                       # Go Scan the Subnet(s)
+    sadm.stop(sadm.exit_code)                                           # Close log & trim
+    sys.exit(sadm.exit_code)                                            # Exit with Error Code
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
+

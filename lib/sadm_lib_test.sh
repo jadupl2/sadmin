@@ -162,7 +162,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_server_nb_socket)         Number of socket on the server (Ex: 2)                        : ...$(sadm_server_nb_socket)...\n"
     printf "\$(sadm_server_core_per_socket)   Number of Core per Socket (Ex: 4)                             : ...$(sadm_server_core_per_socket)...\n"
     printf "\$(sadm_server_thread_per_core)   Number of Thread per Core                                     : ...$(sadm_server_thread_per_core)...\n"
-    printf "\$(sadm_server_cpu_speed)         Server CPU Speed in GHz                                       : ...$(sadm_server_cpu_speed)...\n"
+    printf "\$(sadm_server_cpu_speed)         Server CPU Speed in MHz                                       : ...$(sadm_server_cpu_speed)...\n"
     printf "\$(sadm_server_disks)             Server disks list (MB) (Ex: DISKNAME|SIZE,DISKNAME|SIZE,...)  : ...$(sadm_server_disks)...\n"
     printf "\$(sadm_server_vg)                Server vg(s) list (MB) (Ex: VGNAME|SIZE|USED|FREE,...)        : ...$(sadm_server_vg)...\n"
     printf " \n"
@@ -181,6 +181,8 @@ Debug=true                                      ; export Debug          # Debug 
     printf "  - SADM_DOMAIN=$SADM_DOMAIN\n"               # SADMIN Domain Default
     printf "  - SADM_USER=$SADM_USER\n"                   # sadmin user account
     printf "  - SADM_GROUP=$SADM_GROUP\n"                 # sadmin group account
+    printf "  - SADM_WWW_USER=$SADM_WWW_USER\n"           # sadmin Web user account
+    printf "  - SADM_WWW_GROUP=$SADM_WWW_GROUP\n"         # sadmin Web group account
     printf "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE\n"     # Max Line in each *.log
     printf "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE\n"       # Max Line in each *.rch
     printf "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS\n" # Days to keep old *.nmon
