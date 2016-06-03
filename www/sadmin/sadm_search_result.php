@@ -26,9 +26,8 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 
-$output = ''; 
     sadm_page_heading ("Create or Edit Server Data");
-	
+
 if (isset($_POST['search'])) {
     $searchq = $_POST['search'];
     $searchq = preg_replace("#[^0-9a-z]#i","",$searchq);
@@ -38,44 +37,33 @@ if (isset($_POST['search'])) {
     if ($count == 0){
         $output = 'There was no search results !';
     }else{
+        echo "<br><center><table id='table_rch'>\n";    
+        echo "<tr>\n" ;
+        echo "<th>Cnt</th>";
+        echo "<th>Server Name</th>";
+        echo "<th>Description</th>";
+        echo "<th colspan=3>Action</th>";
+        echo "</tr>\n";
         while ($row = pg_fetch_array($result, null, PGSQL_ASSOC)) {
-          $fname = $row['srv_name'] ;
-          $fdesc  = $row['srv_desc'] ;
-          $output .= '<div>'.
-            $fname.
-            ' - '.
-            $fdesc.
-            '      '.
-            '<a href="#" class="myButton">Edit Server</a>'.
-            '      '.
-            '<a href="#" class="myButton">Delete Server</a>'.
-            '</div>';
+            $fname = $row['srv_name'] ;
+            $fdesc  = $row['srv_desc'] ;
+            $count+=1;
+            echo "<tr>\n" ;
+            echo "<td>" . $count            . "</td>\n";
+            echo "<td>" . $row['srv_name']  . "</td>\n";
+            echo "<td>" . $row['srv_desc']  . "</td>\n";
+            echo "<td>" . $cdate2  . "</td>\n";
+            echo "<td>" . $ctime2  . "</td>\n";
+            echo '<td><a href="#" class="myButton"><button type="button" class="btn btn-info">Edit Server</button></a></td>';
+            echo '<td><a href="#" class="myButton"><button type="button" class="btn btn-info">Delete Server</button></a></td>';
+            echo '<td><a href="#" class="myButton"><button type="button" class="btn btn-info">Query Server</button></a></td>';
+            echo "</tr>\n";
         }  
+        echo "</table>";
                 
     }
 }
-?>
 
- 
-
-	<br>
-	<form name="sadm_search.php"  method='POST'>
-		<table border=0 cellspacing=0>
-			<tr>
-		<td width=50> </td>
-		<td width=50 align=right><input type="text" name="search" placeholder="Search for server ..." /></td>
-		<td width=10> </td>
-		<td> <input type="submit" class="myButton" value="Search Server"/></td>
-		<td width=10> </td>
-		<td>or</td>
-		<td width=10> </td>
-		<td><a href="#" class="myButton">Add Server</a> </td>
-		</tr>
-		</table>
-    </form>
-    
-<?php 
-    print ("$output"); 
 	include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ; 
 ?>
 

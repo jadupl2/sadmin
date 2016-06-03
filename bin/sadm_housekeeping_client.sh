@@ -250,7 +250,7 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog "find $SADM_DAT_DIR -type f -exec chmod 664 {} \;"
-             find $SADM_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1 
+             find $SADM_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -323,6 +323,29 @@ file_housekeeping()
              fi
     fi
 
+
+    # Reset privilege on SADMIN PKG Directory files
+    if [ -d "$SADM_PKG_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_PKG_DIR -exec chmod -R 755 {} \;"
+             find $SADM_PKG_DIR -exec chmod -R 755 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+
+    
     # Remove files older than 7 days in SADMIN TEMP Directory
     if [ -d "$SADM_TMP_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"

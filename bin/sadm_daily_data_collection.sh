@@ -171,7 +171,7 @@ get_aix_files()
             # DR INFO FILES
             # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_DR_DIR"
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -193,7 +193,7 @@ get_aix_files()
             # NMON FILES
             # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_NMON_DIR"                            # Local Receiving Dir.
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -215,7 +215,7 @@ get_aix_files()
             # SAR PERF FILES
             # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_SAR_DIR"                             # Local Receiving Dir.
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                    # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -306,7 +306,7 @@ get_linux_files()
             # DR INFO FILES
             # Transfer $SADMIN/dat/disaster_recovery_info from Remote to $SADMIN/www/dat/$server/dr  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_DR_DIR"
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/dr"                     # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -328,7 +328,7 @@ get_linux_files()
             # NMON FILES
             # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server/nmon  Dir
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_NMON_DIR"                            # Local Receiving Dir.
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/nmon"                     # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]
@@ -350,7 +350,7 @@ get_linux_files()
             # SAR PERF FILES
             # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
             #-------------------------------------------------------------------------------------------
-            WDIR="$SADM_WWW_SAR_DIR"                             # Local Receiving Dir.
+            WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                     # Local Receiving Dir.
             sadm_writelog " " 
             sadm_writelog "Make sure the directory $WDIR Exist"
             if [ ! -d "${WDIR}" ]

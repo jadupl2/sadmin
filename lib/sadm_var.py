@@ -90,7 +90,6 @@ which              = ""                                                 # whic1h
 dmidecode          = ""                                                 # Command dmidecode Path
 bc                 = ""                                                 # Command bc (Do Some Math)
 fdisk              = ""                                                 # fdisk (Read Disk Capacity)
-prtconf            = ""                                                 # prtconf  Path - Required
 perl               = ""                                                 # perl Path (for epoch time)
 uname              = ""                                                 # uname command path
 mail               = ""                                                 # mail command path

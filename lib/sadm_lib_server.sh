@@ -305,7 +305,7 @@ sadm_server_cpu_speed() {
         "LINUX") 
                  if [ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq ]
                     then freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
-                         sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC`
+                         sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC `
                     else sadm_server_cpu_speed=`cat /proc/cpuinfo | grep -i "cpu MHz" | tail -1 | awk -F: '{ print $2 }'`
                          sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | $SADM_BC`
                          #if [ "$sadm_server_cpu_speed" -gt 1000 ]
@@ -352,11 +352,11 @@ sadm_server_disks() {
                         if [ "$index" -ne 0 ]                                       # Don't add , for 1st Disk
                             then sadm_server_disks="${sadm_server_disks},"          # For others disks add ","
                         fi
-                        wsize=`$SADM_FDISK -l /dev/${wdisk} |grep -i "^Disk" |grep -i $wdisk |awk '{ print $3 }'`
+                        wsize=`$SADM_FDISK -l /dev/${wdisk} 2>/dev/null |grep -i "^Disk" |grep -i $wdisk |awk '{ print $3 }'`
                         wsize=`echo $wsize / 1 | $SADM_BC`                          # Get rid of Decimal
 
-                        wunit=`$SADM_FDISK -l /dev/${wdisk} | grep -i "^Disk" | grep -i $wdisk | awk '{ print $4 }'`
-                        if [ "$wunit" = "GB," ]                                     # If Disk Size in GB
+                        wunit=`$SADM_FDISK -l /dev/${wdisk} 2>/dev/null | grep -i "^Disk" | grep -i $wdisk | awk '{ print $4 }'`
+                        if [ "$wunit" = "GB," ] ||  [ "$wunit" = "GiB," ]           # If Disk Size in GB
                            then wsize=`echo "($wsize * 1024) / 1" | $SADM_BC`       # Convert GB into MB 
                            else wsize=`echo "$wsize * 1" | $SADM_BC`                # If MB Get Rid of Decimal
                         fi

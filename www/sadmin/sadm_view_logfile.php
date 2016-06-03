@@ -24,9 +24,8 @@
 */
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php'); 
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
-include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php')  ;
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-include           ($_SERVER['DOCUMENT_ROOT'].'/sadmin/sadm_menu.php')  ;
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 #init_set('error_reporting',E_ALL & ~E_NOTICE);
 
 /*
@@ -35,7 +34,7 @@ include           ($_SERVER['DOCUMENT_ROOT'].'/sadmin/sadm_menu.php')  ;
 * ==================================================================================================
 */
 # Activate or not Debug (Debug will display debugging info on the page)
-$DEBUG = false ;															# TRUE or FALSE
+$DEBUG = false ;                                                            # TRUE or FALSE
 
  
 
@@ -47,37 +46,30 @@ $DEBUG = false ;															# TRUE or FALSE
 // =================================================================================================
 function display_log_file ($WHOST,$WDESC,$WNAME)
 {
-	echo "<strong><font face='Verdana' size=3>Content of log " . basename($WNAME) . "</strong></font><br>";
-	echo date('l jS \of F Y, h:i:s A');
-    
-    echo "<center><br>";
-	echo "<table border=0 cellspacing=0>\n";    
-   	#$HDR_BGCOLOR = '#462066';
-	#$FNT_COLOR   = '#FFFFFF';
-	#$ATTR_BEFORE = "bgcolor=$HDR_BGCOLOR><font color=$FNT_COLOR><strong>";
-	#$ATTR_AFTER  = "</font></strong>";
+    $TITRE="Content of log " . basename($WNAME);
+    sadm_page_heading ("$TITRE");
+    echo "<br><center><table id='table_rch'>\n";    
 
     #echo "<tr>\n" ;
-    #echo "<td align=center colspan=2 ${ATTR_BEFORE}". $WNAME . "${ATTR_AFTER}</td>";
+    #echo "<th colspan=2>" . $TITRE . "</th>";
     #echo "</tr>\n";
-	
-    $FREE_COLOR="#00FF00" ;
+    
     $count=0; $ddate = 0 ; 
 
     $fh = fopen($WNAME, "r") or exit("Unable to open file : " . $WNAME);
     while(!feof($fh)) {
         $wline = fgets($fh);
         if (strlen($wline) > 0) {
-			$count+=1;
-		    echo "<tr>";
-		    $BGCOLOR = "#ffffcc";
-		    #if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-			echo "<td width=30 align='center' bgcolor=$BGCOLOR>" . $count   . "</td>\n";
-		    echo "<td align='left' bgcolor=$BGCOLOR>" . $wline  . "</td>\n";
-			echo "</tr>\n";
-		}
+            $count+=1;
+            echo "<tr>";
+            $BGCOLOR = "#ffffcc";
+            #if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
+            echo "<td width=40>" . $count   . "</td>\n";
+            echo "<td>" . $wline  . "</td>\n";
+            echo "</tr>\n";
+        }
     }
-	fclose($fh);
+    fclose($fh);
     echo "</table>\n";
     return ;
 }
@@ -88,53 +80,53 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
 
 /*
 * ==================================================================================================
-*                              			 PROGRAM START HERE
+*                                           PROGRAM START HERE
 * ==================================================================================================
 */
 
 // Get the first Parameter (HostName of the rch file to view)
-	if (isset($_GET['host']) ) { 
-	    $HOSTNAME = $_GET['host'];
+    if (isset($_GET['host']) ) { 
+        $HOSTNAME = $_GET['host'];
         if ($DEBUG)  { echo "<br>HOSTNAME Received is $HOSTNAME"; } 
-		$query = "SELECT * FROM sadm.server where srv_name = '$HOSTNAME' ;";
+        $query = "SELECT * FROM sadm.server where srv_name = '$HOSTNAME' ;";
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC);
-	    if ($row = FALSE) {
-	        echo "<br>Host $HOSTNAME is not a valid host<br.";
-	        exit;
-		}else{
-		    $HOSTDESC   = $row['srv_desc'];
-		}
-	}
+        if ($row = FALSE) {
+            echo "<br>Host $HOSTNAME is not a valid host<br.";
+            exit;
+        }else{
+            $HOSTDESC   = $row['srv_desc'];
+        }
+    }
 
 // Get the second paramater (Name of LOG file to view)
-	$LOG_FILENAME = $_GET['filename'];
+    $LOG_FILENAME = $_GET['filename'];
     if ($DEBUG)  { echo "<br>FILENAME Received is $LOG_FILENAME "; } 
     $DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" . $HOSTNAME . "/log/";
     if ($DEBUG)  { echo "<br>Directory of the log file is $DIR"; }
 
 // If the LOG Directory does not exist then abort after adivising user
-	$WDIR = SADM_WWW_DAT_DIR . "/" . $HOSTNAME . "/log";
-	if (! is_dir($WDIR))  {
-		echo "<br>The Web LOG Directory " . $WDIR . " does not exist.\n";
-		echo "<br>Correct the situation and retry request\n";
-     	echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
-		exit ;
-	}
+    $WDIR = SADM_WWW_DAT_DIR . "/" . $HOSTNAME . "/log";
+    if (! is_dir($WDIR))  {
+        echo "<br>The Web LOG Directory " . $WDIR . " does not exist.\n";
+        echo "<br>Correct the situation and retry request\n";
+         echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+        exit ;
+    }
 
 // If the LOG File does not exist then abort after adivising user
     if ($DEBUG)  { echo "<br>FILENAME Received is $LOG_FILENAME "; } 
     $LOGFILE = $WDIR . "/" . $LOG_FILENAME ;
     if ($DEBUG)  { echo "<br>Name of the LOG file is $LOGFILE"; }
-	if (! file_exists($LOGFILE))  {
-		echo "<br>The Web LOG file " . $LOGFILE . " does not exist.\n";
-		echo "<br>Correct the situation and retry request\n";
-     	echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
-		exit ;
-	}
+    if (! file_exists($LOGFILE))  {
+        echo "<br>The Web LOG file " . $LOGFILE . " does not exist.\n";
+        echo "<br>Correct the situation and retry request\n";
+         echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+        exit ;
+    }
     
     display_log_file ($HOSTNAME, $HOSTDESC, $LOGFILE);
 
-require       ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;
+include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ; 
 ?>
 

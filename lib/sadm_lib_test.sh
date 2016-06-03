@@ -99,6 +99,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "                                                                                                    RETURN VALUE         \n"
     printf "VARIABLE AVAILABLE TO USE   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================\n"
+    printf "\$(sadm_get_release)         SADMIN Release Number (XX.XX)                                    : ...$(sadm_get_release)...\n"
     printf "\$(sadm_get_ostype)          OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...$(sadm_get_ostype)...\n"
     printf "\$(sadm_get_osversion)       OS Version (Ex: 7.2, 6.5)                                        : ...$(sadm_get_osversion)...\n"
     printf "\$(sadm_get_osmajorversion)  OS Major Version (Ex 7, 6)                                       : ...$(sadm_get_osmajorversion)...\n"

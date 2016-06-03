@@ -70,6 +70,7 @@ log_file           = log_dir + '/' + hostname + '_' + inst + '.log'     # Log Fi
 rch_file           = rch_dir + '/' + hostname + '_' + inst + '.rch'     # RCH Filename
 cfg_file           = cfg_dir + '/sadmin.cfg'                            # Configuration Filename
 cfg_hidden         = cfg_dir + '/.sadmin.cfg'                           # Hidden Config Filename
+rel_file           = cfg_dir + '/.release'                              # SADMIN Release Version No.
 pid_file           = "%s/%s.pid" % (tmp_dir, inst)                      # Process ID File
 tmp_file_prefix    = tmp_dir + '/' + hostname + '_' + inst              # TMP Prefix
 tmp_file1          = "%s_1.%s" % (tmp_file_prefix,tpid)                 # Temp1 Filename
@@ -110,7 +111,6 @@ which              = ""                                                 # whic1h
 dmidecode          = ""                                                 # Command dmidecode Path
 bc                 = ""                                                 # Command bc (Do Some Math)
 fdisk              = ""                                                 # fdisk (Read Disk Capacity)
-prtconf            = ""                                                 # prtconf  Path - Required
 perl               = ""                                                 # perl Path (for epoch time)
 uname              = ""                                                 # uname command path
 mail               = ""                                                 # mail command path
@@ -209,6 +209,19 @@ def writelog(sline):
     if log_type.upper() == "B" :  
        FH_LOG_FILE.write ("%s\n" % (logLine))
        print ("%s" % logLine) 
+
+
+# --------------------------------------------------------------------------------------------------
+#                                 RETURN SADMIN RELEASE VERSION NUMBER
+# --------------------------------------------------------------------------------------------------
+def get_release() :
+    if os.path.exists(rel_file):
+        wcommand = "head -1 %s" % (rel_file)
+        ccode, cstdout, cstderr = oscommand("%s" % (wcommand))           # Execute O/S CMD 
+        wrelease=cstdout
+    else:
+        wrelease="00.00"
+    return wrelease
 
             
 
@@ -931,10 +944,11 @@ def load_config_file():
 def display_env () :
 
     print(" ")                                                      # Space Line in the LOG
-    print(dash)                                                # 80 = Lines 
+    print(dash)                                                     # 80 = Lines 
     print("Display Important Environment Variables")                # Introduce Display Below
-    print(dash)                                                # 80 = Lines 
-    print("ver                 = " + ver)                           # Program Version
+    print(dash)                                                     # 80 = Lines 
+    print("SADMIN Release No.  = " + get_release())                 # Get SADMIN Release Version
+    print("This Script Ver No. = " + ver)                           # Program Version
     print("pn                  = " + pn)                            # Program name
     print("inst                = " + inst)                          # Program name without Ext.
     print("hostname            = " + hostname)                      # Program name without Ext.

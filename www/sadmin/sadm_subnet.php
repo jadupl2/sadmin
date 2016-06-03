@@ -3,7 +3,7 @@
 /*
 * ==================================================================================================
 *   Author   :  Jacques Duplessis
-*   Title    :  template.php
+*   Title    :  sadm_subnet.php
 *   Version  :  1.5
 *   Date     :  14 April 2016
 *   Requires :  php

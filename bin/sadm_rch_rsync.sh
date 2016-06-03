@@ -156,8 +156,8 @@ process_linux_servers()
                   else sadm_writelog "Perfect ${WDIR} directory already exist"
               fi
               
-              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
-              rsync -ar --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
+              sadm_writelog "rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/ "
+              rsync -var --delete ${server_name}.${server_domain}:${SADM_RCH_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
@@ -176,8 +176,8 @@ process_linux_servers()
                   else sadm_writelog "Perfect ${WDIR} directory already exist"
               fi
               
-              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
-              rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
+              sadm_writelog "rsync -var --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
+              rsync -var --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"
@@ -268,8 +268,8 @@ process_aix_servers()
                   else sadm_writelog "Perfect ${WDIR} directory already exist"
               fi
               
-              sadm_writelog "rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
-              rsync -ar --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
+              sadm_writelog "rsync -var --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/ "
+              rsync -var --delete ${server_name}.${server_domain}:${SADM_LOG_DIR}/ ${WDIR}/
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_writelog "ERROR NUMBER $RC for ${server_name}.${server_domain}"

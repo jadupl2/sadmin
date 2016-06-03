@@ -24,9 +24,8 @@
 */
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php'); 
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
-include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php')  ;
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-include           ($_SERVER['DOCUMENT_ROOT'].'/sadmin/sadm_menu.php')  ;
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 #init_set('error_reporting',E_ALL & ~E_NOTICE);
 
 /*
@@ -35,7 +34,7 @@ include           ($_SERVER['DOCUMENT_ROOT'].'/sadmin/sadm_menu.php')  ;
 * ==================================================================================================
 */
 # Activate or not Debug (Debug will display debugging info on the page)
-$DEBUG = FALSE ;															# TRUE or FALSE
+$DEBUG = FALSE ;                                                            # TRUE or FALSE
 
  
 
@@ -48,31 +47,39 @@ $DEBUG = FALSE ;															# TRUE or FALSE
 // =================================================================================================
 function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
 {
-	echo "<strong><font face='Verdana' size=3>Result of $WNAME</strong></font><br>";
-	echo date('l jS \of F Y, h:i:s A');
-    
-    echo "<table align=center border=0 cellspacing=1>\n";    
-   	$HDR_BGCOLOR = '#462066';
-	$FNT_COLOR   = '#FFFFFF';
-	$ATTR_BEFORE = "bgcolor=$HDR_BGCOLOR><font color=$FNT_COLOR><strong>";
-	$ATTR_AFTER  = "</font></strong>";
-
+    sadm_page_heading ("Result of $WNAME");
+    echo "<center>\n";
+    echo "<div id='sadmMainBodyPage'>";
+    echo '<table id="example" class="display compact" cellspacing="0" width="100%">';
+    echo '<style>';
+    echo 'th { font-size: 13px; }';
+    echo 'td { font-size: 13px; }';
+    echo '</style>';
+    echo "<thead>\n";
     echo "<tr>\n" ;
-    echo "<td width=50 align=center           ${ATTR_BEFORE}         ${ATTR_AFTER}</td>";
-    echo "<td width=200 align=center colspan=2 ${ATTR_BEFORE}Start    ${ATTR_AFTER}</td>";
-    echo "<td width=200 align=center colspan=2 ${ATTR_BEFORE}End    ${ATTR_AFTER}</td>";
-    echo "<td align=center           ${ATTR_BEFORE}Elapse   ${ATTR_AFTER}</td>";
-    echo "<td align=center           ${ATTR_BEFORE}Job      ${ATTR_AFTER}</td>";
+    echo "<th>No.</th>";
+    echo "<th>Start Date</th>";
+    echo "<th>Start Time</th>";
+    echo "<th>End Date</th>";
+    echo "<th>End Time</th>";
+    echo "<th>Elapse Time</th>";
+    echo "<th>Status</th>";
     echo "</tr>\n";
-    echo "<td align=center            ${ATTR_BEFORE}No.     ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Date    ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Time    ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Date    ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Time    ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Time    ${ATTR_AFTER}</td>";
-    echo "<td width=100 align='center' ${ATTR_BEFORE}Status  ${ATTR_AFTER}</td>";
-    echo "</tr>";
-	
+    echo "</thead>\n";
+
+    echo "<tfoot>\n";
+    echo "<tr>\n" ;
+    echo "<th>No.</th>";
+    echo "<th>Start Date</th>";
+    echo "<th>Start Time</th>";
+    echo "<th>End Date</th>";
+    echo "<th>End Time</th>";
+    echo "<th>Elapse Time</th>";
+    echo "<th>Status</th>";
+    echo "</tr>\n";
+    echo "</tfoot>\n";
+    echo "<tbody>\n";
+    
     $FREE_COLOR="#00FF00" ;
     $count=0; $ddate = 0 ; 
 
@@ -81,30 +88,30 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$ccode) = explode(" ",fgets($fh));
         if ($cserver == $WHOST) {
             $count+=1;
-            echo "<tr>";
+            echo "<tr>\n";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $count   . "</td>\n";
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $cdate1  . "</td>\n";
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $ctime1  . "</td>\n";
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $cdate2  . "</td>\n";
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $ctime2  . "</td>\n";
-            echo "<td align='center' bgcolor=$BGCOLOR>" . $celapse . "</td>\n";
+            echo "<td>" . $count   . "</td>\n";
+            echo "<td>" . $cdate1  . "</td>\n";
+            echo "<td>" . $ctime1  . "</td>\n";
+            echo "<td>" . $cdate2  . "</td>\n";
+            echo "<td>" . $ctime2  . "</td>\n";
+            echo "<td>" . $celapse . "</td>\n";
             switch ($ccode) {
-                case 0:     echo "<td align='center' bgcolor=$BGCOLOR>Success</td>\n";
+                case 0:     echo "<td>Success</td>\n";
                             break;
-                case 1:     echo "<td align='center' bgcolor='red'>Failed</td>\n";
+                case 1:     echo "<td>Failed</td>\n";
                             break;
-                case 2:     echo "<td align='center' bgcolor=$BGCOLOR>Running</td>\n";
+                case 2:     echo "<td>Running</td>\n";
                             break;
-                default:    echo "<td align='center' bgcolor=$BGCOLOR>" . $ccode . "</td>\n";
+                default:    echo "<td>" . $ccode . "</td>\n";
                             break;
             }                    
             echo "</tr>\n";
         }
     }
-	fclose($fh);
-    echo "</table>\n";
+    fclose($fh);
+    echo "</tbody></table></div></center><br><br>\n";
     return ;
 }
 
@@ -114,49 +121,49 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
 
 /*
 * ==================================================================================================
-*                              			 PROGRAM START HERE
+*                                           PROGRAM START HERE
 * ==================================================================================================
 */
 
 // Get the first Parameter (HostName of the rch file to view)
-	if (isset($_GET['host']) ) { 
-	    $HOSTNAME = $_GET['host'];
+    if (isset($_GET['host']) ) { 
+        $HOSTNAME = $_GET['host'];
         if ($DEBUG)  { echo "<br>HOSTNAME Received is $HOSTNAME"; } 
-		$query = "SELECT * FROM sadm.server where srv_name = '$HOSTNAME' ;";
+        $query = "SELECT * FROM sadm.server where srv_name = '$HOSTNAME' ;";
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC);
-	    if ($row = FALSE) {
-	        echo "<br>Host $HOSTNAME is not a valid host<br.";
-	        exit;
-		}else{
-		    $HOSTDESC   = $row['srv_desc'];
-		}
-	}
+        if ($row = FALSE) {
+            echo "<br>Host $HOSTNAME is not a valid host<br.";
+            exit;
+        }else{
+            $HOSTDESC   = $row['srv_desc'];
+        }
+    }
 
 // Get the second paramater (Name of RCH file to view)
-	$RCV_FILENAME = $_GET['filename'];
+    $RCV_FILENAME = $_GET['filename'];
     if ($DEBUG)  { echo "<br>FILENAME Received is $RCV_FILENAME "; } 
     $DIR = $_SERVER['DOCUMENT_ROOT'] . "/dat/" . $HOSTNAME . "/rch/";
     if ($DEBUG)  { echo "<br>Directory of the RCH file is $DIR"; }
 
 // If the RCH Directory does not exist then abort after adivising user
-	if (! is_dir($DIR))  {
-		echo "<br>The Web RCH Directory " . $DIR . " does not exist.\n";
-		echo "<br>Correct the situation and retry request\n";
-     	echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
-		exit ;
-	}
+    if (! is_dir($DIR))  {
+        echo "<br>The Web RCH Directory " . $DIR . " does not exist.\n";
+        echo "<br>Correct the situation and retry request\n";
+         echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+        exit ;
+    }
 
 // If the RCH File does not exist then abort after adivising user
     if ($DEBUG)  { echo "<br>FILENAME Received is $RCV_FILENAME "; } 
     $RCHFILE = $DIR . $RCV_FILENAME ;
     if ($DEBUG)  { echo "<br>Name of the RCH file is $RCHFILE"; }
-	if (! file_exists($RCHFILE))  {
-		echo "<br>The Web RCH file " . $RCHFILE . " does not exist.\n";
-		echo "<br>Correct the situation and retry request\n";
-     	echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
-		exit ;
-	}
+    if (! file_exists($RCHFILE))  {
+        echo "<br>The Web RCH file " . $RCHFILE . " does not exist.\n";
+        echo "<br>Correct the situation and retry request\n";
+         echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+        exit ;
+    }
     
     
     $tmpfile    = tempnam ('/tmp/', 'rchfiles-');
@@ -170,7 +177,8 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
     display_rch_file ($HOSTNAME, $HOSTDESC, $csv_sorted, $RCV_FILENAME);
     if ($DEBUG) { echo "<br>Final File " . $csv_sorted ; }
     unlink($csv_sorted);
-	
-require       ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;
+    
+
+include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ; 
 ?>
 

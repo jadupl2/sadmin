@@ -9,7 +9,8 @@
 #   Requires :  sh
 # --------------------------------------------------------------------------------------------------
 #
-
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 
 #
 #===================================================================================================
@@ -29,31 +30,45 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+#
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
+SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
+#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
+#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
+#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
+#SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
+#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
+#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
+#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
+#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
+#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
+#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
+#SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
+#SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
+#SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
+#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
+#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
+#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
+#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
+#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
+#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
+#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
+
 #===================================================================================================
 #
 
@@ -65,9 +80,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #
 Debug=true                                      ; export Debug          # Debug increase Verbose
-PRTCONF="/usr/sbin/prtconf"                     ; export PRTCONF        # Aix Print Confing Cmd
 #
-HPREFIX="${SADM_DR_DIR}/`hostname`"             ; export HPREFIX        # Output File Loc & Name
+HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
 HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
 FACTER_FILE="${HPREFIX}_facter.txt"             ; export LVSCAN_FILE    # Facter Output File
 LVS_FILE="${HPREFIX}_lvs.txt"                   ; export LVS_FILE       # lvs Output File
@@ -96,9 +110,13 @@ PVDISPLAY=""                                    ; export PVDISPLAY      # PV Dis
 NETSTAT=""                                      ; export NETSTAT        # netstat Cmd with Path
 IP=""                                           ; export IP             # ip Cmd with Path
 DF=""                                           ; export DF             # df Cmd with Path
+IFCONFIG=""                                     ; export IFCONFIG       # ifconfig Cmd with Path
 FACTER=""                                       ; export FACTER         # facter Cmd with Path
 DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
 SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Var Store Cmd Path
+LSVG=""                                         ; export LSVG           # Tmp Var Store Cmd Path
+LSPV=""                                         ; export LSPV           # Tmp Var Store Cmd Path
+PRTCONF=""                                      ; export PRTCONF        # Aix Print Confing Cmd
 #
 
 
@@ -123,11 +141,11 @@ command_available()
     fi
 
 
-    # Check if command is located and set SADM_CPATH accordingly
+    # Check if command can be located and set SADM_CPATH accordingly
     #-----------------------------------------------------------------------------------------------
     SADM_CPATH=`which $SADM_PKG > /dev/null 2>&1`
     if [ $? -eq 0 ]
-        then SADM_CPATH=`which $SADM_PKG`
+        then SADM_CPATH=`$SADM_WHICH $SADM_PKG`
         else SADM_CPATH=""
     fi
     export SADM_CPATH
@@ -161,7 +179,6 @@ command_available()
 pre_validation()
 {
     sadm_writelog "Validate Script Requirements before proceeding ..."
-    sadm_writelog " "
 
     # The which command is needed to determine presence of command - Return Error if not found
     #-----------------------------------------------------------------------------------------------
@@ -176,20 +193,34 @@ pre_validation()
     # If command is not found the command variable is set empty
     #-----------------------------------------------------------------------------------------------
     command_available "facter"      ; FACTER=$SADM_CPATH                # Cmd Path,Blank if not fnd
-    command_available "lvs"         ; LVS=$SADM_CPATH                   # Cmd Path or Blank !found
-    command_available "lvscan"      ; LVSCAN=$SADM_CPATH                # Cmd Path or Blank !found
-    command_available "lvdisplay"   ; LVDISPLAY=$SADM_CPATH             # Cmd Path or Blank !found
-    command_available "vgs"         ; VGS=$SADM_CPATH                   # Cmd Path or Blank !found
-    command_available "vgscan"      ; VGSCAN=$SADM_CPATH                # Cmd Path or Blank !found
-    command_available "vgdisplay"   ; VGDISPLAY=$SADM_CPATH             # Cmd Path or Blank !found
-    command_available "pvs"         ; PVS=$SADM_CPATH                   # Cmd Path or Blank !found
-    command_available "pvscan"      ; PVSCAN=$SADM_CPATH                # Cmd Path or Blank !found
-    command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH             # Cmd Path or Blank !found
-    command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
-    command_available "ip"          ; IP=$SADM_CPATH                    # Cmd Path or Blank !found
-    command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
-    command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH             # Cmd Path or Blank !found
 
+    if [ $(sadm_get_ostype) = "AIX" ]
+        then    command_available "lspv"        ; LSPV=$SADM_CPATH      # Cmd Path or Blank !found
+                command_available "lsvg"        ; LSVG=$SADM_CPATH      # Cmd Path or Blank !found
+                command_available "prtconf"     ; PRTCONF=$SADM_CPATH   # Cmd Path or Blank !found
+        else    command_available "lvs"         ; LVS=$SADM_CPATH       # Cmd Path or Blank !found
+                command_available "lvscan"      ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "lvdisplay"   ; LVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
+                command_available "vgs"         ; VGS=$SADM_CPATH       # Cmd Path or Blank !found
+                command_available "vgscan"      ; VGSCAN=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "vgdisplay"   ; VGDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
+                command_available "pvs"         ; PVS=$SADM_CPATH       # Cmd Path or Blank !found
+                command_available "pvscan"      ; PVSCAN=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
+                command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
+                command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
+    fi
+    
+    if [ "$FACTER" != "" ]
+       then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
+    fi
+       
+    # Command Commands
+    command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
+    command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
+    command_available "ifconfig"    ; IFCONFIG=$SADM_CPATH              # Cmd Path or Blank !found
+    
+    
     sadm_writelog " "
     sadm_writelog "----------"
     sadm_writelog " "
@@ -197,6 +228,23 @@ pre_validation()
 }
 
 
+
+# ==================================================================================================
+#       First parameter is the command name to run (Example 'pvscan')
+#       Second parameter is the fully qualified command name (Example '/sbin/pvscan')
+#       Third paramter is the name of the ouput file
+# ==================================================================================================
+write_file_header()
+{
+    WTITLE=$1
+    WFILE=$2
+    echo "# ${SADM_DASH}"       >$WFILE 2>&1
+    echo "# SADMIN Release $(sadm_get_release)"      >>$WFILE 2>&1
+    echo "# $SADM_CIE_NAME - `date`"                 >>$WFILE 2>&1
+    echo "# Output of $WTITLE command on $(sadm_get_hostname)" >>$WFILE 2>&1
+    echo "# ${SADM_DASH}"                             >>$WFILE 2>&1
+    echo "#"                                         >>$WFILE 2>&1
+}
 
 
 # ==================================================================================================
@@ -213,14 +261,10 @@ create_command_output()
 
     if [ ! -z "$SCMD_PATH" ]
         then sadm_writelog "Creating $SCMD_TXT with command $SCMD_PATH"
-             echo "# $ADM_CIE_NAME - `date`" >$SCMD_TXT 2>&1
-             echo "# Output of $SCMD_PATH command on `hostname`" >>$SCMD_TXT 2>&1
-             echo "# " >>$SCMD_TXT 2>&1
+             write_file_header "$SCMD_NAME" "$SCMD_TXT"
              $SCMD_PATH >> $SCMD_TXT 2>&1
         else sadm_writelog "The command $SCMD_NAME is not available"
-             echo "# $ADM_CIE_NAME - `date`" > $PVS_FILE 2>&1
-             echo "# The $SCMD_NAME command is not available on `hostname`" >> $PVS_FILE 2>&1
-             echo "#" >> $PVS_FILE 2>&1
+             write_file_header "$SCMD_NAME Not Available" "$SCMD_TXT"
     fi
 }
 
@@ -232,19 +276,15 @@ create_command_output()
 # ==================================================================================================
 create_linux_config_files()
 {
-
     create_command_output "pvs"         "$PVS"          "$PVS_FILE"
     create_command_output "pvscan"      "$PVSCAN"       "$PVSCAN_FILE"
     create_command_output "pvdisplay"   "$PVDISPLAY"    "$PVDISPLAY_FILE"
-
     create_command_output "vgs"         "$VGS"          "$VGS_FILE"
     create_command_output "vgscan"      "$VGSCAN"       "$VGSCAN_FILE"
     create_command_output "vgdisplay"   "$VGDISPLAY"    "$VGDISPLAY_FILE"
-
     create_command_output "lvs"         "$LVS"          "$LVS_FILE"
     create_command_output "lvscan"      "$LVSCAN"       "$LVSCAN_FILE"
     create_command_output "lvdisplay"   "$LVDISPLAY"    "$LVDISPLAY_FILE"
-
     create_command_output "df -h"       "$DF -h"        "$DF_FILE"
     create_command_output "netstat -rn" "$NETSTAT -rn"  "$NETSTAT_FILE"
     create_command_output "ip addr"     "$IP addr"      "$IP_FILE"
@@ -252,7 +292,6 @@ create_linux_config_files()
     if [ "$FACTER" != "" ]
         then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
     fi
-
 }
 
 
@@ -261,25 +300,37 @@ create_linux_config_files()
 # ==================================================================================================
 create_aix_config_files()
 {
+    create_command_output "df -m"       "$DF -m"        "$DF_FILE"
+    create_command_output "netstat -rn" "$NETSTAT -rn"  "$NETSTAT_FILE"
+    create_command_output "ifconfig -a" "$IFCONFIG -a"  "$IP_FILE"
 
-    df -m                   > $DF_FILE 2>&1
-    netstat -rn             > $NETSTAT_FILE 2>&1
-    ifconfig -a             > $IP_FILE 2>&1
-
-    lspv | awk '{ print $1 }' | while read PV
+    rm -f $PVS_FILE >/dev/null 2>&1
+    $LSPV | awk '{ print $1 }' | while read PV
         do
         echo " " >>$PVS_FILE 2>&1
-        lspv  $PV          >>$PVS_FILE 2>&1
+        $LSPV  $PV          >>$PVS_FILE 2>&1
         done
-    lsvg | xargs lsvg      > $VGS_FILE 2>&1
-    lsvg | xargs lsvg -l   > $LVS_FILE 2>&1
+
+    #   #then create_command_output "$LSVG | xargs $LSVG" "lsvg | xargs lsvg" "$VGS_FILE"
+    #   then $LSVG -o | $LSVG -i > $SADM_TMP_FILE3
+    #        create_command_output "cat $SADM_TMP_FILE3" "lsvg -o | lsvg -i" "$VGS_FILE"
+    #fi
+    
+    if [ "$LSVG" != "" ]
+        then write_file_header "lsvg -o | lsvg -i" "$VGS_FILE"
+             lsvg -o | lsvg -i >> $VGS_FILE
+             write_file_header "$LSVG | xargs $LSVG -l" "$LVS_FILE"
+             $LSVG | xargs $LSVG -l   >> $LVS_FILE 2>&1
+    fi
+    
     
     if [ "$FACTER" != "" ]
        then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
     fi
     
-    sadm_writelog "Running $SADM_PRTCONF ..."
-    $SADM_PRTCONF > $PRTCONF_FILE
+    if [ "$PRTCONF" != "" ]
+       then create_command_output "prtconf"     "$PRTCONF"      "$PRTCONF_FILE"
+    fi
 }
 
 

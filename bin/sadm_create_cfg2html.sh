@@ -90,8 +90,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
                 then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"         # Use then one in /sadmin
                 else sadm_writelog "Error : The command 'cfg2html' was not found"   # Not Found inform user
                      sadm_writelog "   Install it and re-run this script" # Not Found inform user
-                     sadm_writelog "   For Ubuntu/Debian : sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/deb/cfg2html-linux.deb"
-                     sadm_writelog "   For RedHat/CentOS/Fedora : rpm -Uvh {SADM_PKG_DIR}/cfg2html/rpm/${sadm_get_osmajorversion}/cfg2html.rpm"
+                     sadm_writelog "   For Ubuntu/Debian/Raspbian : sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+                     sadm_writelog "   For RedHat/CentOS/Fedora   : rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
                      sadm_stop 1                                        # Upd. RC & Trim Log 
                      exit 1                                             # Exit With Error
              fi
@@ -109,6 +109,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     SADM_EXIT_CODE=$?
     sadm_writelog "Return code of the command is $SADM_EXIT_CODE"
     
+    # Uniformize name of cfg2html so that the domain name is not include in the name
+    if [ `hostname` != `hostname -s` ]
+        then mv $(hostname).err  `hostname -s`.err
+             mv $(hostname).html `hostname -s`.html
+             mv $(hostname).txt  `hostname -s`.txt
+             mv $(hostname).partitions.save `hostname -s`.partitions.save
+    fi
 
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
