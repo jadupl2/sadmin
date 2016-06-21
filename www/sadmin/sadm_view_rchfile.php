@@ -49,7 +49,6 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
 {
     sadm_page_heading ("Result of $WNAME");
     echo "<center>\n";
-    echo "<div id='sadmMainBodyPage'>";
     echo '<table id="example" class="display compact" cellspacing="0" width="100%">';
     echo '<style>';
     echo 'th { font-size: 13px; }';
@@ -111,7 +110,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
         }
     }
     fclose($fh);
-    echo "</tbody></table></div></center><br><br>\n";
+    echo "</tbody></table></center><br><br>\n";
     return ;
 }
 

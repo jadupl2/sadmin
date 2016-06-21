@@ -7,7 +7,7 @@
 *   Date     :  22 March 2016
 *   Requires :  php
 *   Synopsis :  This file is the place to store all SADMIN functions
-*   
+*
 *   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 *
 *   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -26,19 +26,117 @@
 
 
 // ================================================================================================
+// Function to strip unwanted characters (Extra space,tab,newline) from beginning and end of data
+// Strips any quotes escaped with slashes and passes it through htmlspecialschar.
+// ================================================================================================
+function sadm_clean_data($wdata) {
+    $wdata = trim($wdata);
+    $wdata = stripslashes($wdata);
+    $wdata = htmlspecialchars($wdata);
+    return $wdata;
+}
+
+
+// ================================================================================================
+//                      DISPLAY CATEGORY DATA USED IN THE DATA INPUT FORM
+//
+// wrow  = Array containing table row keys/values
+// mode  = "Display" Will Only show row content - Can't modify any information
+//       = "Create"  Will display default values and user can modify all fields, except the row key
+//       = "Update"  Will display row content and user can modify all fields, except the row key
+// ================================================================================================
+function display_cat_record( $wrow , $mode) {
+
+    echo "<div class='cat_form'>";                                      # Start Category Form Div
+
+    echo "<div class='cat_code'>";                                      # >Start Div For Cat. Code
+        echo "<div class='cat_label'>";                                 # >Start Div For Cade Label
+        echo "Category Code";                                           # Label Text
+        echo "</div>";                                                  # <End of Div For Code Label
+        
+        echo "<div class='cat_input'>"; 
+        if ($mode == 'Create') {
+            echo "<input type='text' name='scr_code' size=10 placeholder='Cat. Code'
+                value='" . sadm_clean_data($wrow['cat_code']). "' >\n";
+        }else{
+            echo "<input type='text' name='scr_code' readonly size=10 placeholder='Cat. Code'
+                 value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
+        }
+        echo "</div>";  # << End of cat_code_input
+    echo "</div>";      # << End of cat_code
+    
+    
+    // Category Description    
+    echo "<div class='cat_desc'>";
+        echo "<div class='cat_label'>";   
+        echo "Category Description"; 
+        echo "</div>"; 
+        
+        echo "<div class='cat_input'>"; 
+        if ($mode == 'Display') {
+            echo "<input type='text' name='scr_desc' readonly placeholder='Enter Category Desc.'
+                size=25 value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+        }else{
+            echo "<input type='text' name='scr_desc' placeholder='Enter Category Desc.'
+                size=25 value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+        }
+        echo "</div>";  # << End of cat_input
+    echo "</div>";      # << End of cat_desc
+    
+    
+    // Category Status
+    echo "<div class='cat_status'>";
+        echo "<div class='cat_label'>";   
+        echo "Category Status"; 
+        echo "</div>"; 
+        
+        echo "<div class='cat_input'>"; 
+        if ($mode == 'Create') { $wrow['cat_status'] = True ; } 
+        if ($mode == 'Display') {
+            if ($wrow['cat_status'] == 't') {
+                echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;' checked> Active  \n";
+                echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;'> Inactive\n";
+            }else{
+                echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;'> Active  \n";
+                echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;' checked > Inactive\n";
+            }
+        }else{
+            if ($wrow['cat_status'] == 't') {
+                echo "<input type='radio' name='scr_status' value='1' checked > Active  \n";
+                echo "<input type='radio' name='scr_status' value='0'> Inactive\n";
+            }else{
+                echo "<input type='radio' name='scr_status' value='1'> Active\n";
+                echo "<input type='radio' name='scr_status' value='0' checked > Inactive\n";
+            }
+        }
+        echo "</div>";                                                  # < End of input Div
+    echo "</div>";                                                      # < End of Field Div
+    
+    echo "</div>";                                                      # < End of Form Div
+    echo "<br>";
+}
+
+
+
+// ================================================================================================
 //                   All SADM Web Page Heading (Page Title Receive as Parameter)
 // ================================================================================================
 function sadm_page_heading($msg) {
     $message = $msg;
-    
-    echo "<div id='sadmMainBodyHeading'>\n";
-        echo "<div id='sadmMainBodyHeadingLeft'>\n";
-        echo "${msg}\n";
-        echo "</div>\n";
-        echo "<div id='sadmMainBodyHeadingRight'>\n";
-        echo date('l jS \of F Y, h:i:s A');
-        echo "</div>\n";
-    echo "</div>\n";
+
+    echo "\n\n\n<!-- ============================================================================= -->";
+    echo "\n<div id='sadmMainBodyHeading'>";
+    echo "\n<div id='sadmMainBodyHeadingLeft'>\n";
+    echo "${msg}\n";
+    echo "</div>                                <!-- End of Div sadmMainBodyHeadingLeft -->";
+        
+    echo "\n<div id='sadmMainBodyHeadingRight'>\n"; 
+    echo date('l jS \of F Y, h:i:s A');
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingRight -->";
+
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeading -->\n";  
+    echo "\n<!-- ============================================================================= -->";    
+    echo "\n\n<div id='sadmMainBodyPage'>\n";   
 }
 
 
@@ -52,27 +150,27 @@ function build_sidebar_scripts_info() {
 
     # Reset All Counters
     $count=0;
-    $script_array = array() ;                                        
-    
+    $script_array = array() ;
+
     # Form the base directory name where all the servers 'rch' files are located
     $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # /sadmin/www/dat
     if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
-    
+
     # Make sure that the DATA Root directory is a directory
-    if (! is_dir($RCH_ROOT)) {                                          
+    if (! is_dir($RCH_ROOT)) {
         $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
         alert ("$msg");
         ?><script type="text/javascript">history.go(-1);</script><?php
         exit;
     }
- 
+
     # Create unique filename that will contains all servers *.rch filename
     $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
-    if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename 
+    if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
     $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
     if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
-    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command 
-    if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code 
+    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
+    if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
 
     # Open input file containing the name of all rch filenames
     $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
@@ -99,18 +197,18 @@ function build_sidebar_scripts_info() {
                         $script_array[$akey] = $outline . "_" . $count ;
                     }else{
                         $script_array[$akey] = $outline ;
-                    }   
+                    }
                 }
             }
         }
     }
     fclose($input_fh);                                                  # Close Input Filename List
     krsort($script_array);                                              # Reverse Sort Array on Keys
-    
+
     # Under Debug - Display The Array Used to build the SideBar
     if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
     return $script_array;
-}        
+}
 
 
 
@@ -118,78 +216,78 @@ function build_sidebar_scripts_info() {
 //                   Build Side Bar Based on SideBar Type Desired (server/ip/script)
 // ================================================================================================
 function build_sidebar_servers_info() {
-    
+
     $query = "SELECT * FROM sadm.server ;";
     $result = pg_query($query) or die('Query failed: ' . pg_last_error());
 
     # Reset All Counters
     $count=0;
-    $sadm_array = array() ;                                        
-    
+    $sadm_array = array() ;
+
     # Read All Server Table
     while ($row = pg_fetch_array($result, null, PGSQL_ASSOC)) {
         $count+=1;
 
-        # Process Server Type 
+        # Process Server Type
         $akey = "srv_type," . $row['srv_type'];
         if (array_key_exists($akey,$sadm_array)) {
             $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
         }else{
             $sadm_array[$akey] = 1 ;
-        }    
-        
-        # Process OS Type 
+        }
+
+        # Process OS Type
         $akey = "srv_ostype," . $row['srv_ostype'];
         if (array_key_exists($akey,$sadm_array)) {
             $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
         }else{
             $sadm_array[$akey] = 1 ;
-        }    
-        
-        # Process OS Name 
+        }
+
+        # Process OS Name
         $akey = "srv_osname," . $row['srv_osname'];
         if (array_key_exists($akey,$sadm_array)) {
             $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
         }else{
             $sadm_array[$akey] = 1 ;
-        }    
-        
+        }
+
         # Process OS Version
         $akey = "srv_osversion," . $row['srv_osversion'];
         if (array_key_exists($akey,$sadm_array)) {
             $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
         }else{
             $sadm_array[$akey] = 1 ;
-        }    
-        
+        }
+
         # Count Number of Active Servers
-        if ($row['srv_active']  == "t") { 
+        if ($row['srv_active']  == "t") {
             $akey = "srv_active," ;
             if (array_key_exists($akey,$sadm_array)) {
                 $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
             }else{
                 $sadm_array[$akey] = 1 ;
-            }            
+            }
         }
-        
+
         # Count Number of Inactive Servers
-        if ($row['srv_active']  == "f") { 
+        if ($row['srv_active']  == "f") {
             $akey = "srv_inactive," ;
             if (array_key_exists($akey,$sadm_array)) {
                 $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
             }else{
                 $sadm_array[$akey] = 1 ;
-            }            
+            }
         }
-        
+
         # Count Number of Physical and Virtual Servers
-        if ($row['srv_vm']  == "t") { 
+        if ($row['srv_vm']  == "t") {
             $akey = "srv_vm," ;
             if (array_key_exists($akey,$sadm_array)) {
                 $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
             }else{
                 $sadm_array[$akey] = 1 ;
-            }            
+            }
         }else{
             $akey = "srv_physical," ;
             if (array_key_exists($akey,$sadm_array)) {
@@ -198,15 +296,15 @@ function build_sidebar_servers_info() {
                 $sadm_array[$akey] = 1 ;
             }
         }
-        
+
         # Count Number of Physical and Virtual Servers
-        if ($row['srv_sporadic']  == "t") { 
+        if ($row['srv_sporadic']  == "t") {
             $akey = "srv_sporadic," ;
             if (array_key_exists($akey,$sadm_array)) {
                 $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
             }else{
                 $sadm_array[$akey] = 1 ;
-            }            
+            }
         }
 
     }
@@ -220,7 +318,7 @@ function build_sidebar_servers_info() {
 
 
 // ================================================================================================
-//            Popup Message received as parameter and wait for OK to be pressed 
+//            Popup Message received as parameter and wait for OK to be pressed
 // ================================================================================================
 function sadm_confirm($msg) {
     $message = $msg;
@@ -236,9 +334,9 @@ function sadm_confirm($msg) {
 
 
 // ================================================================================================
-//            Popup Message received as parameter and wait for OK to be pressed 
+//            Popup Message received as parameter and wait for OK to be pressed
 // ================================================================================================
-function alert($msg) {
+function sadm_alert($msg) {
     $message = $msg;
     $message = preg_replace("/\r?\n/", "\\n", addslashes($message));
     echo "<script type=\"text/javascript\">\n";
@@ -256,18 +354,18 @@ function DDMMYYYY_2_mysqldate( $input_date ) {
     return $mysql_date ;
 }
 
-    
+
 // ================================================================================================
 //           Transform MYSQL date (YYYY/MM/DD HH:MM:SS) format into user format (DD/MM/YYY)
 // ================================================================================================
 function mysql_date_2_DDMMYYYY( $mysql_date ) {
-    $wyear  = substr($mysql_date, 0, 4); 
-    $wmonth = substr($mysql_date, 5, 2); 
-    $wday   = substr($mysql_date, 8, 2); 
+    $wyear  = substr($mysql_date, 0, 4);
+    $wmonth = substr($mysql_date, 5, 2);
+    $wday   = substr($mysql_date, 8, 2);
     $input_date = $wday . '/' . $wmonth . '/' . $wyear ;
     return $input_date ;
 }
-    
+
 
 
 // ================================================================================================
@@ -282,32 +380,32 @@ function time_difference ( $wstart, $wend)
 
     list ($ehour, $emin,   $esec) = split(":", $wend, 3);
     $wtime2 = ($ehour*60*60)+ ($emin*60) + $esec;
-    
+
     #echo "<br>Time 2 = $wtime2 Time 1 = $wtime1 Difference = " . ($wtime2 -$wtime1) . "<br>" ;
     $TOTAL_SEC = $wtime2 - $wtime1 ;
-    
+
     #echo "<BR>Total Sec before is $TOTAL_SEC";
     if ($TOTAL_SEC < 0) { $TOTAL_SEC = ((24*60*60) - $wtime1) + $wtime2 ;}
     #echo "<BR>Total Sec after is $TOTAL_SEC";
-    
+
     $fhrs = 0 ;
     if ($TOTAL_SEC > 3600) {
         $fhrs = intval($TOTAL_SEC/3600);
         $WORK = trim($TOTAL_SEC - ($fhrs*3600));
-        $TOTAL_SEC = $WORK; 
+        $TOTAL_SEC = $WORK;
     }
     $HOURS = sprintf("%02d",number_format( $fhrs,0 ));
     $fmin = 0 ;
     if ($TOTAL_SEC > 60  ) {
         $fmin = intval($TOTAL_SEC/60) ;
-        $WORK = trim($TOTAL_SEC - ($fmin*60)) ; 
-        $TOTAL_SEC = $WORK; 
+        $WORK = trim($TOTAL_SEC - ($fmin*60)) ;
+        $TOTAL_SEC = $WORK;
     }
     $MIN = sprintf("%02d",number_format($fmin,0));
     $fsec = $TOTAL_SEC ;
     $SEC = sprintf("%02d",number_format($fsec,0));
     $DUREE = $HOURS . ":" . $MIN . ":" . $SEC ;
-    return ($DUREE);  
+    return ($DUREE);
 }
 
 
@@ -344,9 +442,9 @@ function accept_key($server_key) {
 //                                        Standard Page footer
 // ================================================================================================
 function display_row_footer() {
-    echo "</table></center><br>";    
+    echo "</table></center><br>";
 }
-        
+
 
 
 
@@ -371,13 +469,13 @@ function display_file( $nom_du_fichier ) {
 }
 
 
-    
+
 // ================================================================================================
 //                   Display Server Data used in General Server Information Page
 // ================================================================================================
 function display_server_info( $rarray ) {
     echo '<table frame="border" border="1" cellspacing="2" width="900">';
-    
+
     // ======================= G E N E R A L    I N F O R M A T I O N ============================
     echo '<br>';
     echo '<table frame="border" bgcolor="lavender" border="0" width="800">';
@@ -389,7 +487,7 @@ function display_server_info( $rarray ) {
     echo '<td colspan=3 width=300 align=left>' . $myheader . '</td>';
     echo '</tr>';
 
-    // ============== Server Type and Server Notes 
+    // ============== Server Type and Server Notes
     echo '<td width=120 align=left><b>Server Type</b></td>';
     echo '<td width=300 align=left>' . stripslashes($rarray['server_type']) . '</td>';
        echo '<td align=left><b>General Note</b></td>';
@@ -407,7 +505,7 @@ function display_server_info( $rarray ) {
        echo '<td align=left><b>D.R. Note</b></td>';
     echo '<td align=left>' . stripslashes($rarray["server_drnote"]) . '</td>';
     echo '</tr>';
-    
+
     // Virtual Server & Server Recover at DR
     echo '<tr>';
     echo '<td width=150 align=left><b>Virtual Server</b></td>';
@@ -423,8 +521,8 @@ function display_server_info( $rarray ) {
        echo '<td>No</td>' ;
     }
     echo '</tr>';
-    
-    // Edit Server Information & Operating System 
+
+    // Edit Server Information & Operating System
     echo '<tr>';
     echo '<td colspan=2 align=left><b><a href=/cfg/config_server_update.php?id=' . $rarray["server_name"] . '>Edit Server Information</a></b></td>';
     // Server O/S and Version number
@@ -434,7 +532,7 @@ function display_server_info( $rarray ) {
     echo '<td width=300 align=left>' . $myheader . '</td>';
     echo '</tr>';
 
-    // Performance And Backup Links 
+    // Performance And Backup Links
     echo '<tr>';
     echo '<td colspan=2 align=left><b><a href=/unix/server_performance.php?host=' . $rarray["server_name"] . '>View Graphic Performance</a></b></td>';
     #echo '<td width=150 align=left></td>';
@@ -507,7 +605,7 @@ function display_server_info( $rarray ) {
     echo '<td colspan=2 align=left><a href=server_view_text_file.php?file=data/hw/df&server=' . stripslashes($rarray["server_name"]) . '>' . 'Filesystem - df command output' . '</a></td>';
     echo '</tr>';
     echo '</table>';
-    
+
 
 
     // ======================= D I S A S T E R    R E C O V E R Y   I N F O R M A T I O N ============================

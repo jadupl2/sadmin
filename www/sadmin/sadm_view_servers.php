@@ -44,7 +44,6 @@ function display_heading($line_title) {
     sadm_page_heading ("$line_title");                                  # Display Page Title
 
     echo "<center>\n";                                                  # Table Centered on Page
-    echo "<div id='sadmMainBodyPage'>\n";
   
     # Set Font Size for Table Cell and Table Heading
     echo "<style>\n";
@@ -215,6 +214,6 @@ function display_data($count, $row) {
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
-    echo "</tbody></table></div></center><br><br>\n";                   # End of tbody,table,div
+    echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
 ?>

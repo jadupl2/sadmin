@@ -21,6 +21,67 @@ h1, h2 {
 }
 
 
+/* ---------------------------------------------------------------------------------------------- */
+/*   SADMIN  CSS for Category Maintenance Screen Section                                                                     */
+/* ---------------------------------------------------------------------------------------------- */
+.cat_form {
+    font-family: Verdana, Geneva, sans-serif;
+    background-color: #C8DBBE;
+    color: black;
+    width: 50%;
+    margin-top: 5%;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 12px;
+    text-align: left;  
+    padding: 2%;
+}
+.cat_label {
+    float : left; 
+    width : 200px;
+
+}   
+
+.cat_input {
+    margin-bottom: 8px;
+    color : black;
+}  
+
+table.sadm {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 13px;
+}
+
+table.sadm#cat_list {
+    width: 60%;
+}
+
+table.sadm td, table.sadm th {
+    border: 0px solid #ddd;
+    padding: 0px;
+}
+
+table.sadm th {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+}
+
+table.sadm td {
+    border-bottom: 3px solid #ddd;
+    text-align: center;
+}
+
+/*table.sadm tr:nth-child(even) {background: #CCC}
+table.sadm tr:nth-child(odd) {background: #FFF} */
+table.sadm tr:hover {background-color: #ddd;}
+
+
+
 
 /* ---------------------------------------------------------------------------------------------- */
 /*   Table CSS Section                                                                             */
@@ -160,6 +221,7 @@ h1, h2 {
     background: #CDBB79;
     float: left;
 }
+
 #sadmSideBar {
     width: 12%;
     background: #CDBB79;
@@ -175,12 +237,14 @@ h1, h2 {
     text-align: left;
 
 }
+
 #sadmSideBar li {
     font-family: Helvetica, Verdana, Arial, sans-serif;
     font-size: 11px;
     color: #06425C;
 
 }
+
 #sadmSideBar li a {
     text-decoration: none;
     color: #003366 ;
@@ -202,13 +266,14 @@ h1, h2 {
 
 #sadmMainBody {
     width: 88%;
-    background-color: #FFF; 
+    background-color: #ffffff;
     float: right;
     font-size: 8px;
     margin-left: auto;
     margin-right: auto; 
     min-height : 500px;
 }
+
 #sadmMainBodyHeading {
     color : #2D2E87;
     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
@@ -240,11 +305,13 @@ h1, h2 {
     padding: 0%;
     /* background-color: #A6E6B2 ; 
     color : #2D2E87;*/
-    background-color: #CDCDCD ;
+    /* background-color: #CDCDCD ; */
     margin-left: auto;
     margin-right: auto; 
     margin-top: 10px;
 }
+
+
 
 /* ---------------------------------------------------------------------------------------------- */
 /*   Footer CSS Section                                                                           */

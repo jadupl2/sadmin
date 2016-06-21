@@ -56,7 +56,6 @@ function display_rch_heading($HTYPE)
     
     # Main Body Page Section and Table Definition 
     echo "<center>\n";
-    echo "<div id='sadmMainBodyPage'>";
     echo '<table id="example" class="display compact" cellspacing="0" width="100%">';
     
     # Table Font Size
@@ -166,7 +165,7 @@ function display_script_array($PAGE_TYPE, $script_array)
             echo "</tr>\n";
         }
     }    
-    echo "</tbody></table></div></center><br><br>\n";
+    echo "</tbody></table></center><br><br>\n";
 }
 
 

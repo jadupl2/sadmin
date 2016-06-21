@@ -1,17 +1,21 @@
-            <!-- End of MainBody Division -->
-            </div>
-        <!-- End of SideBarAndBodyContainer Division -->
-        </div>
-        
 
-        <div id="sadmFooter">
-            Copyright &copy; 2016 - www.sadmin.ca 
-            <br><small>Contact, corrections and suggestions: Jacques Duplessis</small>
-        </div>
-    </div>
 
-    <?php pg_close($connection); ?>
-    
+<?php
+    echo "\n\n</div>                             <!-- End of Div sadmMainBodyPage -->\n";
+    echo "\n\n</div>                             <!-- End of Div sadmMainBody -->\n";
+    echo "\n\n</div>                             <!-- End of Div sadmSideBarAndBodyContainer -->\n";
+
+    echo "\n\n\n<!-- ========================================================================= -->";
+    echo "\n<div id='sadmFooter'>";
+    echo "\n   Copyright &copy; 2016 - www.sadmin.ca"; 
+    echo "\n   <br><small>Contact, corrections and suggestions: Jacques Duplessis</small>";
+    echo "\n</div>                              <!-- End of Div sadmFooter -->\n";
+    echo "\n<!-- ============================================================================= -->";
+    echo "\n\n</div>                            <!-- End of Div sadmContainer -->\n";
+
+    # Close DataBase Connection
+    pg_close($connection);
+ ?>    
 
     <!-- Bootstrap core JavaScript -->
     <script src="/js/jquery-1.12.3.min.js"></script>
