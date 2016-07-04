@@ -281,6 +281,27 @@ file_housekeeping()
     fi
 
         
+    # Reset privilege on SADMIN SYS Directory files
+    if [ -d "$SADM_SYS_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \;"       # Change Files Privilege
+             find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+        
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -306,7 +327,7 @@ file_housekeeping()
     if [ -d "$SADM_LIB_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"
-             find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \; >/dev/null 2>&1
+             find $SADM_LIB_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
