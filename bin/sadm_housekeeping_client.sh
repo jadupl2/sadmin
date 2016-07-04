@@ -236,8 +236,7 @@ file_housekeeping()
     sadm_writelog "chmod 0600 $SADM_CFG_FILE" 
     chmod 0600 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
-    
-
+      
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by PostGres
     if [ -d "$SADM_DAT_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -250,7 +249,7 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog "find $SADM_DAT_DIR -type f -exec chmod 664 {} \;"
-             find $SADM_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>1 
+             find $SADM_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -301,7 +300,7 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-        
+      
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
