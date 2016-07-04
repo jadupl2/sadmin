@@ -44,33 +44,41 @@ $DEBUG = False;                                       # Activate (TRUE) or Deact
 function display_heading($line_title) {
 
     # Display Page Title
-    sadm_page_heading ("$line_title");                                  # Display Page Title
-
-      
-      
-    #echo "<center><br>";
-    #echo "<a href='/sadmin/sadm_category_create.php'>";
-    #echo '<button type="button" class="btn btn-default btn-sm">';
-    #echo '<span class="glyphicon glyphicon-plus"></span> Create Category</button></a>';
-    #echo "</center>\n";  
+    sadm_page_heading ("$line_title");
     
-    echo "<br><center>\n";                                              # Table Centered on Page
-  
-    #echo "<a href='/sadmin/sadm_category_create.php'>Create Category</a>";
-    #echo '<table border="1" cellpadding="0" cellspacing="0" width="60%">';
-    echo "<table class='sadm' id='cat_list' align='center'> \n";
-    echo "<tr>\n";
-    echo "<td class='sadm' id='td_right'  colspan=5><a href='/crud/sadm_category_create.php'>Create a Category</a></td>";
-    echo "</tr>\n"; 
+    # Row Creation Button 
+    echo "\n<div style='text-align:right'>";
+    echo "\n<a href='/crud/sadm_category_create.php'>"; 
+    echo "\n<button type='button' class='btn btn-info btn-xs'>";
+    echo "\n<span class='glyphicon glyphicon-plus'></span> Create</button></a>";
+    echo "\n</div>\n"; 
 
+    # Table creation
+    echo "\n<br><center>";                                             
+    #echo "\n<table id='sadmTable' class='display compact nowrap'>";
+    echo "<table id='sadmTable' class='display compact nowrap' width='55%'>";
+        
     # Table Heading
-    echo "<tr>\n";
-    echo "<th class='sadm' id='th_center'>Code</th>\n";
-    echo "<th class='sadm' id='th_center'>Description</th>\n";
-    echo "<th class='sadm' id='th_center'>Status</th>\n";
-    echo "<th class='sadm' id='th_center' colspan=2>Operation</th>\n";
-    echo "</tr>\n"; 
+    echo "\n<thead>";
+    echo "\n<tr>";
+    echo "\n<th class='dt-left'>Code</th>";
+    echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Update Row</th>";
+    echo "\n<th class='dt-center'>Delete Row</th>";
+    echo "\n</tr>"; 
+    echo "\n</thead>\n";
 
+    # Server Table Footer
+    echo "\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<th class='dt-left'>Code</th>";
+    echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Update Row</th>";
+    echo "\n<th class='dt-center'>Delete Row</th>";
+    echo "\n</tr>"; 
+    echo "\n</tfoot>\n";
 }
 
 
@@ -80,25 +88,32 @@ function display_heading($line_title) {
 #===================================================================================================
 function display_data($count, $row) {
 
-    echo "<tr>\n";  
-    echo "<td>" . $row['cat_code'] . "</td>\n";
-    echo "<td>" . $row['cat_desc'] . "</td>\n";
-    #echo "<td>" . $row['cat_status'] . "</td>\n";
-    if ($row['cat_status'] == 't') { echo "<td>Active</td>\n"; }else{ echo "<td>Inactive</td>\n";}
+    echo "\n<tr>";  
     
-    echo "<td><a href=/crud/sadm_category_edit.php?sel=" . $row['cat_code'] .">";
-    echo '<button type="button" class="btn btn-default btn-sm">';
-    echo '<span class="glyphicon glyphicon-pencil"></span> Update</button></a></td>';
-    #echo '<span class="glyphicon glyphicon-pencil"></span></button></a>';
-    echo "</td>\n";
+    # Display Code, Description and Status
+    echo "\n<td class='dt-left'>"  . $row['cat_code'] . "</td>";
+    echo "\n<td class='dt-left'>"  . $row['cat_desc'] . "</td>";
+    if ($row['cat_status'] == 't') { 
+        echo "\n<td class='dt-center'>Active</td>"; 
+    }else{ 
+        echo "\n<td class='dt-center'>Inactive</td>";
+    }
+
+    # Update Button
+    echo "\n<td style='text-align: center'>";
+    echo "\n<a href=/crud/sadm_category_update.php?sel=" . $row['cat_code'] .">";
+    echo "\n<button type='button' class='btn btn-info btn-xs'>";
+    echo "\n<span class='glyphicon glyphicon-pencil'></span> Update</button></a>";
+    echo "\n</td>";
     
-    echo "<td><a href=/crud/sadm_category_delete.php?sel=" . $row['cat_code'] .">";
-    echo '<button type="button" class="btn btn-default btn-sm">';
-    echo '<span class="glyphicon glyphicon-trash"></span> Delete</button></a></td>';
-    #echo '<span class="glyphicon glyphicon-trash"></span></button></a>';
-    echo "</td>\n";
+    # Delete Button
+    echo "\n<td style='text-align: center'>"; 
+    echo "\n<a href=/crud/sadm_category_delete.php?sel=" . $row['cat_code'] .">";
+    echo "\n<button type='button' class='btn btn-info btn-xs'>";
+    echo "\n<span class='glyphicon glyphicon-trash'></span> Delete</button></a>";
+    echo "\n</td>";
     
-    echo "</tr>\n"; 
+    echo "\n</tr>\n"; 
 }
     
 
@@ -119,7 +134,7 @@ function display_data($count, $row) {
 # Display Page Heading
     $TITLE = "Category Maintenance";
     display_heading("$TITLE");                                          # Display Page Heading
-  
+    echo "\n<tbody>\n";                                                 # Start of Table Body  
     
 # Loop Through Retreived Data and Display each Row
     $count=0;                                                           # Reset Line Counter
@@ -127,7 +142,7 @@ function display_data($count, $row) {
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
-    echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
 ?>
 

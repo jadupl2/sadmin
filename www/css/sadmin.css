@@ -21,9 +21,73 @@ h1, h2 {
 }
 
 
+
 /* ---------------------------------------------------------------------------------------------- */
-/*   SADMIN  CSS for Category Maintenance Screen Section                                                                     */
+/*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
+/*             Used by sadm_server_*.php and sadm_view_server.php Web Pages                       */
 /* ---------------------------------------------------------------------------------------------- */
+/* 
+/* ===== FORM ATTRIBUTE ===== */
+
+.form_rightside {
+    width: 48%;  
+    float: left;
+    /*background-color: #3E5F80;*/
+    margin-left: 20px;
+    margin-right: auto;    
+}
+.form_leftside {
+    width: 48%;  
+    float: left;   
+    /*background-color: #3E5F80;*/
+    margin-left: auto;
+    margin-right: auto;    
+    
+}
+.server_form {
+    font-family: Verdana, Geneva, sans-serif;
+    background-color: #C8DBBE;
+    color: black;
+    width: 100%;
+    height: 300px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: 12px;
+    text-align: left;  
+    padding: 2%;
+}
+/* ===== FORM LABEL ===== */
+.server_label1 {
+    float : left; 
+    width : 35%;
+    /*background-color: yellow;*/
+}   
+.server_label2 {
+    float : left; 
+    width : 35%;
+    /*background-color: yellow;*/
+}   
+
+/* ===== FORM INPUT ===== */
+.server_input {
+    margin-bottom: 4x;
+    color : black;
+    width : 95%;
+    /*background-color: green;*/
+}  
+
+/*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
+/* ===============================================================================================*/
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */
+/*             Used by sadm_category_*.php and sadm_view_category.php Web Pages                   */
+/* ---------------------------------------------------------------------------------------------- */
+/* 
+/* ===== FORM ATTRIBUTE ===== */
 .cat_form {
     font-family: Verdana, Geneva, sans-serif;
     background-color: #C8DBBE;
@@ -36,16 +100,21 @@ h1, h2 {
     text-align: left;  
     padding: 2%;
 }
+/* ===== FORM LABEL ===== */
 .cat_label {
     float : left; 
     width : 200px;
 
 }   
-
+/* ===== FORM INPUT ===== */
 .cat_input {
     margin-bottom: 8px;
     color : black;
 }  
+
+/*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */
+/* ===============================================================================================*/
+
 
 table.sadm {
     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
@@ -53,16 +122,13 @@ table.sadm {
     table-layout: auto;
     font-size: 13px;
 }
-
 table.sadm#cat_list {
-    width: 60%;
+    width: 75%;
 }
-
 table.sadm td, table.sadm th {
     border: 0px solid #ddd;
     padding: 0px;
 }
-
 table.sadm th {
     padding-top: 1px;
     padding-bottom: 1px;
@@ -70,12 +136,12 @@ table.sadm th {
     color: white;
     text-align: center;
 }
-
 table.sadm td {
     border-bottom: 3px solid #ddd;
     text-align: center;
 }
 
+}
 /*table.sadm tr:nth-child(even) {background: #CCC}
 table.sadm tr:nth-child(odd) {background: #FFF} */
 table.sadm tr:hover {background-color: #ddd;}
@@ -285,20 +351,35 @@ table.sadm tr:hover {background-color: #ddd;}
     margin-right: auto; 
     margin-top: 15px;
 }
+
 #sadmMainBodyHeadingLeft {
+    width=40%;
     float: left;
     margin-left: 10px;
     margin-top: 3px;
     font-weight: bold;
     font-size : 17px;
 }
+
+#sadmMainBodyHeadingCenter {
+    width=50%;
+    float: left;
+    margin-left: 25px;
+    margin-top: 3px;
+    font-weight: bold;
+    font-size : 17px;
+    text-align: center;
+}
+
 #sadmMainBodyHeadingRight {
+    width=30%;
     float: right;
     margin-right: 10px;
     font-size : 12px;
     font-family: verdana;
     margin-top: 7px;
 }
+
 #sadmMainBodyPage {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     width: 90%;
@@ -322,7 +403,7 @@ table.sadm tr:hover {background-color: #ddd;}
     height: 50px;
     padding: 10px;
     margin-bottom: 10px;
-    background-color: #51A39D;
+    background-color: #5F5F5F;
     text-align: center;
     color: white;
 }

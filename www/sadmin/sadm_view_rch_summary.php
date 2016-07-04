@@ -56,7 +56,7 @@ function display_rch_heading($HTYPE)
     
     # Main Body Page Section and Table Definition 
     echo "<center>\n";
-    echo '<table id="example" class="display compact" cellspacing="0" width="100%">';
+    echo '<table id="sadmTable" class="display compact" cellspacing="0" width="100%">';
     
     # Table Font Size
     echo "<style>\n";

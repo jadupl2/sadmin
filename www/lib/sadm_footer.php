@@ -1,9 +1,9 @@
 
 
 <?php
-    echo "\n\n</div>                             <!-- End of Div sadmMainBodyPage -->\n";
-    echo "\n\n</div>                             <!-- End of Div sadmMainBody -->\n";
-    echo "\n\n</div>                             <!-- End of Div sadmSideBarAndBodyContainer -->\n";
+    echo "\n</div>                             <!-- End of Div sadmMainBodyPage -->";
+    echo "\n</div>                             <!-- End of Div sadmMainBody -->";
+    echo "\n</div>                             <!-- End of Div sadmSideBarAndBodyContainer -->";
 
     echo "\n\n\n<!-- ========================================================================= -->";
     echo "\n<div id='sadmFooter'>";
@@ -26,13 +26,13 @@
     <script> 
     $(document).ready(function(){ $('[data-toggle="tooltip"]').tooltip();   }); 
     $(document).ready(function(){ 
-        $('#example').DataTable({
+        $('#sadmTable').DataTable({
             searching: true,
             ordering: true,
-            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            pageLength: 25 ,
-            bAutoWidth: false ,
-            order: [[ 2, 'desc' ], [ 3, 'desc' ]]
+            lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
+            pageLength: 20 ,
+            bAutoWidth: false 
+/*            order: [[ 2, 'desc' ], [ 3, 'desc' ]]*/
  /*       "aoColumns" : [
             { sWidth: '50px' },
             { sWidth: '100px' },
@@ -44,7 +44,7 @@
 /*                columns: [
                 { data: 'id', name: 'id' , width: '50px', class: 'text-right' },
                 { data: 'name', name: 'name' width: '50px', class: 'text-right' }
-                ]*/
+                ]*/            
         });
     } ); 
 

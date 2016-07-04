@@ -37,6 +37,393 @@ function sadm_clean_data($wdata) {
 }
 
 
+
+// ================================================================================================
+//                   All SADM Web Page Heading (Page Title Receive as Parameter)
+// ================================================================================================
+function sadm_page_heading($msg) {
+    $message = $msg;
+    echo "\n\n\n<!-- ========================================================================= -->";
+    echo "\n<div id='sadmMainBodyHeading'>";
+    
+    echo "\n<div id='sadmMainBodyHeadingLeft'>\n";
+    echo "<a href='javascript:history.go(-1)'>" . 
+         "<class='btn btn-info btn-sm'><span class='glyphicon glyphicon-arrow-left'></span></a>";
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingLeft -->";
+
+    echo "\n<div id='sadmMainBodyHeadingCenter'>\n";
+    echo "${msg}\n";
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingCenter -->";
+        
+    echo "\n<div id='sadmMainBodyHeadingRight'>\n"; 
+    echo date('l jS \of F Y, h:i:s A');
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingRight -->";
+
+    echo "\n</div>                              <!-- End of Div sadmMainBodyHeading -->\n";  
+    echo "\n<!-- ============================================================================= -->";    
+    echo "\n<br>";
+    echo "\n\n<div id='sadmMainBodyPage'>\n";   
+}
+
+
+
+# ==================================================================================================
+#                      DISPLAY SERVER DATA USED IN THE DATA INPUT FORM
+#
+#  wrow  = Array containing table row keys/values
+#  mode  = "Display" Will Only show row content - Can't modify any information
+#        = "Create"  Will display default values and user can modify all fields, except the row key
+#        = "Update"  Will display row content and user can modify all fields, except the row key
+# ==================================================================================================
+function display_server_form ( $wrow , $mode) {
+
+    echo "\n\n<div class='server_form'>\n";                             # Start Form Div
+
+    # FORM RIGHT SIDE - FORM HAVE TWO COLUMN - EACH WITH A FIELD LABEL AND A INPUT AREA ------------
+    echo "\n<div class='form_leftside'>";                              # >Start Div Left Side
+
+    
+    # Server Name ----------------------------------------------------------------------------------
+    echo "\n<div class='server_label1'>";                               # >Start Div For Label
+    echo "Name";                                                        # Label Text
+    echo "</div>";                                                      # <End of Div For Code Label
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Create') {
+        echo "<input type='text' name='scr_name' size='16' maxlength='15' placeholder='Hostname'
+             required value='" . sadm_clean_data($wrow['srv_name']). "' >\n";
+    }else{
+        echo "<input type='text' name='scr_name' readonly size='16' placeholder='Hostname'
+             value='" . sadm_clean_data($wrow['srv_name']). "' >\n";   
+    }
+    echo "</div>";                                                      # << End of server_input
+    
+    # Server Description ---------------------------------------------------------------------------   
+    echo "\n\n<div class='server_label1'>";   
+    echo "Description"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "<input type='text' name='scr_desc' readonly placeholder='Server Desc.'
+            maxlength='35' size='35' value='" . sadm_clean_data($wrow['srv_desc']). "'/>\n";
+    }else{
+       echo "<input type='text' name='scr_desc' required placeholder='Server Desc.'
+            maxlength='35' size='35' value='" . sadm_clean_data($wrow['srv_desc']). "'/>\n";
+    }
+    echo "</div>";                                                      # << End of server_input
+    
+    
+    # Server Category ------------------------------------------------------------------------------   
+    echo "\n\n<div class='server_label1'>";   
+    echo "Category"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "\n<input type='text' name='scr_cat' readonly placeholder='Development'
+            maxlength='15' size='16' value='" . sadm_clean_data($wrow['srv_cat']). "'/>\n";
+    }
+    if ($mode == 'Create') {    
+       echo "\n<select name='scr_cat' size=16>"; 
+       $sqlcat = 'SELECT * FROM sadm.category order by cat_code;';
+       $rescat = pg_query($sqlcat) or die('Category Query failed: ' . pg_last_error());
+       while ($crow = pg_fetch_array($rescat, null, PGSQL_ASSOC)) {
+          if (($crow['cat_code']) == ($wrow['srv_cat'])) {
+             echo "\n<option selected>" . sadm_clean_data($crow['cat_code']) . "</option>";
+          }else{
+             echo "\n<option>" . sadm_clean_data($crow['cat_code']) . "</option>";
+          }
+       }
+       echo "\n</select>";
+       # frees the memory and data associated with the specified PostgreSQL query result
+       pg_free_result($rescat);
+    }
+    if ($mode == 'Update') {    
+       echo "\n<select name='scr_cat' size=1>"; 
+       $sqlcat = 'SELECT * FROM sadm.category order by cat_code;';
+       $rescat = pg_query($sqlcat) or die('Category Query failed: ' . pg_last_error());
+       while ($crow = pg_fetch_array($rescat, null, PGSQL_ASSOC)) {
+          if (($crow['cat_code']) == ($wrow['srv_cat'])) {
+             echo "\n<option selected>" . sadm_clean_data($crow['cat_code']) . "</option>";
+          }else{
+             echo "\n<option>" . sadm_clean_data($crow['cat_code']) . "</option>";
+          }
+       }
+       echo "\n</select>";
+       # frees the memory and data associated with the specified PostgreSQL query result
+       pg_free_result($rescat);
+    }
+    echo "\n</div>";                                                      # << End of server_input
+   
+    
+    # Server Domain --------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>";   
+    echo "Domain"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "<input type='text' name='scr_domain' readonly placeholder='Server Domain Name'
+              maxlength='25' size='26' value='" . sadm_clean_data($wrow['srv_domain']). "'/>\n";
+    }else{
+       echo "<input type='text' name='scr_domain' required placeholder='Server Domain Name'
+              maxlength='25' size='26' value='" . sadm_clean_data($wrow['srv_domain']). "'/>\n";
+    }
+    echo "</div>";                                                      # << End of server_input
+    
+    # Server TAG -----------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>";   
+    echo "Server Tag"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "<input type='text' name='scr_tag' readonly placeholder='Server Tag'
+              maxlength='15' size='15' value='" . sadm_clean_data($wrow['srv_tag']). "'/>\n";
+    }else{
+       echo "<input type='text' name='scr_tag' placeholder='Server Tag'
+              maxlength='15' size='15' value='" . sadm_clean_data($wrow['srv_tag']). "'/>\n";
+    }
+    echo "</div>";                                                      # << End of server_input
+    
+    # Server Sporadic ------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>";   
+    echo "Sporadic Server"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Create') { $wrow['srv_sporadic'] = False ; } 
+    if ($mode == 'Display') {
+       if ($wrow['srv_sporadic'] == 't') {
+           echo "<input type='radio' name='scr_sporadic' value='1' onclick='javascript: return false;' checked> True  \n";
+           echo "<input type='radio' name='scr_sporadic' value='0' onclick='javascript: return false;'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_sporadic' value='1' onclick='javascript: return false;'> True  \n";
+           echo "<input type='radio' name='scr_sporadic' value='0' onclick='javascript: return false;' checked > False\n";
+       }                                  
+    }else{                                
+       if ($wrow['srv_sporadic'] == 't') {  
+           echo "<input type='radio' name='scr_sporadic' value='1' checked > True  \n";
+           echo "<input type='radio' name='scr_sporadic' value='0'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_sporadic' value='1'> True\n";
+           echo "<input type='radio' name='scr_sporadic' value='0' checked > False\n";
+       }
+    }
+    echo "</div>";           
+    
+    # Server Status --------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>";   
+    echo "Status"; 
+    echo "</div>"; 
+    echo "<div class='server_input'>"; 
+    if ($mode == 'Create') { $wrow['srv_active'] = True ; } 
+    if ($mode == 'Display') {
+       if ($wrow['srv_active'] == 't') {
+           echo "<input type='radio' name='scr_active' value='1' onclick='javascript: return false;' checked> Active  \n";
+           echo "<input type='radio' name='scr_active' value='0' onclick='javascript: return false;'> Inactive\n";
+       }else{                             
+           echo "<input type='radio' name='scr_active' value='1' onclick='javascript: return false;'> Active  \n";
+           echo "<input type='radio' name='scr_active' value='0' onclick='javascript: return false;' checked > Inactive\n";
+       }                                  
+    }else{                                
+       if ($wrow['srv_active'] == 't') {  
+           echo "<input type='radio' name='scr_active' value='1' checked > Active  \n";
+           echo "<input type='radio' name='scr_active' value='0'> Inactive\n";
+       }else{                             
+           echo "<input type='radio' name='scr_active' value='1'> Active\n";
+           echo "<input type='radio' name='scr_active' value='0' checked > Inactive\n";
+       }
+    }
+    echo "\n</div>";                                                      # < End of input Div
+    
+    echo "\n</div>\n                                              <!-- End of LeftSide Form -->\n";      
+
+    
+    # FORM RIGHT SIDE - FORM HAVE TWO COLUMN - EACH WITH A FIELD LABEL AND A INPUT AREA ------------
+    echo "\n<div class='form_rightside'>";                               # >Start Div Right Side
+    
+    # Update the O/S  ------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Automatic O/S Update</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Create') { $wrow['srv_osupdate'] = False ; } 
+    if ($mode == 'Display') {
+       if ($wrow['srv_osupdate'] == 't') {
+           echo "<input type='radio' name='scr_osupdate' value='1' onclick='javascript: return false;' checked> True  \n";
+           echo "<input type='radio' name='scr_osupdate' value='0' onclick='javascript: return false;'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_osupdate' value='1' onclick='javascript: return false;'> True  \n";
+           echo "<input type='radio' name='scr_osupdate' value='0' onclick='javascript: return false;' checked > False\n";
+       }                                  
+    }else{                                
+       if ($wrow['srv_osupdate'] == 't') {  
+           echo "<input type='radio' name='scr_osupdate' value='1' checked > True  \n";
+           echo "<input type='radio' name='scr_osupdate' value='0'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_osupdate' value='1'> True\n";
+           echo "<input type='radio' name='scr_osupdate' value='0' checked > False\n";
+       }
+    }
+    echo "</div>";                                                      # < End of input Div
+
+    # Reboot after O/S Update ----------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Reboot after O/S Update</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Create') { $wrow['srv_osupdate_reboot'] = False ; } 
+    if ($mode == 'Display') {
+       if ($wrow['srv_osupdate_reboot'] == 't') {
+           echo "<input type='radio' name='scr_osupdate_reboot' value='1' onclick='javascript: return false;' checked> True  \n";
+           echo "<input type='radio' name='scr_osupdate_reboot' value='0' onclick='javascript: return false;'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_osupdate_reboot' value='1' onclick='javascript: return false;'> True  \n";
+           echo "<input type='radio' name='scr_osupdate_reboot' value='0' onclick='javascript: return false;' checked > False\n";
+       }                                  
+    }else{                                
+       if ($wrow['srv_osupdate'] == 't') {  
+           echo "<input type='radio' name='scr_osupdate_reboot' value='1' checked > True  \n";
+           echo "<input type='radio' name='scr_osupdate_reboot' value='0'> False\n";
+       }else{                             
+           echo "<input type='radio' name='scr_osupdate_reboot' value='1'> True\n";
+           echo "<input type='radio' name='scr_osupdate_reboot' value='0' checked > False\n";
+       }
+    }
+    echo "</div>";                                                      # < End of input Div
+
+
+    
+    # O/S Update Day -------------------------------------------------------------------------------   
+    echo "\n\n<div class='server_label1'>";   
+    echo "Day of O/S Update"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "\n<input type='text' name='scr_osupdate_day' readonly placeholder='Development'
+            maxlength='15' size='16' value='" . sadm_clean_data($wrow['srv_cat']). "'/>\n";
+    }
+    if ($mode == 'Create') {    
+       echo "\n<select name='scr_osupdate_day' size=1>"; 
+       echo "\n<option value='0' selected>Sunday</option>";    
+       echo "\n<option value='1'>Monday</option>";    
+       echo "\n<option value='2'>Tuesday</option>";  
+       echo "\n<option value='3'>Wednesday</option>";    
+       echo "\n<option value='4'>Thursday</option>";    
+       echo "\n<option value='5'>Friday</option>";    
+       echo "\n<option value='6'>Saturday</option>";    
+       echo "\n</select>";
+    }
+    if ($mode == 'Update') {    
+       echo "\n<select name='scr_osupdate_day' size=1>"; 
+       for ($x = 0; $x <= 6; $x++) {
+           switch ($x) {
+                case 0: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='0' selected>Sunday</option>";    
+                        }else{
+                           echo "\n<option value='0'>Sunday</option>";
+                        }
+                        break;
+                case 1: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='1' selected>Monday</option>";    
+                        }else{
+                           echo "\n<option value='1'>Monday</option>";
+                        }
+                        break;
+                case 2: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='2' selected>Tuesday</option>";    
+                        }else{
+                           echo "\n<option value='2'>Tuesday</option>";
+                        }
+                        break;
+                case 3: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='3' selected>Wednesday</option>";    
+                        }else{
+                           echo "\n<option value='3'>Wednesday</option>";
+                        }
+                        break;
+                case 4: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='4' selected>Thursday</option>";    
+                        }else{
+                           echo "\n<option value='4'>Thursday</option>";
+                        }
+                        break;
+                case 5: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='5' selected>Friday</option>";    
+                        }else{
+                           echo "\n<option value='5'>Friday</option>";
+                        }
+                        break;
+                case 6: if ($x == $srv_osupdate_day) { 
+                           echo "\n<option value='6' selected>Saturday</option>";    
+                        }else{
+                           echo "\n<option value='6'>Saturday</option>";
+                        }
+                        break;
+           } 
+       }
+       echo "\n</select>";
+    }
+    echo "\n</div>";                                                      # << End of server_input
+   
+
+    
+    # O/S Update Period ----------------------------------------------------------------------------   
+    echo "\n\n<div class='server_label1'>";   
+    echo "Period of O/S Update"; 
+    echo "</div>"; 
+    echo "\n<div class='server_input'>"; 
+    if ($mode == 'Display') {
+       echo "\n<select name='scr_osupdate_period' size=1>"; 
+       if ($srv_osupdate_period == 'W') { echo "\n<option value='W' selected>Weekly</option>"     ;}            
+       if ($srv_osupdate_period == 'M') { echo "\n<option value='M' selected>Monthly</option>"    ;}    
+       if ($srv_osupdate_period == 'T') { echo "\n<option value='T' selected>Trimestrial</option>";}    
+       if ($srv_osupdate_period == 'S') { echo "\n<option value='S' selected>Semestrial</option>" ;}    
+       if ($srv_osupdate_period == 'Y') { echo "\n<option value='Y' selected>Yearly</option>"     ;}    
+       echo "\n</select>";
+    }
+    if ($mode == 'Create') {    
+       echo "\n<select name='scr_osupdate_period' size=1>"; 
+       echo "\n<option value='W' selected>Weekly</option>";    
+       echo "\n<option value='M'>Monthly</option>";    
+       echo "\n<option value='T'>Trimestrial</option>";  
+       echo "\n<option value='S'>Semestrial</option>";    
+       echo "\n<option value='Y'>Yearly</option>";      
+       echo "\n</select>";
+    }
+    if ($mode == 'Update') {    
+       echo "\n<select name='scr_osupdate_period' size=1>"; 
+       if ($srv_osupdate_period == 'W') { 
+           echo "\n<option value='W' selected>Weekly</option>";    
+       }else{
+           echo "\n<option value='W'>Weekly</option>";
+       }
+       if ($srv_osupdate_period == 'M') { 
+           echo "\n<option value='M' selected>Monthly</option>";    
+       }else{
+           echo "\n<option value='M'>Monthly</option>";
+       }
+       if ($srv_osupdate_period == 'T') { 
+           echo "\n<option value='T' selected>Trimestrial</option>";    
+       }else{
+           echo "\n<option value='T'>Trimestrial</option>";
+       }
+       if ($srv_osupdate_period == 'S') { 
+           echo "\n<option value='S' selected>Semestrial</option>";    
+       }else{
+           echo "\n<option value='S'>Semestrial</option>";
+       }
+       if ($srv_osupdate_period == 'Y') { 
+           echo "\n<option value='Y' selected>Yearly</option>";    
+       }else{
+           echo "\n<option value='Y'>Yearly</option>";
+       }
+       echo "\n</select>";
+    }
+    echo "\n</div>";                                                      # << End of server_input
+   
+
+   
+    echo "\n</div>\n                                               <!-- End of RightSide Form -->\n";      
+    echo "\n</div>\n                                               <!-- End of Form DIV -->\n";      
+    echo "<br>";
+}
+
+
+
+
 // ================================================================================================
 //                      DISPLAY CATEGORY DATA USED IN THE DATA INPUT FORM
 //
@@ -45,7 +432,7 @@ function sadm_clean_data($wdata) {
 //       = "Create"  Will display default values and user can modify all fields, except the row key
 //       = "Update"  Will display row content and user can modify all fields, except the row key
 // ================================================================================================
-function display_cat_record( $wrow , $mode) {
+function display_cat_form ( $wrow , $mode) {
 
     echo "<div class='cat_form'>";                                      # Start Category Form Div
 
@@ -56,10 +443,10 @@ function display_cat_record( $wrow , $mode) {
         
         echo "<div class='cat_input'>"; 
         if ($mode == 'Create') {
-            echo "<input type='text' name='scr_code' size=10 placeholder='Cat. Code'
-                value='" . sadm_clean_data($wrow['cat_code']). "' >\n";
+            echo "<input type='text' name='scr_code' size='11' maxlength='10' placeholder='Cat. Code'
+                required value='" . sadm_clean_data($wrow['cat_code']). "' >\n";
         }else{
-            echo "<input type='text' name='scr_code' readonly size=10 placeholder='Cat. Code'
+            echo "<input type='text' name='scr_code' readonly size='11' placeholder='Cat. Code'
                  value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
         }
         echo "</div>";  # << End of cat_code_input
@@ -75,10 +462,10 @@ function display_cat_record( $wrow , $mode) {
         echo "<div class='cat_input'>"; 
         if ($mode == 'Display') {
             echo "<input type='text' name='scr_desc' readonly placeholder='Enter Category Desc.'
-                size=25 value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+                maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
         }else{
-            echo "<input type='text' name='scr_desc' placeholder='Enter Category Desc.'
-                size=25 value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+            echo "<input type='text' name='scr_desc' required placeholder='Enter Category Desc.'
+                maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
         }
         echo "</div>";  # << End of cat_input
     echo "</div>";      # << End of cat_desc
@@ -117,27 +504,6 @@ function display_cat_record( $wrow , $mode) {
 }
 
 
-
-// ================================================================================================
-//                   All SADM Web Page Heading (Page Title Receive as Parameter)
-// ================================================================================================
-function sadm_page_heading($msg) {
-    $message = $msg;
-
-    echo "\n\n\n<!-- ============================================================================= -->";
-    echo "\n<div id='sadmMainBodyHeading'>";
-    echo "\n<div id='sadmMainBodyHeadingLeft'>\n";
-    echo "${msg}\n";
-    echo "</div>                                <!-- End of Div sadmMainBodyHeadingLeft -->";
-        
-    echo "\n<div id='sadmMainBodyHeadingRight'>\n"; 
-    echo date('l jS \of F Y, h:i:s A');
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingRight -->";
-
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeading -->\n";  
-    echo "\n<!-- ============================================================================= -->";    
-    echo "\n\n<div id='sadmMainBodyPage'>\n";   
-}
 
 
 
@@ -469,222 +835,4 @@ function display_file( $nom_du_fichier ) {
 }
 
 
-
-// ================================================================================================
-//                   Display Server Data used in General Server Information Page
-// ================================================================================================
-function display_server_info( $rarray ) {
-    echo '<table frame="border" border="1" cellspacing="2" width="900">';
-
-    // ======================= G E N E R A L    I N F O R M A T I O N ============================
-    echo '<br>';
-    echo '<table frame="border" bgcolor="lavender" border="0" width="800">';
-    echo '<tr><td colspan=5 align=center bgcolor="blue"><font color=#FFFFFF><b>General Information</b></font></td></tr>';
-    echo '<tr>';
-    $myheader = stripslashes($rarray["server_name"]) . '.'  . stripslashes($rarray["server_domain"]) ;
-    $myheader = $myheader . ' - ' . stripslashes($rarray["server_desc"]) ;
-    echo '<td width=120 align=left><b>Server</b></td>';
-    echo '<td colspan=3 width=300 align=left>' . $myheader . '</td>';
-    echo '</tr>';
-
-    // ============== Server Type and Server Notes
-    echo '<td width=120 align=left><b>Server Type</b></td>';
-    echo '<td width=300 align=left>' . stripslashes($rarray['server_type']) . '</td>';
-       echo '<td align=left><b>General Note</b></td>';
-    echo '<td align=left>' . stripslashes($rarray["server_note"]) . '</td>';
-    echo '</tr>';
-
-    // Server Active/Inactive & DR Notes
-    echo '<tr>';
-    echo '<td width=150 align=left><b>Server Status</b></td>';
-    if (stripslashes($rarray['server_active']) == 1 ) {
-       echo '<td>Active</td>';
-    }else{
-       echo '<td>Inactive</td>' ;
-    }
-       echo '<td align=left><b>D.R. Note</b></td>';
-    echo '<td align=left>' . stripslashes($rarray["server_drnote"]) . '</td>';
-    echo '</tr>';
-
-    // Virtual Server & Server Recover at DR
-    echo '<tr>';
-    echo '<td width=150 align=left><b>Virtual Server</b></td>';
-    if (stripslashes($rarray['server_vm']) == 1 ) {
-       echo '<td>Yes</td>';
-    }else{
-       echo '<td>No</td>' ;
-    }
-       echo '<td align=left><b>Recover at DR</b></td>';
-    if (stripslashes($rarray['server_dr']) == 1 ) {
-       echo '<td>Yes</td>';
-    }else{
-       echo '<td>No</td>' ;
-    }
-    echo '</tr>';
-
-    // Edit Server Information & Operating System
-    echo '<tr>';
-    echo '<td colspan=2 align=left><b><a href=/cfg/config_server_update.php?id=' . $rarray["server_name"] . '>Edit Server Information</a></b></td>';
-    // Server O/S and Version number
-    $myheader = stripslashes($rarray['server_os']) . ' ' . stripslashes($rarray['server_osver1']) . '.' ;
-    $myheader = $myheader . stripslashes($rarray['server_osver2']) . '.' . stripslashes($rarray['server_osver3']);
-    echo '<td width=200 align=left><b>Operating system</b></td>';
-    echo '<td width=300 align=left>' . $myheader . '</td>';
-    echo '</tr>';
-
-    // Performance And Backup Links
-    echo '<tr>';
-    echo '<td colspan=2 align=left><b><a href=/unix/server_performance.php?host=' . $rarray["server_name"] . '>View Graphic Performance</a></b></td>';
-    #echo '<td width=150 align=left></td>';
-    echo '<td colspan=2 align=left><b><a href=/unix/server_rcfiles.php?host=' . $rarray["server_name"] . '>View Backup results</a></b></td>';
-    echo '</tr>';
-
-    echo '</table>';
-
-    // ============================================ N E T W O R K   I N F O R M A T I O N =================================================
-    echo '<br>';
-    echo '<table frame="border" bgcolor="lavender" border="0" width="800">';
-    echo '<tr><td colspan=3 align=center bgcolor="blue"><font color=#FFFFFF><b>Network Information</b></font></td></tr>';
-    $myheader = stripslashes($rarray["server_ip1a"]) . '.' .stripslashes($rarray["server_ip1b"]) . '.' ;
-    $myheader = $myheader . stripslashes($rarray["server_ip1c"]) . '.' . stripslashes($rarray["server_ip1d"]) ;
-    echo '<tr><td width=170 align=left><b>Network Interface #1</b></td>';
-    echo '<td width=300 align=left>' . $myheader . '</td>';
-    echo '<td width=300 align=center><a href=server_view_text_file.php?file=data/hw/ifconfig&server=' . stripslashes($rarray["server_name"]) . '>' . 'View ifconfig command output'  . '</a></td>';
-    echo '</tr>';
-    $myheader = stripslashes($rarray["server_ip2a"]) . '.' .stripslashes($rarray["server_ip2b"]) . '.' ;
-    $myheader = $myheader . stripslashes($rarray["server_ip2c"]) . '.' . stripslashes($rarray["server_ip2d"]) ;
-    echo '<tr><td width=170 align=left><b>Network Interface #2</b></td>';
-    echo '<td width=300 align=left>' . $myheader . '</td>';
-    echo '<td width=300 align=center><a href=server_view_text_file.php?file=data/hw/netstat&server=' . stripslashes($rarray["server_name"]) . '>' . 'View netstat command output' . '</a></td>';
-    echo '</tr>';
-    $myheader = stripslashes($rarray["server_ip3a"]) . '.' .stripslashes($rarray["server_ip3b"]) . '.' ;
-    $myheader = $myheader . stripslashes($rarray["server_ip3c"]) . '.' . stripslashes($rarray["server_ip3d"]) ;
-    echo '<tr><td width=170 align=left><b>Network Interface #3</b></td>';
-    echo '<td width=300 align=left>' . $myheader . '</td>';
-    echo '<td width=300 align=center>' . ' '  . '</td>';
-    echo '</tr>';
-    echo '</table>';
-
-
-    // ======================= H A R D W A R E    I N F O R M A T I O N ============================
-    echo '<br>';
-    echo '<table frame="border" bgcolor="lavender" border="0" width="800">';
-    echo '<tr><td colspan=5 align=center bgcolor="blue"><font color=#FFFFFF><b>Hardware & Filesystem Information</b></font></td></tr>';
-    echo '<tr><td><b>Internal Disk</b></td>';
-    echo '<td> ' . stripslashes($rarray["server_disk_int"]) . ' GB';
-    echo '<td>   </td>';
-    echo '<td align=left><b>Server Model   </b></td>';
-    echo '<td> ' . stripslashes($rarray["server_model"]) . '</td>';
-    echo '</tr>';
-    echo '<td><b>External Disk</b></td>';
-    echo '<td width=210>' . stripslashes($rarray["server_disk_ext"]) . ' GB';
-    echo '<td>   </td>';
-    echo '<td><b>Serial Number</b></td>';
-    echo '<td> ' . stripslashes($rarray["server_serial"]) . '</td>';
-    echo '</tr>';
-
-    echo '<tr>';
-    echo '<td colspan=2 align=left><a href=server_view_text_file.php?file=data/hw/pvs&server=' . stripslashes($rarray["server_name"]) . '>' . 'Physical Volume - pvs command output' . '</a></td>';
-    echo '<td>   </td>';
-    echo '<td><b>Memory</b></td>';
-    echo '<td>'  . stripslashes($rarray["server_memory"]) . ' MB';
-    echo '</tr>';
-
-    echo '<tr>';
-    echo '<td colspan=2 align=left><a href=server_view_text_file.php?file=data/hw/vgs&server=' . stripslashes($rarray["server_name"]) . '>' . 'Volume Group - vgs command output' . '</a></td>';
-    echo '<td>   </td>';
-    echo '<td><b>CPU</b></td>';
-    echo '<td>' . stripslashes($rarray["server_cpu_nb"]) . ' X ' . stripslashes($rarray["server_cpu_speed"]) . ' Mhz</td>';
-    echo '</tr>';
-
-    echo '<tr>';
-    echo '<td colspan=2 align=left><a href=server_view_text_file.php?file=data/hw/lvs&server=' . stripslashes($rarray["server_name"]) . '>' . 'Logical Volume - lvs command output' . '</a></td>';
-    echo '</tr>';
-
-    echo '<tr>';
-    echo '<td colspan=2 align=left><a href=server_view_text_file.php?file=data/hw/df&server=' . stripslashes($rarray["server_name"]) . '>' . 'Filesystem - df command output' . '</a></td>';
-    echo '</tr>';
-    echo '</table>';
-
-
-
-    // ======================= D I S A S T E R    R E C O V E R Y   I N F O R M A T I O N ============================
-    echo '<br>';
-    echo '<table frame="border" bgcolor="lavender" border="0" width="800">';
-    echo '<tr><td align=center colspan=5 bgcolor="blue"><font color=#FFFFFF><b>Disaster Recovery Information</b></font></td></tr>';
-
-
-    # STORIX RECOVERY PROCEDURE
-    if ( stripslashes($rarray['server_os']) == "Linux") {
-        $DRDOC = 'data/dr/doc/dr_storix_restore.doc';
-        $WFILE = SADM_WWW_DIR . $DRDOC;
-        if (file_exists($WFILE)) {
-            echo '<tr><td colspan=5><b><a href=/' . $DRDOC . '>Storix Recovery Procedure (' . $WFILE . ').</a></b></td>';
-        } else {
-            echo '<tr><td colspan=5><b>Storix Recovery Procedure is missing (' . $WFILE . ').</b></td>';
-        }
-    }
-
-
-    # SPECIFIC PROCEDURE FOR SERVER - IF FILE EXIST WITH NAME "DR_{SERVERNAME}.doc" THEN DISPLAY LINK
-    $DRDOC = 'data/dr/doc/dr_' . stripslashes($rarray["server_name"]) . '.doc';
-    $WFILE = SADM_WWW_DIR . $DRDOC;
-    if (file_exists($WFILE)) {
-        echo '<tr><td colspan=5><b><a href=/' . $DRDOC . '>Specific Recovery procedure of ' . stripslashes($rarray["server_name"]) . ' (' . $WFILE . ').</a></b></td>';
-    } else {
-        echo '<tr><td colspan=5><b>Recovery procedure of ' . stripslashes($rarray["server_name"]) . ' is missing (' . $WFILE . ').</b></td>';
-    }
-
-    $DRDOC = 'data/dr/doc/dr_' . stripslashes($rarray["server_name"]) . '_a.doc';
-    $WFILE = SADM_WWW_DIR . $DRDOC;
-    if (file_exists($WFILE)) {
-        echo '<tr><td colspan=5><b><a href=/' . $DRDOC . '>Special note for recovering ' . stripslashes($rarray["server_name"]) . ' (' . $WFILE . ').</a></b></td>';
-    }
-
-
-    # ON LINUX - DISPLAY PROCEDURE TO RESTORE FILE WITH TSM
-    if ( stripslashes($rarray['server_os']) == "Linux") {
-        $FSREST = 'data/dr/doc/linux_filesystem_restore_script.doc';
-        $WFILE = SADM_WWW_DIR . $FSREST;
-        if (file_exists($WFILE)) {
-            echo '<tr><td colspan=5><b><a href=/' . $FSREST . '>TSM Filesystem Restore Procedure (' . $WFILE . ').</a></b></td>';
-        } else {
-            echo '<tr><td colspan=5><b>Filesystem restore procedure with TSM is ' . stripslashes($rarray["server_name"]) . ' is missing (' . $WFILE . ').</b></td>';
-        }
-    }
-
-
-    # ON AIX DISPLAY PROCEDURE TO RECREATE VOLUME GROUP
-    if ( stripslashes($rarray['server_os']) == "Aix") {
-        $DRDOC = 'data/dr/doc/aix_recreate_volume_group.doc';
-        $WFILE = SADM_WWW_DIR . $DRDOC;
-        if (file_exists($WFILE)) {
-            echo '<tr><td colspan=5><b><a href=/' . $DRDOC . '>Recreate volume group procedure (' . $WFILE . ').</a></b></td></tr>';
-        } else {
-            echo '<tr><td colspan=5><b>Recreate volume group procedure is missing (' . $WFILE . ').</b></td></tr>';
-        }
-    }
-
-    # RESTORE KMA DOCUMENTATION FOR SERVER SPMQ1022
-    if (( stripslashes($rarray['server_os']) == "Aix") and  ( stripslashes($rarray["server_name"]) == "spmq1022")) {
-        $DRDOC = 'data/dr/doc/dr_restoring_kma_at_sungard.doc';
-        $WFILE = SADM_WWW_DIR . $DRDOC;
-        if (file_exists($WFILE)) {
-            echo '<tr><td colspan=5><b><a href=/' . $DRDOC . '>Restoring KMA at DR site (' . $WFILE . ').</a></b></td></tr>';
-        } else {
-            echo '<tr><td colspan=5><b>Procedure for restoring KMA at DR site is missing (' . $WFILE . ').</b></td></tr>';
-        }
-    }
-
-    // Configuration cfg2html
-    echo '<tr>';
-    echo '<td colspan=5 align=left><b><a href=/unix/server_detail_config.php?host=' . $rarray["server_name"] . '>Detailled server configuration</a></b></td>';
-    echo '</tr>';
-    echo '<tr>';
-    echo '<td colspan=5 align=left><b><a href=/unix/server_system_config.php?host=' . $rarray["server_name"] . '>Summarized server configuration</a></b></td>';
-    echo '</tr>';
-    echo '</table>';
-
-    echo '</table>';
-}
 ?>

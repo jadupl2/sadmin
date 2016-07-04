@@ -24,7 +24,7 @@
     <link href="/css/sadmin.css"  rel="stylesheet" type="text/css"/>
      
     <script> 
-    $(document).ready(function(){ $('#example').DataTable();    } ); 
+    $(document).ready(function(){ $('#sadmTable').DataTable();    } ); 
     </script>   
 
     <script>
