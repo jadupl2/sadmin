@@ -58,7 +58,7 @@ function display_heading($line_title) {
     #echo "<th>No.</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th>Model</th>\n";
+    #echo "<th>Model</th>\n";
     echo "<th>Active</th>\n";
     #echo "<th>Sporadic</th>\n";
     echo "<th>O/S</th>\n";
@@ -76,7 +76,7 @@ function display_heading($line_title) {
     #echo "<th>No.</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th>Model</th>\n";
+    #echo "<th>Model</th>\n";
     echo "<th>Active</th>\n";
     #echo "<th>Sporadic</th>\n";
     echo "<th>O/S</th>\n";
@@ -106,7 +106,7 @@ function display_data($count, $row) {
         "<a href=/sadmin/sadm_view_servers.php?selection=host&value=" . nl2br($row['srv_name']) .
         ">" . nl2br($row['srv_name']) . "</a></td>\n";
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
-    echo "<td>" . nl2br( $row['srv_model']) . "</td>\n";
+    #echo "<td>" . nl2br( $row['srv_model']) . "</td>\n";
     if ($row['srv_active']   == 't' ) { echo "<td>Yes</td>\n"; }else{ echo "<td>No</td>\n";}
     #if ($row['srv_sporadic'] == 't' ) { echo "<td>Yes</td>\n"; }else{ echo "<td>No</td>\n";}
 

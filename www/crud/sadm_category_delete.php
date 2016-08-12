@@ -27,6 +27,8 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_category_common.php');
+
 
 #===================================================================================================
 #                                       Local Variables

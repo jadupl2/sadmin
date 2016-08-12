@@ -117,7 +117,6 @@ def init_row_dictionnary(colnames):
     srow['srv_osupdate_day']     = int(5)                               # Day of Update 0=Sunday ...
 
     srow['srv_osupdate_period']  = 'm'                                  # m=mth w=week s=sem.b=bimen
-    srow['srv_type']  = 'p'                                             # p=prod t=test d=dev 
     wdate = datetime.datetime.now()                                     # Get current Date
     srow['srv_last_update'] = wdate.date()                              # Set Last Update Date
     return (srow)
@@ -188,7 +187,7 @@ def insert_row(wconn, wcur, wrow):
     try:
         wcur.execute("insert into sadm.server                                                   \
         (srv_name,              srv_domain,                 srv_desc,                           \
-         srv_notes,             srv_type,                   srv_ostype,                         \
+         srv_notes,                              srv_ostype,                         \
          srv_osname,            srv_oscodename,             srv_osversion,                      \
          srv_osver_major,       srv_kernel_version,         srv_kernel_bitmode,                 \
          srv_hwd_bitmode,       srv_active,                 srv_creation_date,                  \
@@ -202,7 +201,7 @@ def insert_row(wconn, wcur, wrow):
         values (%s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s,           \
                 %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s,%s, %s,%s )",                               \
         (wrow['srv_name'],          wrow['srv_domain'],            wrow['srv_desc'],            \
-         wrow['srv_notes'],         wrow['srv_type'],              wrow['srv_ostype'],          \
+         wrow['srv_notes'],                     wrow['srv_ostype'],          \
          wrow['srv_osname'],        wrow['srv_oscodename'],        wrow['srv_osversion'],       \
          wrow['srv_osver_major'],   wrow['srv_kernel_version'],    wrow['srv_kernel_bitmode'],  \
          wrow['srv_hwd_bitmode'],   wrow['srv_active'],            wrow['srv_creation_date'],   \
@@ -243,7 +242,7 @@ def update_row(wconn, wcur, wrow):
             srv_oscodename  = %s,           srv_domain = %s,            \
             srv_memory = %s,                srv_last_update = %s,       \
             srv_osversion = %s,             srv_osver_major = %s,       \
-            srv_ip = %s ,                   srv_type = %s,              \
+            srv_ip = %s ,                                 \
             srv_kernel_version = %s ,       srv_kernel_bitmode = %s,    \
             srv_model = %s,                 srv_serial = %s,            \
             srv_hwd_bitmode = %s,           srv_nb_cpu = %s,            \
@@ -256,7 +255,7 @@ def update_row(wconn, wcur, wrow):
              wrow['srv_oscodename'],        wrow['srv_domain'],         \
              wrow['srv_memory'],            wrow['srv_last_update'],    \
              wrow['srv_osversion'],         wrow['srv_osver_major'],    \
-             wrow['srv_ip'],                wrow['srv_type'],           \
+             wrow['srv_ip'],                           \
              wrow['srv_kernel_version'],    wrow['srv_kernel_bitmode'], \
              wrow['srv_model'],             wrow['srv_serial'],         \
              wrow['srv_hwd_bitmode'],       wrow['srv_nb_cpu'],         \

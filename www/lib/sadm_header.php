@@ -19,7 +19,8 @@
     <link href="/css/bootstrap-theme.min.css" rel="stylesheet">
     <!-- DataTable CSS -->
     <link href="/css/jquery.dataTables.min.css" rel="stylesheet">
-    
+    <!-- DatePicker CSS -->
+    <link href="/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
     <!-- Sadmin  -->
     <link href="/css/sadmin.css"  rel="stylesheet" type="text/css"/>
      

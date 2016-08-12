@@ -98,7 +98,7 @@ def process_linux_servers(wconn,wcur):
     # Select All Active Linux Servers
     try :
         wcur.execute(" \
-          SELECT srv_name,srv_ostype,srv_domain,srv_type, srv_active \
+          SELECT srv_name,srv_ostype,srv_domain,srv_active \
             from sadm.server \
             where srv_active = True and srv_ostype = 'linux' order by srv_name; \
         ")
@@ -134,7 +134,7 @@ def process_aix_servers(wconn,wcur):
     # Select All Active Linux Servers
     try :
         wcur.execute(" \
-          SELECT srv_name,srv_ostype,srv_domain,srv_type, srv_active \
+          SELECT srv_name,srv_ostype,srv_domain, srv_active \
             from sadm.server \
             where srv_active = True and srv_ostype = 'aix' order by srv_name; \
         ")

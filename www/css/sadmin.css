@@ -17,7 +17,7 @@ body {
 */
 
 h1, h2 {
-    margin:0; 
+    margin:0;
 }
 
 
@@ -26,57 +26,66 @@ h1, h2 {
 /*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
 /*             Used by sadm_server_*.php and sadm_view_server.php Web Pages                       */
 /* ---------------------------------------------------------------------------------------------- */
-/* 
+/*
 /* ===== FORM ATTRIBUTE ===== */
-
-.form_rightside {
-    width: 48%;  
+div.form_leftside {
+    width: 48%;
     float: left;
     /*background-color: #3E5F80;*/
-    margin-left: 20px;
-    margin-right: auto;    
+    margin-left: 2px;
 }
-.form_leftside {
-    width: 48%;  
-    float: left;   
+div.form_rightside {
+    width: 48%;
+    float: left;
     /*background-color: #3E5F80;*/
-    margin-left: auto;
-    margin-right: auto;    
-    
+    margin-left: 25px;
 }
-.server_form {
+
+div.server_form {
     font-family: Verdana, Geneva, sans-serif;
     background-color: #C8DBBE;
     color: black;
     width: 100%;
-    height: 300px;
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
+    height: 350px;
+    margin: 5px;
+    border: 2px solid #000000;
     font-size: 12px;
-    text-align: left;  
+    text-align: left;
     padding: 2%;
 }
-/* ===== FORM LABEL ===== */
-.server_label1 {
-    float : left; 
-    width : 35%;
-    /*background-color: yellow;*/
-}   
-.server_label2 {
-    float : left; 
-    width : 35%;
-    /*background-color: yellow;*/
-}   
 
-/* ===== FORM INPUT ===== */
-.server_input {
-    margin-bottom: 4x;
+/* ===== FORM LABEL LEFT SIDE ===== */
+div.server_label1 {
+    float : left;
+    width : 35%;
+    /*background-color: yellow;*/
+}
+
+/* ===== FORM LABEL RIGHT SIDE ===== */
+div.server_label2 {
+    float : left;
+    width : 45%;
+    /*background-color: yellow;*/
+}
+
+/* ===== FORM INPUT LEFT SIDE ===== */
+div.server_input1 {
+    margin-bottom: 4px;
+    margin-left: 35%;
     color : black;
-    width : 95%;
+    width : 65%;
     /*background-color: green;*/
-}  
+}
 
+/* ===== FORM INPUT RIGHT SIDE ===== */
+div.server_input2 {
+    margin-bottom: 4px;
+    margin-left: 45%;
+    padding-left: 5px;
+    color : black;
+    width : 55%;
+    /*background-color: green;*/
+}
 /*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
 /* ===============================================================================================*/
 
@@ -86,7 +95,7 @@ h1, h2 {
 /*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */
 /*             Used by sadm_category_*.php and sadm_view_category.php Web Pages                   */
 /* ---------------------------------------------------------------------------------------------- */
-/* 
+/*
 /* ===== FORM ATTRIBUTE ===== */
 .cat_form {
     font-family: Verdana, Geneva, sans-serif;
@@ -96,21 +105,22 @@ h1, h2 {
     margin-top: 5%;
     margin-left: auto;
     margin-right: auto;
+    border: 2px solid #000000;
     font-size: 12px;
-    text-align: left;  
+    text-align: left;
     padding: 2%;
 }
 /* ===== FORM LABEL ===== */
 .cat_label {
-    float : left; 
+    float : left;
     width : 200px;
 
-}   
+}
 /* ===== FORM INPUT ===== */
 .cat_input {
     margin-bottom: 8px;
     color : black;
-}  
+}
 
 /*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */
 /* ===============================================================================================*/
@@ -161,7 +171,7 @@ table.sadm tr:hover {background-color: #ddd;}
 }
 
 #table_rch td, #table_rch th {
-    border: 0px solid #ddd; 
+    border: 0px solid #ddd;
     text-align: left;
     padding: 0px;
 }
@@ -173,7 +183,7 @@ table.sadm tr:hover {background-color: #ddd;}
 }
 #table_rch td {
     border-bottom: 3px solid #ddd;
-}    
+}
 
 /*#table_rch tr:nth-child(even) {background: #CCC}
 #table_rch tr:nth-child(odd) {background: #FFF} */
@@ -334,9 +344,9 @@ table.sadm tr:hover {background-color: #ddd;}
     width: 88%;
     background-color: #ffffff;
     float: right;
-    font-size: 8px;
+    font-size: 14px;
     margin-left: auto;
-    margin-right: auto; 
+    margin-right: auto;
     min-height : 500px;
 }
 
@@ -348,7 +358,7 @@ table.sadm tr:hover {background-color: #ddd;}
     height: 30px;
     background-color: #A6E6B2 ;
     margin-left: auto;
-    margin-right: auto; 
+    margin-right: auto;
     margin-top: 15px;
 }
 
@@ -382,13 +392,13 @@ table.sadm tr:hover {background-color: #ddd;}
 
 #sadmMainBodyPage {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    width: 90%;
+    width: 96%;
     padding: 0%;
-    /* background-color: #A6E6B2 ; 
+    /* background-color: #A6E6B2 ;
     color : #2D2E87;*/
     /* background-color: #CDCDCD ; */
-    margin-left: auto;
-    margin-right: auto; 
+    margin-left: 15px;
+    margin-right: auto;
     margin-top: 10px;
 }
 
@@ -398,7 +408,7 @@ table.sadm tr:hover {background-color: #ddd;}
 /*   Footer CSS Section                                                                           */
 /* ---------------------------------------------------------------------------------------------- */
 #sadmFooter {
-    clear: both; 
+    clear: both;
     font-size: 10px;
     height: 50px;
     padding: 10px;

@@ -464,9 +464,10 @@ sadm_date_to_epoch() {
     fi
     WDATE=$1                                                            # Save Received Date
     YYYY=`echo $WDATE | awk -F. '{ print $1 }'`                         # Extract Year from Rcv Date
-    MTH=`echo   $WDATE | awk -F. '{ print $2 }'`                        # Extract MTH  from Rcv Date
-    #let "MTH=$MTH -1"                                                   # Month less one for perl
-    MTH=$(($MTH - 1 ))                                                  # Month less one for perl
+    MTH=` echo $WDATE | awk -F. '{ print $2 }'`                         # Extract MTH  from Rcv Date
+    #let "MTH=$MTH -1"                                                  # Month less one for perl
+    #MTH=$(($MTH - 1 ))                                                  # Month less one for perl
+    MTH=`echo "$MTH -1" | $SADM_BC`
 
     if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
     DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0//'` # Extract Day
@@ -501,13 +502,13 @@ sadm_elapse_time() {
     whour=00 ; wmin=00 ; wsec=00
 
     # Calculate number of hours (1 hr = 3600 Seconds)
-    if [ $epoch_elapse -gt 3600 ]                                     # If nb Sec Greater than 1Hr
+    if [ $epoch_elapse -gt 3600 ]                                       # If nb Sec Greater than 1Hr
         then whour=`echo "$epoch_elapse / 3600" | $SADM_BC`             # Calculate nb of Hours
              epoch_elapse=`echo "$epoch_elapse - ($whours * 3600)" | $SADM_BC` # Sub Hr*Sec from elapse
     fi
 
     # Calculate number of minutes 1 Min = 60 Seconds)
-    if [ $epoch_elapse -gt 60 ]                                       # If more than 1 min left
+    if [ $epoch_elapse -gt 60 ]                                         # If more than 1 min left
        then  wmin=`echo "$epoch_elapse / 60" | $SADM_BC`                # Calc. Nb of minutes
              epoch_elapse=`echo  "$epoch_elapse - ($wmin * 60)" | $SADM_BC` # Sub Min*Sec from elapse
     fi
@@ -545,6 +546,7 @@ sadm_get_osmajorversion() {
     echo "$wosmajorversion"
 }
 
+
 # --------------------------------------------------------------------------------------------------
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
 # --------------------------------------------------------------------------------------------------
@@ -552,7 +554,6 @@ sadm_get_ostype() {
     sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`                # Get OS Name (AIX or LINUX)
     echo "$sadm_get_ostype"
 }
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -563,7 +564,6 @@ sadm_get_oscodename() {
     if [ "$(sadm_get_ostype)" = "AIX" ]   ; then woscodename="IBM_AIX" ; fi
     echo "$woscodename"
 }
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -580,7 +580,6 @@ sadm_get_osname() {
 }
 
 
-
 # --------------------------------------------------------------------------------------------------
 #                                 RETURN THE HOSTNAME (SHORT)
 # --------------------------------------------------------------------------------------------------
@@ -593,7 +592,6 @@ sadm_get_hostname() {
     fi
     echo "$whostname"
 }
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -620,7 +618,6 @@ sadm_get_domainname() {
     esac
     echo "$wdomainname"
 }
-
 
 
 # --------------------------------------------------------------------------------------------------

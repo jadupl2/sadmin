@@ -115,7 +115,7 @@ get_aix_files()
     sadm_writelog "Starting to process AIX Servers ..."
 
     sadm_writelog "Producing a list of all Linux active servers"
-    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_type,srv_active,srv_sporadic from sadm.server "
+    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_active,srv_sporadic from sadm.server "
     SQL2="where srv_ostype = 'aix' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
@@ -128,7 +128,7 @@ get_aix_files()
             xcount=`expr $xcount + 1`
             server=`  echo $wline|awk -F, '{ print $1 }'`
             domain=`echo $wline|awk -F, '{ print $3 }'`
-            server_sporadic=` echo $wline|awk -F, '{ print $6 }'`
+            server_sporadic=` echo $wline|awk -F, '{ print $5 }'`
 
 
             # Test pinging the server - if doesn t work then skip server & Log error
@@ -252,7 +252,7 @@ get_linux_files()
     sadm_writelog "Starting to process Linux Servers ..."
 
     sadm_writelog "Producing a list of all Linux active servers"
-    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_type,srv_active,srv_sporadic from sadm.server "
+    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_active,srv_sporadic from sadm.server "
     SQL2="where srv_ostype = 'linux' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
@@ -265,7 +265,7 @@ get_linux_files()
             xcount=`expr $xcount + 1`
             server=`  echo $wline|awk -F, '{ print $1 }'`
             domain=`echo $wline|awk -F, '{ print $3 }'`
-            server_sporadic=` echo $wline|awk -F, '{ print $6 }'`
+            server_sporadic=` echo $wline|awk -F, '{ print $5 }'`
 
 
             # Test pinging the server - if doesn t work then skip server & Log error

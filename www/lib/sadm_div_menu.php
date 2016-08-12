@@ -47,10 +47,10 @@ echo "\n    <li><a href='/sadmin/sadm_view_rch_summary.php?selection=all'>Script
 echo "\n";
 echo "\n    <li><a href='#'>Performance</a></li>"; 
 echo "\n";
-echo "\n    <li><a href='/sadmin/sadm_subnet.php?net=192.168.1'>IP Inventory</a>";
+echo "\n    <li><a href='/sadmin/sadm_subnet.php?net=192.168.1&option=all'>IP Inventory</a>";
 echo "\n    <ul>";
-echo "\n        <li><a href='/sadmin/sadm_subnet.php?net=192.168.1'>192.168.1/24</a></li>";
-echo "\n        <li><a href='/sadmin/sadm_subnet.php?net=192.168.0'>Subnet 192.168.0/24</a></li>";
+echo "\n        <li><a href='/sadmin/sadm_subnet.php?net=192.168.1&option=all'>192.168.1/24</a></li>";
+echo "\n        <li><a href='/sadmin/sadm_subnet.php?net=192.168.0&option=all'>192.168.0/24</a></li>";
 echo "\n    </ul>";
 echo "\n    </li>";
 echo "\n";

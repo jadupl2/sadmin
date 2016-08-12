@@ -26,6 +26,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_category_common.php');
 
 
 #===================================================================================================
@@ -90,9 +91,9 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     
     # Display Buttons at the bottom of the form
     echo "<center>";
-    echo "<button type='submit' class='btn btn-sm btn-primary'>Create</button>   ";
+    echo "<button type='submit' class='btn btn-sm btn-primary'> Create </button>   ";
     echo "<a href='/crud/sadm_category_main.php'>";
-    echo "<button type='button' class='btn btn-sm btn-primary'>Cancel</button></a>";
+    echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
     echo "</center>";
     
     # End of Form

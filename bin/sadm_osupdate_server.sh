@@ -112,7 +112,7 @@ process_linux_servers()
     sadm_writelog "${SADM_DASH}"
     sadm_writelog "PROCESS LINUX SERVERS"
 
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_type, srv_osupdate, srv_osupdate_reboot, "
+    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_osupdate, srv_osupdate_reboot, "
     SQL2="srv_osupdate_day, srv_osupdate_period, srv_sporadic, srv_active from sadm.server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "
     SQL4="order by srv_name; "
@@ -127,17 +127,16 @@ process_linux_servers()
             server_name=`               echo $wline|awk -F, '{ print $1 }'`
             server_os=`                 echo $wline|awk -F, '{ print $2 }'`
             server_domain=`             echo $wline|awk -F, '{ print $3 }'`
-            server_type=`               echo $wline|awk -F, '{ print $4 }'`
-            server_osupdate=`           echo $wline|awk -F, '{ print $5 }'`
-            server_osupdate_reboot=`    echo $wline|awk -F, '{ print $6 }'`
-            server_osupdate_day=`       echo $wline|awk -F, '{ print $7 }'`
-            server_osupdate_period=`    echo $wline|awk -F, '{ print $8 }'`
-            server_sporadic=`           echo $wline|awk -F, '{ print $9 }'`
+            server_osupdate=`           echo $wline|awk -F, '{ print $4 }'`
+            server_osupdate_reboot=`    echo $wline|awk -F, '{ print $5 }'`
+            server_osupdate_day=`       echo $wline|awk -F, '{ print $6 }'`
+            server_osupdate_period=`    echo $wline|awk -F, '{ print $7 }'`
+            server_sporadic=`           echo $wline|awk -F, '{ print $8 }'`
             sadm_writelog " "
             sadm_writelog "${STAR_LINE}"
             sadm_writelog "${STAR_LINE}"
             info_line="Processing ($xcount) ${server_name}.${server_domain} - "
-            info_line="${info_line}os:${server_os} - type:${server_type}"
+            info_line="${info_line}os:${server_os}"
             sadm_writelog "$info_line"
             
             sadm_writelog "Ping the selected host ${server_name}.${server_domain}"

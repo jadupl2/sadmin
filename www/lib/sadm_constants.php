@@ -49,5 +49,5 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
-define("SADM_VERSION"       ,"0.75" );  # Temp Hard Code will get it from cfg file
+define("SADM_VERSION"       ,"0.81" );  # Temp Hard Code will get it from cfg file
 ?>

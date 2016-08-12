@@ -27,6 +27,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_server_common.php');
 
 
 #===================================================================================================
@@ -51,22 +52,53 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_name']); }
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
-         
+        
+        if ($DEBUG) {
+            echo "<br>Week2 = " . $_POST['scr_osupdate_week2'];
+            if ($_POST['scr_osupdate_week2'] == True)  { echo "<br>Week2 Bool is True" ; }
+            if ($_POST['scr_osupdate_week2'] == False) { echo "<br>Week2 Bool is False" ; }
+            echo "<br>Week3 = " . $_POST['scr_osupdate_week3'];
+            if ($_POST['scr_osupdate_week3'] == True)  { echo "<br>Week3 Bool is True" ; }
+            if ($_POST['scr_osupdate_week3'] == False) { echo "<br>Week3 Bool is False" ; }            
+            echo "<br>Week4 = " . $_POST['scr_osupdate_week4'];
+            if ($_POST['scr_osupdate_week4'] == True)  { echo "<br>Week4 Bool is True" ; }
+            if ($_POST['scr_osupdate_week4'] == False) { echo "<br>Week4 Bool is False" ; }
+        }
+       
         # Construct SQL to Update row
         $sql = "UPDATE sadm.server SET ";
-        $sql = $sql . "srv_name   = '"          . sadm_clean_data($_POST['scr_name'])           ."', ";
-        $sql = $sql . "srv_desc   = '"          . sadm_clean_data($_POST['scr_desc'])           ."', ";
-        $sql = $sql . "srv_cat    = '"          . sadm_clean_data($_POST['scr_cat'])            ."', ";
-        $sql = $sql . "srv_domain = '"          . sadm_clean_data($_POST['scr_domain'])         ."', ";
-        $sql = $sql . "srv_tag    = '"          . sadm_clean_data($_POST['scr_tag'])            ."', ";
-        $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])       ."', ";
-        $sql = $sql . "srv_osupdate = '"        . sadm_clean_data($_POST['scr_osupdate'])       ."', ";
-        $sql = $sql . "srv_osupdate_reboot = '" . sadm_clean_data($_POST['scr_osupdate_reboot'])."', ";
-        $sql = $sql . "srv_osupdate_day = '"    . sadm_clean_data($_POST['scr_osupdate_day'])   ."', ";
-        $sql = $sql . "srv_osupdate_period = '" . sadm_clean_data($_POST['scr_osupdate_period'])."', ";
-        $sql = $sql . "srv_active = '"          . sadm_clean_data($_POST['scr_active'])         ."'  ";
-        $sql = $sql . "WHERE srv_name = '"      . sadm_clean_data($_POST['scr_name'])           ."'; ";
-        #$sql = $sql . $sql1 . $sql2 . $sql3 . $sql4 . $sql5 . $sql6 . $sql7 ;
+        $sql = $sql . "srv_name   = '"          . sadm_clean_data($_POST['scr_name'])            ."', ";
+        $sql = $sql . "srv_desc   = '"          . sadm_clean_data($_POST['scr_desc'])            ."', ";
+        $sql = $sql . "srv_cat    = '"          . sadm_clean_data($_POST['scr_cat'])             ."', ";
+        $sql = $sql . "srv_domain = '"          . sadm_clean_data($_POST['scr_domain'])          ."', ";
+        $sql = $sql . "srv_tag    = '"          . sadm_clean_data($_POST['scr_tag'])             ."', ";
+        $sql = $sql . "srv_notes  = '"          . sadm_clean_data($_POST['scr_notes'])           ."', ";
+        $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])        ."', ";
+        $sql = $sql . "srv_backup   = '"        . sadm_clean_data($_POST['scr_backup'])          ."', ";
+        $sql = $sql . "srv_monitor  = '"        . sadm_clean_data($_POST['scr_monitor'])         ."', ";
+        $sql = $sql . "srv_osupdate = '"        . sadm_clean_data($_POST['scr_osupdate'])        ."', ";
+        $sql = $sql . "srv_osupdate_reboot = '" . sadm_clean_data($_POST['scr_osupdate_reboot']) ."', ";
+        $sql = $sql."srv_osupdate_start_month = '".sadm_clean_data($_POST['scr_osupdate_start_month'])."', ";
+        $sql = $sql . "srv_osupdate_day = '"    . sadm_clean_data($_POST['scr_osupdate_day'])    ."', ";
+        $sql = $sql . "srv_osupdate_period = '" . sadm_clean_data($_POST['scr_osupdate_period']) ."', ";
+        if ($_POST['scr_osupdate_week1'] == True) { $sql = $sql . "srv_osupdate_week1 = '1', "; }
+        if ($_POST['scr_osupdate_week1'] != True) { $sql = $sql . "srv_osupdate_week1 = '0', "; }
+        if ($_POST['scr_osupdate_week2'] == True) { $sql = $sql . "srv_osupdate_week2 = '1', "; }
+        if ($_POST['scr_osupdate_week2'] != True) { $sql = $sql . "srv_osupdate_week2 = '0', "; }
+        if ($_POST['scr_osupdate_week3'] == True) { $sql = $sql . "srv_osupdate_week3 = '1', "; }
+        if ($_POST['scr_osupdate_week3'] != True) { $sql = $sql . "srv_osupdate_week3 = '0', "; }
+        if ($_POST['scr_osupdate_week4'] == True) { $sql = $sql . "srv_osupdate_week4 = '1', "; }
+        if ($_POST['scr_osupdate_week4'] != True) { $sql = $sql . "srv_osupdate_week4 = '0', "; }
+ 
+        
+        # ReCalculate the Next O/S Update Date
+        $srv_osupdate_date = calculate_osupdate_date($srv_osupdate_start_month,$srv_osupdate_period,
+             $srv_osupdate_week1,$srv_osupdate_week2,$srv_osupdate_week3,$srv_osupdate_week4,
+             $srv_osupdate_day);
+        $sql = $sql . "srv_osupdate_date = '"   . sadm_clean_data($_POST['scr_osupdate_date']) ."', ";
+        $sql = $sql . "srv_ostype        = '"   . sadm_clean_data($_POST['scr_ostype'])        ."', ";
+        $sql = $sql . "srv_active        = '"   . sadm_clean_data($_POST['scr_active'])        ."'  ";
+        $sql = $sql . "WHERE srv_name = '"      . sadm_clean_data($_POST['scr_name'])          ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
         # Execute the Row Update SQL
@@ -124,7 +156,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 
     # Start of Form - Display Form Ready to Update Data
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_server_form( $row , "Update");                              # Display Form Default Value
+    display_server_form( $row , "U");                                   # Display Form Default Value
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";
