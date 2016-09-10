@@ -78,6 +78,8 @@ SADM_PERL=""                                ; export SADM_PERL          # perl P
 SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path
 SADM_LSCPU=""                               ; export SADM_LSCPU         # Path to lscpu Command
 SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
+SADM_LSBLK=""                               ; export SADM_LSBLK         # Path to lsblk Command
+SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
@@ -366,7 +368,27 @@ sadm_check_requirements() {
                        then sadm_check_command_availibility nmon        # Check if command now Avail
                     fi
             fi
-           SADM_NMON=$SADM_VAR1                                         # Save Command Path
+            SADM_NMON=$SADM_VAR1                                        # Save Command Path
+           
+            # Check Availibility of the "ethtool" command
+            sadm_check_command_availibility "ethtool"                   # Command available?
+            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+               then sadm_install_package "ethtool" "ethtool"            # Go Install Missing Package
+                    if [ $? -eq 0 ]                                     # If Install Went OK
+                       then sadm_check_command_availibility ethtool     # Check if command now Avail
+                    fi
+            fi
+           SADM_ETHTOOL=$SADM_VAR1                                      # Save Command Path
+            
+            # Check Availibility of the "lsblk" command
+            sadm_check_command_availibility "lsblk"                     # Command available?
+            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+               then sadm_install_package "lsblk" "lsblk"                # Go Install Missing Package
+                    if [ $? -eq 0 ]                                     # If Install Went OK
+                       then sadm_check_command_availibility lsblk       # Check if command now Avail
+                    fi
+            fi
+           SADM_LSBLK=$SADM_VAR1                                         # Save Command Path
             
             sadm_check_command_availibility mail                        # Mail cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found

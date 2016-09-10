@@ -89,14 +89,16 @@ SAR_FILE=$SAR_DIR/sa${DAY}                                              # Name o
 #
 # Output File
 OUT_PREFIX="sadm"                                                       # Output file prefix
-OUT_FILE="${SADM_SAR_DIR}/$(sadm_get_hostname)_${DATE}.sar"                 # Name of the output file
+OUT_FILE="${SADM_SAR_DIR}/$(sadm_get_hostname)_${DATE}.sar"             # Name of the output file
 OUT_MAX_FILES=30                                                        # Number Output files to keep
 
-# --------------------------------------------------------------------------------------------------
+
+
+# ==================================================================================================
 #                           S T A R T   O F   M A I N    P R O G R A M
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 #
-    sadm_start                                                          # Make sure Dir. Struc. exist
+    sadm_start                                                          # Make sure Dir Struc. exist
 #
 # If Parameter (filename) was/wasn't specified.
 # --------------------------------------------------------------------------------------------------
@@ -105,7 +107,7 @@ if [ "$1" != "" ]
          OUT_FILE=                                                      # Output is stdout
          CLEANUP=false                                                  # No cleanup
     else >$OUT_FILE                                                     # Reset output file
-#         exec 1>/dev/null                                               # Get rid of stdout
+#         exec 1>/dev/null                                              # Get rid of stdout
 fi
 
 # Generate CPU statistics

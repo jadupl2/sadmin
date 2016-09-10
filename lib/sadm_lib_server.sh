@@ -345,36 +345,45 @@ sadm_server_hardware_bitmode() {
 #        IF THEY ARE MULTIPLE DISKS ON THE SERVER EACH DISK INFO IS SEPARATED BY A ";"
 # --------------------------------------------------------------------------------------------------
 sadm_server_disks() {
-    index=0 ; sadm_server_disks=""                                                  # Init Variables
+    index=0 ; output_line=""                                            # Init Variables
     case "$(sadm_get_ostype)" in
-        "LINUX")    for wdisk in `find /sys/block -name "sd[a-z]" -exec basename {} \;` # Get Disk Name 
-                        do
-                        if [ "$index" -ne 0 ]                                       # Don't add , for 1st Disk
-                            then sadm_server_disks="${sadm_server_disks},"          # For others disks add ","
-                        fi
-                        wsize=`$SADM_FDISK -l /dev/${wdisk} 2>/dev/null |grep -i "^Disk" |grep -i $wdisk |awk '{ print $3 }'`
-                        wsize=`echo $wsize / 1 | $SADM_BC`                          # Get rid of Decimal
-
-                        wunit=`$SADM_FDISK -l /dev/${wdisk} 2>/dev/null | grep -i "^Disk" | grep -i $wdisk | awk '{ print $4 }'`
-                        if [ "$wunit" = "GB," ] ||  [ "$wunit" = "GiB," ]           # If Disk Size in GB
-                           then wsize=`echo "($wsize * 1024) / 1" | $SADM_BC`       # Convert GB into MB 
-                           else wsize=`echo "$wsize * 1" | $SADM_BC`                # If MB Get Rid of Decimal
-                        fi
-                        sadm_server_disks="${sadm_server_disks}${wdisk}|${wsize}"   # Combine Disk Name & Size
-                        index=`expr $index + 1`                                     # Increment Index by 1
-                    done
-                    ;;
-        "AIX")      for wdisk in `find /dev -name "hdisk*"`
-                        do
-                        if [ "$index" -ne 0 ] ; then sadm_server_disks="${sadm_server_disks}," ; fi
-                        sadm_disk_name=`basename $wdisk`
-                        sadm_disk_size=`getconf DISK_SIZE ${wdisk}` 
-                        sadm_server_disks="${sadm_server_disks}${sadm_disk_name}|${sadm_disk_size}"
-                        index=`expr $index + 1`                                    
-                    done
-                    ;;
+        "LINUX") STMP="/tmp/sadm_server_disk_$$.txt"                    # TMP Working file
+                 $SADM_LSBLK | grep disk > $STMP                        # Get List of Disks
+                 while read xline                                       # Read Each disks line
+                    do
+                    if [ "$index" -ne 0 ]                               # Don't add , for 1st Disk
+                        then output_line="${output_line},"              # For others disks add ","
+                    fi
+                    dname=`echo $xline | grep disk | awk '{ print $1 }'` # Get the Disk Name
+                    dsize=`echo $xline | awk '{ print $4 }'`            # Get Disk Size on Line
+                    disk_unit=`echo $disk_size| awk '{print substr($0,length,1)}'` # Get Size Unit (G,M,T)
+                    dsize=`echo "${dsize%?}"`                           # Del.last Char
+                    dsize=`echo $dsize / 1 | $SADM_BC`                  # Get rid of Decimal
+                    if [ "$disk_unit" = "G" ]                           # If GB Unit
+                       then dsize=`echo "($dsize * 1024) / 1" | $SADM_BC`  # Convert GB into MB 
+                    fi
+                    if [ "$disk_unit" = "M" ]                           # if MB Unit
+                       then dsize=`echo "$dsize * 1"| $SADM_BC`         # If MB Get Rid of Decimal
+                    fi
+                    if [ "$disk_unit" = "T" ] 
+                       then dsize=`echo "(($dsize*1024)*1024)/1"| $SADM_BC` # Convert GB into MB 
+                    fi
+                    output_line="${output_line}${dname}|${dsize}"       # Combine Disk Name & Size
+                    index=`expr $index + 1`                             # Increment Index by 1
+                    done < $STMP
+                 rm -f $STMP> /dev/null 2>&1                            # Remove Temp File
+                 ;;
+        "AIX")   for wdisk in `find /dev -name "hdisk*"`
+                     do
+                     if [ "$index" -ne 0 ] ; then output_line="${output_line}," ; fi
+                     sadm_dname=`basename $wdisk`
+                     sadm_dsize=`getconf DISK_SIZE ${wdisk}` 
+                     output_line="${output_line}${sadm_dname}|${sadm_dsize}"
+                     index=`expr $index + 1`                                    
+                     done 
+                 ;;
     esac
-    echo "$sadm_server_disks"                                                      
+    echo "$output_line"                                                      
 }
 
 

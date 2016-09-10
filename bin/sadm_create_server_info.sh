@@ -8,7 +8,7 @@
 #   Date     :  13 November 2015
 #   Requires :  sh
 # --------------------------------------------------------------------------------------------------
-#
+# 1.8 - Aug 2016 - Added lsblk output to script
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 
@@ -24,7 +24,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -91,6 +91,7 @@ VGS_FILE="${HPREFIX}_vgs.txt"                   ; export VGS_FILE       # Volume
 VGSCAN_FILE="${HPREFIX}_vgscan.txt"             ; export VGSCAN_FILE    # Volume Group Scan File
 VGDISPLAY_FILE="${HPREFIX}_vgdisplay.txt"       ; export VGDISPLAY_FILE # Volume Group Scan File
 PVS_FILE="${HPREFIX}_pvs.txt"                   ; export PVS_FILE       # Physical Volume Info
+LSBLK_FILE="${HPREFIX}_lsblk.txt"               ; export LSBLK_FILE     # Physical Disk Info
 PVSCAN_FILE="${HPREFIX}_pvscan.txt"             ; export PVSCAN_FILE    # pvscan output file
 PVDISPLAY_FILE="${HPREFIX}_pvdisplay.txt"       ; export PVDISPLAY_FILE # pvdisplay output file
 DF_FILE="${HPREFIX}_df.txt"                     ; export DF_FILE        # DF command Output
@@ -117,6 +118,7 @@ SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Va
 LSVG=""                                         ; export LSVG           # Tmp Var Store Cmd Path
 LSPV=""                                         ; export LSPV           # Tmp Var Store Cmd Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Confing Cmd
+LSBLK=""                                        ; export LSBLK          # Path to lsblk command
 #
 
 
@@ -209,6 +211,7 @@ pre_validation()
                 command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
+                command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
     fi
     
     if [ "$FACTER" != "" ]
@@ -270,13 +273,13 @@ create_command_output()
 
 
 
-
 # ==================================================================================================
 #               Create Misc. Linux config file for Disaster Recovery Purpose
 # ==================================================================================================
 create_linux_config_files()
 {
     create_command_output "pvs"         "$PVS"          "$PVS_FILE"
+    create_command_output "lsblk"       "$LSBLK"        "$LSBLK_FILE"
     create_command_output "pvscan"      "$PVSCAN"       "$PVSCAN_FILE"
     create_command_output "pvdisplay"   "$PVDISPLAY"    "$PVDISPLAY_FILE"
     create_command_output "vgs"         "$VGS"          "$VGS_FILE"
@@ -379,8 +382,8 @@ create_summary_file()
     sadm_start                                                          # Init Env Dir & RC/Log File
 
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
-             sadm_writelog "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
@@ -397,6 +400,6 @@ create_summary_file()
     
     create_summary_file
     
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
-    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
+    exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)
 
