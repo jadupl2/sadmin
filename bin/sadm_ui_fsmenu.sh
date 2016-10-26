@@ -51,6 +51,8 @@ SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_fs.sh ]     && . ${SADM_BASE_DIR}/lib/sadm_lib_lib.sh  
+
 
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
@@ -93,14 +95,6 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 
 BATCH_MODE=0                        ; export BATCH_MODE                 # Batch mode OFF interactive
 
-
-
-
-
-
-
-# Load Ext3/Ext4/XFS Functions
-. $SADM_LIB_DIR/sadm_lib_fs.sh
 
 #===================================================================================================
 #                           Set Creation screen Default Value

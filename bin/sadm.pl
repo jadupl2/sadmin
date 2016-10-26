@@ -84,6 +84,19 @@ cnow               = datetime.datetime.now()                            # Get Cu
 curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
 curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
 
+#===================================================================================================
+#                                    Display Menu Principal
+#===================================================================================================
+def display_main_menu()
+{
+    sadm_display_heading "SADM - System ADMinistration Menu" 
+    sadm_writexy 05 15 "1- Filesystem tools........................"
+    sadm_writexy 07 15 "2- Global Filesystem Tools................."
+    sadm_writexy 09 15 "3- RPM DataBase Tools......................"
+    sadm_writexy 11 15 "Q- Quit S.A.M.............................."
+    sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
+    sadm_writexy 21 38 " "
+}
 
 #===================================================================================================
 #                               Process Linux servers selected by the SQL

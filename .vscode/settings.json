@@ -4,7 +4,7 @@
     "editor.mouseWheelZoom": true,
 
     // Controls the font size.
-    "editor.fontSize": 22,
+    "editor.fontSize": 18,
 
     // Columns at which to show vertical rulers
     "editor.rulers": [100],

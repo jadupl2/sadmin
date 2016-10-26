@@ -271,7 +271,7 @@ get_linux_files()
             # Test pinging the server - if doesn t work then skip server & Log error
             #-------------------------------------------------------------------------------------------
             sadm_writelog " " ; sadm_writelog " " ; sadm_writelog "${SADM_DASH}"
-            sadm_writelog "Starting to process the AIX server : ${server}.${domain}"
+            sadm_writelog "Starting to process the Linux server : ${server}.${domain}"
             sadm_writelog "ping -c 2 ${server}.${domain}"
             ping -c 2 ${server}.${domain} >/dev/null 2>/dev/null
             RC=$?
@@ -399,10 +399,10 @@ get_linux_files()
     fi
     
     # Get Statistics and Configuration files from AIX and Linux Servers
-    get_aix_files                                                       # Collect Files from AIX Servers
-    AIX_ERROR=$?                                                        # AIX Nb. Errors while collecting
     get_linux_files                                                     # Collect Files from Linux Servers
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
+    get_aix_files                                                       # Collect Files from AIX Servers
+    AIX_ERROR=$?                                                        # AIX Nb. Errors while collecting
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Set Total AIX+Linux Errors
 
     sadm_stop $SADM_EXIT_CODE                                           # End Process with exit Code

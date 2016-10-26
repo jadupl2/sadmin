@@ -1,11 +1,11 @@
 #! /bin/bash
 #===================================================================================================
-# Title      :  sadm Systam ADMinistration Tool Main Menu
+# Title      :  sadm_ui.sh Systam ADMinistration Tool User Interface Main Menu
 # Version    :  1.5
 # Author     :  Jacques Duplessis
 # Date       :  2016-06-06
 # Requires   :  bash shell
-# SCCS-Id.   :  @(#) sam 1.6 6-Jun-2016
+# SCCS-Id.   :  @(#) sam_ui.sh 1.6 6-Jun-2016
 #
 #===================================================================================================
 #
@@ -23,7 +23,7 @@
 #
 #===================================================================================================
 
-
+ 
 #
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
@@ -36,7 +36,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -95,23 +95,6 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 
 
 
-
-#===================================================================================================
-#                                    Display Menu Principal
-#===================================================================================================
-display_main_menu()
-{
-    sadm_display_heading "SADM - System ADMinistration Menu" 
-    sadm_writexy 05 15 "1- Filesystem tools........................"
-    sadm_writexy 07 15 "2- Global Filesystem Tools................."
-    sadm_writexy 09 15 "3- RPM DataBase Tools......................"
-    sadm_writexy 11 15 "Q- Quit S.A.M.............................."
-    sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-    sadm_writexy 21 38 " "
-}
-
-
-
 #===================================================================================================
 #            M A I N      S E C T I O N   -   P R O G R A M   S T A R T    H E R E 
 #===================================================================================================
@@ -119,7 +102,6 @@ display_main_menu()
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
     
-    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
@@ -130,41 +112,28 @@ display_main_menu()
     stty_orig=`stty -g`                                                 # Save stty setting    
     #stty erase "^H"                                                    # Make sure backspace work
     CURDIR=`pwd` ; export CURDIR                                        # Save Current Directory
-    #$SAM/sam.init                                                       # Load Function used by SAM
 
-
-    # Display Menu and Process request
-    while :
-        do
-        display_main_menu
-        read REPONSE
-        case $REPONSE in
+    sadm_display_heading "Main Menu"
+    menu_array=("Filesystem tools" "RPM DataBase Tools" )
+    sadm_display_menu "${menu_array[@]}"
+    CHOICE=$?
+    #echo  "Value Returned to Function Caller is $CHOICE - Press [ENTER] to continue" ; read dummy
+    
+    case $CHOICE in
             1)  # FILESYSTEMS
-                if [ $CLUSTER = "Y" ]
-                   then sadm_messok 22 01 "In a cluster, we use GFS not ext[3-4] (unless on rootvg), Continue "
-                       if [ "$?" = "1" ] ; then . $SAM/sam_fs.sh ; fi
-                   else . $SADM_BIN_DIR/sadm_menu_fs.sh 
-                fi 
+                . $SADM_BIN_DIR/sadm_ui_fsmenu.sh
+                ;;
+            2)  # RPM Tools
+                . $SADM_BIN_DIR/sadm_ui_rpm.sh
                 ;;
 
-            2)  # Global Filesystem Tools
-                if [ $CLUSTER = "N" ]
-                    then sadm_mess "Option only available when run within a cluster."
-                    else . $SADM_BIN_DIR/sadm_menu_gfs.sh
-                fi 
-                ;;
-
-            3)  # RPM Tools
-                $SADM_BIN_DIR/sadm_menu_rpm_tools.sh
-                ;;
-
-          Q|q) # QUITTER #
+           99)  # QUITTER #
                 stty $stty_orig
                 cd $CURDIR
                 exit 0
                 ;;
-            *) # OPTION INVALIDE #
-                mess "Invalid option - $REPONSE"
+            *)  # OPTION INVALIDE #
+                sadm_mess "Invalid option - $CHOICE"
                 ;;
         esac
         done
