@@ -21,6 +21,7 @@ notes/
 www/dat/
 www/old/
 www/tmp/
+.vscode/
 
 # System Startup Log Files
 sys/*.log
@@ -36,5 +37,5 @@ __pycache__/
 # Ignore thumbnails created by windows
 [Tt]humbs.db
 
-# Linux Trash
+# Linux Trash Can
 .Trash-*/
