@@ -21,6 +21,15 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+# Version 2.6 - Nov 2016 
+#       Insert Logic to Pass a parameter (Y or N) to sadm_osupdate_client.sh to Reboot ot not
+#       the server after a successfull update. Reboot is specified in the Database (Web Interface)
+#       on a server by server basis.
+# --------------------------------------------------------------------------------------------------
+#
+
+
+
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
@@ -37,7 +46,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.4'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -89,16 +98,17 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 #                           Script Variables Definitions
 # --------------------------------------------------------------------------------------------------
 #
-PGUSER="squery"                                  ; export PGUSER        # Postgres Database User
-PGHOST="holmes.maison.ca"                        ; export PGHOST        # Postgres Database Host
-PSQL="$(which psql)"                             ; export PSQL          # Location of psql program
-PGPASSFILE=/sadmin/cfg/.pgpass                   ; export PGPASSFILE    
-USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
-REMOTE_SSH="/usr/bin/ssh -qnp 32"               ; export REMOTE_SSH     # SSH command for remote node
-ERROR_COUNT=0                                   ; export ERROR_COUNT    # Nb. of update failed
-WARNING_COUNT=0                                 ; export WARNING_COUNT  # Nb. of warning failed
-STAR_LINE=`printf %80s |tr " " "*"`             ; export STAR_LINE      # 80 equals sign line
+PGUSER="squery"                             ; export PGUSER             # Postgres Database User
+PGHOST="holmes.maison.ca"                   ; export PGHOST             # Postgres Database Host
+PSQL="$(which psql)"                        ; export PSQL               # Location of psql program
+PGPASSFILE=/sadmin/cfg/.pgpass              ; export PGPASSFILE    
+REMOTE_SSH="/usr/bin/ssh -qnp 32"           ; export REMOTE_SSH         # SSH command for remote node
+ERROR_COUNT=0                               ; export ERROR_COUNT        # Nb. of update failed
+WARNING_COUNT=0                             ; export WARNING_COUNT      # Nb. of warning failed
+STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
 
+# Script That is run on every client to update the Operating System
+USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
 
 
 
@@ -139,6 +149,7 @@ process_linux_servers()
             info_line="${info_line}os:${server_os}"
             sadm_writelog "$info_line"
             
+            # Ping Server to check if it is network reachable.
             sadm_writelog "Ping the selected host ${server_name}.${server_domain}"
             ping -c2 ${server_name}.${server_domain} >> /dev/null 2>&1
             if [ $? -ne 0 ]
@@ -158,6 +169,8 @@ process_linux_servers()
               else sadm_writelog "Ping went OK"
             fi
 
+
+            # If Server is network reachable, but the O/S Update field is OFF in DB Skip Update
             if [ "$server_osupdate" == "f" ]
                 then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
                      sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
@@ -165,9 +178,13 @@ process_linux_servers()
                          then wsubject="SADM: WARNING O/S Update - Server $server_name (O/S Update OFF)" 
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
-                else sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
-                     sadm_writelog "$REMOTE_SSH ${server_name}.${server_domain} $USCRIPT"
-                     $REMOTE_SSH ${server_name}.${server_domain} $USCRIPT
+                else WREBOOT=" N"                                       # Default is no reboot
+                     if [ "$server_osupdate_reboot" == "t" ]            # If Requested in Database
+                        then WREBOOT="Y"                                # Set Reboot flag to ON
+                     fi                                                 # This reboot after Update
+                     sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
+                     sadm_writelog "$REMOTE_SSH ${server_name}.${server_domain} $USCRIPT $WREBOOT"
+                     $REMOTE_SSH ${server_name}.${server_domain} $USCRIPT $WREBOOT
                      if [ $? -ne 0 ]
                         then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
                              ERROR_COUNT=$(($ERROR_COUNT+1))

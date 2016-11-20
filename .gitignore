@@ -12,6 +12,7 @@
 # SADMIN Directories Exclude
 sam/
 sam/sam
+cfg/
 dat/
 jac/
 log/

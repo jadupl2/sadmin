@@ -388,7 +388,7 @@ sadm_check_requirements() {
                        then sadm_check_command_availibility lsblk       # Check if command now Avail
                     fi
             fi
-           SADM_LSBLK=$SADM_VAR1                                         # Save Command Path
+            SADM_LSBLK=$SADM_VAR1                                         # Save Command Path
             
             sadm_check_command_availibility mail                        # Mail cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found

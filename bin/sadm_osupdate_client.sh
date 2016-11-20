@@ -1,22 +1,27 @@
 #!/bin/sh
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
-#   Title:      Linux OS Update script
-#   Synopsis:   This script is used to update the Linux OS
+#   Title:      Linux O/S Update script 
+#   Synopsis:   This script is used to update the Linux OS Platform 
+#               Support Redhat/Centos v3,4,5,6,7 - Ubuntu - Debian V7,8 - Raspbian V7,8 - Fedora
 #   Update  :   March 2015 -  J.Duplessis
 #
 # --------------------------------------------------------------------------------------------------
+# Version 2.6 - Nov 2016 
+#       Insert Logic to Reboot the server after a successfull update
+#        (If Specified in Server information in the Database)
+#        The script receive a Y or N (Uppercase) as the first command line parameter to 
+#        indicate if a reboot is requested.
+# --------------------------------------------------------------------------------------------------
+#
+
 #set -x
-#
-
-#
-
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -66,6 +71,13 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 #                               Script Variables definition
 # --------------------------------------------------------------------------------------------------
 
+# Command to issue the shutdown / Reboot after the update if requested
+REBOOT_CMD="/sbin/shutdown -r now"           ; export REBOOT_CMD         # Reboot Command
+
+# Default to no reboot after an update
+WREBOOT="N"                                 ; export WREBOOT             # No reboot after update
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -77,18 +89,16 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_writelog "Checking update for $(sadm_get_osname) version $(sadm_get_osversion) ..."
+    sadm_writelog "Checking update for $(sadm_get_osname) version $(sadm_get_osmajorversion) ..."
     
     # RedHat/CentOS/Fedora Base Update 
     if [ "$(sadm_get_osname)" = "REDHAT" ] || 
        [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
         then case "$(sadm_get_osmajorversion)" in
-                [3|4]) sadm_writelog "Running \"up2date -l\""           # Update the Log
-                       sadm_writelog "${SADM_TEN_DASH}"
+                [3-4]) sadm_writelog "Running \"up2date -l\""           # Update the Log
                        up2date -l >> $SADM_LOG 2>&1                     # List update available
                        rc=$?                                            # Save Exit code
-                       sadm_writelog "${SADM_TEN_DASH}"
                        sadm_writelog "Return Code after up2date -l is $rc" # Exit code to log
                        case $rc in
                           0) UpdateStatus=0                             # Update Exist
@@ -99,12 +109,10 @@ check_available_update()
                              ;;
                        esac
                        ;;
-              [5|6|7]) sadm_writelog "Running \"yum check-update\""     # Update the log
-                       sadm_writelog "${SADM_TEN_DASH}"
+              [5-7])   sadm_writelog "Running \"yum check-update\""     # Update the log
                        yum check-update >> $SADM_LOG 2>&1               # List Available update
                        rc=$?                                            # Save Exit Code
-                       sadm_writelog "${SADM_TEN_DASH}"
-                       sadm_writelog "Return Code after yum check-update is $rc" # Exit code to log
+                       sadm_writelog "Return Code after \"yum check-update\" is $rc" # Exit code to log
                        case $rc in
                          100) UpdateStatus=0                            # Update Exist
                               sadm_writelog "Update are available"      # Update the log
@@ -222,6 +230,7 @@ run_apt_get()
 #                           S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
+
     sadm_start                                                          # Make sure Dir. Struc. exist     
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
@@ -229,34 +238,64 @@ run_apt_get()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
-    check_available_update                                              # Check if avail. Update
-    if [ $? -ne 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # No Update Close the Shop
 
-    case "$(sadm_get_osname)" in                                        # Test OS Name
-        "REDHAT"|"CENTOS" )     
-                                if [ $(sadm_get_osmajorversion) -lt 5 ]   
-                                    then run_up2date                    # Version 3 or 4 use up2date
-                                         SADM_EXIT_CODE=$?              # Save Return Code
-                                    else run_yum                        # V 5 and above use yum cmd
-                                         SADM_EXIT_CODE=$?              # Save Return Code
-                                fi     
-                                ;; 
+
+    # If Parameter #1 received is "Y", then server will reboot after update (Default No Reboot)
+    if [ $# -eq 1 ] 
+        then WREBOOT=`sadm_toupper $1` 
+             if [ "$WREBOOT" = "Y" ]                                   # Unless Recv. Param #1=Y
+                then sadm_writelog "A Reboot is requested after a successfull update" 
+                     WREBOOT="Y" 
+                else sadm_writelog "Reboot is not requested after the update"
+             fi
+    fi
+
+    UPDATE_AVAILABLE=0                                                  # Assume no Upd. Available
+    check_available_update                                              # Check if Update is Avail.
+    if [ $? -eq 0 ]                                                     # If Update are Available
+       then UPDATE_AVAILABLE=1                                          # Set Upd to be done Flag ON
+            case "$(sadm_get_osname)" in                                # Test OS Name
+                "REDHAT"|"CENTOS" )         
+                        if [ $(sadm_get_osmajorversion) -lt 5 ]   
+                            then    run_up2date                         # Version 3 or 4 use up2date
+                                    SADM_EXIT_CODE=$?                   # Save Return Code
+                            else    run_yum                             # V 5 and above use yum cmd
+                                    SADM_EXIT_CODE=$?                   # Save Return Code
+                        fi
+                        ;; 
                                 
-        "FEDORA"          )         
-                                run_yum
-                                SADM_EXIT_CODE=$?
-                                ;;
+                "FEDORA" ) 
+                        run_yum
+                        SADM_EXIT_CODE=$?
+                        ;;
                                 
-        "UBUNTU"|"DEBIAN"|"RASPBIAN" )     
-                                run_apt_get
-                                SADM_EXIT_CODE=$?
-                                ;;
-        *)                      sadm_writelog "This OS ($(sadm_get_osname)) is not yet supported"
-                                sadm_writelog "Please report it to SADMIN Web Site at this email :"
-                                sadm_writelog "webadmin@sadmin.ca"
-                                ;;
-    esac
-   
+                "UBUNTU"|"DEBIAN"|"RASPBIAN" )     
+                        run_apt_get
+                        SADM_EXIT_CODE=$?
+                        ;;
+
+                *)   
+                        sadm_writelog "This OS ($(sadm_get_osname)) is not yet supported"
+                        sadm_writelog "Please report it to SADMIN Web Site at this email :"
+                        sadm_writelog "webadmin@sadmin.ca"
+                        ;;
+            esac
+    fi
+
+
+    # If server Reboot was requested and update was available and Applied successfully, then reboot
+    if [ "$WREBOOT" = "Y" ]                                             # If Reboot was requested
+       then if [ $UPDATE_AVAILABLE -eq 0 ]                              # If Update was Applied
+               then sadm_writelog "No need to reboot since no update were applied" 
+               else if [ "$SADM_EXIT_CODE" -eq 0 ]                           # If Update was a success
+                       then sadm_writelog "Update was successfull, server will reboot in 1 Minute"
+                            sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
+                            echo -e "#!/usr/bin/env sh\n${REBOOT_CMD}\n" | at now + 1 Minute 
+                       else sadm_writelog "Update unsuccessfull, no reboot performed"
+                    fi
+                    sadm_writelog "${SADM_DASH}"
+            fi
+    fi
+    
     sadm_stop "$SADM_EXIT_CODE"                                         # End Process with exit Code
     exit  "$SADM_EXIT_CODE"                                             # Exit script
