@@ -1,29 +1,59 @@
 #! /bin/sh
 #===================================================================================================
 # Shellscript   :  sadm_fs_recreate.sh - 
-# Description   :  Recreate all filesystems of the selected volume group
+# Description   :  On Linux - Recreate all filesystems of the selected volume group
+#                  On Aix   - Recreate all Filesystems of the selected volume group
+#                  On Linux environnement the VG MUST create before running this script.
+#                  On Aix the VG is Create and the filesystem within it are created.
 # Version       :  1.5
 # Author        :  Jacques Duplessis (duplessis.jacques@gmail.com)
 # Date          :  2010-10-09
-# Requires      :  bash shell - lvm installed
-# Category      :  disaster recovery tools 
+# Requires      :  bash shell or sh under Aix - lvm installed (on Linux)
+# Category      :  Disaster recovery tools 
 #===================================================================================================
 # Description
-#
-# Note
-#    - This script recreate the filesystem of the system with the right
-#      size and protection exactly like we have at the office, based on the input file content.
+# -----
+# Linux Notes
+#    - This script recreate the filesystem of the system with the proper size and protection. 
 #    - Run this script and specify the Volume Group you want to recreate the filesystems.
-#    - This script read it input from the file "sadm_fs_save_info.dat". 
-#    - The file "sadm_fs_save_info.prev" contains data from previous day could be used 
-#       If rename to "sadm_fs_save_info.dat".
+#    - This script read it input from the file "HOSTNAME_fs_save_info.dat". 
+#    - The file "HOSTNAME_fs_save_info.prev" contains data from previous day could be used, if you
+#      rename it to "HOSTNAME_fs_save_info.dat".
 #    - The necessary Volume Group got to created prior to running this script.
 #
 # At Disaster Recovery Site, You just need to create the volume group, run this script to 
 # recreate the empties filesystems as they were at the Office and then restore data to these
 # filesystems.
-
+# 
+# -----
+# Aix Notes
+#
+#    - This file "$SADMIN_BASE_DIR/dat/dr/HOSTNAME_VGNAME.savevg" is the restore input filename 
+#      (savevg backup), that will be produce every night by running the script 
+#      "sadm_fs_save_info.sh" (should be in cron) normally located in /sadmin/bin. 
+#      File is in backup/restore format.
+#            root@aixb50(/sadmin/dat/dr)# file aixb50_datavg.savevg
+#                     aixb50_datavg.savevg: backup/restore format file
+#  
+#    - The restore of the VG will be created on the disks specified in
+#      "$SADMIN_BASE_DIR/HOSTNAME_VGNAME_restvg_disks.txt" file. This file contain the disks 
+#      that the VG was using last night and was created by the script "sadm_fs_save_info.sh.
+#      This file can be modify prior to running this script. 
+#      If you want te recreate the VG on different disks then you should modify it.
+#
+#
 #===================================================================================================
+#
+# 2.0   Nov 2016 - Jacques Duplessis
+#       Correct problem in LVM Version detection in Linux (Affect Only RedHat/CentOS V3)
+#       Support for AIX was added 
+#           - Using savevg to save the structure of the VG
+#           - THe Filsystem (and Raw) within VG are recreated automatically, with proper perm.
+#           - You need to restore the content of the filesystems from your usual backup.
+#            
+#
+#===================================================================================================
+#
 #set -x
 
 
@@ -39,7 +69,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -51,9 +81,8 @@ SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh    
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh 
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
@@ -82,7 +111,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-DRFILE=$SADM_DR_DIR/`hostname`_fs_save_info.dat ; export DRFILE         # Input file of program
+DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
 Debug=true                                      ; export Debug          # Debug increase Verbose
 STDERR="${SADM_TMP_DIR}/stderr.$$"              ; export STDERR         # Output of Standard Error
 STDOUT="${SADM_TMP_DIR}/stdout.$$"              ; export STDOUT         # Output of Standard Output
@@ -94,11 +123,17 @@ XFS_ENABLE="N"                                  ; export XFS_ENABLE     # Disabl
 LVNAME=""                                       ; export LVNAME         # Logical Volume Name
 LVSIZE=""                                       ; export LVSIZE         # Logical Volume Size
 VGNAME=""                                       ; export VGNAME         # Volume Group Name
-LVTYPE=""                                       ; export LVTYPE         # Logical volume type ext3 swap
-LVMOUNT=""                                      ; export LVMOUNT        # Logical Volume mount point
-LVOWNER=""                                      ; export LVOWNER        # Logical Vol Mount point owner
-LVGROUP=""                                      ; export LVGROUP        # Logical Vol Mount point group
-LVPROT=""                                       ; export LVPROT         # Logical Vol Mount point protection
+LVTYPE=""                                       ; export LVTYPE         # LV Type ext3 swap xfs
+LVMOUNT=""                                      ; export LVMOUNT        # LV Mount point
+LVOWNER=""                                      ; export LVOWNER        # LV Mount point owner
+LVGROUP=""                                      ; export LVGROUP        # LV Mount point group
+LVPROT=""                                       ; export LVPROT         # LV Mount point protection
+
+# Variables Used by Aix
+RESTVG="restvg -q -fVGDATAFILE_PLACE_HOLDER"    ; export RESTVG         # Cmnd to restore VG in Aix
+VG=""                                           ; export VG             # Name of VG to Restore
+DISK_LIST=""                                    ; export DISK_LIST      # Restore Destination disks
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -106,7 +141,7 @@ LVPROT=""                                       ; export LVPROT         # Logica
 #     - Check if Input exist and is readable
 # --------------------------------------------------------------------------------------------------
 #
-pre_validation()
+linux_setup()
 {
     sadm_writelog "Validate Program Requirements before proceeding ..."
     sadm_writelog " "
@@ -270,8 +305,12 @@ check_lvm_version()
     LVMVER=0                                                            # Assume lvm not install
     sadm_writelog "Currently verifying the LVM version installed on system"
 
+    # Check if LVM Version 1 is installed
+    rpm -qa | grep '^lvm-1' > /dev/null 2>&1                            # Query RPM DB
+    if [ $? -eq 0 ] ; then LVMVER=1 ; fi                                # Found LVM V1
+
     # Check if LVM Version 2 is installed
-    rpm -qa '^lvm-2' > /dev/null 2>&1                                   # Query RPM DB
+    rpm -qa | grep '^lvm2' > /dev/null 2>&1                             # Query RPM DB
     if [ $? -eq 0 ] ; then LVMVER=2 ; fi                                # Found LVM V2
 
     # If LVM Not Installed
@@ -436,7 +475,7 @@ recreate_filesystem()
 #   Volume group MUST be created first
 # --------------------------------------------------------------------------------------------------
 #
-ask_user_vg()
+ask_linux_user_vg()
 {
     # Accept the volume group that we need to create the filesystems
     while :
@@ -476,12 +515,81 @@ ask_user_vg()
 }
 
 
+# --------------------------------------------------------------------------------------------------
+#  Ask User what is the volume group he wish to recreate the filesystems
+#  Volume group MUST not exist before starting the restore
+# --------------------------------------------------------------------------------------------------
+ask_aix_user_vg()
+{
+
+    # Accept the volume group that we need to restore
+    while :
+        do
+        tput clear
+        RC1=0 ; RC2=0 
+        ls -1 ${SADM_DR_DIR}/*.savevg |awk -F_ '{ print $2 }' |awk -F. '{ print $1 }' |sort >$SADM_TMP_FILE1
+        sadm_writelog "AIX RESTORE OF A VOLUME GROUP"
+        sadm_writelog " "
+        sadm_writelog "A Backup of these VG(s) exist in ${SADM_DR_DIR} :"
+        sort $SADM_TMP_FILE1 | tee $SADM_LOG                            # List VG that have backup
+        sadm_writelog " "
+        sadm_writelog "Enter the volume group name that you want to restore : "
+        read VG                                                         # Accept Volume Group Name
+        grep -i $VG $SADM_TMP_FILE1 >/dev/null 2>&1                     # VG is in the avail.list
+        if [ $? -ne 0 ] ; then RC1=1 ; fi                               # Error to 1 ON VG not found
+        lsvg | grep -i $VG         > /dev/null 2>&1                     # VG Exist on System ?
+        if [ $? -eq 0 ] ; then RC2=1 ; fi                               # Error to 1 ON VG Exit
+        RC_ERROR=$(($RC1+$RC2))                                         # Add two search results
+        if [ $RC_ERROR -eq 0 ] 
+            then DISKFILE=`ls -1 ${SADM_DR_DIR}/$(sadm_get_hostname)_${VG}_restvg_disks.txt`
+                 if [ ! -r "$DISKFILE" ] 
+                    then sadm_writelog "The file $DISKFILE is missing"
+                         sadm_writelog "This file should contain the destination disk used for the restore"
+                         sadm_writelog "Until the file exist and contain the disk name, we cannot proceed"
+                         sadm_writelog "Press [ENTER] to continue" 
+                         sadm_writelog " "
+                         read dummy
+                    else sadm_writelog "Based on the content of $DISKFILE" 
+                         sadm_writelog "Here is the list of the destination disk(s) used for the restore" 
+                         cat $DISKFILE | while read disk
+                            do
+                            DISK_LIST="$DISK_LIST $disk"
+                            done  
+                        sadm_writelog "$DISK_LIST"
+                        sadm_writelog " "
+                        break
+                 fi
+            else if [ $RC1 -ne 0 ] ; then sadm_writelog "Invalid VG no Backup for $VG available" ;fi
+                 if [ $RC2 -ne 0 ] ; then sadm_writelog "Invalid VG $VG exist on system";fi
+                 sadm_writelog "Press [RETURN] and choose another VG"
+                 read dummy                                              # Wait till [EMTER] pressed
+        fi 
+        done
+    export VG DISK_LIST
+
+    # Accept final confirmation
+    while :
+        do
+        sadm_writelog " "
+        sadm_writelog "We are now ready to restore the volume group $VG using the following disk(s)"
+        sadm_writelog "$DISK_LIST" 
+        sadm_writelog " "
+        echo "Do you want to proceed with the restore [Y/N] ? "
+        read answer
+        if [ "$answer" = "Y" ] || [ "$answer" = "y" ]
+            then answer="Y" ; break
+            else sadm_stop 0
+                 exit 0
+        fi
+        done
+}
+
+
 
 # --------------------------------------------------------------------------------------------------
-# Create all filesystems part of the VG the user specified
+# Create all Linux filesystems part of the VG the user specified (Parameter Recv is VG name)
 # --------------------------------------------------------------------------------------------------
-#
-create_filesystem_on_vg()
+create_linux_filesystem_on_vg()
 {
     WVG=$1                                                              # Save VG Received
 
@@ -533,30 +641,74 @@ create_filesystem_on_vg()
 }
 
 
+
+# --------------------------------------------------------------------------------------------------
+# Create all Aix filesystems part of the VG the user specified (Parameter Recv is VG name)
+# --------------------------------------------------------------------------------------------------
+#
+aix_restore_vg()
+{
+    #vg=$1                                                               # Save VG Received
+
+    VGBACKUP="$SADM_DR_DIR/$(sadm_get_hostname)_${VG}.savevg"
+    VGDISKS="$SADM_DR_DIR/$(sadm_get_hostname)_${VG}_restvg_disks.txt"
+    sadm_writelog "Restoring Volume Group $VG using backup file named :" 
+    sadm_writelog "$VGBACKUP" 
+    sadm_writelog " " 
+    sadm_writelog "The backup will be restore onto these disk(s) :"
+    sadm_writelog "$DISK_LIST"
+    sadm_writelog " " 
+
+    restvgcommand=`echo "$RESTVG" | sed -e "s|VGDATAFILE_PLACE_HOLDER|$VGBACKUP|g"`
+    restvgcommand=`echo "$restvgcommand" "$DISK_LIST" `
+    sadm_writelog "Command running is " 
+    sadm_writelog "$restvgcommand | tee -a ${SADM_LOG}" 
+    sadm_writelog " " 
+    $restvgcommand | tee -a ${SADM_LOG}
+    RC=$?
+    return $RC
+}
+
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-#
-    check_lvm_version                                                   # Get LVM Version in $LVMVER
-    SADM_EXIT_CODE=$?                                                     # Save Function Return code
-    if [ $SADM_EXIT_CODE -eq 0 ]                                          # LVM Not install - Exit
-        then sadm_stop $SADM_EXIT_CODE                                    # Upd. RC & Trim Log & Set RC
-             exit 1
+    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
     fi
-    if [ $Debug ]                                                       # If Debug Activated
-        then sadm_writelog "We are using LVM version $LVMVER"               # Show LVM Version
+    
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # Check LVM Ver under Linux
+        then check_lvm_version                                          # Get LVM Version in $LVMVER
+             SADM_EXIT_CODE=$?                                          # Save Function Return code
+             if [ $SADM_EXIT_CODE -eq 0 ]                               # LVM Not install - Exit
+                then sadm_stop $SADM_EXIT_CODE                          # Upd RC & Trim Log & Set RC
+                     exit 1
+             fi
+             if [ $Debug ]                                              # If Debug Activated
+                then sadm_writelog "We are using LVM version $LVMVER"   # Show LVM Version
+             fi
+             linux_setup                                                # Input File & Cmd present ?
+             SADM_EXIT_CODE=$?                                          # Save Function Return code
+             if [ $SADM_EXIT_CODE -ne 0 ]                               # Cmd|File missing = exit
+                then sadm_stop $SADM_EXIT_CODE                          # Upd RC & Trim Log & Set RC
+                     exit 1
+             fi
     fi
 #
-    pre_validation                                                      # Input File > Cmd present ?
-    SADM_EXIT_CODE=$?                                                     # Save Function Return code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                          # Cmd|File missing = exit
-        then sadm_stop $SADM_EXIT_CODE                                    # Upd. RC & Trim Log & Set RC
-             exit 1
+#
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # Linux FS use *.dat file   
+        then ask_linux_user_vg                                          # Input VG to recreate FS
+             create_linux_filesystem_on_vg $VG                          # Create FS on VG specified
+             SADM_EXIT_CODE=$?                                          # Save Status return Code
+    fi
+    if [ $(sadm_get_ostype) = "AIX" ]                                   # For Aix un testvg Command
+        then ask_aix_user_vg 
+             aix_restore_vg $VG                                         # Restore VG specified
+             SADM_EXIT_CODE=$?                                          # Save Status return Code
     fi
 #
-    ask_user_vg                                                         # Input VG to recreate FS
-    create_filesystem_on_vg $VG                                         # Create All FS on VG specified
-#
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
-    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
+    exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

@@ -34,7 +34,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$DEBUG = True ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
 
 
 
@@ -89,13 +89,16 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         if ($_POST['scr_osupdate_week3'] != True) { $sql = $sql . "srv_osupdate_week3 = '0', "; }
         if ($_POST['scr_osupdate_week4'] == True) { $sql = $sql . "srv_osupdate_week4 = '1', "; }
         if ($_POST['scr_osupdate_week4'] != True) { $sql = $sql . "srv_osupdate_week4 = '0', "; }
+        #$sql = $sql . "srv_last_edit_date = '" . sadm_clean_data($_POST['scr_last_edit_date']) ."', ";
+        $sql = $sql . "srv_last_edit_date = '" . date("Y-m-d H:i:s")  . "', ";
  
         
         # ReCalculate the Next O/S Update Date
-        $srv_osupdate_date = calculate_osupdate_date($srv_osupdate_start_month,$srv_osupdate_period,
-             $srv_osupdate_week1,$srv_osupdate_week2,$srv_osupdate_week3,$srv_osupdate_week4,
-             $srv_osupdate_day);
-        $sql = $sql . "srv_osupdate_date = '"   . sadm_clean_data($_POST['scr_osupdate_date']) ."', ";
+        #$srv_osupdate_date = calculate_osupdate_date($srv_osupdate_start_month,$srv_osupdate_period,
+        #     $srv_osupdate_week1,$srv_osupdate_week2,$srv_osupdate_week3,$srv_osupdate_week4,
+        #     $srv_osupdate_day);
+        #$sql = $sql . "srv_osupdate_date = '"   . sadm_clean_data($_POST['scr_osupdate_date']) ."', ";
+        $sql = $sql . "srv_osupdate_date = '"   . "2016-11-16" ."', ";
         $sql = $sql . "srv_ostype        = '"   . sadm_clean_data($_POST['scr_ostype'])        ."', ";
         $sql = $sql . "srv_active        = '"   . sadm_clean_data($_POST['scr_active'])        ."'  ";
         $sql = $sql . "WHERE srv_name = '"      . sadm_clean_data($_POST['scr_name'])          ."'; ";
@@ -107,7 +110,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             $err_msg = "ERROR : Row was not updated\n";
             $err_msg = $err_msg . pg_last_error() . "\n";
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $sql ; }
-            sadm_alert ($err_msg) ;
+            #sadm_alert ($err_msg) ;
         }else{
             sadm_alert ("Server '" . sadm_clean_data($_POST['scr_name']) . "' updated.");
         }
@@ -139,7 +142,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             $err_msg = "ERROR : Row was not found in Database\n";
             $err_msg = $err_msg . pg_last_error() . "\n";
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $query ; }
-            sadm_alert ($err_msg) ;  
+            #sadm_alert ($err_msg) ;  
             exit;
         }else{
            $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;

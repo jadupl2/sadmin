@@ -6,9 +6,11 @@
 #               information on the server (Info that will collect by the SADMIN Server)
 #   Version  :  1.5
 #   Date     :  13 November 2015
-#   Requires :  sh
+#   Requires :  sh 
 # --------------------------------------------------------------------------------------------------
 # 1.8 - Aug 2016 - Added lsblk output to script
+# 1.9 - Dec 2016 - Replace lsblk by parted to output disk name and size
+# 2.0 - Dec 2016 - Added lsdev to PVS_FILE in Aix 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 
@@ -24,7 +26,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -81,6 +83,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 #
 Debug=true                                      ; export Debug          # Debug increase Verbose
 #
+# Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
 HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
 FACTER_FILE="${HPREFIX}_facter.txt"             ; export LVSCAN_FILE    # Facter Output File
@@ -91,7 +94,7 @@ VGS_FILE="${HPREFIX}_vgs.txt"                   ; export VGS_FILE       # Volume
 VGSCAN_FILE="${HPREFIX}_vgscan.txt"             ; export VGSCAN_FILE    # Volume Group Scan File
 VGDISPLAY_FILE="${HPREFIX}_vgdisplay.txt"       ; export VGDISPLAY_FILE # Volume Group Scan File
 PVS_FILE="${HPREFIX}_pvs.txt"                   ; export PVS_FILE       # Physical Volume Info
-LSBLK_FILE="${HPREFIX}_lsblk.txt"               ; export LSBLK_FILE     # Physical Disk Info
+PARTED_FILE="${HPREFIX}_parted.txt"             ; export PARTED_FILE    # Physical Disk Info
 PVSCAN_FILE="${HPREFIX}_pvscan.txt"             ; export PVSCAN_FILE    # pvscan output file
 PVDISPLAY_FILE="${HPREFIX}_pvdisplay.txt"       ; export PVDISPLAY_FILE # pvdisplay output file
 DF_FILE="${HPREFIX}_df.txt"                     ; export DF_FILE        # DF command Output
@@ -99,6 +102,7 @@ NETSTAT_FILE="${HPREFIX}_netstat.txt"           ; export NETSTAT_FILE   # Netsta
 IP_FILE="${HPREFIX}_ip.txt"                     ; export IP_FILE        # IP Information
 PRTCONF_FILE="${HPREFIX}_prtconf.txt"           ; export PRTCONF_FILE   # prtconf output file
 #
+# Path to Command used in this Script
 LVS=""                                          ; export LVS            # LV Summary Cmd with Path
 LVSCAN=""                                       ; export LVSCAN         # LV Scan Cmd with Path
 LVDISPLAY=""                                    ; export LVDISPLAY      # LV Display Cmd with Path
@@ -118,7 +122,6 @@ SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Va
 LSVG=""                                         ; export LSVG           # Tmp Var Store Cmd Path
 LSPV=""                                         ; export LSPV           # Tmp Var Store Cmd Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Confing Cmd
-LSBLK=""                                        ; export LSBLK          # Path to lsblk command
 #
 
 
@@ -211,13 +214,8 @@ pre_validation()
                 command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
-                command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
     fi
-    
-    if [ "$FACTER" != "" ]
-       then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
-    fi
-       
+
     # Command Commands
     command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
     command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
@@ -263,12 +261,13 @@ create_command_output()
     SCMD_TXT=$3
 
     if [ ! -z "$SCMD_PATH" ]
-        then sadm_writelog "Creating $SCMD_TXT with command $SCMD_PATH"
+        then sadm_writelog "Creating $SCMD_TXT ..."
              write_file_header "$SCMD_NAME" "$SCMD_TXT"
              $SCMD_PATH >> $SCMD_TXT 2>&1
         else sadm_writelog "The command $SCMD_NAME is not available"
-             write_file_header "$SCMD_NAME Not Available" "$SCMD_TXT"
+             write_file_header "$SCMD_NAME" "$SCMD_TXT"
     fi
+    chown ${SADM_USER}.${SADM_GROUP} ${SCMD_TXT}
 }
 
 
@@ -278,19 +277,33 @@ create_command_output()
 # ==================================================================================================
 create_linux_config_files()
 {
-    create_command_output "pvs"         "$PVS"          "$PVS_FILE"
-    create_command_output "lsblk"       "$LSBLK"        "$LSBLK_FILE"
-    create_command_output "pvscan"      "$PVSCAN"       "$PVSCAN_FILE"
-    create_command_output "pvdisplay"   "$PVDISPLAY"    "$PVDISPLAY_FILE"
-    create_command_output "vgs"         "$VGS"          "$VGS_FILE"
-    create_command_output "vgscan"      "$VGSCAN"       "$VGSCAN_FILE"
-    create_command_output "vgdisplay"   "$VGDISPLAY"    "$VGDISPLAY_FILE"
-    create_command_output "lvs"         "$LVS"          "$LVS_FILE"
-    create_command_output "lvscan"      "$LVSCAN"       "$LVSCAN_FILE"
-    create_command_output "lvdisplay"   "$LVDISPLAY"    "$LVDISPLAY_FILE"
-    create_command_output "df -h"       "$DF -h"        "$DF_FILE"
-    create_command_output "netstat -rn" "$NETSTAT -rn"  "$NETSTAT_FILE"
-    create_command_output "ip addr"     "$IP addr"      "$IP_FILE"
+
+    # Get Disk Name & Size
+    # Cannot Get Info under RedHat/CentOS 3 and 4 - Unsuported
+    SOSNAME=$(sadm_get_osname) ; SOSVER=$(sadm_get_osmajorversion)
+    #echo "SOSNAME = $SOSNAME , SOSVER = $SOSVER"
+    if (([ $SOSNAME = "CENTOS" ] || [ $SOSNAME = "REDHAT" ]) && ([ $SOSVER -lt 5 ]))
+       then echo "parted version not supported on $SOSNAME Version $SOSVER" > $SADM_TMP_FILE3
+       else $SADM_PARTED -l |grep "^Disk" |grep -vE "mapper|Disk Flags:"  > $SADM_TMP_FILE3 
+    fi
+
+    # Collect Disk Information
+    create_command_output "parted"      "cat $SADM_TMP_FILE3"   "$PARTED_FILE"
+    create_command_output "pvs/parted"  "$PVS"                  "$PVS_FILE"
+    echo "#" >> $PVS_FILE ; echo "# Result of parted -l command" >> $PVS_FILE
+    cat $SADM_TMP_FILE3 >> $PVS_FILE
+    #
+    create_command_output "pvscan"      "$PVSCAN"               "$PVSCAN_FILE"
+    create_command_output "pvdisplay"   "$PVDISPLAY"            "$PVDISPLAY_FILE"
+    create_command_output "vgs"         "$VGS"                  "$VGS_FILE"
+    create_command_output "vgscan"      "$VGSCAN"               "$VGSCAN_FILE"
+    create_command_output "vgdisplay"   "$VGDISPLAY"            "$VGDISPLAY_FILE"
+    create_command_output "lvs"         "$LVS"                  "$LVS_FILE"
+    create_command_output "lvscan"      "$LVSCAN"               "$LVSCAN_FILE"
+    create_command_output "lvdisplay"   "$LVDISPLAY"            "$LVDISPLAY_FILE"
+    create_command_output "df -h"       "$DF -h"                "$DF_FILE"
+    create_command_output "netstat -rn" "$NETSTAT -rn"          "$NETSTAT_FILE"
+    create_command_output "ip addr"     "$IP addr"              "$IP_FILE"
     
     if [ "$FACTER" != "" ]
         then create_command_output "facter"     "$FACTER"      "$FACTER_FILE"
@@ -306,13 +319,18 @@ create_aix_config_files()
     create_command_output "df -m"       "$DF -m"        "$DF_FILE"
     create_command_output "netstat -rn" "$NETSTAT -rn"  "$NETSTAT_FILE"
     create_command_output "ifconfig -a" "$IFCONFIG -a"  "$IP_FILE"
+    create_command_output "lspv"        "$LSPV"         "$PVS_FILE"
 
-    rm -f $PVS_FILE >/dev/null 2>&1
+    #rm -f $PVS_FILE >/dev/null 2>&1
+    echo "" >> $PVS_FILE
     $LSPV | awk '{ print $1 }' | while read PV
         do
         echo " " >>$PVS_FILE 2>&1
         $LSPV  $PV          >>$PVS_FILE 2>&1
         done
+    echo "" >> $PVS_FILE
+    lsdev -Cc disk >>$PVS_FILE 2>&1
+
 
     #   #then create_command_output "$LSVG | xargs $LSVG" "lsvg | xargs lsvg" "$VGS_FILE"
     #   then $LSVG -o | $LSVG -i > $SADM_TMP_FILE3

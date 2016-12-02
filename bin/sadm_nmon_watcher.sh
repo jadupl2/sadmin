@@ -1,16 +1,21 @@
 #!/usr/bin/env sh 
 # --------------------------------------------------------------------------------------------------
-#   Title    : sadm_nmon_respwan.sh 
+#   Title    : sadm_nmon_watcher.sh 
 #   Author   : Jacques Duplessis 
-#   Synopsis : Restart then nmon daemon, if it's not already running
-#               - Start it with proper parameters so it finished at 23:55
-#   Version  :  1.5
-#   Date     :  November 2015 
-#   Requires :  sh
+#   Synopsis : Restart then nmon daemon, if it's not already running at midnight
+#   Version  : 1.5
+#   Date     : November 2015 
+#   Requires : sh
 # --------------------------------------------------------------------------------------------------
-#set +x
-
+# 1.7   Modification making sure that nmon is available on the server.
+#       If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon.
+# --------------------------------------------------------------------------------------------------
+# 1.8   Nov 2016
+#       Enhance checking for nmon existence and add some message for user.
+#       ReTested in AIX
+# --------------------------------------------------------------------------------------------------
 #
+#set +x
 
 #
 #===================================================================================================
@@ -24,7 +29,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -38,12 +43,11 @@ SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
 # --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
+#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR        # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
 #SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
 #SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
@@ -70,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # -------------------------------------------------------------------------------------
 CUR_DATE=`date +"%Y.%m.%d"`              ; export CUR_DATE          # Current Date
 NOW="$CUR_DATE 23:55:00"                 ; export NOW               # Build epoch cmd date format
-EPOCH_NOW=$(sadm_get_epoch_time)             ; export EPOCH_NOW         # Get Current Epoch Time
+EPOCH_NOW=$(sadm_get_epoch_time)         ; export EPOCH_NOW         # Get Current Epoch Time
 EPOCH_END=`sadm_date_to_epoch "${NOW}"`  ; export EPOCH_END         # Epoch Value of Today at 23:55
 TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`                       # Nb Sec. between now & 23:55
 TOT_MIN=`echo "${TOT_SEC}/60"| bc`                                  # Nb of Minutes till 23:55
@@ -86,34 +90,28 @@ TOT_SNAPSHOT=`expr $TOT_SNAPSHOT - 1 `			                    # Sub. 1 SnapShot j
 pre_validation()
 {
 
-    # Verify if the nmon programe is on the system
-    sadm_writelog "Verifying if nmon is accessible"
-    NMON=`$SADM_WHICH nmon >/dev/null 2>&1`
-    if [ $? -ne 0 ]
-        then sadm_writelog "Error : The command 'nmon' could not be found" 
-             sadm_writelog "        This program is need by $SADM_INST script of the SADMIN tools"
-             sadm_writelog "        Please install it and re-run this script"
-             sadm_writelog "        To install it, use the following command depending on your distro"
-             sadm_writelog "        Use 'yum install nmon' or 'apt-get install nmon'"
-             sadm_writelog "Script Aborted"
-             SADM_EXIT_CODE=1
-             return $SADM_EXIT_CODE                                     # Return Error to Caller
+    # Verify if the nmon executable was found by SADM Library
+    if [ "$SADM_NMON" = "" ] 
+        then SADM_EXIT_CODE=1 
+             sadm_writelog "The nmon command was NOT found - Cannot start daemon"
+        else sadm_writelog "The nmon command was found at $SADM_NMON"
+             NMON=$SADM_NMON
+             SADM_EXIT_CODE=0
     fi
-    NMON=`$SADM_WHICH nmon` ; export NMON
-    sadm_writelog "The nmon command was found at $NMON"
-    
 
     # If nmon started by cron - Put crontab line in comment
     # What to make sure that only one nmon is running and is the one controlled by this script
-    nmon_cron='/etc/cron.d/nmon-script'                                 # Name of the nmon cron file
-    if [ -r "$nmon_cron" ]                                              # nmon cron file exist ?
-       then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1`  # Get 1st Char Of nmon line
-            if [ "$commented" = "0" ]                                   # Cron Line not in commented
-                then sed -i -e 's/^/#/' $nmon_cron                      # Then Put line in comment
-                     sadm_writelog "$nmon_cron file was put in comment"   # Leave trace of this
-                else sadm_writelog "$nmon_cron file is in comment - OK"   # Leave trace of this
-            fi
-    fi 
+    if [ $(sadm_get_ostype) = "LINUX" ]
+        then nmon_cron='/etc/cron.d/nmon-script'                        # Name of the nmon cron file
+             if [ -r "$nmon_cron" ]                                     # nmon cron file exist ?
+                then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1` # Get 1st Char Of nmon line
+                     if [ "$commented" = "0" ]                          # Cron Line not in commented
+                        then sed -i -e 's/^/#/' $nmon_cron              # Then Put line in comment
+                             sadm_writelog "$nmon_cron file was put in comment" # Leave trace of this
+                        else sadm_writelog "$nmon_cron file is in comment - OK" # Leave trace of this
+                     fi
+             fi
+    fi
     
     return $SADM_EXIT_CODE
 }
@@ -129,20 +127,20 @@ restart_nmon()
     
     # Kill any nmon running without the option -s300 (Our switch) - Want only one nmon running
     # This will eliminate the nmon running from the crontab with rpm installation
-    nmon_count=`ps -ef | grep "$NMON" |grep -v grep |grep -v s300 |wc -l |tr -d ' '`
+    nmon_count=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 |wc -l |tr -d ' '`
     if [ $nmon_count -ne 0 ] 
-        then NMON_PID=`ps -ef | grep "$NMON" |grep -v grep |grep -v s300 |awk '{ print $2 }'`
+        then NMON_PID=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 |awk '{ print $2 }'`
              sadm_writelog "Found another nmon process running at $NMON_PID"
-             ps -ef | grep "$NMON" |grep -v grep |grep -v s300 | tee -a $SADM_LOG 2>&1
+             ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 | tee -a $SADM_LOG 2>&1
              kill -9 "$NMON_PID"
              sadm_writelog "We just kill it - Only one nmon process should be running"
     fi
              
  
     # Display Current Running Number of nmon process
-    nmon_count=`ps -ef | grep "$NMON" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    nmon_count=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep s300 |wc -l |tr -d ' '`
     sadm_writelog "There is $nmon_count nmon process actually running"
-    ps -ef | grep "$NMON" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
+    ps -ef | grep "$SADM_NMON" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
     # nmon_count = 0 = Not running - Then we start it 
@@ -154,37 +152,37 @@ restart_nmon()
         0)  sadm_writelog "The nmon process is not running - Starting nmon daemon ..."
             sadm_writelog "We will start a fresh one that will terminate at 23:55"
             sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
-            $NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
+            sadm_writelog "$SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
+            $SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
                 then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
             fi
             sadm_writelog " "
-            nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
+            nmon_count=`ps -ef | grep $SADM_NMON | grep -v grep | wc -l |tr -d ' '`
             sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
-            ps -ef | grep $NMON | grep -v grep | nl
+            ps -ef | grep $SADM_NMON | grep -v grep | nl
             ;;
         1)  sadm_writelog "Nmon already Running ... Nothing to Do."
             SADM_EXIT_CODE=0
             ;;
         *)  sadm_writelog "There seems to be more than one nmon process running ??"
-            ps -ef | grep "$NMON" | grep 's300' | grep -v grep | nl 
+            ps -ef | grep "$SADM_NMON" | grep 's300' | grep -v grep | nl 
             sadm_writelog "We will kill them both and start a fresh one that will terminate at 23:55"
-            ps -ef | grep "$NMON" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
+            ps -ef | grep "$SADM_NMON" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
             sadm_writelog "We will start a fresh one that will terminate at 23:55"
             sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
-            $NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
+            sadm_writelog "$SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
+            $SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
                 then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
                 else SADM_EXIT_CODE=0
             fi
             sadm_writelog " "
-            nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
+            nmon_count=`ps -ef | grep $SADM_NMON | grep -v grep | wc -l`
             sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
-            ps -ef | grep $NMON | grep -v grep | nl
+            ps -ef | grep $SADM_NMON | grep -v grep | nl
             ;;
     esac
 

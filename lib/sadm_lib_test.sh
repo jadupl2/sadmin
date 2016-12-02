@@ -40,7 +40,7 @@ SADM_DEBUG_LEVEL=9                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
+#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
@@ -103,6 +103,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_get_ostype)                          OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...$(sadm_get_ostype)...\n"
     printf "\$(sadm_get_osversion)                       OS Version (Ex: 7.2, 6.5)                                        : ...$(sadm_get_osversion)...\n"
     printf "\$(sadm_get_osmajorversion)                  OS Major Version (Ex 7, 6)                                       : ...$(sadm_get_osmajorversion)...\n"
+    printf "\$(sadm_get_osminorversion)                  OS Minor Version (Ex 2, 3)                                       : ...$(sadm_get_osminorversion)...\n"
     printf "\$(sadm_get_osname)                          OS Distribution (Always in Uppercase) (Ex:REDHAT,CENTOS,UBUNTU)  : ...$(sadm_get_osname)...\n"   
     printf "\$(sadm_get_oscodename)                      OS Project Code Name                                             : ...$(sadm_get_oscodename)...\n"   
     printf "\$(sadm_get_kernel_version)                  OS Running Kernel Version (Ex: 3.10.0-229.20.1.el7.x86_64)       : ...$(sadm_get_kernel_version)...\n"
@@ -231,30 +232,30 @@ Debug=true                                      ; export Debug          # Debug 
     tput clear
 
     
-    sadm_display_heading "Small Menu (7 Items or less)"
-    menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
-                "Menu Item 6" "Menu Item 7" )
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+#    sadm_display_heading "Small Menu (7 Items or less)"
+#    menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
+#                "Menu Item 6" "Menu Item 7" )
+#    sadm_display_menu "${menu_array[@]}"
+#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+#
+#
+#    sadm_display_heading "Medium Menu (Up to 15 Items)"
+#    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+#                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+#                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
+#    sadm_display_menu "${menu_array[@]}"
+#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
 
-    sadm_display_heading "Medium Menu (Up to 15 Items)"
-    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
-
-
-    sadm_display_heading "Large Menu (Up to 30 Items)"
-    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
-                "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
-                "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
-                "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+#    sadm_display_heading "Large Menu (Up to 30 Items)"
+#    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+#                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+#                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
+#                "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
+#                "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
+#                "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
+#    sadm_display_menu "${menu_array[@]}"
+#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
     #tput clear
     #e_header    "e_eheader"

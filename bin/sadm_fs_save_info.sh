@@ -11,26 +11,83 @@
 # Description
 #
 # Note
-#    o this script collect all data necessary to recreate all filesystems using LVM
 #    o run this script once a day via the cron
-#    o the output of this script is a text file named $SADMIN/sadm_fs_save_info.dat
 #
-#    Script does : 
+# -----
+#    In Linux Script does : 
+#    o this script collect all data necessary to recreate all filesystems using LVM
 #       1- Check if lvm package is installed on server.
 #           If not script display error and exit with error code 1
 #           If it is installed check if V1 (Rhel3) or V2 is installed
 #           Get the path to lvscan command
+#
 #       2- Run the LVSCAN command and process each line , one by one.
 #           Gather all info needed to recreate the filesystem (or swap) needed in case of disaster
 #           Create file sadm_fs_save_info.dat that will contain all info needed. to recreate FS.
 #           File is in order of mount point lenght (So that /abc if created before /abc/123).
+#
+#           The output of the script is a text file named : 
+#           SADM_BASE_DIR/dat/dr/HOSTNAME_sadm_fs_save_info.dat
+#           This output file can then be use by "sadm_fs_recreate.sh" script to recreate all 
+#           filesystems of the specified VG, with the proper Persmission.
+#           Note the VG MUST be created with proper size prior to run the recreate fs script
+#
+#           EXAMPLE FOR FILE PRODUCED :
+#                 root@holmes:/sadmin/dat/dr# cat holmes_fs_save_info.dat
+#                       # SADMIN - Filesystem Info. for system holmes.maison.ca
+#                        # File was created by sadm_fs_save_info.sh on Thu Dec  1 05:02:03 EST 2016
+#                        # This file is use in a Disaster Recovery situation
+#                        # The data below is use by sadm_fs_recreate.sh to recreate filesystems
+#                        # ---------------------------------------------------------------------
+#                        # 
+#                        rootvg::swap00:swap:3072:::0000
+#                        rootvg:/:root:xfs:1024:root:root:0555
+#                        rootvg:/opt:opt:xfs:2048:root:root:0755
+#                        rootvg:/tmp:tmp:xfs:3072:root:root:1777
+#                        rootvg:/usr:usr:xfs:7997:root:root:0755
+#                        rootvg:/var:var:xfs:3072:root:root:0755
+#                        rootvg:/home:home:xfs:7997:root:root:0755
+#                        rootvg:/sadmin:sadmin:xfs:4096:sadmin:sadmin:0775
+#                        rootvg:/storix:storix:xfs:768:root:root:0775
+#                        rootvg:/sysadmin:sysadm:xfs:128:sadmin:jacques:0775
+#                    root@holmes:/sadmin/dat/dr#   
+#
+# -----     
+#    In AIX Script does : 
+#       1- It produce a file name ${SADM_BASE_DIR}/dat/dr/HOSTNAME_pvinfo.txt, that contain the
+#          list of physical volume along with their size and the space use in each VG.
+#          Example : root@aixb50(/sadmin/dat/dr)# cat aixb50_pvinfo.txt
+#                       hdisk0          0002dd2f26946375                    rootvg          active
+#                       hdisk1          0002dd2f24d98974                    datavg          active
+#                       Used space for datavg: (256 megabytes)
+#                       hdisk0:34715
+#                       hdisk1:34715
+#
+#       2- Script make sure that an exclude file (/etc/exclude.VGNAME) for each VG exist and 
+#          that it contain this line ".*", so that no file is taken in the backup of the VG 
+#           (Only the structure).
+#
+#       3- A backup of the structure of each VG is taken and store in ${SADM_BASE_DIR}/dat/dr.
+#          File is in backup/restore format.
+#                       root@aixb50(/sadmin/dat/dr)# file aixb50_datavg.savevg
+#                        aixb50_datavg.savevg: backup/restore format file
+#                       root@aixb50(/sadmin/dat/dr)#
 #           
+#          Both of the files created are quite small, since no users files is included in the backup
+#               -rw-rw-r--    1 sadmin   sadmin          215 Dec 01 12:10 aixb50_pvinfo.txt
+#               -rw-rw-r--    1 sadmin   sadmin        51200 Dec 01 12:10 aixb50_datavg.savevg
+#
+#       4- When the backup of a VG is done the line line that was added in the exclude file 
+#          is removed. 
+#
 #
 #===================================================================================================
 #
 # 2015_10 - 1.5 - Modify to create a copy of previous data into $SADMIN/sadm_fs_save_info.prev 
 # 2015_11 - 1.6 - Remove RHEL3 Support - Now Support RHEL 4, 5, 6 and 7.
 # 2015_12 - 1.7 - Corrected bug with Swap Space
+# 2016_11 - 2.0 - Aix is now supported by the script - All VG Structure are store in *.savevg 
+#                 file under ${SADM_BASE_DIR}/dat/dr Directory 
 #
 #===================================================================================================
 #set -x
@@ -48,7 +105,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -60,9 +117,8 @@ SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
@@ -90,14 +146,19 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T 
 # --------------------------------------------------------------------------------------------------
-DRFILE=$SADM_DR_DIR/`hostname`_fs_save_info.dat   ; export DRFILE       # Output file of program
-DRSORT=$SADM_DR_DIR/`hostname`_fs_save_info.srt   ; export DRSORT       # Output sorted by mnt len
-PRVFILE=$SADM_DR_DIR/`hostname`_fs_save_info.prev ; export PRVFILE      # Output file of Yesterday
+DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
+PRVFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.prev ;export PRVFILE # Yesterday Output file
 Debug=true                                        ; export Debug        # Debug increase Verbose 
 LVMVER=0                                          ; export LVMVER       # LVM Version on server (1/2)
 LVSCAN=" "                                        ; export LVSCAN       # Full path to lvscan cmd
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
 
+# Variables used for AIX Support
+VG_LIST=""                                        ; export VG_LIST      # Contain List of Active VG             SAVEVGFILE=""                                     ; export SAVEVGFILE   # FileName of savevg backup 
+PVNAME="hdisk"                                    ; export PVNAME       # Hard Disk name in Aix
+HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"     ; export HPREFIX      # Output File Loc & Name
+PVINFO_FILE="${HPREFIX}_pvinfo.txt"               ; export PVINFO_FILE  # Output for Aix PV info   
+SAVEVG="savevg -e -i -v -fVGDATAFILE_PLACE_HOLDER"
 
 
 
@@ -278,23 +339,109 @@ save_lvm_info()
     echo "# ---------------------------------------------------------------------"    >> $DRFILE
     echo "# " >> $DRFILE
     cat  $SADM_TMP_FILE2 >> $DRFILE
-    return
+    return 0
 }
+
+
+# --------------------------------------------------------------------------------------------------
+#                                Save All Vgs Information on AIX
+# --------------------------------------------------------------------------------------------------
+#
+save_aix_info()
+{
+    sadm_writelog "Information about Volume group will be store in $SADM_DR_DIR"
+    SADM_EXIT_CODE=0                                                    # Start with Exit Code at 0 
+
+    # Build a list Volume Group Excluding rootvg.
+    lsvg | grep -v rootvg | while read vg
+        do
+        VG_LIST="$VG_LIST $vg"
+        done
+    if [[ $VG_LIST = "" ]]
+        then sadm_writelog "nCould not find any VG to process..."
+             return 1
+        else sadm_writelog "This is all VGs that are detected : $VG_LIST"
+    fi
+
+    sadm_writelog "Writing Physical volume name into ${PVINFO_FILE}"
+    cp /dev/null ${PVINFO_FILE}
+    lspv >> ${PVINFO_FILE}
+
+    # Get the disk usage of the VG on Disk
+    for VG in $VG_LIST
+        do
+        sadm_writelog "Extracting used space for that VG" 
+        echo "Used space for $VG: `lsvg $VG | grep USED | awk '{ print $6,$7 }'`" >>${PVINFO_FILE}
+        VGDISKS="$SADM_DR_DIR/$(sadm_get_hostname)_${VG}_restvg_disks.txt"
+        sadm_writelog "Save list of disks in $VG to $VGDISKS"
+        lspv | grep " $VG " | awk '{ print $1 }' > $VGDISKS
+        done
+
+    # Get the disk capacity 
+    lspv | grep $PVNAME | awk '{ print $1 }' | while read pv
+        do
+        echo "$pv:`bootinfo -s $pv`" >> $PVINFO_FILE
+        done
+
+    # Backup the VG Structure
+    for vg in $VG_LIST
+        do
+        sadm_writelog "Verifying /etc/exclude.$vg content before backup"
+        grep "^\.\*" /etc/exclude.$vg >/dev/null 2>&1
+        if [ $? -eq 1 ] 
+            then sadm_writelog "Adding .* in the exclude file /etc/exclude.$vg ...."
+                 echo ".*" >> /etc/exclude.$vg
+            else sadm_writelog " No need to modify /etc/exclude.$vg" 
+        fi
+
+        sadm_writelog "Backup the structure of $vg volume group ..."
+        SAVEVGFILE="$SADM_DR_DIR/$(sadm_get_hostname)_$vg.savevg"
+        savevgcommand=`echo "$SAVEVG $vg" | sed -e "s|VGDATAFILE_PLACE_HOLDER|$SAVEVGFILE|g"`
+        sadm_writelog "Running : $savevgcommand" 
+        $savevgcommand
+        if [ $? -ne 0 ]
+            then sadm_writelog "Error occured while doing the backup of Volume Group name $vg"
+                 sadm_writelog "You may want to correct the error and run this script again"
+                 SADM_EXIT_CODE=1
+        fi
+        
+        sadm_writelog " "
+        sadm_writelog "Removing the line '.*' in /etc/exclude.$vg after the backup"
+        grep -v "^\.\*" /etc/exclude.$vg >$SADM_TMP_FILE3
+        cp $SADM_TMP_FILE3  /etc/exclude.$vg
+        if [ $? -ne 0 ]
+            then sadm_writelog "Error while creating the new /etc/exclude.$vg file"
+                 SADM_EXIT_CODE=1
+        fi
+    done
+    return $SADM_EXIT_CODE
+}
+
 
 
 
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    sadm_start                                                          # Init Env Dir & RC/Log File
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"     # Advise User Message
-             sadm_writelog "Process aborted"                              # Abort advise message
+        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    check_lvm_version                                                   # Get LVM Version in $LVMVER
-    if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi                    # LVM Not install - Exit
-    save_lvm_info                                                       # Save info about all lvm's
+
+    if [ $(sadm_get_ostype) = "AIX" ]                                   # For AIX O/S Save all VGs
+        then save_aix_info                                              # Save All VGs Information
+             SADM_EXIT_CODE=$?                                          # Save Return Code
+    fi
+
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # Operations for Linux O/S
+        then check_lvm_version                                          # Get LVM Version in $LVMVER
+             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # LVM Not install - Exit
+             save_lvm_info                                              # Save info about all lvm's
+             SADM_EXIT_CODE=$?                                          # Save Return Code
+    fi
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

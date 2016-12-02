@@ -8,7 +8,8 @@
 #   Requires :  sh
 #   SCCS-Id. :  @(#) create_cfg2html.sh 2.0 2013/08/14
 #===================================================================================================
-# 2.2 Correction in end_process function (April 2014)
+# 2.2 Correction in end_process function (Sept 2016)
+# 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
 #
 #===================================================================================================
 #set -x
@@ -27,7 +28,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -111,10 +112,10 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     
     # Uniformize name of cfg2html so that the domain name is not include in the name
     if [ `hostname` != `hostname -s` ]
-        then mv $(hostname).err  `hostname -s`.err
-             mv $(hostname).html `hostname -s`.html
-             mv $(hostname).txt  `hostname -s`.txt
-             mv $(hostname).partitions.save `hostname -s`.partitions.save
+        then mv ${SADM_DR_DIR}/$(hostname).err  ${SADM_DR_DIR}/`hostname -s`.err
+             mv ${SADM_DR_DIR}/$(hostname).html ${SADM_DR_DIR}/`hostname -s`.html
+             mv ${SADM_DR_DIR}/$(hostname).txt  ${SADM_DR_DIR}/`hostname -s`.txt
+             mv ${SADM_DR_DIR}/$(hostname).partitions.save ${SADM_DR_DIR}/`hostname -s`.partitions.save
     fi
 
 

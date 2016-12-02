@@ -225,7 +225,11 @@ sadm_ask_password()
 #---------------------------------------------------------------------------------------------------
 sadm_display_menu() 
 {
-    marray=( "$@" )                                                     # Save Array of menu recv.
+#######    marray=( "$@" )                                                     # Save Array of menu recv.
+#####THIS LINE IS NEEDED - TO BE FIXED
+
+
+
 
     # Validate number of item in array - Can be from 1 to 30 Maximum
     if [ "${#marray[@]}" -gt 30 ] && [ "${#marray[@]}" -lt 1 ]          # Validate NB items in array

@@ -1,14 +1,20 @@
 #!/usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
-#   Author   : Jacques Duplessis
+#   Title    : sadm_nmon_midnight_restart.sh 
+#   Author   : Jacques Duplessis 
 #   Synopsis :  1) Restart nmon daemon at midnight every day, so that it finish at 23:55
-#               2) Clean up of old nmon files
+#               MAKE SURE THIS SCRIPT RUN JUST BEFORE midnight
 #   Version  :  1.0
 #   Date     :  August 2013
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sys_nmon_recycle.sh 1.0 2013/08/02
 # --------------------------------------------------------------------------------------------------
-# Modified in March 2015 - Add clean up Process - Jacques Duplessis
+# 1.7   March 2015
+#       Add clean up Process - Jacques Duplessis
+# --------------------------------------------------------------------------------------------------
+# 1.8   Nov 2016
+#       Enhance checking for nmon existence and add some message for user.
+#       ReTested in AIX
 # --------------------------------------------------------------------------------------------------
 #set +x
 #
@@ -22,12 +28,14 @@
 #   variables and functions available to you when using the SADMIN functions Library
 #===================================================================================================
 
+
+
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -63,29 +71,41 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
-
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-NMON_2_KEEP=90                                  ; export NMON_2_KEEP    # NB nmon log 2 Keep
 
-    
+
+
+
+
 # --------------------------------------------------------------------------------------------------
-#     - Set command path used in the script (Some path are different on some RHEL Version)
+#     - Set command path used of nmon executable in the script 
+#           (Some path are different on some RHEL Version)
 #     - Check if Input exist and is readable
 # --------------------------------------------------------------------------------------------------
 #
 pre_validation()
 {
     sadm_writelog "Verifying if nmon is accessible"
+    
+    # Check if the nmon program can be found
     NMON=`which nmon >/dev/null 2>&1`
     if [ $? -eq 0 ]
         then NMON=`which nmon`
-        else sadm_writelog "Error : The command 'nmon' was not found" ; return 1
+             export NMON
+             sadm_writelog "Yes it is at $NMON"
+        else sadm_writelog "Error : The command 'nmon' was not found"
+             sadm_writelog "I will not be able to restart nmon daemon, since it can't be found" 
+             return 1
     fi
-    export NMON
-    sadm_writelog "Yes it is at $NMON"
+
+    # Check if nmon has execute permission
+    if [ ! -x $NMON ]
+       then sadm_writelog "The nmon executable ($NMON) doesn't have execution permission"
+            return 1
+    fi
+    return 0
 }
 
 
@@ -99,7 +119,7 @@ restart_nmon()
  
     # Display Current Running Number of nmon process
     sadm_writelog " "
-    nmon_count=`ps -ef | grep 'nmon' | grep 's300' | grep -v grep | wc -l`
+    nmon_count=`ps -ef | grep 'nmon' | grep 's300' | grep -v grep | wc -l |tr -d ' '`
     sadm_writelog "There are $nmon_count nmon process actually running"
     ps -ef | grep 'nmon' | grep 's300' | grep -v grep | nl
 
@@ -113,15 +133,15 @@ restart_nmon()
 
     # Start new Process
     sadm_writelog " "
-    sadm_writelog "Starting nmon daemon ..."
+    sadm_writelog "Restarting nmon daemon ..."
     sadm_writelog "$NMON -s300 -c288 -t -m $SADM_NMON_DIR -f "
     $NMON -s300 -c288 -t -m $SADM_NMON_DIR -f  >> $SADM_LOG 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error while starting - Not Started !" ; return 1 ; fi
+    if [ $? -ne 0 ] ; then sadm_writelog "Error while starting nmon - Not Started !" ; return 1 ; fi
 
     # Display Process Info after starting nmon
-    nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l`
+    nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l |tr -d ' '`
     sadm_writelog " "
-    sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
+    sadm_writelog "The number of nmon process running after restarting it is $nmon_count"
     ps -ef | grep $NMON | grep -v grep | nl
 
     return 0   
@@ -132,20 +152,18 @@ restart_nmon()
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir & RC/Log File
-    pre_validation                                                      # nmon Cmd present ?
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    pre_validation                                                      # Is nmon executable present
     if [ $? -ne 0 ]                                                     # If not there
-        then sadm_stop 1                                                # Upd. RC & Trim Log & Set RC
-             exit 1                                                     # Abort Program
+        then sadm_stop 1                                                # Upd. RC/Trim Log/Set RC
+             exit 1                                                     # Exit Program
     fi                             
+
     restart_nmon                                                        # nmon not running start it
-    SADM_EXIT_CODE=$?                                                     # Recuperate error code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                          # if error occured
-        then sadm_writelog "Problem starting nmon"                          # Advise User
+    SADM_EXIT_CODE=$?                                                   # Recuperate error code
+    if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occured
+        then sadm_writelog "Problem starting nmon"                      # Advise User
     fi     
 
-    sadm_stop $SADM_EXIT_CODE                                             # Upd. RC & Trim Log & Set RC
-    exit $SADM_EXIT_CODE                                                  # Exit Glob. Err.Code (0/1)
-
-
-#
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC/Trim Log/Set RC
+    exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

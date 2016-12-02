@@ -12,6 +12,9 @@
 #        (If Specified in Server information in the Database)
 #        The script receive a Y or N (Uppercase) as the first command line parameter to 
 #        indicate if a reboot is requested.
+# Version 2.7 - Nov 2016
+#       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking 
+#       if update were available. Now Script return an error (1) when checking for update.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -21,7 +24,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.6'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.7'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -252,7 +255,8 @@ run_apt_get()
 
     UPDATE_AVAILABLE=0                                                  # Assume no Upd. Available
     check_available_update                                              # Check if Update is Avail.
-    if [ $? -eq 0 ]                                                     # If Update are Available
+    RC=$?                                                               # Save Return Code Value
+    if [ $RC -eq 0 ]                                                    # If Update are Available
        then UPDATE_AVAILABLE=1                                          # Set Upd to be done Flag ON
             case "$(sadm_get_osname)" in                                # Test OS Name
                 "REDHAT"|"CENTOS" )         
@@ -280,17 +284,25 @@ run_apt_get()
                         sadm_writelog "webadmin@sadmin.ca"
                         ;;
             esac
+       else if [ $RC -eq 1 ]                                            # If No Update Avail
+                then SADM_EXIT_CODE=0                                   # No Update Final Code to 0
+                else SADM_EXIT_CODE=1                                   # Error Encountered set to 1
+            fi
     fi
 
-
     # If server Reboot was requested and update was available and Applied successfully, then reboot
+    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
     if [ "$WREBOOT" = "Y" ]                                             # If Reboot was requested
        then if [ $UPDATE_AVAILABLE -eq 0 ]                              # If Update was Applied
                then sadm_writelog "No need to reboot since no update were applied" 
-               else if [ "$SADM_EXIT_CODE" -eq 0 ]                           # If Update was a success
-                       then sadm_writelog "Update was successfull, server will reboot in 1 Minute"
-                            sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
-                            echo -e "#!/usr/bin/env sh\n${REBOOT_CMD}\n" | at now + 1 Minute 
+               else if [ "$SADM_EXIT_CODE" -eq 0 ]                      # If Update was a success
+                       then if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]
+                                then sadm_writelog "Automatic reboot cancelled for this server"
+                                     sadm_writelog "No Automatic reboot on the SADM Main server"
+                                else sadm_writelog "Update was successfull, server will reboot in 1 Minute"
+                                     sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
+                                     echo -e "#!/usr/bin/env sh\n${REBOOT_CMD}\n" | at now + 1 Minute 
+                            fi
                        else sadm_writelog "Update unsuccessfull, no reboot performed"
                     fi
                     sadm_writelog "${SADM_DASH}"

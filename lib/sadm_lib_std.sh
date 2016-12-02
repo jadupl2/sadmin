@@ -78,8 +78,9 @@ SADM_PERL=""                                ; export SADM_PERL          # perl P
 SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path
 SADM_LSCPU=""                               ; export SADM_LSCPU         # Path to lscpu Command
 SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
-SADM_LSBLK=""                               ; export SADM_LSBLK         # Path to lsblk Command
+SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
 SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
+
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
@@ -225,8 +226,8 @@ sadm_check_command_availibility() {
         else SADM_VAR1=""                                               # Clear Path of command
              sadm_writelog " "                                            # Inform User 
              sadm_writelog "WARNING : Missing Requirement "
-             sadm_writelog "The ${SADM_CMD} command is not available on the system"
-             sadm_writelog "We need to install it before we can used functions of SADMIN Library"
+             sadm_writelog "The \"${SADM_CMD}\" command is not available on this system"
+             sadm_writelog "We need to install it so we can used functions of SADMIN Library"
              #sadm_writelog "Once the software is installed, rerun this script"
              #sadm_writelog "Will continue anyway, but some functionnality may not work as expected"
              sadm_writelog "SADMIN Will install it for you ... One moment"
@@ -341,7 +342,7 @@ sadm_check_requirements() {
              return 1                                                   # Return Error to Caller
     fi
     
-    # Commands require on Linux O/S
+    # Commands require on Linux O/S ----------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
        then sadm_check_command_availibility lsb_release                 # lsb_release cmd available?
             SADM_LSB_RELEASE=$SADM_VAR1                                 # Save Command Path
@@ -378,39 +379,63 @@ sadm_check_requirements() {
                        then sadm_check_command_availibility ethtool     # Check if command now Avail
                     fi
             fi
-           SADM_ETHTOOL=$SADM_VAR1                                      # Save Command Path
+            SADM_ETHTOOL=$SADM_VAR1                                     # Save Command Path
             
-            # Check Availibility of the "lsblk" command
-            sadm_check_command_availibility "lsblk"                     # Command available?
+            # Check Availibility of the "parted" command
+            sadm_check_command_availibility "parted"                    # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "lsblk" "lsblk"                # Go Install Missing Package
+               then sadm_install_package "parted" "parted"              # Go Install Missing Package
                     if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility lsblk       # Check if command now Avail
+                       then sadm_check_command_availibility "parted"    # Check if command now Avail
                     fi
             fi
-            SADM_LSBLK=$SADM_VAR1                                         # Save Command Path
+            SADM_PARTED=$SADM_VAR1                                      # Save Command Path
             
-            sadm_check_command_availibility mail                        # Mail cmd available?
+            sadm_check_command_availibility "mail"                      # Mail cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                then sadm_install_package "mailx" "mailutils"            # Go Install Missing Package
                     if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility mail        # Check if command now Avail
-                    fi
+                       then sadm_check_command_availibility "mail"      # Check if command now Avail
+                    fi               
+
             fi
             SADM_MAIL=$SADM_VAR1                                        # Save Command Path
 
             sadm_check_command_availibility lscpu                       # lscpu cmd available?
             SADM_LSCPU=$SADM_VAR1                                       # Save Command Path
+            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+               then sadm_install_package "util-linux" "util-linux"      # Go Install RPM/DEBIAN pkg
+                    if [ $? -eq 0 ]                                     # If Install Went OK
+                       then sadm_check_command_availibility "lscpu"     # Check if command now Avail
+                    fi               
+
+            fi
     fi
     
-    # Commands Require on Aix O/S
+    # Commands Require on Aix O/S ------------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under Aix O/S
-       then sadm_check_command_availibility bc                          # bc cmd available?
+       then sadm_check_command_availibility "bc"                        # bc cmd available?
             SADM_BC=$SADM_VAR1                                          # Save Command Path
+            sadm_check_command_availibility "mail"                      # mail cmd available?
+            SADM_MAIL=$SADM_VAR1       
+            sadm_check_command_availibility "nmon"                      # nmon cmd available?
+            SADM_NMON=$SADM_VAR1       
+            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+               then NMON_WDIR="${SADM_PKG_DIR}/nmon/aix/" 
+                    NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
+                    NMON_USE="${NMON_WDIR}${NMON_EXE}"
+                    if [ ! -x "$NMON_USE" ]
+                        then sadm_writelog "The nmon for AIX $(sadm_get_osversion) isn't available"
+                             sadm_writelog "The nmon executable we need is $NMON_USE" 
+                        else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon" 
+                             ln -s ${NMON_USE} /usr/bin/nmon
+                             if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi 
+                    fi
+            fi
     fi
     
     # Commands require on Linux and Aix 
-    sadm_check_command_availibility perl                                # perl needed (epoch time)
+    sadm_check_command_availibility "perl"                              # perl needed (epoch time)
     SADM_PERL=$SADM_VAR1                                                # Save perl path
     return 0
 }
@@ -568,6 +593,19 @@ sadm_get_osmajorversion() {
     echo "$wosmajorversion"
 }
 
+
+# --------------------------------------------------------------------------------------------------
+#                            RETURN THE OS (DISTRIBUTION) MINOR VERSION
+# --------------------------------------------------------------------------------------------------
+sadm_get_osminorversion() {
+    case "$(sadm_get_ostype)" in
+        "LINUX") wosminorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' '`
+                 ;;
+        "AIX")   wosminorversion=`uname -r`
+                 ;;
+    esac
+    echo "$wosminorversion"
+}
 
 # --------------------------------------------------------------------------------------------------
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE

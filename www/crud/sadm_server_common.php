@@ -40,7 +40,7 @@
 function display_server_form ( $wrow , $mode) {
 
     # FORM DIV
-    echo "\n\n<div class='server_form'>\n                         <!-- End of Form DIV -->\n";
+    echo "\n\n<div class='server_form'>\n                         <!-- Start of Form DIV -->\n";
 
     # FORM LEFT SIDE DIV
     echo "\n<div class='form_leftside'>                           <!-- Start LeftSide Form  -->\n";
@@ -352,6 +352,9 @@ function display_left_side ( $wrow , $mode) {
 
 
 
+
+
+
 # ==================================================================================================
 #                      DISPLAY RIGHT SIDE OF SERVER DATA USED IN THE DATA INPUT FORM
 #
@@ -366,7 +369,7 @@ function display_right_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     # Update the O/S Automatically (Yes/No) ?
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update Automatic ?</div>";
+    echo "\n\n<div class='server_label2'>Perform O/S update automatically</div>";
     echo "\n<div class='server_input2'>";
     if ($mode == 'C') { $wrow['srv_osupdate'] = True ; }                # Default Value to No
     switch ($mode) {
@@ -397,7 +400,7 @@ function display_right_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     # Reboot after O/S Update (Yes/No) ?
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update Reboot after ?</div>";
+    echo "\n\n<div class='server_label2'>Reboot after O/S update</div>";
     echo "\n<div class='server_input2'>";
     if ($mode == 'C') { $wrow['srv_osupdate_reboot'] = False ; }        # Default Value to No Reboot
     switch ($mode) {
@@ -426,9 +429,44 @@ function display_right_side ( $wrow , $mode) {
 
 
     # ----------------------------------------------------------------------------------------------
+    # O/S Update Every X Month (1 to 12)
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Update O/S frequency</div>";
+    echo "\n<div class='server_input2'>";
+    switch ($mode) {
+        case 'C' :  echo "\n<select name='scr_osupdate_period' size=1>";
+                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
+                        if ($mth == 1) {
+                            echo "\n<option value='" . $mth . "' selected>Every Month</option>";
+                        }else{
+                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
+                        }
+                    }
+                    echo "\n</select>";
+                    break ;
+        default  :  if ($mode == "U") {
+                        echo "\n<select name='scr_osupdate_period' size=1>";
+                    }else{
+                        echo "\n<select name='scr_osupdate_period' size=1 disabled>";
+                    }
+                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
+                        if ($mth == $wrow['srv_osupdate_period']) {
+                            echo "\n<option value='" . $mth . "' selected>Every " . $mth . " Month</option>";
+                        }else{
+                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
+                        }
+                    }
+                    break;
+    }
+    echo "\n</select>";
+    echo "\n</div>";
+
+    
+    
+    # ----------------------------------------------------------------------------------------------
     # O/S Update Starting Month
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update First Month</div>";
+    echo "\n\n<div class='server_label2'>Month of first O/S update</div>";
     echo "\n<div class='server_input2'>";
     switch ($mode) {
         case 'C' :  echo "\n<select name='scr_osupdate_start_month' size=1>";
@@ -534,44 +572,11 @@ function display_right_side ( $wrow , $mode) {
     echo "\n</div>";
 
 
-    # ----------------------------------------------------------------------------------------------
-    # O/S Update Every X Month (1 to 12)
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update Frequency</div>";
-    echo "\n<div class='server_input2'>";
-    switch ($mode) {
-        case 'C' :  echo "\n<select name='scr_osupdate_period' size=1>";
-                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
-                        if ($mth == 1) {
-                            echo "\n<option value='" . $mth . "' selected>Every Month</option>";
-                        }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
-                        }
-                    }
-                    echo "\n</select>";
-                    break ;
-        default  :  if ($mode == "U") {
-                        echo "\n<select name='scr_osupdate_period' size=1>";
-                    }else{
-                        echo "\n<select name='scr_osupdate_period' size=1 disabled>";
-                    }
-                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
-                        if ($mth == $wrow['srv_osupdate_period']) {
-                            echo "\n<option value='" . $mth . "' selected>Every " . $mth . " Month</option>";
-                        }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
-                        }
-                    }
-                    break;
-    }
-    echo "\n</select>";
-    echo "\n</div>";
-
 
     # ----------------------------------------------------------------------------------------------
     # O/S Update Week (1,2,3,4) Can be multiple Choice
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update Week</div>";
+    echo "\n\n<div class='server_label2'>Update O/S in week</div>";
     echo "\n<div class='server_input2'>";
     switch ($mode) {
         case 'C'  : echo "<input type='checkbox' name='scr_osupdate_week1' value=True checked />1st  ";
@@ -604,7 +609,7 @@ function display_right_side ( $wrow , $mode) {
     # O/S Update Day
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='server_label2'>";
-    echo "O/S Update Day";
+    echo "Update O/S on day";
     echo "</div>";
     echo "\n<div class='server_input2'>";
     if ($mode == 'D') {
@@ -676,7 +681,7 @@ function display_right_side ( $wrow , $mode) {
 
 
     # O/S Update Calculated Date -------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>O/S Update Calc. Date</div>";
+    echo "\n\n<div class='server_label2'>Calculated next O/S update date</div>";
     echo "\n<div class='server_input2'>";
     switch ($mode) {
         case 'D' : echo "\n<input type='text' name='scr_osupdate_date' readonly maxlength='10' size='11' ";
@@ -686,6 +691,19 @@ function display_right_side ( $wrow , $mode) {
                    echo "value='" . sadm_clean_data($wrow['srv_osupdate_date']). "'/>";
                    break;
     }
+    echo "</div>\n";
+
+
+    # Space Lines    -------------------------------------------------------------------------------
+    echo "\n<br><br><br><br><br>\n";
+
+
+    
+    # Last Edit Date -------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Last Edit Date & Time</div>";
+    echo "\n<div class='server_input2'>";
+    echo "\n<input type='text' name='scr_osupdate_date' readonly maxlength='20' size='20' ";
+    echo "value='" . sadm_clean_data($wrow['srv_last_edit_date']). "'/>";
     echo "</div>\n";
 
 
