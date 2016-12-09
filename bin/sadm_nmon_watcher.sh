@@ -14,6 +14,8 @@
 #       Enhance checking for nmon existence and add some message for user.
 #       ReTested in AIX
 # --------------------------------------------------------------------------------------------------
+# 1.9   Dec 2016
+#       Change to run on Aix 7.x and minor corrections
 #
 #set +x
 
@@ -29,7 +31,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -123,24 +125,35 @@ pre_validation()
 #
 restart_nmon()
 {
- 
+    if [ $(sadm_get_ostype) = "AIX" ]
+        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1
+             if [ $? -eq 0 ]
+                then TOPAS_NMON=`${SADM_WHICH} topas_nmon`
+                     WSEARCH="${SADM_NMON}|${TOPAS_NMON}"
+                else WSEARCH=$SADM_NMON
+             fi
+        else WSEARCH=$SADM_NMON
+    fi
+    
     
     # Kill any nmon running without the option -s300 (Our switch) - Want only one nmon running
     # This will eliminate the nmon running from the crontab with rpm installation
-    nmon_count=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 |wc -l |tr -d ' '`
-    if [ $nmon_count -ne 0 ] 
-        then NMON_PID=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 |awk '{ print $2 }'`
-             sadm_writelog "Found another nmon process running at $NMON_PID"
-             ps -ef | grep "$SADM_NMON" |grep -v grep |grep -v s300 | tee -a $SADM_LOG 2>&1
-             kill -9 "$NMON_PID"
-             sadm_writelog "We just kill it - Only one nmon process should be running"
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    if [ $nmon_count -gt 1 ] 
+        then #NMON_PID=`ps -ef | grep nmon |grep -v grep |grep s300 |awk '{ print $2 }'`
+             #sadm_writelog "Found another nmon process running at $NMON_PID"
+             sadm_writelog "Found another nmon process running with s300 parameter"
+             ps -ef | grep nmon |grep -v grep |grep s300 | tee -a $SADM_LOG 2>&1
+             ps -ef | grep nmon |grep -v grep |grep s300 | awk '{ print $2 }' | xargs kill -9
+             #kill -9 "$NMON_PID"
+             sadm_writelog "We just kill them - Only one nmon process should be running"
     fi
              
  
     # Display Current Running Number of nmon process
-    nmon_count=`ps -ef | grep "$SADM_NMON" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
     sadm_writelog "There is $nmon_count nmon process actually running"
-    ps -ef | grep "$SADM_NMON" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
+    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
     # nmon_count = 0 = Not running - Then we start it 
@@ -159,17 +172,17 @@ restart_nmon()
                      SADM_EXIT_CODE=1 
             fi
             sadm_writelog " "
-            nmon_count=`ps -ef | grep $SADM_NMON | grep -v grep | wc -l |tr -d ' '`
+            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
             sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
-            ps -ef | grep $SADM_NMON | grep -v grep | nl
+            ps -ef | grep -E "$WSEARCH" | grep -v grep | nl
             ;;
         1)  sadm_writelog "Nmon already Running ... Nothing to Do."
             SADM_EXIT_CODE=0
             ;;
         *)  sadm_writelog "There seems to be more than one nmon process running ??"
-            ps -ef | grep "$SADM_NMON" | grep 's300' | grep -v grep | nl 
+            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl 
             sadm_writelog "We will kill them both and start a fresh one that will terminate at 23:55"
-            ps -ef | grep "$SADM_NMON" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
+            ps -ef | grep -E "$WSEARCH" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
             sadm_writelog "We will start a fresh one that will terminate at 23:55"
             sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
             sadm_writelog "$SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
@@ -180,9 +193,9 @@ restart_nmon()
                 else SADM_EXIT_CODE=0
             fi
             sadm_writelog " "
-            nmon_count=`ps -ef | grep $SADM_NMON | grep -v grep | wc -l`
+            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
             sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
-            ps -ef | grep $SADM_NMON | grep -v grep | nl
+            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl 
             ;;
     esac
 

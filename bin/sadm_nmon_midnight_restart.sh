@@ -16,6 +16,10 @@
 #       Enhance checking for nmon existence and add some message for user.
 #       ReTested in AIX
 # --------------------------------------------------------------------------------------------------
+# 1.9   Dec 2016
+#       Correction to make it work on AIX 7.x - (topas_nmon now)
+#       ReTested in AIX - Nmon Now part of Aix (as of 6.1)
+# --------------------------------------------------------------------------------------------------
 #set +x
 #
 #
@@ -35,7 +39,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -49,7 +53,6 @@ SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
@@ -116,34 +119,49 @@ pre_validation()
 #
 restart_nmon()
 {
- 
+    if [ $(sadm_get_ostype) = "AIX" ]
+        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1
+             if [ $? -eq 0 ]
+                then TOPAS_NMON=`${SADM_WHICH} topas_nmon`
+                     WSEARCH="${SADM_NMON}|${TOPAS_NMON}"
+                else WSEARCH=$SADM_NMON
+             fi
+        else WSEARCH=$SADM_NMON
+    fi
+    
+    
     # Display Current Running Number of nmon process
     sadm_writelog " "
-    nmon_count=`ps -ef | grep 'nmon' | grep 's300' | grep -v grep | wc -l |tr -d ' '`
-    sadm_writelog "There are $nmon_count nmon process actually running"
-    ps -ef | grep 'nmon' | grep 's300' | grep -v grep | nl
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    sadm_writelog "There is $nmon_count nmon process actually running"
+    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
     # Kill Process to start the new day (New nmon File)
     if [ $nmon_count -gt 0 ]
-       then NMON_ID=`ps -ef | grep -v grep | grep "$NMON" | grep 's300' | awk '{ print $2 }'`
-            sadm_writelog "Killing Process $NMON_ID"
-            ps -ef | grep -v grep | grep "$NMON" | grep 's300' | awk '{ print $2 }' | xargs kill -9
+       then sadm_writelog "Killing Process"
+            ps -ef | grep nmon |grep -v grep |grep s300 | tee -a $SADM_LOG 2>&1
+            ps -ef | grep nmon |grep -v grep |grep s300 | awk '{ print $2 }' | xargs kill -9
     fi
+
+    # Display Current Running Number of nmon process
+    sadm_writelog " "
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    sadm_writelog "There is $nmon_count nmon process actually running"
+    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
     # Start new Process
     sadm_writelog " "
     sadm_writelog "Restarting nmon daemon ..."
-    sadm_writelog "$NMON -s300 -c288 -t -m $SADM_NMON_DIR -f "
-    $NMON -s300 -c288 -t -m $SADM_NMON_DIR -f  >> $SADM_LOG 2>&1
+    sadm_writelog "$SADM_NMON -s300 -c288 -t -m $SADM_NMON_DIR -f "
+    $SADM_NMON -s300 -c288 -t -m $SADM_NMON_DIR -f  >> $SADM_LOG 2>&1
     if [ $? -ne 0 ] ; then sadm_writelog "Error while starting nmon - Not Started !" ; return 1 ; fi
 
     # Display Process Info after starting nmon
-    nmon_count=`ps -ef | grep $NMON | grep -v grep | wc -l |tr -d ' '`
     sadm_writelog " "
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
     sadm_writelog "The number of nmon process running after restarting it is $nmon_count"
-    ps -ef | grep $NMON | grep -v grep | nl
-
+    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
     return 0   
 }
 

@@ -132,7 +132,7 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME)
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC);
         if ($row = FALSE) {
-            echo "<br>Host $HOSTNAME is not a valid host<br.";
+            echo "<br>Host $HOSTNAME is not a valid host<br>";
             exit;
         }else{
             $HOSTDESC   = $row['srv_desc'];

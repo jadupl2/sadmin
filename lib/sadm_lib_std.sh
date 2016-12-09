@@ -1006,14 +1006,6 @@ sadm_start() {
              chmod 664 $SADM_RCHLOG
     fi
 
-    # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]
-       then sadm_writelog "Script is already running ... "
-            sadm_writelog "PID File ${SADM_PID_FILE} exist ..."
-            sadm_writelog "Will not launch a second copy of this script"
-            exit 1
-       else echo "$TPID" > $SADM_PID_FILE
-    fi
 
     # Feed the Return Code History File stating the script is started
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"` ; export SADM_STIME
@@ -1021,10 +1013,20 @@ sadm_start() {
     
     # Write Starting Info in the Log
     sadm_writelog "${SADM_DASH}"
-    sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER} on $(sadm_get_hostname)"
-    sadm_writelog "$(sadm_get_ostype) $(sadm_get_osname) $(sadm_get_osversion) $(sadm_get_oscodename)"
+    sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER}"
+    sadm_writelog "Server: $(sadm_get_hostname) - Type: $(sadm_get_ostype) - O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
     sadm_writelog "${SADM_DASH}"
     sadm_writelog " "
+
+    # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]
+       then sadm_writelog "Script is already running ... "
+            sadm_writelog "PID File ${SADM_PID_FILE} exist ..."
+            sadm_writelog "Will not launch a second copy of this script"
+            sadm_stop 1 
+            exit 1
+       else echo "$TPID" > $SADM_PID_FILE
+    fi
     return 0 
 }
 

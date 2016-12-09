@@ -163,7 +163,7 @@ process_linux_servers()
                             sadm_writelog "*** WILL CONTINUE UPDATE WITH NEXT SERVER"
                             if [ "$SADM_MAIL_TYPE" == "3" ]
                                 then wsubject="SADM: WARNING O/S Update - Server $server_name (OFFLINE)" 
-                                     echo "Server was OFFLINE"  | mail -s "$wsubject" $SADM_MAIL_ADDR
+                                     echo "Server $server was OFFLINE at `date`"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                             fi
                        else sadm_writelog "Update of server ${server_name}.${server_domain} Aborted"
                             WARNING_COUNT=$(($WARNING_COUNT+1))
