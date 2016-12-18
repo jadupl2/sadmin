@@ -23,7 +23,85 @@ h1, h2 {
 
 
 /* ---------------------------------------------------------------------------------------------- */
-/*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
+/*          THIS SECTION IS USED FOR DISPLAYING THE SERVER TABLE                                  */
+/*             Used by sadm_view_server_info.php Web Pages                                        */
+/* ---------------------------------------------------------------------------------------------- */
+
+div.server_data {
+    font-family: Verdana, Geneva, sans-serif;
+    background-color: #C8DBBE;
+    color: black;
+    width: 100%;
+    height: 350px;
+    margin: 5px;
+    border: 2px solid #000000;
+    font-size: 12px;
+    text-align: left;
+    padding: 2%;
+}
+
+/* ===== Server Left side of screen  ===== */
+div.server_leftside {
+    width: 48%;
+    float: left;
+    /*background-color: #3E5F80;*/
+    margin-left: 2px;
+}
+/* ===== Server Right side of screen  ===== */
+div.server_rightside {
+    width: 48%;
+    float: left;
+    /*background-color: #3E5F80;*/
+    margin-left: 25px;
+}
+
+
+/* ===== Label on left size of the screen ==== */
+div.server_left_label {
+    float : left;
+    width : 35%;
+    /*background-color: yellow;*/
+}
+
+/* ===== Label on right size of the screen ==== */
+div.server_right_label {
+    float : left;
+    width : 45%;
+    /*background-color: yellow;*/
+}
+
+/* ===== Data on right size of screen  ===== */
+div.server_left_data {
+    margin-bottom: 4px;
+    margin-left: 35%;
+    color : black;
+    width : 65%;
+    /*background-color: green;*/
+}
+
+/* ===== Data on left size of screen  ===== */
+div.server_right_data {
+    margin-bottom: 4px;
+    margin-left: 45%;
+    padding-left: 5px;
+    color : black;
+    width : 55%;
+    /*background-color: green;*/
+}
+/*           END OF SECTION USED FOR DISPLAYING SERVER DATA                                       */
+/* ===============================================================================================*/
+
+
+
+
+
+
+
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*          THIS SECTION IS USED FOR MAINTAINING THE SERVER TABLE                                 */
 /*             Used by sadm_server_*.php and sadm_view_server.php Web Pages                       */
 /* ---------------------------------------------------------------------------------------------- */
 /*
@@ -86,7 +164,7 @@ div.server_input2 {
     width : 55%;
     /*background-color: green;*/
 }
-/*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE SERVER TABLE                     */
+/*           END OF SECTION USED FOR MAINTAINING THE SERVER TABLE                     */
 /* ===============================================================================================*/
 
 

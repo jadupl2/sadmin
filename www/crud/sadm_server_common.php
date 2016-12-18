@@ -288,34 +288,94 @@ function display_left_side ( $wrow , $mode) {
 
 
     # ----------------------------------------------------------------------------------------------
-    # Server Backup ? (Run the backup script on the server)
+    # Indicate the Day of the week that we want to take the ReaR Backup (Done during night time)
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Run Backup Script</div>";
+    echo "\n\n<div class='server_label1'>ReaR Backup Day</div>";
     echo "\n<div class='server_input1'>";
-    if ($mode == 'C') { $wrow['srv_backup'] = False ; }                # Set Default Value to False
-    switch ($mode) {
-        case 'D' : if ($wrow['srv_backup'] == 't') {
-                       echo "\n<input type='radio' name='scr_backup' value='1' ";
-                       echo "onclick='javascript: return false;' checked> Yes  ";
-                       echo "\n<input type='radio' name='scr_backup' value='0' ";
-                       echo "onclick='javascript: return false;'> No";
-                   }else{
-                       echo "\n<input type='radio' name='scr_backup' value='1' ";
-                       echo "onclick='javascript: return false;'> Yes  ";
-                       echo "\n<input type='radio' name='scr_backup' value='0' ";
-                       echo "onclick='javascript: return false;' checked > No";
-                   }
-                   break ;
-        default  : if ($wrow['srv_backup'] == 't') {
-                       echo "\n<input type='radio' name='scr_backup' value='1' checked > Yes ";
-                       echo "\n<input type='radio' name='scr_backup' value='0'> No";
-                   }else{
-                       echo "\n<input type='radio' name='scr_backup' value='1'> Yes";
-                       echo "\n<input type='radio' name='scr_backup' value='0' checked > No";
-                   }
-                   break;
+    if ($mode == 'D') {
+        switch ($wrow['srv_backup']) {
+            case 0: $scr_backup=0 ; $scr_backup_desc="No backup" ; break;
+            case 1: $scr_backup=1 ; $scr_backup_desc="Sunday"    ; break;
+            case 2: $scr_backup=2 ; $scr_backup_desc="Monday"    ; break;
+            case 3: $scr_backup=3 ; $scr_backup_desc="Tuesday"   ; break;
+            case 4: $scr_backup=4 ; $scr_backup_desc="Wednesday" ; break;
+            case 5: $scr_backup=5 ; $scr_backup_desc="Thursday"  ; break;
+            case 6: $scr_backup=6 ; $scr_backup_desc="Friday"    ; break;
+            case 7: $scr_backup=7 ; $scr_backup_desc="Saturday"  ; break;
+        }
+        echo "\n<input type='text' name='scr_backup_desc' readonly placeholder=" . $scr_backup_desc .
+             " maxlength='15' size='16' value='" . sadm_clean_data($scr_backup_desc). "'/>\n";
     }
-    echo "\n</div>";
+    if ($mode == 'C') {
+       echo "\n<select name='scr_backup' size=1>";
+       echo "\n<option value='4' selected>Wednesday</option>";
+       echo "\n<option value='1'>Sunday</option>";
+       echo "\n<option value='2'>Monday</option>";
+       echo "\n<option value='3'>Tuesday</option>";
+       echo "\n<option value='4'>Wednesday</option>";
+       echo "\n<option value='5'>Thursday</option>";
+       echo "\n<option value='5'>Friday</option>";
+       echo "\n<option value='7'>Saturday</option>";
+       echo "\n</select>";
+    }
+    if ($mode == 'U') {
+       echo "\n<select name='scr_backup' size=1>";
+       for ($x = 0; $x <= 7; $x++) {
+           switch ($x) {
+                case 0: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='0' selected>No backup</option>";
+                        }else{
+                           echo "\n<option value='0'>No backup</option>";
+                        }
+                        break;
+                case 1: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='1' selected>Sunday</option>";
+                        }else{
+                           echo "\n<option value='1'>Sunday</option>";
+                        }
+                        break;
+                case 2: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='2' selected>Monday</option>";
+                        }else{
+                           echo "\n<option value='2'>Monday</option>";
+                        }
+                        break;
+                case 3: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='3' selected>Tuesday</option>";
+                        }else{
+                           echo "\n<option value='3'>Tuesday</option>";
+                        }
+                        break;
+                case 4: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='4' selected>Wednesday</option>";
+                        }else{
+                           echo "\n<option value='4'>Wednesday</option>";
+                        }
+                        break;
+                case 5: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='5' selected>Thursday</option>";
+                        }else{
+                           echo "\n<option value='5'>Thursday</option>";
+                        }
+                        break;
+                case 6: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='6' selected>Friday</option>";
+                        }else{
+                           echo "\n<option value='6'>Friday</option>";
+                        }
+                        break;
+                case 7: if ($x == $wrow['srv_backup']) {
+                           echo "\n<option value='7' selected>Saturday</option>";
+                        }else{
+                           echo "\n<option value='7'>Saturday</option>";
+                        }
+                        break;
+           }
+       }
+       echo "\n</select>";
+    }
+    echo "\n</div>";                                                      # << End of server_input
+    
 
 
     # ----------------------------------------------------------------------------------------------
@@ -484,90 +544,104 @@ function display_right_side ( $wrow , $mode) {
                     echo "\n<option value='12'>December</option>";
                     echo "\n</select>";
                     break ;
-        default  :  if ($mode == "U") {
-                        echo "\n<select name='scr_osupdate_start_month' size=1>";
-                    }else{
-                        echo "\n<select name='scr_osupdate_start_month' size=1 disabled>";
-                    }
-                    if ($mode == 'U') {
-                       for ($x = 1; $x <= 12; $x++) {
-                            switch ($x) {
-                                case 1: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='1' selected>January</option>";
-                                        }else{
-                                            echo "\n<option value='1'>January</option>";
-                                        }
-                                        break;
-                                case 2: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='2' selected>February</option>";
-                                        }else{
-                                            echo "\n<option value='2'>February</option>";
-                                        }
-                                        break;
-                                case 3: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='3' selected>March</option>";
-                                        }else{
-                                            echo "\n<option value='3'>March</option>";
-                                        }
-                                        break;
-                                case 4: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='4' selected>April</option>";
-                                        }else{
-                                            echo "\n<option value='4'>April</option>";
-                                        }
-                                        break;
-                                case 5: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='5' selected>May</option>";
-                                        }else{
-                                            echo "\n<option value='5'>May</option>";
-                                        }
-                                        break;
-                                case 6: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='6' selected>June</option>";
-                                        }else{
-                                            echo "\n<option value='6'>June</option>";
-                                        }
-                                        break;
-                                case 7: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='7' selected>July</option>";
-                                        }else{
-                                            echo "\n<option value='7'>July</option>";
-                                        }
-                                        break;
-                                case 8: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='8' selected>August</option>";
-                                        }else{
-                                            echo "\n<option value='8'>August</option>";
-                                        }
-                                        break;
-                                case 9: if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='9' selected>September</option>";
-                                        }else{
-                                            echo "\n<option value='9'>September</option>";
-                                        }
-                                        break;
-                                case 10:if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='10' selected>October</option>";
-                                        }else{
-                                            echo "\n<option value='10'>October</option>";
-                                        }
-                                        break;
-                                case 11:if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='11' selected>November</option>";
-                                        }else{
-                                            echo "\n<option value='11'>November</option>";
-                                        }
-                                        break;
-                                case 12:if ($x == $srv_osupdate_start_month) {
-                                            echo "\n<option value='12' selected>December</option>";
-                                        }else{
-                                            echo "\n<option value='12'>December</option>";
-                                        }
-                                        break;
-                            }
+                
+        case 'D' : switch ($wrow['srv_osupdate_start_month']) {
+                        case 1:  $scr_osupdate_start_month=1  ; $scr_osupd_mth_desc="January"   ; break;
+                        case 2:  $scr_osupdate_start_month=2  ; $scr_osupd_mth_desc="February"  ; break;
+                        case 3:  $scr_osupdate_start_month=3  ; $scr_osupd_mth_desc="March"     ; break;
+                        case 4:  $scr_osupdate_start_month=4  ; $scr_osupd_mth_desc="April"     ; break;
+                        case 5:  $scr_osupdate_start_month=5  ; $scr_osupd_mth_desc="May"       ; break;
+                        case 6:  $scr_osupdate_start_month=6  ; $scr_osupd_mth_desc="June"      ; break;
+                        case 7:  $scr_osupdate_start_month=7  ; $scr_osupd_mth_desc="July"      ; break;
+                        case 8:  $scr_osupdate_start_month=8  ; $scr_osupd_mth_desc="August"    ; break;
+                        case 9:  $scr_osupdate_start_month=9  ; $scr_osupd_mth_desc="September" ; break;
+                        case 10: $scr_osupdate_start_month=10 ; $scr_osupd_mth_desc="October"   ; break;
+                        case 11: $scr_osupdate_start_month=11 ; $scr_osupd_mth_desc="November"  ; break;
+                        case 12: $scr_osupdate_start_month=12 ; $scr_osupd_mth_desc="December"  ; break;
+                    }       
+                    echo "\n<input type='text' name='scr_osupd_mth_desc' readonly placeholder=" .
+                        $scr_osupd_mth_desc . " maxlength='15' size='16' value='" .
+                        $scr_osupd_mth_desc . "'/>\n";
+                    break ;
+                
+       case 'U' : echo "\n<select name='scr_osupdate_start_month' size=1>";
+                   for ($x = 1; $x <= 12; $x++) {
+                       switch ($x) {
+                           case 1: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='1' selected>January</option>";
+                                   }else{
+                                       echo "\n<option value='1'>January</option>";
+                                   }
+                                   break;
+                           case 2: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='2' selected>February</option>";
+                                   }else{
+                                       echo "\n<option value='2'>February</option>";
+                                   }
+                                   break;
+                           case 3: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='3' selected>March</option>";
+                                   }else{
+                                       echo "\n<option value='3'>March</option>";
+                                   }
+                                   break;
+                           case 4: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='4' selected>April</option>";
+                                   }else{
+                                       echo "\n<option value='4'>April</option>";
+                                   }
+                                   break;
+                           case 5: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='5' selected>May</option>";
+                                   }else{
+                                       echo "\n<option value='5'>May</option>";
+                                   }
+                                   break;
+                           case 6: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='6' selected>June</option>";
+                                   }else{
+                                       echo "\n<option value='6'>June</option>";
+                                   }
+                                   break;
+                           case 7: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='7' selected>July</option>";
+                                   }else{
+                                       echo "\n<option value='7'>July</option>";
+                                   }
+                                   break;
+                           case 8: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='8' selected>August</option>";
+                                   }else{
+                                       echo "\n<option value='8'>August</option>";
+                                   }
+                                   break;
+                           case 9: if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='9' selected>September</option>";
+                                   }else{
+                                       echo "\n<option value='9'>September</option>";
+                                   }
+                                   break;
+                           case 10:if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='10' selected>October</option>";
+                                   }else{
+                                       echo "\n<option value='10'>October</option>";
+                                   }
+                                   break;
+                           case 11:if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='11' selected>November</option>";
+                                   }else{
+                                       echo "\n<option value='11'>November</option>";
+                                   }
+                                   break;
+                           case 12:if ($x == $srv_osupdate_start_month) {
+                                       echo "\n<option value='12' selected>December</option>";
+                                   }else{
+                                       echo "\n<option value='12'>December</option>";
+                                   }
+                                   break;
                        }
-                    }
-                    echo "\n</select>";
+                   }
+                   echo "\n</select>";
     }
     echo "\n</div>";
 
@@ -613,8 +687,18 @@ function display_right_side ( $wrow , $mode) {
     echo "</div>";
     echo "\n<div class='server_input2'>";
     if ($mode == 'D') {
-       echo "\n<input type='text' name='scr_osupdate_day' readonly placeholder='Development'
-            maxlength='15' size='16' value='" . sadm_clean_data($wrow['srv_osupdate_day']). "'/>\n";
+        switch ($wrow['srv_osupdate_day']) {
+            case 0: $scr_osupdate_day=0 ; $scr_osupdate_day_desc="Sunday"    ; break;
+            case 1: $scr_osupdate_day=1 ; $scr_osupdate_day_desc="Monday"    ; break;
+            case 2: $scr_osupdate_day=2 ; $scr_osupdate_day_desc="Tuesday"   ; break;
+            case 3: $scr_osupdate_day=3 ; $scr_osupdate_day_desc="Wednesday" ; break;
+            case 4: $scr_osupdate_day=4 ; $scr_osupdate_day_desc="Thursday"  ; break;
+            case 5: $scr_osupdate_day=5 ; $scr_osupdate_day_desc="Friday"    ; break;
+            case 6: $scr_osupdate_day=6 ; $scr_osupdate_day_desc="Saturday"  ; break;
+        }
+        echo "\n<input type='text' name='scr_osupdate_day' readonly placeholder=" .
+            $scr_osupdate_day_desc . " maxlength='15' size='16' value='" .
+            $scr_osupdate_day_desc . "'/>\n";
     }
     if ($mode == 'C') {
        echo "\n<select name='scr_osupdate_day' size=1>";
@@ -631,43 +715,43 @@ function display_right_side ( $wrow , $mode) {
        echo "\n<select name='scr_osupdate_day' size=1>";
        for ($x = 0; $x <= 6; $x++) {
            switch ($x) {
-                case 0: if ($x == $srv_osupdate_day) {
+                case 0: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='0' selected>Sunday</option>";
                         }else{
                            echo "\n<option value='0'>Sunday</option>";
                         }
                         break;
-                case 1: if ($x == $srv_osupdate_day) {
+                case 1: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='1' selected>Monday</option>";
                         }else{
                            echo "\n<option value='1'>Monday</option>";
                         }
                         break;
-                case 2: if ($x == $srv_osupdate_day) {
+                case 2: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='2' selected>Tuesday</option>";
                         }else{
                            echo "\n<option value='2'>Tuesday</option>";
                         }
                         break;
-                case 3: if ($x == $srv_osupdate_day) {
+                case 3: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='3' selected>Wednesday</option>";
                         }else{
                            echo "\n<option value='3'>Wednesday</option>";
                         }
                         break;
-                case 4: if ($x == $srv_osupdate_day) {
+                case 4: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='4' selected>Thursday</option>";
                         }else{
                            echo "\n<option value='4'>Thursday</option>";
                         }
                         break;
-                case 5: if ($x == $srv_osupdate_day) {
+                case 5: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='5' selected>Friday</option>";
                         }else{
                            echo "\n<option value='5'>Friday</option>";
                         }
                         break;
-                case 6: if ($x == $srv_osupdate_day) {
+                case 6: if ($x == $wrow['srv_osupdate_day']) {
                            echo "\n<option value='6' selected>Saturday</option>";
                         }else{
                            echo "\n<option value='6'>Saturday</option>";

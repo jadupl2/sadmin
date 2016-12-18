@@ -212,16 +212,29 @@ sadm_server_memory() {
 
 
 
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SERVER NUMBER OF LOGICAL CPU
+# --------------------------------------------------------------------------------------------------
+sadm_server_nb_logical_cpu() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX")    wlcpu=`cat /proc/cpuinfo | awk '/^processor/{n++} END{print n}' | tr -d ' '`
+                    if [ $wlcpu -eq 0 ] ; then wlcpu=1 ; fi
+                    ;;
+        "AIX")      wlcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
+                    ;;
+    esac
+    echo "$wlcpu"
+}
+
+
 
 # --------------------------------------------------------------------------------------------------
-#                             RETURN THE SERVER NUMBER OF CPU
+#                             RETURN THE SERVER NUMBER OF PHYSICAL CPU
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() { 
     case "$(sadm_get_ostype)" in
-        "LINUX")    wnbcpu=`cat /proc/cpuinfo | grep -i '^processor' | wc -l | tr -d ' '`
-                    if [ "$SADM_LSCPU" != "" ]
-                        then wnbcpu=`$SADM_LSCPU | grep -i '^cpu(s):' | cut -d ':' -f 2 | tr -d ' '`
-                    fi
+        "LINUX")    wnbcpu=`grep '^physical id' /proc/cpuinfo| sort -u | wc -l| tr -d ' '`
+                    if [ $wnbcpu -eq 0 ] ; then wnbcpu=1 ; fi
                     ;;
         "AIX")      wnbcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
                     ;;
@@ -320,6 +333,7 @@ sadm_server_cpu_speed() {
 }
 
  
+
 # --------------------------------------------------------------------------------------------------
 #                     Return 32 or 64 Bits Depending of CPU Hardware Capability
 # --------------------------------------------------------------------------------------------------
@@ -336,6 +350,8 @@ sadm_server_hardware_bitmode() {
     esac
     echo "$sadm_server_hardware_bitmode"
 }
+
+
 
 # --------------------------------------------------------------------------------------------------
 #    FUNCTION RETURN A STRING CONTAINING DISKS NAMES AND CAPACITY (MB) OF EACH DISKS

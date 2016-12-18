@@ -225,12 +225,12 @@ sadm_check_command_availibility() {
              return 0                                                   # Return 0 if cmd found
         else SADM_VAR1=""                                               # Clear Path of command
              sadm_writelog " "                                            # Inform User 
-             sadm_writelog "WARNING : Missing Requirement "
-             sadm_writelog "The \"${SADM_CMD}\" command is not available on this system"
-             sadm_writelog "We need to install it so we can used functions of SADMIN Library"
+             sadm_writelog "WARNING : The \"${SADM_CMD}\" command is not available on this system"
+             sadm_writelog "To fully benefit the SADMIN Library & give you accurate information"
+             sadm_writelog "We will install the package that include the command \"${SADM_CMD}\""
+             sadm_writelog "SADMIN Will install it for you ... One moment"
              #sadm_writelog "Once the software is installed, rerun this script"
              #sadm_writelog "Will continue anyway, but some functionnality may not work as expected"
-             sadm_writelog "SADMIN Will install it for you ... One moment"
     fi  
     return 1
 }
@@ -254,27 +254,6 @@ sadm_install_package()
     PACKAGE_DEB=$2                                                       # Ubuntu/Debian/Raspian Deb
     
 
-    # Ask user if he want to install the missing package
-    #MSG="Do you want SADMIN to install the package \"${PACKAGE}\" for you [Y/N] ? " 
-    #while :
-    #  do
-    #  sadm_writelog ""
-    #  sadm_writelog "$SADM_DASH"
-    #  sadm_writelog "$MSG"                                              # Write mess + [ Y/N ] ?
-    #  read answer                                                       # Read User answer
-    #  case "$answer" in                                                 # Test Answer
-    #    Y|y ) wreturn=1                                                 # Yes = Return Value of 1
-    #          break                                                     # Break of the loop
-    #          ;; 
-    #    n|N ) wreturn=0                                                 # Yes = Return Value of 0
-    #          break                                                     # Break of the loop
-    #          ;;
-    #      * ) ;;                                                        # Other stay in the loop
-    #  esac
-    #done
-    #if [ $wreturn -eq 0 ] ; then return 0 ; fi                          # if No - Return to Caller
-
-    
     # Install the Package under RedHat/CentOS/Fedora
     if [ "$(sadm_get_osname)" = "REDHAT" ] || 
        [ "$(sadm_get_osname)" = "CENTOS" ] || 
@@ -332,8 +311,7 @@ sadm_check_requirements() {
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which 
         then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save the Path of Which
-        else sadm_writelog "ERROR : Missing Requirement "
-             sadm_writelog " The command 'which' could not be found" 
+        else sadm_writelog " ERROR : The command 'which' could not be found" 
              sadm_writelog " This program is often used by the SADMIN tools"
              sadm_writelog " Please install it and re-run this script"
              sadm_writelog " To install it, use the following command depending on your distro"
@@ -344,19 +322,17 @@ sadm_check_requirements() {
     
     # Commands require on Linux O/S ----------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
-       then sadm_check_command_availibility lsb_release                 # lsb_release cmd available?
+       then sadm_check_command_availibility "lsb_release"               # lsb_release cmd available?
             SADM_LSB_RELEASE=$SADM_VAR1                                 # Save Command Path
-            sadm_check_command_availibility dmidecode                   # dmidecode cmd available?
+            sadm_check_command_availibility "dmidecode"                 # dmidecode cmd available?
             SADM_DMIDECODE=$SADM_VAR1                                   # Save Command Path
-            sadm_check_command_availibility fdisk                       # FDISK cmd available?
+            sadm_check_command_availibility "fdisk"                     # FDISK cmd available?
             SADM_FDISK=$SADM_VAR1                                       # Save Command Path
-            
-            # Check Availibility of the "bc" command
             sadm_check_command_availibility "bc"                        # bc cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                then sadm_install_package "bc" "bc"                      # Go Install Missing Package
                     if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility bc          # Check if command now Avail
+                       then sadm_check_command_availibility "bc"        # Check if command now Avail
                     fi
             fi
             SADM_BC=$SADM_VAR1                                          # Save Command Path
@@ -545,20 +521,22 @@ sadm_elapse_time() {
     epoch_start=`sadm_date_to_epoch "$w_starttime"`                     # Get Epoch for Start Time
     epoch_end=`sadm_date_to_epoch   "$w_endtime"`                       # Get Epoch for End Time
     epoch_elapse=`echo "$epoch_end - $epoch_start" | $SADM_BC`          # Substract End - Start time
+
     if [ "$epoch_elapse" = "" ] ; then epoch_elapse=0 ; fi              # If nb Sec Greater than 1Hr
     whour=00 ; wmin=00 ; wsec=00
 
     # Calculate number of hours (1 hr = 3600 Seconds)
-    if [ $epoch_elapse -gt 3600 ]                                       # If nb Sec Greater than 1Hr
+    if [ "$epoch_elapse" -gt 3599 ]                                     # If nb Sec Greater than 1Hr
         then whour=`echo "$epoch_elapse / 3600" | $SADM_BC`             # Calculate nb of Hours
-             epoch_elapse=`echo "$epoch_elapse - ($whours * 3600)" | $SADM_BC` # Sub Hr*Sec from elapse
+             epoch_elapse=`echo "$epoch_elapse - ($whour * 3600)" | $SADM_BC` # Sub Hr*Sec from elapse
     fi
-
+    
     # Calculate number of minutes 1 Min = 60 Seconds)
-    if [ $epoch_elapse -gt 60 ]                                         # If more than 1 min left
+    if [ "$epoch_elapse" -gt 59 ]                                       # If more than 1 min left
        then  wmin=`echo "$epoch_elapse / 60" | $SADM_BC`                # Calc. Nb of minutes
              epoch_elapse=`echo  "$epoch_elapse - ($wmin * 60)" | $SADM_BC` # Sub Min*Sec from elapse
     fi
+
     wsec=$epoch_elapse                                                  # left is less than 60 sec
     sadm_elapse=`printf "%02d:%02d:%02d" ${whour} ${wmin} ${wsec}`      # Format Result
     echo "$sadm_elapse"                                                 # Return Result to caller

@@ -15,7 +15,7 @@ import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
 # SADM Library Initialization
 #===================================================================================================
 # If SADMIN environment variable is defined, use it as the SADM Base Directory else use /sadmin.
-sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
+sadm_base_dir           = os.environ.get('SADMIN', '/sadmin')           # Set SADM Base Directory
 sadm_lib_dir            = os.path.join(sadm_base_dir,'lib')             # Set SADM Library Directory
 sys.path.append(sadm_lib_dir)                                           # Add Library Dir to PyPath
 import sadm_lib_std as sadm                                             # Import SADM Tools Library
@@ -61,8 +61,8 @@ cfg_mail_type      = 3                                                  # 0=No 1
 #                                 Local Variables used by this script
 #===================================================================================================
 row_list           = []
-cur                 = ""
-conn                = ""
+cur                = ""
+conn               = ""
 
 
 
@@ -103,7 +103,7 @@ def init_row_dictionnary(colnames):
     srow['srv_osupdate']         = True                                 # Update O/S Periodically
     srow['srv_sporadic']         = False                                # Server online sporadically
     srow['srv_monitor']          = True                                 # Monitor Activity of server
-    srow['srv_backup']           = True                                 # Backup the server
+    srow['srv_backup']           = 4                                    # 0=None 1=Mon 3=Wed 7=Sat
     srow['srv_osupdate_reboot']  = False                                # Reboot server after update
     
     srow['srv_osver_major']      = int(0)                               # Server OS Major Version
@@ -435,8 +435,14 @@ def update_process(wconn,wcur,wcolnames):
                     srow['srv_ips_info']        = CFG_VALUE
                 
                 # All Disks defined on the servers with Dev, Size
-                if "SADM_SERVER_DISKS"            in CFG_NAME :
-                    srow['srv_disks_info']      = CFG_VALUE
+                try :
+                    if "SADM_SERVER_DISKS"            in CFG_NAME :
+                        srow['srv_disks_info']      = CFG_VALUE
+                except :
+                    sadm.writelog ("ERROR: Using SADM_SERVER_DISKS - Name %s and value is (%s)" % (CFG_NAME,CFG_VALUE))
+                    TOTAL_ERROR = TOTAL_ERROR + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR=False                                # Now No "Error" is False
+
 
                 # All Volumes Groups defined on the servers with Name, Size, USed, Free
                 if "SADM_SERVER_VG(s)"            in CFG_NAME :

@@ -112,7 +112,7 @@ process_linux_servers()
     sadm_writelog "Processing active Linux Servers"
     sadm_writelog " "
 
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_active from sadm.server  "
+    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_monitor, srv_active from sadm.server  "
     SQL2="where srv_ostype = 'linux' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
@@ -123,14 +123,15 @@ process_linux_servers()
        then while read wline
               do
               xcount=`expr $xcount + 1`
-              server_name=`  echo $wline|awk -F, '{ print $1 }'`
-              server_os=`    echo $wline|awk -F, '{ print $2 }'`
-              server_domain=`echo $wline|awk -F, '{ print $3 }'`
+              server_name=`   echo $wline|awk -F, '{ print $1 }'`
+              server_os=`     echo $wline|awk -F, '{ print $2 }'`
+              server_domain=` echo $wline|awk -F, '{ print $3 }'`
+              server_monitor=`echo $wline|awk -F, '{ print $4 }'`
               sadm_writelog " "
               sadm_writelog "${SADM_TEN_DASH}"
               info_line="Processing ($xcount) ${server_name}.${server_domain} - "
               info_line="${info_line}os:${server_os}"
-              sadm_writelog "$info_line"
+              sadm_writelog "$info_line - Monitor is $server_monitor"
               
               # Ping the server - Server or Laptop may be unplugged
               sadm_writelog "ping -c 2 ${server_name}.${server_domain}"

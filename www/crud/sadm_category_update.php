@@ -123,13 +123,13 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     echo "<input type='hidden' value='1' name='submitted' />";
     
     # Display Buttons at the bottom of the form
-    echo "<center>";
+    echo "<center>";                                                    # Center Button on Page
     echo "<button type='submit' class='btn btn-sm btn-primary'> Update </button>   ";
     echo "<a href='/crud/sadm_category_main.php'>";
     echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
     echo "</center>";
     
     # End of Form
-    echo "</form>"; 
+    echo "</form>";                                                     
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
 ?>

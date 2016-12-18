@@ -103,7 +103,7 @@ function display_data($count, $row) {
     echo "<tr>\n";  
     #echo "<td>" . $count . "</td>\n";  
     echo "<td>" .
-        "<a href=/sadmin/sadm_view_servers.php?selection=host&value=" . nl2br($row['srv_name']) .
+        "<a href=/sadmin/sadm_view_server_info.php?host=" . nl2br($row['srv_name']) .
         ">" . nl2br($row['srv_name']) . "</a></td>\n";
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     #echo "<td>" . nl2br( $row['srv_model']) . "</td>\n";

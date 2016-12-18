@@ -138,11 +138,12 @@ $DEBUG = True ;                                       # Activate (TRUE) or Deact
         
          # Execute the SQL to Read the Row
          $result = pg_query($query) ;
-         if (!$result) {
-            $err_msg = "ERROR : Row was not found in Database\n";
+         $NUMROW = pg_num_rows($result) ;
+         if ((!$result) or ($NUMROW == 0))  {
+            $err_msg = "ERROR : The row of server " . $wkey . " was not found in Database";
             $err_msg = $err_msg . pg_last_error() . "\n";
-            if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $query ; }
-            #sadm_alert ($err_msg) ;  
+            if ($DEBUG) { $err_msg = $err_msg . "\nMaybe a problem with SQL Command ?\n" . $query ;}
+            sadm_alert ($err_msg) ;  
             exit;
         }else{
            $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;

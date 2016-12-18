@@ -147,7 +147,7 @@ def close_sadmin_database(wconn,wcur):
         wcur.close()
         wconn.close()
     except psycopg2.Error as e:                                         # in case of error
-        writelog ("Error: Cannot Closing Connection with 'sadmin' Database")
+        writelog ("Error: Cannot Close Connection with 'sadmin' Database")
         writelog ("%s" % e)
         return (1)
     return (0)
@@ -710,12 +710,7 @@ def stop(return_code):
     writelog (dash)                                                     # 80 = Lines 
     writelog (" ")                                                      # Space Line in the LOG
     #FH_LOG_FILE.flush()                                                 # Got to do it - Missing end
-    FH_LOG_FILE.close()                                                 # Close the Log File
 
-    # Trimming the Log 
-    trimfile (log_file, cfg_max_logline)                                # Trim the Script Log 
-    trimfile (rch_file, cfg_max_rchline)                                # Trim the Script RCH Log 
-    
     # Inform UnixAdmin By Email based on his selected choice
     # Now that the user email choice is written to the log, let's send the email now, if needed
     # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
@@ -743,7 +738,12 @@ def stop(return_code):
         if ccode != 0 :                                                 # If Cmd Fail
            writelog ("ERROR : Problem sending email to %s" % (cfg_mail_addr)) # Advise USer 
     
+    FH_LOG_FILE.close()                                                 # Close the Log File
 
+    # Trimming the Log 
+    trimfile (log_file, cfg_max_logline)                                # Trim the Script Log 
+    trimfile (rch_file, cfg_max_rchline)                                # Trim the Script RCH Log 
+    
     # Make sure the RCH File and the Script log belong to sadmin.cfg user/group
     uid = pwd.getpwnam(cfg_user).pw_uid                                 # Get UID User in sadmin.cfg 
     gid = grp.getgrnam(cfg_group).gr_gid                                # Get GID User in sadmin.cfg 

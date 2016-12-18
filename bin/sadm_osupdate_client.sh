@@ -15,6 +15,10 @@
 # Version 2.7 - Nov 2016
 #       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking 
 #       if update were available. Now Script return an error (1) when checking for update.
+# Version 2.8 - Dec 2016
+#       Correction minor bug with shutdown reboot command on Raspberry Pi
+#       Now Checking if Script is running of SADMIN server at the beginning
+#           - No automatic reboot on the SADMIN server while it is use to start update on client
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -24,7 +28,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.7'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -229,6 +233,8 @@ run_apt_get()
 }
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 #                           S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
@@ -244,14 +250,23 @@ run_apt_get()
 
 
     # If Parameter #1 received is "Y", then server will reboot after update (Default No Reboot)
-    if [ $# -eq 1 ] 
-        then WREBOOT=`sadm_toupper $1` 
-             if [ "$WREBOOT" = "Y" ]                                   # Unless Recv. Param #1=Y
+    if [ $# -eq 1 ]                                                     # If one Param. Recv.
+        then WREBOOT=`sadm_toupper $1`                                  # Make sure it is UpperCase
+             if [ "$WREBOOT" = "Y" ]                                    # Unless Recv. Param #1=Y
                 then sadm_writelog "A Reboot is requested after a successfull update" 
                      WREBOOT="Y" 
                 else sadm_writelog "Reboot is not requested after the update"
              fi
     fi
+
+    # Check if Actual Server is the Main SADMIN server - No automatic Reboot for that server
+    SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
+    if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]
+        then sadm_writelog "Automatic reboot cancelled for this server"
+             sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
+             WREBOOT="N"
+    fi         
+
 
     UPDATE_AVAILABLE=0                                                  # Assume no Upd. Available
     check_available_update                                              # Check if Update is Avail.
@@ -296,13 +311,9 @@ run_apt_get()
        then if [ $UPDATE_AVAILABLE -eq 0 ]                              # If Update was Applied
                then sadm_writelog "No need to reboot since no update were applied" 
                else if [ "$SADM_EXIT_CODE" -eq 0 ]                      # If Update was a success
-                       then if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]
-                                then sadm_writelog "Automatic reboot cancelled for this server"
-                                     sadm_writelog "No Automatic reboot on the SADM Main server"
-                                else sadm_writelog "Update was successfull, server will reboot in 1 Minute"
-                                     sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
-                                     echo -e "#!/usr/bin/env sh\n${REBOOT_CMD}\n" | at now + 1 Minute 
-                            fi
+                       then sadm_writelog "Update was successfull, server will reboot in 1 Minute"
+                            sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
+                            echo "${REBOOT_CMD}" | at now + 1 Minute 
                        else sadm_writelog "Update unsuccessfull, no reboot performed"
                     fi
                     sadm_writelog "${SADM_DASH}"

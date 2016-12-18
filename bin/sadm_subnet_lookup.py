@@ -3,12 +3,30 @@
 #   Author:     Jacques Duplessis
 #   Title:      ping_lookup.py
 #   Synopsis:   ping and do a nslookup on all IP in the subnet and produce a report
-#
+#               Support Redhat/Centos v3,4,5,6,7 - Ubuntu - Debian V7,8 - Raspbian V7,8 - Fedora
 #===================================================================================================
 # Description
+#  This script ping and do a nslookup for every IP specify in the "SUBNET" Variable.
+#  Result of each subnet is recorded in their own file ${SADM_BASE_DIR}/dat/net/subnet_SUBNET.txt
+#  These file are used by the Web Interface to inform user what IP is free and what IP is used.
+#  On the Web interface the file can be seen by selecting the IP Inventory page.
+#  It is run once a day from the crontab.
 #
+# --------------------------------------------------------------------------------------------------
+# Version 2.6 - Nov 2016 
+#       Insert Logic to Reboot the server after a successfull update
+#        (If Specified in Server information in the Database)
+#        The script receive a Y or N (Uppercase) as the first command line parameter to 
+#        indicate if a reboot is requested.
+# Version 2.7 - Nov 2016
+#       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking 
+#       if update were available. Now Script return an error (1) when checking for update.
+# Version 2.8 - Dec 2016
+#       Correction minor bug with shutdown reboot command on Raspberry Pi
+#       Now Checking if Script is running of SADMIN server at the beginning
+#           - No automatic reboot on the SADMIN server while it is use to start update on client
+# --------------------------------------------------------------------------------------------------
 #
-#===================================================================================================
 import os, time, sys, pdb, socket, datetime, getpass, subprocess, pwd, grp
 from subprocess import Popen, PIPE
 
@@ -114,7 +132,14 @@ def main_process() :
 def main():
     sadm.start()                                                        # Open Log, Create Dir ...
 
-    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    # Script run by root only
+    if os.geteuid() != 0:                                               # UID of user is not zero
+       sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
+       sadm.writelog ("Process aborted")                                # Process Aborted Msg 
+       sadm.stop (1)                                                    # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
+  
+    # Script is run only on the SADMIN Server, If not abort script
     if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
        sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
        sadm.writelog ("Process aborted")                                # Abort advise message

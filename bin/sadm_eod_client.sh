@@ -1,8 +1,8 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_cron_client_morning.sh
-#   Synopsis :  This script must be run once a day at the of the day.
+#   Title    :  sadm_eod_client.sh
+#   Synopsis :  This script must be run once a day at the end of the day.
 #               It run multiple script that collect informations about server.
 #   Version  :  1.0
 #   Date     :  3 December 2016
@@ -100,7 +100,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
     
 
-    # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
+    # Script Got to be run by root user
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
@@ -108,41 +108,67 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              exit 1                                                     # Exit To O/S
     fi
 
+    # At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
+    SCMD="${SADM_BIN_DIR}/sadm_nmon_midnight_restart.sh"
+    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
+    $SCMD >/dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
+   
+
     # Once a day just before midnight - Create daily Linux performance data file
     SCMD="${SADM_BIN_DIR}/sadm_create_sar_perfdata.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error encounter id $SCMD" ; SADM_EXIT_CODE=1 ; fi
-    sadm_writelog "End of $SCMD ..."
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
    
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN client
     SCMD="${SADM_BIN_DIR}/sadm_housekeeping_client.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error encounter id $SCMD" ; SADM_EXIT_CODE=1 ; fi
-    sadm_writelog "End of $SCMD ..."
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
 
     # Save Filesystems Structure for every Volume Group on System
     #  - Used in case of a System Recovery by sadm_fs_recreate.sh script
     SCMD="${SADM_BIN_DIR}/sadm_fs_save_info.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error encounter id $SCMD" ; SADM_EXIT_CODE=1 ; fi
-    sadm_writelog "End of $SCMD ..."
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
 
     # Generate System Configuration for this server (Collect by sadmin server)
     SCMD="${SADM_BIN_DIR}/sadm_create_server_info.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error encounter id $SCMD" ; SADM_EXIT_CODE=1 ; fi
-    sadm_writelog "End of $SCMD ..."
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
 
     # Produce html page containing configuration (Collect by sadmin server)
     SCMD="${SADM_BIN_DIR}/sadm_create_cfg2html.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error encounter id $SCMD" ; SADM_EXIT_CODE=1 ; fi
-    sadm_writelog "End of $SCMD ..." 
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
 
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File

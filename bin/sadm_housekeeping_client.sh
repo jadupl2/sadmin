@@ -230,11 +230,11 @@ file_housekeeping()
     sadm_writelog "${SADM_DASH}"
     sadm_writelog " "
 
-    # Make sure the configuration file is at 600
+    # Make sure the configuration file is at 644
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Protect SADMIN Configuration file"
     sadm_writelog "chmod 0600 $SADM_CFG_FILE" 
-    chmod 0600 $SADM_CFG_FILE
+    chmod 0644 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
       
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by PostGres

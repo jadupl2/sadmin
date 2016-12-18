@@ -94,6 +94,7 @@ Debug=true                                      ; export Debug          # Debug 
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
     
+    
     printf "=========================================================================================================================================\n"
     printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part I)                                                    \n"
     printf "                                                                                                                    RETURN VALUE         \n"
@@ -219,11 +220,13 @@ Debug=true                                      ; export Debug          # Debug 
     echo " "
     echo "Testing Epoch and Elapse time calculation functions"
     wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    wstart_time="2016.12.15 17:18:10"
     epoch_start=`sadm_date_to_epoch  "$wstart_time"`
     printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
     echo "Please wait - Sleeping for 5 seconds"
     sleep 5 
     wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    wend_time="2016.12.15 18:31:56"
     epoch_end=`sadm_date_to_epoch "$wend_time"`
     welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
     printf "End   Date is $wend_time - Epoch is $epoch_end \n"
