@@ -34,7 +34,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = True ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
 
 
 

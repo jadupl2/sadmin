@@ -486,7 +486,7 @@ def main():
         
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
-       sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
+       sadm.writelog ("Script can only be run on SADMIN server (%s)",(sadm.cfg_server))
        sadm.writelog ("Process aborted")                                # Abort advise message
        sadm.stop (1)                                                    # Close and Trim Log
        sys.exit(1)                                                      # Exit To O/S

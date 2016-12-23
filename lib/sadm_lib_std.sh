@@ -24,7 +24,8 @@ SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equ
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
-SADM_DEBUG_LEVEL=5                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -80,7 +81,9 @@ SADM_LSCPU=""                               ; export SADM_LSCPU         # Path t
 SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
 SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
 SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
-
+SADM_PSQL=""                                ; export SADM_PSQL          # Path to PostGresql Exec.
+SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
+SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
@@ -106,13 +109,14 @@ SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgr
 SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
 SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
 SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
+SADM_SERVER=""                              ; export SADM_SERVER        # Server FQDN Name
 SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
+PGPASSFILE="${SADM_CFG_DIR}/.pgpass"        ; export PGPASSFILE         # PostGres Passwd File
+
 
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
 # --------------------------------------------------------------------------------------------------
-#
 sadm_toupper() { 
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
@@ -121,7 +125,6 @@ sadm_toupper() {
 # --------------------------------------------------------------------------------------------------
 #                       THIS FUNCTION RETURN THE STRING RECEIVED TO LOWERCASE 
 # --------------------------------------------------------------------------------------------------
-#
 sadm_tolower() {
     echo $1 | tr  "[:upper:]" "[:lower:]"
 }
@@ -379,13 +382,12 @@ sadm_check_requirements() {
 
             sadm_check_command_availibility lscpu                       # lscpu cmd available?
             SADM_LSCPU=$SADM_VAR1                                       # Save Command Path
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "util-linux" "util-linux"      # Go Install RPM/DEBIAN pkg
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility "lscpu"     # Check if command now Avail
-                    fi               
-
-            fi
+            #if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+            #   then sadm_install_package "util-linux" "util-linux"      # Go Install RPM/DEBIAN pkg
+            #        if [ $? -eq 0 ]                                     # If Install Went OK
+            #           then sadm_check_command_availibility "lscpu"     # Check if command now Avail
+            #        fi               
+            #fi
     fi
     
     # Commands Require on Aix O/S ------------------------------------------------------------------
@@ -410,12 +412,72 @@ sadm_check_requirements() {
             fi
     fi
     
-    # Commands require on Linux and Aix 
+    # Commands require on ALL platform 
     sadm_check_command_availibility "perl"                              # perl needed (epoch time)
     SADM_PERL=$SADM_VAR1                                                # Save perl path
+    sadm_check_command_availibility "ssh"                               # ssh needed (epoch time)
+    SADM_SSH=$SADM_VAR1                                                 # Save ssh path
+
+    # psql is only present (at least the DB is) - Do not want to install automatically if not there
+    if ${SADM_WHICH} psql >/dev/null 2>&1                               # Command is found ?
+        then SADM_PSQL=`${SADM_WHICH} psql`                             # Store Path of command
+        else SADM_PSQL=""                                               # Clear Path of command
+    fi
+
     return 0
 }
 
+
+
+# --------------------------------------------------------------------------------------------------
+#      Called when we need to advise the user of an error or when his attention is required.
+# --------------------------------------------------------------------------------------------------
+alert_user()
+{
+    
+# Save Received Parameters
+    a_type=$1                                                           # Proto M=Mail T=Text P=Page
+    a_severity=$2                                                       # E=Error W=Warning I=info
+    a_server=$3                                                         # Problematic Server Name 
+    a_group=$4                                                          # Destination alert group
+    a_mess=$5                                                           # Alert Message
+    a_exit_code=0                                                       # Def. Function Return Code
+
+# Build the SADM uniform Subject Prefix - Based on Alert Severity Received
+    case "$a_severity" in                                               # Depend on Severity E/W/I
+        e|E) a_prefix="SADM: ERROR "                                    # Error SADM Subject Prefix        
+             ;; 
+        w|W) a_prefix="SADM: WARNING "                                  # Warning SADM Subject Prefix                 
+             ;; 
+        i|I) a_prefix="SADM: INFO "                                     # Info SADM Subject Prefix                 
+             ;; 
+          *) a_prefix="SADM: N/A "                                      # Invalid SADM Subject Prefix                 
+             a_exit_code=1                                              # Something went wrong in fct.
+             ;; 
+    esac
+
+# Send the Alert Message using the Protocol requested
+    case "$a_type" in 
+        m|M) if [ "$SADM_MAIL" == "" ] 
+                then sadm_writelog "Function 'alert_user' was requested to send an email" 
+                     sadm_writelog "But the mail program was not found (SADM_MAIL=${SADM_MAIL})" 
+                     sadm_writelog "Correct the situation and try again"
+                     a_exit_code=1                                      # Something went wrong 
+                else a1_msg="`date` ${a_server} ${a_prefix}${a_mess}"   # Build Email Alert Message
+                     echo "${a1_msg}" | $SADM_MAIL -s "${a_prefix}${a_mess}" $SADM_MAIL_ADDR
+                     a_exit_code=$?                                     # Set Return Code 
+             fi
+             ;; 
+          *) a1_msg="`date` ${a_server} ${a_prefix}"                    # Invalid Protocol Received
+             a2_msg="Function 'alert_user' received an invalid first parameter ($a_type)" 
+             a3_msg="${a1_msg}${a2_msg}"                                # Advise usr something wrong
+             echo "`date` ${a_server} $a3_msg" |$SADM_MAIL -s "SADM: ALERT $a_mess" $SADM_MAIL_ADDR
+             a_exit_code=1                                              # Something went wrong 
+             ;; 
+    esac
+
+    return $a_exit_code
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -618,6 +680,20 @@ sadm_get_osname() {
 }
 
 
+
+# --------------------------------------------------------------------------------------------------
+#                                 RETURN SADMIN RELEASE VERSION NUMBER
+# --------------------------------------------------------------------------------------------------
+sadm_get_release() {
+    if [ -r "$SADM_REL_FILE" ]
+        then wrelease=`cat $SADM_REL_FILE`
+        else wrelease="00.00"
+    fi
+    echo "$wrelease"
+}
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                                 RETURN THE HOSTNAME (SHORT)
 # --------------------------------------------------------------------------------------------------
@@ -633,18 +709,6 @@ sadm_get_hostname() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                                 RETURN SADMIN RELEASE VERSION NUMBER
-# --------------------------------------------------------------------------------------------------
-sadm_get_release() {
-    if [ -r "$SADM_REL_FILE" ]
-        then wrelease=`cat $SADM_REL_FILE`
-        else wrelease="00.00"
-    fi
-    echo "$wrelease"
-}
-
-
-# --------------------------------------------------------------------------------------------------
 #                                 RETURN THE DOMAINNAME (SHORT)
 # --------------------------------------------------------------------------------------------------
 sadm_get_domainname() {
@@ -655,6 +719,15 @@ sadm_get_domainname() {
                  ;;
     esac
     echo "$wdomainname"
+}
+
+
+
+# --------------------------------------------------------------------------------------------------
+#                        RETURN THE FULLY QUALIFIED NAME OF THE SYSTEM
+# --------------------------------------------------------------------------------------------------
+sadm_get_fqdn() {
+    echo "$(sadm_get_hostname).$(sadm_get_domainname)"
 }
 
 
@@ -813,17 +886,23 @@ sadm_load_config_file()
         echo "$wline" |grep -i "^SADM_RO_PGPWD" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_RO_PGPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
         done < $SADM_CFG_FILE
 
         # For Debugging Purpose - Display Final Value of configuration file
         if [ "$SADM_DEBUG_LEVEL" -gt 8 ]
             then sadm_writelog ""
+                 sadm_writelog "EXPORTED VARIABLES THAT ARE SET AFTER READING THE CONFIG FILE " 
                  sadm_writelog "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information"
+                 sadm_writelog "CONFIGURATION FILE IS $SADM_CFG_FILE"
                  sadm_writelog "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
                  sadm_writelog "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
                  sadm_writelog "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
                  sadm_writelog "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
                  sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
+                 sadm_writelog "  - SADM_SSH_PORT=$SADM_SSH_PORT"           # SADMIN SSH TCP Port
                  sadm_writelog "  - SADM_USER=$SADM_USER"                   # sadmin user account
                  sadm_writelog "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
                  sadm_writelog "  - SADM_WWW_USER=$SADM_WWW_USER"           # sadmin user account
@@ -971,6 +1050,7 @@ sadm_start() {
     if [ ! -e "$SADM_LOG" ]
         then touch $SADM_LOG
              chmod 664 $SADM_LOG
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
     fi
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
@@ -982,6 +1062,7 @@ sadm_start() {
     if [ ! -e "$SADM_RCHLOG" ]
         then touch $SADM_RCHLOG
              chmod 664 $SADM_RCHLOG
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
     fi
 
 
@@ -1001,6 +1082,7 @@ sadm_start() {
        then sadm_writelog "Script is already running ... "
             sadm_writelog "PID File ${SADM_PID_FILE} exist ..."
             sadm_writelog "Will not launch a second copy of this script"
+            DELETE_PID="N"                                              # No Dele PID Since running
             sadm_stop 1 
             exit 1
        else echo "$TPID" > $SADM_PID_FILE
@@ -1107,8 +1189,13 @@ sadm_stop() {
           ;;
     esac
     
+    # Normally we Delete the PID File when exiting Script
+    # But when script is already running (DELETE_PID is set to "N"),we don't want to delete PID file
+    if ( [ -e "$SADM_PID_FILE"  ] && [ "$DELETE_PID" = "Y" ] )
+        then rm -f $SADM_PID_FILE  >/dev/null 2>&1 
+    fi
+
     # Delete Temporary files used
-    if [ -e "$SADM_PID_FILE"  ] ; then rm -f $SADM_PID_FILE  >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi

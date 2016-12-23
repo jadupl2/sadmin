@@ -22,7 +22,7 @@
 
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
+# These variables need to be defined prior to lo1ad the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
 SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
@@ -45,6 +45,7 @@ SADM_DEBUG_LEVEL=9                         ; export SADM_DEBUG_LEVEL    # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
 # --------------------------------------------------------------------------------------------------
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
 #SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
@@ -112,6 +113,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_get_hostname)                        Host Name                                                        : ...$(sadm_get_hostname)...\n"
     printf "\$(sadm_get_host_ip)                         Host IP Address                                                  : ...$(sadm_get_host_ip)...\n"
     printf "\$(sadm_get_domainname)                      Host Domain Name                                                 : ...$(sadm_get_domainname)...\n"
+    printf "\$(sadm_get_fqdn)                            Fully Qualified Host Name                                        : ...$(sadm_get_fqdn)...\n"
     printf "\$(sadm_get_epoch_time)                      Get Current Epoch Time                                           : ...$(sadm_get_epoch_time)...\n"
     EPOCH_TIME=$(sadm_get_epoch_time)
     printf "\$(sadm_epoch_to_date $EPOCH_TIME)            Convert epoch time to date (YYYY.MM.DD HH:MM:SS)                 : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
@@ -185,12 +187,15 @@ Debug=true                                      ; export Debug          # Debug 
     tput clear
     printf "=========================================================================================================================\n"
     printf ""
-    printf  "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information\n"
+    printf  "EXPORTED VARIABLES INFORMATION\n"
+    printf "  - SADM_DEBUG_LEVEL=$SADM_DEBUG_LEVEL\n"
     printf "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR\n"         # Default email address
     printf "  - SADM_CIE_NAME=$SADM_CIE_NAME\n"           # Company Name
     printf "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE\n"         # Send Email after each run
     printf "  - SADM_SERVER=$SADM_SERVER\n"               # SADMIN server
     printf "  - SADM_DOMAIN=$SADM_DOMAIN\n"               # SADMIN Domain Default
+    printf "  - SADM_SSH=$SADM_SSH\n"                     # SADMIN SSH Path
+    printf "  - SADM_SSH_PORT=$SADM_SSH_PORT\n"           # SADMIN SSH Port
     printf "  - SADM_USER=$SADM_USER\n"                   # sadmin user account
     printf "  - SADM_GROUP=$SADM_GROUP\n"                 # sadmin group account
     printf "  - SADM_WWW_USER=$SADM_WWW_USER\n"           # sadmin Web user account
@@ -201,9 +206,11 @@ Debug=true                                      ; export Debug          # Debug 
     printf "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.sar
     printf "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS\n"  # Days to keep old *.rch
     printf "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.log
+    printf "  - SADM_PSQL=$SADM_PSQL\n"                   # Location of psql Executable
     printf "  - SADM_PGUSER=$SADM_PGUSER\n"               # PostGres User Name
     printf "  - SADM_PGGROUP=$SADM_PGGROUP\n"             # PostGres Group Name
     printf "  - SADM_PGDB=$SADM_PGDB\n"                   # PostGres DataBase Name
+    printf "  - PGPASSFILE=$PGPASSFILE\n"                 # PostGres PAssword File
     printf "  - SADM_PGSCHEMA=$SADM_PGSCHEMA\n"           # PostGres DataBase Schema
     printf "  - SADM_PGHOST=$SADM_PGHOST\n"               # PostGres DataBase Host
     printf "  - SADM_PGPORT=$SADM_PGPORT\n"               # PostGres Listening Port
@@ -211,6 +218,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "  - SADM_RW_PGPWD=$SADM_RW_PGPWD\n"           # PostGres RW User Pwd
     printf "  - SADM_RO_PGUSER=$SADM_RO_PGUSER\n"         # PostGres RO User
     printf "  - SADM_RO_PGPWD=$SADM_RO_PGPWD\n"           # PostGres RO User Pwd
+
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
      
@@ -218,21 +226,19 @@ Debug=true                                      ; export Debug          # Debug 
      
     tput clear
     echo " "
-    echo "Testing Epoch and Elapse time calculation functions"
+    echo "TEST EPOCH AND ELAPSE TIME CALCULTATION FUNCTIONS"
+    echo " "
     wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    wstart_time="2016.12.15 17:18:10"
     epoch_start=`sadm_date_to_epoch  "$wstart_time"`
     printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
     echo "Please wait - Sleeping for 5 seconds"
     sleep 5 
     wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    wend_time="2016.12.15 18:31:56"
     epoch_end=`sadm_date_to_epoch "$wend_time"`
     welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
     printf "End   Date is $wend_time - Epoch is $epoch_end \n"
     printf "Elapsed time is $welapse \n"
-    echo "Press [ENTER] to Continue" ; read dummy
-    tput clear
+
 
     
 #    sadm_display_heading "Small Menu (7 Items or less)"

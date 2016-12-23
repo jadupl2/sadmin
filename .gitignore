@@ -26,6 +26,8 @@ www/tmp/
 
 # System Startup Log Files
 sys/*.log
+cfg/.pgpass
+
 
 __pycache__/
 *.pyc

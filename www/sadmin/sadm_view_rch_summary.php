@@ -128,7 +128,7 @@ function display_script_array($PAGE_TYPE, $script_array)
 
             echo "<tr>\n";
             echo "<td class='dt-left'>" ;
-            echo "<a href='/sadmin/sadm_view_server.php?host=" . $cserver . 
+            echo "<a href='/sadmin/sadm_view_server_info.php?host=" . $cserver . 
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>\n";
                  
             # Display Script Name, Start Date, Start Time, End Time and Elapse Script Time

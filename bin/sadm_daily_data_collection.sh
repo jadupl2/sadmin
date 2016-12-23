@@ -48,7 +48,6 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
@@ -94,15 +93,12 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-PGUSER="squery"                                  ; export PGUSER        # Postgres Database User
-PGHOST="holmes.maison.ca"                        ; export PGHOST        # Postgres Database Host
-PSQL="$(which psql)"                             ; export PSQL          # Location of psql program
-PGPASSFILE=/sadmin/cfg/.pgpass                   ; export PGPASSFILE    
 HW_DIR="$SADM_DAT_DIR/hw"	                     ; export HW_DIR        # Hardware Data collected
 ERROR_COUNT=0                                    ; export ERROR_COUNT   # Global Error Counter
 TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Error in Aix Function
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
+DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 
 
 # --------------------------------------------------------------------------------------------------
@@ -119,8 +115,12 @@ get_aix_files()
     SQL2="where srv_ostype = 'aix' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
-    $PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
-    
+    #$PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    if [ $DEBUG_LEVEL -gt 5 ] 
+       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
+    fi
+    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
+   
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
@@ -256,7 +256,11 @@ get_linux_files()
     SQL2="where srv_ostype = 'linux' and srv_active = True "
     SQL3="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}"
-    $PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    #$PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    if [ $DEBUG_LEVEL -gt 5 ] 
+       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
+    fi
+    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
     
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]
@@ -403,7 +407,13 @@ get_linux_files()
     LINUX_ERROR=$?                                                      # Set Nb. Errors while collecting
     get_aix_files                                                       # Collect Files from AIX Servers
     AIX_ERROR=$?                                                        # AIX Nb. Errors while collecting
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Set Total AIX+Linux Errors
 
-    sadm_stop $SADM_EXIT_CODE                                           # End Process with exit Code
-    exit $SADM_EXIT_CODE                                                # Exit script
+    # Print Total Script Errors
+    sadm_writelog " "                                                   # Separation Blank Line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Exit Code=AIX+Linux Errors
+    sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
+
+    # Gracefully Exit the script    
+    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
+    exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)

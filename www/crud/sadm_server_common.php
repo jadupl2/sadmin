@@ -295,27 +295,27 @@ function display_left_side ( $wrow , $mode) {
     if ($mode == 'D') {
         switch ($wrow['srv_backup']) {
             case 0: $scr_backup=0 ; $scr_backup_desc="No backup" ; break;
-            case 1: $scr_backup=1 ; $scr_backup_desc="Sunday"    ; break;
-            case 2: $scr_backup=2 ; $scr_backup_desc="Monday"    ; break;
-            case 3: $scr_backup=3 ; $scr_backup_desc="Tuesday"   ; break;
-            case 4: $scr_backup=4 ; $scr_backup_desc="Wednesday" ; break;
-            case 5: $scr_backup=5 ; $scr_backup_desc="Thursday"  ; break;
-            case 6: $scr_backup=6 ; $scr_backup_desc="Friday"    ; break;
-            case 7: $scr_backup=7 ; $scr_backup_desc="Saturday"  ; break;
+            case 1: $scr_backup=1 ; $scr_backup_desc="Monday"    ; break;
+            case 2: $scr_backup=2 ; $scr_backup_desc="Tuesday"   ; break;
+            case 3: $scr_backup=3 ; $scr_backup_desc="Wednesday" ; break;
+            case 4: $scr_backup=4 ; $scr_backup_desc="Thursday"  ; break;
+            case 5: $scr_backup=5 ; $scr_backup_desc="Friday"    ; break;
+            case 6: $scr_backup=6 ; $scr_backup_desc="Saturday"  ; break;
+            case 7: $scr_backup=7 ; $scr_backup_desc="Sunday"    ; break;
         }
         echo "\n<input type='text' name='scr_backup_desc' readonly placeholder=" . $scr_backup_desc .
              " maxlength='15' size='16' value='" . sadm_clean_data($scr_backup_desc). "'/>\n";
     }
     if ($mode == 'C') {
        echo "\n<select name='scr_backup' size=1>";
-       echo "\n<option value='4' selected>Wednesday</option>";
-       echo "\n<option value='1'>Sunday</option>";
-       echo "\n<option value='2'>Monday</option>";
-       echo "\n<option value='3'>Tuesday</option>";
-       echo "\n<option value='4'>Wednesday</option>";
-       echo "\n<option value='5'>Thursday</option>";
+       echo "\n<option value='3' selected>Wednesday</option>";
+       echo "\n<option value='1'>Monday</option>";
+       echo "\n<option value='2'>Tuesday</option>";
+       echo "\n<option value='3'>Wednesday</option>";
+       echo "\n<option value='4'>Thursday</option>";
        echo "\n<option value='5'>Friday</option>";
-       echo "\n<option value='7'>Saturday</option>";
+       echo "\n<option value='6'>Saturday</option>";
+       echo "\n<option value='7'>Sunday</option>";
        echo "\n</select>";
     }
     if ($mode == 'U') {
@@ -329,45 +329,45 @@ function display_left_side ( $wrow , $mode) {
                         }
                         break;
                 case 1: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='1' selected>Sunday</option>";
+                           echo "\n<option value='1' selected>Monday</option>";
                         }else{
-                           echo "\n<option value='1'>Sunday</option>";
+                           echo "\n<option value='1'>Monday</option>";
                         }
                         break;
                 case 2: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='2' selected>Monday</option>";
+                           echo "\n<option value='2' selected>Tuesday</option>";
                         }else{
-                           echo "\n<option value='2'>Monday</option>";
+                           echo "\n<option value='2'>Tuesday</option>";
                         }
                         break;
                 case 3: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='3' selected>Tuesday</option>";
+                           echo "\n<option value='3' selected>Wednesday</option>";
                         }else{
-                           echo "\n<option value='3'>Tuesday</option>";
+                           echo "\n<option value='3'>Wednesday</option>";
                         }
                         break;
                 case 4: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='4' selected>Wednesday</option>";
+                           echo "\n<option value='4' selected>Thursday</option>";
                         }else{
-                           echo "\n<option value='4'>Wednesday</option>";
+                           echo "\n<option value='4'>Thursday</option>";
                         }
                         break;
                 case 5: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='5' selected>Thursday</option>";
+                           echo "\n<option value='5' selected>Friday</option>";
                         }else{
-                           echo "\n<option value='5'>Thursday</option>";
+                           echo "\n<option value='5'>Friday</option>";
                         }
                         break;
                 case 6: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='6' selected>Friday</option>";
+                           echo "\n<option value='6' selected>Saturday</option>";
                         }else{
-                           echo "\n<option value='6'>Friday</option>";
+                           echo "\n<option value='6'>Saturday</option>";
                         }
                         break;
                 case 7: if ($x == $wrow['srv_backup']) {
-                           echo "\n<option value='7' selected>Saturday</option>";
+                           echo "\n<option value='7' selected>Sunday</option>";
                         }else{
-                           echo "\n<option value='7'>Saturday</option>";
+                           echo "\n<option value='7'>Sunday</option>";
                         }
                         break;
            }

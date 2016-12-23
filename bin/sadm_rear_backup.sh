@@ -20,79 +20,55 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+#
+#  History
+#  1.7  Dec 2016    Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
+
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
-#
+
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 #   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
 #   variables and functions available to you when using the SADMIN functions Library
-#===================================================================================================
-
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 
-
-#
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
-#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
 #SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
-#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
-#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-#SADM_PGDB=""                                ; export SADM_PGDB          # PostGres DataBase Name
-#SADM_PGSCHEMA=""                            ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-#SADM_PGHOST=""                              ; export SADM_PGHOST        # PostGres DataBase Host
-#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
-#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
-#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
-#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
-
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
 #
 
 
 
-
-
-
 # --------------------------------------------------------------------------------------------------
-#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
+#                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-NFS_IP="192.168.1.47"                               ; export NFS_IP         # NFS Server IP
-NFS_DIR="/volume1/Linux_DR"                         ; export NFS_DIR        # Dir where Backup Go
-NFS_MOUNT="/mnt/nfs1"                               ; export NFS_MOUNT      # Local NFS Mount Point 
-REAR_COPY=2                                         ; export REAR_COPY      # Nb. of images to keep
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+NFS_IP="192.168.1.47"                       ; export NFS_IP             # NFS Server IP
+NFS_DIR="/volume1/Linux_DR"                 ; export NFS_DIR            # Dir where Backup Go
+NFS_MOUNT="/mnt/nfs1"                       ; export NFS_MOUNT          # Local NFS Mount Point 
+REAR_COPY=2                                 ; export REAR_COPY          # Nb. of images to keep
+REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # Read Configuration file
 
 
 # --------------------------------------------------------------------------------------------------
@@ -103,8 +79,14 @@ create_backup()
     REAR=`which rear`
     if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
         then REAR=`${SADM_WHICH} rear`                                  # Store Path of command
-        else sadm_writelog "Command rear is not found - Job Aborted"    # Advise User Aborting
+        else sadm_writelog "Command 'rear' isn't found - Job Aborted"   # Advise User Aborting
              return 1
+    fi
+
+    if [ ! -r "$READ_CFGFILE" ]                                         # ReaR Site config exist?
+        then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
+             sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
+             return 1                                                   # Exit with Error
     fi
     
     # Remove default crontab job - So we can decide otherwise when we run rear from this script
@@ -154,7 +136,8 @@ rear_housekeeping()
     mount ${NFS_IP}:${NFS_DIR} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]
         then RC=1
-             sadm_writelog "Mount of $NFS_DIR on NFS server $NFS_IP Failed Proces Aborted"
+             sadm_writelog "Mount of $NFS_DIR on NFS server $NFS_IP Failed"
+             sadm_writelog "Proces Aborted"
              umount ${NFS_MOUNT} > /dev/null 2>&1
              return 1
     fi

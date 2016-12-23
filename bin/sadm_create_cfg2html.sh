@@ -35,7 +35,6 @@ SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
@@ -98,9 +97,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              fi
     fi
     export CFG2HTML                                                     
-    if [ "$SADM_DEBUG_LEVEL" -gt 0 ]
-        then sadm_writelog "COMMAND CFG2HTML : $CFG2HTML"               # Display Path if Debug
-    fi
     
     # Run CFG2HTML
     CFG2VER=`$CFG2HTML -v | tr -d '\n'`
