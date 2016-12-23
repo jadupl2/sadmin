@@ -54,7 +54,7 @@ SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR
 SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/net"   ; export SADM_WWW_NET_DIR   # web net dir
 SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR    # web dr dir
 SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR  # web nmon dir
-SADM_WWW_TMP_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/tmp"   ; export SADM_WWW_TMP_DIR   # web tmp dir
+SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                   ; export SADM_WWW_TMP_DIR   # web tmp dir
 SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/log"   ; export SADM_WWW_LOG_DIR   # web log dir
 #
 #

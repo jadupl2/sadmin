@@ -10,74 +10,43 @@
 # --------------------------------------------------------------------------------------------------
 # 2.2 Correction in end_process function (April 2014)
 #
+# Enhancements/Corrections Version Log
+# 1.6   
+# 
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-#
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 #   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
 #   variables and functions available to you when using the SADMIN functions Library
-#===================================================================================================
-
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to lo1ad the SADMIN function Libraries
+# These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.8'                             ; export SADM_VER            # This Script Version
+SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
+SADM_VER='1.6'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=9                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-
-
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
+# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
 SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
 #
 
-
-##############################################################################
-# Display Menu Principal
-##############################################################################
-sadm_display_main_menu()
-{
-    sadm_display_heading "System Administration Menu" 
-    sadm_writexy 05 15 "1- Filesystem tools........................"
-    sadm_writexy 07 15 "2- Create system group on Linux farm......."
-    sadm_writexy 09 15 "3- Global Filesystem Tools................."
-    sadm_writexy 11 15 "4- RPM DataBase Tools......................"
-    sadm_writexy 14 15 "Q- Quit S.A.M.............................."
-    sadm_writexy 21 29 "${reverse}Option ? ${reset}_${right}"
-    sadm_writexy 21 38 " "
-}
-
-#
 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
@@ -86,6 +55,109 @@ sadm_display_main_menu()
 Debug=true                                      ; export Debug          # Debug increase Verbose
 #
 
+
+# --------------------------------------------------------------------------------------------------
+# Display All SADM Variables Available to USER
+# --------------------------------------------------------------------------------------------------
+sadm_display_variables()
+{
+
+# SADMIN DIRECTORIES STRUCTURES DEFINITIONS
+    tput clear  ; printf "DIRECTORIES VARIABLES\n" ; printf "\n"
+    printf "SADM_BASE_DIR        = $SADM_BASE_DIR\n" 
+    printf "SADM_BIN_DIR         = $SADM_LIB_DIR\n" 
+    printf "SADM_TMP_DIR         = $SADM_TMP_DIR\n" 
+    printf "SADM_LIB_DIR         = $SADM_LIB_DIR\n" 
+    printf "SADM_LOG_DIR         = $SADM_LOG_DIR\n" 
+    printf "SADM_CFG_DIR         = $SADM_CFG_DIR\n" 
+    printf "SADM_SYS_DIR         = $SADM_SYS_DIR\n" 
+    printf "SADM_DAT_DIR         = $SADM_DAT_DIR\n"
+    printf "SADM_PG_DIR          = $SADM_PG_DIR\n" 
+    printf "SADM_PKG_DIR         = $SADM_PKG_DIR\n" 
+    printf "SADM_NMON_DIR        = $SADM_NMON_DIR\n" 
+    printf "SADM_DR_DIR          = $SADM_DR_DIR\n"
+    printf "SADM_SAR_DIR         = $SADM_SAR_DIR\n" 
+    printf "SADM_RCH_DIR         = $SADM_RCH_DIR\n" 
+    printf "SADM_NET_DIR         = $SADM_NET_DIR\n" 
+#
+# SADMIN WEB SITE DIRECTORIES DEFINITION
+    printf "SADM_WWW_DIR         = $SADM_WWW_DIR\n" 
+    printf "SADM_WWW_HTML_DIR    = $SADM_WWW_HTML_DIR\n" 
+    printf "SADM_WWW_DAT_DIR     = $SADM_WWW_DAT_DIR\n" 
+    printf "SADM_WWW_LIB_DIR     = $SADM_WWW_LIB_DIR\n" 
+    printf "SADM_WWW_RCH_DIR     = $SADM_WWW_RCH_DIR\n" 
+    printf "SADM_WWW_SAR_DIR     = $SADM_WWW_SAR_DIR\n"
+    printf "SADM_WWW_NET_DIR     = $SADM_WWW_NET_DIR\n" 
+    printf "SADM_WWW_DR_DIR      = $SADM_WWW_DR_DIR\n" 
+    printf "SADM_WWW_NMON_DIR    = $SADM_WWW_NMON_DIR\n" 
+    printf "SADM_WWW_TMP_DIR     = $SADM_WWW_TMP_DIR\n" 
+    printf "SADM_WWW_LOG_DIR     = $SADM_WWW_LOG_DIR\n" 
+    echo "Press [ENTER] to Continue" ; read dummy
+
+#
+# SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
+    tput clear ; printf "FILES VARIABLES\n" ; printf "\n"
+    printf "SADM_PID_FILE        = $SADM_PID_FILE\n" 
+    printf "SADM_CFG_FILE        = $SADM_CFG_FILE\n" 
+    printf "SADM_REL_FILE        = $SADM_REL_FILE\n" 
+    printf "SADM_CFG_HIDDEN      = $SADM_CFG_HIDDEN\n" 
+    printf "SADM_TMP_FILE1       = $SADM_TMP_FILE1\n" 
+    printf "SADM_TMP_FILE2       = $SADM_TMP_FILE2\n" 
+    printf "SADM_TMP_FILE3       = $SADM_TMP_FILE3\n" 
+    printf "SADM_LOG             = $SADM_LOG\n" 
+    printf "SADM_RCHLOG          = $SADM_RCHLOG\n" 
+    printf "PGPASSFILE           = $PGPASSFILE\n" 
+    printf "SADM_SERVER          = $SADM_SERVER\n" 
+    printf "SADM_DOMAIN          = $SADM_DOMAIN\n"
+#    
+# COMMAND PATH REQUIRE TO RUN SADM
+    printf "\n" ; printf "PROGRAM USED & MISC. VARIABLES\n" ; printf "\n"
+    printf "SADM_LSB_RELEASE     = $SADM_LSB_RELEASE\n"
+    printf "SADM_DMIDECODE       = $SADM_DMIDECODE\n" 
+    printf "SADM_BC              = $SADM_BC\n" 
+    printf "SADM_FDISK           = $SADM_FDISK\n" 
+    printf "SADM_WHICH           = $SADM_WHICH\n" 
+    printf "SADM_PERL            = $SADM_PERL\n"
+    printf "SADM_MAIL            = $SADM_MAIL\n" 
+    printf "SADM_LSCPU           = $SADM_LSCPU\n"
+    printf "SADM_NMON            = $SADM_NMON\n"
+    printf "SADM_PARTED          = $SADM_PARTED\n" 
+    printf "SADM_ETHTOOL         = $SADM_ETHTOOL\n"
+    printf "SADM_PSQL            = $SADM_PSQL\n"
+    printf "SADM_SSH             = $SADM_SSH\n" 
+    printf "SADM_DASH            = $SADM_DASH\n" 
+    printf "SADM_TEN_DASH        = $SADM_TEN_DASH\n" 
+    echo "Press [ENTER] to Continue" ; read dummy
+    
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+    tput clear ; printf "VARIABLES LOADED FROM SADM CONFIGURATION FILE\n" ; printf "\n"
+    printf "SADM_MAIL_ADDR       = $SADM_MAIL_ADDR\n"
+    printf "SADM_MAIL_TYPE       = $SADM_MAIL_TYPE\n" 
+    printf "SADM_CIE_NAME        = $SADM_CIE_NAME\n" 
+    printf "SADM_USER            = $SADM_USER\n"
+    printf "SADM_GROUP           = $SADM_GROUP\n"
+    printf "SADM_WWW_USER        = $SADM_WWW_USER\n" 
+    printf "SADM_WWW_GROUP       = $SADM_GROUP\n" 
+    printf "SADM_MAX_LOGLINE     = $SADM_MAX_LOGLINE\n" 
+    printf "SADM_MAX_RCLINE      = $SADM_MAX_RCLINE\n" 
+    printf "SADM_NMON_KEEPDAYS   = $SADM_NMON_KEEPDAYS\n" 
+    printf "SADM_SAR_KEEPDAYS    = $SADM_SAR_KEEPDAYS\n" 
+    printf "SADM_RCH_KEEPDAYS    = $SADM_RCH_KEEPDAYS\n" 
+    printf "SADM_LOG_KEEPDAYS    = $SADM_LOG_KEEPDAYS\n" 
+    printf "SADM_PGUSER          = $SADM_PGUSER\n" 
+    printf "SADM_PGGROUP         = $SADM_PGGROUP\n" 
+    printf "SADM_PGDB            = $SADM_PGDB\n" 
+    printf "SADM_PGSCHEMA        = $SADM_PGSCHEMA\n" 
+    printf "SADM_PGHOST          = $SADM_PGHOST\n" 
+    printf "SADM_PGPORT          = $SADM_PGPORT\n" 
+    printf "SADM_RW_PGUSER       = $SADM_RW_PGUSER\n" 
+    #printf "SADM_RW_PGPWD        = $SADM_RW_PGPWD\n" 
+    printf "SADM_RO_PGUSER       = $SADM_RO_PGUSER\n"
+    printf "SADM_RO_PGPWD        = $SADM_RO_PGPWD\n" 
+    printf "SADM_SSH_PORT        = $SADM_SSH_PORT\n"
+    echo "Press [ENTER] to Continue" ; read dummy
+    
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -183,61 +255,25 @@ Debug=true                                      ; export Debug          # Debug 
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
 
-    # For Debugging Purpose - Display Final Value of configuration file
-    tput clear
-    printf "=========================================================================================================================\n"
-    printf ""
-    printf  "EXPORTED VARIABLES INFORMATION\n"
-    printf "  - SADM_DEBUG_LEVEL=$SADM_DEBUG_LEVEL\n"
-    printf "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR\n"         # Default email address
-    printf "  - SADM_CIE_NAME=$SADM_CIE_NAME\n"           # Company Name
-    printf "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE\n"         # Send Email after each run
-    printf "  - SADM_SERVER=$SADM_SERVER\n"               # SADMIN server
-    printf "  - SADM_DOMAIN=$SADM_DOMAIN\n"               # SADMIN Domain Default
-    printf "  - SADM_SSH=$SADM_SSH\n"                     # SADMIN SSH Path
-    printf "  - SADM_SSH_PORT=$SADM_SSH_PORT\n"           # SADMIN SSH Port
-    printf "  - SADM_USER=$SADM_USER\n"                   # sadmin user account
-    printf "  - SADM_GROUP=$SADM_GROUP\n"                 # sadmin group account
-    printf "  - SADM_WWW_USER=$SADM_WWW_USER\n"           # sadmin Web user account
-    printf "  - SADM_WWW_GROUP=$SADM_WWW_GROUP\n"         # sadmin Web group account
-    printf "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE\n"     # Max Line in each *.log
-    printf "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE\n"       # Max Line in each *.rch
-    printf "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS\n" # Days to keep old *.nmon
-    printf "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.sar
-    printf "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS\n"  # Days to keep old *.rch
-    printf "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS\n"   # Days ro keep old *.log
-    printf "  - SADM_PSQL=$SADM_PSQL\n"                   # Location of psql Executable
-    printf "  - SADM_PGUSER=$SADM_PGUSER\n"               # PostGres User Name
-    printf "  - SADM_PGGROUP=$SADM_PGGROUP\n"             # PostGres Group Name
-    printf "  - SADM_PGDB=$SADM_PGDB\n"                   # PostGres DataBase Name
-    printf "  - PGPASSFILE=$PGPASSFILE\n"                 # PostGres PAssword File
-    printf "  - SADM_PGSCHEMA=$SADM_PGSCHEMA\n"           # PostGres DataBase Schema
-    printf "  - SADM_PGHOST=$SADM_PGHOST\n"               # PostGres DataBase Host
-    printf "  - SADM_PGPORT=$SADM_PGPORT\n"               # PostGres Listening Port
-    printf "  - SADM_RW_PGUSER=$SADM_RW_PGUSER\n"         # PostGres RW User
-    printf "  - SADM_RW_PGPWD=$SADM_RW_PGPWD\n"           # PostGres RW User Pwd
-    printf "  - SADM_RO_PGUSER=$SADM_RO_PGUSER\n"         # PostGres RO User
-    printf "  - SADM_RO_PGPWD=$SADM_RO_PGPWD\n"           # PostGres RO User Pwd
-
-    printf "=========================================================================================================================\n"
-    echo "Press [ENTER] to Continue" ; read dummy
+   
      
+    sadm_display_variables
 
      
-    tput clear
-    echo " "
-    echo "TEST EPOCH AND ELAPSE TIME CALCULTATION FUNCTIONS"
-    echo " "
-    wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    epoch_start=`sadm_date_to_epoch  "$wstart_time"`
-    printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
-    echo "Please wait - Sleeping for 5 seconds"
-    sleep 5 
-    wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    epoch_end=`sadm_date_to_epoch "$wend_time"`
-    welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
-    printf "End   Date is $wend_time - Epoch is $epoch_end \n"
-    printf "Elapsed time is $welapse \n"
+    #tput clear
+    #echo " "
+    #echo "TEST EPOCH AND ELAPSE TIME CALCULTATION FUNCTIONS"
+    #echo " "
+    #wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    #epoch_start=`sadm_date_to_epoch  "$wstart_time"`
+    #printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
+    #echo "Please wait - Sleeping for 5 seconds"
+    #sleep 5 
+    #wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
+    #epoch_end=`sadm_date_to_epoch "$wend_time"`
+    #welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
+    #printf "End   Date is $wend_time - Epoch is $epoch_end \n"
+    #printf "Elapsed time is $welapse \n"
 
 
     
@@ -275,6 +311,7 @@ Debug=true                                      ; export Debug          # Debug 
     #e_underline "e_underline"
     #e_bold      "e_bold"
     #e_note      "e_note"
+
 
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
