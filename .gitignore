@@ -27,7 +27,7 @@ www/tmp/
 # System Startup Log Files
 sys/*.log
 cfg/.pgpass
-
+cfg/sadmin.cfg
 
 __pycache__/
 *.pyc
