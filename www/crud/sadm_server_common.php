@@ -381,7 +381,7 @@ function display_left_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     # Monitor the Server ?
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Monitor</div>";
+    echo "\n\n<div class='server_label1'>Monitor SSH Connectivity</div>";
     echo "\n<div class='server_input1'>";
     if ($mode == 'C') { $wrow['srv_monitor'] = True ; }                 # Set Default Value to True
     switch ($mode) {
@@ -499,7 +499,7 @@ function display_right_side ( $wrow , $mode) {
                         if ($mth == 1) {
                             echo "\n<option value='" . $mth . "' selected>Every Month</option>";
                         }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
+                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Months</option>";
                         }
                     }
                     echo "\n</select>";
@@ -511,13 +511,21 @@ function display_right_side ( $wrow , $mode) {
                     }
                     for ($mth = 1; $mth < 13; $mth = $mth + 1) {
                         if ($mth == $wrow['srv_osupdate_period']) {
-                            echo "\n<option value='" . $mth . "' selected>Every " . $mth . " Month</option>";
+                           if ($mth == 1) {
+                              echo "\n<option value='" . $mth . "' selected>Every Month</option>";
+                           }else{
+                              echo "\n<option value='" . $mth . "' selected>Every " . $mth . " Months</option>";
+                           }     
                         }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Month</option>";
+                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Months</option>";
                         }
                     }
                     break;
     }
+
+
+
+
     echo "\n</select>";
     echo "\n</div>";
 
@@ -650,7 +658,7 @@ function display_right_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     # O/S Update Week (1,2,3,4) Can be multiple Choice
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Update O/S in week</div>";
+    echo "\n\n<div class='server_label2'>Update O/S in week in the month</div>";
     echo "\n<div class='server_input2'>";
     switch ($mode) {
         case 'C'  : echo "<input type='checkbox' name='scr_osupdate_week1' value=True checked />1st  ";
@@ -764,6 +772,38 @@ function display_right_side ( $wrow , $mode) {
     echo "\n</div>";                                                      # << End of server_input
 
 
+
+    # Space Lines    -------------------------------------------------------------------------------
+    echo "\n<br><br><br><br><br>\n";
+
+
+    
+    # Last Edit Date -------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Last Edit Date & Time</div>";
+    echo "\n<div class='server_input2'>";
+    echo "\n<input type='text' name='scr_last_edit_date' readonly maxlength='20' size='20' ";
+    echo "value='" . sadm_clean_data($wrow['srv_last_edit_date']). "'/>";
+    echo "</div>\n";
+
+    
+    # Creation Date -------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Creation Date</div>";
+    echo "\n<div class='server_input2'>";
+    echo "\n<input type='text' name='scr_creation_date' readonly maxlength='20' size='20' ";
+    echo "value='" . sadm_clean_data($wrow['srv_creation_date']). "'/>";
+    echo "</div>\n";
+
+    
+    # Last O/S Update Date -------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Last O/S Update</div>";
+    echo "\n<div class='server_input2'>";
+    echo "\n<input type='text' name='scr_last_update' readonly maxlength='20' size='20' ";
+    echo "value='" . sadm_clean_data($wrow['srv_last_update']). "'/>";
+    echo "\n<input type='text' name='scr_osupdate_status' readonly maxlength='1' size='1' ";
+    echo "value='" . sadm_clean_data($wrow['srv_osupdate_status']). "'/>";
+    echo "</div>\n";
+
+
     # O/S Update Calculated Date -------------------------------------------------------------------
     echo "\n\n<div class='server_label2'>Calculated next O/S update date</div>";
     echo "\n<div class='server_input2'>";
@@ -776,20 +816,6 @@ function display_right_side ( $wrow , $mode) {
                    break;
     }
     echo "</div>\n";
-
-
-    # Space Lines    -------------------------------------------------------------------------------
-    echo "\n<br><br><br><br><br>\n";
-
-
-    
-    # Last Edit Date -------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Last Edit Date & Time</div>";
-    echo "\n<div class='server_input2'>";
-    echo "\n<input type='text' name='scr_osupdate_date' readonly maxlength='20' size='20' ";
-    echo "value='" . sadm_clean_data($wrow['srv_last_edit_date']). "'/>";
-    echo "</div>\n";
-
 
     # O/S Update Effective Start Date -------------------------------------------------------------
     #if ($mode == 'U') {

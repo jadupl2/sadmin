@@ -80,7 +80,7 @@ perform_backup()
 
     # Display Current Day of the week
     DOW=`date '+%u'`                                                    # Day of Week 1=Mon-7=Sun
-    if [ $DOW -eq 0 ] ; then DOWSTR="Backup option is OFF"                          ;fi
+    if [ $DOW -eq 0 ] ; then DOWSTR="Backup option is OFF"                         ;fi
     if [ $DOW -eq 1 ] ; then DOWSTR="We will do backup scheduled for Monday"       ;fi
     if [ $DOW -eq 2 ] ; then DOWSTR="We will do backup scheduled for Tuesday"      ;fi
     if [ $DOW -eq 3 ] ; then DOWSTR="We will do backup scheduled for Wednesday"    ;fi
@@ -111,7 +111,6 @@ perform_backup()
     WCUR_DATE=$(date "+%C%y.%m.%d %H:%M:%S")
     WCUR_EPOCH=$(sadm_date_to_epoch "$WCUR_DATE")
     sadm_writelog "The current epoch time for $WCUR_DATE is $WCUR_EPOCH"
-    sadm_writelog ""
     sadm_writelog "Processing each server(s) that are scheduled to be backup today"
     
     xcount=0; ERROR_COUNT=0;
@@ -164,7 +163,6 @@ perform_backup()
                     else W_START_EPOCH=`echo "$WCUR_EPOCH + ( ($xcount-1) * $W_INT_SEC) " | bc`
               fi 
               W_START_DATE=$(sadm_epoch_to_date "$W_START_EPOCH")  
-              sadm_writelog ""
               sadm_writelog "($xcount) ${fqdn_server} - Backup start around ${W_START_DATE}"
 
               # Display and run the 'at' Command to launch th eReaR Backup Script

@@ -83,7 +83,7 @@ create_backup()
              return 1
     fi
 
-    if [ ! -r "$READ_CFGFILE" ]                                         # ReaR Site config exist?
+    if [ ! -r "$REAR_CFGFILE" ]                                         # ReaR Site config exist?
         then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
              sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
              return 1                                                   # Exit with Error

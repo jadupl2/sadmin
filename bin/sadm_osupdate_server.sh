@@ -82,6 +82,37 @@ STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equ
 USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
 
 
+# --------------------------------------------------------------------------------------------------
+#               Update Last O/S Update Date and Result in Server Table in sadm Database
+# --------------------------------------------------------------------------------------------------
+update_server_db()
+{
+    WSERVER=$1                                                          # Save Server name Recv.
+    WSTATUS=$2                                                          # Save Server Update Status
+    WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
+    sadm_writelog "Update $WSERVER row in DataBase" 
+    SQL1="UPDATE sadm.server SET " 
+    SQL2="srv_last_update = '${WCURDAT}', "
+    SQL3="srv_osupdate_status = '${WSTATUS}' "
+    SQL4="where srv_name = '${WSERVER}' ;"
+    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
+    if [ $DEBUG_LEVEL -gt 5 ] 
+       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RW_PGUSER -c $SQL" 
+            sadm_writelog "PGPASSFILE = $PGPASSFILE" 
+    fi
+    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RW_PGUSER -c "$SQL" >> $SADM_LOG 2>&1
+    if [ $? -ne 0 ]
+        then sadm_writelog "Error updating the row of $WSERVER in Database" 
+             RCU=1
+        else sadm_writelog "Last O/S Update date and status is updated for $WSERVER" 
+             RCU=0
+    fi
+    return $RCU
+}
+
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
@@ -163,7 +194,9 @@ process_linux_servers()
                      if [ $? -ne 0 ]
                         then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
                              ERROR_COUNT=$(($ERROR_COUNT+1))
+                             update_server_db "${server_name}" "F"  
                         else sadm_writelog "Script was submitted with no error."
+                             update_server_db "${server_name}" "S"  
                      fi
             fi
             sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
