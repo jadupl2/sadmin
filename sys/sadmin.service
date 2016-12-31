@@ -1,0 +1,14 @@
+[Unit]
+Description=Control SysADMin Tools service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/sadmin/sys/sadm_startup.sh
+ExecStop=/sadmin/sys/sadm_shutdown.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

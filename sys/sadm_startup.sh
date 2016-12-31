@@ -49,5 +49,5 @@ write_log()
  
     # Indicate the startup is finished is the log
     write_log " "
-    write_log "sadmin.service startup is finished !"
+    write_log "Startup script: $PN Version: ${VER} is finished on ${HOSTNAME}!"
 
