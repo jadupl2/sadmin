@@ -7,7 +7,6 @@
 # --------------------------------------------------------------------------------------------------
 #set -x
 
-
 # Screen related variables
 clreol=`tput el`                                ; export clreol         # Clr to end of lne
 clreos=`tput ed`                                ; export clreos         # Clr to end of scr
@@ -25,7 +24,6 @@ blink=`tput blink`                              ; export blink          # turn b
 screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
 reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
 
-#
 # Color Foreground Text
 black=$(tput setaf 0)                           ; export black          # Black color
 red=$(tput setaf 1)                             ; export red            # Red color
@@ -35,7 +33,7 @@ blue=$(tput setaf 4)                            ; export blue           # Blue c
 magentae=$(tput setaf 5)                        ; export magenta        # Magenta color
 cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
 white=$(tput setaf 7)                           ; export white          # White color
-#
+
 # Color Background Text
 bblack=$(tput setab 0)                           ; export bblack          # Black color
 bred=$(tput setab 1)                             ; export bred            # Red color
@@ -46,13 +44,7 @@ bmagentae=$(tput setab 5)                        ; export bmagenta        # Mage
 bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
 bwhite=$(tput setab 7)                           ; export bwhite          # White color
 
-
-
-
-
 # Headers and  Logging
-#
-
 e_header()      { printf "\n${bold}${purple}==========  %s  ==========${reset}\n" "$@" 
 }
 e_arrow()       { printf "➜ $@\n"
@@ -225,23 +217,28 @@ sadm_ask_password()
 #---------------------------------------------------------------------------------------------------
 sadm_display_menu() 
 {
-#######    marray=( "$@" )                                                     # Save Array of menu recv.
-#####THIS LINE IS NEEDED - TO BE FIXED
-
-
+    s_count=0
+    s_item_list=$*
+    for s_item in $s_item_list ; do  s_count=$(($s_count+1)) ; s_array[$s_count]=$s_item ; done
+#    sadm_writelog "Count is $s_count"
+#    for (( c=1; c<=$s_count; c++ ))
+#        do
+#        sadm_writelog "[$c] ${s_array[$c]}"
+#        done
+#    exit
 
 
     # Validate number of item in array - Can be from 1 to 30 Maximum
-    if [ "${#marray[@]}" -gt 30 ] && [ "${#marray[@]}" -lt 1 ]          # Validate NB items in array
-        then sadm_mess "Number of items in array ("${#marray[@]}") is invalid"
+    if [ "$s_count" -gt 30 ] && [ "$s_count" -lt 1 ]          # Validate NB items in array
+        then sadm_mess "Number of items in array ("$s_count") is invalid"
              return 98                                                  # Set Error return code
     fi
-    adm_choice=0                                                        # Initial menu item to zero
     
     
     # If from 1 to 8 items to display in the menu
-    if [ "${#marray[@]}" -lt 8 ]                                        # If less than 9 items
-        then for i in "${marray[@]}"                                    # Loop through the array
+    adm_choice=0                                                        # Initial menu item to zero
+    if [ "$s_count" -lt 8 ]                                             # If less than 9 items
+        then for i in "${s_array[@]}"                                    # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no. 
                 menu_item=$i
@@ -259,8 +256,8 @@ sadm_display_menu()
     fi
     
     # If from 8 to 15 items to display in the menu
-     if [ "${#marray[@]}" -gt 7 ] && [ "${#marray[@]}" -lt 16 ]         # If from 8 to 15 Items
-        then for i in "${marray[@]}"                                    # Loop through the array
+     if [ "$s_count" -gt 7 ] && [ "$s_count" -lt 16 ]         # If from 8 to 15 Items
+        then for i in "${s_array[@]}"                                    # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no.
                 menu_item=$i
@@ -276,8 +273,8 @@ sadm_display_menu()
     fi
 
     # If from 16 to 30 items to display in the menu
-     if [ "${#marray[@]}" -gt 15 ] && [ "${#marray[@]}" -lt 31 ]        # If from 16 to 30 items
-        then for i in "${marray[@]}"                                    # Loop through the array
+     if [ "$s_count" -gt 15 ] && [ "$s_count" -lt 31 ]        # If from 16 to 30 items
+        then for i in "${s_array[@]}"                                    # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no. 
                 menu_item=$i
@@ -313,7 +310,7 @@ sadm_display_menu()
            then sadm_mess "Sorry, wanted a number"                      # Error Msg on Line 22
                 continue                                                # Go Re-Accept choice
         fi
-        if [ "$adm_choix" -lt 1 ] || [ "$adm_choix" -gt "${#marray[@]}" ] # If Invalid Choice Number 
+        if [ "$adm_choix" -lt 1 ] || [ "$adm_choix" -gt "$s_count" ] # If Invalid Choice Number 
            then sadm_mess "Choice is invalid"                           # Invalid Choice  Message
                 continue                                                # Go Back to ReAccept Choice
            else break                                                   # Valid Choice Selected
@@ -321,7 +318,6 @@ sadm_display_menu()
         done
     return $adm_choix                                                   # Return Selected choice
 }
-
 
 
 

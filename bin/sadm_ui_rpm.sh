@@ -27,19 +27,19 @@ trap 'exec $SAM/sam' 2   		# INTERCEPTE LE ^C
 #===============================================================================
 display_rpm_menu()
 {
-	display_entete "RPM DataBase Tools"
-	writexy 05 10 "01- Search for a package using this pattern.:"
-	writexy 06 10 "02- View changelog of the package...........:" 
-	writexy 07 10 "03- Reset files permissions of package......:"
-	writexy 08 10 "04- Display documentation files of package..:"
-	writexy 09 10 "05- Query packages install order & date.....:"
-	writexy 10 10 "06- What RPM package provide that program...:"
-	writexy 11 10 "07- List files included in this package.....:"
-	writexy 12 10 "08- Display Information about this package..:"
-	writexy 13 10 "09- Display URL of a package................:"
-	writexy 15 10 " Q- Quit this menu...................."
-	writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-	writexy 21 38 " "
+	sadm_display_heading "RPM DataBase Tools"
+	sadm_writexy 05 10 "01- Search for a package using this pattern.:"
+	sadm_writexy 06 10 "02- View changelog of the package...........:" 
+	sadm_writexy 07 10 "03- Reset files permissions of package......:"
+	sadm_writexy 08 10 "04- Display documentation files of package..:"
+	sadm_writexy 09 10 "05- Query packages install order & date.....:"
+	sadm_writexy 10 10 "06- What RPM package provide that program...:"
+	sadm_writexy 11 10 "07- List files included in this package.....:"
+	sadm_writexy 12 10 "08- Display Information about this package..:"
+	sadm_writexy 13 10 "09- Display URL of a package................:"
+	sadm_writexy 15 10 " Q- Quit this menu...................."
+	sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
+	sadm_writexy 21 38 " "
 }
 
 
@@ -59,8 +59,8 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "Search for $RPM in package name"
-                   writexy 04 01 "Searching for $RPM in package name\n"
+                   sadm_display_heading "Search for $RPM in package name"
+                   sadm_writexy 04 01 "Searching for $RPM in package name\n"
                    rpm -qa | grep -i $RPM 
                    mess " " 
            fi
@@ -70,7 +70,7 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "Query Change log of package $RPM"
+                   sadm_display_heading "Query Change log of package $RPM"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"
@@ -83,12 +83,12 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "Reset Files Permissions of package $RPM"
+                   sadm_display_heading "Reset Files Permissions of package $RPM"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"
                       else rpm --setperms $RPM 
-                           display_entete "Reset Files Permissions of package $RPM"
+                           sadm_display_heading "Reset Files Permissions of package $RPM"
                            if [ $? -eq 0 ]
                               then mess "Files Permissions were reset successfully"
                               else mess "Files Persissions were NOT reset successfully"
@@ -101,7 +101,7 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "List documentation files of package $RPM"
+                   sadm_display_heading "List documentation files of package $RPM"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"
@@ -120,8 +120,8 @@ display_rpm_menu()
               else if [ ! -e "$WDATA" ] 
                       then mess "$WDATA does not exist on the system ?" 
                       else PGM=$WDATA
-                           display_entete "Package providing $PGM" 
-                           writexy 04 01 "The file $PGM is part of this RPM package\n\n" 
+                           sadm_display_heading "Package providing $PGM" 
+                           sadm_writexy 04 01 "The file $PGM is part of this RPM package\n\n" 
                            rpm -qf $PGM  
                            mess " "
                    fi
@@ -132,7 +132,7 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "List files contained in $RPM Package"
+                   sadm_display_heading "List files contained in $RPM Package"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"
@@ -145,7 +145,7 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "Display $RPM Package Information"
+                   sadm_display_heading "Display $RPM Package Information"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"
@@ -158,7 +158,7 @@ display_rpm_menu()
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
-                   display_entete "Display URL of Package $RPM"
+                   sadm_display_heading "Display URL of Package $RPM"
                    rpm -q $RPM > /dev/null 2>&1
                    if [ $? -ne 0 ] 
                       then mess "Package $RPM does not exist or not installed"

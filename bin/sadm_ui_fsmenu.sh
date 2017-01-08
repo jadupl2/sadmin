@@ -17,86 +17,20 @@
 #   1.0      Initial Version - Jun 2016 - Jacques Duplessis
 #   1.3      Revised for ext4 -Jul 2016 - Jacques Duplessis
 #   1.5      Revised for xfs -Jul 2016 - Jacques Duplessis
-#
-#===================================================================================================
-#trap 'exec $SAM/sam' 2   		# INTERCEPTE LE ^C
-#
-
-
-#
-#===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
+#   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #===================================================================================================
 
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_fs.sh ]     && . ${SADM_BASE_DIR}/lib/sadm_lib_lib.sh  
-
-
-#
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
-#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
-#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
-#SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
-#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
-#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-#SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
-#SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-#SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
-#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
-#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
-#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
-#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
-
-#===================================================================================================
-#
-
-
-
+# Load Filesystem Library Tools
+[ -f ${SADM_LIB_DIR}/sadm_lib_fs.sh ] && . ${SADM_LIB_DIR}/sadm_lib_fs.sh  
 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-
-
 BATCH_MODE=0                        ; export BATCH_MODE                 # Batch mode OFF interactive
 
 
 #===================================================================================================
-#                           Set Creation screen Default Value
+#                       Set FileSystem Creation Screen Default Value
 #===================================================================================================
 set_creation_default()
 {
@@ -107,6 +41,7 @@ set_creation_default()
     CR_NS="0"      ; export CR_NS
     CR_SS="0"      ; export CR_SS
     if [ "$OSVERSION" -gt 5 ] ; then CR_FT="ext4" ; else CR_FT="ext3" ; fi
+    if [ "$OSVERSION" -gt 6 ] ; then CR_FT="xfs"  ; else CR_FT="ext4" ; fi
     export CR_FT
 }
 
@@ -125,7 +60,7 @@ create_filesystem()
      sadm_writexy 07 05  "2- Logical volume name...................... $CR_LV "
      sadm_writexy 08 05  "3- Logical volume size in MB................ $CR_MB "
      sadm_writexy 09 05  "4- Filesystem mount point................... $CR_MP "
-     sadm_writexy 10 05  "5- Filesystem Type (ext3 or ext4)........... $CR_FT "
+     sadm_writexy 10 05  "5- Filesystem Type (ext3,ext4,xfs).......... $CR_FT "
      sadm_writexy 14 05  "${bold}P${nrm}- Proceed with creation ..................."
      sadm_writexy 15 05  "${bold}Q${nrm}- Quit this menu..........................."
      sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
@@ -329,7 +264,7 @@ delete_filesystem()
                             if [ "$RC" -ne 0 ]
                                then sadm_mess "Error ($RC) occured while deleting the filesystem"
                                else sadm_mess "Filesystem deleted with success !"
-        	                    RM_MP="" ; export RM_MP
+        	                        RM_MP="" ; export RM_MP
                                     RM_ST="" ; export RM_ST
                                fi
                             fi
@@ -461,3 +396,4 @@ display_fs_menu()
            ;;
       esac
    done
+   return 0

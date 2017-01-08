@@ -153,7 +153,7 @@ def print_server_row(wrow):
     sadm.writelog ("Print Server Dictionnary for Analysis")
     lineno = 0
     for k, v in wrow.iteritems():
-        print ("[%2d] %-25s ...%s..." % (lineno, k, v))
+        sadm.writelog ("[%2d] %-25s ...%s..." % (lineno, k, v))
         lineno += 1
     sadm.writelog (sadm.ten_dash)
 

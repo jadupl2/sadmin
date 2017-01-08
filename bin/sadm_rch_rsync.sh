@@ -141,7 +141,7 @@ process_servers()
               # If Monitoring is False for server doesn't respond to ping, continue to next server
               #-------------------------------------------------------------------------------------
               sadm_writelog " " ; sadm_writelog "Let's try to ping the server $fqdn_server"
-              ping -c 1 $fqdn_server >/dev/null 2>/dev/null             # Ping Server one time
+              ping -c 2 $fqdn_server >/dev/null 2>/dev/null             # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"
