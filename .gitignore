@@ -14,11 +14,14 @@ sam/
 sam/sam
 cfg/
 dat/
-jac/
+jac/*
+!jac/bin
 log/
 tmp/
 pgsql/
 notes/
+www/cgi-bin/
+www/html/
 www/dat/
 www/old/
 www/tmp/
