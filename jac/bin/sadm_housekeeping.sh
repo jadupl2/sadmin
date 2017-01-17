@@ -116,6 +116,19 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
             fi  
     fi
+
+    if [ -d "/install" ]
+        then sadm_writelog " "
+             sadm_writelog "/install Directory"
+             sadm_writelog "find /install -exec chown jacques.${jgroup} {} \;"
+             find /install -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+            fi  
+    fi   
     
     if [ -d "/os" ]
         then sadm_writelog " "
