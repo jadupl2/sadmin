@@ -10,62 +10,51 @@
 #===================================================================================================
 # 2.2 Correction in end_process function (Sept 2016)
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
+# 2.4 Install cfg2html from local copy is not present (Jab 2017)
 #
 #===================================================================================================
+# 
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-
-#
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 #   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
 #   variables and functions available to you when using the SADMIN functions Library
-#===================================================================================================
-
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.3'                             ; export SADM_VER            # This Script Version
+SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
+SADM_VER='2.4'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
-#[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  # sadm screen lib
-
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
 #
 
 
+
 # --------------------------------------------------------------------------------------------------
-#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
+#                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-#
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+
 
 
 #===================================================================================================
@@ -84,23 +73,40 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
     # ----------------------------------------------------------------------------------------------
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
-    if [ $? -eq 0 ]                                                     # if found
-        then CFG2HTML=`which cfg2html`                                  # Save cfg2html path
-        else if [ "$(sadm_get_osname)" = "AIX" ]                        # If on AIX & Not Found
-                then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"         # Use then one in /sadmin
-                else sadm_writelog "Error : The command 'cfg2html' was not found"   # Not Found inform user
-                     sadm_writelog "   Install it and re-run this script" # Not Found inform user
-                     sadm_writelog "   For Ubuntu/Debian/Raspbian : sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
-                     sadm_writelog "   For RedHat/CentOS/Fedora   : rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
-                     sadm_stop 1                                        # Upd. RC & Trim Log 
-                     exit 1                                             # Exit With Error
-             fi
+    if [ $? -ne 0 ]                                                     # if found
+       then if [ "$(sadm_get_osname)" = "AIX" ]                         # If on AIX & Not Found
+               then CFG2HTML="$SADM_PKG_DIR/cfg2html/cfg2html"          # Use then one in /sadmin
+               else sadm_writelog "Command 'cfg2html' was not found"    # Not Found inform user
+                    sadm_writelog "We will install it now"              # Not Found inform user
+                    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
+                       [ "$(sadm_get_osname)" = "FEDORA" ]                    
+                       then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
+                    fi
+                    if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "DEBIAN" ] || 
+                       [ "$(sadm_get_osname)" = "RASPBIAN" ]                    
+                       then dpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb
+                    fi
+                    CFG2HTML=`which cfg2html >/dev/null 2>&1`           # Try Again to Locate cfg2html
+                    if [ $? -ne 0 ]                                     # if Still not found
+                        then sadm_writelog "Still the command 'cfg2html' can't be found" 
+                             sadm_writelog "Install it and re-run this script" # Not Found inform user
+                             sadm_writelog "For Ubuntu/Debian/Raspbian : " 
+                             sadm_writelog " - sudo dpkg --install ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+                             sadm_writelog "For RedHat/CentOS/Fedora   : "
+                             sadm_writelog " - sudo rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
+                             sadm_stop 1                                # Upd. RC & Trim Log 
+                             exit 1                                     # Exit With Error     
+                        else sadm_writelog "Package cfg2html was installed successfully" 
+                     fi
+                     CFG2HTML=`which cfg2html`                          # Save cfg2html path
+            fi
+       else CFG2HTML=`which cfg2html`                                   # Save cfg2html path
     fi
     export CFG2HTML                                                     
     
     # Run CFG2HTML
     CFG2VER=`$CFG2HTML -v | tr -d '\n'`
-    sadm_writelog "Version use is $CFG2VER"
+    sadm_writelog "$CFG2VER"
     sadm_writelog "Running : $CFG2HTML -H -o $SADM_DR_DIR"
     $CFG2HTML -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
     SADM_EXIT_CODE=$?
