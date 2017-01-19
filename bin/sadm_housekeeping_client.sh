@@ -16,6 +16,9 @@
 #   See the GNU General Public License for more details.
 #
 # --------------------------------------------------------------------------------------------------
+# 1.7  Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
+#
+# --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -30,7 +33,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -177,6 +180,15 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
+    set_dir "$SADM_BASE_DIR/jac"  "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_BASE_DIR/jac/bin" "0775" "$SADM_USER" "$SADM_GROUP"  # set Priv SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+
 
 
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
@@ -213,11 +225,20 @@ file_housekeeping()
     # Make sure the configuration file is at 644
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Protect SADMIN Configuration file"
-    sadm_writelog "chmod 0600 $SADM_CFG_FILE" 
+    sadm_writelog "chmod 0644 $SADM_CFG_FILE" 
     chmod 0644 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
-      
-    # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by PostGres
+    sadm_writelog "chmod 0644 $SADM_CFG_HIDDEN" 
+    chmod 0644 $SADM_CFG_HIDDEN
+    ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
+
+    # Set Owner and Permission for Readme file
+    if [ -f ${SADM_BASE_DIR}/README.md ]
+        then chmod 644 ${SADM_BASE_DIR}/README.md
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+    fi
+
+    # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
     if [ -d "$SADM_DAT_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
@@ -238,7 +259,7 @@ file_housekeeping()
              fi
     fi
 
-    # Make sure LOG Directory $SADM_LOG_DIR Directory files is own by PostGres
+    # Make sure LOG Directory $SADM_LOG_DIR Directory files is own by sadmin
     if [ -d "$SADM_LOG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
@@ -259,7 +280,29 @@ file_housekeeping()
              fi
     fi
 
-        
+    # Make sure JAC (Use for Development) Directory 
+    JACDIR="${SADM_BASE_DIR}/jac" 
+    if [ -d "$JACDIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $JACDIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $JACDIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $JACDIR -type f -exec chmod 664 {} \;"
+             find $JACDIR -type f -exec chmod 775 {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+
+             
     # Reset privilege on SADMIN SYS Directory files
     if [ -d "$SADM_SYS_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
