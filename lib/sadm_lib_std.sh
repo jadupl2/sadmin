@@ -9,7 +9,7 @@
 # Description
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
-#
+# 18 Jan - Create log file earlier to prevent error message
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -787,20 +787,20 @@ sadm_load_config_file()
     # Configuration file MUST be present - If .sadm_config exist, then create sadm_config from it.
     if [ ! -r "$SADM_CFG_FILE" ]
         then if [ ! -r "$SADM_CFG_HIDDEN" ] 
-                then sadm_writelog "****************************************************************"
-                     sadm_writelog "SADMIN Configuration file is not found - $SADM_CFG_FILE "
-                     sadm_writelog "Even the config template file cannot be found - $SADM_CFG_HIDDEN"
-                     sadm_writelog "Copy both files from another system to this server"
-                     sadm_writelog "Or restore the files from a backup"
-                     sadm_writelog "Review the file content."
-                     sadm_writelog "****************************************************************"
-                else sadm_writelog "****************************************************************"
-                     sadm_writelog "The configuration file $SADM_CFG_FILE do not exist."
-                     sadm_writelog "Will continue using template configuration file $SADM_CFG_HIDDEN"
-                     sadm_writelog "Please review the configuration file."
-                     sadm_writelog "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"   # Install Default cfg  file
+                then echo "****************************************************************"
+                     echo "SADMIN Configuration file is not found - $SADM_CFG_FILE "
+                     echo "Even the config template file cannot be found - $SADM_CFG_HIDDEN"
+                     echo "Copy both files from another system to this server"
+                     echo "Or restore the files from a backup"
+                     echo "Review the file content."
+                     echo "****************************************************************"
+                else echo "****************************************************************"
+                     echo "The configuration file $SADM_CFG_FILE do not exist."
+                     echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
+                     echo "Please review the configuration file."
+                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"   # Install Default cfg  file
                      cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg  file
-                     sadm_writelog "****************************************************************"
+                     echo "****************************************************************"
              fi
     fi
     
@@ -948,6 +948,13 @@ sadm_start() {
              chmod 0775 $SADM_LOG_DIR
     fi
 
+    # If LOG File doesn't exist, Create it and Make it writable 
+    if [ ! -e "$SADM_LOG" ]
+        then touch $SADM_LOG
+             chmod 664 $SADM_LOG
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
+    fi
+
     # If TMP Directory doesn't exist, create it.
     if [ ! -d "$SADM_TMP_DIR" ]
         then mkdir -p $SADM_TMP_DIR
@@ -1046,12 +1053,6 @@ sadm_start() {
              chmod 0775 $SADM_RCH_DIR
     fi
 
-    # If LOG File doesn't exist, Create it and Make it writable 
-    if [ ! -e "$SADM_LOG" ]
-        then touch $SADM_LOG
-             chmod 664 $SADM_LOG
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
-    fi
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
     if [ "$SADM_LOG_APPEND" = "N" ]                                     # If don't want expand log

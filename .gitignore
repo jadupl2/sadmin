@@ -13,6 +13,7 @@
 sam/
 sam/sam
 cfg/
+!cfg/.sadmin.cfg
 dat/
 jac/*
 !jac/bin
