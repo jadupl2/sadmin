@@ -94,7 +94,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 
 TOTAL_ERROR=0                           ; export TOTAL_ERROR            # Total Rsync Error
-NB_VER=7                                ; export NB_VER                 # Nb Version to keep
+NB_VER=4                                ; export NB_VER                 # Nb Version to keep
 #
 NFS_SERVER="ds410.maison.ca"            ; export NFS_SERVER             # Remoote Backup Name
 REM_BASE_DIR="/volume1/linux"           ; export REM_BASE_DIR           # Remote Base Dir.
