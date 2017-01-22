@@ -1,0 +1,22 @@
+#
+# Cron does not get a Path when it is run - So We put a standard PATH here
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+SADMIN=/sadmin
+#
+#
+# ==========================================================================
+#        S A D M I N    C L I E N T    T O O L S    S E C T I O N
+# ==========================================================================
+#
+# End Of Day client job
+# MUST be run once a day, just before midnight - Produce Sysinfo/Rotate logs
+55 23 * * * $SADMIN/bin/sadm_eod_client.sh > /dev/null 2>&1
+#
+# Run every 20 minutes - verify if the nmon daemon is running
+#  - If not running start it with proper parameters so it finish at 23:55
+00,20,40 * * * * $SADMIN/bin/sadm_nmon_watcher.sh >/dev/null 2>&1
+#
+# Activate on Laptop - ReaR Backup every night laptop is left ON
+#00 01 * * * $SADMIN/bin/sadm_rear_backup.sh > /dev/null 2>&1
+#
+#
