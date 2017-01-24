@@ -55,7 +55,7 @@ display_rpm_menu()
       read REPONSE
       case $REPONSE in
 	    1) RPM="" 
-           accept_data 05 56 15 A $RPM
+           sadm_accept_data 05 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -66,7 +66,7 @@ display_rpm_menu()
            fi
            ;;
 	    2) RPM="" 
-           accept_data 06 56 15 A $RPM
+           sadm_accept_data 06 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -79,7 +79,7 @@ display_rpm_menu()
            fi
            ;;
 	    3) RPM="" 
-           accept_data 07 56 15 A $RPM
+           sadm_accept_data 07 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -97,7 +97,7 @@ display_rpm_menu()
            fi
            ;;
 	    4) RPM="" 
-           accept_data 08 56 15 A $RPM
+           sadm_accept_data 08 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -114,7 +114,7 @@ display_rpm_menu()
            rpm -qa --last | less 
            ;;
 	    6) PGM="" 
-           accept_data 10 56 25 A $PGM
+           sadm_accept_data 10 56 25 A $PGM
            if [ -z "$WDATA" ] 
               then continue
               else if [ ! -e "$WDATA" ] 
@@ -128,7 +128,7 @@ display_rpm_menu()
            fi
            ;;
 	    7) RPM="" 
-           accept_data 11 56 15 A $RPM
+           sadm_accept_data 11 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -141,7 +141,7 @@ display_rpm_menu()
            fi
            ;;
 	    8) RPM="" 
-           accept_data 12 56 15 A $RPM
+           sadm_accept_data 12 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA
@@ -154,7 +154,7 @@ display_rpm_menu()
            fi
            ;;
 	    9) RPM="" 
-           accept_data 13 56 15 A $RPM
+           sadm_accept_data 13 56 15 A $RPM
            if [ -z "$WDATA" ] 
               then continue
               else RPM=$WDATA

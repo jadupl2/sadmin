@@ -13,6 +13,7 @@
 #
 #---------------------------------------------------------------------------------------------------
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
+#   2.1      Added support for XFS Filesystem
 #===================================================================================================
 # 
 #
@@ -27,7 +28,13 @@
 #---------------------------------------------------------------------------------------------------
 FSTAB=/etc/fstab                            ; export FSTAB              # Filesystem Table file
 WFSTAB=$SADM_TMP_DIR/fstab.wrk              ; export WFSTAB             # Filesystem Table Work file
-BATCH_MODE=0                                ; export BATCH_MODE         # 0=Not in Batch 1=Batch Mode
+VGLIST="$SADM_TMP_DIR/vglist.$$"            ; export VGLIST             # Contain list of VG on system
+rm -f $VGLIST >/dev/null 2>&1                                           # Make sure file doesn't exist
+VGDIR="/etc/lvm/backup"                     ; export VGDIR              # List if VG 
+declare -a mount_array                                                  # Declare mount & unmount array 
+MAXLEN_LV=14                                ; export MAXLEN_LV          # Max Char for LV Name
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+#
 LVNAME=""			                        ; export LVNAME             # Logical Volume Name
 LVSIZE=""                                   ; export LVSIZE             # Logical Volume Size
 VGNAME=""                                   ; export VGNAME             # Volume Group Name
@@ -37,31 +44,91 @@ LVMOUNT=""                                  ; export LVMOUNT            # Logica
 LVOWNER=""                                  ; export LVOWNER            # Mount point owner
 LVGROUP=""                                  ; export LVGROUP            # Mount point group
 LVPROT=""                                   ; export LVPROT             # Mount point protection
-TUNE2FS=`which tune2fs`	                    ; export TUNE2FS            # Tune2fs Command Path
-MKFS_EXT3=`which mkfs.ext3`		            ; export MKFS_EXT3          # ext3 mkfs command path
-FSCK_EXT3=`which fsck.ext3`		            ; export FSCK_EXT3          # ext3 fsck command path 
-MKFS_EXT4=`which mkfs.ext4`		            ; export MKFS_EXT4          # ext3 mkfs command path
-FSCK_EXT4=`which fsck.ext4`		            ; export FSCK_EXT4          # ext3 fsck command path 
-MKDIR=`which mkdir`	       		            ; export MKDIR              # mkdir command path
-MOUNT=`which mount`	        	            ; export MOUNT              # mount command path
-CHMOD=`which chmod`	        	            ; export CHMOD              # chmod command path
-CHOWN=`which chown`	        	            ; export CHOWN              # chown command path
-LVCREATE=`which lvcreate` 			        ; export LVCREATE           # lvcreate path
-LVEXTEND=`which lvextend`                   ; export LVEXTEND           # lvextend path
-LVSCAN=`which lvscan`                       ; export LVSCAN             # lvscan
-#EXT2ONLINE=`which ext2online`              ; export EXT2ONLINE         # ext2online path
-RESIZE2FS=`which resize2fs`                 ; export RESIZE2FS          # resize2fs path
-MAXLEN_LV=14                                ; export MAXLEN_LV          # Max Char for LV Name
-VGLIST="$SADM_TMP_DIR/vglist.$$"            ; export VGLIST             # Contain list of VG on system
-rm -f $VGLIST >/dev/null 2>&1                                           # Make sure file doesn't exist
-VGDIR="/etc/lvm/backup"                     ; export VGDIR              # List if VG 
-declare -a mount_array                                                  # Declare mount & unmount array 
+#
+LVREMOVE=""                                 ; export LVREMOVE           # lvremove Path
+
+
+# --------------------------------------------------------------------------------------------------
+# THIS FUNCTION SETUP LVM ENVIRONMENT VARIABLES USED BY THIS SCRIPT 
+# WILL USE THESE ENVIRONMENT VARIABLE TO TEST IF COMMAND ARE AVAILABLE OR NOT.
+# --------------------------------------------------------------------------------------------------
+setlvm_path() {
+    which mkfs.ext3 >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then MKFS_EXT3=`which mkfs.ext3`      ; else MKFS_EXT3=""  ;fi
+    export MKFS_EXT3
+
+    which fsck.ext3 >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then FSCK_EXT3=`which fsck.ext3`      ; else FSCK_EXT3=""  ;fi
+    export FSCK_EXT3
+
+    which mkfs.ext4 >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then MKFS_EXT4=`which mkfs.ext4`      ; else MKFS_EXT4=""  ;fi
+    export MKFS_EXT4
+
+    which fsck.ext4 >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then FSCK_EXT4=`which fsck.ext4`      ; else FSCK_EXT4=""  ;fi
+    export FSCK_EXT4
+
+    which mkfs.xfs >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then MKFS_XFS=`which mkfs.xfs`        ; else MKFS_XFS=""  ;fi
+    export MKFS_XFS
+
+    which lvcreate >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then LVCREATE=`which lvcreate`        ; else LVCREATE=""  ;fi
+    export LVCREATE
+
+    which lvextend >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then LVEXTEND=`which lvextend`        ; else LVEXTEND=""  ;fi
+    export LVEXTEND
+
+    which lvremove >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then LVREMOVE=`which lvremove`        ; else LVREMOVE=""  ;fi
+    export LVREMOVE
+
+    which lvscan >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then LVSCAN=`which lvscan`            ; else LVSCAN=""  ;fi
+    export LVSCAN
+
+    which vgdisplay >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then VGDISPLAY=`which vgdisplay`      ; else VGDISPLAY=""  ;fi
+    export VGDISPLAY
+
+    which resize2fs >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then RESIZE2FS=`which resize2fs`      ; else RESIZE2FS=""  ;fi
+    export RESIZE2FS
+
+    which xfs_growfs >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then XFS_GROWFS=`which xfs_growfs`    ; else XFS_GROWFS=""  ;fi
+    export XFS_GROWFS
+
+    which xfs_repair >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then XFS_REPAIR=`which xfs_repair`    ; else XFS_REPAIR=""  ;fi
+    export XFS_REPAIR
+
+    if [ "$DEBUG_LEVEL" -gt 0 ]
+       then sadm_writelog " " ; sadm_writelog " " 
+            sadm_writelog "Important Commands Path or Not Found"
+            sadm_writelog "MKFS_EXT3        = $MKFS_EXT3"
+            sadm_writelog "MKFS_EXT4        = $MKFS_EXT4"
+            sadm_writelog "FSCK_EXT3        = $FSCK_EXT3"
+            sadm_writelog "FSCK_EXT4        = $FSCK_EXT4"
+            sadm_writelog "LVCREATE         = $LVCREATE"
+            sadm_writelog "LVEXTEND         = $LVEXTEND"
+            sadm_writelog "LVSCAN           = $LVSCAN"
+            sadm_writelog "RESIZE2FS        = $RESIZE2FS"
+            sadm_writelog "XFS_GROWFS       = $XFS_GROWFS"
+            sadm_writelog "XFS_REPAIR       = $XFS_REPAIR"
+            sadm_writelog "VGDISPLAY        = $VGDISPLAY"
+            sadm_writelog " " ; sadm_writelog " " 
+    fi
+}
+
 
 
 
 
 #---------------------------------------------------------------------------------------------------
-# This function create a file that contains a list of volume group on the system
+#   This function create a file that contains a list of volume group on the system
 #---------------------------------------------------------------------------------------------------
 create_vglist()
 {
@@ -102,8 +169,8 @@ lvexist()
 #---------------------------------------------------------------------------------------------------
 getvg_info()
 {
-   vgsize=`vgdisplay $VGNAME 2>/dev/null | grep -i free | awk '{ print $7 }'`
-   vgunit=`vgdisplay $VGNAME 2>/dev/null | grep -i free | awk '{ print $8 }'`
+   vgsize=`$VGDISPLAY $VGNAME 2>/dev/null | grep -i free | awk '{ print $7 }'`
+   vgunit=`$VGDISPLAY $VGNAME 2>/dev/null | grep -i free | awk '{ print $8 }'`
    if [ $vgunit = "GB" ] || [ $vgunit = "GiB" ]
       then vgint=`echo "$vgsize * 1024" | /usr/bin/bc  | awk -F'.' '{ print $1 }'`
       else vgint=$( echo $vgsize | awk -F'.' '{ print $1 }' )
@@ -119,12 +186,10 @@ getvg_info()
 mntexist()
 {
    mnt2check=$1
-   grep "^/dev/" $FSTAB | awk '{ printf "%s \n", $2 }' | egrep "^${mnt2check} |^${mnt2check}	">/dev/null
+   grep "^/dev/" $FSTAB |awk '{ printf "%s \n", $2 }' |egrep "^${mnt2check} |^${mnt2check}	">/dev/null
    mntrc=$?
    return $mntrc
 }
-
-
 
 
 
@@ -159,31 +224,18 @@ get_mntdata()
     fi
    LVTYPE=`echo $LVLINE | awk     '{ print $3 }' | tr [A-Z] [a-z]`
 
-   if [ $LVMVER -eq 2 ]
-      then LVLINE=`$LVSCAN 2>/dev/null | grep "'/dev/${VGNAME}/${LVNAME}'"`
-           LVWS1=$( echo $LVLINE  | awk -F'[' '{ print $2 }' )
-           LVWS2=$( echo $LVWS1   | awk -F']' '{ print $1 }' )
-           LVFLT=$( echo $LVWS2   | awk '{ print $1 }' )
-           LVUNIT=$(  echo $LVWS2 | awk '{ print $2 }' )
-           if [ "$LVUNIT" = "GB" ] || [ "$LVUNIT" = "GiB" ]
-              then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
-                   LVSIZE=$LVINT
-              else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
-                   LVSIZE=$LVINT
-           fi
-      else LVLINE=`$LVSCAN 2>/dev/null | grep "/dev/${VGNAME}/${LVNAME}\""`
-           LVWS1=$( echo $LVLINE | awk -F'[' '{ print $2 }' )
-           LVWS2=$( echo $LVWS1  | awk -F']' '{ print $1 }' )
-           LVFLT=$( echo $LVWS2 | awk '{ print $1 }' )
-           LVUNIT=$(  echo $LVWS2 | awk '{ print $2 }' )
-           if [ "$LVUNIT" = "GB" ]
-              then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
-                   LVSIZE=$LVINT
-              else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
-                   LVSIZE=$LVFLT
-           fi
+   LVLINE=`$LVSCAN 2>/dev/null | grep "'/dev/${VGNAME}/${LVNAME}'"`
+   LVWS1=$( echo $LVLINE  | awk -F'[' '{ print $2 }' )
+   LVWS2=$( echo $LVWS1   | awk -F']' '{ print $1 }' )
+   LVFLT=$( echo $LVWS2   | awk '{ print $1 }' )
+   LVUNIT=$(  echo $LVWS2 | awk '{ print $2 }' )
+   if [ "$LVUNIT" = "GB" ] || [ "$LVUNIT" = "GiB" ]
+      then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
+           LVSIZE=$LVINT
+      else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
+           LVSIZE=$LVINT
    fi
-   
+           
    LVOWNER=`ls -ld $LVMOUNT | awk '{ printf "%s", $3 }'`
    LVGROUP=`ls -ld $LVMOUNT | awk '{ printf "%s", $4 }'`
 
@@ -211,9 +263,9 @@ get_mntdata()
 
 
 #---------------------------------------------------------------------------------------------------
-# This function validate if data is ok to create the filesystem 
+#           This function validate if MetaData Collected is ok to create the filesystem 
 #---------------------------------------------------------------------------------------------------
-data_creation_valid()
+metadata_creation_valid()
 {
 
 # Volume Group must exist
@@ -228,13 +280,13 @@ data_creation_valid()
            return 1
    fi 
 
-# Logical Volume Name must be specified
+# Logical Volume Name Length is zero 
    if [ ${#LVNAME} -eq 0 ] 
       then sadm_writelog "No Valid LV name is specify"
            return 1
    fi
 
-# Logical Volume name 
+# Refuse First Character Blank for Logical Volume name 
    if [ ${LVNAME:0:1} = " " ] 
       then sadm_writelog "First charecter of the Logical Volume name must not be blank"
            return 1
@@ -246,9 +298,9 @@ data_creation_valid()
            return 1
    fi
 
-# Logical Volume type must be Ext3 Xjfs Jfs or Reiserfs
-   if [ $LVTYPE != "ext3" ] && [ $LVTYPE != "ext4" ] 
-      then sadm_writelog "Filesystem type must be ext3 or ext4 - Not $LVTYPE"
+# Logical Volume type must be ext3 ext4 or xfs 
+   if [ $LVTYPE != "ext3" ] && [ $LVTYPE != "ext4" ] && [ $LVTYPE != "xfs" ] 
+      then sadm_writelog "Filesystem type must be ext3, ext4 or xfs - Not $LVTYPE"
            return 1
    fi
 
@@ -285,18 +337,12 @@ mntvalid()
 #---------------------------------------------------------------------------------------------------
 report_error()
 {
-     WMESS=$1
-     WDATE=$(date "+%C%y.%m.%d %H:%M:%S")
-
-    # Write the error in the log file
-     echo -e "$WDATE - $WMESS" >> $SADM_LOG
-
-    # If in interactive mode - Advise user before proceeding
-     if [ $BATCH_MODE -eq 0 ]
-        then echo -e "$WMESS"
-             echo -e "\a\aPress [ENTER] to continue - CTRL-C to Abort\c"
-             read dummy 
-     fi
+    WMESS=$1
+    WDATE=$(date "+%C%y.%m.%d %H:%M:%S")
+    sadm_writelog "$WMESS" 
+    echo -e "$WMESS"
+    echo -e "\a\aPress [ENTER] to continue - CTRL-C to Abort\c"
+    read dummy 
 }
 
 
@@ -308,86 +354,12 @@ fix_fstab()
 {
    awk '! /^#/ && !/^$/ { printf "%03d %s\n", length($2), $0 }' $FSTAB |sort > $WFSTAB
    awk '{ printf "%-30s %-30s %s %s %-3s %-3s\n",$2,$3,$4,$5,$6,$7}' $WFSTAB > $FSTAB 
-   $CHMOD 644 $FSTAB
-   $CHOWN root.root $FSTAB
+   chmod 644 $FSTAB
+   chown root.root $FSTAB
 }
 
 
 
-
-
-#---------------------------------------------------------------------------------------------------
-# Umount Filesystems (if any) that need to be unmounted to increase desired filesystem
-#---------------------------------------------------------------------------------------------------
-prereq_unmount()
-{
-
-# Initializing the mount array to make sure it is empty
-   mount_array=( ) 
-
-# Default value returned to caller
-   prereq_return_flag=0
-
-# Count number of time mount point is used in /etc/fstab
-   NBMOUNT=`awk '{ print $2 }' $FSTAB | grep "${LVMOUNT}/" | wc -l`
-
-# If no more than once - No need to umount other filesystems
-   if [ "$NBMOUNT" -lt 2 ] 
-      then sadm_writelog "No unmount are pre-requisite to this task." 
-           return 0
-   fi
-
-# Subtract one from number of mount (remove the one specified by user)
-   #let "NBMOUNT-=1"
-   sadm_writelog "I Will need to umount $NBMOUNT filesystem(s) before increasing $LVMOUNT" 
-
-
-# Process all filesystems that need to be unmounted before the task
-   windex=0
-   for wmount in `awk '{ print $2 }' $FSTAB | grep "${LVMOUNT}/"`
-       do
-
-# For every filesystem that used the mount point and length is greater than original
-       if [ ${#wmount} -gt ${#LVMOUNT} ]
-          then mount | grep "$wmount" > /dev/null 2>&1
-               if [ $? -eq 0 ]
-                  then mount_array[$windex]=${wmount}
-                       sadm_writelog "unmount ${mount_array[$windex]}"
-                       umount ${mount_array[$windex]} >/dev/null 2>&1
-                       if [ $? -ne 0 ]
-                          then sadm_writelog "Executing lsof command and searching for ${mount_array[$windex]}"
-                               lsof   | grep -v grep | grep -i ${mount_array[$windex]} | tee -a $SADM_LOG
-                               sadm_writelog "Executing ps -ef and search for ${mount_array[$windex]}"
-                               ps -ef | grep -v grep | grep -i ${mount_array[$windex]} | tee -a $SADM_LOG
-                               report_error "Could not unmount ${mount_array[$windex]}"
-                               prereq_return_flag=1                               
-                               break
-                       fi
-                       let "windex+=1"
-               fi
-       fi
-   done
-
-# If one umount failed prerq_return_flag=1 else equal 0.
-   return $prereq_return_flag
-}
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-# Umount FS (if any) that need to be unmounted to increase desired filesystem
-#---------------------------------------------------------------------------------------------------
-remount_prereq_unmount()
-{
-    windex=0
-    while [ $windex -lt ${#mount_array[@]} ]
-          do
-          sadm_writelog "Mounting ${mount_array[$windex]}"
-          mount ${mount_array[$windex]} >/dev/null 2>&1
-          let "windex+=1"
-          done
-}
 
 
 
@@ -398,116 +370,45 @@ remount_prereq_unmount()
 #---------------------------------------------------------------------------------------------------
 extend_fs()
 {
+    sadm_writelog "Filesystem before increase"
+    echo "Filesystem before increase"
+    df -h ${LVMOUNT} | tee -a $SADM_LOG 2>&1 
+    echo " "
 
-# Check to see if any filesystem must be unmounted first
-# ------------------------------------------------------------------------------
-    if [ $LVMVER -eq 1 ]
-       then sadm_writelog "Checking if any other unmount need to be done"
-            prereq_unmount
-            if [ $? -ne 0 ]
-               then remount_prereq_unmount
-                    return 1
-            fi
+    sadm_writelog "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME"
+    echo "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME"
+    $LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1       # Extend the logical volume
+    if [ $? -ne 0 ] 
+        then report_error "Error on lvextend /dev/$VGNAME/$LVNAME"
+             return 1
+    fi 
+
+    if [ "$LVTYPE" = "ext3" ] || [ "$LVTYPE" = "ext4" ]                 # Ext3,Ext4 Resize Filesystem 
+        then sadm_writelog "$RESIZE2FS     /dev/$VGNAME/$LVNAME" 
+             echo "$RESIZE2FS     /dev/$VGNAME/$LVNAME" 
+             $RESIZE2FS  /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
+             if [ $? -ne 0 ] 
+                then report_error "Error on resize2fs /dev/$VGNAME/$LVNAME" 
+                     return 1
+             fi 
     fi
 
+    if [ "$LVTYPE" = "xfs" ]                                            # XFS Resize Filesystem 
+        then sadm_writelog "$XFS_GROWFS ${LVMOUNT}" 
+             echo "$XFS_GROWFS ${LVMOUNT}" 
+             $XFS_GROWFS ${LVMOUNT} >> $SADM_LOG 2>&1
+             if [ $? -ne 0 ] 
+                then report_error "Error with $XFS_GROWFS ${LVMOUNT}" 
+                     return 1
+             fi 
+    fi
 
-# In LVM version 1 - Filesystem got to be unmounted first
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then sadm_writelog "Unmounting ${LVMOUNT} "
-          umount ${LVMOUNT}  > $SADM_LOG 2>&1
-          if [ $? -ne 0 ] 
-             then report_error "Error unmounting ${LVMOUNT}"
-                  remount_prereq_unmount
-             return 1
-          fi
-  fi 
-
-
-# Extend the logical volume
-# ------------------------------------------------------------------------------
-  sadm_writelog "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME"
-  $LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-  ERRCODE="$?"
-  if [ "$ERRCODE" -ne 0 ] 
-     then report_error "Error on lvextend /dev/$VGNAME/$LVNAME"
-          remount_prereq_unmount
-          return 1
-  fi 
-
-
-# In LVM Version 1 - Do a fsck on unmounted filesystem
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then sadm_writelog "$FSCK_EXT3    -fy  /dev/$VGNAME/$LVNAME" 
-          $FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-          if [ $? -ne 0 ] 
-             then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
-                  remount_prereq_unmount
-                  return 1
-          fi
-  fi 
-
+    echo " "
+    sadm_writelog "Filesystem after increase"
+    echo "Filesystem after increase"
+    df -h ${LVMOUNT} | tee -a $SADM_LOG 2>&1 
+    return 0
  
-# Resize Filesystem 
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then sadm_writelog "$RESIZE2FS        /dev/$VGNAME/$LVNAME"
-          $RESIZE2FS /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-          if [ $? -ne 0 ] 
-             then report_error "Error on resize /dev/$VGNAME/$LVNAME"
-                  remount_prereq_unmount
-                  return 1
-          fi 
-     else if [ "$(sadm_get_osmajorversion)" -ge 5 ] 
-	         then sadm_writelog "$RESIZE2FS     /dev/$VGNAME/$LVNAME" 
-                  $RESIZE2FS  /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-				  EN=$?
-	         else sadm_writelog "$EXT2ONLINE    /dev/$VGNAME/$LVNAME" 
-                  $EXT2ONLINE /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-				  EN=$?
-	      fi
-          if [ $EN -ne 0 ] 
-             then if [ "$(sadm_get_osmajorversion)" -ge 5 ] 
-                     then report_error "Error on ext2online /dev/$VGNAME/$LVNAME"
-                     else report_error "Error on resize2fs /dev/$VGNAME/$LVNAME" 
-                  fi 
-                  return 1
-          fi 
-   fi 
-
-# In LVM Version 1 - Do a fsck on unmounted filesystem
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then sadm_writelog "$FSCK_EXT3    -fy  /dev/$VGNAME/$LVNAME" 
-          $FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
-          if [ $? -ne 0 ] 
-             then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
-                  remount_prereq_unmount
-                  return 1
-          fi
-  fi 
-
-
-# In LVM Version 1 - Remount unmounted filesystem
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then sadm_writelog "Mounting ${LVMOUNT} "
-          mount ${LVMOUNT} 
-          if [ $? -ne 0 ] 
-             then report_error "Error Mounting ${LVMOUNT}"
-                  remount_prereq_unmount
-                  return 1
-          fi
-  fi 
-
-
-# If any unmount had to be done prior to increase, remount then now
-# ------------------------------------------------------------------------------
-  if [ $LVMVER -eq 1 ]
-     then remount_prereq_unmount
-  fi
-
 }
 
 
@@ -524,21 +425,13 @@ extend_fs()
 remove_fs()
 {
 
-# Check to see if any sub filesystem must be unmounted first
-# ------------------------------------------------------------------------------
-sadm_writelog "Checking if any other unmount need to be done"
-    prereq_unmount
-    if [ $? -ne 0 ]
-        then remount_prereq_unmount
-             return 1
-    fi
-
 # Check filesystem is mounted - if it is umount it 
 # ------------------------------------------------------------------------------
     mount | grep "${LVMOUNT} "  > /dev/null 
     if [ $? -eq 0 ] 
        then sadm_writelog "Unmounting ${LVMOUNT} "
-            umount ${LVMOUNT} > $SADM_LOG 2>&1
+            echo "Unmounting ${LVMOUNT} "
+            umount ${LVMOUNT} >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
                then report_error "Error unmounting ${LVMOUNT}"
                     return 1
@@ -548,8 +441,9 @@ sadm_writelog "Checking if any other unmount need to be done"
    
 # Remove the logical Volume
 # ------------------------------------------------------------------------------
-     sadm_writelog "lvremove -f /dev/${VGNAME}/${LVNAME} "
-     lvremove -f /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1 
+     sadm_writelog "$LVREMOVE -f /dev/${VGNAME}/${LVNAME} "
+     echo "$LVREMOVE -f /dev/${VGNAME}/${LVNAME}"
+     $LVREMOVE -f /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1 
      if [ $? -ne 0 ] 
         then report_error "Error removing /dev/${VGNAME}/${LVNAME} logical volume"
              mount ${LVMOUNT} 
@@ -558,6 +452,7 @@ sadm_writelog "Checking if any other unmount need to be done"
 
 # Remove entry in /etc/fstab
 # ------------------------------------------------------------------------------
+     echo "Removing \"$LVMOUNT \" from $FSTAB "
      sadm_writelog "Removing \" $LVMOUNT \" from $FSTAB "
 #     grep "^/dev/" $FSTAB | grep -vi "${LVMOUNT} " > $WFSTAB
      grep -vi " ${LVMOUNT} " $FSTAB > $WFSTAB
@@ -566,12 +461,8 @@ sadm_writelog "Checking if any other unmount need to be done"
              return 1
      fi 
      cp $WFSTAB $FSTAB      
-     $CHMOD 644 $FSTAB       
-     $CHOWN root.root $FSTAB 
-
-# If any unmount had to be done prior to removing the filesystem, remount then now
-# ------------------------------------------------------------------------------
-  remount_prereq_unmount
+     chmod 644 $FSTAB       
+     chown root.root $FSTAB 
 }
 
 
@@ -583,26 +474,15 @@ sadm_writelog "Checking if any other unmount need to be done"
 #---------------------------------------------------------------------------------------------------
 filesystem_fsck()
 {
-
-# Check to see if any filesystem must be unmounted first
-# ------------------------------------------------------------------------------
-    sadm_writelog "Checking if any other unmount need to be done"
-    prereq_unmount
-    if [ $? -ne 0 ]
-        then remount_prereq_unmount
-             return 1
-    fi
-
     
 # Filesystem got to be unmounted first
 # ------------------------------------------------------------------------------
     mount | grep "${LVMOUNT} "  > /dev/null 
     if [ $? -eq 0 ] 
        then sadm_writelog "Unmounting ${LVMOUNT} "
-            umount ${LVMOUNT}  > $SADM_LOG 2>&1
+            umount ${LVMOUNT}  >> $SADM_LOG 2>&1
             if [ $? -ne 0 ]
                then report_error "Error unmounting ${LVMOUNT}"
-                    remount_prereq_unmount
                     return 1
             fi
     fi
@@ -612,19 +492,29 @@ filesystem_fsck()
 # ------------------------------------------------------------------------------
     if [ "$LVTYPE" = "ext3" ]
        then sadm_writelog "$FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME"
-            $FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
+            $FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
             if [ $? -ne 0 ]
                then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
             fi
     fi
     if [ "$LVTYPE" = "ext4" ]
        then sadm_writelog "$FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME"
-            $FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME > $SADM_LOG 2>&1
+            $FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
             if [ $? -ne 0 ]
                then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
             fi
     fi
 
+    if [ "$LVTYPE" = "xfs" ]
+        then sadm_writelog "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
+             ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
+             RC=$?
+             if [ "$RC" -ne 0 ]
+                then report_error "Error $RC with fsck.ext4"
+                     return 1
+             fi
+    fi
+       
 
 # Remount unmounted filesystem
 # ------------------------------------------------------------------------------
@@ -632,14 +522,9 @@ filesystem_fsck()
     mount ${LVMOUNT}
     if [ $? -ne 0 ]
        then report_error "Error Mounting ${LVMOUNT}"
-            remount_prereq_unmount
             return 1
     fi
 
-
-# If any unmount had to be done prior to increase, remount then now
-# ------------------------------------------------------------------------------
-     remount_prereq_unmount
      return 0  
 }
 
@@ -653,30 +538,32 @@ filesystem_fsck()
 create_fs()
 {
 
-    if [ $DEBUG ] 
+    if [ "$DEBUG_LEVEL" -gt 0 ] 
        then sadm_writelog "\n-----------------------------"
-            echo "LINE        = $LVLINE" 
-            echo "LVNAME      = $LVNAME"
-            echo "OLD_LVNAME  = $OLD_LVNAME"
-            echo "VGNAME      = $VGNAME" 
-            echo "OLD_VGNAME  = $OLD_VGNAME" 
-            echo "LVSIZE      = $LVSIZE MB" 
-            echo "LVTYPE      = $LVTYPE" 
-            echo "LVMOUNT     = $LVMOUNT"
-            echo "OLDLVMOUNT  = $OLD_LVMOUNT"
-            echo "LVTYPE      = $LVTYPE"
-            echo "LVOWNER     = $LVOWNER"
-            echo "LVGROUP     = $LVGROUP"
-            echo "LVPROT      = $LVPROT"
+            sadm_writelog "LINE        = $LVLINE" 
+            sadm_writelog "LVNAME      = $LVNAME"
+            sadm_writelog "OLD_LVNAME  = $OLD_LVNAME"
+            sadm_writelog "VGNAME      = $VGNAME" 
+            sadm_writelog "OLD_VGNAME  = $OLD_VGNAME" 
+            sadm_writelog "LVSIZE      = $LVSIZE MB" 
+            sadm_writelog "LVTYPE      = $LVTYPE" 
+            sadm_writelog "LVMOUNT     = $LVMOUNT"
+            sadm_writelog "OLDLVMOUNT  = $OLD_LVMOUNT"
+            sadm_writelog "LVTYPE      = $LVTYPE"
+            sadm_writelog "LVOWNER     = $LVOWNER"
+            sadm_writelog "LVGROUP     = $LVGROUP"
+            sadm_writelog "LVPROT      = $LVPROT"
+            sadm_writelog "\n-----------------------------"
     fi
-    sadm_writelog "\n-----------------------------"
     
 # If logical volume name is greater than MAXLEN_LV char - then remove char overflow 
 # ------------------------------------------------------------------------------
     if [ ${#LVNAME} -gt ${MAXLEN_LV} ] 
        then sadm_writelog "The Logical volume name ${LVNAME} ${#LVNAME} char is too long"
+            echo "The Logical volume name ${LVNAME} ${#LVNAME} char is too long"
             LVNAME=`echo "${LVNAME}" | cut -c1-${MAXLEN_LV}`
             sadm_writelog "It has been changed to ${LVNAME}"
+            echo "It has been changed to ${LVNAME}"
     fi 
 
 
@@ -685,7 +572,8 @@ create_fs()
     grep -E "^\/dev" $FSTAB | awk '{ print $1 }' | awk -F/ '{ print $4 }'| grep $LVNAME >/dev/null 
     RC=$?
     if [ $RC -eq 0 ]
-       then sadm_writelog "The LV name ${LVNAME} already exist"
+       then echo "The LV name ${LVNAME} already exist"
+            sadm_writelog "The LV name ${LVNAME} already exist"
             NUMBER=100
             while [ $NUMBER -gt 99 ]  
                   do 
@@ -694,6 +582,7 @@ create_fs()
             WLVNAME=`echo "${LVNAME}" | cut -c1-12`
             LVNAME=`echo "${WLVNAME}${NUMBER}"`
             sadm_writelog "It has been changed with random number ${NUMBER} to ${LVNAME}"
+            echo "It has been changed with random number ${NUMBER} to ${LVNAME}"
      fi 
     
 
@@ -709,8 +598,9 @@ create_fs()
 
 # CREATE LOGICAL VOLUME
 # ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${LVCREATE} -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
-    ${LVCREATE} -L${LVSIZE}M -n ${LVNAME} ${VGNAME} > $SADM_LOG 2>&1
+    sadm_writelog "Running : ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
+    echo "Running : ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
+    ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then report_error "Error $RC with lvcreate\n"
@@ -722,7 +612,8 @@ create_fs()
 # ------------------------------------------------------------------------------
     if [ "$LVTYPE" = "ext3" ]
         then sadm_writelog "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
-             ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1
+             echo "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
+             ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
                 then report_error "Error $RC with mkfs.ext3"
@@ -731,10 +622,21 @@ create_fs()
     fi
     if [ "$LVTYPE" = "ext4" ]
         then sadm_writelog "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
-             ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1
+             echo "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
+             ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
                 then report_error "Error $RC with mkfs.ext4"
+                     return 1
+             fi
+    fi
+    if [ "$LVTYPE" = "xfs" ]
+        then sadm_writelog "Running : ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME}"
+             echo "Running : ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME}"
+             ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
+             RC=$?
+             if [ "$RC" -ne 0 ]
+                then report_error "Error $RC with mkfs.xfs"
                      return 1
              fi
     fi
@@ -744,7 +646,8 @@ create_fs()
 # ------------------------------------------------------------------------------
     if [ "$LVTYPE" = "ext3" ]
         then sadm_writelog "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
-             ${FSCK_EXT3} -fy /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1
+             echo "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
+             ${FSCK_EXT3} -fy /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
                 then report_error "Error $RC with fsck.ext3"
@@ -753,30 +656,34 @@ create_fs()
     fi
     if [ "$LVTYPE" = "ext4" ]
         then sadm_writelog "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
-             ${FSCK_EXT4} -fy /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1
+             echo "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
+             ${FSCK_EXT4} -fy /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
                 then report_error "Error $RC with fsck.ext4"
                      return 1
              fi
     fi
-    
-    
-# RUN TUNEFS to PREVENT FSCK UPON REBOOT
-# ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${TUNE2FS} -c 0 -i 0 /dev/${VGNAME}/${LVNAME}"
-    ${TUNE2FS} -c 0 -i 0 /dev/${VGNAME}/${LVNAME} > $SADM_LOG 2>&1
-    RC=$?
-    if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with tune2fs"
-             return 1
+ 
+    if [ "$LVTYPE" = "xfs" ]
+        then sadm_writelog "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
+             echo "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
+             ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
+             RC=$?
+             if [ "$RC" -ne 0 ]
+                then report_error "Error $RC with fsck.ext4"
+                     return 1
+             fi
     fi
+       
+
 
 
 # MAKE DIRECTORY MOUNT POINT
 # ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${MKDIR} -p ${LVMOUNT}"
-    ${MKDIR} -p ${LVMOUNT} > $SADM_LOG 2>&1
+    sadm_writelog "Running : mkdir -p ${LVMOUNT}"
+    echo "Running : mkdir -p ${LVMOUNT}"
+    mkdir -p ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then report_error "Error $RC with mkdir"
@@ -787,6 +694,7 @@ create_fs()
 # ADD MOUNT POINT TO /ETC/FSTAB
 # ------------------------------------------------------------------------------
     sadm_writelog "Running : Adding mount point in $FSTAB"
+    echo "Running : Adding mount point in $FSTAB"
     if [ "$LVTYPE" = "ext3" ]
        then if [ "$(sadm_get_osmajorversion)" -lt 6 ]
                then echo "/dev/${VGNAME}/${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext3 defaults 1 2"}'>>$FSTAB
@@ -796,14 +704,19 @@ create_fs()
     if [ "$LVTYPE" = "ext4" ]
        then echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext4 defaults 1 2"}'>>$FSTAB
     fi
+    if [ "$LVTYPE" = "xfs" ]
+       then echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"xfs  defaults 1 2"}'>>$FSTAB
+    fi
     sadm_writelog "Running : Sort /etc/fstab so that all mounts points are in the right order"
+    echo "Running : Sort /etc/fstab so that all mounts points are in the right order"
     fix_fstab
 
 
 # MOUNT NEW FILESYSTEM
 # ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${MOUNT} ${LVMOUNT}"
-    ${MOUNT} ${LVMOUNT} > $SADM_LOG 2>&1
+    sadm_writelog "Running : mount ${LVMOUNT}"
+    echo "Running : mount ${LVMOUNT}"
+    mount ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then report_error "Error $RC with mount"
@@ -813,8 +726,9 @@ create_fs()
     
 # CHANGE OWNER OF FILESYSTEM
 # ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${CHOWN} ${LVOWNER}:${LVGROUP} ${LVMOUNT}"
-    ${CHOWN} ${LVOWNER}:${LVGROUP} ${LVMOUNT} > $SADM_LOG 2>&1
+    sadm_writelog "Running : chown${LVOWNER}:${LVGROUP} ${LVMOUNT}"
+    echo "Running : chown ${LVOWNER}:${LVGROUP} ${LVMOUNT}"
+    chown ${LVOWNER}:${LVGROUP} ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then report_error "Error $RC with chown"
@@ -824,8 +738,9 @@ create_fs()
 
 # CHANGE PROTECTION OF FILESYSTEM
 # ------------------------------------------------------------------------------
-    sadm_writelog "Running : ${CHMOD} ${LVPROT} ${LVMOUNT}"
-    ${CHMOD} ${LVPROT} ${LVMOUNT} > $SADM_LOG 2>&1
+    sadm_writelog "Running : chmod ${LVPROT} ${LVMOUNT}"
+    echo "Running : chmod ${LVPROT} ${LVMOUNT}"
+    chmod ${LVPROT} ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
         then report_error "Error $RC with chmod"
@@ -838,3 +753,4 @@ create_fs()
 
 #---------------------------------------------------------------------------------------------------
 create_vglist
+setlvm_path

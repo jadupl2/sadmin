@@ -232,7 +232,7 @@ file_housekeeping()
     chmod 0644 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
     sadm_writelog "chmod 0644 $SADM_CFG_DIR/.crontab.txt" 
-    chmod 0640 $SADM_CFG_DIR/.crontab.txt
+    chmod 0644 $SADM_CFG_DIR/.crontab.txt
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]

@@ -102,6 +102,9 @@ main_process()
     rsync -var --delete $SRC/sys/       $DEST/sys/      >/dev/null 2>&1
     rsync -var --delete $SRC/jac/bin/   $DEST/jac/bin/  >/dev/null 2>&1
 
+    # Remove Server files
+    rm -f $DEST/cfg/.pgpass > /dev/null 
+
 
     TAR_SRC="/install/files"
     TAR_NAME="files.tar.gz"
