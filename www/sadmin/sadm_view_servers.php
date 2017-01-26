@@ -50,7 +50,8 @@ function display_heading($line_title) {
     echo "td { font-size: 12px; }\n";
     echo "th { font-size: 13px; }\n";
     echo "</style>\n";
-    echo '<table id="sadmTable" class="display compact nowrap" border="0" cellpadding="0" cellspacing="0" width="100%">';
+    #echo '<table id="sadmTable" class="display compact nowrap" border="0" cellpadding="0" cellspacing="0" width="100%">';
+    echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
 
     # Server Table Heading
     echo "<thead>\n";

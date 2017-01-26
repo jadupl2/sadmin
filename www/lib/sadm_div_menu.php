@@ -27,7 +27,7 @@ echo "\n\n\n<!-- ===============================================================
 echo "\n<div id='sadmMenu'>";
 echo "\n   <ul>";
 echo "\n";
-echo "\n   <li><a href='#'>Home</a></li>";
+echo "\n   <li><a href='http://sadmin.maison.ca/index.php'>Home</a></li>";
 echo "\n";
 echo "\n   <li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'>Servers</a>";
 echo "\n     <ul>";
