@@ -132,6 +132,22 @@ process_servers()
               fi
 
 
+              # Test if the server name can be resolved - If not no use trying to ping server
+              # Signal Error and continue with next server
+              #-------------------------------------------------------------------------------------
+              if ! host  $fqdn_server >/dev/null 2>&1 
+                 then SMSG="Can't process server '$fqdn_server' because name can't be resolved"
+                      sadm_writelog "ERROR : $SMSG"                     # Advise user
+                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
+                      sadm_writelog " "                                 # Separation Blank Line
+                      sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
+                      sadm_writelog "Sending email to $SADM_MAIL_ADDR"
+                      SMSG="$SMSG in $SADM_PN"
+                      alert_user "M" "E" "$_server" ""  "$SMSG"         # Email User
+                      sadm_writelog "Continuing with the next server"  
+                      continue                                          # No need 2 rsync/Nxt Server
+              fi
+
               # Ping the server - Server or Laptop may be unplugged
               #-------------------------------------------------------------------------------------
               # Sporadic server are server that can't always be online (laptop or test server)
@@ -141,19 +157,24 @@ process_servers()
               # If Monitoring is False for server doesn't respond to ping, continue to next server
               #-------------------------------------------------------------------------------------
               sadm_writelog " " ; sadm_writelog "Let's try to ping the server $fqdn_server"
-              ping -c 2 $fqdn_server >/dev/null 2>/dev/null             # Ping Server one time
+              ping -c 2 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
+              #ping -c 2 $fqdn_server >>$SADM_LOG 2>&1                   # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"
                               sadm_writelog "Will consider that it's OK (System down or unplugged)"
                               sadm_writelog "Continuing with the next server"  
                               continue                                  # Continue with Next Server
-                         else SMSG="Server $fqdn_server doesn't respond to ping request"
+                         else SMSG="Server '$fqdn_server' doesn't respond to ping request"
                               sadm_writelog "ERROR : $SMSG"             # Advise use ping don't work
                               if [ "$server_monitor" = "t" ]            # Is Monitoring to True 
                                   then sadm_writelog "Sending email to $SADM_MAIL_ADDR"
-                                       alert_user "M" "E" "$_server" "OPS"  "$SMSG"  # Email User
+                                       SMSG="$SMSG in $SADM_PN"
+                                       alert_user "M" "E" "$_server" ""  "$SMSG"  # Email User
                               fi
+                              ERROR_COUNT=$(($ERROR_COUNT+1))           # Consider Error -Incr Cntr
+                              sadm_writelog " "                         # Separation Blank Line
+                              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
                               sadm_writelog "Continuing with the next server"  
                               continue                                  # No need 2 rsync/Nxt Server
                       fi
@@ -171,12 +192,15 @@ process_servers()
               fi
               $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1          # SSH to Server for date
               if [ $? -ne 0 ]                                           # If SSH did not work
-                 then SMSG="ERROR : Can't SSH to server ${fqdn_server}" # Construct Error Msg
-                      sadm_writelog "$SMSG"                             # Display Error Msg
+                 then SMSG="Can't SSH to server '${fqdn_server}'"       # Construct Error Msg
+                      sadm_writelog "ERROR : $SMSG"                     # Display Error Msg
                       if [ $server_monitor = 't' ]                      # If monitoring is ON
                          then sadm_writelog "Sending email to $SADM_MAIL_ADDR" # Send email Msg
-                              alert_user "M" "E" "$fqdn_server" ""  "Can't SSH to $fqdn_server"        
+                              SMSG="$SMSG in $SADM_PN"
+                              alert_user "M" "E" "$fqdn_server" "" "$SMSG"        
                               ERROR_COUNT=$(($ERROR_COUNT+1))           # Consider Error -Incr Cntr
+                              sadm_writelog " "                         # Separation Blank Line
+                              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
                       fi 
                       continue                                          # Continue with next server
                  else sadm_writelog "SSH went OK ..."                   # Good SSH Work
