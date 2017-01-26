@@ -110,7 +110,7 @@ command_available()
     if [ $# -ne 1 ] || [ -z "$SADM_PKG" ]
         then sadm_writelog "ERROR : Invalid parameter received by command_available function"
              sadm_writelog "        Parameter received = $*"
-             sadm_writelog "Please correct the script error"
+             sadm_writelog "        Please correct error in the script"
              return 1
     fi
 
@@ -162,9 +162,9 @@ pre_validation()
     fi
 
 
-    # Check the availibility of some command that will be used later on
-    # If command is found the command variable is set to full command path
-    # If command is not found the command variable is set empty
+    # Check the availibility of some commands that will be used in this script
+    # If command is found the uppercase command variable is set to full command path
+    # If command isn't found the uppercase command variable is set nothing
     #-----------------------------------------------------------------------------------------------
     command_available "facter"      ; FACTER=$SADM_CPATH                # Cmd Path,Blank if not fnd
 
@@ -185,12 +185,11 @@ pre_validation()
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
     fi
 
-    # Command Commands
+    # Aix and Linux Common Commands
     command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
     command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
     command_available "ifconfig"    ; IFCONFIG=$SADM_CPATH              # Cmd Path or Blank !found
-    
-    
+       
     sadm_writelog " "
     sadm_writelog "----------"
     sadm_writelog " "
