@@ -106,7 +106,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     
     # Run CFG2HTML
     CFG2VER=`$CFG2HTML -v | tr -d '\n'`
-    sadm_writelog "$CFG2VER"
+    sadm_writelog "$CFG2VER" ;  sadm_writelog "" 
     sadm_writelog "Running : $CFG2HTML -H -o $SADM_DR_DIR"
     $CFG2HTML -H -o $SADM_DR_DIR >>$SADM_LOG 2>&1
     SADM_EXIT_CODE=$?
@@ -120,6 +120,11 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
              mv ${SADM_DR_DIR}/$(hostname).partitions.save ${SADM_DR_DIR}/`hostname -s`.partitions.save
     fi
 
+    # Aix version of cfg2html leave unnecessary file every time it run - Here we delete those
+    if [ "$(sadm_get_osname)" = "AIX" ]  
+        then rm -f ${SADM_DR_DIR}/`hostname -s`_?.txt > /dev/null 2>&1
+    fi
+       
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                             # Upd. RCH File & Trim Log 

@@ -96,7 +96,7 @@ pre_validation()
     if [ $? -eq 0 ]
         then NMON=`which nmon`
              export NMON
-             sadm_writelog "Yes it is at $NMON"
+             sadm_writelog "Yes it's at $NMON"
         else sadm_writelog "Error : The command 'nmon' was not found"
              sadm_writelog "I will not be able to restart nmon daemon, since it can't be found" 
              return 1
@@ -132,7 +132,7 @@ restart_nmon()
     # Display Current Running Number of nmon process
     sadm_writelog " "
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running"
+    sadm_writelog "There is $nmon_count nmon process actually running before stopping it"
     ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
@@ -146,7 +146,7 @@ restart_nmon()
     # Display Current Running Number of nmon process
     sadm_writelog " "
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running"
+    sadm_writelog "There is $nmon_count nmon process running after killing it"
     ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
     # Start new Process

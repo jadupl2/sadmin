@@ -326,17 +326,31 @@ file_housekeeping()
     fi
     
     # Remove logwatch from sending an email every morning
-    sadm_writelog " "
-    sadm_writelog "Removing /etc/cron.daily/0logwatch"    # Advise user
-    rm -f /etc/cron.daily/0logwatch >/dev/null 2>&1                     # Red Hat / CentOS 5 an Up
-    rm -f /etc/cron.daily/00-logwatch >/dev/null 2>&1                   # Red Hat 4 and below
-    if [ $? -ne 0 ]
-        then sadm_writelog "Error occured on the last operation."
-             ERROR_COUNT=$(($ERROR_COUNT+1))
-        else sadm_writelog "OK"
-             sadm_writelog "Total Error Count at $ERROR_COUNT"
+    if [ -f /etc/cron.daily/0logwatch ] 
+       then sadm_writelog " "
+            sadm_writelog "Removing /etc/cron.daily/0logwatch"          # Advise user
+            rm -f /etc/cron.daily/0logwatch >/dev/null 2>&1             # Red Hat / CentOS 5 an Up
+            if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+            fi
     fi
 
+    # Remove logwatch from sending an email every morning
+    if [ -f /etc/cron.daily/00-logwatch ] 
+       then sadm_writelog " "
+            sadm_writelog "Removing /etc/cron.daily/00-logwatch"        # Advise user
+            rm -f /etc/cron.daily/00-logwatch >/dev/null 2>&1           # Red Hat 4 and below
+            if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+            fi
+    fi
+    
     return $ERROR_COUNT
 }
 

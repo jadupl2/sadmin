@@ -108,64 +108,82 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
     fi
 
     # At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
-    SCMD="${SADM_BIN_DIR}/sadm_nmon_midnight_restart.sh"
+    SCRIPT="sadm_nmon_midnight_restart" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
    
 
     # Once a day just before midnight - Create daily Linux performance data file
-    SCMD="${SADM_BIN_DIR}/sadm_create_sar_perfdata.sh"
+    SCRIPT="sadm_create_sar_perfdata" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
    
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN client
-    SCMD="${SADM_BIN_DIR}/sadm_housekeeping_client.sh"
+    SCRIPT="sadm_housekeeping_client" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
     # Save Filesystems Structure for every Volume Group on System
     #  - Used in case of a System Recovery by sadm_fs_recreate.sh script
-    SCMD="${SADM_BIN_DIR}/sadm_fs_save_info.sh"
+    SCRIPT="sadm_fs_save_info" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
     # Generate System Configuration for this server (Collect by sadmin server)
-    SCMD="${SADM_BIN_DIR}/sadm_create_server_info.sh"
+    SCRIPT="sadm_create_server_info" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
     # Produce html page containing configuration (Collect by sadmin server)
-    SCMD="${SADM_BIN_DIR}/sadm_create_cfg2html.sh"
+    SCRIPT="sadm_create_cfg2html" 
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
