@@ -16,7 +16,8 @@
 #   See the GNU General Public License for more details.
 #
 # --------------------------------------------------------------------------------------------------
-#
+# 1.6 - 2017_01_27 - Cosmetic Changes to improve log Details
+# --------------------------------------------------------------------------------------------------
 #
 #
 #===================================================================================================
@@ -30,7 +31,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.6'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -61,8 +62,7 @@ SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1
  
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
-#===================================================================================================
-#
+
 
 
 
@@ -86,9 +86,9 @@ LIMIT_DAYS=60                               ; export LIMIT_DAYS             # RC
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping() 
 {
-    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "MY DIRECTORIES HOUSEKEEPING STARTING"
-    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
 
     jgroup=`id -gn jacques`                                           # Get Jacques's Group
     if [ -d "/stbackups" ]  
@@ -177,19 +177,7 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
-    # Once a day - Delete files in /tmp that have not been modified for 35 days
-    sadm_writelog " "
-    sadm_writelog "Once a day - Delete files in /tmp that have not been modified for 35 days"
-    sadm_writelog "find /tmp -type f -mtime +35 -exec rm -f {} \\;"
-    find /tmp -type f -mtime +35 -exec rm -f {} \; >/dev/null 2>&1
-    if [ $? -ne 0 ]
-        then sadm_writelog "Error occured on the last operation."
-             ERROR_COUNT=$(($ERROR_COUNT+1))
-        else sadm_writelog "OK"
-             sadm_writelog "Total Error Count at $ERROR_COUNT"
-    fi
-    
+
     
     # Make sure directory exist - Contains Storix Custom Scripts Distributed by sadm_rsync_sadmin.sh
     if [ ! -d "/storix/custom" ]
@@ -218,6 +206,8 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
               fi
+             sadm_writelog " "
+             sadm_writelog "Make sure /sadmin/jac have right permission" 
              sadm_writelog "chmod 0775 /sadmin/jac" 
              chmod 0775 /sadmin/jac
              if [ $? -ne 0 ]
@@ -226,6 +216,8 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
+             sadm_writelog " "
+             sadm_writelog "Make sure /sadmin/jac have right permission" 
              sadm_writelog "chmod g-s /sadmin/jac" 
              chmod g-s /sadmin/jac
              if [ $? -ne 0 ]
@@ -256,11 +248,10 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-    fi
-     
-    
+    fi    
     return $ERROR_COUNT
 }
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -268,15 +259,16 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_writelog " " ; sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " " ; 
+    sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "MY FILES HOUSEKEEPING STARTING"
-    sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
     
     # Reset privilege on directory /sadmin/jac
     if [ -d "$SADM_BASE_DIR/jac" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"       # Change Dir. 
-             find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     # Change Dir. 
+             sadm_writelog "find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"      
+             find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -289,8 +281,8 @@ file_housekeeping()
     # Reset privilege on notes directories
     if [ -d "$SADM_BASE_DIR/jac/notes" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \;"       # Change Dir. 
-             find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Dir. 
+             sadm_writelog "find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \;"      
+             find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -302,8 +294,8 @@ file_housekeeping()
     # Reset privilege on /sadmin/jac/cfg directories
     if [ -d "$SADM_BASE_DIR/jac/cfg" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \;"       # Change Dir. 
-             find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Dir. 
+             sadm_writelog "find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \;"      
+             find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -359,8 +351,24 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 special_housekeeping()
 {
+    sadm_writelog " " ; 
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "SPECIAL HOUSEKEEPING STARTING"
+    sadm_writelog "${SADM_TEN_DASH}"
+    
     rm -f ${SADM_DR_DIR}/*lsblk.txt  > /dev/null 2>&1
 
+    # Once a day - Delete files in /tmp that have not been modified for 35 days
+    sadm_writelog " "
+    sadm_writelog "Once a day - Delete files in /tmp that have not been modified for 35 days"
+    sadm_writelog "find /tmp -type f -mtime +35 -exec rm -f {} \\;"
+    find /tmp -type f -mtime +35 -exec rm -f {} \; >/dev/null 2>&1
+    if [ $? -ne 0 ]
+        then sadm_writelog "Error occured on the last operation."
+             ERROR_COUNT=$(($ERROR_COUNT+1))
+        else sadm_writelog "OK"
+             sadm_writelog "Total Error Count at $ERROR_COUNT"
+    fi
 }
 
 
@@ -389,10 +397,15 @@ special_housekeeping()
              fi
     fi
     
-    
+    # Check and Change Owner and Group and Permission on Directories
     dir_housekeeping                                                    # Do Dir HouseKeeping
+
+    # Check and Change Owner and Group and Permission on files
     file_housekeeping                                                   # Do File HouseKeeping
+
+    # On time shot housekeeping or Special HouseKeeping
     special_housekeeping                                                # Correct Historical Change
+
     SADM_EXIT_CODE=$ERROR_COUNT                                         # Error COunt = Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
