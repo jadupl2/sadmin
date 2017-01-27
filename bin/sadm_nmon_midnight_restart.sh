@@ -20,6 +20,8 @@
 #       Correction to make it work on AIX 7.x - (topas_nmon now)
 #       ReTested in AIX - Nmon Now part of Aix (as of 6.1)
 # --------------------------------------------------------------------------------------------------
+# 2.0   Jan 2017 - Cosmetic Message change
+# --------------------------------------------------------------------------------------------------
 #set +x
 #
 #
@@ -39,7 +41,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.9'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -132,14 +134,15 @@ restart_nmon()
     # Display Current Running Number of nmon process
     sadm_writelog " "
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running before stopping it"
+    sadm_writelog "There is $nmon_count nmon process actually running"
     ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
 
     # Kill Process to start the new day (New nmon File)
+    sadm_writelog " "
     if [ $nmon_count -gt 0 ]
-       then sadm_writelog "Killing Process"
-            ps -ef | grep nmon |grep -v grep |grep s300 | tee -a $SADM_LOG 2>&1
+       then sadm_writelog "Killing nmon Process"
+            #ps -ef | grep nmon |grep -v grep |grep s300 | tee -a $SADM_LOG 2>&1
             ps -ef | grep nmon |grep -v grep |grep s300 | awk '{ print $2 }' | xargs kill -9
     fi
 
@@ -159,7 +162,7 @@ restart_nmon()
     # Display Process Info after starting nmon
     sadm_writelog " "
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "The number of nmon process running after restarting it is $nmon_count"
+    sadm_writelog "There is $nmon_count nmon process running after restarting it"
     ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
     return 0   
 }
