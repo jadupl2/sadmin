@@ -404,7 +404,6 @@ save_aix_info()
                  SADM_EXIT_CODE=1
         fi
         
-        sadm_writelog " "
         sadm_writelog "Removing the line '.*' in /etc/exclude.$vg after the backup"
         grep -v "^\.\*" /etc/exclude.$vg >$SADM_TMP_FILE3
         cp $SADM_TMP_FILE3  /etc/exclude.$vg
