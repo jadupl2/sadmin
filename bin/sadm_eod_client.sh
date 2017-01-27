@@ -21,9 +21,11 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+# 1.1 Jan 2017 - Cosmetic Log Output change 
+# --------------------------------------------------------------------------------------------------
+
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
-
 #
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
@@ -36,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.0'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.1'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -110,7 +112,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
     # At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
     SCRIPT="sadm_nmon_midnight_restart" 
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
+    sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
         then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
