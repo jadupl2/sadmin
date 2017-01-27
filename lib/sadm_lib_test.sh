@@ -9,9 +9,8 @@
 #   SCCS-Id. :  @(#) template.sh 2.0 2013/08/14
 # --------------------------------------------------------------------------------------------------
 # 2.2 Correction in end_process function (April 2014)
+# 2.3 Cosmetic changes - Jan 2017
 #
-# Enhancements/Corrections Version Log
-# 1.6   
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -27,7 +26,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -190,7 +189,7 @@ sadm_display_variables()
     EPOCH_TIME=$(sadm_get_epoch_time)
     printf "\$(sadm_epoch_to_date $EPOCH_TIME)            Convert epoch time to date (YYYY.MM.DD HH:MM:SS)                 : ...$(sadm_epoch_to_date $EPOCH_TIME)...\n"
     WDATE=$(sadm_epoch_to_date $EPOCH_TIME)
-    printf "\$(sadm_date_to_epoch \'$WDATE\') Convert Date to epoch time (YYYY.MM.DD HH:MM:SS)                 : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
+    printf "\$(sadm_date_to_epoch '$WDATE') Convert Date to epoch time (YYYY.MM.DD HH:MM:SS)                 : ..."$(sadm_date_to_epoch "$WDATE")"...\n"
     printf "\$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03') Return Elapse Time between two timestamp     : ...$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03')...\n"
     printf "sadm_toupper string                         Return the string it receive in uppercase                        : ...`sadm_toupper STRING`...\n"
     printf "sadm_tolower STRING                         Return the string it receive in lowercase                        : ...`sadm_tolower STRING`...\n"
