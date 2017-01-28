@@ -1,12 +1,9 @@
 <?php
 
-define("SADM_VERSION"       ,"0.84" );  # Temp Hard Code will get it from cfg file
-
-
 # Setting the HOSTNAME Variable
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
-# SET SADMIN BASE DIRECTORIES 
+# SET SADMIN ROOT BASE DIRECTORY
 define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
 $TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable
 if (strlen($TMPVAR) != 0 ) { define("SADM_BASE_DIR",$TMPVAR); }         # Use Env. SADMIN Var Base
@@ -26,7 +23,7 @@ define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disast
 define("SADM_SAR_DIR"      , SADM_DAT_DIR  . "/sar");                   # System Activty Report Dir
 define("SADM_RCH_DIR"      , SADM_DAT_DIR  . "/rch");                   # Result Code History Dir
 define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Network SubNet Info Dir
-#
+
 # SADMIN WEB SITE DIRECTORIES DEFINITION
 define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Site Dir.
 define("SADM_WWW_HTML_DIR" , SADM_WWW_DIR  . "/html");                  # Web server html Dir
@@ -40,24 +37,16 @@ define("SADM_WWW_NMON_DIR" , SADM_WWW_DAT_DIR . "/${HOSTNAME}/nmon");   # Web nm
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
 define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LOG Dir
 
-// Database Constants
-define("DB_SERVER", "sadmin.maison.ca");
-define("HOME_URL" , "http://sadmin.maison.ca");
-define("DB_USER"  , "sadmin");
-define("DB_PASS"  , "nimdas");
-define("DB_NAME"  , "sadmin");
-
-# Loading Configuration File 
-$lineno = 0;
-$handle = fopen(SADM_CFG_DIR . "/sadmin.cfg", "r");
-#echo "Location of config file is " . SADM_CFG_DIR . "/sadmin.cfg";
-if ($handle) {
-    while (($line = fgets($handle)) !== false) {
+# LOADING CONFIGURATION FILE 
+$lineno = 0;                                                            # Clear Line Number
+$handle = fopen(SADM_CFG_DIR . "/sadmin.cfg", "r");                     # Set Configuration Filename
+if ($handle) {                                                          # If Successfully Open
+    while (($line = fgets($handle)) !== false) {                        # If Still Line to read
           $lineno++;                                                    # Increase Line Number
           if ( strpos(trim($line), '#') === 0  )                        # If 1st Non-WhiteSpace is #
              continue;                                                  # Go Read the next line
+          list($fname,$fvalue) = explode ('=',$line);                   # Split Line by Name & Value
           #echo "\n$lineno : $line";
-          list($fname,$fvalue) = explode ('=',$line); 
           #echo "\nThe Parameter is : " . $fname ;
           #echo "\nThe Value is     : " . $fvalue ;
           if (trim($fname) == "SADM_MAIL_ADDR")     { define("SADM_MAIL_ADDR"     , trim($fvalue));}
@@ -87,12 +76,23 @@ if ($handle) {
           if (trim($fname) == "SADM_RCH_KEEPDAYS")  { define("SADM_RCH_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_LOG_KEEPDAYS")  { define("SADM_LOG_KEEPDAYS"  , trim($fvalue));}
     }
-
     fclose($handle);
 } else {
-    echo "Error opening the file";
+    echo "Error opening the file " . SADM_CFG_DIR . "/sadmin.cfg";
 } 
 
+
+# GET THE SADMIN RELEASE NUMBER FORM THE .RELEASE FILE
+$REL_FILE = SADM_CFG_DIR . "/.release" ;                                # Name of the Release File
+if (file_exists($REL_FILE)) {                                           # If Release file exist
+    $f = fopen($REL_FILE, 'r');                                         # Open Release FIle
+    $release = fgets($f);                                               # Read Rel No. from File
+    fclose($f);                                                         # Close .release file
+    define("SADM_VERSION" , trim($release));                            # Create Var. from Release 
+}else{
+    define("SADM_VERSION" , "00.00");                                   # Default if File Not Exist
+    echo "Release file is missing " . $REL_FILE ;                       # Error Mess. - File Missing
+}
 
 
 # ADD PHP LIBRARY DIRECTORY TO PATH
@@ -100,10 +100,10 @@ if ($handle) {
 set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
-// 1. Create a database connection
-#$connString = "host=".DB_SERVER." dbname=".DB_NAME." user=".DB_USER." password=".DB_PASS ;
+# CREATE DATABASE CONNECTION STRING
 $connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
 
+# CONNECT TO POSTGRESQL DATABASE
 $connection = pg_connect($connString);
 if (!$connection) { die("Database connection failed: " . mysql_error()); }
 

@@ -227,8 +227,11 @@ function sadm_page_heading($msg) {
     echo "\n<div id='sadmMainBodyHeading'>";
     
     echo "\n<div id='sadmMainBodyHeadingLeft'>\n";
-    echo "<a href='javascript:history.go(-1)'>" . 
-         "<class='btn btn-info btn-sm'><span class='glyphicon glyphicon-arrow-left'></span></a>";
+    if ($message != "List of all Servers") {
+        echo "<a href='javascript:history.go(-1)'>" . 
+            "<class='btn btn-info btn-sm'><span class='glyphicon glyphicon-arrow-left'></span>" ; 
+        echo "</a>";
+    }
     echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingLeft -->";
 
     echo "\n<div id='sadmMainBodyHeadingCenter'>\n";

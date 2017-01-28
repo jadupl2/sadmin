@@ -36,7 +36,7 @@ echo "\n    <div id='sadmEntete1L'>";
 echo "\n    <a href='http://sadmin.maison.ca/index.php'>";
 echo "\n        SADMIN Control Center<br>";
 echo "\n    </a>";
-echo "\n        <small>Your Company Name</small><br>";
+echo "\n        <small>" . SADM_CIE_NAME .  " <br>";
 echo "\n    </div>                                      <!-- End of Div sadmEntete1L -->\n";
 
 echo "\n    <div id='sadmEntete1R'>"; 
