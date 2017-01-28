@@ -22,8 +22,7 @@
 *   If not, see <http://www.gnu.org/licenses/>.
 * ==================================================================================================
 */
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php'); 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 #init_set('error_reporting',E_ALL & ~E_NOTICE);

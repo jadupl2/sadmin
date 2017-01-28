@@ -23,8 +23,7 @@
 *   If not, see <http://www.gnu.org/licenses/>.
 * ==================================================================================================
 */
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_constants.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_connect.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_category_common.php');
