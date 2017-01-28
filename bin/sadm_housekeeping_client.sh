@@ -111,14 +111,11 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
-    sadm_writelog " "
-    sadm_writelog "${SADM_DASH}"
     sadm_writelog "CLIENT DIRECTORIES HOUSEKEEPING STARTING"
-    sadm_writelog "${SADM_DASH}"
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
     
-       
+      
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
@@ -189,8 +186,6 @@ dir_housekeeping()
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
 
-
-
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
     if [ -d "$SADM_BASE_DIR/lost+found" ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -217,22 +212,25 @@ dir_housekeeping()
 file_housekeeping()
 {
     sadm_writelog " " 
-    sadm_writelog "${SADM_DASH}"
+    sadm_writelog " " 
     sadm_writelog "CLIENT FILES HOUSEKEEPING STARTING"
-    sadm_writelog "${SADM_DASH}"
     sadm_writelog " "
 
     # Make sure the configuration file is at 644
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Protect SADMIN Configuration file"
+
     sadm_writelog "chmod 0644 $SADM_CFG_FILE" 
     chmod 0644 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
+
     sadm_writelog "chmod 0644 $SADM_CFG_HIDDEN" 
     chmod 0644 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
+
     sadm_writelog "chmod 0644 $SADM_CFG_DIR/.crontab.txt" 
     chmod 0644 $SADM_CFG_DIR/.crontab.txt
+    ls -l $SADM_CFG_DIR/.crontab.txt | tee -a $SADM_LOG
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
@@ -396,6 +394,7 @@ file_housekeeping()
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_TMP_DIR -type f -mtime +7 -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;" 
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -404,8 +403,9 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Delete pid files once a day - Otherwise May cause script not to run"
+             sadm_writelog "Delete pid files once a day - To prevent cause script not to run"
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \;" 
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
     fi
 
@@ -415,6 +415,7 @@ file_housekeeping()
              sadm_writelog "Keep rch files for ${SADM_RCH_KEEPDAYS} days"
              sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR} and delete them"
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;" 
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -430,6 +431,7 @@ file_housekeeping()
              sadm_writelog "Keep log files for ${SADM_LOG_KEEPDAYS} days"
              sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR} and delete them"
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;" 
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -446,6 +448,7 @@ file_housekeeping()
              sadm_writelog "List of nmon file that will be deleted"
              sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;"
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
+             sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.nmon' -exec rm {} \;" 
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec rm {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -462,6 +465,7 @@ file_housekeeping()
             sadm_writelog "List of sar file that will be deleted"
             sadm_writelog "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;"
             find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
+            sadm_writelog "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name '*.sar' -exec rm {} \;"
             find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
             if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
