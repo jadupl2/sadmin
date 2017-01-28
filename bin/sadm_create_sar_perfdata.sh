@@ -24,6 +24,7 @@
 #############################################################################################
 # --------------------------------------------------------------------------------------------------
 #  2.1 Added Basic Logic for Aix - JAn 2017
+#  2.2 Added MOre Verbose to output log - JAn 2017
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -39,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.1'                             ; export SADM_VER            # Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -101,6 +102,7 @@ fi
 
 # Generate CPU statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:CPU" 
 echo "PERFDATA:CPU" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then sar -u -f $SAR_FILE  | tee -a $OUT_FILE
@@ -109,6 +111,7 @@ fi
 
 # Generate memory usage statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:MEM_USAGE" 
 echo "PERFDATA:MEM_USAGE" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then sar -r -f $SAR_FILE  | tee -a $OUT_FILE
@@ -117,6 +120,7 @@ fi
 
 # Generate memory demand statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:MEM_STATS" 
 echo "PERFDATA:MEM_STATS" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then echo " " 
@@ -126,6 +130,7 @@ fi
 
 # Generate paging statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:PAGING" 
 echo "PERFDATA:PAGING" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then echo " " 
@@ -135,6 +140,7 @@ fi
 
 # Generate swapping statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:SWAPPING" 
 echo "PERFDATA:SWAPPING" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then echo " " 
@@ -144,6 +150,7 @@ fi
 
 # Generate disk transfer statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:DISK" 
 echo "PERFDATA:DISK" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then sar -b -f $SAR_FILE  | tee -a $OUT_FILE
@@ -152,6 +159,7 @@ fi
 
 # Generate run queue statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:RUNQUEUE" 
 echo "PERFDATA:RUNQUEUE" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then sar -q -f $SAR_FILE  | tee -a $OUT_FILE
@@ -160,6 +168,7 @@ fi
 
 # Generate network usage statistics
 # --------------------------------------------------------------------------------------------------
+sadm_writelog "PERFDATA:NETWORK" 
 echo "PERFDATA:NETWORK" | tee -a $OUT_FILE
 if [ "$(sadm_get_osname)" = "AIX" ] 
    then echo " " 
