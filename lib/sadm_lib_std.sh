@@ -43,6 +43,7 @@ SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disast
 SADM_SAR_DIR="$SADM_DAT_DIR/sar"            ; export SADM_SAR_DIR       # System Activty Report Dir
 SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
+SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
 SADM_WWW_DIR="$SADM_BASE_DIR/www"                      ; export SADM_WWW_DIR       # Web Site Dir.
@@ -946,6 +947,7 @@ sadm_start() {
     if [ ! -d "$SADM_LOG_DIR" ]
         then mkdir -p $SADM_LOG_DIR
              chmod 0775 $SADM_LOG_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_LOG_DIR           
     fi
 
     # If LOG File doesn't exist, Create it and Make it writable 
@@ -959,24 +961,28 @@ sadm_start() {
     if [ ! -d "$SADM_TMP_DIR" ]
         then mkdir -p $SADM_TMP_DIR
              chmod 1777 $SADM_TMP_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_TMP_DIR
     fi
 
     # If LIB Directory doesn't exist, create it.
     if [ ! -d "$SADM_LIB_DIR" ]
         then mkdir -p $SADM_LIB_DIR
              chmod 0775 $SADM_LIB_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
     fi
 
     # If Custom Configuration Directory doesn't exist, create it.
     if [ ! -d "$SADM_CFG_DIR" ]
         then mkdir -p $SADM_CFG_DIR
              chmod 0775 $SADM_CFG_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_CFG_DIR
     fi
 
     # If System Startup/Shutdown Script Directory doesn't exist, create it.
     if [ ! -d "$SADM_SYS_DIR" ]
         then mkdir -p $SADM_SYS_DIR
              chmod 0775 $SADM_SYS_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_SYS_DIR
     fi
 
     # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
@@ -992,65 +998,84 @@ sadm_start() {
     if [ ! -d "$SADM_DAT_DIR" ]
         then mkdir -p $SADM_DAT_DIR
              chmod 0775 $SADM_DAT_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_DAT_DIR
     fi
 
     # If Package Directory doesn't exist, create it.
     if [ ! -d "$SADM_PKG_DIR" ]
         then mkdir -p $SADM_PKG_DIR
              chmod 0775 $SADM_PKG_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
     fi
 
     # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
 
     # If SADM Server Web Site Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
     fi
+
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_WWW_LIB_DIR
     fi
 
     # If NMON Directory doesn't exist, create it.
     if [ ! -d "$SADM_NMON_DIR" ]
         then mkdir -p $SADM_NMON_DIR
              chmod 0775 $SADM_NMON_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_NMON_DIR
     fi
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
     if [ ! -d "$SADM_DR_DIR" ]
         then mkdir -p $SADM_DR_DIR
              chmod 0775 $SADM_DR_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_DR_DIR
     fi
 
     # If Network/Subnet Information Directory doesn't exist, create it.
     if [ ! -d "$SADM_NET_DIR" ]
         then mkdir -p $SADM_NET_DIR
              chmod 0775 $SADM_NET_DIR
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_NET_DIR
+    fi
+
+    #If SADM Sysmon Report Directory doesn't exist, create it.
+    if [ ! -d "$SADM_RPT_DIR" ]
+        then mkdir -p $SADM_RPT_DIR
+             chmod 0775 $SADM_RPT_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_RPT_DIR
     fi
 
     # If Performance Server Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_SAR_DIR" ]
         then mkdir -p $SADM_SAR_DIR
              chmod 0775 $SADM_SAR_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_SAR_DIR
     fi
 
     # If Return Code History Directory doesn't exist, create it.
     if [ ! -d "$SADM_RCH_DIR" ]
         then mkdir -p $SADM_RCH_DIR
              chmod 0775 $SADM_RCH_DIR
+             chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
     fi
 
 
