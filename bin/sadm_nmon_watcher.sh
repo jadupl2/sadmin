@@ -119,10 +119,10 @@ pre_validation()
 
 
 # --------------------------------------------------------------------------------------------------
-#    - Stop / Start nmon Daemon once a day at 23:55
+#    - Check if nmon is running - If not start it and set parameter so it stop at 23:55
 # --------------------------------------------------------------------------------------------------
 #
-restart_nmon()
+check_nmon()
 {
     if [ $(sadm_get_ostype) = "AIX" ]
         then ${SADM_WHICH} topas_nmon >/dev/null 2>&1
@@ -213,10 +213,16 @@ restart_nmon()
         then sadm_stop 1                                                # Upd. RC & Trim Log & Set RC
              exit 1                                                     # Abort Program
     fi                             
-    restart_nmon                                                        # nmon not running start it
-    SADM_EXIT_CODE=$?                                                   # Recuperate error code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occured
-        then sadm_writelog "Problem starting nmon"                        # Advise User
+    
+    # Don't Check nmon status when nmon rotation script (sadm_nmon_midnight_restart) is running
+    if [ ! -e "${SADM_TMP_DIR}/sadm_nmon_midnight_restart.pid" ]        # nmon No Rotation running ?
+        then check_nmon                                                 # nmon not running start it
+             SADM_EXIT_CODE=$?                                          # Recuperate error code
+             if [ $SADM_EXIT_CODE -ne 0 ]                               # if error occured
+                then sadm_writelog "Problem starting nmon"              # Advise User
+             fi
+        else sadm_writelog "Don't check nmon when sadm_nmon_midnight_restart.sh is running"
     fi
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)
