@@ -51,6 +51,7 @@ SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                 ; export SADM_WWW_HTML_DI
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                   ; export SADM_WWW_DAT_DIR   # server Data Dir
 SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                   ; export SADM_WWW_LIB_DIR   # server Libr Dir
 SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR   # web rch dir
+SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR   # web rpt dir
 SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR   # web sar dir
 SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/net"   ; export SADM_WWW_NET_DIR   # web net dir
 SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR    # web dr dir
