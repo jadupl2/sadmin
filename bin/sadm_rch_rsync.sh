@@ -52,7 +52,8 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 
 # These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
+#SADM_SSH_CMD="${SADM_SSH} -o 'ConnectTimeout 10' -qnp ${SADM_SSH_PORT} " ; export SADM_SSH_CMD  
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " ; export SADM_SSH_CMD  
 SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
 #SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
@@ -65,7 +66,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 #===================================================================================================
@@ -157,8 +158,8 @@ process_servers()
               # If Monitoring is False for server doesn't respond to ping, continue to next server
               #-------------------------------------------------------------------------------------
               sadm_writelog " " ; sadm_writelog "Let's try to ping the server $fqdn_server"
-              ping -c 2 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
-              #ping -c 2 $fqdn_server >>$SADM_LOG 2>&1                   # Ping Server one time
+              #ping -c 2 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
+              ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"
@@ -232,7 +233,7 @@ process_servers()
               fi
 
 
-              # Make sure the receiving LOG directory on this server exist before we populate it
+              # Make sure the receiving LOG directory exist on this server  before we populate it
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
@@ -256,6 +257,32 @@ process_servers()
                  else sadm_writelog "The Log files are now in sync - OK ..."
               fi
 
+ 
+              # Make sure the receiving rpt directory exist on this server before we populate it
+              #-------------------------------------------------------------------------------------
+              sadm_writelog " "                                         # Separation Blank Line
+              WDIR="${SADM_WWW_RPT_DIR}/${server_name}/rpt"             # Local Receiving Dir.
+              sadm_writelog "Make sure the directory $WDIR Exist"       # Inform User Dir Must Exist
+              if [ ! -d "${WDIR}" ]                                     # If Dir. doesn't exist
+                  then sadm_writelog "Creating ${WDIR} directory"       # Inform we creating it
+                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
+                  else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
+              fi
+              
+
+              # Get the server Sysmon Report File 
+              # Transfer Remote Report file(s) $SADMIN/rpt/*.rpt to local $SADMIN/www/dat/$server/rpt
+              #-------------------------------------------------------------------------------------
+              sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ "
+              rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ >/dev/null 2>&1
+              RC=$?                                                     # Save error number
+              if [ $RC -ne 0 ]                                          # If Error doing rch rsync
+                 then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
+                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
+                 else sadm_writelog "The Log files are now in sync - OK ..."
+              fi
+
+              
               sadm_writelog " "                                         # Separation Blank Line
               sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
               done < $SADM_TMP_FILE1                            
