@@ -30,6 +30,7 @@ www/tmp/
 sys/*.log
 cfg/.pgpass
 cfg/sadmin.cfg
+cfg/holmes.cfg
 
 __pycache__/
 *.pyc

@@ -1,66 +1,229 @@
-#----------------------------------------------------------------------------------------------------------------------------------------
-# UPDATED FOR VERSION 2.1
-# SADM SYSMON Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.cfg
-# This file is read and updated by SADM SYSMON every time it run.
-# New Filesystem line will be added automatically to this file when Detected.
-#----------------------------------------------------------------------------------------------------------------------------------------
-# This file contains all the verifications made on the node and the actual value for each test
-# Comments lines must always begin with a "#".
-# Tabs and space can be used between field.
-#----------------------------------------------------------------------------------------------------------------------------------------
-#
-# Script to run if error condition occurs-----------------------------------------------------------------------------------------------
-# Email Aliases to advice when error occurs---------------------------------------------------------------------------                 |  
-# Aliases to qpage if error condition occurs------------------------------------------------------                   |                 |
-# Last Time that the error Occured - Used in conjunction with 6th field ---------------          |                   |                 |
-# Last Date that the error Occured - Used in conjunction with 6th field ---------     |          |                   |                 |
-# Line is active ? Line to be tested ? (Y/N)-------------------------------     |     |          |                   |                 |
-# Test to be done on Saturday (Y/N)-------------------------------------- |     |     |          |                   |                 |
-# Test to be done on Friday (Y/N)-------------------------------------- | |     |     |          |                   |                 |
-# Test to be done on Thursday (Y/N)---------------------------------- | | |     |     |          |                   |                 |
-# Test to be done on Wednesday (Y/N)------------------------------- | | | |     |     |          |                   |                 |
-# Test to be done on Tuesday (Y/N)------------------------------- | | | | |     |     |          |                   |                 |
-# Test to be done on Monday (Y/N)------------------------------ | | | | | |     |     |          |                   |                 |
-# Test to be done on Sunday (Y/N)---------------------------- | | | | | | |     |     |          |                   |                 |
-# Hours that will stop to evaluate (0=not evaluate)------   | | | | | | | |     |     |          |                   |                 |
-# Hours that will start to evaluate (0=not evaluate)    |   | | | | | | | |     |     |          |                   |                 |
-# Error must occur over X minutes before trigger-  |    |   | | | | | | | |     |     |          |                   |                 |
-# Error Level (0=not evaluated)--------------   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Warning Level (0=not evaluated)--------   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Evaluation Operator (=,!=,<,>,=>,=<)  |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Last Value calculated by SYSMON|  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-#                                |  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# IDENTIFIER                     V  V   V   V   V  V    V   V V V V V V V V     V     V          V                   V                 V
-#----------------------------------------------------------------------------------------------------------------------------------------
-#
-#------- R U N   S P E C I F I C    S C R I P T S    ------------------------------------------------------------------------------------
-#script:name                      1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
-#
-#------- CPU / LOAD AVERAGE / SWAP SPACE  M O N I T O R I N G  --------------------------------------------------------------------------
-load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-cpu_level                        4 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-swap_space                      16  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
+#----------------------------------------------------------------------------
+# SADMIN - Configuration file - Created on Mon Dec 14 15:52:38 EST 2015
+#   - Comment line MUST begin with an # in column 1
+#   - Blank lines are ignored
+#   - The Format is simple (NAME = VALUE)
+#       NAME must start in column 1
+#   - These are the defaults values used by sadmin tools
+#   - Most fields can be overriden on a script basis
+#        Like SADM_MAIL_TYPE , SADM_MAIL_ADDR overriden at the top of script
+#        See the template sadm_template.sh as an example.
+#   - If this file (sadmin.cfg) is not present when the 1st script is run,
+#     then template file .sadmin.cfg will be copied to sadmin.cfg
+#     If both file sadmin.cfg and .sadmin.cfg are not present default values
+#     are used.
+#----------------------------------------------------------------------------
 #
 #
-#------- U N I X    D A E M O N   M O N I T O R I N G  ----------------------------------------------------------------------------------
-daemon_sendmail                  0  <  00  01 000 0700 2100 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-sendmail.sh
-daemon_ntpd                      0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-ntpd.sh
-daemon_portmap                   0  <  00  01 000 0700 2100 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-portmap.sh
-daemon_syslogd                   0  <  00  01 000 0700 2100 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-syslogd.sh
-#daemon_named                     1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-named.sh
+#----------------------------------------------------------------------------
+# Email when error and log report are sent
+#----------------------------------------------------------------------------
+SADM_MAIL_ADDR = duplessis.jacques@gmail.com
 #
 #
-#-------  L I N U X   O N L Y    D A E M O N   M O N I T O R I N G  ---------------------------------------------------------------------
-daemon_atd                       2  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-atd.sh
-daemon_crond                     1  <  00  01 001 0000 0000 Y Y Y Y Y Y Y Y 20110322 1536 sadm sadm scom-start-crond.sh
-daemon_sshd                      7  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm scom-start-sshd.sh
+#----------------------------------------------------------------------------
+# Put your Company name here
+#----------------------------------------------------------------------------
+SADM_CIE_NAME = The Batcave
 #
 #
-#---------- N E T W O R K     P I N G    ------------------------------------------------------------------------------------------------
-ping_www.google.com              2  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+#----------------------------------------------------------------------------
+# Default Option for sending email after a script is ended
+# Can be overridden by changing SADM_MAIL_TYPE at the top of template script
+# 0 = No Mail Sent      1 = On Error Only
+# 2 = On Success Only   3 = Always send email
+#----------------------------------------------------------------------------
+SADM_MAIL_TYPE = 3
 #
 #
-# 
-#------- F I L E S Y S T E M S   M O N I T O R I N G  -----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------
+# SADMIN Server - (MUST be fully qualified name)
+# This name MUST NOT be an alias in the DNS 
+# It MUST be the result of the 'hostname' command on the SADMIN server
+#----------------------------------------------------------------------------
+SADM_SERVER = holmes.maison.ca
+#
+#
+#----------------------------------------------------------------------------
+# Standard Port for SSH is 22 - But if you use a different port put it here
+#----------------------------------------------------------------------------
+SADM_SSH_PORT = 32
+#
+#----------------------------------------------------------------------------
+# Default Domain when Adding new server to SADM Tools
+#----------------------------------------------------------------------------
+SADM_DOMAIN = maison.ca
 
-#SADMSTAT 2.5 holmes - Wed Feb  1 10:30:51 2017 - Execution Time 3.00 seconds
+
+#----------------------------------------------------------------------------
+# This is the user and group that have access to $SADM_BASE_DIR (/sadmin)
+# sadm_housekeeping_client.sh and sadm_housekeeping_server.sh will use them
+# to make sure all files and directories belong to them.
+#----------------------------------------------------------------------------
+SADM_USER = sadmin
+SADM_GROUP = sadmin
+
+
+
+#----------------------------------------------------------------------------
+# POSTGRES DATABASE DIRECTORIES STRUCTURE OWNER
+
+# Linux user and group that have access to $SADM_PG_DIR (/sadmin/pgsql)
+# sadm_housekeeping_client.sh and sadm_housekeeping_server.sh will use them
+# to make sure all files and directories belong to them.
+#----------------------------------------------------------------------------
+SADM_PGUSER   = postgres
+SADM_PGGROUP  = postgres
+
+
+
+#----------------------------------------------------------------------------
+# This is the user and group that have access to $SADM_BASE_DIR (/sadmin/www)
+# sadm_housekeeping_server.sh will use them to make sure all files and 
+# directories belong to them.
+# They should be set to the user and group that is running the http server.
+# On RedHat/CentOS it is usually apache/apache 
+#----------------------------------------------------------------------------
+SADM_WWW_USER  = apache
+SADM_WWW_GROUP = apache
+
+
+#----------------------------------------------------------------------------
+# POSTGRES DATABASE USER WITH READ/WRITE PRIVILEGE (Admin)
+#----------------------------------------------------------------------------
+SADM_RW_PGUSER = sadmin
+SADM_RW_PGPWD  = nimdas
+
+#----------------------------------------------------------------------------
+# POSTGRES DATABASE USER WITH READ ONLY PRIVILEGE
+#----------------------------------------------------------------------------
+SADM_RO_PGUSER  = squery
+SADM_RO_PGPWD   = squery
+
+
+#----------------------------------------------------------------------------
+# POSTGRES DATABASE PARAMETERS
+#----------------------------------------------------------------------------
+
+# Database Name and Schema
+SADM_PGDB     = sadmin
+SADM_PGSCHEMA = sadm
+
+# Database Host and TCP Port Number - Used to connect to Database
+SADM_PGHOST   = sadmin.maison.ca
+SADM_PGPORT   = 5432
+
+
+#----------------------------------------------------------------------------
+# The Log filename are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log"
+# They are located in ${SADM_BASE_DIR}/log
+# Log are created/updated each time the function sadm_start() is called.
+# There is a log file per script, log are cumulative, they are never cleared
+# SADM_MAX_LOGLINE represent the maximum number of lines that each *.log file
+# can contain.
+# *.log are trimmed to this number when the function sadm_stop() is called
+#----------------------------------------------------------------------------
+SADM_MAX_LOGLINE=5000
+
+
+#----------------------------------------------------------------------------
+# The *.rch ([R]eturn [C]ode [H]istory] file, record script execution history.
+#----------------------------------------------------------------------------
+# You can use the "sadm_rch_scr_summary.sh" (You can also type "smon")
+# to display a summary of all "rch" files collected from the server farm.
+#----------------------------------------------------------------------------
+# The *.rch filename are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+# They are located in ${SADM_BASE_DIR}/dat/rch
+# Log are created/updated each time the function sadm_start() is called.
+# There is a log file per script, log are cumulative, they are never cleared
+# SADM_MAX_RCHLINE represent the maximum number of lines that each *.rch file
+# can contain.
+# *.rch are trimmed to this number when the function sadm_stop() is called
+#----------------------------------------------------------------------------
+# Each Script excution will create 2 lines in the rch file
+# Example :
+#   nomad 2016.01.16 06:05:01 ........ sadm_daily_data_collection 2
+#   nomad 2016.01.16 06:05:01 06:06:09 sadm_daily_data_collection 0
+# First Line
+#   Line is added to rch file when the script call the sadm_start() function
+#   The code "2" at the end of the file indicate the script in "Running"
+#   So the script "sadm_daily_data_collection" was started at 6:05:01 am
+#   on January the 16th 2016 on the host named "nomad"
+# Second Line
+#   Line is added to rch file when the script call the sadm_stop() function.
+#   Code "0" at the end of the file indicate the script ended with "Success".
+#   Code "1" at the end of the file would indicate a "Failure" of the script.
+#   So the script "sadm_daily_data_collection" was started at 6:05:01 am
+#   on January the 16th 2016 on the host named "nomad" and ended at 06:06 am.
+#----------------------------------------------------------------------------
+# If script is run daily, so value of 100 would keep an history of 50 days.
+#----------------------------------------------------------------------------
+SADM_MAX_RCHLINE=125
+
+
+
+#----------------------------------------------------------------------------
+# One *.nmon file is produced daily and recorded in $SADMIN_BASE_DIR/dat/nmon
+# of each server.
+# The name of each nmon file is "[HOSTNAME]_[yymmdd]_[hhmm].nmon"
+# This file is created by the "nmon" tool, that collect information and
+# performance statistics about the server.
+# You can find the nmon homepage at http://nmon.sourceforge.net/pmwiki.php
+# SADMIN script will install nmon if not present on the system, the first 
+# time a script using the SADM Library is run.
+# You can find a copy of nmon for your env. in ${SADM_BASE_DIR}/pkg/nmon dir.
+# SADM Tools will use it to produce performance graph of your servers.
+# -----
+# Once a day nmon dir. of each servers is sync (rsync) to the SADMIN server,
+# this is done by the "sadm_daily_data_collection.sh" that run every day early
+# in the morning. 
+# -----
+# At midnight every night the current nmon file is closed and a new one created
+# This is done by executing "sadm_nmon_midnight_restart.sh" (it is in crontab)
+# -----
+# The script "sadm_housekeeping_client.sh" run once a day delete any nmon 
+# files older that the number of days specified in this Global variable.
+# Default value of 40 days, is a reasonable default (each file is about 500k)
+#----------------------------------------------------------------------------
+SADM_NMON_KEEPDAYS=60
+
+#----------------------------------------------------------------------------
+# One *.sar file is produced daily and recorded in $SADMIN_BASE_DIR/dat/sar
+# The name of each *.sar file is "[HOSTNAME]_[yyyymmdd].sar"
+# This file is created by the "sar" tool, that collect performance statistics
+# The sysstat homepage is at http://sebastien.godard.pagesperso-orange.fr/
+# Installation will ask you to install it, if it's not.
+# SADM Tools will use it to produce performance graph of your server
+# Default value of 40 days, is a reasonable default (each file is about 500k)
+#----------------------------------------------------------------------------
+SADM_SAR_KEEPDAYS=60
+
+
+#----------------------------------------------------------------------------
+# The *.rch files ([R]eturn [C]ode [H]istory) are updated every time the
+# associate script is run.
+# The *.rch files are located in ${SADM_BASE_DIR}/dat/rch directory.
+# If an *.rch is not updated for a long time, this may
+# indicate that the associated script don't exist anymore and as not been run
+# for a while. The *.rch file will then stay there for ever.
+# The variable SADM_RCH_KEEPDAYS indicated the number of days we wait, till we
+# deleted an *.rch file that was not updated for the number of days specified.
+# Recommended value is 60 days.
+#----------------------------------------------------------------------------
+SADM_RCH_KEEPDAYS=60
+
+
+#----------------------------------------------------------------------------
+# The *.log files are updated every time the associate script is run.
+# The *.log files are located in ${SADM_BASE_DIR}/log directory.
+# If an *.log is not updated for a long time, this may indicate that the
+# associated script don't exist anymore and as not been run for a while.
+# The *.log file will then stay there for ever.
+# The variable SADM_LOG_KEEPDAYS indicated the number of days we wait, till we
+# deleted an *.log file that was not updated for the number of days specified.
+# Recommended value is 60 days.
+#----------------------------------------------------------------------------
+SADM_LOG_KEEPDAYS=60
+
+
+
