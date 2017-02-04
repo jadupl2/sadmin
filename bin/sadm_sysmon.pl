@@ -60,9 +60,8 @@ my $CMD_VMSTAT          = `which vmstat`     ;chomp($CMD_VMSTAT);       # Locati
 my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
 my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command 
-my $CMD_SYSTEMCTL       = `which systemctl`  ;chomp($CMD_SYSTEMCTL);    # Location of systemctl cmd 
-my $CMD_SYSTEMCTL       = `which systemctl 2>/dev/null`;                # Get Path of systemctl 
-if ($? != 0) { $CMD_SYSTEMCTL = ""; }                                   # Not Found then equal Blank
+system ("which systemctl >/dev/null 2>&1");
+if ( $? == -1 )  { $CMD_SYSTEMCTL = ""; }else{ $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
 
 
 # SSH COMMANDS AND VARIABLES
