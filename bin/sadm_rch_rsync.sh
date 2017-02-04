@@ -207,8 +207,10 @@ process_servers()
                  else sadm_writelog "SSH went OK ..."                   # Good SSH Work
               fi
                                    
-              
-              # Make sure the RCH receiving directory on this server exist before we populate it
+
+
+
+              # MAKE SURE THE RCH RECEIVING DIRECTORY ON THIS SERVER EXIST BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
@@ -218,10 +220,9 @@ process_servers()
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
-              
 
-              # Get the RCH (Return Code History) files from remote server
-              # rsync remote $SADMIN/dat/rch/*.rch to local $SADMIN/www/dat/$server/rch  
+              # GET THE RCH (RETURN CODE HISTORY) FILES FROM REMOTE SERVER
+              # RSYNC REMOTE $SADMIN/DAT/RCH/*.RCH TO LOCAL $SADMIN/WWW/DAT/$SERVER/RCH  
               #-------------------------------------------------------------------------------------
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ >/dev/null 2>&1
@@ -233,7 +234,9 @@ process_servers()
               fi
 
 
-              # Make sure the receiving LOG directory exist on this server  before we populate it
+
+
+              # MAKE SURE THE RECEIVING LOG DIRECTORY EXIST ON THIS SERVER  BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
@@ -244,9 +247,8 @@ process_servers()
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
               
-
-              # Get the server LOG File 
-              # Transfer Remote Log file(s) $SADMIN/log/*.log to local $SADMIN/www/dat/$server/log
+              # GET THE SERVER LOG FILE 
+              # TRANSFER REMOTE LOG FILE(S) $SADMIN/LOG/*.LOG TO LOCAL $SADMIN/WWW/DAT/$SERVER/LOG
               #-------------------------------------------------------------------------------------
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ >/dev/null 2>&1
@@ -257,11 +259,13 @@ process_servers()
                  else sadm_writelog "The Log files are now in sync - OK ..."
               fi
 
- 
-              # Make sure the receiving rpt directory exist on this server before we populate it
+
+
+
+              # MAKE SURE THE RECEIVING RPT DIRECTORY EXIST ON THIS SERVER BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
-              WDIR="${SADM_WWW_RPT_DIR}/${server_name}/rpt"             # Local Receiving Dir.
+              WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"               # Local www Receiving Dir.
               sadm_writelog "Make sure the directory $WDIR Exist"       # Inform User Dir Must Exist
               if [ ! -d "${WDIR}" ]                                     # If Dir. doesn't exist
                   then sadm_writelog "Creating ${WDIR} directory"       # Inform we creating it
@@ -269,9 +273,8 @@ process_servers()
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
               
-
-              # Get the server Sysmon Report File 
-              # Transfer Remote Report file(s) $SADMIN/rpt/*.rpt to local $SADMIN/www/dat/$server/rpt
+              # GET THE SERVER SYSMON REPORT FILE 
+              # TRANSFER REMOTE REPORT FILE(S) $SADMIN/RPT/*.RPT TO LOCAL $SADMIN/WWW/DAT/$SERVER/RPT
               #-------------------------------------------------------------------------------------
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ >/dev/null 2>&1
@@ -282,7 +285,8 @@ process_servers()
                  else sadm_writelog "The Log files are now in sync - OK ..."
               fi
 
-              
+
+
               sadm_writelog " "                                         # Separation Blank Line
               sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
               done < $SADM_TMP_FILE1                            
