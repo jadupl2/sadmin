@@ -148,8 +148,8 @@ process_linux_servers()
 
                
               # Do the Rsync /sadmin/cfg
-              sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/"
-              rsync -ar  --delete ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/
+              sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std"
+              rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_writelog "********** ERROR NUMBER $RC for ${server_name}.${server_domain}"
@@ -270,8 +270,8 @@ process_aix_servers()
 
                
               # Do the Rsync /sadmin/cfg
-              sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/"
-              rsync -ar  --delete ${SADM_CFG_DIR}/ ${server_name}.${server_domain}:${SADM_CFG_DIR}/
+              sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std"
+              rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
                  then sadm_writelog "********** ERROR NUMBER $RC for ${server_name}.${server_domain}"
