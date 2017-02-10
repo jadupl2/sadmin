@@ -66,7 +66,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 #===================================================================================================
@@ -158,8 +158,8 @@ process_servers()
               # If Monitoring is False for server doesn't respond to ping, continue to next server
               #-------------------------------------------------------------------------------------
               sadm_writelog " " ; sadm_writelog "Let's try to ping the server $fqdn_server"
-              #ping -c 2 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
-              ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
+              ping -w3 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
+              #ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"
