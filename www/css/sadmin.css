@@ -325,9 +325,10 @@ table.sadm tr:hover {background-color: #ddd;}
 #sadmMenu ul {
     margin: 0;
     padding: 0;
+    list-style-type: none;
 }
 #sadmMenu li {
-    list-style-type: none;
+    #list-style-type: none;
     float: left;
     display: block;
     width: 103px;

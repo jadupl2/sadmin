@@ -410,7 +410,7 @@ sub check_for_error {
     if ($error_detected eq "N") { return ; }                            # Return to caller
 
 
-    #---------- AIX or Linux Operating System Error Related portion
+    #---------- AIX or LINUX Operating System Error Related portion
     if (($MODULE eq "aix") || ($MODULE eq "linux")) {
            
       #---------- FILESYSTEM ALERT OCCURED
@@ -592,7 +592,7 @@ sub check_for_error {
          }
       }  # End of CPU SubModule
 
-   } # End of AIX/Linux Module 
+   } # End of AIX/LINUX Module 
              
 
    #---------- Error detected for the Module name "NETWORK" 
@@ -624,9 +624,9 @@ sub check_for_error {
 
    #---------- Error detected - A service was suppose to be running and it is not
    if ($MODULE eq "SERVICE") {
-      if ($SUBMODULE eq "PROCESS") {
+      if ($SUBMODULE eq "DAEMON") {
          $ERR_MESS = "Service $WID not running !";
-         write_error_file($error_detected ,"SERVICE", "PROCESS", $ERR_MESS );
+         write_error_file($error_detected ,"SERVICE", "DAEMON", $ERR_MESS );
       }  
    } # End of Service Module
 
@@ -723,7 +723,7 @@ sub check_service {
                     $SADM_RECORD->{SADM_ERRVAL},                        # Error Threshold Value
                     $SADM_RECORD->{SADM_TEST},                          # Test Operator 
                     "SERVICE",                                          # Name of Module
-                    "PROCESS",                                          # Name of Sub Module
+                    "DAEMON",                                          # Name of Sub Module
                     $srv_name);                                         # Name of the Service
 }
 
@@ -1189,7 +1189,7 @@ sub write_error_file {
     }
    
     #----- Set Error/Warning Date and Time
-    $ERR_DATE = `date +%d/%m/%Y`; chop $ERR_DATE;
+    $ERR_DATE = `date +%Y.%m.%d`; chop $ERR_DATE;
     $ERR_TIME = `date +%H:%M`   ; chop $ERR_TIME;
 
     #----- Set Error Type 

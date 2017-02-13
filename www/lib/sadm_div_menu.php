@@ -27,8 +27,10 @@ echo "\n\n\n<!-- ===============================================================
 echo "\n<div id='sadmMenu'>";
 echo "\n   <ul>";
 echo "\n";
+
 echo "\n   <li><a href='http://sadmin.maison.ca/index.php'>Home</a></li>";
 echo "\n";
+
 echo "\n   <li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'>Servers</a>";
 echo "\n     <ul>";
 echo "\n       <li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'>List Servers</a></li>";
@@ -36,6 +38,7 @@ echo "\n       <li><a href='/crud/sadm_server_main.php'>Edit Server Data</a></li
 echo "\n     </ul>"; 
 echo "\n   </li>";
 echo "\n";
+
 echo "\n   <li><a href='/sadmin/sadm_view_category.php'>Category</a>";
 echo "\n     <ul>";
 echo "\n       <li><a href='/sadmin/sadm_view_category.php'>List Categories</a></li>"; 
@@ -43,8 +46,13 @@ echo "\n       <li><a href='/crud/sadm_category_main.php'>Edit Categories</a></l
 echo "\n     </ul>"; 
 echo "\n   </li>";
 echo "\n";
-echo "\n    <li><a href='/sadmin/sadm_view_rch_summary.php?selection=all'>Script Status</a></li>";
+
+echo "\n    <li><a href='/sadmin/sadm_view_rch_summary.php'>Script Status</a></li>";
 echo "\n";
+
+echo "\n    <li><a href='/sadmin/sadm_view_sysmon.php'>Servers Alerts</a></li>";
+echo "\n";
+
 echo "\n    <li><a href='#'>Performance</a></li>"; 
 echo "\n";
 echo "\n    <li><a href='/sadmin/sadm_subnet.php?net=192.168.1&option=all'>IP Inventory</a>";
@@ -54,6 +62,7 @@ echo "\n        <li><a href='/sadmin/sadm_subnet.php?net=192.168.0&option=all'>1
 echo "\n    </ul>";
 echo "\n    </li>";
 echo "\n";
+
 echo "\n    <li><a href='#'>About</a></li>";
 echo "\n";
 echo "\n    </ul>";

@@ -105,12 +105,47 @@ function display_data($count, $row) {
     echo "<td>" .
         "<a href=/sadmin/sadm_view_server_info.php?host=" . nl2br($row['srv_name']) .
         ">" . nl2br($row['srv_name']) . "</a></td>\n";
+
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     #echo "<td>" . nl2br( $row['srv_model']) . "</td>\n";
     if ($row['srv_active']   == 't' ) { echo "<td>Yes</td>\n"; }else{ echo "<td>No</td>\n";}
     #if ($row['srv_sporadic'] == 't' ) { echo "<td>Yes</td>\n"; }else{ echo "<td>No</td>\n";}
 
-    echo "<td>" . nl2br( ucwords($row['srv_osname']))      . "</td>\n";  
+    #echo "<td>" . nl2br( ucwords($row['srv_osname']))      . "</td>\n";  
+    $WOS   = $row['srv_osname'];
+    switch (strtoupper($WOS)) {
+            case 'REDHAT' :
+                echo "<td><a href='http://www.redhat.com' title='Server $whost is a RedHat server - Visit redhat.com'><img src='/images/redhat.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'FEDORA' :
+                echo "<td><a href='https://getfedora.org' title='Server $whost is a Fedora server - Visit getfedora.org'><img src='/images/fedora.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'CENTOS' :
+                echo "<td><a href='https://www.centos.org' title='Server $whost is a CentOS server - Visit centos.org'><img src='/images/centos.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'UBUNTU' :
+                echo "<td><a href='https://www.ubuntu.com/' title='Server $whost is a Ubuntu server - Visit ubuntu.com'><img src='/images/ubuntu.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'DEBIAN' :
+                echo "<td><a href='https://www.debian.org/' title='Server $whost is a Debian server - Visit debian.org'><img src='/images/debian.png' style='width:32px;height:32px;'></a<</td>\n";
+                break;
+            case 'RASPBIAN' :
+                echo "<td><a href='https://www.raspbian.org/' title='Server $whost is a Raspbian server - Visit raspian.org'><img src='/images/raspbian.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'SUSE' :
+                echo "<td><a href='https://www.opensuse.org/' title='Server $whost is a OpenSUSE server - Visit opensuse.org'><img src='/images/suse.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            case 'AIX' :
+                echo "<td><a href='http://www-03.ibm.com/systems/power/software/aix/' title='Server $whost is an AIX server - Visit Aix Home Page'><img src='/images/aix.png' style='width:32px;height:32px;'></a></td>\n";
+                break;
+            default:
+                echo "<td><img src='/images/os_unknown.jpg' style='width:32px;height:32px;'></td>\n";
+                break;
+    }
+
+
+
+
     echo "<td>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
     echo "<td>" . nl2br( $row['srv_memory'])      . " MB</td>\n";  
     echo "<td>" . nl2br( $row['srv_nb_cpu']) . " X " . nl2br( $row['srv_cpu_speed']) . " MHz</td>\n";

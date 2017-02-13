@@ -30,7 +30,7 @@
             searching: true,
             ordering: true,
             lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
-            pageLength: 20 ,
+            pageLength: 50 ,
             bAutoWidth: false 
 /*            order: [[ 2, 'desc' ], [ 3, 'desc' ]]*/
  /*       "aoColumns" : [
