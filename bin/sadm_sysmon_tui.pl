@@ -16,7 +16,7 @@ $XDISPLAY= "$ENV{'DISPLAY'}";	   	                                    # Variable
 $VERSION_NUMBER = "01.01";	   	                                        # SADM Version Number
 $CLEAR=`tput clear`;
 $RPT_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui.$$";
-$CMD="find $SADM_RPT_DIR -type f -name *.rpt -exec cat {} > $RPT_FILE \\;" ;
+$CMD="find $SADM_RPT_DIR -type f name *.rpt -exec cat {} > $RPT_FILE \\;" ;
 
 
 # ---------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@ sub display_report {
    	}
    	close (SADMRPT);
 }
+
 
 # --------------------------------------------------------------------------------------------
 #                       M A I N    P R O G R A M    S T A R T    H E R E 
