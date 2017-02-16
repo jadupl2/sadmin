@@ -32,12 +32,14 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                          # Activate Debug True/False
+$DEBUG = False ;                                                        # Activate Debug True/False
 $tmp_file1          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp1_');
 $tmp_file2          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp2_');
 $tmp_file3          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp3_');
 $array_sysmon = [];                                                     # Create Empty Array
 $alert_file = SADM_TMP_DIR . "/www_sysmon_file_" . getmypid() ;         # File Being Built/Displayed
+
+
 
 #===================================================================================================
 #                                   Display Alert section Heading 
@@ -53,78 +55,76 @@ function display_degug_info() {
 
 
 #===================================================================================================
-# This function create one file ______ that merge the *.rpt in /sadmin/www/dat with the *.rch in 
-# /sadmin/dat that are runnign or finish with errors (doesn't have a "0" (success) in last column)
+# This function create one file $alert_file that merge the *.rpt in /sadmin/www/dat with the *.rch
+# in /sadmin/dat that are runnign or finish with errors (doesn't have a "0" (success) in last column)
 # File in then loaded into an array (sysmon_array).
 #===================================================================================================
 function load_sysmon_array() {
     global $DEBUG, $tmp_file1, $tmp_file2, $tmp_file3, $alert_file ;
 
+    # GET CONTENT OF EVERY RPT FILE INTO OUR WORKING ALERT FILE
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; > $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
     if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
 
+    # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; > $tmp_file2";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
     if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
 
+    # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
     $CMD="awk 'match($8,/[1-2]/) { print }' $tmp_file2 > $tmp_file3" ;
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
     if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
 
-    # Load RCH Line into Array
-    $lines = file($tmp_file3);
+
     # CONVERT THESE KIND OF LINES 
-    #debian7 2017.02.09 00:06:02 2017.02.09 00:06:02 00:00:00 sadm_rear_backup 1
+    # debian7 2017.02.09 00:06:02 2017.02.09 00:06:02 00:00:00 sadm_rear_backup 1
     #   1        2         3         4        5        6          7            8
     # TO THIS TYPE OF LINE
     # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm; 
     #   1    2       3        4      5       6             7                     8     9
+    $lines = file($tmp_file3);                                          # Load RCH Line into Array
     $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
        
-   foreach ($lines as $line_num => $line) {
-        if ($DEBUG) { echo "\n<br>RCH Before conversion - Ligne #<b>{$line_num}</b> : " . htmlspecialchars($line) ; }
-        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$wcode) = explode(" ",htmlspecialchars($line));
-        $rtype    = "";  $rhost       = "";  $rdate = ""; $rtime  = ""; 
-        $rmod = "";  $rsubmod = "";  $rdesc = ""; $rqage = ""; 
-        $remail   = "";
+    foreach ($lines as $line_num => $line) {
+        if ($DEBUG) { echo "\n<br>RCH Before conversion - Ligne #{$line_num} : " . $line ; }
+        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);
-        $rtime = trim($wtime2);
+        $rtime = substr(trim($wtime2),0,-3);
         switch (trim($wcode)) {
-            case 0:
-                $rtype = "Success" ;
-                break;
-            case 1:
-                $rtype = "Error" ;
-                break;
-            case 2:
-                $rtype = "Running" ;
-                $rdate = trim($wdate1);
-                $rtime = trim($wtime1);
-                break;
-            default:
-                $rtype = "Unknown" ;
-                break;
+            case 0:     $rtype = "Success" ;
+                        break;
+            case 1:     $rtype = "Error" ;
+                        break;
+            case 2:     $rtype = "Running" ;
+                        $rdate = trim($wdate1);
+                        $rtime = substr(trim($wtime1),0,-3);
+                        break;
+            default:    $rtype = "Unknown" ;
+                        break;
         }
-        $rhost = trim($whost);
-        $rmod = "SADM"; 
-        $rsubmod = "SCRIPT";
-        $rpage = "sadm";
-        $rmail = "sadm";
-        $rdesc = "Script " . $wscript;
-        $LINE = "${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${rpage};${rmail}\n";
-        if ($DEBUG) { echo "\n<br>RCH After conversion - Ligne #<b>{$line_num}</b> : " . htmlspecialchars($LINE) ; }
+        $rhost      = trim($whost);
+        $rmod       = "SADM"; 
+        $rsubmod    = "SCRIPT";
+        $rpage      = "sadm";
+        $rmail      = "sadm";
+        $rdesc      = "Script " . $wscript;
+        $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${rpage};${rmail}\n";
+        if ($DEBUG) { echo "\n<br>RCH After conversion - Ligne #{$line_num} : " . $LINE ; }
         fwrite($afile,$LINE);
     }
     fclose($afile);
 
-    if ($DEBUG) { echo "\n\n<br><br>Debug Information - Alert file Content"; }
-    $lines = file($alert_file);
-    foreach ($lines as $line_num => $line) {
-        if ($DEBUG) { echo "\n<br>Ligne #<b>{$line_num}</b> : " . htmlspecialchars($line) . "\n"; }
+    if ($DEBUG) { 
+        echo "\n\n<br><br>Debug Information - Alert file Content"; 
+        $lines = file($alert_file);
+        foreach ($lines as $line_num => $line) {
+            echo "\n<br>Ligne #<b>{$line_num}</b> : " . $line . "\n"; 
+        }
     }
     
     # Delete Work Files
@@ -144,46 +144,48 @@ function display_heading($line_title) {
     echo "<center>\n";                                                  # Table Centered on Page
   
     # Set Font Size for Table Cell and Table Heading
-    echo "<style>\n";
-    echo "td { font-size: 12px; }\n";
-    echo "th { font-size: 13px; }\n";
-    echo "</style>\n";
-    #echo '<table id="sadmTable" class="display compact nowrap" border="0" cellpadding="0" cellspacing="0" width="100%">';
+    #echo "<style>\n";
+    #echo "td { font-size: 12px; }\n";
+    #echo "th { font-size: 13px; }\n";
+    #echo "</style>\n";
     echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
+    #echo '<table class="table-bordered display nowrap compact width="100%">';
 
     # Server Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
-    echo "<th>Status</th>\n";
-    echo "<th>Server</th>\n";
-    echo "<th> </th>\n";
-    echo "<th>Server Description</th>\n";
-    echo "<th>Cat.</th>\n";
-    echo "<th>Date</th>\n";
-    echo "<th>Time</th>\n";
-    echo "<th>Module</th>\n";
-    echo "<th>SubModule</th>\n";
+    echo "<th class='text-center'>No</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Module</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th>Alert Grp</th>\n";
-    echo "<th>Email Grp</th>\n";
+    echo "<th class='text-center'>Date</th>\n";
+    echo "<th class='text-center'>Time</th>\n";
+    echo "<th>Server</th>\n";
+    echo "<th class='text-center'> </th>\n";
+    echo "<th>Server Description</th>\n";
+    echo "<th class='text-center'>Cat.</th>\n";
+    #echo "<th class='text-center'>SubModule</th>\n";
+    echo "<th class='text-center'>Alert Grp</th>\n";
+    echo "<th class='text-center'>Email Grp</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
     # Server Table Footer
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th>Status</th>\n";
-    echo "<th>Server</th>\n";
-    echo "<th> </th>\n";
-    echo "<th>Server Description</th>\n";
-    echo "<th>Cat.</th>\n";
-    echo "<th>Date</th>\n";
-    echo "<th>Time</th>\n";
-    echo "<th>Module</th>\n";
-    echo "<th>SubModule</th>\n";
+    echo "<th class='text-center'>No</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Module</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th>Alert Grp</th>\n";
-    echo "<th>Email Grp</th>\n";
+    echo "<th class='text-center'>Date</th>\n";
+    echo "<th class='text-center'>Time</th>\n";
+    echo "<th>Server</th>\n";
+    echo "<th class='text-center'> </th>\n";
+    echo "<th>Server Description</th>\n";
+    echo "<th class='text-center'>Cat.</th>\n";
+    #echo "<th class='text-center'>SubModule</th>\n";
+    echo "<th class='text-center'>Alert Grp</th>\n";
+    echo "<th class='text-center'>Email Grp</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
 
@@ -197,34 +199,63 @@ function display_heading($line_title) {
 #===================================================================================================
 function display_data() {
     global $DEBUG, $alert_file ;
+
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
-    rsort($array_sysmon);
-       
+    rsort($array_sysmon);                                               # Sort Array in Reverse Ord.
+
+    # DISPLAY EACH LINE IN ARRAY_SYSMON
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n"; }
-        list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$wpage,$wmail) = explode(";",$line);
-        echo "<tr>\n";  
-
-        #echo "<td>" . nl2br($wstatus)   . "</td>\n";  
+        list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$wpage,$wmail)=explode(";",$line);
+        
+        # DISPLAY STATUS
         switch (strtoupper($wstatus)) {
             case 'SUCCESS' :
-                echo "<td><img src='/images/success.png' style='width:32px;height:32px;'></td>\n";
+                echo "<tr>\n";  
+                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/success.png' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'ERROR' :
-                echo "<td><img src='/images/error.png' style='width:32px;height:32px;'></td>\n";
+                echo "<tr>\n";  
+                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+                echo "<td class='dt-center'>";
+                #echo "<td class='bg-danger text-white'>";
+                #echo "<td class='text-danger'>";
+                echo "<img src='/images/error.png' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'WARNING' :
-                echo "<td><img src='/images/warning.png' style='width:32px;height:32px;'></td>\n";
+                echo "<tr>\n";  
+                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/warning.png' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'RUNNING' :
-                echo "<td><img src='/images/running.png' style='width:32px;height:32px;'></td>\n";
+                echo "<tr>\n";  
+                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/running.png' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             default:
-                echo "<td><img src='/images/question_mark.png' style='width:32px;height:32px;'></td>\n";
+                echo "<tr>\n";  
+                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/question_mark.png' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
         }
+        echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";  
+        echo "<td>" . $wdesc                                 . "</td>\n";  
+        echo "<td class='dt-center'>" . $wdate               . "</td>\n";  
+        echo "<td class='dt-center'>" . $wtime               . "</td>\n";  
+        echo "<td><a href=/sadmin/sadm_view_server_info.php?host=" . nl2br($whost) .  ">" ;
+        echo nl2br($whost) . "</a></td>\n";
 
-        echo "<td><a href=/sadmin/sadm_view_server_info.php?host=" . nl2br($whost) .  ">" . nl2br($whost) . "</a></td>\n";
+        # READ INFO ABOUT THE SERVER IN THE DATABASE
         $query = "SELECT * FROM sadm.server where srv_name = '". $whost . "';";
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;
@@ -232,45 +263,77 @@ function display_data() {
         $WCAT  = sadm_clean_data($row['srv_cat']);
 
         $WOS   = sadm_clean_data($row['srv_osname']);
+   
+        # Display Operating System Logo
+        $WOS   = $row['srv_osname'];
         switch (strtoupper($WOS)) {
             case 'REDHAT' :
-                echo "<td><a href='http://www.redhat.com' title='Server $whost is a RedHat server - Visit redhat.com'><img src='/images/redhat.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='http://www.redhat.com' ";
+                echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
+                echo "<img src='/images/redhat.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'FEDORA' :
-                echo "<td><a href='https://getfedora.org' title='Server $whost is a Fedora server - Visit getfedora.org'><img src='/images/fedora.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://getfedora.org' ";
+                echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
+                echo "<img src='/images/fedora.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'CENTOS' :
-                echo "<td><a href='https://www.centos.org' title='Server $whost is a CentOS server - Visit centos.org'><img src='/images/centos.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.centos.org' ";
+                echo "title='Server $whost is a CentOS server - Visit centos.org'>";
+                echo "<img src='/images/centos.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'UBUNTU' :
-                echo "<td><a href='https://www.ubuntu.com/' title='Server $whost is a Ubuntu server - Visit ubuntu.com'><img src='/images/ubuntu.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.ubuntu.com/' ";
+                echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
+                echo "<img src='/images/ubuntu.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'DEBIAN' :
-                echo "<td><a href='https://www.debian.org/' title='Server $whost is a Debian server - Visit debian.org'><img src='/images/debian.png' style='width:32px;height:32px;'></a<</td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.debian.org/' ";
+                echo "title='Server $whost is a Debian server - Visit debian.org'>";
+                echo "<img src='/images/debian.png' ";
+                echo "style='width:32px;height:32px;'></a<</td>\n";
                 break;
             case 'RASPBIAN' :
-                echo "<td><a href='https://www.raspbian.org/' title='Server $whost is a Raspbian server - Visit raspian.org'><img src='/images/raspbian.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.raspbian.org/' ";
+                echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
+                echo "<img src='/images/raspbian.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'SUSE' :
-                echo "<td><a href='https://www.opensuse.org/' title='Server $whost is a OpenSUSE server - Visit opensuse.org'><img src='/images/suse.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.opensuse.org/' ";
+                echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
+                echo "<img src='/images/suse.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             case 'AIX' :
-                echo "<td><a href='http://www-03.ibm.com/systems/power/software/aix/' title='Server $whost is an AIX server - Visit Aix Home Page'><img src='/images/aix.png' style='width:32px;height:32px;'></a></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
+                echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
+                echo "<img src='/images/aix.png' ";
+                echo "style='width:32px;height:32px;'></a></td>\n";
                 break;
             default:
-                echo "<td><img src='/images/os_unknown.jpg' style='width:32px;height:32px;'></td>\n";
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/os_unknown.jpg' ";
+                echo "style='width:32px;height:32px;'></td>\n";
                 break;
         }
-
-        echo "<td>" . $WDESC    . "</td>\n";  
-        echo "<td>" . $WCAT     . "</td>\n";  
-        echo "<td>" . $wdate   . "</td>\n";  
-        echo "<td>" . $wtime   . "</td>\n";  
-        echo "<td>" . strtoupper($wmod)   . "</td>\n";  
-        echo "<td>" . strtoupper($wsubmod)   . "</td>\n";  
-        echo "<td>" . $wdesc   . "</td>\n";  
-        echo "<td>" . $wpage   . "</td>\n";  
-        echo "<td>" . $wmail   . "</td>\n";  
+        echo "<td>" . $WDESC                                 . "</td>\n";  
+        echo "<td class='dt-center'>" . $WCAT                . "</td>\n";  
+        #echo "<td class='dt-center'>" . strtoupper($wsubmod) . "</td>\n";  
+        echo "<td class='dt-center'>" . $wpage               . "</td>\n";  
+        echo "<td class='dt-center'>" . $wmail               . "</td>\n";  
     }
     echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
     echo "<center><br><br>";

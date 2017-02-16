@@ -1,8 +1,8 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_rch.sh
-#   Synopsis : .Bring all rch files from server farm to SADMIN Server
+#   Title    :  sadm_collect_farm_info.sh
+#   Synopsis :  Bring all rch/log/rpt files from servers farm to SADMIN Server
 #   Version  :  1.0
 #   Date     :  December 2015
 #   Requires :  sh
@@ -40,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -120,7 +120,7 @@ process_servers()
               sadm_writelog "${SADM_TEN_DASH}"                          # Print 10 Dash line
               sadm_writelog "Processing ($xcount) ${fqdn_server}"       # Print Counter/Server Name
 
-              # if DEBUG_LEVEL > 0 - Display Server Monitoring and Sporadic Options are ON or OFF
+              # IF DEBUG_LEVEL > 0 - DISPLAY SERVER MONITORING AND SPORADIC OPTIONS ARE ON OR OFF
               if [ $DEBUG_LEVEL -gt 0 ]                            # If Debug Activated
                  then if [ "$server_monitor" == "t" ]                   # Monitor Flag is at True
                             then sadm_writelog "Monitoring is ON for $fqdn_server"
@@ -133,8 +133,8 @@ process_servers()
               fi
 
 
-              # Test if the server name can be resolved - If not no use trying to ping server
-              # Signal Error and continue with next server
+              # TEST IF THE SERVER NAME CAN BE RESOLVED - IF NOT NO USE TRYING TO PING SERVER
+              # SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
               #-------------------------------------------------------------------------------------
               if ! host  $fqdn_server >/dev/null 2>&1 
                  then SMSG="Can't process server '$fqdn_server' because name can't be resolved"
@@ -149,15 +149,15 @@ process_servers()
                       continue                                          # No need 2 rsync/Nxt Server
               fi
 
-              # Ping the server - Server or Laptop may be unplugged
+              # PING THE SERVER - SERVER OR LAPTOP MAY BE UNPLUGGED
               #-------------------------------------------------------------------------------------
-              # Sporadic server are server that can't always be online (laptop or test server)
-              # If ping don't work on a sporadic server, advise user and skip rsync & continue 
+              # SPORADIC SERVER ARE SERVER THAT CAN'T ALWAYS BE ONLINE (LAPTOP OR TEST SERVER)
+              # IF PING DON'T WORK ON A SPORADIC SERVER, ADVISE USER AND SKIP RSYNC & CONTINUE 
               #-------------------------------------------------------------------------------------
-              # If Monitoring is True for server and doesn't respond to ping, then alert user
-              # If Monitoring is False for server doesn't respond to ping, continue to next server
+              # IF MONITORING IS TRUE  AND SERVER DOESN'T RESPOND TO PING, THEN ALERT USER
+              # IF MONITORING IS FALSE AND SERVER DOESN'T RESPOND TO PING, CONTINUE TO NEXT SERVER
               #-------------------------------------------------------------------------------------
-              sadm_writelog " " ; sadm_writelog "Let's try to ping the server $fqdn_server"
+              sadm_writelog "Let's try to ping the server $fqdn_server"
               ping -w3 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
               #ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
@@ -183,9 +183,9 @@ process_servers()
               fi
                 
 
-              # Now that we know we can ping the server, let's try SSH to Server
-              # If Monitor is ON  and ssh doesn't work, Increase Error counter & Alert User (Email)
-              # If Monitor is OFF and ssh doesn't work, Advise User and continue with next server
+              # NOW THAT WE KNOW WE CAN PING THE SERVER, LET'S TRY SSH TO SERVER
+              # IF MONITOR IS ON  AND SSH DOESN'T WORK, INCREASE ERROR COUNTER & ALERT USER (EMAIL)
+              # IF MONITOR IS OFF AND SSH DOESN'T WORK, ADVISE USER AND CONTINUE WITH NEXT SERVER
               #-------------------------------------------------------------------------------------
               sadm_writelog "Testing SSH to server $fqdn_server"
               if [ $DEBUG_LEVEL -gt 4 ]                                 # If Debug Activated
@@ -220,7 +220,7 @@ process_servers()
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
-
+              #
               # GET THE RCH (RETURN CODE HISTORY) FILES FROM REMOTE SERVER
               # RSYNC REMOTE $SADMIN/DAT/RCH/*.RCH TO LOCAL $SADMIN/WWW/DAT/$SERVER/RCH  
               #-------------------------------------------------------------------------------------
@@ -246,7 +246,7 @@ process_servers()
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
-              
+              #
               # GET THE SERVER LOG FILE 
               # TRANSFER REMOTE LOG FILE(S) $SADMIN/LOG/*.LOG TO LOCAL $SADMIN/WWW/DAT/$SERVER/LOG
               #-------------------------------------------------------------------------------------
@@ -272,7 +272,7 @@ process_servers()
                        mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
                   else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
               fi
-              
+              #
               # GET THE SERVER SYSMON REPORT FILE 
               # TRANSFER REMOTE REPORT FILE(S) $SADMIN/RPT/*.RPT TO LOCAL $SADMIN/WWW/DAT/$SERVER/RPT
               #-------------------------------------------------------------------------------------
@@ -321,7 +321,7 @@ process_servers()
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
     while getopts "hd:" opt ; do                                        # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                 # Get Debug Level Specified
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
             h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
@@ -334,8 +334,8 @@ process_servers()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                      # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}" # Display Debug Level
+    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
+        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
     fi
 
 

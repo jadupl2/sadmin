@@ -1067,7 +1067,7 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_ID}      = "FS" . "$fname" ;
             $SADM_RECORD->{SADM_CURVAL}  = "00" ;
             $SADM_RECORD->{SADM_TEST}    = ">=";
-            $SADM_RECORD->{SADM_WARVAL}  = "80" ;
+            $SADM_RECORD->{SADM_WARVAL}  = "85" ;
             $SADM_RECORD->{SADM_ERRVAL}  = "90";
             $SADM_RECORD->{SADM_MINUTES} = "000";
             $SADM_RECORD->{SADM_STHRS}   = "0000" ;

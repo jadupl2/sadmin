@@ -258,7 +258,9 @@ main_process()
     # Script can only be run on the sadmin server (files needed for report are ont it)
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
         then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                              # Abort advise message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             echo "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             echo "Process aborted"                                     # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
