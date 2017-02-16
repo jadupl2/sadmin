@@ -21,7 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# 1.7   
+# 1.7  Added Print Content of Error reported by RCH Files
+#       Output now colorized
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -37,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -65,6 +66,56 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
+# Screen related variables
+clreol=`tput el`                                ; export clreol         # Clr to end of lne
+clreos=`tput ed`                                ; export clreos         # Clr to end of scr
+bold=$(tput bold)                               ; export bold           # bold attribute
+bell=`tput bel`                                 ; export bell           # Ring the bell
+reverse=`tput rev`                              ; export reverse        # rev. video attrib.
+underline=$(tput sgr 0 1)                       ; export underline      # UnderLine
+home=`tput home`                                ; export home           # home cursor
+up=`tput cuu1`                                  ; export up             # cursor up
+down=`tput cud1`                                ; export down           # cursor down
+right=`tput cub1`                               ; export right          # cursor right
+left=`tput cuf1`                                ; export left           # cursor left
+clr=`tput clear`                                ; export clr            # clear the screen
+blink=`tput blink`                              ; export blink          # turn blinking on
+screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
+reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
+
+# Color Foreground Text
+black=$(tput setaf 0)                           ; export black          # Black color
+red=$(tput setaf 1)                             ; export red            # Red color
+green=$(tput setaf 2)                           ; export green          # Green color
+yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
+blue=$(tput setaf 4)                            ; export blue           # Blue color
+magentae=$(tput setaf 5)                        ; export magenta        # Magenta color
+cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
+white=$(tput setaf 7)                           ; export white          # White color
+
+# Color Background Text
+bblack=$(tput setab 0)                           ; export bblack          # Black color
+bred=$(tput setab 1)                             ; export bred            # Red color
+bgreen=$(tput setab 2)                           ; export bgreen          # Green color
+byellow=$(tput setab 3)                          ; export byellow         # Yellow color
+bblue=$(tput setab 4)                            ; export bblue           # Blue color
+bmagentae=$(tput setab 5)                        ; export bmagenta        # Magenta color
+bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
+bwhite=$(tput setab 7)                           ; export bwhite          # White color
+
+# Headers and  Logging
+e_success()     { printf "${green}✔ %s${reset}\n" "$@"
+ }
+e_error()       { printf "${red}✖ %s${reset}\n" "$@" 
+}
+e_warning()     { printf "${tan}➜ %s${reset}\n" "$@"
+ }
+e_underline()   { printf "${underline}${bold}%s${reset}\n" "$@" 
+}
+e_bold()        { printf "${bold}%s${reset}\n" "$@" 
+}
+e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${reset}\n" "$@" 
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -79,16 +130,40 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     fi
 
     tput clear 
+
+    # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
+    find $SADM_RCH_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE2
+
+    # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
+    awk 'match($8,/1/) { print }' $SADM_TMP_FILE2 > $SADM_TMP_FILE3 
+
     $SADM_BIN_DIR/sadm_sysmon.pl
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
 
     tput clear 
     echo "----------------------------------------------------------------------------------"
-    echo "Based on the current configutation file $SADM_CFG_DIR/${HOSTNAME}.cfg"
-    echo "Here is the output file $SADM_RPT_DIR/${HOSTNAME}.rpt of SADM System Monitor"
+    e_bold "Based on the current configutation file $SADM_CFG_DIR/${HOSTNAME}.cfg"
+    e_bold "Here is the output file $SADM_RPT_DIR/${HOSTNAME}.rpt of SADM System Monitor"
     echo "----------------------------------------------------------------------------------"
+    if [ -s $SADM_RPT_DIR/${HOSTNAME}.rpt ] 
+        then cat $SADM_RPT_DIR/${HOSTNAME}.rpt | while read line 
+                do
+                e_error "$line"
+                done 
+        else e_success "No error reported by SysMon file" 
+    fi
     echo " "
-    cat $SADM_RPT_DIR/${HOSTNAME}.rpt
+    echo " "
+    echo "----------------------------------------------------------------------------------"
+    e_bold "Error(s) signaled by the Return Code History file"
+    echo "----------------------------------------------------------------------------------"
+    if [ -s $SADM_TMP_FILE3 ] 
+       then cat  $SADM_TMP_FILE3 | while read line 
+              do
+              e_error "$line"
+              done 
+       else e_success "No error reported by the RCH files" 
+    fi
     echo " "
     echo "----------------------------------------------------------------------------------"
     echo " "
