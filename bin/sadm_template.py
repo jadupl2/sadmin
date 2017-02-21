@@ -38,7 +38,7 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver                = "5.0"                                         # Default Program Version
+sadm.ver                = "1.0"                                         # Default Program Version
 sadm.multiple_exec      = "N"                                           # Default Run multiple copy
 sadm.debug              = 0                                             # Default Debug Level (0-9)
 sadm.exit_code          = 0                                             # Script Error Return Code
@@ -46,31 +46,8 @@ sadm.log_append         = "N"                                           # Append
 sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
 
 # SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
-cfg_mail_type      = 3                                                  # 0=No 1=Err 2=Succes 3=All
+sadm.cfg_mail_type      = 1                                                  # 0=No 1=Err 2=Succes 3=All
 #cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
-#cfg_cie_name       = ""                                                 # Company Name
-#cfg_user           = ""                                                 # sadmin user account
-#cfg_group          = ""                                                 # sadmin group account
-#cfg_www_user       = ""                                                 # sadmin/www user account
-#cfg_www_group      = ""                                                 # sadmin/www group owner
-#cfg_server         = ""                                                 # sadmin FQN Server
-#cfg_domain         = ""                                                 # sadmin Default Domain
-#cfg_max_logline    = 5000                                               # Max Nb. Lines in LOG )
-#cfg_max_rchline    = 100                                                # Max Nb. Lines in RCH file
-#cfg_nmon_keepdays  = 60                                                 # Days to keep old *.nmon
-#cfg_sar_keepdays   = 60                                                 # Days to keep old *.sar
-#cfg_rch_keepdays   = 60                                                 # Days to keep old *.rch
-#cfg_log_keepdays   = 60                                                 # Days to keep old *.log
-#cfg_pguser         = ""                                                 # PostGres Database user
-#cfg_pggroup        = ""                                                 # PostGres Database Group
-#cfg_pgdb           = ""                                                 # PostGres Database Name
-#cfg_pgschema       = ""                                                 # PostGres Database Schema
-#cfg_pghost         = ""                                                 # PostGres Database Host
-#cfg_pgport         = 5432                                               # PostGres Database Port
-#cfg_rw_pguser      = ""                                                 # PostGres Read Write User
-#cfg_rw_pgpwd       = ""                                                 # PostGres Read Write Pwd
-#cfg_ro_pguser      = ""                                                 # PostGres Read Only User
-#cfg_ro_pgpwd       = ""                                                 # PostGres Read Only Pwd
 
 
 
