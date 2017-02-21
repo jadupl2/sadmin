@@ -28,6 +28,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version 2.7 - Nov 2016
 #       Log will now be cumulative (Not clear every time the script in run)
+# Version 2.8 - Feb 2017 - Jacques Duplessis
+#       Database Columns were changed
 # --------------------------------------------------------------------------------------------------
 #
 #
@@ -48,13 +50,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.7'                             ; export SADM_VER            # Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
@@ -92,8 +94,8 @@ update_server_db()
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
     sadm_writelog "Update $WSERVER row in DataBase" 
     SQL1="UPDATE sadm.server SET " 
-    SQL2="srv_last_update = '${WCURDAT}', "
-    SQL3="srv_osupdate_status = '${WSTATUS}' "
+    SQL2="srv_update_date = '${WCURDAT}', "
+    SQL3="srv_update_status = '${WSTATUS}' "
     SQL4="where srv_name = '${WSERVER}' ;"
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
     if [ $DEBUG_LEVEL -gt 5 ] 
@@ -124,8 +126,8 @@ process_linux_servers()
     sadm_writelog "${SADM_DASH}"
     sadm_writelog "PROCESS LINUX SERVERS"
 
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_osupdate, srv_osupdate_reboot, "
-    SQL2="srv_osupdate_day, srv_osupdate_period, srv_sporadic, srv_active from sadm.server "
+    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, srv_update_reboot, "
+    SQL2=" srv_sporadic, srv_active from sadm.server "
     SQL3="where srv_ostype = 'linux' and srv_active = True "
     SQL4="order by srv_name; "
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
@@ -143,11 +145,9 @@ process_linux_servers()
             server_name=`               echo $wline|awk -F, '{ print $1 }'`
             server_os=`                 echo $wline|awk -F, '{ print $2 }'`
             server_domain=`             echo $wline|awk -F, '{ print $3 }'`
-            server_osupdate=`           echo $wline|awk -F, '{ print $4 }'`
-            server_osupdate_reboot=`    echo $wline|awk -F, '{ print $5 }'`
-            server_osupdate_day=`       echo $wline|awk -F, '{ print $6 }'`
-            server_osupdate_period=`    echo $wline|awk -F, '{ print $7 }'`
-            server_sporadic=`           echo $wline|awk -F, '{ print $8 }'`
+            server_update_auto=`        echo $wline|awk -F, '{ print $4 }'`
+            server_update_reboot=`      echo $wline|awk -F, '{ print $5 }'`
+            server_sporadic=`           echo $wline|awk -F, '{ print $6 }'`
             sadm_writelog " "
             sadm_writelog "${STAR_LINE}"
             sadm_writelog "${STAR_LINE}"
@@ -177,7 +177,7 @@ process_linux_servers()
 
 
             # If Server is network reachable, but the O/S Update field is OFF in DB Skip Update
-            if [ "$server_osupdate" == "f" ]
+            if [ "$server_update_auto" == "f" ]
                 then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
                      sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
                      if [ "$SADM_MAIL_TYPE" == "3" ]
@@ -185,7 +185,7 @@ process_linux_servers()
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
                 else WREBOOT=" N"                                       # Default is no reboot
-                     if [ "$server_osupdate_reboot" == "t" ]            # If Requested in Database
+                     if [ "$server_update_reboot" == "t" ]            # If Requested in Database
                         then WREBOOT="Y"                                # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
