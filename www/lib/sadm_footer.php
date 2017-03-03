@@ -15,6 +15,10 @@
 
     # Close DataBase Connection
     pg_close($connection);
+	
+	# Delete Temporary File define in sadm_init.php
+	unlink (SADM_WWW_TMP_FILE1);
+	
  ?>    
 
     <!-- Bootstrap core JavaScript -->
