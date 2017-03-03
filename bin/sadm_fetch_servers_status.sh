@@ -1,17 +1,18 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_collect_farm_info.sh
-#   Synopsis :  Bring all rch/log/rpt files from servers farm to SADMIN Server
+#   Title    :  sadm_fetch_servers_status.sh
+#   Synopsis :  Rsync all rch/log/rpt files from servers farm to SADMIN Server
 #   Version  :  1.0
 #   Date     :  December 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
+#   SCCS-Id. :  @(#) sadm_fetch_servers_status.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
 #  History
 #  1.6  Dec 2016    Major changes to include ssh test to each server and alert when not working
 #                   Logic was redone , almost rewritten
 #                   now include -d[1-9] switch to be more verbose during execution
+#  1.8  Feb 2017    Change Script name and change SADM server default crontab 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -19,7 +20,7 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -40,7 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
