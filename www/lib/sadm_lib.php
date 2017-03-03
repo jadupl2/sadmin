@@ -210,9 +210,11 @@ function display_file( $nom_du_fichier ) {
 // Strips any quotes escaped with slashes and passes it through htmlspecialschar.
 // ================================================================================================
 function sadm_clean_data($wdata) {
-    $wdata = trim($wdata);
-    $wdata = stripslashes($wdata);
-    $wdata = htmlspecialchars($wdata);
+    if (! is_array($wdata)) {
+        $wdata = trim($wdata);
+        $wdata = stripslashes($wdata);
+        $wdata = htmlspecialchars($wdata);
+    }
     return $wdata;
 }
 
@@ -315,7 +317,7 @@ function build_sidebar_scripts_info() {
     }
     fclose($input_fh);                                                  # Close Input Filename List
     krsort($script_array);                                              # Reverse Sort Array on Keys
-
+    unlink($tmprch);                                                    # Delete Temp File
     # Under Debug - Display The Array Used to build the SideBar
     if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
     return $script_array;
