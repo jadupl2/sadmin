@@ -23,7 +23,8 @@
 #
 #  History
 #  1.7  Dec 2016    Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
-
+#  1.8  Mar 2017    Move test if rear is installed first, if not abort process up front.
+#                   Error Message more verbose and More Customization
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -38,7 +39,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -64,7 +66,8 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-NFS_IP="192.168.1.47"                       ; export NFS_IP             # NFS Server IP
+#NFS_IP="192.168.1.47"                      ; export NFS_IP             # NFS Server IP
+NFS_IP="rear_server.maison.ca"              ; export NFS_IP             # NFS Server IP
 NFS_DIR="/volume1/Linux_DR"                 ; export NFS_DIR            # Dir where Backup Go
 NFS_MOUNT="/mnt/nfs1"                       ; export NFS_MOUNT          # Local NFS Mount Point 
 REAR_COPY=2                                 ; export REAR_COPY          # Nb. of images to keep
@@ -76,22 +79,7 @@ REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # Read C
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-    REAR=`which rear`
-    if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
-        then REAR=`${SADM_WHICH} rear`                                  # Store Path of command
-        else sadm_writelog "Command 'rear' isn't found - Job Aborted"   # Advise User Aborting
-             return 1
-    fi
 
-    if [ ! -r "$REAR_CFGFILE" ]                                         # ReaR Site config exist?
-        then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
-             sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
-             return 1                                                   # Exit with Error
-    fi
-    
-    # Remove default crontab job - So we can decide otherwise when we run rear from this script
-    if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
-    
     # Create the bootable ISO on the NFS Server
     sadm_writelog " "
     sadm_writelog "$SADM_TEN_DASH"; sadm_writelog "$REAR mkrescue -v "       
@@ -123,7 +111,7 @@ create_backup()
 rear_housekeeping()
 {
     FNC_ERROR=0                                                       # Cleanup Error Default 0
-    sadm_writelog "Beginning ReaR Housekeeping ... "
+    sadm_writelog "Performing ReaR Housekeeping ... "
     sadm_writelog " "
  
     # Make sure Local mount point exist
@@ -142,31 +130,37 @@ rear_housekeeping()
              return 1
     fi
     sadm_writelog "NFS mount succeeded ..."
-    df -h | grep nfs | tee -a $SADM_LOG 2>&1
+    df -h | grep ${NFS_MOUNT} | tee -a $SADM_LOG 2>&1
 
     
     # Make sure the Directory of the host exist on NFS Server and have proper permission
-    if [ ! -d  "${NFS_MOUNT}/$(sadm_get_hostname)" ]
-        then mkdir ${NFS_MOUNT}/$(sadm_get_hostname)
-        if [ $? -ne 0 ] ; then sadm_writelog "Error returned on previous command" ;FNC_ERROR=1; fi
+    if [ ! -d  "${NFS_MOUNT}/${SADM_HOSTNAME}" ]
+        then mkdir ${NFS_MOUNT}/${SADM_HOSTNAME}
+             if [ $? -ne 0 ] 
+                then sadm_writelog "Error can't create directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
+                     return 1 
+             fi
     fi
-    sadm_writelog "chmod 775 ${NFS_MOUNT}/$(sadm_get_hostname)"
-    chmod 775 ${NFS_MOUNT}/$(sadm_get_hostname) >> $SADM_LOG 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "Error returned on previous command" ; FNC_ERROR=1; fi
+    sadm_writelog "chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME}"
+    chmod 775 ${NFS_MOUNT}/${SADM_HOSTNAME} >> $SADM_LOG 2>&1
+    if [ $? -ne 0 ] 
+       then sadm_writelog "Error can't chmod directory ${NFS_MOUNT}/${SADM_HOSTNAME}" 
+            return 1 
+    fi
     
 
-    # Create Environnement Variable of all files about to deal with below
-    REAR_DIR="${NFS_MOUNT}/$(sadm_get_hostname)"                        # Rear Host Backup Directory
-    REAR_NAME="${REAR_DIR}/rear_$(sadm_get_hostname)"                   # ISO & Backup Prefix Name
+    # Create Environnement Variable of all files we are about to deal with below
+    REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}"                            # Rear Host Backup Dir.
+    REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                       # ISO & Backup Prefix Name
     REAR_ISO="${REAR_NAME}.iso"                                         # Rear Host ISO File Name
     PREV_ISO="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").iso"          # Rear Backup ISO 
     REAR_BAC="${REAR_NAME}.tar.gz"                                      # Rear Host Backup File Name
     PREV_BAC="${REAR_NAME}_$(date "+%C%y.%m.%d_%H:%M:%S").tar.gz"       # Rear Previous Backup File  
 
     # Make a copy of actual ISO before creating a new one   
-    sadm_writelog " "
     if [ -r "$REAR_ISO" ]
-        then sadm_writelog "Rename actual ISO before creating a new one"
+        then sadm_writelog " "
+             sadm_writelog "Rename actual ISO before creating a new one"
              sadm_writelog "mv $REAR_ISO $PREV_ISO"
              mv $REAR_ISO $PREV_ISO >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -176,9 +170,9 @@ rear_housekeeping()
     fi
     
     # Make a copy of actual Backup file before creating a new one   
-    sadm_writelog " "
     if [ -r "$REAR_BAC" ]
-        then sadm_writelog "Rename actual Backup file before creating a new one"
+        then sadm_writelog " "
+             sadm_writelog "Rename actual Backup file before creating a new one"
              sadm_writelog "mv $REAR_BAC $PREV_BAC"
              mv $REAR_BAC $PREV_BAC >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -190,7 +184,7 @@ rear_housekeeping()
                  
     sadm_writelog " "
     sadm_writelog "You choose to keep $REAR_COPY backup files on the NFS server"
-    sadm_writelog "Here is a list of ReaR backup and ISO on NFS Server for $(sadm_get_hostname)"
+    sadm_writelog "Here is a list of ReaR backup and ISO on NFS Server for ${SADM_HOSTNAME}"
     #sadm_writelog "ls -1t ${REAR_NAME}*.iso | sort -r"
     ls -1t ${REAR_NAME}*.iso | sort -r | tee -a $SADM_LOG
     #sadm_writelog "ls -1t ${REAR_NAME}*.gz  | sort -r"
@@ -226,12 +220,12 @@ rear_housekeeping()
         
 
     # Make sure Host Directory permission and files below are ok
-    sadm_writelog " "
+    #sadm_writelog " "
     sadm_writelog "chmod 664 ${REAR_NAME}*"
     chmod 664 ${REAR_NAME}* >> /dev/null 2>&1
         
     # Ok Cleanup up is finish - Unmount the NFS
-    sadm_writelog " "
+    #sadm_writelog " "
     sadm_writelog "Unmounting NFS mount directories"
     sadm_writelog "umount ${NFS_MOUNT}"
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
@@ -254,6 +248,26 @@ rear_housekeeping()
              exit 1                                                     # Exit To O/S
     fi
 
+    # Check if REAR is not installed - Abort Process 
+    REAR=`${SADM_WHICH} rear`
+    if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
+        then REAR=`${SADM_WHICH} rear`                                  # Store Path of command
+        else sadm_writelog "COMMAND 'rear' ISN'T FOUND - JOB ABORTED"   # Advise User Aborting
+             sadm_stop 1                                                # Upd. RCH File & Trim Log 
+             exit 1                                                     # Exit With Global Err (0/1)
+    fi
+
+    # If Rear configuration is not there - Abort Process
+    if [ ! -r "$REAR_CFGFILE" ]                                         # ReaR Site config exist?
+        then sadm_writelog "The $REAR_CFGFILE isn't present"            # Warn User - Missing file
+             sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
+             sadm_stop 1                                                # Upd. RCH File & Trim Log 
+             exit 1                                                     # Exit With Global Err (0/1)
+    fi
+    
+    # Remove default crontab job - So we can decide otherwise when we run rear from this script
+    if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
+    
     rear_housekeeping                                                   # Set Perm. & rm old version
     if [ $? -eq 0 ]                                                     # If went OK do Clean up
         then create_backup                                              # Set Perm. & rm old version
