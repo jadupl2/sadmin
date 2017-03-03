@@ -20,6 +20,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Current Host name
+SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
@@ -46,18 +47,18 @@ SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Networ
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-SADM_WWW_DIR="$SADM_BASE_DIR/www"                      ; export SADM_WWW_DIR       # Web Site Dir.
-SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                 ; export SADM_WWW_HTML_DIR  # server html Dir
-SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                   ; export SADM_WWW_DAT_DIR   # server Data Dir
-SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                   ; export SADM_WWW_LIB_DIR   # server Libr Dir
-SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR   # web rch dir
-SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR   # web rpt dir
-SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR   # web sar dir
-SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/net"   ; export SADM_WWW_NET_DIR   # web net dir
-SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR    # web dr dir
-SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR  # web nmon dir
-SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                   ; export SADM_WWW_TMP_DIR   # web tmp dir
-SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${HOSTNAME}/log"   ; export SADM_WWW_LOG_DIR   # web log dir
+SADM_WWW_DIR="$SADM_BASE_DIR/www"                           ; export SADM_WWW_DIR      # Web Site Dir
+SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                      ; export SADM_WWW_HTML_DIR # www html Dir
+SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Data Dir
+SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Libr Dir
+SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR  # web rch dir
+SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR  # web rpt dir
+SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR  # web sar dir
+SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NET_DIR  # web net dir
+SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR   # web dr dir
+SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR # web nmon dir
+SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                        ; export SADM_WWW_TMP_DIR  # web tmp dir
+SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/log"   ; export SADM_WWW_LOG_DIR  # web log dir
 #
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
@@ -68,8 +69,8 @@ SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HI
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1 
 SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2  # Temp File 2
 SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FILE3  # Temp File 3
-SADM_LOG="${SADM_LOG_DIR}/${HOSTNAME}_${SADM_INST}.log"     ; export LOG             # Output LOG 
-SADM_RCHLOG="${SADM_RCH_DIR}/${HOSTNAME}_${SADM_INST}.rch"  ; export SADM_RCHLOG     # Return Code 
+SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     ; export LOG             # Output LOG 
+SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  ; export SADM_RCHLOG     # Return Code 
 #
 # COMMAND PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                         ; export SADM_LSB_RELEASE   # Command lsb_release Path
@@ -715,7 +716,7 @@ sadm_get_hostname() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
-        "LINUX") wdomainname=`host $(sadm_get_hostname) |head -1 |awk '{ print $1 }' |cut -d. -f2-3` 
+        "LINUX") wdomainname=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3` 
                  ;;
         "AIX")   wdomainname=`namerslv -s | grep domain | awk '{ print $2 }'`
                  ;;
@@ -729,7 +730,7 @@ sadm_get_domainname() {
 #                        RETURN THE FULLY QUALIFIED NAME OF THE SYSTEM
 # --------------------------------------------------------------------------------------------------
 sadm_get_fqdn() {
-    echo "$(sadm_get_hostname).$(sadm_get_domainname)"
+    echo "${SADM_HOSTNAME}.$(sadm_get_domainname)"
 }
 
 
@@ -738,9 +739,9 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX") whost_ip=`host $(sadm_get_hostname) |awk '{ print $4 }' |head -1` 
+        "LINUX") whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1` 
                  ;;
-        "AIX")   whost_ip=`host $(sadm_get_hostname).$(sadm_get_domainname) |head -1 |awk '{ print $3 }'` 
+        "AIX")   whost_ip=`host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }'` 
                  ;;
     esac    
     echo "$whost_ip"
@@ -987,7 +988,7 @@ sadm_start() {
     fi
 
     # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
-    if [ ! -d "$SADM_PG_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_PG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_PG_DIR
              mkdir -p $SADM_PG_DIR/data
              mkdir -p $SADM_PG_DIR/backups
@@ -1010,28 +1011,28 @@ sadm_start() {
     fi
 
     # If SADM Server Web Site Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
 
     # If SADM Server Web Site Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
     fi
 
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
              chown ${SADM_USER}.${SADM_GROUP} $SADM_WWW_LIB_DIR
@@ -1095,12 +1096,12 @@ sadm_start() {
 
     # Feed the Return Code History File stating the script is started
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"` ; export SADM_STIME
-    echo "$(sadm_get_hostname) $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
+    echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     
     # Write Starting Info in the Log
     sadm_writelog "${SADM_DASH}"
     sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER}"
-    sadm_writelog "Server: $(sadm_get_hostname) - Type: $(sadm_get_ostype) - O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
+    sadm_writelog "Server: ${SADM_HOSTNAME} - Type: $(sadm_get_ostype) - O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
     sadm_writelog "${SADM_DASH}"
     sadm_writelog " "
 
@@ -1150,7 +1151,7 @@ sadm_stop() {
     sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
 
     # Update the [R]eturn [C]ode [H]istory File
-    RCHLINE="$(sadm_get_hostname) $SADM_STIME $sadm_end_time"           # Format Part1 of RCH File
+    RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"           # Format Part1 of RCH File
     RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE"          # Format Part2 of RCH File
     echo "$RCHLINE" >>$SADM_RCHLOG                                      # Append Line to  RCH File
     
@@ -1199,18 +1200,18 @@ sadm_stop() {
     # Inform UnixAdmin By Email based on his selected choice
     case $SADM_MAIL_TYPE in
       1)  if [ "$SADM_EXIT_CODE" -ne 0 ] && [ "$SADM_MAIL" != "" ]      # Mail On Error Only
-             then wsub="SADM : ERROR of $SADM_PN on $(sadm_get_hostname)"   # Format Mail Subject
+             then wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"   # Format Mail Subject
                   cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR # Send Email to SysAdmin
           fi
           ;;
       2)  if [ "$SADM_EXIT_CODE" -eq 0 ] && [ "$SADM_MAIL" != "" ]      # Mail On Success Only
-             then wsub="SADM : SUCCESS of $SADM_PN on $(sadm_get_hostname)" # Format Mail Subject
+             then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Mail Subject
                   cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR # Send Email to SysAdmin
           fi 
           ;;
       3)  if [ "$SADM_EXIT_CODE" -eq 0 ] && [ "$SADM_MAIL" != "" ]      # Always mail
-              then wsub="SADM : SUCCESS of $SADM_PN on $(sadm_get_hostname)" # Format Mail Subject
-              else wsub="SADM : ERROR of $SADM_PN on $(sadm_get_hostname)"  # Format Mail Subject
+              then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Mail Subject
+              else wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"  # Format Mail Subject
           fi
           cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR         # Send Email to SysAdmin
           ;;
