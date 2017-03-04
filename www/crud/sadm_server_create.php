@@ -48,45 +48,58 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_name']); }
         
+
+        $wmonth=$_POST['scr_update_month'];
+    	if (empty($wmonth)) { for ($i = 0; $i < 12; $i = $i + 1) { $wmonth[$i] = $i; } }
+        $wstr=str_repeat('N',12);
+        foreach ($wmonth as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $pmonth=$wstr;
+
+        $wdom=$_POST['scr_update_dom'];
+    	if (empty($wdom)) { for ($i = 0; $i < 31; $i = $i + 1) { $wdom[$i] = $i; } }
+        $wstr=str_repeat('N',31);
+        foreach ($wdom as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $pdom=$wstr;
+
+        $wdow=$_POST['scr_update_dow'];
+    	if (empty($wdow)) { for ($i = 0; $i < 7; $i = $i + 1) { $wdow[$i] = $i; } }
+        $wstr=str_repeat('N',7);
+        foreach ($wdow as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $pdow=$wstr;
+        
         # Construct SQL to Insert row
         $sql = "INSERT INTO sadm.server ";
         $sql = $sql . "(srv_name, srv_desc, srv_cat, srv_domain, srv_notes, srv_tag, srv_sporadic,
-                        srv_backup, srv_monitor, srv_osupdate, srv_osupdate_reboot,
-                        srv_osupdate_day, srv_osupdate_period, srv_osupdate_start_month,
-                        srv_osupdate_week1, srv_osupdate_week2, srv_osupdate_week3,
-                        srv_osupdate_week4, srv_osupdate_date, srv_ostype,
+                        srv_backup, srv_monitor, srv_update_auto, srv_update_reboot,
+                        srv_update_hour, srv_update_minute, srv_maintenance,
+                        srv_update_month, srv_update_dom, srv_update_dow,
+                        srv_last_edit_date, srv_creation_date, srv_ostype,
                         srv_active) ";
         $sql = $sql . " VALUES ('" .  $_POST['scr_name'] . "','" ;
-        $sql = $sql . $_POST['scr_desc']         . "','" ;
-        $sql = $sql . $_POST['scr_cat']          . "','" ;
-        $sql = $sql . $_POST['scr_domain']       . "','" ;
-        $sql = $sql . $_POST['scr_notes']        . "','" ;
-        $sql = $sql . $_POST['scr_tag']          . "','" ;
-        $sql = $sql . $_POST['scr_sporadic']     . "','" ;
-        $sql = $sql . $_POST['scr_backup']       . "','" ;
-        $sql = $sql . $_POST['scr_monitor']      . "','" ;
-        $sql = $sql . $_POST['scr_osupdate']      . "','" ;
-        $sql = $sql . $_POST['scr_osupdate_reboot']      . "','" ;
-        $sql = $sql . $_POST['scr_osupdate_day']      . "','" ;
-        $sql = $sql . $_POST['scr_osupdate_period']      . "','" ;
-        $sql = $sql . $_POST['scr_osupdate_start_month']      . "','" ;
-        if ($_POST['scr_osupdate_week1'] == True) { $sql = $sql . "1"  . "','" ; }
-        if ($_POST['scr_osupdate_week1'] != True) { $sql = $sql . "0"  . "','" ; }
-        if ($_POST['scr_osupdate_week2'] == True) { $sql = $sql . "1"  . "','" ; }
-        if ($_POST['scr_osupdate_week2'] != True) { $sql = $sql . "0"  . "','" ; }
-        if ($_POST['scr_osupdate_week3'] == True) { $sql = $sql . "1"  . "','" ; }
-        if ($_POST['scr_osupdate_week3'] != True) { $sql = $sql . "0"  . "','" ; }
-        if ($_POST['scr_osupdate_week4'] == True) { $sql = $sql . "1"  . "','" ; }
-        if ($_POST['scr_osupdate_week4'] != True) { $sql = $sql . "0"  . "','" ; }
-        
-        # ReCalculate the Next O/S Update Date
-        #$srv_osupdate_date = date("Y/m/d") ;
-        $srv_osupdate_date = "2032/01/01" ; 
-#        $srv_osupdate_date = calculate_osupdate_date($scr_osupdate_start_month,$srv_osupdate_period,
-#             $srv_osupdate_week1,$srv_osupdate_week2,$srv_osupdate_week3,$srv_osupdate_week4,
-#             $srv_osupdate_day);
-        $sql = $sql . $srv_osupdate_date      . "','" ;
-        $sql = $sql . $_POST['scr_ostype']      . "','" ;
+        $sql = $sql . $_POST['scr_desc']          . "','" ;
+        $sql = $sql . $_POST['scr_cat']           . "','" ;
+        $sql = $sql . $_POST['scr_domain']        . "','" ;
+        $sql = $sql . $_POST['scr_notes']         . "','" ;
+        $sql = $sql . $_POST['scr_tag']           . "','" ;
+        $sql = $sql . $_POST['scr_sporadic']      . "','" ;
+        #
+        $sql = $sql . $_POST['scr_backup']        . "','" ;
+        $sql = $sql . $_POST['scr_monitor']       . "','" ;
+        $sql = $sql . $_POST['scr_update_auto']   . "','" ;
+        $sql = $sql . $_POST['scr_update_reboot'] . "','" ;
+        #
+        $sql = $sql . $_POST['scr_update_hour']   . "','";
+        $sql = $sql . $_POST['scr_update_minute'] . "','";
+        $sql = $sql . $_POST['scr_maintenance']   . "','";
+        #
+        $sql = $sql . $pmonth                     . "','";
+        $sql = $sql . $pdom                       . "','";
+        $sql = $sql . $pdow                       . "','";
+        #
+        $sql = $sql . date("Y-m-d H:i:s")         . "','" ;
+        $sql = $sql . date("Y-m-d H:i:s")         . "','" ;
+        $sql = $sql . $_POST['scr_ostype']        . "','" ;
+        #
         $sql = $sql . $_POST['scr_active']       . "')"  ;
         if ($DEBUG) { echo "<br>Execute SQL Command = $sql"; }
 
@@ -98,7 +111,10 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $sql ; }
             sadm_alert ($err_msg) ;
         }else{
-            sadm_alert ("Server '" . sadm_clean_data($_POST['scr_name']) . "' inserted.");
+            # Go Update the SADMIN crontab 
+            update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],'C',$pmonth,
+                $pdom,$pdow,$_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
+            sadm_alert ("Server '" . $_POST['scr_name'] . "' inserted.");
         }
 
         # frees the memory and data associated with the specified PostgreSQL query result

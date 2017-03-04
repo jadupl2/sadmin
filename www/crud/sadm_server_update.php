@@ -3,7 +3,7 @@
 * ==================================================================================================
 *   Author      :  Jacques Duplessis 
 *   Email       :  jacques.duplessis@sadmin.ca
-*   Title       :  sadm_server_edit.php
+*   Title       :  sadm_server_update.php
 *   Version     :  1.8
 *   Date        :  13 June 2016
 *   Requires    :  php - BootStrap - PostGresSql
@@ -51,56 +51,49 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_name']); }
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
-        
-        if ($DEBUG) {
-            echo "<br>Week2 = " . $_POST['scr_osupdate_week2'];
-            if ($_POST['scr_osupdate_week2'] == True)  { echo "<br>Week2 Bool is True" ; }
-            if ($_POST['scr_osupdate_week2'] == False) { echo "<br>Week2 Bool is False" ; }
-            echo "<br>Week3 = " . $_POST['scr_osupdate_week3'];
-            if ($_POST['scr_osupdate_week3'] == True)  { echo "<br>Week3 Bool is True" ; }
-            if ($_POST['scr_osupdate_week3'] == False) { echo "<br>Week3 Bool is False" ; }            
-            echo "<br>Week4 = " . $_POST['scr_osupdate_week4'];
-            if ($_POST['scr_osupdate_week4'] == True)  { echo "<br>Week4 Bool is True" ; }
-            if ($_POST['scr_osupdate_week4'] == False) { echo "<br>Week4 Bool is False" ; }
-        }
-       
+
         # Construct SQL to Update row
         $sql = "UPDATE sadm.server SET ";
-        $sql = $sql . "srv_name   = '"          . sadm_clean_data($_POST['scr_name'])            ."', ";
-        $sql = $sql . "srv_desc   = '"          . sadm_clean_data($_POST['scr_desc'])            ."', ";
-        $sql = $sql . "srv_cat    = '"          . sadm_clean_data($_POST['scr_cat'])             ."', ";
-        $sql = $sql . "srv_domain = '"          . sadm_clean_data($_POST['scr_domain'])          ."', ";
-        $sql = $sql . "srv_tag    = '"          . sadm_clean_data($_POST['scr_tag'])             ."', ";
-        $sql = $sql . "srv_notes  = '"          . sadm_clean_data($_POST['scr_notes'])           ."', ";
-        $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])        ."', ";
-        $sql = $sql . "srv_backup   = '"        . sadm_clean_data($_POST['scr_backup'])          ."', ";
-        $sql = $sql . "srv_monitor  = '"        . sadm_clean_data($_POST['scr_monitor'])         ."', ";
-        $sql = $sql . "srv_osupdate = '"        . sadm_clean_data($_POST['scr_osupdate'])        ."', ";
-        $sql = $sql . "srv_osupdate_reboot = '" . sadm_clean_data($_POST['scr_osupdate_reboot']) ."', ";
-        $sql = $sql."srv_osupdate_start_month = '".sadm_clean_data($_POST['scr_osupdate_start_month'])."', ";
-        $sql = $sql . "srv_osupdate_day = '"    . sadm_clean_data($_POST['scr_osupdate_day'])    ."', ";
-        $sql = $sql . "srv_osupdate_period = '" . sadm_clean_data($_POST['scr_osupdate_period']) ."', ";
-        if ($_POST['scr_osupdate_week1'] == True) { $sql = $sql . "srv_osupdate_week1 = '1', "; }
-        if ($_POST['scr_osupdate_week1'] != True) { $sql = $sql . "srv_osupdate_week1 = '0', "; }
-        if ($_POST['scr_osupdate_week2'] == True) { $sql = $sql . "srv_osupdate_week2 = '1', "; }
-        if ($_POST['scr_osupdate_week2'] != True) { $sql = $sql . "srv_osupdate_week2 = '0', "; }
-        if ($_POST['scr_osupdate_week3'] == True) { $sql = $sql . "srv_osupdate_week3 = '1', "; }
-        if ($_POST['scr_osupdate_week3'] != True) { $sql = $sql . "srv_osupdate_week3 = '0', "; }
-        if ($_POST['scr_osupdate_week4'] == True) { $sql = $sql . "srv_osupdate_week4 = '1', "; }
-        if ($_POST['scr_osupdate_week4'] != True) { $sql = $sql . "srv_osupdate_week4 = '0', "; }
-        #$sql = $sql . "srv_last_edit_date = '" . sadm_clean_data($_POST['scr_last_edit_date']) ."', ";
-        $sql = $sql . "srv_last_edit_date = '" . date("Y-m-d H:i:s")  . "', ";
- 
+        $sql = $sql . "srv_name = '"          . sadm_clean_data($_POST['scr_name'])          ."', ";
+        $sql = $sql . "srv_desc = '"          . sadm_clean_data($_POST['scr_desc'])          ."', ";
+        $sql = $sql . "srv_cat  = '"          . sadm_clean_data($_POST['scr_cat'])           ."', ";
+        $sql = $sql . "srv_domain = '"        . sadm_clean_data($_POST['scr_domain'])        ."', ";
+        $sql = $sql . "srv_tag = '"           . sadm_clean_data($_POST['scr_tag'])           ."', ";
+        $sql = $sql . "srv_notes = '"         . sadm_clean_data($_POST['scr_notes'])         ."', ";
+        $sql = $sql . "srv_sporadic = '"      . sadm_clean_data($_POST['scr_sporadic'])      ."', ";
+        $sql = $sql . "srv_backup = '"        . sadm_clean_data($_POST['scr_backup'])        ."', ";
+        $sql = $sql . "srv_monitor = '"       . sadm_clean_data($_POST['scr_monitor'])       ."', ";
+        $sql = $sql . "srv_update_auto = '"   . sadm_clean_data($_POST['scr_update_auto'])   ."', ";
+        $sql = $sql . "srv_update_reboot = '" . sadm_clean_data($_POST['scr_update_reboot']) ."', ";
+
+        $wmonth=$_POST['scr_update_month'];
+    	if (empty($wmonth)) { for ($i = 0; $i < 12; $i = $i + 1) { $wmonth[$i] = $i; } }
+        $wstr=str_repeat('N',12);
+        foreach ($wmonth as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $sql = $sql . "srv_update_month = '"  . $wstr  ."', ";
+        $pmonth = $wstr;                                                # Save for crontab
         
-        # ReCalculate the Next O/S Update Date
-        #$srv_osupdate_date = calculate_osupdate_date($srv_osupdate_start_month,$srv_osupdate_period,
-        #     $srv_osupdate_week1,$srv_osupdate_week2,$srv_osupdate_week3,$srv_osupdate_week4,
-        #     $srv_osupdate_day);
-        #$sql = $sql . "srv_osupdate_date = '"   . sadm_clean_data($_POST['scr_osupdate_date']) ."', ";
-        $sql = $sql . "srv_osupdate_date = '"   . "2016-11-16" ."', ";
-        $sql = $sql . "srv_ostype        = '"   . sadm_clean_data($_POST['scr_ostype'])        ."', ";
-        $sql = $sql . "srv_active        = '"   . sadm_clean_data($_POST['scr_active'])        ."'  ";
-        $sql = $sql . "WHERE srv_name = '"      . sadm_clean_data($_POST['scr_name'])          ."'; ";
+        $wdom=$_POST['scr_update_dom'];
+    	if (empty($wdom)) { for ($i = 0; $i < 31; $i = $i + 1) { $wdom[$i] = $i; } }
+        $wstr=str_repeat('N',31);
+        foreach ($wdom as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $sql = $sql . "srv_update_dom = '"    . $wstr  ."', ";
+        $pdom = $wstr ;                                                 # Save for crontab
+
+        $wdow=$_POST['scr_update_dow'];
+    	if (empty($wdow)) { for ($i = 0; $i < 7; $i = $i + 1) { $wdow[$i] = $i; } }
+        $wstr=str_repeat('N',7);
+        foreach ($wdow as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
+        $sql = $sql . "srv_update_dow = '"  . $wstr  ."', ";
+        $pdow = $wstr ;                                                 # Save for crontab
+
+        $sql = $sql . "srv_update_hour = '"   . sadm_clean_data($_POST['scr_update_hour'])   ."', ";
+        $sql = $sql . "srv_update_minute = '" . sadm_clean_data($_POST['scr_update_minute']) ."', ";
+        $sql = $sql . "srv_maintenance = '"   . sadm_clean_data($_POST['scr_maintenance'])   ."', ";
+        $sql = $sql . "srv_last_edit_date = '". date("Y-m-d H:i:s")                          ."', ";
+        $sql = $sql . "srv_ostype        = '" . sadm_clean_data($_POST['scr_ostype'])        ."', ";
+        $sql = $sql . "srv_active        = '" . sadm_clean_data($_POST['scr_active'])        ."'  ";
+        $sql = $sql . "WHERE srv_name = '"    . sadm_clean_data($_POST['scr_name'])          ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
         # Execute the Row Update SQL
@@ -116,6 +109,11 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 
         # frees the memory and data associated with the specified PostgreSQL query result
         pg_free_result($row);
+
+        # Go Update the SADMIN crontab 
+        if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
+        update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],$MODE,$pmonth,$pdom,$pdow, 
+                $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
 
         # Back to server List Page
         ?> <script> location.replace("/crud/sadm_server_main.php"); </script><?php

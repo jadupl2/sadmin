@@ -26,7 +26,153 @@
 #
 # ==================================================================================================
 #
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG = True ;                                                         # Activate Debug True/False
 
+# ==================================================================================================
+#                      Update the crontab based on the $paction parameter
+#
+#   pname    The hostname of the server to include/modify/delete in crontab
+#   paction  [C] for create entry  [U] for Updating the crontab   [D] Delete crontab entry
+#   pmonth   12 Characters (either a Y or a N) each representing a month (YYYYYYYYYYYY)
+#            Default is that entry could run every month, no restriction based on month
+#   pdom     31 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
+#            Default all at Y - Entry could run any day of the month 
+#            So entry will run Once a week on the day specify in pdow 
+#   pdow     7 Characters (either a Y or a N) each representing a week day () Starting with Sunday
+#            Default at Saturday
+#   phour    Hour when the update should begin (00-23) - Default 1am
+#   pmin     Minute when the update will begin (00-50) - Default 5min
+#
+# Default will cause new entry to run every week on Saturday at 1:05 am.
+# ==================================================================================================
+function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY", 
+                         $pdom = "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY", $pdow = "NNNNNNY", 
+                         $phour = "01", $pmin ="05") 
+{
+    if ($DEBUG) { 
+        echo "\n<br>pname   = " . $pscript ;
+        echo "\n<br>paction = " . $paction ;
+        echo "\n<br>pmonth  = " . $pmonth ;
+        echo "\n<br>pdom    = " . $pdom ;
+        echo "\n<br>pdow    = " . $pdow ;
+        echo "\n<br>phour   = " . $phour ;
+        echo "\n<br>pmin    = " . $pmin ;
+    }
+
+    # Begin constructing our crontab line ($cline) based on parameters received
+    $cline = sprintf ("%02d %02d ",$pmin,$phour);                       # Hour & Min. of Execution
+
+    # Construct Date of the month (1-31) to run and add it to crontab line ($cline)
+    if ($pdom == str_repeat("Y",31)) {                                  # If it's to run every Date
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Date 
+        $cdom = "";                                                     # Clear Work Variable
+        for ($i = 0; $i < 31; $i = $i + 1) {                            # Check for Y or N in DOM
+            if (substr($pdom,$i,1) == "Y") {                            # If Yes to run that Date
+                if (strlen($cdom) == 0) {                               # And first date to add
+                    $cdom = sprintf("%02d",$i+1);                       # Add Date number 
+                }else{                                                  # If not 1st month in list
+                    $cdom = $cdom . "," . sprintf("%02d",$i+1);         # More Date add , before
+                }
+            }    
+        }
+        $cline = $cline . $cdom . " " ;                                 # Add DOM in Crontab Line
+    }
+    
+    # Construct the month(s) (1-12) to run and add it to crontab line ($cline)
+    if ($pmonth == str_repeat("Y",12)) {                                # If it's to run every Month
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Months
+        $cmonth = "";                                                   # Clear Work Variable
+        for ($i = 0; $i < 12; $i = $i + 1) {                            # Check for Y or N in Month
+            if (substr($pmonth,$i,1) == "Y") {                          # If Yes to run that month
+                if (strlen($cmonth) == 0) {                             # And first month to add
+                    $cmonth = sprintf("%02d",$i+1);                     # Add month number 
+                }else{                                                  # If not 1st month in list
+                    $cmonth = $cmonth . "," . sprintf("%02d",$i+1);     # More Mth add , before Mth
+                }
+            }    
+        }
+        $cline = $cline . $cmonth . " " ;                               # Add Month in Crontab Line
+    }
+    
+    # Construct the day of the week (0-6) to run and add it to crontab line ($cline)
+    if ($pdow == str_repeat("Y",7)) {                                   # If it's to run every Day
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Day
+        $cdow = "";                                                     # Clear Work Variable
+        for ($i = 0; $i < 7; $i = $i + 1) {                             # Check for Y or N in Week
+            if (substr($pdow,$i,1) == "Y") {                            # If Yes to run that Day
+                if (strlen($cdow) == 0) {                               # And first add day of week
+                    $cdow = sprintf("%02d",$i);                         # Add Day number 
+                }else{                                                  # If not 1st Day in list
+                    $cdow = $cdow . "," . sprintf("%02d",$i);           # More Day add , before Day
+                }
+            }    
+        }
+        $cline = $cline . $cdow . " " ;                                 # Add Month in Crontab Line
+    }
+    
+    # Add User, script name and script parameter to crontab line
+    $cline = $cline . "root " . $pscript . " >/dev/null 2>&1\n";        # Add user & cmd on $cline
+    if ($DEBUG) { echo "\n<br>Assemble crontab line : " . $cline ; }    # Debug Show crontab line
+   
+    # Opening what will become the new crontab file
+    $newtab = fopen(SADM_WWW_TMP_FILE1,"w");                            # Create new Crontab File
+    if (! $newtab) {                                                    # If Create didn't work
+        sadm_fatal_error ("Can't create file " . SADM_WWW_TMP_FILE1) ;  # Show Err & Back Prev. Page
+    } 
+    # Write Crontab File Header
+    $wline = "# Please don't edit manually, SADMIN generated file ". date("Y-m-d H:i:s") ."\n"; 
+    fwrite($newtab,$wline);                                             # Write SADM Cron Header
+
+    # Open existing crontab File - If don't exist create empty one
+    if (!file_exists(SADM_CRON_FILE)) {                                 # SADM crontab doesn't exist
+        touch(SADM_CRON_FILE);                                          # Create empty crontab file
+        chmod(SADM_CRON_FILE,0640);                                     # Set Permission on crontab
+        chown(SADM_CRON_FILE,'root');                                   # Set Crontab Owner
+        $CMD="sudo chgrp " . SADM_CRON_FILE . " root"; 
+        if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
+        $a = exec ( $CMD , $FILE_LIST, $RCODE);
+        if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
+        chgrp(SADM_CRON_FILE,'root');                                   # Set Crontab Group Owner
+    }
+
+    # Load actual crontab in array and process each line in array
+    $alines = file(SADM_CRON_FILE);                                     # Load Crontab in Array
+    $UPD_DONE = False;                                                  # AutoUpdate was Off now ON?
+    foreach ($alines as $line_num => $line) {                           # Process each line in Array
+        if ($DEBUG) { echo "\n<br>Before Processing Ligne #{$line_num} : " . $line ; }        
+        if (strpos(trim($line), '#') === 0) continue;                   # Next line if comment
+        $line = trim($line);                                            # Trim Crontab Line
+        $wpos = strpos($line,' root ');                                 # Get Pos. of root on line
+        $wscr = substr($line,$wpos+6);                                  # Get Script name & param.
+        if ($DEBUG) { echo "\n<br>Script script id is : " . $wscr ; }   # Debug Show Script & Param
+        $wret = strpos($line,$wscr);                                    # Is Line to be Upd or Del ?
+        if ($wret == false) {                                           # Line isn't target script
+              fwrite($newtab,$wline);                                   # Write line untouched
+        }else{                                                          # If line is our target line
+              if ($paction == "U") {                                    # If Update insert new Line
+                 fwrite($newtab,$cline);                                # Write line to new crontab
+                 $UPD_DONE=True;                                        # Line was found
+              }
+              if ($paction == "D") { continue ; }                       # If Delete forget this line
+        }   
+    }
+    if ($paction == 'C') { fwrite($newtab,$cline); }                    # Add new line to crontab 
+    if (($paction == "U") && (!$UPD_DONE)) {                            # Update but No line found
+        fwrite($newtab,$cline);                                         # Add new line to crontab 
+    }   
+    fclose($newtab);                                                    # Close sadm new crontab
+    if (! copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)) {                    # Copy new over existing 
+        sadm_fatal_error ("\n><BR>Error while doing  copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)");
+    }
+    unlink(SADM_WWW_TMP_FILE1);                                         # Delete Crontab tmp file
+}
 
 
 # ==================================================================================================
@@ -379,7 +525,7 @@ function display_left_side ( $wrow , $mode) {
 
 
     # ----------------------------------------------------------------------------------------------
-    # Monitor the Server ?
+    # Monitor SSH Connectivity to Server ?
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='server_label1'>Monitor SSH Connectivity</div>";
     echo "\n<div class='server_input1'>";
@@ -387,22 +533,53 @@ function display_left_side ( $wrow , $mode) {
     switch ($mode) {
         case 'D' : if ($wrow['srv_monitor'] == 't') {
                        echo "\n<input type='radio' name='scr_monitor' value='1' ";
-                       echo "onclick='javascript: return false;' checked> Yes  ";
+                       echo "onclick='javascript: return false;' checked> Enable  ";
                        echo "\n<input type='radio' name='scr_monitor' value='0' ";
-                       echo "onclick='javascript: return false;'> No";
+                       echo "onclick='javascript: return false;'> Disable";
                    }else{
                        echo "\n<input type='radio' name='scr_monitor' value='1' ";
-                       echo "onclick='javascript: return false;'> Yes  ";
+                       echo "onclick='javascript: return false;'> Enable  ";
                        echo "\n<input type='radio' name='scr_monitor' value='0' ";
-                       echo "onclick='javascript: return false;' checked > No";
+                       echo "onclick='javascript: return false;' checked > Disable";
                    }
                    break ;
         default  : if ($wrow['srv_monitor'] == 't') {
-                       echo "\n<input type='radio' name='scr_monitor' value='1' checked > Yes ";
-                       echo "\n<input type='radio' name='scr_monitor' value='0'> No";
+                       echo "\n<input type='radio' name='scr_monitor' value='1' checked > Enable ";
+                       echo "\n<input type='radio' name='scr_monitor' value='0'> Disable";
                    }else{
-                       echo "\n<input type='radio' name='scr_monitor' value='1'> Yes";
-                       echo "\n<input type='radio' name='scr_monitor' value='0' checked > No";
+                       echo "\n<input type='radio' name='scr_monitor' value='1'> Enable";
+                       echo "\n<input type='radio' name='scr_monitor' value='0' checked > Disable";
+                   }
+                   break;
+    }
+    echo "\n</div>";
+
+    
+    # ----------------------------------------------------------------------------------------------
+    # Maintenance Mode ON or OFF Monitor SSH Connectivity to Server ?
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>Maintenance Mode</div>";
+    echo "\n<div class='server_input1'>";
+    if ($mode == 'C') { $wrow['srv_maintenance'] = False ; }               # Default Mode is OFF
+    switch ($mode) {
+        case 'D' : if ($wrow['srv_maintenance'] == 't') {
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
+                      echo "onclick='javascript: return false;' checked> On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
+                      echo "onclick='javascript: return false;'> Off";
+                   }else{
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
+                      echo "onclick='javascript: return false;'> On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
+                      echo "onclick='javascript: return false;' checked > Off";
+                   }
+                   break;
+        default  : if ($wrow['srv_maintenance'] == 't') {
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' checked > On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0'> Off";
+                   }else{
+                      echo "\n<input type='radio' name='scr_maintenance' value='1'> On";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' checked > Off";
                    }
                    break;
     }
@@ -429,28 +606,28 @@ function display_right_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     # Update the O/S Automatically (Yes/No) ?
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Perform O/S update automatically</div>";
+    echo "\n\n<div class='server_label2'>Update O/S</div>";
     echo "\n<div class='server_input2'>";
-    if ($mode == 'C') { $wrow['srv_osupdate'] = True ; }                # Default Value to No
+    if ($mode == 'C') { $wrow['srv_update_auto'] = True ; }             # Default Regularly
     switch ($mode) {
-        case 'D' : if ($wrow['srv_osupdate'] == 't') {
-                        echo "\n<input type='radio' name='scr_osupdate' value='1' ";
-                        echo "onclick='javascript: return false;' checked> Yes  ";
-                        echo "\n<input type='radio' name='scr_osupdate' value='0' ";
-                        echo "onclick='javascript: return false;'> No";
+        case 'D' : if ($wrow['srv_update_auto'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
+                        echo "onclick='javascript: return false;' checked> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
+                        echo "onclick='javascript: return false;'> Disable";
                     }else{
-                        echo "\n<input type='radio' name='scr_osupdate' value='1' ";
-                        echo "onclick='javascript: return false;'> Yes  ";
-                        echo "\n<input type='radio' name='scr_osupdate' value='0' ";
-                        echo "onclick='javascript: return false;' checked > No ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
+                        echo "onclick='javascript: return false;'> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
+                        echo "onclick='javascript: return false;' checked > Disable ";
                     }
                     break;
-        default   : if ($wrow['srv_osupdate'] == 't') {
-                        echo "\n<input type='radio' name='scr_osupdate' value='1' checked > Yes ";
-                        echo "\n<input type='radio' name='scr_osupdate' value='0'> No";
+        default   : if ($wrow['srv_update_auto'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' checked > Enable ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0'> Disable  ";
                     }else{
-                        echo "\n<input type='radio' name='scr_osupdate' value='1'> Yes";
-                        echo "\n<input type='radio' name='scr_osupdate' value='0' checked > No";
+                        echo "\n<input type='radio' name='scr_update_auto' value='1'> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > Disable";
                     }
                     break;
     }
@@ -462,26 +639,26 @@ function display_right_side ( $wrow , $mode) {
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='server_label2'>Reboot after O/S update</div>";
     echo "\n<div class='server_input2'>";
-    if ($mode == 'C') { $wrow['srv_osupdate_reboot'] = False ; }        # Default Value to No Reboot
+    if ($mode == 'C') { $wrow['srv_update_reboot'] = False ; }        # Default Value to No Reboot
     switch ($mode) {
-        case 'D' :  if ($wrow['srv_osupdate_reboot'] == 't') {
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='1' ";
-                        echo "onclick='javascript: return false;' checked> Yes";
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='0' ";
-                        echo "onclick='javascript: return false;'> No";
+        case 'D' :  if ($wrow['srv_update_reboot'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
+                        echo "onclick='javascript: return false;' checked> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
+                        echo "onclick='javascript: return false;'> Disable";
                     }else{
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='1' ";
-                        echo "onclick='javascript: return false;'> Yes";
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='0' ";
-                        echo "onclick='javascript: return false;' checked > No";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
+                        echo "onclick='javascript: return false;'> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
+                        echo "onclick='javascript: return false;' checked > Disable";
                     }
                     break;
-        default  :  if ($wrow['srv_osupdate_reboot'] == 't') {
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='1' checked> Yes";
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='0'> No";
+        default  :  if ($wrow['srv_update_reboot'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' checked> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0'> Disable";
                     }else{
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='1'> Yes";
-                        echo "\n<input type='radio' name='scr_osupdate_reboot' value='0' checked> No";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1'> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' checked> Disable";
                     }
                     break;
     }
@@ -489,295 +666,130 @@ function display_right_side ( $wrow , $mode) {
 
 
     # ----------------------------------------------------------------------------------------------
-    # O/S Update Every X Month (1 to 12)
+    # O/S Update Months - Specify what month the Update need to run - Default is All months
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Update O/S frequency</div>";
+    echo "\n\n<div class='server_label2'>Months to Update O/S</div>";
     echo "\n<div class='server_input2'>";
+    $months = array('January','February','March','April','May','June','July ','August','September',
+                    'October','November','December',);
+    echo "\n<select name='scr_update_month[]' multiple='multiple' size=3>";
     switch ($mode) {
-        case 'C' :  echo "\n<select name='scr_osupdate_period' size=1>";
-                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
-                        if ($mth == 1) {
-                            echo "\n<option value='" . $mth . "' selected>Every Month</option>";
-                        }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Months</option>";
-                        }
+        case 'C' :  for ($i = 0; $i < 12; $i = $i + 1) {
+                        echo "\n<option value='$i' selected/>" . $months[$i] . "</option>";
                     }
-                    echo "\n</select>";
                     break ;
-        default  :  if ($mode == "U") {
-                        echo "\n<select name='scr_osupdate_period' size=1>";
-                    }else{
-                        echo "\n<select name='scr_osupdate_period' size=1 disabled>";
-                    }
-                    for ($mth = 1; $mth < 13; $mth = $mth + 1) {
-                        if ($mth == $wrow['srv_osupdate_period']) {
-                           if ($mth == 1) {
-                              echo "\n<option value='" . $mth . "' selected>Every Month</option>";
-                           }else{
-                              echo "\n<option value='" . $mth . "' selected>Every " . $mth . " Months</option>";
-                           }     
-                        }else{
-                            echo "\n<option value='" . $mth . "'>Every " . $mth . " Months</option>";
-                        }
+        default  :  for ($i = 0; $i < 12; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if (substr($wrow['srv_update_month'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo "/>" . $months[$i] . "</option>";
                     }
                     break;
     }
+    echo "\n</select>";
+    #echo "mth = " . $wrow['srv_update_month'];
+    echo "\n</div>";
 
 
-
-
+    # ----------------------------------------------------------------------------------------------
+    # Date in the month (dom) to Update O/S 
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Date in month to update O/S</div>";
+    echo "\n<div class='server_input2'>";
+    echo "\n<select name='scr_update_dom[]' multiple='multiple' size=3>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 31; $i = $i + 1) {
+                        echo "\n<option value='$i' selected/>" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 31; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if (substr($wrow['srv_update_dom'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i+1) . "</option>";
+                    }     
+                    break;
+    }
     echo "\n</select>";
     echo "\n</div>";
 
-    
-    
+
     # ----------------------------------------------------------------------------------------------
-    # O/S Update Starting Month
+    # Day in the week (dow) to update the O/S
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Month of first O/S update</div>";
+    echo "\n\n<div class='server_label2'>Day in the week to update O/S</div>";
     echo "\n<div class='server_input2'>";
+    $days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+    echo "\n<select name='scr_update_dow[]' multiple='multiple' size=3>";
     switch ($mode) {
-        case 'C' :  echo "\n<select name='scr_osupdate_start_month' size=1>";
-                    echo "\n<option value='1' selected>January</option>";
-                    echo "\n<option value='2'>February</option>";
-                    echo "\n<option value='3'>March</option>";
-                    echo "\n<option value='4'>April</option>";
-                    echo "\n<option value='5'>May</option>";
-                    echo "\n<option value='6'>June</option>";
-                    echo "\n<option value='7'>July</option>";
-                    echo "\n<option value='8'>August</option>";
-                    echo "\n<option value='9'>September</option>";
-                    echo "\n<option value='10'>October</option>";
-                    echo "\n<option value='11'>November</option>";
-                    echo "\n<option value='12'>December</option>";
-                    echo "\n</select>";
+        case 'C' :  for ($i = 0; $i < 7; $i = $i + 1) {
+                        echo "\n<option value='$i' ";
+                        if ($i == 6) { echo " selected"; }
+                        echo "/>" . $days[$i] . "</option>";
+                    }
                     break ;
-                
-        case 'D' : switch ($wrow['srv_osupdate_start_month']) {
-                        case 1:  $scr_osupdate_start_month=1  ; $scr_osupd_mth_desc="January"   ; break;
-                        case 2:  $scr_osupdate_start_month=2  ; $scr_osupd_mth_desc="February"  ; break;
-                        case 3:  $scr_osupdate_start_month=3  ; $scr_osupd_mth_desc="March"     ; break;
-                        case 4:  $scr_osupdate_start_month=4  ; $scr_osupd_mth_desc="April"     ; break;
-                        case 5:  $scr_osupdate_start_month=5  ; $scr_osupd_mth_desc="May"       ; break;
-                        case 6:  $scr_osupdate_start_month=6  ; $scr_osupd_mth_desc="June"      ; break;
-                        case 7:  $scr_osupdate_start_month=7  ; $scr_osupd_mth_desc="July"      ; break;
-                        case 8:  $scr_osupdate_start_month=8  ; $scr_osupd_mth_desc="August"    ; break;
-                        case 9:  $scr_osupdate_start_month=9  ; $scr_osupd_mth_desc="September" ; break;
-                        case 10: $scr_osupdate_start_month=10 ; $scr_osupd_mth_desc="October"   ; break;
-                        case 11: $scr_osupdate_start_month=11 ; $scr_osupd_mth_desc="November"  ; break;
-                        case 12: $scr_osupdate_start_month=12 ; $scr_osupd_mth_desc="December"  ; break;
-                    }       
-                    echo "\n<input type='text' name='scr_osupd_mth_desc' readonly placeholder=" .
-                        $scr_osupd_mth_desc . " maxlength='15' size='16' value='" .
-                        $scr_osupd_mth_desc . "'/>\n";
-                    break ;
-                
-       case 'U' : echo "\n<select name='scr_osupdate_start_month' size=1>";
-                   for ($x = 1; $x <= 12; $x++) {
-                       switch ($x) {
-                           case 1: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='1' selected>January</option>";
-                                   }else{
-                                       echo "\n<option value='1'>January</option>";
-                                   }
-                                   break;
-                           case 2: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='2' selected>February</option>";
-                                   }else{
-                                       echo "\n<option value='2'>February</option>";
-                                   }
-                                   break;
-                           case 3: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='3' selected>March</option>";
-                                   }else{
-                                       echo "\n<option value='3'>March</option>";
-                                   }
-                                   break;
-                           case 4: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='4' selected>April</option>";
-                                   }else{
-                                       echo "\n<option value='4'>April</option>";
-                                   }
-                                   break;
-                           case 5: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='5' selected>May</option>";
-                                   }else{
-                                       echo "\n<option value='5'>May</option>";
-                                   }
-                                   break;
-                           case 6: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='6' selected>June</option>";
-                                   }else{
-                                       echo "\n<option value='6'>June</option>";
-                                   }
-                                   break;
-                           case 7: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='7' selected>July</option>";
-                                   }else{
-                                       echo "\n<option value='7'>July</option>";
-                                   }
-                                   break;
-                           case 8: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='8' selected>August</option>";
-                                   }else{
-                                       echo "\n<option value='8'>August</option>";
-                                   }
-                                   break;
-                           case 9: if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='9' selected>September</option>";
-                                   }else{
-                                       echo "\n<option value='9'>September</option>";
-                                   }
-                                   break;
-                           case 10:if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='10' selected>October</option>";
-                                   }else{
-                                       echo "\n<option value='10'>October</option>";
-                                   }
-                                   break;
-                           case 11:if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='11' selected>November</option>";
-                                   }else{
-                                       echo "\n<option value='11'>November</option>";
-                                   }
-                                   break;
-                           case 12:if ($x == $srv_osupdate_start_month) {
-                                       echo "\n<option value='12' selected>December</option>";
-                                   }else{
-                                       echo "\n<option value='12'>December</option>";
-                                   }
-                                   break;
-                       }
-                   }
-                   echo "\n</select>";
-    }
-    echo "\n</div>";
-
-
-
-    # ----------------------------------------------------------------------------------------------
-    # O/S Update Week (1,2,3,4) Can be multiple Choice
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Update O/S in week in the month</div>";
-    echo "\n<div class='server_input2'>";
-    switch ($mode) {
-        case 'C'  : echo "<input type='checkbox' name='scr_osupdate_week1' value=True checked />1st  ";
-                    echo "<input type='checkbox' name='scr_osupdate_week2' value=True />2nd  ";
-                    echo "<input type='checkbox' name='scr_osupdate_week3' value=True/>3rd  ";
-                    echo "<input type='checkbox' name='scr_osupdate_week4' value=True />4th  ";
-                    break;
-        default   : echo "\n<input type='checkbox' name='scr_osupdate_week1' value=True ";
-                    if ($wmode == "D") { echo " disabled " ; }
-                    if ($wrow['srv_osupdate_week1'] == 't') {echo "checked /> 1st  ";}else{echo "/> 1st  ";}
-                    #
-                    echo "\n<input type='checkbox' name='scr_osupdate_week2' value=True ";
-                    if ($wmode == "D") { echo " disabled " ; }
-                    if ($wrow['srv_osupdate_week2'] == 't') {echo "checked /> 2nd  ";}else{echo "/> 2nd  ";}
-                    #
-                    echo "\n<input type='checkbox' name='scr_osupdate_week3' value=True ";
-                    if ($wmode == "D") { echo " disabled " ; }
-                    if ($wrow['srv_osupdate_week3'] == 't') {echo "checked /> 3rd  ";}else{echo "/> 3rd  ";}
-                    #
-                    echo "\n<input type='checkbox' name='scr_osupdate_week4' value=True ";
-                    if ($wmode == "D") { echo " disabled " ; }
-                    if ($wrow['srv_osupdate_week4'] == 't') {echo "checked /> 4th  ";}else{echo "/> 4th  ";}
-                    #
+        default  :  for ($i = 0; $i < 7; $i = $i + 1) {
+                        echo "\n<option value='$i' " ;
+                        if (substr($wrow['srv_update_dow'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo "/>" . $days[$i] . "</option>";
+                    }
                     break;
     }
+    echo "\n</select>";
     echo "\n</div>";
 
 
     # ----------------------------------------------------------------------------------------------
-    # O/S Update Day
+    # Hour to update the O/S
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>";
-    echo "Update O/S on day";
-    echo "</div>";
+    echo "\n\n<div class='server_label2'>Time to Update the O/S</div>";
     echo "\n<div class='server_input2'>";
-    if ($mode == 'D') {
-        switch ($wrow['srv_osupdate_day']) {
-            case 0: $scr_osupdate_day=0 ; $scr_osupdate_day_desc="Sunday"    ; break;
-            case 1: $scr_osupdate_day=1 ; $scr_osupdate_day_desc="Monday"    ; break;
-            case 2: $scr_osupdate_day=2 ; $scr_osupdate_day_desc="Tuesday"   ; break;
-            case 3: $scr_osupdate_day=3 ; $scr_osupdate_day_desc="Wednesday" ; break;
-            case 4: $scr_osupdate_day=4 ; $scr_osupdate_day_desc="Thursday"  ; break;
-            case 5: $scr_osupdate_day=5 ; $scr_osupdate_day_desc="Friday"    ; break;
-            case 6: $scr_osupdate_day=6 ; $scr_osupdate_day_desc="Saturday"  ; break;
-        }
-        echo "\n<input type='text' name='scr_osupdate_day' readonly placeholder=" .
-            $scr_osupdate_day_desc . " maxlength='15' size='16' value='" .
-            $scr_osupdate_day_desc . "'/>\n";
+    echo "\n<select name='scr_update_hour' size=3>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 24; $i = $i + 1) {
+                        if ($i == 1) { 
+                            echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
+                        }else{
+                            echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
+                        }
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 24; $i = $i + 1) {
+                        echo "\n<option value='$i' " ;
+                        if ($wrow['srv_update_hour'] == $i) {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break;
     }
-    if ($mode == 'C') {
-       echo "\n<select name='scr_osupdate_day' size=1>";
-       echo "\n<option value='0' selected>Sunday</option>";
-       echo "\n<option value='1'>Monday</option>";
-       echo "\n<option value='2'>Tuesday</option>";
-       echo "\n<option value='3'>Wednesday</option>";
-       echo "\n<option value='4'>Thursday</option>";
-       echo "\n<option value='5'>Friday</option>";
-       echo "\n<option value='6'>Saturday</option>";
-       echo "\n</select>";
+    echo "\n</select>";
+    echo " Hour ";
+    echo "\n<select name='scr_update_minute' size=3>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 60; $i = $i + 1) {
+                        if ($i == 5) { 
+                            echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
+                        }else{
+                            echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
+                        }
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 60; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if ($wrow['srv_update_minute'] == $i) {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break;
     }
-    if ($mode == 'U') {
-       echo "\n<select name='scr_osupdate_day' size=1>";
-       for ($x = 0; $x <= 6; $x++) {
-           switch ($x) {
-                case 0: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='0' selected>Sunday</option>";
-                        }else{
-                           echo "\n<option value='0'>Sunday</option>";
-                        }
-                        break;
-                case 1: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='1' selected>Monday</option>";
-                        }else{
-                           echo "\n<option value='1'>Monday</option>";
-                        }
-                        break;
-                case 2: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='2' selected>Tuesday</option>";
-                        }else{
-                           echo "\n<option value='2'>Tuesday</option>";
-                        }
-                        break;
-                case 3: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='3' selected>Wednesday</option>";
-                        }else{
-                           echo "\n<option value='3'>Wednesday</option>";
-                        }
-                        break;
-                case 4: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='4' selected>Thursday</option>";
-                        }else{
-                           echo "\n<option value='4'>Thursday</option>";
-                        }
-                        break;
-                case 5: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='5' selected>Friday</option>";
-                        }else{
-                           echo "\n<option value='5'>Friday</option>";
-                        }
-                        break;
-                case 6: if ($x == $wrow['srv_osupdate_day']) {
-                           echo "\n<option value='6' selected>Saturday</option>";
-                        }else{
-                           echo "\n<option value='6'>Saturday</option>";
-                        }
-                        break;
-           }
-       }
-       echo "\n</select>";
-    }
-    echo "\n</div>";                                                      # << End of server_input
-
-
+    echo "\n</select>";
+    echo " Min ";
+    echo "\n</div>";
 
     # Space Lines    -------------------------------------------------------------------------------
-    echo "\n<br><br><br><br><br>\n";
-
-
-    
+    echo "\n<br>\n";
+   
     # Last Edit Date -------------------------------------------------------------------------------
     echo "\n\n<div class='server_label2'>Last Edit Date & Time</div>";
     echo "\n<div class='server_input2'>";
@@ -785,61 +797,5 @@ function display_right_side ( $wrow , $mode) {
     echo "value='" . sadm_clean_data($wrow['srv_last_edit_date']). "'/>";
     echo "</div>\n";
 
-    
-    # Creation Date -------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Creation Date</div>";
-    echo "\n<div class='server_input2'>";
-    echo "\n<input type='text' name='scr_creation_date' readonly maxlength='20' size='20' ";
-    echo "value='" . sadm_clean_data($wrow['srv_creation_date']). "'/>";
-    echo "</div>\n";
-
-    
-    # Last O/S Update Date -------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Last O/S Update</div>";
-    echo "\n<div class='server_input2'>";
-    echo "\n<input type='text' name='scr_last_update' readonly maxlength='20' size='20' ";
-    echo "value='" . sadm_clean_data($wrow['srv_last_update']). "'/>";
-    echo "\n<input type='text' name='scr_osupdate_status' readonly maxlength='1' size='1' ";
-    echo "value='" . sadm_clean_data($wrow['srv_osupdate_status']). "'/>";
-    echo "</div>\n";
-
-
-    # O/S Update Calculated Date -------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Calculated next O/S update date</div>";
-    echo "\n<div class='server_input2'>";
-    switch ($mode) {
-        case 'D' : echo "\n<input type='text' name='scr_osupdate_date' readonly maxlength='10' size='11' ";
-                   echo "value='" . sadm_clean_data($wrow['srv_osupdate_date']). "'/>";
-                   break;
-        default  : echo "\n<input type='text' name='scr_osupdate_date' maxlength='10' size='11' ";
-                   echo "value='" . sadm_clean_data($wrow['srv_osupdate_date']). "'/>";
-                   break;
-    }
-    echo "</div>\n";
-
-    # O/S Update Effective Start Date -------------------------------------------------------------
-    #if ($mode == 'U') {
-    #    echo "\n\n<div class='server_label2'>O/S Update Start Month</div>";
-    #    echo "\n<div class='server_input2'>";
-    #    echo "\n<div class='input-append date form_date'>";
-    #    echo "<input size='16' name='scr_next_update_date' type='text' " ;
-    #    echo "value='" . sadm_clean_data($wrow['srv_next_update_date']). "' readonly>";
-    #    echo "<span class='add-on'><i class='icon-th'></i></span>";
-    #    #echo '<span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span>';
-    #    echo "\n</div>";
-    #    #    format: "format: "yyyy/mm/dd" ;
-    #        ?>
-    <!--
-         <script type="text/javascript">
-         $(".form_date").datepicker( { pickTime: false } );
-        </script>
-     -->
-    <?php
-    #    echo "</div>\n";
-    #}
-
-   #Display srv_os_lastupdate,srv_last_edit_date, srv_last_update, srv_creation_date
-
 }
-
-
+?>

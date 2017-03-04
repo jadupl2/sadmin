@@ -66,6 +66,19 @@ function sadm_confirm($msg) {
 
 
 
+// ================================================================================================
+//      Popup with the Error Message wait for 5 seconds and return to previous page
+// ================================================================================================
+function sadm_fatal_error($msg) {
+    $message = $msg;
+    $message = preg_replace("/\r?\n/", "\\n", addslashes($message));
+    echo "<script type=\"text/javascript\">\n";
+    echo " alert(\"$message\");\n";
+    echo " windows.history.back()\n";
+    echo "</script>\n\n";
+}
+
+
 
 // ================================================================================================
 //            Popup Message received as parameter and wait for OK to be pressed
