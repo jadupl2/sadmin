@@ -26,9 +26,10 @@ www/old/
 www/tmp/
 .vscode/
 
-# System Startup Log Files
+# Specific files to exclude 
 sys/*.log
 cfg/.pgpass
+www/sadmin/.crontab.txt
 cfg/sadmin.cfg
 cfg/holmes.cfg
 
