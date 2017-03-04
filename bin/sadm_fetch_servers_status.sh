@@ -348,6 +348,8 @@ process_servers()
     process_servers "aix"                                               # Process Active Aix
     AIX_ERROR=$?                                                        # Save Nb. Errors in process
     sadm_writelog "Total Aix error(s) : ${AIX_ERROR}"                   # Display Total Aix Errors
+    cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                                # Put in place Final Crontab
+    chmod 600 ${SADM_CRONTAB} ; chown root.root ${SADM_CRONTAB}         # Set Permission on crontab
 
     # Print Total Script Errors
     sadm_writelog " "                                                   # Separation Blank Line

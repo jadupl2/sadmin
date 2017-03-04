@@ -129,17 +129,16 @@ function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY",
     # Write Crontab File Header
     $wline = "# Please don't edit manually, SADMIN generated file ". date("Y-m-d H:i:s") ."\n"; 
     fwrite($newtab,$wline);                                             # Write SADM Cron Header
+    $wline = "SADMIN=" . SADM_CFG_DIR . "\n" ;                          # SADMIN Base Dir. Location
+    fwrite($newtab,$wline);                                             # Write SADM Cron Header
+    fwrite($newtab,"# \n");                                             # Write Comment Line
 
     # Open existing crontab File - If don't exist create empty one
     if (!file_exists(SADM_CRON_FILE)) {                                 # SADM crontab doesn't exist
         touch(SADM_CRON_FILE);                                          # Create empty crontab file
         chmod(SADM_CRON_FILE,0640);                                     # Set Permission on crontab
-        chown(SADM_CRON_FILE,'root');                                   # Set Crontab Owner
-        $CMD="sudo chgrp " . SADM_CRON_FILE . " root"; 
-        if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
-        $a = exec ( $CMD , $FILE_LIST, $RCODE);
-        if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
-        chgrp(SADM_CRON_FILE,'root');                                   # Set Crontab Group Owner
+        #chown(SADM_CRON_FILE,'root');                                   # Set Crontab Owner
+        #chgrp(SADM_CRON_FILE,'root');                                   # Set Crontab Group Owner
     }
 
     # Load actual crontab in array and process each line in array
@@ -168,8 +167,12 @@ function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY",
         fwrite($newtab,$cline);                                         # Add new line to crontab 
     }   
     fclose($newtab);                                                    # Close sadm new crontab
+    #$CMD="sudo cp " . SADM_WWW_TMP_FILE1 . " " . SADM_CRON_FILE . "\n"; 
+    #if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
+    #$a = exec ( $CMD , $FILE_LIST, $RCODE);
+    #if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
     if (! copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)) {                    # Copy new over existing 
-        sadm_fatal_error ("\n><BR>Error while doing  copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)");
+        sadm_fatal_error ("Error copying " . SADM_WWW_TMP_FILE1 . " to " . SADM_CRON_FILE . " ");
     }
     unlink(SADM_WWW_TMP_FILE1);                                         # Delete Crontab tmp file
 }

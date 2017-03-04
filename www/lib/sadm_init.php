@@ -40,7 +40,7 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 
 # SADMIN FILE DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
-define("SADM_CRON_FILE"    , "/etc/cron.d/sadmin");                     # SADM Crontab File
+define("SADM_CRON_FILE"    , SADM_WWW_DIR . "/sadmin/.crontab.txt");    # SADM Crontab File
 define("SADM_WWW_TMP_FILE1",tempnam(SADM_WWW_TMP_DIR,"www_tmpfile1_")); # SADM Temp File1
 define("SADM_UPDATE_SCRIPT", SADM_BIN_DIR ."/sadm_osupdate_server.sh"); # O/S Update Script Name
 
