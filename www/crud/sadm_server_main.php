@@ -63,7 +63,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-left'>Name</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Category</th>";
-    #echo "\n<th class='dt-center'>Tag</th>";
+    echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";    
@@ -76,7 +76,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-left'>Name</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Category</th>";
-    #echo "\n<th class='dt-center'>Tag</th>";
+    echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
@@ -94,10 +94,10 @@ function display_data($count, $row) {
     echo "\n<tr>";  
     
     # Display Code, Description and Status
-    echo "\n<td class='dt-left'>"  . $row['srv_name'] . "</td>";
-    echo "\n<td class='dt-left'>"  . $row['srv_desc'] . "</td>";
-    echo "\n<td class='dt-left'>"  . $row['srv_cat'] . "</td>";
-    #echo "\n<td class='dt-left'>"  . $row['srv_tag'] . "</td>";
+    echo "\n<td class='dt-left'>"   . $row['srv_name']  . "</td>";
+    echo "\n<td class='dt-left'>"   . $row['srv_desc']  . "</td>";
+    echo "\n<td class='dt-center'>" . $row['srv_cat']   . "</td>";
+    echo "\n<td class='dt-center'>" . $row['srv_group'] . "</td>";
     if ($row['srv_active'] == 't') { 
         echo "\n<td class='dt-center'>Active</td>"; 
     }else{ 

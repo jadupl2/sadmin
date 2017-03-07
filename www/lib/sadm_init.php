@@ -27,6 +27,7 @@ define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Networ
 # SADMIN WEB SITE DIRECTORIES DEFINITION
 define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Site Dir.
 define("SADM_WWW_HTML_DIR" , SADM_WWW_DIR  . "/html");                  # Web server html Dir
+define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
@@ -40,9 +41,9 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 
 # SADMIN FILE DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
-define("SADM_CRON_FILE"    , SADM_WWW_DIR . "/sadmin/.crontab.txt");    # SADM Crontab File
+define("SADM_CRON_FILE"    , SADM_WWW_CFG_DIR . "/.crontab.txt");       # SADM Crontab File
 define("SADM_WWW_TMP_FILE1",tempnam(SADM_WWW_TMP_DIR,"www_tmpfile1_")); # SADM Temp File1
-define("SADM_UPDATE_SCRIPT", SADM_BIN_DIR ."/sadm_osupdate_server.sh"); # O/S Update Script Name
+define("SADM_UPDATE_SCRIPT",SADM_BIN_DIR."/sadm_osupdate_server.sh -s");# O/S Update Script Name
 
 # LOADING CONFIGURATION FILE 
 $lineno = 0;                                                            # Clear Line Number

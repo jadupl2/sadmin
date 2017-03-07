@@ -159,8 +159,8 @@ process_servers()
               # IF MONITORING IS FALSE AND SERVER DOESN'T RESPOND TO PING, CONTINUE TO NEXT SERVER
               #-------------------------------------------------------------------------------------
               sadm_writelog "Let's try to ping the server $fqdn_server"
-              ping -w3 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
-              #ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
+              #ping -w3 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
+              ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"

@@ -55,6 +55,7 @@ rpt_dir            = os.path.join(dat_dir,'rpt')                        # SADM S
 # SADM Web Site Directories Structure
 www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
 www_dat_dir        = os.path.join(www_dir,'dat')                        # SADM Web Site Data Dir
+www_cfg_dir        = os.path.join(www_dir,'cfg')                        # SADM Web Site CFG Dir
 www_html_dir       = os.path.join(www_dir,'html')                       # SADM Web Site html Dir
 www_lib_dir        = os.path.join(www_dir,'lib')                        # SADM Web Site Lib Dir
 www_net_dir        = www_dat_dir + '/' + hostname + '/net'              # SADM Web Data Network Dir
@@ -71,6 +72,8 @@ log_file           = log_dir + '/' + hostname + '_' + inst + '.log'     # Log Fi
 rch_file           = rch_dir + '/' + hostname + '_' + inst + '.rch'     # RCH Filename
 cfg_file           = cfg_dir + '/sadmin.cfg'                            # Configuration Filename
 cfg_hidden         = cfg_dir + '/.sadmin.cfg'                           # Hidden Config Filename
+crontab_work       = www_cfg_dir + '/.crontab.txt'                      # Work crontab
+crontab_file       = '/etc/cron.d/sadmin'                               # Final crontab
 rel_file           = cfg_dir + '/.release'                              # SADMIN Release Version No.
 pid_file           = "%s/%s.pid" % (tmp_dir, inst)                      # Process ID File
 tmp_file_prefix    = tmp_dir + '/' + hostname + '_' + inst              # TMP Prefix

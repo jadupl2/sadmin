@@ -346,7 +346,7 @@ function display_data() {
 #                                      PROGRAM START HERE
 #===================================================================================================
 #
-    display_heading("SADM SysMon Alert");                               # Display Page Heading
+    display_heading("Server(s) Alert(s)");                               # Display Page Heading
     display_degug_info();                                               # Debug Information
     load_sysmon_array();                                                # Load RPT and RCH File
     display_data();                                                     # Display SysMOn Array

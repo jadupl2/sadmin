@@ -71,21 +71,21 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         $wstr=str_repeat('N',12);
         foreach ($wmonth as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
         $sql = $sql . "srv_update_month = '"  . $wstr  ."', ";
-        $pmonth = $wstr;                                                # Save for crontab
+        $pmonth = trim($wstr);                                                # Save for crontab
         
         $wdom=$_POST['scr_update_dom'];
     	if (empty($wdom)) { for ($i = 0; $i < 31; $i = $i + 1) { $wdom[$i] = $i; } }
         $wstr=str_repeat('N',31);
         foreach ($wdom as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
         $sql = $sql . "srv_update_dom = '"    . $wstr  ."', ";
-        $pdom = $wstr ;                                                 # Save for crontab
+        $pdom = trim($wstr) ;                                                 # Save for crontab
 
         $wdow=$_POST['scr_update_dow'];
     	if (empty($wdow)) { for ($i = 0; $i < 7; $i = $i + 1) { $wdow[$i] = $i; } }
         $wstr=str_repeat('N',7);
         foreach ($wdow as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
         $sql = $sql . "srv_update_dow = '"  . $wstr  ."', ";
-        $pdow = $wstr ;                                                 # Save for crontab
+        $pdow = trim($wstr) ;                                                 # Save for crontab
 
         $sql = $sql . "srv_update_hour = '"   . sadm_clean_data($_POST['scr_update_hour'])   ."', ";
         $sql = $sql . "srv_update_minute = '" . sadm_clean_data($_POST['scr_update_minute']) ."', ";
@@ -111,12 +111,16 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         pg_free_result($row);
 
         # Go Update the SADMIN crontab 
-        if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
-        update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],$MODE,$pmonth,$pdom,$pdow, 
-                $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
-
+        if ($_POST['scr_ostype'] == "linux") {
+            if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
+            update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],$MODE,$pmonth,$pdom,$pdow, 
+                    $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
+        }
         # Back to server List Page
-        ?> <script> location.replace("/crud/sadm_server_main.php"); </script><?php
+        #header("Location: {$_SERVER['HTTP_REFERER']}");
+		#?> <script> location.replace("/crud/sadm_server_main.php"); </script><?php
+		#?> <script> location.replace($_SERVER['HTTP_REFERER']); </script><?php
+		?> <script> goBack() ; </script><?php
         exit;
     }
 

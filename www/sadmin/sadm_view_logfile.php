@@ -107,7 +107,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
 // If the LOG Directory does not exist then abort after adivising user
     $WDIR = SADM_WWW_DAT_DIR . "/" . $HOSTNAME . "/log";
     if (! is_dir($WDIR))  {
-        echo "<br>The Web LOG Directory " . $WDIR . " does not exist.\n";
+        echo "<br>The LOG Directory " . $WDIR . " does not exist.\n";
         echo "<br>Correct the situation and retry request\n";
          echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
         exit ;
@@ -118,7 +118,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     $LOGFILE = $WDIR . "/" . $LOG_FILENAME ;
     if ($DEBUG)  { echo "<br>Name of the LOG file is $LOGFILE"; }
     if (! file_exists($LOGFILE))  {
-        echo "<br>The Web LOG file " . $LOGFILE . " does not exist.\n";
+        echo "<br>The LOG file " . $LOGFILE . " does not exist.\n";
         echo "<br>Correct the situation and retry request\n";
          echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
         exit ;

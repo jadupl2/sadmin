@@ -69,8 +69,8 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         pg_free_result($row);
 
         # Go Delete entry from SADMIN crontab 
-        update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],"D");
-        
+        update_crontab(SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],"D");
+   
         # Back to the List Page
         ?> <script>location.replace("/crud/sadm_server_main.php");</script><?php
         exit;

@@ -53,19 +53,19 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     	if (empty($wmonth)) { for ($i = 0; $i < 12; $i = $i + 1) { $wmonth[$i] = $i; } }
         $wstr=str_repeat('N',12);
         foreach ($wmonth as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
-        $pmonth=$wstr;
+        $pmonth=trim($wstr);
 
         $wdom=$_POST['scr_update_dom'];
     	if (empty($wdom)) { for ($i = 0; $i < 31; $i = $i + 1) { $wdom[$i] = $i; } }
         $wstr=str_repeat('N',31);
         foreach ($wdom as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
-        $pdom=$wstr;
+        $pdom=trim($wstr);
 
         $wdow=$_POST['scr_update_dow'];
     	if (empty($wdow)) { for ($i = 0; $i < 7; $i = $i + 1) { $wdow[$i] = $i; } }
         $wstr=str_repeat('N',7);
         foreach ($wdow as $p) { $wstr=substr_replace($wstr,'Y',intval($p),1); }
-        $pdow=$wstr;
+        $pdow=trim($wstr);
         
         # Construct SQL to Insert row
         $sql = "INSERT INTO sadm.server ";
@@ -112,8 +112,10 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             sadm_alert ($err_msg) ;
         }else{
             # Go Update the SADMIN crontab 
-            update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],'C',$pmonth,
-                $pdom,$pdow,$_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
+            if ($_POST['scr_ostype'] == "linux") {
+                update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],'C',$pmonth,
+                    $pdom,$pdow,$_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
+            }
             sadm_alert ("Server '" . $_POST['scr_name'] . "' inserted.");
         }
 

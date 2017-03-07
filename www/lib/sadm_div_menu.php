@@ -34,6 +34,8 @@ echo "\n";
 echo "\n   <li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'>Servers</a>";
 echo "\n     <ul>";
 echo "\n       <li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'>List Servers</a></li>";
+echo "\n       <li><a href='/sadmin/sadm_view_schedule.php'>View O/S Update</a></li>";
+echo "\n       <li><a href='/sadmin/sadm_view_sysmon.php'>View Servers Alerts</a></li>";
 echo "\n       <li><a href='/crud/sadm_server_main.php'>Edit Server Data</a></li>";
 echo "\n     </ul>"; 
 echo "\n   </li>";

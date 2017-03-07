@@ -30,6 +30,9 @@
 #       Log will now be cumulative (Not clear every time the script in run)
 # Version 2.8 - Feb 2017 - Jacques Duplessis
 #       Database Columns were changed
+# Version 2.9 - Mar 2017 - Jacques Duplessis
+#       Add Logic for command line switch [-s servername] to update only one server
+#       Command line swtich [-h]  for help also added
 # --------------------------------------------------------------------------------------------------
 #
 #
@@ -50,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.8'                             ; export SADM_VER            # Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -79,9 +82,24 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 ERROR_COUNT=0                               ; export ERROR_COUNT        # Nb. of update failed
 WARNING_COUNT=0                             ; export WARNING_COUNT      # Nb. of warning failed
 STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equals sign line
+ONE_SERVER=""                               ; export ONE_SERVER         # Name If One server to Upd.
 
 # Script That is run on every client to update the Operating System
 USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
+
+
+#===================================================================================================
+#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
+#===================================================================================================
+help()
+{
+    echo " "
+    echo "sadm_osupdate_server.sh usage :"
+    echo "             -s [ServerName]"
+    echo "             -h help"
+    echo " "
+}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -128,10 +146,13 @@ process_linux_servers()
 
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, srv_update_reboot, "
     SQL2=" srv_sporadic, srv_active from sadm.server "
-    SQL3="where srv_ostype = 'linux' and srv_active = True "
-    SQL4="order by srv_name; "
+    if [ "$ONE_SERVER" != "" ] 
+        then SQL3="where srv_ostype = 'linux' and srv_active = True and srv_name = '$ONE_SERVER' " 
+             SQL4=" ;"
+        else SQL3="where srv_ostype = 'linux' and srv_active = True "
+             SQL4="order by srv_name; "
+    fi
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
-    #$PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
     if [ $DEBUG_LEVEL -gt 5 ] 
        then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
     fi
@@ -231,6 +252,23 @@ process_linux_servers()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+
+    ONE_SERVER=""                                                       # Set Switch Default Value
+    while getopts "hs:" opt ; do                                        # Loop to process Switch
+        case $opt in
+            s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
+               ;;
+            h) help                                                     # Display Help Usage
+               sadm_stop 0                                              # Close the shop
+               exit 0                                                   # Back to shell 
+               ;;
+           \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
+               help                                                     # Display Help Usage
+               sadm_stop 1                                              # Upd. RCH File & Trim Log 
+               exit 1                                                   # Exit With Global Err (0/1)
+               ;;
+        esac                                                            # End of case
+        done             
 
     process_linux_servers                                               # Go Update Linux Servers
     SADM_EXIT_CODE=$?                                                   # Save Exit Code

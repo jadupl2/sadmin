@@ -53,16 +53,6 @@ function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY",
                          $pdom = "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY", $pdow = "NNNNNNY", 
                          $phour = "01", $pmin ="05") 
 {
-    if ($DEBUG) { 
-        echo "\n<br>pname   = " . $pscript ;
-        echo "\n<br>paction = " . $paction ;
-        echo "\n<br>pmonth  = " . $pmonth ;
-        echo "\n<br>pdom    = " . $pdom ;
-        echo "\n<br>pdow    = " . $pdow ;
-        echo "\n<br>phour   = " . $phour ;
-        echo "\n<br>pmin    = " . $pmin ;
-    }
-
     # Begin constructing our crontab line ($cline) based on parameters received
     $cline = sprintf ("%02d %02d ",$pmin,$phour);                       # Hour & Min. of Execution
 
@@ -129,8 +119,6 @@ function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY",
     # Write Crontab File Header
     $wline = "# Please don't edit manually, SADMIN generated file ". date("Y-m-d H:i:s") ."\n"; 
     fwrite($newtab,$wline);                                             # Write SADM Cron Header
-    $wline = "SADMIN=" . SADM_CFG_DIR . "\n" ;                          # SADMIN Base Dir. Location
-    fwrite($newtab,$wline);                                             # Write SADM Cron Header
     fwrite($newtab,"# \n");                                             # Write Comment Line
 
     # Open existing crontab File - If don't exist create empty one
@@ -148,29 +136,16 @@ function update_crontab ($pscript, $paction = "U", $pmonth = "YYYYYYYYYYYY",
         if ($DEBUG) { echo "\n<br>Before Processing Ligne #{$line_num} : " . $line ; }        
         if (strpos(trim($line), '#') === 0) continue;                   # Next line if comment
         $line = trim($line);                                            # Trim Crontab Line
-        $wpos = strpos($line,' root ');                                 # Get Pos. of root on line
-        $wscr = substr($line,$wpos+6);                                  # Get Script name & param.
-        if ($DEBUG) { echo "\n<br>Script script id is : " . $wscr ; }   # Debug Show Script & Param
-        $wret = strpos($line,$wscr);                                    # Is Line to be Upd or Del ?
-        if ($wret == false) {                                           # Line isn't target script
-              fwrite($newtab,$wline);                                   # Write line untouched
-        }else{                                                          # If line is our target line
-              if ($paction == "U") {                                    # If Update insert new Line
-                 fwrite($newtab,$cline);                                # Write line to new crontab
-                 $UPD_DONE=True;                                        # Line was found
-              }
-              if ($paction == "D") { continue ; }                       # If Delete forget this line
-        }   
+        $wpos = strpos($line,$pscript);                                 # Get Pos. of script on line
+        if ($wpos == false) {                                           # If Script is not on line
+            fwrite($newtab,${line}."\n");                               # Write line to new crontab
+        }else{                                                          # If script to Upd or Del
+            continue;                                                   # Line Match then skip it
+        }    
     }
     if ($paction == 'C') { fwrite($newtab,$cline); }                    # Add new line to crontab 
-    if (($paction == "U") && (!$UPD_DONE)) {                            # Update but No line found
-        fwrite($newtab,$cline);                                         # Add new line to crontab 
-    }   
+    if ($paction == "U") { fwrite($newtab,$cline); }                    # Add Update line to crontab 
     fclose($newtab);                                                    # Close sadm new crontab
-    #$CMD="sudo cp " . SADM_WWW_TMP_FILE1 . " " . SADM_CRON_FILE . "\n"; 
-    #if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
-    #$a = exec ( $CMD , $FILE_LIST, $RCODE);
-    #if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
     if (! copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)) {                    # Copy new over existing 
         sadm_fatal_error ("Error copying " . SADM_WWW_TMP_FILE1 . " to " . SADM_CRON_FILE . " ");
     }

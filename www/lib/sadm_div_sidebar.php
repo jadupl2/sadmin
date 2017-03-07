@@ -145,6 +145,23 @@ echo "\n<div id='sadmSideBar'>\n";
         echo "$TOTAL_SUCCESS Success Script(s)</a></li>\n";
     }
     echo "</ul>\n";
+	
+	
+	
+		
+	
+	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
+    echo "<br>\n";                                                      # Insert White Line
+    echo "<p><strong>Server Status</strong></p>\n";                    # Display Section Title
+    echo "<ul>\n";
+    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_schedule.php'>";
+    echo "O/S Update Schedule";
+	echo "</a></li>\n";
+    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_sysmon.php'>";
+    echo "Server(s) Alert(s)";
+	echo "</a></li>\n";
+	echo "</ul>\n";
+	
 
 echo "\n</div>                             <!-- End of Div sadmSideBar -->\n";  
 echo "\n<!-- ================================================================================= -->";

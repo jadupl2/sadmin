@@ -223,8 +223,16 @@ function display_data($count, $row) {
     # Display Icon to View Server Configuration
     echo "<td class='dt-center'>";
     echo "<a href='/dat/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html' " ;
-    echo " title='View " . ucwords($row['srv_name']) . " Configuration'>";
-    echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'></a></td>\n";
+    $html_name = "dat/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html" ;
+    if (file_exists($html_name)) {
+        echo " title='View " . ucwords($row['srv_name']) . " Configuration'>";
+        echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'>";
+    }else{
+        #echo " title='No Report on disk for " . ucwords($row['srv_name']) . "'>";
+        echo " title='No Report on disk for " . $html_name . "'>";
+        echo "<img src='/images/noreport.jpg' style='width:32px;height:32px;'>";
+    }
+    echo "</a></td>\n";
 
     # Display Icon to Edit Server Static information
     echo "<td class='dt-center'>";

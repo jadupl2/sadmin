@@ -60,18 +60,15 @@ function display_heading($line_title) {
     echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='text-center'>Group</th>\n";
     echo "<th>Description</th>\n";
-    #echo "<th class='text-center'>Version</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Start Month</th>\n";
-    echo "<th class='text-center'>Update Day</th>\n";
-    echo "<th class='text-center'>Interval</th>\n";
-    echo "<th class='text-center'>Week</th>\n";
-    echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Last Status</th>\n";
+    echo "<th class='text-center'>Upd. Month</th>\n";
+    echo "<th class='text-center'>Upd. Date</th>\n";
+    echo "<th class='text-center'>Upd. Day</th>\n";
+    echo "<th class='text-center'>Upd. Time</th>\n";
+    echo "<th class='text-center'>Last Upd.</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
     echo "<th class='text-center'>Update</th>\n";
     echo "</tr>\n"; 
@@ -83,18 +80,15 @@ function display_heading($line_title) {
     echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
-    echo "<th class='text-center'>Group</th>\n";
     echo "<th>Description</th>\n";
-    #echo "<th class='text-center'>Version</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Start Month</th>\n";
-    echo "<th class='text-center'>Update Day</th>\n";
-    echo "<th class='text-center'>Interval</th>\n";
-    echo "<th class='text-center'>Week to Update</th>\n";
-    echo "<th class='text-center'>Next Update</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Last Status</th>\n";
+    echo "<th class='text-center'>Upd. Month</th>\n";
+    echo "<th class='text-center'>Upd. Date</th>\n";
+    echo "<th class='text-center'>Upd. Day</th>\n";
+    echo "<th class='text-center'>Upd. Time</th>\n";
+    echo "<th class='text-center'>Last Upd.</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
     echo "<th class='text-center'>Update</th>\n";
     echo "</tr>\n"; 
@@ -187,9 +181,6 @@ function display_data($count, $row) {
                 break;
     }
 
-    # Group of Server
-    echo "<td>" . nl2br( $row['srv_group'])  . "</td>\n";
-
     # Description of Server
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
@@ -197,51 +188,97 @@ function display_data($count, $row) {
     #echo "<td class='dt-center'>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
 
     # Automatic Update (Yes/No)
-    if ($row['srv_osupdate']   == 't' ) { 
+    if ($row['srv_update_auto']   == 't' ) { 
         echo "<td class='dt-center'>Yes</td>\n"; 
     }else{ 
-        echo "<td class='dt-center'>No</td>\n";
+        echo "<td class='dt-center'><B>No</b></td>\n";
     }
 
     # Reboot after Update (Yes/No)
-    if ($row['srv_osupdate_reboot']   == 't' ) { 
+    if ($row['srv_update_reboot']   == 't' ) { 
         echo "<td class='dt-center'>Yes</td>\n"; 
     }else{ 
         echo "<td class='dt-center'>No</td>\n";
     }
 
-    # Start Date of O/S Shedule
-    echo "<td class='dt-center'>" . nl2br( $row['srv_osupdate_start_date']) . "</td>\n";  
+    # Month that Update can occur
+    echo "<td class='dt-center'>";
+    if ($row['srv_update_auto']   == 't' ) { 
+        $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
+        if (trim($row['srv_update_month']) == "YYYYYYYYYYYY") {
+            echo "Any Month" ;
+        }else{
+            for ($i = 0; $i < 12; $i = $i + 1) {
+                if (substr($row['srv_update_month'],$i,1) == "Y") { echo $months[$i] . ","; }
+            }
+        }
+    }else{
+        echo "N/A";
+    }    
+    echo "</td>\n";  
     
-    # Update Day in the Week
-    if ($row['srv_osupdate_day'] == '0' ) { echo "<td class='dt-center'>Sunday</td>\n";    }
-    if ($row['srv_osupdate_day'] == '1' ) { echo "<td class='dt-center'>Monday</td>\n";    }
-    if ($row['srv_osupdate_day'] == '2' ) { echo "<td class='dt-center'>Tuesday</td>\n";   }
-    if ($row['srv_osupdate_day'] == '3' ) { echo "<td class='dt-center'>Wednesday</td>\n"; }
-    if ($row['srv_osupdate_day'] == '4' ) { echo "<td class='dt-center'>Thursday</td>\n";  }
-    if ($row['srv_osupdate_day'] == '5' ) { echo "<td class='dt-center'>Friday</td>\n";    }
-    if ($row['srv_osupdate_day'] == '6' ) { echo "<td class='dt-center'>Saturday</td>\n";  }
+    # Date of the month (1-31) that update can occur
+    #echo "<td class='dt-center'>" . $row['srv_update_dom'] . "- ". strlen(trim($row['srv_update_dom'])) .  "</td>\n";  
+    echo "<td class='dt-center'>";
+    if ($row['srv_update_auto']   == 't' ) { 
+        if (trim($row['srv_update_dom']) == "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY") {
+            echo "Any Date" ;
+        }else{
+            for ($i = 0; $i < 31; $i = $i + 1) {
+                if (substr($row['srv_update_dom'],$i,1) == "Y") { echo $i+1 . ","; }
+            }
+        }
+    }else{
+        echo "N/A";
+    }    
+    echo "</td>\n";
+
+    # Day of the week that update can occur
+    echo "<td class='dt-center'>";
+    if ($row['srv_update_auto']   == 't' ) { 
+        $days = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+        if (trim($row['srv_update_dow']) == "YYYYYYY") {
+            echo "Every Day" ;
+        }else{
+            for ($i = 0; $i < 7; $i = $i + 1) {
+                if (substr($row['srv_update_dow'],$i,1) == "Y") { echo $days[$i] . ","; }
+            }
+        }
+    }else{
+        echo "N/A";
+    }    
+    echo "</td>\n";
     
-    # Month Between Update
-    echo "<td class='dt-center'>" . nl2br( $row['srv_osupdate_interval']) . "</td>\n";  
+    # Hour of the Update
+    echo "<td class='dt-center'>";
+    if ($row['srv_update_auto']   == 't' ) { 
+        echo sprintf("%02d",$row['srv_update_hour']) . ":";
+        echo sprintf("%02d",$row['srv_update_minute']) ;
+    }else{
+        echo "N/A";
+    }    
+    echo "</td>\n";  
     
-    # Week within the month to Update
-    echo "<td class='dt-center'> . nl2br( $row['srv_osupdate_week']) . "</td>\n";
-    
-    # Next Update Date
-    echo "<td class='dt-center'>" . nl2br( $row['srv_osupdate_date']) . "</td>\n";  
-        
-    # Last Update Date 
+        # Last Update Date 
     echo "<td class='dt-center'>" . nl2br( $row['srv_last_update']) . "</td>\n";  
         
     # Last Update Status
-    if ($row['srv_osupdate_status'] == 'S' ) { echo "<td class='dt-center'>Success</td>\n";  }
-    if ($row['srv_osupdate_status'] == 'F' ) { echo "<td class='dt-center'>Failed</td>\n";  }
+    echo "<td class='dt-center'>";
+    switch ( strtoupper($row['srv_osupdate_status']) ) {
+        case 'S'  : echo "Success" ; break ;
+        case 'F'  : echo "Failed"  ; break ;
+        default   : echo "Unknown" ; break ;
+    }
+    echo "</td>\n";  
     
     # Display Icon to View Last O/S Update Log
     echo "<td class='dt-center'>";
-    echo "<a href='/dat/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log>" ;
-    echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'></a></td>\n";
+    echo "<a href='/sadmin/sadm_view_logfile.php?host=".  $row['srv_name'];
+    echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
+    echo "data-toggle='tooltip' title='View Update Log'>";
+    echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'></a>";
+    echo "</td>\n";  
+
     
     # Display Icon to Edit Server Static information
     echo "<td class='dt-center'>";
@@ -285,42 +322,12 @@ function display_data($count, $row) {
         case 'all_servers'  : 
             $query = 'SELECT * FROM sadm.server order by srv_name;';
             $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of all Servers";
+            $TITLE = "O/S Update Schedule";
             break;
         case 'host'         : 
             $query = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
             $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "Info about " . ucwords($VALUE) . " Server";
-            break;
-        case 'os'           : 
-            $query = "SELECT * FROM sadm.server where srv_osname = '". $VALUE . "' order by srv_name;";
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of " . ucwords($VALUE) . " Servers";
-            break;
-        case 'all_active'   : 
-            $query = 'SELECT * FROM sadm.server where srv_active = True order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of Active Servers";
-            break;
-        case 'all_inactive' : 
-            $query = 'SELECT * FROM sadm.server where srv_active = False order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of Inactive Servers";
-            break;
-        case 'all_vm'       : 
-            $query = 'SELECT * FROM sadm.server where srv_vm = True order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of Virtual Servers";
-            break;
-        case 'all_physical' : 
-            $query = 'SELECT * FROM sadm.server where srv_vm = False order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of Physical Servers";
-            break;
-        case 'all_sporadic' : 
-            $query = 'SELECT * FROM sadm.server where srv_sporadic = True order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-            $TITLE = "List of Sporadic Servers";
+            $TITLE = "O/S Update Schedule for server " . ucwords($VALUE) . " Server";
             break;
         default             : 
             echo "<br>The sort order received (" . $SELECTION . ") is invalid<br>";
