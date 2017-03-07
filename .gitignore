@@ -22,6 +22,7 @@ notes/
 www/cgi-bin/
 www/html/
 www/dat/
+www/cfg/
 www/old/
 www/tmp/
 .vscode/
