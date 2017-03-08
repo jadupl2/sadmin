@@ -1,0 +1,10 @@
+root@rhel3:/tmp# rpm -Uvh perl-Class-Singleton-1.4-1.el3.rf.noarch.rpm perl-DateTime-TimeZone-0.8301-1.el3.rf.noarch.rpm  perl-DateTime-Locale-0.45-1.el3.rf.noarch.rpm perl-List-MoreUtils-0.25.2-1.el3.rft.i386.rpm         
+Preparing...                ########################################### [100%]
+   1:perl-Params-Validate   ########################################### [ 17%]
+   2:perl-List-MoreUtils    ########################################### [ 33%]
+   3:perl-DateTime-Locale   ########################################### [ 50%]
+   4:perl-Class-Singleton   ########################################### [ 67%]
+   5:perl-DateTime-TimeZone ########################################### [ 83%]
+   6:perl-DateTime          ########################################### [100%]
+root@rhel3:/tmp# 
+
