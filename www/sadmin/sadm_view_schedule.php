@@ -260,7 +260,7 @@ function display_data($count, $row) {
     echo "</td>\n";  
     
         # Last Update Date 
-    echo "<td class='dt-center'>" . nl2br( $row['srv_last_update']) . "</td>\n";  
+    echo "<td class='dt-center'>" . nl2br( $row['srv_update_date']) . "</td>\n";  
         
     # Last Update Status
     echo "<td class='dt-center'>";
