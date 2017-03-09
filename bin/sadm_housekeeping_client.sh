@@ -215,22 +215,37 @@ file_housekeeping()
     sadm_writelog " " 
     sadm_writelog "CLIENT FILES HOUSEKEEPING STARTING"
     sadm_writelog " "
+    sadm_writelog "${SADM_TEN_DASH}"
+
+
+    # If we are not of the SADMIN Server, remove some server files
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
+       then sadm_writelog "Remove useless files on client"
+            afile="$SADM_CFG_DIR/.crontab.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.pgpass"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.release"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/holmes.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+    fi
+
 
     # Make sure the configuration file is at 644
-    sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Protect SADMIN Configuration file"
-
-    sadm_writelog "chmod 0644 $SADM_CFG_FILE" 
+    sadm_writelog "chmod 0640 $SADM_CFG_FILE" 
     chmod 0644 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
 
-    sadm_writelog "chmod 0644 $SADM_CFG_HIDDEN" 
+    sadm_writelog "chmod 0640 $SADM_CFG_HIDDEN" 
     chmod 0644 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
 
-    sadm_writelog "chmod 0644 $SADM_CFG_DIR/.crontab.txt" 
-    chmod 0644 $SADM_CFG_DIR/.crontab.txt
-    ls -l $SADM_CFG_DIR/.crontab.txt | tee -a $SADM_LOG
+    if [ -f $SADM_CFG_DIR/.crontab.txt ] 
+        then sadm_writelog "chmod 0644 $SADM_CFG_DIR/.crontab.txt" 
+             chmod 0644 $SADM_CFG_DIR/.crontab.txt
+             ls -l $SADM_CFG_DIR/.crontab.txt | tee -a $SADM_LOG
+    fi
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
@@ -280,7 +295,7 @@ file_housekeeping()
              fi
     fi
 
-    # Make sure JAC (Use for Development) Directory 
+    # Make sure JAC (Use for Development) Directory have proper permission
     JACDIR="${SADM_BASE_DIR}/jac" 
     if [ -d "$JACDIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -492,11 +507,11 @@ file_housekeeping()
              exit 1                                                     # Exit To O/S
     fi
 
-    # If sadmin group is not created - Let's created it  
+    # Check if 'sadmin' group exist - If not create it.
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
         then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
-             sadm_writelog "The group will now be created"              # Advise user will create
+             sadm_writelog "Creating the ${SADM_GROUP} group"           # Advise user will create
              groupadd ${SADM_GROUP}                                     # Create SADM_GROUP
              if [ $? -ne 0 ]                                            # Error creating Group 
                 then sadm_writelog "Error when creating group ${SADM_GROUP}"
@@ -505,7 +520,7 @@ file_housekeeping()
              fi
     fi
     
-    # If sadmin user is not created - Let's created it and put user is sadmin group
+    # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
         then sadm_writelog "User $SADM_USER not present"                # Advise user will create
