@@ -157,10 +157,26 @@ function display_script_array($PAGE_TYPE, $script_array)
             # Display Links to Access History File (RCH) and the Log file 
             list($fname,$fext) = explode ('.',$cfile);                  # Isolate Script Name
             $LOGFILE = $fname . ".log";                                 # Add .log to Script Name
-            echo "<td><a href='/sadmin/sadm_view_rchfile.php?host=". $cserver ."&filename=". $cfile . 
-             "' data-toggle='tooltip' title='View Script Result History File'>View History</a></td>\n" ;
-            echo "<td><a href='/sadmin/sadm_view_logfile.php?host=". $cserver . "&filename=" . 
-             $LOGFILE .  "' data-toggle='tooltip' title='View Script Log File'>View Log</a></td>\n";
+
+            echo "<td class='dt-center'>" ;
+            $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . trim($cfile) ;
+            if (file_exists($rch_name)) {
+                echo "<a href='/sadmin/sadm_view_rchfile.php?host=". $cserver ."&filename=". $cfile . 
+                    "' data-toggle='tooltip' title='View Result Code History File'>View History</a>";
+            }else{
+                echo "N/A";    
+            }
+            echo "</td>\n" ;
+
+            echo "<td class='dt-center'>" ;
+            $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($LOGFILE) ;
+            if (file_exists($log_name)) {
+                echo "<a href='/sadmin/sadm_view_logfile.php?host=". $cserver . "&filename=" . 
+                 $LOGFILE .  "' data-toggle='tooltip' title='View Script Log File'>View Log</a>";
+            }else{
+                echo "N/A";    
+            }
+            echo "</td>\n" ;
             echo "</tr>\n";
         }
     }    

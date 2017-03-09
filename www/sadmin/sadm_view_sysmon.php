@@ -156,13 +156,13 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th class='text-center'>No</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th>O/S</th>\n";
+    echo "<th>Server</th>\n";
+    echo "<th>Description</th>\n";
     echo "<th class='text-center'>Module</th>\n";
     echo "<th>Description</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th>Server</th>\n";
-    echo "<th class='text-center'> </th>\n";
-    echo "<th>Server Description</th>\n";
     echo "<th class='text-center'>Cat.</th>\n";
     #echo "<th class='text-center'>SubModule</th>\n";
     echo "<th class='text-center'>Alert Grp</th>\n";
@@ -175,13 +175,13 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th class='text-center'>No</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th>O/S</th>\n";
+    echo "<th>Server</th>\n";
+    echo "<th>Description</th>\n";
     echo "<th class='text-center'>Module</th>\n";
     echo "<th>Description</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th>Server</th>\n";
-    echo "<th class='text-center'> </th>\n";
-    echo "<th>Server Description</th>\n";
     echo "<th class='text-center'>Cat.</th>\n";
     #echo "<th class='text-center'>SubModule</th>\n";
     echo "<th class='text-center'>Alert Grp</th>\n";
@@ -209,127 +209,124 @@ function display_data() {
         list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$wpage,$wmail)=explode(";",$line);
         
         # DISPLAY STATUS
+        echo "<tr>\n";  
+        echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+        echo "<td class='dt-center'>";
         switch (strtoupper($wstatus)) {
             case 'SUCCESS' :
-                echo "<tr>\n";  
-                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
-                echo "<td class='dt-center'>";
+                echo "<span data-toggle='tooltip' title='Success '>";
                 echo "<img src='/images/success.png' ";
-                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'ERROR' :
-                echo "<tr>\n";  
-                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
-                echo "<td class='dt-center'>";
-                #echo "<td class='bg-danger text-white'>";
-                #echo "<td class='text-danger'>";
+                echo "<span data-toggle='tooltip' title='Error Reported'>";
                 echo "<img src='/images/error.png' ";
-                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'WARNING' :
-                echo "<tr>\n";  
-                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
-                echo "<td class='dt-center'>";
+                echo "<span data-toggle='tooltip' title='Warning Reported'>";
                 echo "<img src='/images/warning.png' ";
-                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             case 'RUNNING' :
-                echo "<tr>\n";  
-                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
-                echo "<td class='dt-center'>";
+                echo "<span data-toggle='tooltip' title='Running Process'>";
                 echo "<img src='/images/running.png' ";
-                echo "style='width:32px;height:32px;'></td>\n";
                 break;
             default:
-                echo "<tr>\n";  
-                echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
-                echo "<td class='dt-center'>";
+                echo "<span data-toggle='tooltip' title='Unknown Status'>";
                 echo "<img src='/images/question_mark.png' ";
-                echo "style='width:32px;height:32px;'></td>\n";
                 break;
         }
-        echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";  
-        echo "<td>" . $wdesc                                 . "</td>\n";  
-        echo "<td class='dt-center'>" . $wdate               . "</td>\n";  
-        echo "<td class='dt-center'>" . $wtime               . "</td>\n";  
-        echo "<td><a href=/sadmin/sadm_view_server_info.php?host=" . nl2br($whost) .  ">" ;
-        echo nl2br($whost) . "</a></td>\n";
-
+        echo "style='width:24px;height:24px;'></span></td>\n";
+ 
         # READ INFO ABOUT THE SERVER IN THE DATABASE
         $query = "SELECT * FROM sadm.server where srv_name = '". $whost . "';";
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;
-        $WDESC = sadm_clean_data($row['srv_desc']);
-        $WCAT  = sadm_clean_data($row['srv_cat']);
-
-        $WOS   = sadm_clean_data($row['srv_osname']);
-   
-        # Display Operating System Logo
+        $WDESC = $row['srv_desc'];      
         $WOS   = $row['srv_osname'];
+        $WVER  = $row['srv_osversion'];
+
+        # Server Name
+        echo "<td>";
+        echo "<a href='/sadmin/sadm_view_server_info.php?host=" . nl2br($whost) ;
+        echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
+        echo nl2br($whost) . "</a></td>\n";
+
+
+        # Display Operating System Logo
         switch (strtoupper($WOS)) {
             case 'REDHAT' :
                 echo "<td class='dt-center'>";
                 echo "<a href='http://www.redhat.com' ";
                 echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
                 echo "<img src='/images/redhat.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'FEDORA' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://getfedora.org' ";
                 echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
                 echo "<img src='/images/fedora.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'CENTOS' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.centos.org' ";
                 echo "title='Server $whost is a CentOS server - Visit centos.org'>";
                 echo "<img src='/images/centos.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'UBUNTU' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.ubuntu.com/' ";
                 echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
                 echo "<img src='/images/ubuntu.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'DEBIAN' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.debian.org/' ";
                 echo "title='Server $whost is a Debian server - Visit debian.org'>";
                 echo "<img src='/images/debian.png' ";
-                echo "style='width:32px;height:32px;'></a<</td>\n";
+                #echo "style='width:24px;height:24px;'></a<</td>\n";
+                echo "style='width:24px;height:24px;'></a<</td>\n";
                 break;
             case 'RASPBIAN' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.raspbian.org/' ";
                 echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
                 echo "<img src='/images/raspbian.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'SUSE' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.opensuse.org/' ";
                 echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
                 echo "<img src='/images/suse.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'AIX' :
                 echo "<td class='dt-center'>";
                 echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
                 echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
                 echo "<img src='/images/aix.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             default:
                 echo "<td class='dt-center'>";
                 echo "<img src='/images/os_unknown.jpg' ";
-                echo "style='width:32px;height:32px;'></td>\n";
+                echo "style='width:24px;height:24px;'></td>\n";
                 break;
         }
         echo "<td>" . $WDESC                                 . "</td>\n";  
+        echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";  
+
+
+        echo "<td>" . $wdesc                                 . "</td>\n";  
+        echo "<td class='dt-center'>" . $wdate               . "</td>\n";  
+        echo "<td class='dt-center'>" . $wtime               . "</td>\n";  
+ 
+        $WCAT  = sadm_clean_data($row['srv_cat']);
+
+        $WOS   = sadm_clean_data($row['srv_osname']);
         echo "<td class='dt-center'>" . $WCAT                . "</td>\n";  
         #echo "<td class='dt-center'>" . strtoupper($wsubmod) . "</td>\n";  
         echo "<td class='dt-center'>" . $wpage               . "</td>\n";  

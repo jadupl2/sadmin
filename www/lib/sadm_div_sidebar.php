@@ -146,19 +146,17 @@ echo "\n<div id='sadmSideBar'>\n";
     }
     echo "</ul>\n";
 	
+
 	
-	
-		
-	
-	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
+	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "<br>\n";                                                      # Insert White Line
     echo "<p><strong>Server Status</strong></p>\n";                    # Display Section Title
     echo "<ul>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_schedule.php'>";
-    echo "O/S Update Schedule";
+    echo "Update O/S Schedule";
 	echo "</a></li>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_sysmon.php'>";
-    echo "Server(s) Alert(s)";
+    echo "Monitoring Alert(s)";
 	echo "</a></li>\n";
 	echo "</ul>\n";
 	

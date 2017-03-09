@@ -120,61 +120,61 @@ function display_data($count, $row) {
                 echo "<a href='http://www.redhat.com' ";
                 echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
                 echo "<img src='/images/redhat.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'FEDORA' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://getfedora.org' ";
                 echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
                 echo "<img src='/images/fedora.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'CENTOS' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.centos.org' ";
                 echo "title='Server $whost is a CentOS server - Visit centos.org'>";
                 echo "<img src='/images/centos.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'UBUNTU' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.ubuntu.com/' ";
                 echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
                 echo "<img src='/images/ubuntu.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'DEBIAN' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.debian.org/' ";
                 echo "title='Server $whost is a Debian server - Visit debian.org'>";
                 echo "<img src='/images/debian.png' ";
-                echo "style='width:32px;height:32px;'></a<</td>\n";
+                echo "style='width:24px;height:24px;'></a<</td>\n";
                 break;
             case 'RASPBIAN' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.raspbian.org/' ";
                 echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
                 echo "<img src='/images/raspbian.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'SUSE' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.opensuse.org/' ";
                 echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
                 echo "<img src='/images/suse.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             case 'AIX' :
                 echo "<td class='dt-center'>";
                 echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
                 echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
                 echo "<img src='/images/aix.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
+                echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
             default:
                 echo "<td class='dt-center'>";
                 echo "<img src='/images/os_unknown.jpg' ";
-                echo "style='width:32px;height:32px;'></td>\n";
+                echo "style='width:24px;height:24px;'></td>\n";
                 break;
     }
 
@@ -222,15 +222,15 @@ function display_data($count, $row) {
     
     # Display Icon to View Server Configuration
     echo "<td class='dt-center'>";
-    echo "<a href='/dat/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html' " ;
-    $html_name = "dat/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html" ;
+    echo "<a href='/dat/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html' ";
+    $html_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/dr/" . $row['srv_name'] . ".html";
     if (file_exists($html_name)) {
         echo " title='View " . ucwords($row['srv_name']) . " Configuration'>";
-        echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'>";
+        echo "<img src='/images/cfg2html.png' style='width:24px;height:24px;'>";
     }else{
         #echo " title='No Report on disk for " . ucwords($row['srv_name']) . "'>";
         echo " title='No Report on disk for " . $html_name . "'>";
-        echo "<img src='/images/noreport.jpg' style='width:32px;height:32px;'>";
+        echo "<img src='/images/noreport.jpg' style='width:24px;height:24px;'>";
     }
     echo "</a></td>\n";
 
@@ -238,7 +238,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     echo "<a href='/crud/sadm_server_update.php?sel=" . $row['srv_name'] . "'";
     echo " title='Edit " . ucwords($row['srv_name']) . " Static Information'>";
-    echo "<img src='/images/update.png'   style='width:32px;height:32px;'></a></td>\n";
+    echo "<img src='/images/update.png'   style='width:24px;height:24px;'></a></td>\n";
 
     echo "</tr>\n"; 
 }

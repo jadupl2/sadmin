@@ -48,10 +48,10 @@ function display_heading($line_title) {
     echo "<center>\n";                                                  # Table Centered on Page
   
     # Set Font Size for Table Cell and Table Heading
-    echo "<style>\n";
-    echo "td { font-size: 12px; }\n";
-    echo "th { font-size: 13px; }\n";
-    echo "</style>\n";
+    #echo "<style>\n";
+    ##echo "td { font-size: 13px; }\n";
+    #echo "th { font-size: 14px; }\n";
+    #echo "</style>\n";
     echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
 
     # Table Heading
@@ -59,14 +59,13 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='text-center'>O/S</th>\n";
     echo "<th>Description</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Upd. Month</th>\n";
-    echo "<th class='text-center'>Upd. Date</th>\n";
-    echo "<th class='text-center'>Upd. Day</th>\n";
-    echo "<th class='text-center'>Upd. Time</th>\n";
+    echo "<th class='text-center'>Month</th>\n";
+    echo "<th class='text-center'>Date</th>\n";
+    echo "<th class='text-center'>Day</th>\n";
+    echo "<th class='text-center'>Time</th>\n";
     echo "<th class='text-center'>Last Upd.</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
@@ -79,14 +78,13 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
-    echo "<th class='text-center'>O/S</th>\n";
     echo "<th>Description</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Upd. Month</th>\n";
-    echo "<th class='text-center'>Upd. Date</th>\n";
-    echo "<th class='text-center'>Upd. Day</th>\n";
-    echo "<th class='text-center'>Upd. Time</th>\n";
+    echo "<th class='text-center'>Month</th>\n";
+    echo "<th class='text-center'>Date</th>\n";
+    echo "<th class='text-center'>Day</th>\n";
+    echo "<th class='text-center'>Time</th>\n";
     echo "<th class='text-center'>Last Upd.</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
@@ -109,77 +107,12 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>" . $count . "</td>\n";  
 
     # Server Name
+    $WOS  = $row['srv_osname'];
+    $WVER = $row['srv_osversion'];
     echo "<td>";
     echo "<a href='/sadmin/sadm_view_server_info.php?host=" . nl2br($row['srv_name']) ;
-    echo "' title='Server ip address is " . $row['srv_ip'] ."'>" ;
+    echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] ." - Click for more info'>" ;
     echo $row['srv_name']  . "</a></td>\n";
-
-    
-    # Display Operating System Logo
-    $WOS   = $row['srv_osname'];
-    switch (strtoupper($WOS)) {
-            case 'REDHAT' :
-                echo "<td class='dt-center'>";
-                echo "<a href='http://www.redhat.com' ";
-                echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
-                echo "<img src='/images/redhat.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'FEDORA' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://getfedora.org' ";
-                echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
-                echo "<img src='/images/fedora.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'CENTOS' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://www.centos.org' ";
-                echo "title='Server $whost is a CentOS server - Visit centos.org'>";
-                echo "<img src='/images/centos.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'UBUNTU' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://www.ubuntu.com/' ";
-                echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
-                echo "<img src='/images/ubuntu.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'DEBIAN' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://www.debian.org/' ";
-                echo "title='Server $whost is a Debian server - Visit debian.org'>";
-                echo "<img src='/images/debian.png' ";
-                echo "style='width:32px;height:32px;'></a<</td>\n";
-                break;
-            case 'RASPBIAN' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://www.raspbian.org/' ";
-                echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
-                echo "<img src='/images/raspbian.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'SUSE' :
-                echo "<td class='dt-center'>";
-                echo "<a href='https://www.opensuse.org/' ";
-                echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
-                echo "<img src='/images/suse.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            case 'AIX' :
-                echo "<td class='dt-center'>";
-                echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
-                echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
-                echo "<img src='/images/aix.png' ";
-                echo "style='width:32px;height:32px;'></a></td>\n";
-                break;
-            default:
-                echo "<td class='dt-center'>";
-                echo "<img src='/images/os_unknown.jpg' ";
-                echo "style='width:32px;height:32px;'></td>\n";
-                break;
-    }
 
     # Description of Server
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
@@ -264,7 +197,7 @@ function display_data($count, $row) {
         
     # Last Update Status
     echo "<td class='dt-center'>";
-    switch ( strtoupper($row['srv_osupdate_status']) ) {
+    switch ( strtoupper($row['srv_update_status']) ) {
         case 'S'  : echo "Success" ; break ;
         case 'F'  : echo "Failed"  ; break ;
         default   : echo "Unknown" ; break ;
@@ -273,10 +206,15 @@ function display_data($count, $row) {
     
     # Display Icon to View Last O/S Update Log
     echo "<td class='dt-center'>";
-    echo "<a href='/sadmin/sadm_view_logfile.php?host=".  $row['srv_name'];
-    echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
-    echo "data-toggle='tooltip' title='View Update Log'>";
-    echo "<img src='/images/cfg2html.png' style='width:32px;height:32px;'></a>";
+    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
+    if (file_exists($log_name)) {
+        echo "<a href='/sadmin/sadm_view_logfile.php?host=".  $row['srv_name'];
+        echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
+        echo " title='View Update Log'>";
+        echo "<img src='/images/cfg2html.png' style='width:24px;height:24px;'></a>";
+    }else{
+        echo "<img src='/images/noreport.jpg' style='width:24px;height:24px;'>";
+    }
     echo "</td>\n";  
 
     
@@ -284,7 +222,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     echo "<a href='/crud/sadm_server_update.php?sel=" . $row['srv_name'] . "'";
     echo " title='Edit " . ucwords($row['srv_name']) . " Static Information'>";
-    echo "<img src='/images/update.png'   style='width:32px;height:32px;'></a></td>\n";
+    echo "<img src='/images/update.png'   style='width:24px;height:24px;'></a></td>\n";
 
     echo "</tr>\n"; 
 }
