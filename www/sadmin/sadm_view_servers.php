@@ -62,6 +62,7 @@ function display_heading($line_title) {
     echo "<th>Server</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
     echo "<th>Description</th>\n";
+    echo "<th class='text-center'>Cat</th>\n";
     echo "<th class='text-center'>Active</th>\n";
     echo "<th class='text-center'>VM</th>\n";
     echo "<th class='text-center'>Version</th>\n";
@@ -80,6 +81,7 @@ function display_heading($line_title) {
     echo "<th>Server</th>\n";
     echo "<th class='text-center'>O/S</th>\n";
     echo "<th>Description</th>\n";
+    echo "<th class='text-center'>Cat</th>\n";
     echo "<th class='text-center'>Active</th>\n";
     echo "<th class='text-center'>VM</th>\n";
     echo "<th class='text-center'>Version</th>\n";
@@ -180,6 +182,9 @@ function display_data($count, $row) {
 
     # Description of Server
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
+    
+    # Category of Server
+    echo "<td class='dt-center'>" . nl2br( $row['srv_cat'])  . "</td>\n";
     
     # Server Status (Active/Inactive)
     if ($row['srv_active']   == 't' ) { 
