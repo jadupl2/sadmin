@@ -57,38 +57,38 @@ function display_heading($line_title) {
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
-    echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
+    echo "<th class='text-center'>Grp</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last Upd.</th>\n";
+    echo "<th class='text-center'>Last O/S Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
-    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
     # Table Footer
     echo "<tfoot>\n";
     echo "<tr>\n";
-    echo "<th class='text-center'>No</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
+    echo "<th class='text-center'>Grp</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last Upd.</th>\n";
+    echo "<th class='text-center'>Last O/S Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
-    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -104,7 +104,7 @@ function display_heading($line_title) {
 function display_data($count, $row) {
 
     echo "<tr>\n";  
-    echo "<td class='dt-center'>" . $count . "</td>\n";  
+    #echo "<td class='dt-center'>" . $count . "</td>\n";  
 
     # Server Name
     $WOS  = $row['srv_osname'];
@@ -117,6 +117,9 @@ function display_data($count, $row) {
     # Description of Server
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
+    # Groupe de Serveur
+    echo "<td class='dt-center'>" . nl2br( $row['srv_group']) . "</td>\n";  
+
     # Operating System Version
     #echo "<td class='dt-center'>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
 
