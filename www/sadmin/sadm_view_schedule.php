@@ -241,6 +241,8 @@ function display_data($count, $row) {
 * ==================================================================================================
 */
 
+    #$PURL = "http://" . $_SERVER[HTTP_HOST] . $_SERVER[REQUEST_URI];
+    #setcookie("PURL", $PURL);
 
 # The "selection" (1st) parameter contains type of query that need to be done (all_servers,os,...)   
     if (isset($_GET['selection']) && !empty($_GET['selection'])) { 
