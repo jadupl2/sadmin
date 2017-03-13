@@ -104,13 +104,13 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $sql ; }
             #sadm_alert ($err_msg) ;
         }else{
-            sadm_alert ("Server '" . sadm_clean_data($_POST['scr_name']) . "' updated.");
+            sadm_alert ("Server '" .$_POST['scr_name']. "' updated.");
         }
 
-        # frees the memory and data associated with the specified PostgreSQL query result
+        # frees memory and data associated with PostgreSQL query result
         pg_free_result($row);
 
-        # Go Update the SADMIN crontab 
+        # CRONTAB SADMIN UPDATE ON LINUX
         if ($_POST['scr_ostype'] == "linux") {
             if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
             update_crontab (SADM_UPDATE_SCRIPT . " " . $_POST['scr_name'],$MODE,$pmonth,$pdom,$pdow, 
@@ -120,8 +120,15 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         #header("Location: {$_SERVER['HTTP_REFERER']}");
 		#?> <script> location.replace("/crud/sadm_server_main.php"); </script><?php
 		#?> <script> location.replace($_SERVER['HTTP_REFERER']); </script><?php
-		?> <script> goBack() ; </script><?php
-        exit;
+        #header("Location: {$_SERVER['HTTP_REFERER']}");
+		#?> <script> goBack() ; </script><?php
+        #if (isset($_COOKIE['PURL'])) 
+        #{
+        #    #echo "<a href='".$_COOKIE['PURL']."' target='_blank'>GO BACK</a>";
+        #    header("Location: {$_COOKIE['PURL']}");
+        #}
+		?> <script> window.history.go(-1); </script><?php
+        #exit;
     }
 
         
@@ -166,12 +173,14 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";
     
-    # Display Buttons at the bottom of the form
-    echo "<center>";
-    echo "<button type='submit' class='btn btn-sm btn-primary'>Update </button>   ";
-    echo "<a href='/crud/sadm_server_main.php'>";
+    # Display Update Button for Submit Form
+    echo "\n<center>";
+    echo "\n<button type='submit' class='btn btn-sm btn-primary'>Update </button>";
+
+    # Display Cancel Button To return Back to previous page
+    echo "\n<a href='/crud/sadm_server_main.php'>";
     echo "<button type='button' class='btn btn-sm btn-primary'> Cancel</button></a>";
-    echo "</center>";
+    echo "\n</center>";
     
     # End of Form
     echo "</form>"; 

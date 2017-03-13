@@ -272,11 +272,12 @@ function display_left_side ( $wrow , $mode) {
                    $sqlcat = 'SELECT * FROM sadm.category order by cat_code;';
                    $rescat = pg_query($sqlcat) or die('Cat. Query failed: '. pg_last_error());
                    while ($crow = pg_fetch_array($rescat, null, PGSQL_ASSOC)) {
-                     if (($crow['cat_code']) == ($wrow['srv_cat'])) {
-                        echo "\n<option selected>" . sadm_clean_data($crow['cat_code'])."</option>";
+                      if ($crow['cat_default'] == 't') {
+                        echo "\n<option selected>" ;
                      }else{
-                        echo "\n<option>" . sadm_clean_data($crow['cat_code']) . "</option>";
+                        echo "\n<option>";
                      }
+                     echo sadm_clean_data($crow['cat_code']) . "</option>";
                    }
                    echo "\n</select>";
                    pg_free_result($rescat);

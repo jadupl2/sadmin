@@ -35,20 +35,15 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_server_common.php');
 $DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
 
 
-
 # ==================================================================================================
-#                                      PROGRAM START HERE
+#               THIS SECTION IS EXECUTED WHEN THE DELETE BUTTON IS PRESS
 # ==================================================================================================
-
-    
-    # THIS SECTION IS EXECUTED WHEN THE DELETE BUTTON IS PRESS
-    # ----------------------------------------------------------------------------------------------
     
     # Form is submitted - Process the Deletion of the selected row
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_name']); }
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
-        
+
         # Construct SQL to Delete selected row
         $sql = "DELETE FROM sadm.server ";
         $sql = $sql . "WHERE srv_name = '" . sadm_clean_data($_POST['scr_name']) . "'; ";
@@ -108,8 +103,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     }
 
     # Display initial page for Row Deletion 
-    $title = "Delete a Server" ;                                        # Page Heading Title
-    sadm_page_heading ("$title");                                       # Display Page Heading  
+    sadm_page_heading ("Delete a Server");                              # Display Page Heading  
 
     # Start of Form - Display Form Ready to Accept Data
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
