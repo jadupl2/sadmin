@@ -62,6 +62,7 @@ function display_heading($line_title) {
     echo "\n<tr>";
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Default</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
@@ -73,6 +74,7 @@ function display_heading($line_title) {
     echo "\n<tr>";
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Default</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
@@ -92,6 +94,15 @@ function display_data($count, $row) {
     # Display Code, Description and Status
     echo "\n<td class='dt-left'>"  . $row['cat_code'] . "</td>";
     echo "\n<td class='dt-left'>"  . $row['cat_desc'] . "</td>";
+    
+    # Is it the default category ?
+    if ($row['cat_default'] == 't') { 
+        echo "\n<td class='dt-center'><b>Yes</b></td>"; 
+    }else{ 
+        echo "\n<td class='dt-center'>No</td>";
+    }
+
+    # Category Status (Active or Inactive)
     if ($row['cat_status'] == 't') { 
         echo "\n<td class='dt-center'>Active</td>"; 
     }else{ 
@@ -107,11 +118,14 @@ function display_data($count, $row) {
     
     # Delete Button
     echo "\n<td style='text-align: center'>"; 
-    echo "\n<a href=/crud/sadm_category_delete.php?sel=" . $row['cat_code'] .">";
-    echo "\n<button type='button' class='btn btn-info btn-xs'>";
-    echo "\n<span class='glyphicon glyphicon-trash'></span> Delete</button></a>";
-    echo "\n</td>";
-    
+    if ($row['cat_default'] != 't') { 
+        echo "\n<a href=/crud/sadm_category_delete.php?sel=" . $row['cat_code'] .">";
+        echo "\n<button type='button' class='btn btn-info btn-xs'>";
+        echo "\n<span class='glyphicon glyphicon-trash'></span> Delete</button></a>";
+    }else{
+        echo "<img src='/images/nodelete.png' style='width:24px;height:24px;'>\n";
+    }
+    echo "\n</td>";   
     echo "\n</tr>\n"; 
 }
     
@@ -130,12 +144,12 @@ function display_data($count, $row) {
     $result = pg_query($query) or die('Query failed: ' . pg_last_error());
 
 
-# Display Page Heading
+    # Display Page Heading
     $TITLE = "Category Maintenance";
     display_heading("$TITLE");                                          # Display Page Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body  
     
-# Loop Through Retreived Data and Display each Row
+    # Loop Through Retreived Data and Display each Row
     $count=0;                                                           # Reset Line Counter
     while ($row = pg_fetch_array($result, null, PGSQL_ASSOC)) {
         $count+=1;                                                      # Incr Line Counter

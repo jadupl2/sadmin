@@ -40,76 +40,96 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
 //       = "Create"  Will display default values and user can modify all fields, except the row key
-//       = "Update"  Will display row content and user can modify all fields, except the row key
+//       = "Update"  Will display row content    and user can modify all fields, except the row key
 // ================================================================================================
 function display_cat_form ( $wrow , $mode) {
 
     echo "<div class='cat_form'>";                                      # Start Category Form Div
 
+    # Category Code
     echo "<div class='cat_code'>";                                      # >Start Div For Cat. Code
-        echo "<div class='cat_label'>";                                 # >Start Div For Cade Label
-        echo "Category Code";                                           # Label Text
-        echo "</div>";                                                  # <End of Div For Code Label
-        
-        echo "<div class='cat_input'>"; 
-        if ($mode == 'Create') {
-            echo "<input type='text' name='scr_code' size='11' maxlength='10' placeholder='Cat. Code'
-                required value='" . sadm_clean_data($wrow['cat_code']). "' >\n";
-        }else{
-            echo "<input type='text' name='scr_code' readonly size='11' placeholder='Cat. Code'
-                 value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
-        }
-        echo "</div>";  # << End of cat_code_input
-    echo "</div>";      # << End of cat_code
+    echo "<div class='cat_label'>Category Code</div>";                                                  # <End of Div For Code Label
+    echo "<div class='cat_input'>"; 
+    if ($mode == 'Create') {
+       echo "<input type='text' name='scr_code' size='11' maxlength='11' placeholder='Cat. Code'
+             required value='" . sadm_clean_data($wrow['cat_code']). "' >\n";
+    }else{
+       echo "<input type='text' name='scr_code' readonly size='11' placeholder='Cat. Code'
+             value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
+    }
+    echo "</div>";  # << End of cat_input
+    echo "</div>";  # << End of cat_code
     
     
-    // Category Description    
+    # Category Description    
     echo "<div class='cat_desc'>";
-        echo "<div class='cat_label'>";   
-        echo "Category Description"; 
-        echo "</div>"; 
-        
-        echo "<div class='cat_input'>"; 
-        if ($mode == 'Display') {
-            echo "<input type='text' name='scr_desc' readonly placeholder='Enter Category Desc.'
-                maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
-        }else{
-            echo "<input type='text' name='scr_desc' required placeholder='Enter Category Desc.'
-                maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
-        }
-        echo "</div>";  # << End of cat_input
+    echo "<div class='cat_label'>Category Description</div>"; 
+    echo "<div class='cat_input'>"; 
+    if ($mode == 'Display') {
+       echo "<input type='text' name='scr_desc' readonly placeholder='Enter Category Desc.'
+             maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+    }else{
+       echo "<input type='text' name='scr_desc' required placeholder='Enter Category Desc.'
+             maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+    }
+    echo "</div>";      # << End of cat_input
     echo "</div>";      # << End of cat_desc
+
+ 
     
-    
-    // Category Status
+    # Category Status
     echo "<div class='cat_status'>";
-        echo "<div class='cat_label'>";   
-        echo "Category Status"; 
-        echo "</div>"; 
-        
-        echo "<div class='cat_input'>"; 
-        if ($mode == 'Create') { $wrow['cat_status'] = True ; } 
-        if ($mode == 'Display') {
-            if ($wrow['cat_status'] == 't') {
-                echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;' checked> Active  \n";
-                echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;'> Inactive\n";
-            }else{
-                echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;'> Active  \n";
-                echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;' checked > Inactive\n";
-            }
+    echo "<div class='cat_label'>Category Status</div>"; 
+    echo "<div class='cat_input'>"; 
+    if ($mode == 'Create') { $wrow['cat_status'] = True ; } 
+    if ($mode == 'Display') {
+       if ($wrow['cat_status'] == 't') {
+          echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;' checked> Active  \n";
+          echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;'> Inactive\n";
+       }else{
+          echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;'> Active  \n";
+          echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;' checked > Inactive\n";
+       }
+    }else{
+       if ($wrow['cat_status'] == 't') {
+          echo "<input type='radio' name='scr_status' value='1' checked > Active  \n";
+          echo "<input type='radio' name='scr_status' value='0'> Inactive\n";
+       }else{
+          echo "<input type='radio' name='scr_status' value='1'> Active\n";
+          echo "<input type='radio' name='scr_status' value='0' checked > Inactive\n";
+       }
+    }
+    echo "</div>";      # << End of cat_input
+    echo "</div>";      # << End of cat_status   
+
+   
+    # Default Category (Yes/No)
+    echo "<div class='cat_default'>";
+    echo "<div class='cat_label'>Default Category</div>"; 
+    echo "<div class='cat_input'>"; 
+    if ($mode == 'Create') { $wrow['cat_default'] = False ; } 
+    if ($mode == 'Display') {
+        if ($wrow['cat_default'] == 't') {
+           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return false;' checked>Yes \n";
+           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return false;'> No\n";
         }else{
-            if ($wrow['cat_status'] == 't') {
-                echo "<input type='radio' name='scr_status' value='1' checked > Active  \n";
-                echo "<input type='radio' name='scr_status' value='0'> Inactive\n";
-            }else{
-                echo "<input type='radio' name='scr_status' value='1'> Active\n";
-                echo "<input type='radio' name='scr_status' value='0' checked > Inactive\n";
-            }
+           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return false;'> Yes  \n";
+           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return false;' checked > No\n";
         }
-        echo "</div>";                                                  # < End of input Div
-    echo "</div>";                                                      # < End of Field Div
-    
-    echo "</div>";                                                      # < End of Form Div
+    }else{
+        if ($wrow['cat_default'] == 't') {
+           echo "<input type='radio' name='scr_default' value='1' checked> Yes \n";
+           echo "<input type='radio' name='scr_default' value='0'> No\n";
+        }else{
+           echo "<input type='radio' name='scr_default' value='1'> Yes \n";
+           echo "<input type='radio' name='scr_default' value='0' checked > No\n";
+        }
+    }
+    echo "</div>";      # << End of cat_input
+    echo "</div>";      # << End of cat_default
+
+
+    echo "</div>";      # << End of cat_form
     echo "<br>";
 }
 

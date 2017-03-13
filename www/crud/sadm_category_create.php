@@ -22,6 +22,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 #
+# 1.9 - March 2017 - Jacques Duplessis
+#       Add lot of comments in code and enhance code performance 
+# ==================================================================================================
+#
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
@@ -36,48 +40,45 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 
 
 
-
-
 # ==================================================================================================
-#                                      PROGRAM START HERE
+#              THIS IS THE SECOND EXECUTION OF PAGE AFTER THE DELETE BUTTON IS PRESS
 # ==================================================================================================
- 
-
+    
     # Form is submitted - Process the Insertion of the row
     if (isset($_POST['submitted'])) {
-        foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_code']); }
-        
+        foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
+     
         # Construct SQL to Insert row
-        $sql1 = "INSERT INTO sadm.category ";
-        $sql2 = "(cat_code, cat_desc, cat_status) VALUES ";
-        $sql3 = "('" .  $_POST['scr_code'] . "','" ;
-        $sql4 = $_POST['scr_desc']         . "','" ;
-        $sql5 = $_POST['scr_status']       . "')"  ;
-        $sql  = $sql1 . $sql2 . $sql3 . $sql4 . $sql5 ;
-        if ($DEBUG) { echo "<br>Execute SQL Command = $sql"; }
+        $sql = "INSERT INTO sadm.category ";                            # Construct SQL Statement
+        $sql = $sql . "(cat_code, cat_desc, cat_status) VALUES ('";
+        $sql = $sql . $_POST['scr_code']    . "','" ;
+        $sql = $sql . $_POST['scr_desc']    . "','" ;
+        $sql = $sql . $_POST['scr_status']  . "')"  ;
+        if ($DEBUG) { echo "<br>SQL Command = $sql"; }                  # In Debug display SQL Stat.
 
         # Execute the Row Insertion SQL
-        $row = pg_query($sql) ;
-        if (!$row){
-            $err_msg = "ERROR : Row was not inserted\n";
-            $err_msg = $err_msg . pg_last_error() . "\n";
+        $row = pg_query($sql) ;                                         # Perform the SQL Query
+        if (!$row){                                                     # If Insert didn't work
+            $err_msg = "ERROR : Row wasn't inserted\n";                 # Error Message Part 1
+            $err_msg = $err_msg . pg_last_error() . "\n";               # Error Message Part 2
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $sql ; }
-            sadm_alert ($err_msg) ;
-        }else{
-            sadm_alert ("Category code '" . sadm_clean_data($_POST['scr_code']) . "' inserted.");
+            sadm_alert ($err_msg) ;                                     # Display Error Msg. Box
+        }else{                                                          # Row was inserted
+            sadm_alert ("Category '".$_POST['scr_code']."' created."); # Msg. Box for User
         }
-
-        # frees the memory and data associated with the specified PostgreSQL query result
-        pg_free_result($row);
+        pg_free_result($row);                                           # Frees memory and data 
 
         # Back to Category List Page
         ?> <script> location.replace("/crud/sadm_category_main.php"); </script><?php
         exit;
     }
     
+ 
+# ==================================================================================================
+#              THIS IS INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
+# ==================================================================================================
     
-    # Display initial page for Insertion 
     $title = "Create a Category" ;                                      # Page Heading Title
     sadm_page_heading ("$title");                                       # Display Page Heading  
 
@@ -88,7 +89,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";
     
-    # Display Buttons at the bottom of the form
+    # Display Buttons (Create/Cancel) at the bottom of the form
     echo "<center>";
     echo "<button type='submit' class='btn btn-sm btn-primary'> Create </button>   ";
     echo "<a href='/crud/sadm_category_main.php'>";
