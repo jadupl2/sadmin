@@ -62,6 +62,7 @@ function display_heading($line_title) {
     echo "\n<tr>";
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Nb. Server using it</th>";
     echo "\n<th class='dt-center'>Default</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
@@ -74,6 +75,7 @@ function display_heading($line_title) {
     echo "\n<tr>";
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
+    echo "\n<th class='dt-center'>Nb. Server using it</th>";
     echo "\n<th class='dt-center'>Default</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
@@ -88,25 +90,37 @@ function display_heading($line_title) {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-
     echo "\n<tr>";  
     
-    # Display Code, Description and Status
-    echo "\n<td class='dt-left'>"  . $row['cat_code'] . "</td>";
-    echo "\n<td class='dt-left'>"  . $row['cat_desc'] . "</td>";
-    
-    # Is it the default category ?
-    if ($row['cat_default'] == 't') { 
-        echo "\n<td class='dt-center'><b>Yes</b></td>"; 
-    }else{ 
-        echo "\n<td class='dt-center'>No</td>";
+    # Display Code, Description
+    echo "\n<td class='dt-left'>"  . $row['cat_code'] . "</td>";        # Display Category Code
+    echo "\n<td class='dt-left'>"  . $row['cat_desc'] . "</td>";        # Display Description
+
+    # Display count of servers using the category
+    $sql = "SELECT srv_name, srv_cat FROM sadm.server ";                # Construct SQL Statement
+    $sql = $sql . "WHERE srv_cat = '" . $row['cat_code'] . "'; ";       # Isolate to current Cat
+    $srow = pg_query($sql) ;                                            # Perform the SQL Query
+    $count = pg_num_rows($srow);                                        # Get nb. of rows returned
+    echo "\n<td class='dt-center'>" ;                                   # Start of Cell
+    if ($count > 0) {                                                   # If at least one server
+        echo "\n<a href=/sadmin/sadm_view_servers.php?selection=cat&value="; # Display Server Using 
+        echo $row['cat_code'] . ">" . $count . "</a></td>";             # Display Count Using Cat
+    }else{                                                              # If Cat is not use at all
+        echo $count . "</td>";                                          # Display Count without link
     }
 
-    # Category Status (Active or Inactive)
-    if ($row['cat_status'] == 't') { 
-        echo "\n<td class='dt-center'>Active</td>"; 
-    }else{ 
-        echo "\n<td class='dt-center'>Inactive</td>";
+    # Is it the default category ?
+    if ($row['cat_default'] == 't') {                                   # If Category if the default
+        echo "\n<td class='dt-center'><b>Yes</b></td>";                 # Indicate by a Bold Yes
+    }else{                                                              # If not the Default Cat.    
+        echo "\n<td class='dt-center'>No</td>";                         # Display No in cell
+    }
+
+    # Category Status (Active or Inactive)                      
+    if ($row['cat_status'] == 't') {                                    # Is Category Active
+        echo "\n<td class='dt-center'>Active</td>";                     # If so display Active
+    }else{                                                              # If not Activate
+        echo "\n<td class='dt-center'>Inactive</td>";                   # Display Inactive in Cell
     }
 
     # Update Button
@@ -142,11 +156,7 @@ function display_data($count, $row) {
  
     $query = 'SELECT * FROM sadm.category order by cat_code;';
     $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-
-
-    # Display Page Heading
-    $TITLE = "Category Maintenance";
-    display_heading("$TITLE");                                          # Display Page Heading
+    display_heading("Category Maintenance");                            # Display Page Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body  
     
     # Loop Through Retreived Data and Display each Row

@@ -288,6 +288,16 @@ function display_data($count, $row) {
             $result = pg_query($query) or die('Query failed: ' . pg_last_error());
             $TITLE = "Info about " . ucwords($VALUE) . " Server";
             break;
+        case 'cat'           : 
+            $query = "SELECT * FROM sadm.server where srv_cat = '". $VALUE . "' order by srv_name;";
+            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
+            $TITLE = "List of server(s) using the " . ucwords($VALUE) . " category";
+            break;
+        case 'group'           : 
+            $query = "SELECT * FROM sadm.server where srv_group = '". $VALUE . "' order by srv_name;";
+            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
+            $TITLE = "List of server(s) using the " . ucwords($VALUE) . " group";
+            break;
         case 'os'           : 
             $query = "SELECT * FROM sadm.server where srv_osname = '". $VALUE . "' order by srv_name;";
             $result = pg_query($query) or die('Query failed: ' . pg_last_error());
