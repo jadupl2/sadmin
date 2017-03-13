@@ -63,7 +63,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Nb. Server using it</th>";
-    echo "\n<th class='dt-center'>Default</th>";
+    echo "\n<th class='dt-center'>Default Category</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
@@ -76,7 +76,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-left'>Code</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Nb. Server using it</th>";
-    echo "\n<th class='dt-center'>Default</th>";
+    echo "\n<th class='dt-center'>Default Category</th>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
