@@ -31,7 +31,7 @@ echo "\n<div id='sadmSideBar'>\n";
 	$sadm_array = build_sidebar_servers_info();
     $SERVER_COUNT=0;
     echo "<br>";
-    echo "<p><strong>O/S Repartition</strong></p>\n";
+    echo "<strong>O/S Repartition</strong>\n";
     echo "<ul>\n";
     foreach($sadm_array as $key=>$value)
     {
@@ -47,9 +47,11 @@ echo "\n<div id='sadmSideBar'>\n";
 	echo ">All (" . $SERVER_COUNT . ") Servers</a></li>\n";
     echo "</ul>\n";
   
-	# SERVERS ATTRIBUTES SIDEBAR
+
+
+	# ------------------------  SERVERS ATTRIBUTES SIDEBAR -----------------------------------------
     echo "<br>";
-    echo "<p><strong>Servers Attributes</strong></p>\n";
+    echo "<strong>Servers Attributes</strong>\n";
     echo "<ul>\n";
 
     # Number of Active Servers
@@ -102,7 +104,7 @@ echo "\n<div id='sadmSideBar'>\n";
 	
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
     echo "<br>\n";                                                      # Insert White Line
-    echo "<p><strong>Scripts Status</strong></p>\n";                    # Display Section Title
+    echo "<strong>Scripts Status</strong>\n";                           # Display Section Title
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
     $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
@@ -150,7 +152,7 @@ echo "\n<div id='sadmSideBar'>\n";
 	
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "<br>\n";                                                      # Insert White Line
-    echo "<p><strong>Server Status</strong></p>\n";                    # Display Section Title
+    echo "<strong>Server Status</strong>\n";                            # Display Section Title
     echo "<ul>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_schedule.php'>";
     echo "Update O/S Schedule";
@@ -159,6 +161,24 @@ echo "\n<div id='sadmSideBar'>\n";
     echo "Monitoring Alert(s)";
 	echo "</a></li>\n";
 	echo "</ul>\n";
+	
+
+	
+	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
+    echo "<br>\n";                                                      # Insert White Line
+    echo "<strong>Edit Section</strong>\n";                             # Display Section Title
+    echo "<ul>\n";
+    echo "<li class='text-capitalize'><a href='/crud/sadm_server_main.php'>";
+    echo "Edit Servers";
+	echo "</a></li>\n";
+    echo "<li class='text-capitalize'><a href='/crud/sadm_category_main.php'>";
+    echo "Edit Category";
+	echo "</a></li>\n";
+    echo "<li class='text-capitalize'><a href='/crud/sadm_group_main.php'>";
+    echo "Edit Group";
+	echo "</a></li>\n";
+	echo "</ul>\n";
+    echo "<br>\n";                                                      # Insert White Line
 	
 
 echo "\n</div>                             <!-- End of Div sadmSideBar -->\n";  
