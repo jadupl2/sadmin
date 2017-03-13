@@ -213,6 +213,24 @@ function display_left_side ( $wrow , $mode) {
 
 
     # ----------------------------------------------------------------------------------------------
+    # Server Domain
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>Domain</div>";
+    echo "\n<div class='server_input1'>";
+    switch ($mode) {
+        case 'D' : echo "\n<input type='text' name='scr_domain' readonly ";
+                   echo "placeholder='Server Domain Name' maxlength='25' size='26' ";
+                   echo "value='" . sadm_clean_data($wrow['srv_domain']). "'/>";
+                   break;
+        default  : echo "\n<input type='text' name='scr_domain' required ";
+                   echo "placeholder='Server Domain Name' maxlength='25' size='26' ";
+                   echo "value='" . sadm_clean_data($wrow['srv_domain']). "'/>";
+                   break ;
+    }
+    echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
     # Server Description
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='server_label1'>Description</div>";
@@ -299,22 +317,47 @@ function display_left_side ( $wrow , $mode) {
     echo "\n</div>";
 
 
+
     # ----------------------------------------------------------------------------------------------
-    # Server Domain
+    # Server Group
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Domain</div>";
+    echo "\n\n<div class='server_label1'>Server Group</div>";
     echo "\n<div class='server_input1'>";
     switch ($mode) {
-        case 'D' : echo "\n<input type='text' name='scr_domain' readonly ";
-                   echo "placeholder='Server Domain Name' maxlength='25' size='26' ";
-                   echo "value='" . sadm_clean_data($wrow['srv_domain']). "'/>";
-                   break;
-        default  : echo "\n<input type='text' name='scr_domain' required ";
-                   echo "placeholder='Server Domain Name' maxlength='25' size='26' ";
-                   echo "value='" . sadm_clean_data($wrow['srv_domain']). "'/>";
+        case 'D' : echo "\n<input type='text' name='scr_group' readonly ";
+                   echo "placeholder='Group' maxlength='15' size='16' ";
+                   echo "value='" . sadm_clean_data($wrow['srv_group']). "'/>";
+                   break ;
+        case 'C' : echo "\n<select name='scr_group' size=1>";
+                   $sql = 'SELECT * FROM sadm.group order by grp_code;';
+                   $rescat = pg_query($sql) or die('Group Query failed: '. pg_last_error());
+                   while ($crow = pg_fetch_array($rescat, null, PGSQL_ASSOC)) {
+                      if ($crow['grp_default'] == 't') {
+                        echo "\n<option selected>" ;
+                     }else{
+                        echo "\n<option>";
+                     }
+                     echo sadm_clean_data($crow['grp_code']) . "</option>";
+                   }
+                   echo "\n</select>";
+                   pg_free_result($rescat);
+                   break ;
+        case 'U' : echo "\n<select name='scr_group' size=1>";
+                   $sql = 'SELECT * FROM sadm.group order by grp_code;';
+                   $rescat = pg_query($sql) or die('Group Query failed: '. pg_last_error());
+                   while ($crow = pg_fetch_array($rescat, null, PGSQL_ASSOC)) {
+                     if (($crow['grp_code']) == ($wrow['srv_group'])) {
+                        echo "\n<option selected>" . sadm_clean_data($crow['grp_code'])."</option>";
+                     }else{
+                        echo "\n<option>" . sadm_clean_data($crow['grp_code']) . "</option>";
+                     }
+                   }
+                   echo "\n</select>";
+                   pg_free_result($rescat);
                    break ;
     }
     echo "\n</div>";
+
 
 
     # ----------------------------------------------------------------------------------------------

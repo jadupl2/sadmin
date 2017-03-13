@@ -168,6 +168,40 @@ div.server_input2 {
 /* ===============================================================================================*/
 
 
+/* ---------------------------------------------------------------------------------------------- */
+/*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE GROUP TABLE                   */
+/*             Used by sadm_group_*.php and sadm_view_group.php Web Pages                   */
+/* ---------------------------------------------------------------------------------------------- */
+/*
+/* ===== FORM ATTRIBUTE ===== */
+.grp_form {
+    font-family: Verdana, Geneva, sans-serif;
+    background-color: #C8DBBE;
+    color: black;
+    width: 50%;
+    margin-top: 5%;
+    margin-left: auto;
+    margin-right: auto;
+    border: 2px solid #000000;
+    font-size: 12px;
+    text-align: left;
+    padding: 2%;
+}
+/* ===== FORM LABEL ===== */
+.grp_label {
+    float : left;
+    width : 200px;
+
+}
+/* ===== FORM INPUT ===== */
+.grp_input {
+    margin-bottom: 8px;
+    color : black;
+}
+
+/*           END OF SECTION USED FOR MAINTAINING AND VIEWING THE GROUP TABLE                   */
+/* ===============================================================================================*/
+
 
 /* ---------------------------------------------------------------------------------------------- */
 /*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */

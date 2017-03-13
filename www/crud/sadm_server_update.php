@@ -57,6 +57,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         $sql = $sql . "srv_name = '"          . sadm_clean_data($_POST['scr_name'])          ."', ";
         $sql = $sql . "srv_desc = '"          . sadm_clean_data($_POST['scr_desc'])          ."', ";
         $sql = $sql . "srv_cat  = '"          . sadm_clean_data($_POST['scr_cat'])           ."', ";
+        $sql = $sql . "srv_group = '"         . sadm_clean_data($_POST['scr_group'])         ."', ";
         $sql = $sql . "srv_domain = '"        . sadm_clean_data($_POST['scr_domain'])        ."', ";
         $sql = $sql . "srv_tag = '"           . sadm_clean_data($_POST['scr_tag'])           ."', ";
         $sql = $sql . "srv_notes = '"         . sadm_clean_data($_POST['scr_notes'])         ."', ";

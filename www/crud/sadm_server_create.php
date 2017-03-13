@@ -69,7 +69,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         
         # Construct SQL to Insert row
         $sql = "INSERT INTO sadm.server ";
-        $sql = $sql . "(srv_name, srv_desc, srv_cat, srv_domain, srv_notes, srv_tag, srv_sporadic,
+        $sql = $sql . "(srv_name, srv_desc, srv_cat, srv_group, srv_domain, srv_notes, srv_tag, srv_sporadic,
                         srv_backup, srv_monitor, srv_update_auto, srv_update_reboot,
                         srv_update_hour, srv_update_minute, srv_maintenance,
                         srv_update_month, srv_update_dom, srv_update_dow,
@@ -78,6 +78,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         $sql = $sql . " VALUES ('" .  $_POST['scr_name'] . "','" ;
         $sql = $sql . $_POST['scr_desc']          . "','" ;
         $sql = $sql . $_POST['scr_cat']           . "','" ;
+        $sql = $sql . $_POST['scr_group']         . "','" ;
         $sql = $sql . $_POST['scr_domain']        . "','" ;
         $sql = $sql . $_POST['scr_notes']         . "','" ;
         $sql = $sql . $_POST['scr_tag']           . "','" ;
