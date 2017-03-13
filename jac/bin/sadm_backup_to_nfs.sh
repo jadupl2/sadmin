@@ -103,7 +103,7 @@ LOCAL_MOUNT_DIR="/linux"                ; export LOCAL_MOUNT_POINT      # Local 
 ARCHIVE_DIR="${LOCAL_MOUNT_DIR}/$(sadm_get_hostname)" ; export ARCHIVE_DIR  # NFS Backup Dir.
 
 # List of Directories to Backup
-BACKUP_DIR="/cadmin /sadmin /home /storix /sysadmin /sysinfo /aix_data /gitrepos /wiki "
+BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
 BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
