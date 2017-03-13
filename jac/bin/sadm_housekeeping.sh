@@ -78,13 +78,26 @@ dir_housekeeping()
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "MY DIRECTORIES HOUSEKEEPING STARTING"
     sadm_writelog "${SADM_TEN_DASH}"
-
     jgroup=`id -gn jacques`                                           # Get Jacques's Group
+
     if [ -d "/stbackups" ]  
         then sadm_writelog " "
              sadm_writelog "Storix ISO Accessibility"
              sadm_writelog "find /stbackups -exec chown jacques.${jgroup} {} \;" 
              find /stbackups -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+            fi
+    fi
+    
+    if [ -d "/mystuff" ]  
+        then sadm_writelog " "
+             sadm_writelog "MyStuff Accessibility"
+             sadm_writelog "find /mystuff -exec chown jacques.${jgroup} {} \;" 
+             find /mystuff -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
