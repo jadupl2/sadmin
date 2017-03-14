@@ -19,7 +19,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.5";                                        # Version Number
+my $VERSION_NUMBER      = "2.6";                                        # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -421,8 +421,8 @@ sub check_for_error {
       #   ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
       #   if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
       #      print "\n\n----- Filesystem Increase: $WID at $ACTVAL%\n";  # FileSystem Entered
-      #      print "Actual Time is $year $month $day $hour $min $sec\n"; # Print current time
-      #      print "Actual epoch time is $epoch\n";                      # Print Epoch time
+      #      print "\nActual Time is $year $month $day $hour $min $sec\n"; # Print current time
+      #      print "\nActual epoch time is $epoch\n";                      # Print Epoch time
       #   }
       #   # If it is the first occurence of the Error - Put Date and Time in cfg
       #   if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                        # If current date = 0 in SLAM Array
@@ -554,8 +554,8 @@ sub check_for_error {
       if ($SUBMODULE eq "CPU") {
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get Date,Time, Epoch Time
          if ($SYSMON_DEBUG >= 5) { 
-            print "Actual Time is $year $month $day $hour $min $sec\n";
-            print "Actual epoch time is $epoch";
+            print "\nActual Time is $year $month $day $hour $min $sec";
+            print "\nActual epoch time is $epoch";
          }
          #----- If it is the first occurence of the Error - Put Date and Time in cfg
          if ( $SADM_RECORD->{SADM_DATE} == 0 ) {
@@ -693,8 +693,10 @@ sub check_service {
             if ( system("$CMD >/dev/null 2>&1") == 0 ) { 
                 $service_ok = 1 ; 
                 $srv_name = $srv ; 
+                print " - *** Running";
             }else{ 
                 $service_ok = 0 ; 
+                print " - Not Running";
             }
         }else{
             my $CMD = "systemctl status ${srv}.service" ;
@@ -704,8 +706,10 @@ sub check_service {
             if ( system("$CMD >/dev/null 2>&1") == 0 ) { 
                 $service_ok = 1 ; 
                 $srv_name = $srv ; 
+                print " - *** Running";
             }else{ 
                 $service_ok = 0 ; 
+                print " - Not Running";
             }
         }
         $service_count = $service_count + $service_ok ;
@@ -714,9 +718,9 @@ sub check_service {
     #----- Put current value in slam array and check for error.
     $SADM_RECORD->{SADM_CURVAL} = $service_count ;
     if ($service_count >= 1) { 
-        printf "\nService %s is running (%d)",$srv_name,$service_count;
+        printf "\nSERVICE IS RUNNING (%d)",$service_count;
     }else{
-        printf "\nService %s isn't running (%d)",$srv_name,$service_count;
+        printf "\nSERVICE ISN'T RUNNING (%d)",$service_count;
     }
     check_for_error($SADM_RECORD->{SADM_CURVAL},                        # Current Value
                     $SADM_RECORD->{SADM_WARVAL},                        # Warning Threshold Value
