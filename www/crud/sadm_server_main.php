@@ -60,11 +60,13 @@ function display_heading($line_title) {
     # Table Heading
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th class='dt-left'>Name</th>";
+    echo "\n<th class='dt-left'>Server</th>";
+    echo "\n<th class='dt-left'>O/S</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Category</th>";
     echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Last Edit</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";    
     echo "\n</tr>"; 
@@ -73,11 +75,13 @@ function display_heading($line_title) {
     # Server Table Footer
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th class='dt-left'>Name</th>";
+    echo "\n<th class='dt-left'>Server</th>";
+    echo "\n<th class='dt-left'>O/S</th>";
     echo "\n<th class='dt-left'>Description</th>";
     echo "\n<th class='dt-center'>Category</th>";
     echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Last Edit/th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
     echo "\n</tr>"; 
@@ -95,6 +99,73 @@ function display_data($count, $row) {
     
     # Display Code, Description and Status
     echo "\n<td class='dt-left'>"   . $row['srv_name']  . "</td>";
+
+    # Display Operating System Logo
+    $WOS   = $row['srv_osname'];
+    switch (strtoupper($WOS)) {
+            case 'REDHAT' :
+                echo "<td class='dt-center'>";
+                echo "<a href='http://www.redhat.com' ";
+                echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
+                echo "<img src='/images/redhat.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'FEDORA' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://getfedora.org' ";
+                echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
+                echo "<img src='/images/fedora.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'CENTOS' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.centos.org' ";
+                echo "title='Server $whost is a CentOS server - Visit centos.org'>";
+                echo "<img src='/images/centos.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'UBUNTU' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.ubuntu.com/' ";
+                echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
+                echo "<img src='/images/ubuntu.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'DEBIAN' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.debian.org/' ";
+                echo "title='Server $whost is a Debian server - Visit debian.org'>";
+                echo "<img src='/images/debian.png' ";
+                echo "style='width:24px;height:24px;'></a<</td>\n";
+                break;
+            case 'RASPBIAN' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.raspbian.org/' ";
+                echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
+                echo "<img src='/images/raspbian.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'SUSE' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://www.opensuse.org/' ";
+                echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
+                echo "<img src='/images/suse.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            case 'AIX' :
+                echo "<td class='dt-center'>";
+                echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
+                echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
+                echo "<img src='/images/aix.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
+            default:
+                echo "<td class='dt-center'>";
+                echo "<img src='/images/os_unknown.jpg' ";
+                echo "style='width:24px;height:24px;'></td>\n";
+                break;
+    }
+
     echo "\n<td class='dt-left'>"   . $row['srv_desc']  . "</td>";
     echo "\n<td class='dt-center'>" . $row['srv_cat']   . "</td>";
     echo "\n<td class='dt-center'>" . $row['srv_group'] . "</td>";
@@ -103,6 +174,7 @@ function display_data($count, $row) {
     }else{ 
         echo "\n<td class='dt-center'>Inactive</td>";
     }
+    echo "\n<td class='dt-center'>" . $row['srv_last_edit_date']   . "</td>";
 
     # Update Button
     echo "\n<td style='text-align: center'>";
