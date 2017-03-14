@@ -60,7 +60,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             $result = pg_query($sql) ;                                  # Perform the SQL Query
             $count = pg_num_rows($result);                              # Get Nb Default Group
             $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;         # Read the Associated row
-            if ($count > 0) {                                           # If Already Default Group.
+            if (($count > 0) and ($row['grp_code'] != $_POST['scr_code'])) { # If Already Default Grp         
                 $err_msg = "ERROR: Only one group can be the default."; 
                 $err_msg = $err_msg . "\Group '" . $row['grp_code'] . "' is the default now.";
                 $err_msg = $err_msg . "\nRemove default from '" . $row['grp_code'] . "' first.";

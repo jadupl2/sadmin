@@ -60,7 +60,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             $result = pg_query($sql) ;                                  # Perform the SQL Query
             $count = pg_num_rows($result);                              # Get Nb Default Category
             $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;         # Read the Associated row
-            if ($count > 0) {                                           # If Already Default Cat.
+            if (($count > 0) and ($row['cat_code'] != $_POST['scr_code'])) {  # If Already Default Cat.
                 $err_msg = "ERROR: Only one category can be the default."; 
                 $err_msg = $err_msg . "\nCategory '" . $row['cat_code'] . "' is the default now.";
                 $err_msg = $err_msg . "\nRemove default from '" . $row['cat_code'] . "' first.";
