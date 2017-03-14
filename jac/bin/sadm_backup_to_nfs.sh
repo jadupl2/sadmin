@@ -5,7 +5,7 @@
 #   Date:       28 August 2015
 #   Synopsis:   This script is used to create a tgz file of all directories speciied in the 
 #               variable $BACKUP_DIR to NFS $ARCHIVE_DIR .
-#               Only the specified ($NB_VER) copies of each tgz files will be kept
+#               Only the specified ($NB_VERSION_TO_KEEP) copies of each tgz files will be kept
 #               Can be Run Once a week or Once every couple of Day (As you choose)
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -26,61 +26,34 @@
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
-#
+
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 #   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
 #   variables and functions available to you when using the SADMIN functions Library
-#===================================================================================================
-
 # --------------------------------------------------------------------------------------------------
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.6'                             ; export SADM_VER            # This Script Version
+SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='2.0'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_DEBUG_LEVEL=0                         ; export SADM_DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
-#
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
-#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
+# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
 #SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
-#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
-#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-#SADM_PGDB=""                                ; export SADM_PGDB          # PostGres DataBase Name
-#SADM_PGSCHEMA=""                            ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-#SADM_PGHOST=""                              ; export SADM_PGHOST        # PostGres DataBase Host
-#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
-#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
-#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
-#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
-
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
 #
 
@@ -92,21 +65,24 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-
-TOTAL_ERROR=0                           ; export TOTAL_ERROR            # Total Rsync Error
-NB_VER=4                                ; export NB_VER                 # Nb Version to keep
 #
-NFS_SERVER="ds410.maison.ca"            ; export NFS_SERVER             # Remoote Backup Name
+# THESE VARIABLES MUST BE SET TO FIT YOUR ENVIRONMENT - YOU NEED TO CHANGE THEM
+NFS_SERVER="nas_server.maison.ca"       ; export NFS_SERVER             # Remoote Backup Name
 REM_BASE_DIR="/volume1/linux"           ; export REM_BASE_DIR           # Remote Base Dir.
 #
-LOCAL_MOUNT_DIR="/linux"                ; export LOCAL_MOUNT_POINT      # Local NFS MOunt Point 
-ARCHIVE_DIR="${LOCAL_MOUNT_DIR}/$(sadm_get_hostname)" ; export ARCHIVE_DIR  # NFS Backup Dir.
-
-# List of Directories to Backup
+# LIST OF DIRECTORIES THAT WILL BE BACKUP (IF THEY EXIST OF COURSE)
+# YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT
 BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /var/ftp /var/lib/mysql /var/spool/cron "
+BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www "
+BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
+NB_VERSION_TO_KEEP=4                    ; export NB_VERSION_TO_KEEP     # Nb Version to keep
+#
+#
+TOTAL_ERROR=0                           ; export TOTAL_ERROR            # Total Rsync Error
+LOCAL_MOUNT_DIR="/mnt/backup"           ; export LOCAL_MOUNT_POINT      # Local NFS Mount Point 
+ARCHIVE_DIR="${LOCAL_MOUNT_DIR}/${SADM_HOSTNAME}" ; export ARCHIVE_DIR  # NFS Backup Dir.
 
 
 
@@ -164,19 +140,20 @@ create_backup()
 
 
 # --------------------------------------------------------------------------------------------------
-#                       Keep only the number of backup copies specied in $NB_VER
+#               Keep only the number of backup copies specied in $NB_VERSION_TO_KEEP
 # --------------------------------------------------------------------------------------------------
 clean_backup_dir()
 {
     sadm_writelog " "                                                   # Blank Line in Log
     sadm_writelog " "                                                   # Blank Line in Log
     sadm_writelog "${SADM_DASH}"                                        # Line of 80 Equal Char.
-    sadm_writelog "Keep only last $NB_VER copies of each backup in ${ARCHIVE_DIR}"
+    sadm_writelog "Keep only last $NB_VERSION_TO_KEEP copies of each backup in ${ARCHIVE_DIR}"
     sadm_writelog "${SADM_DASH}"                                        # Line of 80 Equal Char.
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
-    # Enter Server Backup Directory - May need to delete some backup if more than $NB_VER copies
+    # Enter Server Backup Directory
+    # May need to delete some backup if more than $NB_VERSION_TO_KEEP copies
     cd ${ARCHIVE_DIR}                                                   # Change Dir. To Backup Dir.
     sadm_writelog "Current directory is `pwd`"                          # Print Current Dir.
     sadm_writelog " "                                                   # Blank Line in Log
@@ -186,7 +163,7 @@ clean_backup_dir()
         do
         if [ -d ${WDIR} ]                                               # if Dir exist on Localhost
            then BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
-                FILE_COUNT=`ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | wc -l`
+                FILE_COUNT=`ls -t1 ${BASE_NAME}*.tgz |sort -r |sed "1,${NB_VERSION_TO_KEEP}d"|wc -l`
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
 
                 if [ "$FILE_COUNT" -ne 0 ]
@@ -194,8 +171,8 @@ clean_backup_dir()
                         sadm_writelog "Here is a list of $BASE_NAME before the cleanup ..."
                         ls -t1 ${BASE_NAME}*.tgz | sort -r | nl | tee -a $SADM_LOG
                         sadm_writelog "File(s) Deleted are :"
-                        ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | tee -a $SADM_LOG
-                        ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VER}d" | xargs rm -f >> $SADM_LOG 2>&1
+                        ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VERSION_TO_KEEP}d" | tee -a $SADM_LOG
+                        ls -t1 ${BASE_NAME}*.tgz | sort -r | sed "1,${NB_VERSION_TO_KEEP}d" | xargs rm -f >> $SADM_LOG 2>&1
                         RC=$?
                         if [ $RC -ne 0 ]
                             then sadm_writelog "ERROR $RC while cleaning up ${BASE_NAME} files"
@@ -227,7 +204,7 @@ clean_backup_dir()
 mount_nfs()
 {
     # Local Mount Point Verification
-    if [ ! -d ${LOCAL_MOUNT_DIR} ]                                      # Check mount point exist
+    if [ ! -d ${LOCAL_MOUNT_DIR} ]                                      # Mount Point doesn't exist
         then mkdir ${LOCAL_MOUNT_DIR}                                   # Create if not exist
              write_log "Creating local mount point $LOCAL_MOUNT_DIR"    # Advise user we create Dir.
              chmod 775 ${LOCAL_MOUNT_DIR}                               # Change Protection
@@ -262,28 +239,26 @@ mount_nfs()
 # --------------------------------------------------------------------------------------------------
 umount_nfs()
 {
-   sadm_writelog "Unmounting NFS mount directory $LOCAL_MOUNT_DIR"      # Advise user we umount
-   umount $LOCAL_MOUNT_DIR >> $SADM_LOG 2>&1                            # Umount Just to make sure
+    sadm_writelog "Unmounting NFS mount directory $LOCAL_MOUNT_DIR"     # Advise user we umount
+    umount $LOCAL_MOUNT_DIR >> $SADM_LOG 2>&1                           # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_writelog "NFS Error umounting Dir. $LOCAL_MOUNT_DIR"  # Error - Advise User
              return 1                                                   # End Function with error
     fi
-   return 0
+    return 0
 }
 
 # --------------------------------------------------------------------------------------------------
-#                       S T A R T   O F   M A I N    P R O G R A M
+#                              S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
     sadm_start                                                          # Init Env. Dir & RC/Log File
-
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
     mount_nfs                                                           # Mount NFS Archive Dir.
     if [ $? -ne 0 ]                                                     # If Error While MOunt NFS
         then umount_nfs                                                 # Try to umount it Make Sure
@@ -291,7 +266,6 @@ umount_nfs()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
     create_backup                                                       # Create TGZ of Seleted Dir.
     BACKUP_ERROR=$?                                                     # Save the Total Error
     clean_backup_dir                                                    # Delete Old Backup
