@@ -158,9 +158,9 @@ function display_heading($line_title) {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>O/S</th>\n";
-    echo "<th>Description</th>\n";
+    echo "<th>Server Description</th>\n";
     echo "<th class='text-center'>Module</th>\n";
-    echo "<th>Description</th>\n";
+    echo "<th>Alert Description</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Time</th>\n";
     echo "<th class='text-center'>Cat.</th>\n";
@@ -177,9 +177,9 @@ function display_heading($line_title) {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th>Server</th>\n";
     echo "<th>O/S</th>\n";
-    echo "<th>Description</th>\n";
+    echo "<th>Server Description</th>\n";
     echo "<th class='text-center'>Module</th>\n";
-    echo "<th>Description</th>\n";
+    echo "<th>Alert Description</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Time</th>\n";
     echo "<th class='text-center'>Cat.</th>\n";
