@@ -208,7 +208,7 @@ function display_data() {
         if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n"; }
         list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$wpage,$wmail)=explode(";",$line);
         
-        # DISPLAY STATUS
+        # DISPLAY ICON STATUS
         echo "<tr>\n";  
         echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
         echo "<td class='dt-center'>";
@@ -319,8 +319,18 @@ function display_data() {
         echo "<td>" . $WDESC                                 . "</td>\n";  
         echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";  
 
+        list($wdummy,$wscript) = explode(" ",$wdesc);
+        $wlog =  $whost . "_" . $wscript . ".log";
+        echo "<td>";
+        if ($wdummy == "Script") {
+            echo "<a href='/sadmin/sadm_view_logfile.php?host=" . $whost ;
+            echo "&filename=" . $wlog . "' title='View the script log - " . $wlog . "'>" . $wdesc ;
+            echo "</a>";
+        }else{
+            echo $wdesc ;
 
-        echo "<td>" . $wdesc                                 . "</td>\n";  
+        }
+        echo "</td>\n";  
         echo "<td class='dt-center'>" . $wdate               . "</td>\n";  
         echo "<td class='dt-center'>" . $wtime               . "</td>\n";  
  
