@@ -28,6 +28,7 @@ www/tmp/
 .vscode/
 
 # Specific files to exclude 
+sysmon.lock
 sys/*.log
 cfg/.pgpass
 cfg/.sadmin.cfg
