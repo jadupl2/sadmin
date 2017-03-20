@@ -81,7 +81,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-center'>Category</th>";
     echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Last Edit/th>";
+    echo "\n<th class='dt-center'>Last Edit</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
     echo "\n</tr>"; 
