@@ -352,7 +352,7 @@ get_linux_files()
 
 
             # SAR PERF FILES
-            # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/nmon  
+            # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server/sar 
             #-------------------------------------------------------------------------------------------
             WDIR="${SADM_WWW_DAT_DIR}/${server}/sar"                     # Local Receiving Dir.
             sadm_writelog " " 
