@@ -259,7 +259,7 @@ function sadm_page_heading($msg) {
 
     echo "\n</div>                              <!-- End of Div sadmMainBodyHeading -->\n";  
     echo "\n<!-- ============================================================================= -->";    
-    echo "\n<br>";
+    #echo "\n<br>";
     echo "\n\n<div id='sadmMainBodyPage'>\n";   
 }
 
