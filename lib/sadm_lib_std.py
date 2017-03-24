@@ -127,14 +127,14 @@ mail               = ""                                                 # mail c
 #===================================================================================================
 #
 def open_sadmin_database():
-    if debug > 6 : writelog ("Making connection to 'sadmin' database")
     try:
+        if debug > 6 : writelog ("Connecting to '%s' database" % cfg_pgdb)
         conn = psycopg2.connect( database=cfg_pgdb, user=cfg_rw_pguser, \
-            password=cfg_rw_pgpwd, host="holmes.maison.ca", port="5432")       
-        if debug > 6 : writelog ("Setting Connection Cursor")
+            password=cfg_rw_pgpwd, host=cfg_pghost, port=cfg_pgport)       
+        if debug > 6 : writelog ("Setting Connection Cursor to %s:%s" % (cfg_pghost,cfg_pgport))
         cur = conn.cursor()
     except psycopg2.Error as e:                                         # in case of error
-        writelog ("Error: Cannot make connection with 'sadmin' Database")
+        writelog ("Error: Can't connect to '%s' database with user %s" % (cfg_pgdb,cfg_rw_pguser))
         writelog ("%s" % e)
         sys.exit(1)
     return (conn,cur)
@@ -146,15 +146,16 @@ def open_sadmin_database():
 #===================================================================================================
 #
 def close_sadmin_database(wconn,wcur):
-    if debug > 6 : writelog ("Close Connection to 'sadmin' database")
     try:
+        if debug > 6 : writelog ("Closing Connection to '%s' Database" % cfg_pgdb)
         wcur.close()
         wconn.close()
     except psycopg2.Error as e:                                         # in case of error
-        writelog ("Error: Cannot Close Connection with 'sadmin' Database")
+        writelog ("Error: Can't Close Connection to '%s' database" & cfg_pgdb)
         writelog ("%s" % e)
         return (1)
     return (0)
+
 
 
 # --------------------------------------------------------------------------------------------------
