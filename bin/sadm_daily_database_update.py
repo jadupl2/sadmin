@@ -1,8 +1,9 @@
 #!/usr/bin/env python 
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      sadm_template_servers.py
-#   Synopsis:   
+#   Title:      sadm_daily_database_update.py
+#   Synopsis:   Read all /sadmin/www/dat/{HOSTNAME}/dr/{HOSTNAME}_sysinfo.txt and update the 
+#               Database based on the content of file.
 #===================================================================================================
 # Description
 #
@@ -38,9 +39,9 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver = "2.0"                                                        # Default Program Version
+sadm.ver = "2.2"                                                        # Default Program Version
 sadm.multiple_exec = "N"                                                # Default Run multiple copy
-sadm.debug = 0                                                          # Default Debug Level (0-9)
+sadm.debug = 4                                                          # Default Debug Level (0-9)
 sadm.exit_code = 0                                                      # Script Error Return Code
 sadm.log_append = "N"                                                   # Append to Existing Log ?
 sadm.log_type = "B"                                                     # 4Logger S=Scr L=Log B=Both
@@ -92,7 +93,11 @@ def get_columns_name(wconn, wcur, tbname):
 def init_row_dictionnary(colnames):
     """DEFINE DEFAULT VALUES OF SERVER TABLE WHEN WE NEED TO ADD A SERVER INTO THE SERVER TABLE"""
     srow = {}                                                           # Create empty Dictionnary
-    wdate = datetime.datetime.now()                                     # Get current Date
+    cnow = datetime.datetime.now()                                          # Get Current Time
+    #curdate = cnow.strftime("%Y.%m.%d")                                     # Format Current date
+    #curtime = cnow.strftime("%H:%M:%S")                                     # Format Current Time
+    #wdate = datetime.datetime.now()                                     # Get current Date
+    wdate = cnow.strftime("%Y-%m-%d %H:%M:%S")
     #for index in range(1, len(colnames)):                               # Loop from 1 to Nb Columns
     #    srow[colnames[index]] = ""                                      # Set All fields to Blank
 
@@ -103,7 +108,7 @@ def init_row_dictionnary(colnames):
     srow['srv_monitor'] = True                                          # Monitor Activity of server
     srow['srv_backup'] = 4                                              # 0=None 1=Mon 3=Wed 7=Sat
     srow['srv_maintenance'] = False                                     # Def. Maintenance Mode OFF
-    srow['srv_group'] = "GRP1"                                          # Default Server Group
+    srow['srv_group'] = "Standard"                                      # Default Server Group
     srow['srv_osver_major'] = int(0)                                    # Server OS Major Version
     srow['srv_memory'] = int(0)                                         # Server Memory in MB
     srow['srv_kernel_bitmode'] = int(64)                                # Running Kernel 32/64 Bits
@@ -113,8 +118,8 @@ def init_row_dictionnary(colnames):
     srow['srv_nb_socket'] = int(0)                                      # Server Nb of CPU Socket
     srow['srv_core_per_socket'] = int(0)                                # Nb. Of Core per Socket
     srow['srv_thread_per_core'] = int(0)                                # Nb. Thread per core
-    srow['srv_last_edit_date'] = wdate.date()                           # Set Last Edit Date
-    srow['srv_creation_date'] = wdate.date()                            # Set Creation Date
+    srow['srv_last_edit_date'] = wdate                           # Set Last Edit Date
+    srow['srv_creation_date'] = wdate                            # Set Creation Date
     srow['srv_update_month'] = "YYYYYYYYYYYY"                           # Month of Update (1-12 Y/N)
     srow['srv_update_dom'] = "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"          # Day of Update (1-31 Y/N)
     srow['srv_update_dow'] = "NNNNNNN"                                  # Day of Week (1-7 Y/N)
@@ -123,8 +128,8 @@ def init_row_dictionnary(colnames):
     srow['srv_update_reboot'] = False                                   # Reboot server after update
     srow['srv_update_status'] = "N"                                     # Server not update Yet
     srow['srv_update_auto'] = True                                      # O/S Update use Schedule
-    srow['srv_update_date'] = wdate.date()                              # Last O/S update date
-    srow['srv_last_daily_update'] = wdate.date()                        # Last Daily update date
+    srow['srv_update_date'] = wdate                              # Last O/S update date
+    srow['srv_last_daily_update'] = wdate                        # Last Daily update date
     return srow
 
 
@@ -256,7 +261,8 @@ def update_row(wconn, wcur, wrow):
 
     sadm.writelog("Update information of server %s in server table" % (wrow['srv_name']))
     wdate = datetime.datetime.now()                                     # Get current Date
-    wrow['srv_last_daily_update'] = wdate.date()                        # Last Daily update date
+    wrow['srv_last_daily_update'] = wdate.strftime('%Y-%m-%d %H:%M:%S') # Last Daily update date
+    #sadm.writelog("Last Daily Update TimeStamp is %s" % (wrow['srv_last_daily_update']))
 
     try:
         sql = """ update sadm.server set 
