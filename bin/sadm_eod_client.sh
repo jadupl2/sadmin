@@ -109,6 +109,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              exit 1                                                     # Exit To O/S
     fi
 
+
     # At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
     SCRIPT="sadm_nmon_midnight_restart" 
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
@@ -135,7 +136,8 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
-   
+
+
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN client
     SCRIPT="sadm_housekeeping_client" 
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
@@ -148,6 +150,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
+
 
     # Save Filesystems Structure for every Volume Group on System
     #  - Used in case of a System Recovery by sadm_fs_recreate.sh script
@@ -163,6 +166,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
+
     # Generate System Configuration for this server (Collect by sadmin server)
     SCRIPT="sadm_create_server_info" 
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
@@ -175,6 +179,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
+
 
     # Produce html page containing configuration (Collect by sadmin server)
     SCRIPT="sadm_create_cfg2html" 
