@@ -47,11 +47,12 @@ SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Networ
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-SADM_WWW_DIR="$SADM_BASE_DIR/www"                           ; export SADM_WWW_DIR      # Web Site Dir
+SADM_WWW_DIR="$SADM_BASE_DIR/www"                           ; export SADM_WWW_DIR      # Web Dir
 SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                      ; export SADM_WWW_HTML_DIR # www html Dir
-SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Data Dir
+SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
-SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Libr Dir
+SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
+SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IMG_DIR  # www Img Dir
 SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR  # web rch dir
 SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR  # web rpt dir
 SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR  # web sar dir
@@ -1038,7 +1039,15 @@ sadm_start() {
     if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_WWW_LIB_DIR
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+    fi
+
+
+    # If SADM Server Web Site Images Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+        then mkdir -p $SADM_WWW_IMG_DIR
+             chmod 0775 $SADM_WWW_IMG_DIR  
+             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
     fi
 
     # If NMON Directory doesn't exist, create it.
