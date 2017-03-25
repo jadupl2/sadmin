@@ -171,7 +171,62 @@ dir_housekeeping()
              fi
     fi
 
-    
+
+    if [ -d "$SADM_WWW_IMG_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chmod -R 775 {} \;"
+             find $SADM_WWW_IMG_DIR -exec chmod -R 775 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_WWW_IMG_DIR -name *.ico -exec chmod 664 {} \;"
+             find $SADM_WWW_IMG_DIR -name *.ico -exec chmod 664 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+             sadm_writelog "find $SADM_WWW_IMG_DIR -name *.png -exec chmod 664 {} \;"
+             find $SADM_WWW_IMG_DIR -name *.png -exec chmod 664 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+              sadm_writelog "find $SADM_WWW_IMG_DIR -name *.jpg -exec chmod 664 {} \;"
+             find $SADM_WWW_IMG_DIR -name *.jpg -exec chmod 664 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi             
+             sadm_writelog "find $SADM_WWW_IMG_DIR -name *.gif -exec chmod 664 {} \;"
+             find $SADM_WWW_IMG_DIR -name *.gif -exec chmod 664 {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi             
+            
+             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+
+
+
     return $ERROR_COUNT
 }
 
@@ -185,7 +240,7 @@ file_housekeeping()
     sadm_writelog "Server Files HouseKeeping Starting"
     sadm_writelog " "
     
-    # Delete old RCH File in /sadmin/www/dat
+    # Delete old RCH Files in /sadmin/www/dat based on number of day specify in sadmin.cfg
     if [ -d "${SADM_WWW_DIR}/dat" ]
         then sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DIR}/dat and delete them"
              find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
