@@ -32,7 +32,7 @@ div.server_data {
     background-color: #d6dcdd;
     color: black;
     width: 100%;
-    height: 450px;
+    height: 475px;
     margin: 5px;
     border: 2px solid #000000;
     font-size: 12px;
@@ -61,7 +61,7 @@ div.server_left_label {
     float : left;
     width : 35%;
     /*font-family: "Verdana";*/
-    font: 14px arial, sans-serif;
+    font: 13px arial, sans-serif;
     font-weight: bold;
     /*background-color: yellow;*/
 }
@@ -70,7 +70,7 @@ div.server_left_label {
 div.server_right_label {
     float : left;
     width : 45%;
-    font: 14px arial, sans-serif;
+    font: 13px arial, sans-serif;
     font-weight: bold;
     /*background-color: yellow;*/
 }
@@ -80,7 +80,7 @@ div.server_left_data {
     margin-bottom: 4px;
     margin-left: 35%;
     color : black;
-    font: 14px arial, sans-serif;
+    font: 13px arial, sans-serif;
     width : 65%;
     /*background-color: green;*/
 }
@@ -91,7 +91,7 @@ div.server_right_data {
     margin-left: 45%;
     padding-left: 5px;
     color : black;
-    font: 14px arial, sans-serif;
+    font: 13px arial, sans-serif;
     width : 55%;
     /*background-color: green;*/
 }
