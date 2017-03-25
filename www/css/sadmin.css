@@ -42,14 +42,14 @@ div.server_data {
 
 /* ===== Server Left side of screen  ===== */
 div.server_leftside {
-    width: 48%;
+    width: 36%;
     float: left;
     /*background-color: #3E5F80;*/
     margin-left: 2px;
 }
 /* ===== Server Right side of screen  ===== */
 div.server_rightside {
-    width: 48%;
+    width: 60%;
     float: left;
     /*background-color: #3E5F80;*/
     margin-left: 25px;

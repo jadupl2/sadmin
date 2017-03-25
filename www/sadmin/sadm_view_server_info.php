@@ -80,6 +80,16 @@ function display_left_side ($wrow) {
     echo $wrow['srv_name'] . "." . $wrow['srv_domain'] ;
     echo "</div>";
  
+    # Server IP
+    echo "\n\n<div class='server_left_label'>Server IP</div>";
+    echo "\n<div class='server_left_data'>" ;
+    if (empty($wrow['srv_ip'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_ip'];
+    }
+    echo "</div>";
+ 
      # Server Description
     echo "\n\n<div class='server_left_label'>Description</div>";
     echo "\n<div class='server_left_data'>" . $wrow['srv_desc'] . "</div>";
@@ -184,7 +194,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Server Monitored
-    echo "\n\n<div class='server_left_label'>Monitor SSH Connectivity</div>";
+    echo "\n\n<div class='server_left_label'>Monitor SSH Conn.</div>";
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_monitor'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
@@ -253,29 +263,22 @@ function display_right_side ($wrow) {
     }
     echo "</div>";
 
-    # IP Address 
-    echo "\n\n<div class='server_right_label'>Main Server IP Address</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_ip'])) { 
-        echo "&nbsp" ; 
-    }else{ 
-        $ipArray  = explode(",",$wrow['srv_ips_info']);
-        $ipNumber = sizeof($ipArray);
-        $ipLine   = ""; 
-        if (count($ipArray) > 1) {
-            echo "<span title='";
-            for ($i = 0; $i < count($ipArray); ++$i) {
-                list($Dev,$Ip,$Netmask,$MacAddr) = explode("|", $ipArray[$i] );
-                $info = sprintf ("%-7s %-15s %-15s %-18s", $Dev,$Ip,$Netmask,$MacAddr);
-                #$info = $ipArray[$i];
-                $ipLine = $ipLine . $info . "\n" ;
-            }
-            echo "$ipLine" . "'>";
-            echo "</span>";
-        }   
-        echo $wrow['srv_ip'] . " - " . count($ipArray) ; 
+    # Secondary IP Address 
+    if (! empty($wrow['srv_ips_info'])) { 
+       $ipArray  = explode(",",$wrow['srv_ips_info']);
+       $ipNumber = sizeof($ipArray);
+       $ipLine   = ""; 
+       if (count($ipArray) > 1) {
+          for ($i = 0; $i < count($ipArray); ++$i) {
+              list($Dev,$Ip,$Netmask,$MacAddr) = explode("|", $ipArray[$i] );
+              echo "\n\n<div class='server_right_label'>Network Interface(".$i.")</div>";
+              echo "\n<div class='server_right_data'>";
+              $info = sprintf ("%-7s %16s / %-15s / %s",$Dev,$Ip,$Netmask,$MacAddr);              echo $info;
+              echo "</div>";
+          }   
+        }
     }
-    echo "</div>";
+
 
     # Server Memory 
     echo "\n\n<div class='server_right_label'>Server Memory</div>";
