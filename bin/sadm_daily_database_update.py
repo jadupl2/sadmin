@@ -21,6 +21,14 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 #===================================================================================================
+# 2.3   March 2017  - Jacques Duplessis
+#       To eliminate duplicate field separator with Mac Address 
+#           Change field separator in HOSTNAME_sysinfo.txt file from : to = 
+#       Add Error Exception when getting Value
+#       Add time to Last_Daily_Update Column (Timestamp) in the SADM Database
+#
+#
+#===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
 #pdb.set_trace()                                                       # Activate Python Debugging
 
@@ -39,7 +47,7 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver = "2.2"                                                        # Default Program Version
+sadm.ver = "2.3"                                                        # Default Program Version
 sadm.multiple_exec = "N"                                                # Default Run multiple copy
 sadm.debug = 4                                                          # Default Debug Level (0-9)
 sadm.exit_code = 0                                                      # Script Error Return Code
@@ -263,7 +271,7 @@ def update_row(wconn, wcur, wrow):
     wdate = datetime.datetime.now()                                     # Get current Date
     wrow['srv_last_daily_update'] = wdate.strftime('%Y-%m-%d %H:%M:%S') # Last Daily update date
     #sadm.writelog("Last Daily Update TimeStamp is %s" % (wrow['srv_last_daily_update']))
-    sadm.writelog("IPS Info is %s" % (wrow['srv_ips_info']))
+    #sadm.writelog("IPS Info is %s" % (wrow['srv_ips_info']))
 
     try:
         sql = """ update sadm.server set 
@@ -366,8 +374,16 @@ def process_active_servers(wconn, wcur, wcolnames):
             if sadm.debug > 4: print "  Parsing Line : %s" % wline      # Debug Info - Parsing Line
             split_line = wline.split('=')                               # Split based on equal sign
             CFG_NAME = split_line[0].strip()                            # Param Name Uppercase Trim
-            CFG_VALUE = str(split_line[1]).strip()                      # Param Value Trimmed
-            CFG_NAME = str.upper(CFG_NAME)                              # Make Name in Uppercase
+            try:
+                CFG_VALUE = str(split_line[1]).strip()                  # Param Value Trimmed
+                CFG_NAME = str.upper(CFG_NAME)                          # Make Name in Uppercase
+            except LookupError:
+                sadm.writelog(" ")                                      # Print Blank Line
+                sadm.writelog("ERROR GETTING VALUE ON LINE %s" % wline) # Print IndexError Line
+                total_error = total_error + 1                           # Add 1 To Total Error
+                NO_ERROR_OCCUR = False                                  # Now No "Error" is False
+                sadm.writelog("CONTINUE WITH THE NEXT SERVER")          # Advise user we continue
+                continue                                                # Go Read Next Line
 
             # Save Information Found in SysInfo file into our row dictionnary (server_row)
             try:
@@ -384,9 +400,9 @@ def process_active_servers(wconn, wcur, wcolnames):
                 if "SADM_SERVER_MODEL"      in CFG_NAME: srow['srv_model'] = CFG_VALUE
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: srow['srv_serial'] = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: srow['srv_ips_info'] = CFG_VALUE
-                if "SADM_SERVER_IPS"        in CFG_NAME: 
-                    sadm.writelog("IPS INFO = %s" % srow['srv_ips_info'])
-                    sadm.writelog("CFG_VALUE = %s" % CFG_VALUE)
+                #if "SADM_SERVER_IPS"        in CFG_NAME: 
+                #    sadm.writelog("IPS INFO = %s" % srow['srv_ips_info'])
+                #    sadm.writelog("CFG_VALUE = %s" % CFG_VALUE)
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
