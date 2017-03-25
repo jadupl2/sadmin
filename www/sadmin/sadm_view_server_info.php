@@ -156,19 +156,19 @@ function display_left_side ($wrow) {
     # Server Status
     echo "\n\n<div class='server_left_label'>Server Active</div>";
     echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_active']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_active'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
 
     # Server Virtual ?
-    echo "\n\n<div class='server_left_label'>Virtual or Physical Server</div>";
+    echo "\n\n<div class='server_left_label'>Virtual/Physical Server</div>";
     echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_vm']) { echo "Virtual" ; }else{ echo "Physical" ; }
+    if ($wrow['srv_vm'] == 't') { echo "Virtual" ; }else{ echo "Physical" ; }
     echo "</div>";
 
     # Server Sporadic
     echo "\n\n<div class='server_left_label'>Online Sporadically</div>";
     echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_sporadic']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_sporadic'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
 
     # Server Model
@@ -186,7 +186,7 @@ function display_left_side ($wrow) {
     # Server Monitored
     echo "\n\n<div class='server_left_label'>Monitor SSH Connectivity</div>";
     echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_monitor']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_monitor'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
 
     # Server Backup with Rear ?
@@ -214,10 +214,11 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Server Maintenance Mode
-    echo "\n\n<div class='server_left_label'>Maintenance Mode Active</div>";
+    echo "\n\n<div class='server_left_label'>Maintenance Mode</div>";
     echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_maintenance']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_maintenance'] == 't')  { echo "Active" ; }else{ echo "Inactive" ; }
     echo "</div>";
+
 }
 
 
@@ -255,7 +256,24 @@ function display_right_side ($wrow) {
     # IP Address 
     echo "\n\n<div class='server_right_label'>Main Server IP Address</div>";
     echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_ip'])) { echo "&nbsp" ; }else{ echo $wrow['srv_ip']; 
+    if (empty($wrow['srv_ip'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        $ipArray  = explode(",",$wrow['srv_ips_info']);
+        $ipNumber = sizeof($ipArray);
+        $ipLine   = ""; 
+        if (count($ipArray) > 1) {
+            echo "<span title='";
+            for ($i = 0; $i < count($ipArray); ++$i) {
+                list($Dev,$Ip,$Netmask,$MacAddr) = explode("|", $ipArray[$i] );
+                $info = sprintf ("%-7s %-15s %-15s %-18s", $Dev,$Ip,$Netmask,$MacAddr);
+                #$info = $ipArray[$i];
+                $ipLine = $ipLine . $info . "\n" ;
+            }
+            echo "$ipLine" . "'>";
+            echo "</span>";
+        }   
+        echo $wrow['srv_ip'] . " - " . count($ipArray) ; 
     }
     echo "</div>";
 
@@ -292,12 +310,6 @@ function display_right_side ($wrow) {
     echo "\n\n<div class='server_right_label'>Thread per Core</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_thread_per_core'])) { echo "&nbsp" ; }else{ echo $wrow['srv_thread_per_core']; }
-    echo "</div>";
-
-    # IP Use on the Server
-    echo "\n\n<div class='server_right_label'>IP Address used on Server</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_ips_info'])) { echo "&nbsp" ; }else{ echo $wrow['srv_ips_info']; }
     echo "</div>";
 
     # Server Disk INformation
@@ -339,13 +351,13 @@ function display_right_side ($wrow) {
     # Reboot after Update
     echo "\n\n<div class='server_right_label'>Reboot after O/S Update</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_reboot']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_update_reboot'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
        
     # Server Auto Update
     echo "\n\n<div class='server_right_label'>Update O/S Automatically</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_auto']) { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_update_auto'] == 't') { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
     
     # Month that O/S Update Can Occurs

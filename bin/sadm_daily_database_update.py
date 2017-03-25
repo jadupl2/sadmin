@@ -263,6 +263,7 @@ def update_row(wconn, wcur, wrow):
     wdate = datetime.datetime.now()                                     # Get current Date
     wrow['srv_last_daily_update'] = wdate.strftime('%Y-%m-%d %H:%M:%S') # Last Daily update date
     #sadm.writelog("Last Daily Update TimeStamp is %s" % (wrow['srv_last_daily_update']))
+    sadm.writelog("IPS Info is %s" % (wrow['srv_ips_info']))
 
     try:
         sql = """ update sadm.server set 
@@ -363,7 +364,7 @@ def process_active_servers(wconn, wcur, wcolnames):
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
                 continue                                                # Go read the next line
             if sadm.debug > 4: print "  Parsing Line : %s" % wline      # Debug Info - Parsing Line
-            split_line = wline.split(':')                               # Split based on equal sign
+            split_line = wline.split('=')                               # Split based on equal sign
             CFG_NAME = split_line[0].strip()                            # Param Name Uppercase Trim
             CFG_VALUE = str(split_line[1]).strip()                      # Param Value Trimmed
             CFG_NAME = str.upper(CFG_NAME)                              # Make Name in Uppercase
@@ -383,6 +384,9 @@ def process_active_servers(wconn, wcur, wcolnames):
                 if "SADM_SERVER_MODEL"      in CFG_NAME: srow['srv_model'] = CFG_VALUE
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: srow['srv_serial'] = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: srow['srv_ips_info'] = CFG_VALUE
+                if "SADM_SERVER_IPS"        in CFG_NAME: 
+                    sadm.writelog("IPS INFO = %s" % srow['srv_ips_info'])
+                    sadm.writelog("CFG_VALUE = %s" % CFG_VALUE)
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
