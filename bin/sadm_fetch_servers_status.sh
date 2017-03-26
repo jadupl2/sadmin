@@ -159,8 +159,8 @@ process_servers()
               # IF MONITORING IS FALSE AND SERVER DOESN'T RESPOND TO PING, CONTINUE TO NEXT SERVER
               #-------------------------------------------------------------------------------------
               sadm_writelog "Let's try to ping the server $fqdn_server"
-              #ping -w3 $fqdn_server >/dev/null 2>&1                    # Ping Server one time
-              ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
+              ping -w3 $fqdn_server >/dev/null 2>&1                     # Ping Server one time
+              #ping -w 3 $fqdn_server >>$SADM_LOG 2>&1                    # Ping Server one time
               if [ $? -ne 0 ]                                           # If server doesn't respond
                  then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
                          then sadm_writelog "WARNING : Can't ping sporadic server $fqdn_server"
@@ -215,13 +215,8 @@ process_servers()
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
-              sadm_writelog "Make sure the directory $WDIR Exist"       # Inform User Dir Must Exist
-              if [ ! -d "${WDIR}" ]                                     # If Dir. doesn't exist
-                  then sadm_writelog "Creating ${WDIR} directory"       # Inform we creating it
-                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
-                  else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
-              fi
-              #
+              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+
               # GET THE RCH (RETURN CODE HISTORY) FILES FROM REMOTE SERVER
               # RSYNC REMOTE $SADMIN/DAT/RCH/*.RCH TO LOCAL $SADMIN/WWW/DAT/$SERVER/RCH  
               #-------------------------------------------------------------------------------------
@@ -241,13 +236,8 @@ process_servers()
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
-              sadm_writelog "Make sure the directory $WDIR Exist"       # Inform User Dir Must Exist
-              if [ ! -d "${WDIR}" ]                                     # If Dir. doesn't exist
-                  then sadm_writelog "Creating ${WDIR} directory"       # Inform we creating it
-                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
-                  else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
-              fi
-              #
+              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+
               # GET THE SERVER LOG FILE 
               # TRANSFER REMOTE LOG FILE(S) $SADMIN/LOG/*.LOG TO LOCAL $SADMIN/WWW/DAT/$SERVER/LOG
               #-------------------------------------------------------------------------------------
@@ -267,13 +257,8 @@ process_servers()
               #-------------------------------------------------------------------------------------
               sadm_writelog " "                                         # Separation Blank Line
               WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"               # Local www Receiving Dir.
-              sadm_writelog "Make sure the directory $WDIR Exist"       # Inform User Dir Must Exist
-              if [ ! -d "${WDIR}" ]                                     # If Dir. doesn't exist
-                  then sadm_writelog "Creating ${WDIR} directory"       # Inform we creating it
-                       mkdir -p ${WDIR} ; chmod 2775 ${WDIR}            # Create Directory
-                  else sadm_writelog "Directory ${WDIR} already exist"  # Inform user it's OK
-              fi
-              #
+              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+
               # GET THE SERVER SYSMON REPORT FILE 
               # TRANSFER REMOTE REPORT FILE(S) $SADMIN/RPT/*.RPT TO LOCAL $SADMIN/WWW/DAT/$SERVER/RPT
               #-------------------------------------------------------------------------------------
