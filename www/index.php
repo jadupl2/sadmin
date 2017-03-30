@@ -1,1 +1,1 @@
-sadmin/sadm_view_servers.php
+sadmin/sadm_view_sysmon.php
