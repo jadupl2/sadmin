@@ -117,7 +117,17 @@ process_linux_servers()
                  else sadm_writelog "Good, I have a ping response"
               fi
               
-              
+               
+
+              # Test if $SADM_BIN_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_BIN_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_BIN_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_BIN_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_BIN_DIR} >/dev/null 2>&1
+              fi
+             
               # Do the Rsync /sadmin/bin
               sadm_writelog "rsync -ar --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/"
               rsync -ar --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/
@@ -129,6 +139,17 @@ process_linux_servers()
               fi
               
               
+              
+
+              # Test if $SADM_BASE_DIR/jac/bin exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_BASE_DIR/jac/bin}"
+              ssh -n ${server_name} ls -l ${SADM_BASE_DIR/jac/bin} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_BASE_DIR/jac/bin} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_BASE_DIR/jac/bin} >/dev/null 2>&1
+              fi
+
               # Do the Rsync /sadmin/jac/bin
               sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/jac/bin/ ${server_name}.${server_domain}:${SADM_BASE_DIR}/jac/bin/"
               rsync -ar --delete ${SADM_BASE_DIR}/jac/bin/ ${server_name}.${server_domain}:${SADM_BASE_DIR}/jac/bin/
@@ -140,6 +161,16 @@ process_linux_servers()
               fi
               
                
+
+              # Test if $SADM_LIB_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_LIB_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_LIB_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_LIB_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_LIB_DIR} >/dev/null 2>&1
+              fi
+
               # Do the Rsync /sadmin/lib
               sadm_writelog "rsync -ar --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/"
               rsync -ar --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/
@@ -151,7 +182,17 @@ process_linux_servers()
               fi
 
                
-              # Do the Rsync /sadmin/cfg
+ 
+              # Test if $SADM_CFG_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_CFG_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_CFG_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_CFG_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_CFG_DIR} >/dev/null 2>&1
+              fi
+
+             # Do the Rsync /sadmin/cfg
               sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std"
               rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std
               RC=$? ; RC=0
@@ -175,7 +216,16 @@ process_linux_servers()
                  else sadm_writelog "Return Code : 0 - OK"
               fi
                
-                
+  
+              # Test if $SADM_PKG_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_PKG_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_PKG_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_PKG_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_PKG_DIR} >/dev/null 2>&1
+              fi
+                             
               # Do the Rsync /sadmin/pkg
               sadm_writelog "rsync -ar  --delete ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/"
               rsync -ar  --delete ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/
@@ -239,7 +289,16 @@ process_aix_servers()
                  else sadm_writelog "Good, I have a ping response"
               fi
               
-              
+
+              # Test if $SADM_BIN_DIR exist on remote - If not Create it
+              sadm_writelog "ssh ${server_name} ls -l ${SADM_BIN_DIR}"
+              ssh ${server_name} ls -l ${SADM_BIN_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_BIN_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_BIN_DIR} >/dev/null 2>&1
+              fi
+
               # Do the Rsync /sadmin/bin
               sadm_writelog "rsync -ar --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/"
               rsync -ar --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/
@@ -262,6 +321,16 @@ process_aix_servers()
               fi
               
                
+
+              # Test if $SADM_LIB_DIR exist on remote - If not Create it
+              sadm_writelog "ssh ${server_name} ls -l ${SADM_LIB_DIR}"
+              ssh ${server_name} ls -l ${SADM_LIB_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_LIB_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_LIB_DIR} >/dev/null 2>&1
+              fi
+
               # Do the Rsync /sadmin/lib
               sadm_writelog "rsync -ar --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/"
               rsync -ar --delete ${SADM_LIB_DIR}/ ${server_name}.${server_domain}:${SADM_LIB_DIR}/
@@ -273,6 +342,15 @@ process_aix_servers()
               fi
 
                
+              # Test if $SADM_CFG_DIR exist on remote - If not Create it
+              sadm_writelog "ssh ${server_name} ls -l ${SADM_CFG_DIR}"
+              ssh ${server_name} ls -l ${SADM_CFG_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_CFG_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_CFG_DIR} >/dev/null 2>&1
+              fi
+
               # Do the Rsync /sadmin/cfg
               sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std"
               rsync -ar  --delete ${SADM_CFG_DIR}/sysmon.std ${server_name}.${server_domain}:${SADM_CFG_DIR}/sysmon.std
@@ -297,7 +375,16 @@ process_aix_servers()
                  else sadm_writelog "Return Code : 0 - OK"
               fi
                
-                
+  
+              # Test if $SADM_PKG_DIR exist on remote - If not Create it
+              sadm_writelog "ssh ${server_name} ls -l ${SADM_PKG_DIR}"
+              ssh ${server_name} ls -l ${SADM_PKG_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_PKG_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_PKG_DIR} >/dev/null 2>&1
+              fi
+               
               # Do the Rsync /sadmin/pkg
               sadm_writelog "rsync -ar  --delete ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/"
               rsync -ar  --delete ${SADM_PKG_DIR}/ ${server_name}.${server_domain}:${SADM_PKG_DIR}/
