@@ -66,7 +66,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-center'>Category</th>";
     echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Last Edit</th>";
+    echo "\n<th class='dt-center'>Sporadic</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";    
     echo "\n</tr>"; 
@@ -81,7 +81,7 @@ function display_heading($line_title) {
     echo "\n<th class='dt-center'>Category</th>";
     echo "\n<th class='dt-center'>Group</th>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Last Edit</th>";
+    echo "\n<th class='dt-center'>Sporadic</th>";
     echo "\n<th class='dt-center'>Update</th>";
     echo "\n<th class='dt-center'>Delete</th>";
     echo "\n</tr>"; 
@@ -174,8 +174,12 @@ function display_data($count, $row) {
     }else{ 
         echo "\n<td class='dt-center'>Inactive</td>";
     }
-    echo "\n<td class='dt-center'>" . $row['srv_last_edit_date']   . "</td>";
-
+    if ($row['srv_sporadic'] == 't') { 
+        echo "\n<td class='dt-center'>Yes</td>"; 
+    }else{ 
+        echo "\n<td class='dt-center'>No</td>";
+    }
+    
     # Update Button
     echo "\n<td style='text-align: center'>";
     echo "\n<a href=/crud/sadm_server_update.php?sel=" . $row['srv_name'] .">";
