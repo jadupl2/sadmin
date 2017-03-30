@@ -195,7 +195,7 @@ function display_data($count, $row) {
     }    
     echo "</td>\n";  
     
-        # Last Update Date 
+    # Last O/S Update Date 
     echo "<td class='dt-center'>" . nl2br( $row['srv_update_date']) . "</td>\n";  
         
     # Last Update Status
