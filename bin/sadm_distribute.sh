@@ -1,14 +1,12 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_rsync_sadmin.sh
+#   Title    :  sadm_distribute.sh
 #   Synopsis : .
-#   Version  :  1.0
-#   Date     :  6 September 2015
+#   Version  :  2.0
+#   Date     :  30 March 2017
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_rsync_sadmin.sh 1.0 2015.09.06
-#  History
-#  1.1 
+#   SCCS-Id. :  @(#) sadm_distribute.sh 1.0 2017.03.30
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
@@ -23,8 +21,8 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Version 1.7
-# 2017_02_04    Jacques DUplessis - Don't rsync /samin/cfg entirely just sysmon.std file from now on
+# Version 2.X
+# 2017_XX_XX    Jacques Duplessis - 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -40,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
