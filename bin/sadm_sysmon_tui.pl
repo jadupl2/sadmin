@@ -10,13 +10,14 @@ use English;
 #
 # Global Variables definition
 # ---------------------------------------------------------------------------------------------
-$SADM_BASE_DIR= "$ENV{'SADMIN'}";   		                            # Dir where sadmin reside
-$SADM_RPT_DIR = "${SADM_BASE_DIR}/www/dat";                             # Dir where rpt reside
+my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN Root Dir.
+my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
+my $SADM_RPT_DIR        = "${SADM_BASE_DIR}/www/dat";                   # Dir where rpt reside
 $XDISPLAY= "$ENV{'DISPLAY'}";	   	                                    # Variable ENV DIsplay
-$VERSION_NUMBER = "01.01";	   	                                        # SADM Version Number
+$VERSION_NUMBER = "01.02";	   	                                        # SADM Version Number
 $CLEAR=`tput clear`;
 $RPT_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui.$$";
-$CMD="find $SADM_RPT_DIR -type f name *.rpt -exec cat {} > $RPT_FILE \\;" ;
+$CMD="find $SADM_RPT_DIR -type f -name *.rpt -exec cat {} > $RPT_FILE \\;" ;
 
 
 # ---------------------------------------------------------------------------------------------
@@ -27,6 +28,7 @@ sub display_report {
 	$dash_line = "-";
 	$dash_line x= 100;
 	print "${CLEAR}SADMIN SYSMON VIEWER - $VERSION_NUMBER \nReport as of ${RDATE}\n${dash_line}\n";
+    #print "$CMD";
     system ("$CMD");
     open (SADMRPT,"<$RPT_FILE") or die "Can't open $RPT_FILE: $!\n";
    	while ($line = <SADMRPT>) {
