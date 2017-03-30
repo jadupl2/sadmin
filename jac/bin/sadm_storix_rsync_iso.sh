@@ -85,7 +85,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-LOCAL_ISO_DIR="/stbackups/iso"                ; export LOCAL_ISO_DIR    # Storix ISO Directory
+LOCAL_ISO_DIR="/backups/iso"                  ; export LOCAL_ISO_DIR    # Storix ISO Directory
 REMOTE_HOST="nas_storix.maison.ca"            ; export REMOTE_HOST      # NAS BOX NAME
 REMOTE_ISO_DIR="/volume1/storix/iso"          ; export REMOTE_ISO_DIR   # ISO Dir. on NAS Box
 
@@ -116,14 +116,14 @@ rsync_storix_iso()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                          # Initialize the LOG and RC File - Check existence of Dir.
-        
-#    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ] # Only run on SADM Server
-#        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-#             sadm_writelog "Process aborted"                           # Abort advise message
-#             sadm_stop 1                                               # Close and Trim Log
-#             exit 1                                                    # Exit To O/S
-#    fi
-        
+
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
@@ -131,9 +131,9 @@ rsync_storix_iso()
              exit 1                                                     # Exit To O/S
     fi
     
-    rsync_storix_iso                    # Rsync local Storix ISO with Remote NAS Dir.
-    rc=$? ; export rc                   # Save Return Code
-    sadm_stop $rc                       # Saveand trim Logs
-    exit $SADM_EXIT_CODE                  # Exit with Error code value
+    rsync_storix_iso                                                    # Rsync Storix ISO with  NAS
+    rc=$? ; export rc                                                   # Save Return Code
+    sadm_stop $rc                                                       # Saveand trim Logs
+    exit $rc                                                            # Exit with Error code value
 
 
