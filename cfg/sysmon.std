@@ -44,7 +44,7 @@ swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 2002
 #
 #---------- Linux Service Monitoring
 service_crond|cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
-service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+#service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 #service_named                   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_chronyd|ntp|ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_ssh|sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
