@@ -265,8 +265,7 @@ sadm_install_package()
     
 
     # Install the Package under RedHat/CentOS/Fedora
-    if [ "$(sadm_get_osname)" = "REDHAT" ] || 
-       [ "$(sadm_get_osname)" = "CENTOS" ] || 
+    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
         then sadm_writelog "Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
              case "$(sadm_get_osmajorversion)" in
@@ -288,9 +287,8 @@ sadm_install_package()
     fi
     
     # Install the Package under Debian/*Ubuntu/RaspberryPi 
-    if [ "$(sadm_get_osname)" = "UBUNTU" ] || 
-       [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
-       [ "$(sadm_get_osname)" = "DEBIAN" ]
+    if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
+       [ "$(sadm_get_osname)" = "DEBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
         then sadm_writelog "Resynchronize package index files from their sources via Internet"
              sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
              apt-get update > /dev/null 2>&1                            # Get Package List From Repo
@@ -795,12 +793,13 @@ sadm_load_config_file()
     if [ ! -r "$SADM_CFG_FILE" ]
         then if [ ! -r "$SADM_CFG_HIDDEN" ] 
                 then echo "****************************************************************"
-                     echo "SADMIN Configuration file is not found - $SADM_CFG_FILE "
-                     echo "Even the config template file cannot be found - $SADM_CFG_HIDDEN"
+                     echo "SADMIN Configuration file not found - $SADM_CFG_FILE "
+                     echo "Even the config template file can't be found - $SADM_CFG_HIDDEN"
                      echo "Copy both files from another system to this server"
                      echo "Or restore the files from a backup"
                      echo "Review the file content."
                      echo "****************************************************************"
+                     sadm_stop 1
                 else echo "****************************************************************"
                      echo "The configuration file $SADM_CFG_FILE do not exist."
                      echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
