@@ -201,7 +201,14 @@ process_linux_servers()
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_writelog "Return Code : 0 - OK"
               fi
-               
+              sadm_writelog "rsync -ar  --delete ${SADM_CFG_DIR}/sadmin.cfg ${server_name}.${server_domain}:${SADM_CFG_DIR}/sadmin.cfg"
+              rsync -ar  --delete ${SADM_CFG_DIR}/sadmin.cfg ${server_name}.${server_domain}:${SADM_CFG_DIR}/sadmin.cfg
+              RC=$? ; RC=0
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "********** ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                 else sadm_writelog "Return Code : 0 - OK"
+              fi              
                
               # Do the Rsync /storix/custom
               #sadm_writelog "${server_name}.${server_domain} 'mkdir -p /storix/custom'"
