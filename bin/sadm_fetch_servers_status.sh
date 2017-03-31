@@ -223,6 +223,7 @@ process_servers()
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ >/dev/null 2>&1
               RC=$?                                                     # Save error number
+              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK 
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
@@ -244,6 +245,7 @@ process_servers()
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ >/dev/null 2>&1
               RC=$?                                                     # Save error number
+              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK 
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
@@ -265,6 +267,7 @@ process_servers()
               sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ "
               rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ >/dev/null 2>&1
               RC=$?                                                     # Save error number
+              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK 
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
