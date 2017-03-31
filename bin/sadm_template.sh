@@ -67,6 +67,19 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 
 
+#===================================================================================================
+#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
+#===================================================================================================
+help()
+{
+    echo " "
+    echo "sadm_template.sh usage :"
+    echo "             -s [ServerName]"
+    echo "             -h help"
+    echo " "
+}
+
+
 # --------------------------------------------------------------------------------------------------
 #                      Process servers O/S selected by parameter received (aix/linux)
 # --------------------------------------------------------------------------------------------------
@@ -79,11 +92,10 @@ process_servers()
     sadm_writelog " "
 
     # Select From Database Linux Active Servers and output result in $SADM_TMP_FILE
-    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active " 
-    SQL2="from sadm.server "
-    SQL3="where srv_ostype = '${WOSTYPE}' and srv_active = True "
-    SQL4="order by srv_name; "
-    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    SQL="${SQL} from sadm.server"
+    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True"
+    SQL="${SQL} order by srv_name; "
     sadm_writelog "$SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
     #$SADM_PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
     $SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
@@ -98,18 +110,18 @@ process_servers()
               server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
               server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
-              fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
+              server_fqdn=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
               sadm_writelog " " ; sadm_writelog " "
               sadm_writelog "${SADM_TEN_DASH}"
-              info_line="Processing ($xcount) $fqdn_server"
+              info_line="Processing ($xcount) $server_fqdn"
               sadm_writelog "$info_line"
               if [ "$server_monitor" == "t" ]
-                    then sadm_writelog "Monitoring is ON for $fqdn_server"
-                    else sadm_writelog "Monitoring is OFF for $fqdn_server"
+                    then sadm_writelog "Monitoring is ON for $server_fqdn"
+                    else sadm_writelog "Monitoring is OFF for $server_fqdn"
               fi
               if [ "$server_sporadic" == "t" ]
-                    then sadm_writelog "Sporadic server is ON for $fqdn_server"
-                    else sadm_writelog "Sporadic server is OFF for $fqdn_server"
+                    then sadm_writelog "Sporadic server is ON for $server_fqdn"
+                    else sadm_writelog "Sporadic server is OFF for $server_fqdn"
               fi
               
               # PROCESS GOES HERE
