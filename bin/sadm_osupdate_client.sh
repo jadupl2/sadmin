@@ -19,6 +19,8 @@
 #       Correction minor bug with shutdown reboot command on Raspberry Pi
 #       Now Checking if Script is running of SADMIN server at the beginning
 #           - No automatic reboot on the SADMIN server while it is use to start update on client
+# Version 2.9 - April 2017 
+#       Added Support for Linux Mint 
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -28,7 +30,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.8'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -98,8 +100,7 @@ check_available_update()
     sadm_writelog "Checking update for $(sadm_get_osname) version $(sadm_get_osmajorversion) ..."
     
     # RedHat/CentOS/Fedora Base Update 
-    if [ "$(sadm_get_osname)" = "REDHAT" ] || 
-       [ "$(sadm_get_osname)" = "CENTOS" ] || 
+    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
         then case "$(sadm_get_osmajorversion)" in
                 [3-4]) sadm_writelog "Running \"up2date -l\""           # Update the Log
@@ -134,9 +135,8 @@ check_available_update()
              esac
     fi
     
-    if [ "$(sadm_get_osname)" = "UBUNTU" ] || 
-       [ "$(sadm_get_osname)" = "DEBIAN" ] ||
-       [ "$(sadm_get_osname)" = "RASPBIAN" ]
+    if [ "$(sadm_get_osname)" = "UBUNTU" ]   || [ "$(sadm_get_osname)" = "DEBIAN" ] ||
+       [ "$(sadm_get_osname)" = "RASPBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
         then sadm_writelog "Resynchronize package index files from their sources via Internet"
              sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
              apt-get update > /dev/null 2>&1                            # Get Package List From Repo
@@ -287,7 +287,7 @@ run_apt_get()
                         SADM_EXIT_CODE=$?
                         ;;
                                 
-                "UBUNTU"|"DEBIAN"|"RASPBIAN" )     
+                "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT" )     
                         run_apt_get
                         SADM_EXIT_CODE=$?
                         ;;
