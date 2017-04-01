@@ -74,34 +74,41 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
-process_linux_servers()
+process_servers()
 {
+
+    WOSTYPE=$1                                                           # Should be aix or linux
     sadm_writelog " "
     sadm_writelog "$SADM_DASH" 
-    sadm_writelog "Processing active Linux Servers"
+    sadm_writelog "Processing active $WOSTYPE server(s)"
+    sadm_writelog " "
 
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_active from sadm.server  "
-    SQL2="where srv_ostype = 'linux' and srv_active = True "
-    SQL3="order by srv_name; "
-    SQL="${SQL1}${SQL2}${SQL3}"
+    # Select From Database Active Servers and output result in $SADM_TMP_FILE
+    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active " 
+    SQL2="from sadm.server "
+    SQL3="where srv_ostype = '${WOSTYPE}' and srv_active = True "
+    SQL4="order by srv_name; "
+    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
     if [ $DEBUG_LEVEL -gt 5 ] 
-       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
+      then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
     fi
     $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
- 
+
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
               do
-              xcount=`expr $xcount + 1`
-              server_name=`  echo $wline|awk -F, '{ print $1 }'`
-              server_os=`    echo $wline|awk -F, '{ print $2 }'`
-              server_domain=`echo $wline|awk -F, '{ print $3 }'`
-              sadm_writelog "${SADM_DASH}"
-              info_line="Processing ($xcount) ${server_name}.${server_domain} - "
-              info_line="${info_line}os:${server_os}"
-              sadm_writelog "$info_line"
-              
+              xcount=`expr $xcount + 1`                                 # Server Counter
+              server_name=`    echo $wline|awk -F, '{ print $1 }'`      # Extract Server Name
+              server_os=`      echo $wline|awk -F, '{ print $2 }'`      # Extract O/S (linux/aix)
+              server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
+              server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
+              server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
+              fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
+              sadm_writelog " " ; sadm_writelog " "
+              sadm_writelog "${SADM_TEN_DASH}"
+              sadm_writelog "Processing ($xcount) $fqdn_server"
+
               # Ping the server - Server or Laptop may be unplugged
               sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
               ping -c 2 ${server_name}.${server_domain} >/dev/null 2>/dev/null
