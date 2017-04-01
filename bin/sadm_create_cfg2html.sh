@@ -10,7 +10,8 @@
 #===================================================================================================
 # 2.2 Correction in end_process function (Sept 2016)
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
-# 2.4 Install cfg2html from local copy is not present (Jab 2017)
+# 2.4 Install cfg2html from local copy is not present (Jan 2017)
+# 2.5 Added support for LinuxMint (April 2017)
 #
 #===================================================================================================
 # 
@@ -28,7 +29,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.4'                             ; export SADM_VER            # Script Version
+SADM_VER='2.5'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -83,8 +84,10 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
                        [ "$(sadm_get_osname)" = "FEDORA" ]                    
                        then rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
                     fi
-                    if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "DEBIAN" ] || 
-                       [ "$(sadm_get_osname)" = "RASPBIAN" ]                    
+                    if [ "$(sadm_get_osname)" = "UBUNTU" ]   ||
+                       [ "$(sadm_get_osname)" = "DEBIAN" ]   || 
+                       [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
+                       [ "$(sadm_get_osname)" = "LINUXMINT" ]                  
                        then dpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb
                     fi
                     CFG2HTML=`which cfg2html >/dev/null 2>&1`           # Try Again to Locate cfg2html
