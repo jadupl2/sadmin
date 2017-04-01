@@ -145,6 +145,13 @@ function display_data($count, $row) {
                 echo "<img src='/images/ubuntu.png' ";
                 echo "style='width:24px;height:24px;'></a></td>\n";
                 break;
+            case 'LINUXMINT' :
+                echo "<td class='dt-center'>";
+                echo "<a href='https://linuxmint.com/' ";
+                echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
+                echo "<img src='/images/linuxmint.png' ";
+                echo "style='width:24px;height:24px;'></a></td>\n";
+                break;
             case 'DEBIAN' :
                 echo "<td class='dt-center'>";
                 echo "<a href='https://www.debian.org/' ";
