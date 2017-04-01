@@ -476,7 +476,7 @@ function display_left_side ( $wrow , $mode) {
     }
     if ($mode == 'C') {
        echo "\n<select name='scr_backup' size=1>";
-       echo "\n<option value='3' selected>Wednesday</option>";
+       echo "\n<option value='0' selected>No backup</option>";
        echo "\n<option value='1'>Monday</option>";
        echo "\n<option value='2'>Tuesday</option>";
        echo "\n<option value='3'>Wednesday</option>";
