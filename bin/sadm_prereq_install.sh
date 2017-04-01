@@ -250,7 +250,45 @@ main_process()
        then sadm_writelog "Perl Module '${SCMD}' is available [OK]" 
        else sadm_install_std_package "$DRYRUN" "$SCMD" "perl-DateTime" "libdatetime-perl libwww-perl"
     fi
+    sadm_writelog " "
+    
 
+    # Check if 'sadmin' group exist - If not create it.
+    sadm_writelog "Checking if ${SADM_GROUP} group is created"
+    grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
+    if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
+        then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
+             if [ "$DRYRUN" = "OFF" ]
+                then groupadd ${SADM_GROUP}                             # Create SADM_GROUP
+                     if [ $? -ne 0 ]                                    # Error creating Group 
+                        then sadm_writelog "Error when creating group ${SADM_GROUP}"
+                             sadm_writelog "Process Aborted"            # Abort got be created
+                             sadm_stop 1                                # Terminate Gracefully
+                        else sadm_writelog "Group ${SADM_GROUP} Created"# Advise user will create
+                     fi
+             fi
+        else sadm_writelog "Group ${SADM_GROUP} Already Created [OK]"   # Advise user will create 
+    fi
+    sadm_writelog " "
+
+    # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
+    sadm_writelog "Checking if ${SADM_USER} user is created"
+    grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
+    if [ $? -ne 0 ]                                                     # NO Not There
+        then sadm_writelog "User $SADM_USER not present"                # Advise user will create
+             if [ "$DRYRUN" = "OFF" ]
+                then useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
+                     if [ $? -ne 0 ]                                    # Error creating user 
+                         then sadm_writelog "Error when creating user ${SADM_USER}"
+                              sadm_writelog "Process Aborted"           # Abort got be created
+                              sadm_stop 1                               # Terminate Gracefully
+                         else sadm_writelog "The user ${SADM_USER} is created" # Advise user created
+                     fi
+             fi
+        else sadm_writelog "User ${SADM_USER} Already Created [OK]"     # Advise user will create 
+    fi
+    sadm_writelog " "
+    
     return 0                                                            # Return Default return code
 }
 
