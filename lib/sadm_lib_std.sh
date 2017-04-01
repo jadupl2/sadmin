@@ -9,7 +9,8 @@
 # Description
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
-# 18 Jan - Create log file earlier to prevent error message
+# 2.0 Create log file earlier to prevent error message - 18 Jan - J.Duplessis
+# 2.1 Added Support for Linux Mint - April 2017 - J.D.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -27,6 +28,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
+SADM_LIB_VER="2.1"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1191,7 +1193,7 @@ sadm_stop() {
           ;;
       4)  sadm_writelog "No Mail can be send until the mail command is install"
           sadm_writelog "On CentOS/Red Hat/Fedora  - enter command 'yum -y mail'"
-          sadm_writelog "On Ubuntu/Debian/Raspbian - enter command 'apt-get install mailx'"
+          sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - enter command 'apt-get install mailx'"
           ;;
       *)  sadm_writelog "The SADM_MAIL_TYPE is not set properly - Should be between 0 and 3"
           sadm_writelog "It is now set to $SADM_MAIL_TYPE"
