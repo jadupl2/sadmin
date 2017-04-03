@@ -197,7 +197,6 @@ sadm_install_std_package()
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    sadm_writelog " " 
     if [ "$DRYRUN" = "ON" ] 
         then sadm_writelog "RUNNING IN DRYRUN MODE - NOTHING WILL BE INSTALL"
     fi 
@@ -221,7 +220,6 @@ main_process()
     fi            
     sadm_writelog " " 
 
-
     # Check if command mail is installed - If not install it if not running in dryrun mode
     SCMD="mail"
     sadm_writelog "Checking availability of command $SCMD" 
@@ -231,7 +229,69 @@ main_process()
     fi            
     sadm_writelog " " 
 
- 
+    # Check if command ethtool is installed - If not install it if not running in dryrun mode
+    SCMD="ethtool"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "ethtool" "ethtool" # Install related RPMorDEB 
+    fi            
+    sadm_writelog " " 
+
+    # Check if command lscpu is installed - If not install it if not running in dryrun mode
+    SCMD="lsb_release"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "redhat-lsb-core" "lsb_release"  # Install related RPMorDEB 
+    fi            
+    sadm_writelog " "
+    
+    # Check if command lscpu is installed - If not install it if not running in dryrun mode
+    SCMD="dmidecode"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "dmidecode" "dmidecode"  # Install related RPMorDEB 
+    fi            
+    sadm_writelog " "
+    
+    # Check if command lscpu is installed - If not install it if not running in dryrun mode
+    SCMD="fdisk"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "util-linux" "util-linux"  # Install related RPMorDEB 
+    fi            
+    sadm_writelog " "
+    
+    # Check if command lscpu is installed - If not install it if not running in dryrun mode
+    SCMD="lscpu"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "util-linux" "util-linux"  # Install related RPMorDEB 
+    fi            
+    sadm_writelog " " 
+
+    # Check if command parted is installed - If not install it if not running in dryrun mode
+    SCMD="bc"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "bc" "bc" # Install related RPMorDEB 
+    fi            
+    sadm_writelog " " 
+  
+    # Check if command parted is installed - If not install it if not running in dryrun mode
+    SCMD="parted"
+    sadm_writelog "Checking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+       else sadm_install_std_package "$DRYRUN" "$SCMD" "parted" "parted" # Install related RPMorDEB 
+    fi            
+    sadm_writelog " " 
+  
     # Check if command cfg2html is installed - If not install it if not running in dryrun mode
     SCMD="cfg2html"
     sadm_writelog "Checking availability of command $SCMD" 
@@ -240,7 +300,6 @@ main_process()
        else sadm_install_cfg2html                                       # Install related RPMorDEB 
     fi            
     sadm_writelog " " 
-
 
     # Test if perl module DateTime is installed - If not install it
     SCMD="DateTime"
@@ -252,7 +311,6 @@ main_process()
     fi
     sadm_writelog " "
     
-
     # Check if 'sadmin' group exist - If not create it.
     sadm_writelog "Checking if ${SADM_GROUP} group is created"
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
