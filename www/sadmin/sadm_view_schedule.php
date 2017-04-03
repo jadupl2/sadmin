@@ -48,10 +48,10 @@ function display_heading($line_title) {
     echo "<center>\n";                                                  # Table Centered on Page
   
     # Set Font Size for Table Cell and Table Heading
-    #echo "<style>\n";
-    ##echo "td { font-size: 13px; }\n";
-    #echo "th { font-size: 14px; }\n";
-    #echo "</style>\n";
+    echo "<style>\n";
+    echo "td { font-size: 13px; }\n";
+    echo "th { font-size: 13px; }\n";
+    echo "</style>\n";
     echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
 
     # Table Heading
@@ -59,7 +59,7 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th class='text-center'>Grp</th>\n";
+    #echo "<th class='text-center'>Grp</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
@@ -69,7 +69,7 @@ function display_heading($line_title) {
     echo "<th class='text-center'>Last O/S Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
-    echo "<th class='text-center'>Edit</th>\n";
+    #echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -78,7 +78,7 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th class='text-center'>Grp</th>\n";
+    #echo "<th class='text-center'>Grp</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
@@ -88,7 +88,7 @@ function display_heading($line_title) {
     echo "<th class='text-center'>Last O/S Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Log</th>\n";
-    echo "<th class='text-center'>Edit</th>\n";
+    #echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -118,7 +118,7 @@ function display_data($count, $row) {
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
     # Groupe de Serveur
-    echo "<td class='dt-center'>" . nl2br( $row['srv_group']) . "</td>\n";  
+    #echo "<td class='dt-center'>" . nl2br( $row['srv_group']) . "</td>\n";  
 
     # Operating System Version
     #echo "<td class='dt-center'>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
@@ -222,10 +222,10 @@ function display_data($count, $row) {
 
     
     # Display Icon to Edit Server Static information
-    echo "<td class='dt-center'>";
-    echo "<a href='/crud/sadm_server_update.php?sel=" . $row['srv_name'] . "'";
-    echo " title='Edit " . ucwords($row['srv_name']) . " Static Information'>";
-    echo "<img src='/images/update.png'   style='width:24px;height:24px;'></a></td>\n";
+    #echo "<td class='dt-center'>";
+    #echo "<a href='/crud/sadm_server_update.php?sel=" . $row['srv_name'] . "'";
+    #echo " title='Edit " . ucwords($row['srv_name']) . " Static Information'>";
+    #echo "<img src='/images/update.png'   style='width:24px;height:24px;'></a></td>\n";
 
     echo "</tr>\n"; 
 }
