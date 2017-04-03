@@ -67,7 +67,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #
 # THESE VARIABLES MUST BE SET TO FIT YOUR ENVIRONMENT - YOU NEED TO CHANGE THEM
-NFS_SERVER="nas_server.maison.ca"       ; export NFS_SERVER             # Remoote Backup Name
+NFS_SERVER="batnas.maison.ca"           ; export NFS_SERVER             # Remote Backup Name
 REM_BASE_DIR="/volume1/linux"           ; export REM_BASE_DIR           # Remote Base Dir.
 #
 # LIST OF DIRECTORIES THAT WILL BE BACKUP (IF THEY EXIST OF COURSE)
@@ -206,7 +206,7 @@ mount_nfs()
     # Local Mount Point Verification
     if [ ! -d ${LOCAL_MOUNT_DIR} ]                                      # Mount Point doesn't exist
         then mkdir ${LOCAL_MOUNT_DIR}                                   # Create if not exist
-             write_log "Creating local mount point $LOCAL_MOUNT_DIR"    # Advise user we create Dir.
+             sadm_write_log "Creating local mount point $LOCAL_MOUNT_DIR"    # Advise user we create Dir.
              chmod 775 ${LOCAL_MOUNT_DIR}                               # Change Protection
     fi
     
