@@ -197,7 +197,7 @@ function display_left_side ($wrow) {
     echo "\n\n<div class='server_left_label'>Monitor SSH Conn.</div>";
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_monitor'] == 't') { echo "Yes" ; }else{ echo "No" ; }
-    echo "</div>";
+    echo "</div>"; 
 
     # Server Backup with Rear ?
     echo "\n\n<div class='server_left_label'>Backup with Rear</div>";
@@ -273,7 +273,10 @@ function display_right_side ($wrow) {
               list($Dev,$Ip,$Netmask,$MacAddr) = explode("|", $ipArray[$i] );
               echo "\n\n<div class='server_right_label'>Network Interface(".$i.")</div>";
               echo "\n<div class='server_right_data'>";
-              $info = sprintf ("%-7s %16s / %-15s / %s",$Dev,$Ip,$Netmask,$MacAddr);              echo $info;
+              #$info = sprintf ("%-7s %16s / %-15s / %s",$Dev,$Ip,$Netmask,$MacAddr);
+              $IpName = gethostbyaddr ( $Ip );
+              $info = sprintf ("%-9s %16s %-10s",$Dev,$Ip,$IpName);
+              echo $info;
               echo "</div>";
           }   
         }
