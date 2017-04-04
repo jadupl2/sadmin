@@ -22,6 +22,7 @@
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
 # 1.6  Change NAS Source and Destination Name 
+# 1.7  Change rsync Option (Didn't keep date of source on destination)
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -38,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -112,8 +113,8 @@ main_process()
     
     # Do the Rsync
     sadm_writelog "rsync -vDdLHlr  --delete ${LOCAL_DIR1}/ ${LOCAL_DIR2}/"
-    #rsync -var ${LOCAL_DIR1}/ ${LOCAL_DIR2}/ >>$SADM_LOG 2>&1
-    rsync -vDdLHlr --delete ${LOCAL_DIR1}/ ${LOCAL_DIR2}/ >>$SADM_LOG 2>&1
+    #rsync -vDdLHlr --delete ${LOCAL_DIR1}/ ${LOCAL_DIR2}/ | tee -a $SADM_LOG 2>&1
+    rsync -var --delete ${LOCAL_DIR1}/ ${LOCAL_DIR2}/ | tee -a $SADM_LOG 2>&1
     RC=$? 
     if [ $RC -ne 0 ]
        then sadm_writelog "ERROR NUMBER $RC on rsync "
