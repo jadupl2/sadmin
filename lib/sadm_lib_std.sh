@@ -725,6 +725,7 @@ sadm_get_domainname() {
         "AIX")   wdomainname=`namerslv -s | grep domain | awk '{ print $2 }'`
                  ;;
     esac
+    if [ "$wdomainname" = "" ] ; then wdomainname="$SADM_DOMAIN" ; fi
     echo "$wdomainname"
 }
 
