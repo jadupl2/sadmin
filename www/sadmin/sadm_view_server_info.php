@@ -83,8 +83,8 @@ function display_left_side ($wrow) {
     # Server IP
     echo "\n\n<div class='server_left_label'>Server IP</div>";
     echo "\n<div class='server_left_data'>" ;
-    if (empty($wrow['srv_ip'])) { 
-        echo "&nbsp" ; 
+    if (empty($wrow['srv_ip']) or $wrow['srv_ip'] == " " ) { 
+        echo "No IP ?" ; 
     }else{ 
         echo $wrow['srv_ip'];
     }
@@ -318,17 +318,45 @@ function display_right_side ($wrow) {
     if (empty($wrow['srv_thread_per_core'])) { echo "&nbsp" ; }else{ echo $wrow['srv_thread_per_core']; }
     echo "</div>";
 
-    # Server Disk INformation
-    echo "\n\n<div class='server_right_label'>Disk(s) Information</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_disks_info'])) { echo "&nbsp" ; }else{ echo $wrow['srv_disks_info']; }
-    echo "</div>";
+    # Server Disk Information
+    if (! empty($wrow['srv_disks_info'])) { 
+       $pvArray  = explode(",",$wrow['srv_disks_info']);
+       $pvNumber = sizeof($pvArray);
+       $pvLine   = ""; 
+       if (count($pvArray) > 1) {
+          for ($i = 0; $i < count($pvArray); ++$i) {
+              list($pvDev,$pvSize) = explode("|", $pvArray[$i] );
+              echo "\n\n<div class='server_right_label'>Disk Information(".$i.")</div>";
+              echo "\n<div class='server_right_data'>";
+              $pvSize = $pvSize / 1000 ;
+              $info = sprintf ("%-10s %16s GB",$pvDev,$pvSize);
+              echo $info;
+              echo "</div>";
+          }   
+        }
+    }
 
+    
+    
     # Server VG INformation
-    echo "\n\n<div class='server_right_label'>Volume Group Information</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_vgs_info'])) { echo "&nbsp" ; }else{ echo $wrow['srv_vgs_info']; }
-    echo "</div>";
+    if (! empty($wrow['srv_vgs_info'])) { 
+       $vgArray  = explode(",",$wrow['srv_vgs_info']);
+       $vgNumber = sizeof($vgArray);
+       $vgLine   = ""; 
+       if (count($vgArray) > 0) {
+          for ($i = 0; $i < count($vgArray); ++$i) {
+              list($vgName,$vgSize,$vgUse,$vgFree) = explode("|", $vgArray[$i] );
+              echo "\n\n<div class='server_right_label'>Volume Group Info.(".$i.")</div>";
+              echo "\n<div class='server_right_data'>";
+              $vgSize = round($vgSize / 1024) ;
+              $vgUse  = round($vgUse  / 1024) ;
+              $vgFree = round($vgFree / 1024) ;
+              $info = sprintf ("%-15s Size:%-15s GB Use:%-15s GB Free:%-15s GB",$vgName,$vgSize,$vgUse,$vgFree);
+              echo $info;
+              echo "</div>";
+          }   
+        }
+    }
     
     
     # Blank LIne
