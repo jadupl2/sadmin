@@ -20,6 +20,10 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+# Version 1.6 - April 2017 
+#       Don't send email when can't get current IP, instead Log it in IPMIS log.
+# --------------------------------------------------------------------------------------------------
+#
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
@@ -35,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.5'                             ; export SADM_VER            # This Script Version
+SADM_VER='1.6'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -89,6 +93,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 IPFILE="${SADM_BASE_DIR}/jac/dat/current_ip.txt"    ; export IPFILE         # Last execution IP
 IPLOG="${SADM_BASE_DIR}/jac/dat/current_ip.log"     ; export IPLOG          # Log when IP Change
+IPMIS="${SADM_BASE_DIR}/jac/dat/current_ip_mis.log" ; export IPMIS          # Log Cannot Get Cur. IP
 PREVIOUS_IP=""                                      ; export PREVIOUS_IP    # Last execution IP
 CURRENT_IP=""                                       ; export CURRENT_IP     # Current IP
 IP_NAME="batcave.ydns.eu"                           ; export IP_NAME        # Dynamic DNS Name
@@ -102,7 +107,6 @@ IP_NAME="batcave.ydns.eu"                           ; export IP_NAME        # Dy
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    
     # Get the last IP we had at previous execution
     if [ -r $IPFILE ]
         then PREVIOUS_IP=`cat $IPFILE`
@@ -115,16 +119,18 @@ main_process()
 
     # Check if IP could be obtained - If not Exit
     if [ "$CURRENT_IP" = "" ] 
-        then sadm_writelog "Cannot get the current Internet IP Address" 
+        then sadm_writelog "Cannot get the current Internet IP Address of $IP_NAME" 
              sadm_writelog "Skipping execution - Still at $PREVIOUS_IP"
-             WSUBJECT="SADM : WARNING Internet IP for $IP_NAME could not be obtained at the moment"
-             MAIL_MSG="At last execution IP for $IP_NAME was ..${PREVIOUS_IP}.. - Skipping execution" 
-             echo "`date` - $MAIL_MSG" | $SADM_MAIL -s "$WSUBJECT" $SADM_MAIL_ADDR              
-             return 1
+             echo "`date` - Can't get IP Address of $IP_NAME Current $PREVIOUS_IP" >> $IPMIS 2>&1
+             #
+             #WSUBJECT="SADM : WARNING Internet IP for $IP_NAME could not be obtained at the moment"
+             #MAIL_MSG="At last execution IP for $IP_NAME was ..${PREVIOUS_IP}.. - Skipping execution" 
+             #echo "`date` - $MAIL_MSG" | $SADM_MAIL -s "$WSUBJECT" $SADM_MAIL_ADDR              
+             return 0
     fi
 
     # Construct Email Message
-    MAIL_MSG="At last execution IP for ${IP_NAME} was ..${PREVIOUS_IP}.. now it's ..${CURRENT_IP}.." 
+    MAIL_MSG="Last time IP for ${IP_NAME} was '${PREVIOUS_IP}' now it's '${CURRENT_IP}'" 
     sadm_writelog "$MAIL_MSG" 
     
     # Check if IP Change - I so inform user
@@ -134,7 +140,7 @@ main_process()
             echo "`date` - $MAIL_MSG" | $SADM_MAIL -s "$WSUBJECT" $SADM_MAIL_ADDR 
             sadm_writelog "Warning Email is sent to $SADM_MAIL_ADDR"
             echo "`date` - IP for $IP_NAME was $PREVIOUS_IP now it's $CURRENT_IP" >> $IPLOG
-       else sadm_writelog "No change of IP for $IP_NAME"  
+       else sadm_writelog "No change of IP"  
     fi
 
     # Save Current IP to $IPFILE
