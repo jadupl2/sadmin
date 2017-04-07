@@ -21,6 +21,9 @@
 #           - No automatic reboot on the SADMIN server while it is use to start update on client
 # Version 2.9 - April 2017 
 #       Added Support for Linux Mint 
+# Version 3.0 - April 2017 
+#       Not detecting Error correctly on Debian Family update
+#       Add Error Message in the Log
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -30,7 +33,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.9'                             ; export SADM_VER            # This Script Version
+SADM_VER='3.0'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -129,6 +132,7 @@ check_available_update()
                               ;;
                            *) UpdateStatus=2                            # Problem Abort Update
                               sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                              sadm_writelog "For more information check the log $SADM_LOG"
                               ;;
                         esac
                         ;;
@@ -139,13 +143,14 @@ check_available_update()
        [ "$(sadm_get_osname)" = "RASPBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
         then sadm_writelog "Resynchronize package index files from their sources via Internet"
              sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
-             apt-get update > /dev/null 2>&1                            # Get Package List From Repo
+             apt-get update  >> $SADM_LOG 2>&1                          # Get Package List From Repo
              rc=$?                                                      # Save Exit Code
              if [ "$rc" -ne 0 ]
-                then UpdateStats=2
+                then UpdateStatus=2
                      sadm_writelog "We had problem running the \"apt-get update\" command" 
                      sadm_writelog "We had a return code $rc" 
-                else sadm_writelog "Return Code after apt-get update is $rc"  # Show  Return Code
+                     sadm_writelog "For more information check the log $SADM_LOG"
+                else sadm_writelog "Return Code of apt-get update: $rc" # Show  Return Code
                      sadm_writelog "Querying list of package that will be updated"
                      NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
                      apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
@@ -212,23 +217,25 @@ run_apt_get()
 {
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Starting the $(sadm_get_osname) update process ..."
-
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get -y upgrade"
-    apt-get -y upgrade | tee -a $SADM_LOG 2>&1
-    rc1=$?
-    sadm_writelog "Return Code after \"apt-get -y upgrade\" is $rc1"    # Write Exit code to log
-
+    apt-get -y upgrade >>$SADM_LOG 2>&1
+    RC=$?
+    if [ "$RC" -ne 0 ] 
+       then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC" # Write Exit code to log
+            return $RC
+    fi
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get -y dist-upgrade "
-    apt-get -y dist-upgrade | tee -a $SADM_LOG 2>&1
-    rc2=$?
-    sadm_writelog "Return Code after \"apt-get -y upgrade\" is $rc2"    # Write Exit code to log
-    RC=$(($rc1+$rc2))
-    
+    apt-get -y dist-upgrade >>$SADM_LOG 2>&1
+    RC=$?
+    if [ "$RC" -ne 0 ] 
+        then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC" # Write Exit code to log
+             return $RC
+    fi
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Return Code after apt-get upgrade and apt-get dist-upgrade is $RC"
-    return $RC
+    sadm_writelog "Success execution of apt-get upgrade & apt-get dist-upgrade"
+    return 0
 }
 
 
@@ -269,7 +276,7 @@ run_apt_get()
 
     UPDATE_AVAILABLE=0                                                  # Assume no Upd. Available
     check_available_update                                              # Check if Update is Avail.
-    RC=$?                                                               # Save Return Code Value
+    RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
     if [ $RC -eq 0 ]                                                    # If Update are Available
        then UPDATE_AVAILABLE=1                                          # Set Upd to be done Flag ON
             case "$(sadm_get_osname)" in                                # Test OS Name
