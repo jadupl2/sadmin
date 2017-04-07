@@ -25,6 +25,8 @@
 #       Correction minor bug with shutdown reboot command on Raspberry Pi
 #       Now Checking if Script is running of SADMIN server at the beginning
 #           - No automatic reboot on the SADMIN server while it is use to start update on client
+# Version 2.9 - April 2017
+#       Email log only when error for now on
 # --------------------------------------------------------------------------------------------------
 #
 import os, time, sys, pdb, socket, datetime, getpass, subprocess, pwd, grp
@@ -43,7 +45,7 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver                = "2.0"                                         # Default Program Version
+sadm.ver                = "2.9"                                         # Default Program Version
 sadm.multiple_exec      = "N"                                           # Default Run multiple copy
 sadm.debug              = 0                                             # Default Debug Level (0-9)
 sadm.exit_code          = 0                                             # Script Error Return Code
@@ -51,7 +53,7 @@ sadm.log_append         = "N"                                           # Append
 sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
 
 # SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
-cfg_mail_type      = 3                                                  # 0=No 1=Err 2=Succes 3=All
+cfg_mail_type      = 1                                                  # 0=No 1=Err 2=Succes 3=All
 #cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
 #cfg_cie_name       = ""                                                 # Company Name
 #cfg_user           = ""                                                 # sadmin user account
