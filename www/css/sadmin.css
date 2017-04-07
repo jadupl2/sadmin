@@ -32,7 +32,7 @@ div.server_data {
     background-color: #d6dcdd;
     color: black;
     width: 100%;
-    height: 475px;
+    height: 550px;
     margin: 5px;
     border: 2px solid #000000;
     font-size: 12px;
@@ -42,14 +42,14 @@ div.server_data {
 
 /* ===== Server Left side of screen  ===== */
 div.server_leftside {
-    width: 36%;
+    width: 45%;
     float: left;
     /*background-color: #3E5F80;*/
     margin-left: 2px;
 }
 /* ===== Server Right side of screen  ===== */
 div.server_rightside {
-    width: 60%;
+    width: 45%;
     float: left;
     /*background-color: #3E5F80;*/
     margin-left: 25px;
@@ -59,7 +59,7 @@ div.server_rightside {
 /* ===== Label on left size of the screen ==== */
 div.server_left_label {
     float : left;
-    width : 35%;
+    width : 40%;
     /*font-family: "Verdana";*/
     font: 13px arial, sans-serif;
     font-weight: bold;
@@ -69,7 +69,7 @@ div.server_left_label {
 /* ===== Label on right size of the screen ==== */
 div.server_right_label {
     float : left;
-    width : 45%;
+    width : 40%;
     font: 13px arial, sans-serif;
     font-weight: bold;
     /*background-color: yellow;*/
@@ -78,7 +78,7 @@ div.server_right_label {
 /* ===== Data on right size of screen  ===== */
 div.server_left_data {
     margin-bottom: 4px;
-    margin-left: 35%;
+    margin-left: 40%;
     color : black;
     font: 13px arial, sans-serif;
     width : 65%;
@@ -88,7 +88,7 @@ div.server_left_data {
 /* ===== Data on left size of screen  ===== */
 div.server_right_data {
     margin-bottom: 4px;
-    margin-left: 45%;
+    margin-left: 40%;
     padding-left: 5px;
     color : black;
     font: 13px arial, sans-serif;
