@@ -234,11 +234,11 @@ file_housekeeping()
 
     # Make sure the configuration file is at 644
     sadm_writelog "chmod 0640 $SADM_CFG_FILE" 
-    chmod 0644 $SADM_CFG_FILE
+    chmod 0640 $SADM_CFG_FILE
     ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
 
     sadm_writelog "chmod 0640 $SADM_CFG_HIDDEN" 
-    chmod 0644 $SADM_CFG_HIDDEN
+    chmod 0640 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
 
     if [ -f $SADM_CFG_DIR/.crontab.txt ] 
