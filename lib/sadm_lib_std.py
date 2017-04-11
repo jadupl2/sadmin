@@ -107,6 +107,7 @@ cfg_rw_pguser      = ""                                                 # PostGr
 cfg_rw_pgpwd       = ""                                                 # PostGres Read Write Pwd
 cfg_ro_pguser      = ""                                                 # PostGres Read Only User
 cfg_ro_pgpwd       = ""                                                 # PostGres Read Only Pwd
+cfg_ssh_port       = 22                                                 # SSH Port used in Farm
 
 
 # SADM Path to various commands used by SADM Tools
@@ -777,7 +778,7 @@ def load_config_file():
     global cfg_max_logline, cfg_max_rchline, cfg_www_user, cfg_www_group
     global cfg_nmon_keepdays, cfg_sar_keepdays, cfg_rch_keepdays, cfg_log_keepdays
     global cfg_pguser, cfg_pggroup, cfg_pgdb, cfg_pgschema, cfg_pghost,  cfg_pgport
-    global cfg_rw_pguser, cfg_rw_pgpwd, cfg_ro_pguser, cfg_ro_pgpwd
+    global cfg_rw_pguser, cfg_rw_pgpwd, cfg_ro_pguser, cfg_ro_pgpwd, cfg_ssh_port
     global FH_LOG_FILE
     
     # Debug Level Higher than 4 , inform that entering Load configuration file
@@ -860,7 +861,10 @@ def load_config_file():
         split_line   = wline.split('=')                                 # Split based on equal sign 
         CFG_NAME   = split_line[0].upper().strip()                      # Param Name Uppercase Trim
         CFG_VALUE  = str(split_line[1]).strip()                         # Get Param Value Trimmed
-        
+
+        #print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
+
+     
         # Save Each Parameter found in Sadmin Configuration File
         if "SADM_MAIL_ADDR"     in CFG_NAME : cfg_mail_addr      = CFG_VALUE
         if "SADM_CIE_NAME"      in CFG_NAME : cfg_cie_name       = CFG_VALUE
@@ -887,6 +891,7 @@ def load_config_file():
         if "SADM_RW_PGPWD"      in CFG_NAME : cfg_rw_pgpwd       = CFG_VALUE
         if "SADM_RO_PGUSER"     in CFG_NAME : cfg_ro_pguser      = CFG_VALUE
         if "SADM_RO_PGPWD"      in CFG_NAME : cfg_ro_pgpwd       = CFG_VALUE
+        if "SADM_SSH_PORT"      in CFG_NAME : cfg_ssh_port       = int(CFG_VALUE)
         
     FH_CFG_FILE.close()                                                 # Close Config File
     return        
@@ -1001,7 +1006,7 @@ def display_env () :
 
     print(" ")                                                      # Space Line in the LOG
     print(dash)                                                # 80 = Lines 
-    print("Global variables setting after reading the SADM Cconfigation file")
+    print("Global variables setting after reading the SADM Configuration file")
     print(dash)                                                # 80 = Lines 
     print("cfg_mail_addr       = ..." + cfg_mail_addr + "...")
     print("cfg_cie_name        = ..." + cfg_cie_name + "...")
@@ -1028,5 +1033,7 @@ def display_env () :
     print("cfg_rw_pgpwd        = ..." + str(cfg_rw_pgpwd) + "...")
     print("cfg_ro_pguser       = ..." + str(cfg_ro_pguser) + "...")
     print("cfg_ro_pgpwd        = ..." + str(cfg_ro_pgpwd) + "...")
+    print("cfg_ssh_port        = ..." + str(cfg_ssh_port) + "...")
     return 0
-    
+
+ #load_config_file                                                # Load cfg var from sadmin.cfg
