@@ -336,6 +336,8 @@ process_servers()
     process_servers "aix"                                               # Process Active Aix
     AIX_ERROR=$?                                                        # Save Nb. Errors in process
     sadm_writelog "Total Aix error(s) : ${AIX_ERROR}"                   # Display Total Aix Errors
+    
+    # Being root can update o/s update crontab - Can't while in web interface
     cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                                # Put in place Final Crontab
     chmod 600 ${SADM_CRONTAB} ; chown root.root ${SADM_CRONTAB}         # Set Permission on crontab
 
