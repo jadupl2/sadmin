@@ -33,7 +33,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='3.0'                             ; export SADM_VER            # This Script Version
+SADM_VER='3.1'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -218,19 +218,19 @@ run_apt_get()
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Starting the $(sadm_get_osname) update process ..."
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y upgrade"
-    apt-get -y upgrade >>$SADM_LOG 2>&1
+    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef'' -o Dpkg::Options::='--force-confold' upgrade" 
+    apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ] 
-       then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC" # Write Exit code to log
+       then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC" 
             return $RC
     fi
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y dist-upgrade "
-    apt-get -y dist-upgrade >>$SADM_LOG 2>&1
+    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef'' -o Dpkg::Options::='--force-confold' dist-upgrade" 
+    apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ] 
-        then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC" # Write Exit code to log
+        then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is $RC" 
              return $RC
     fi
     sadm_writelog "${SADM_TEN_DASH}"
