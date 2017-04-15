@@ -337,8 +337,7 @@ function display_right_side ($wrow) {
     }
 
     
-    
-    # Server VG INformation
+    # Server VG Information
     if (! empty($wrow['srv_vgs_info'])) { 
        $vgArray  = explode(",",$wrow['srv_vgs_info']);
        $vgNumber = sizeof($vgArray);
@@ -351,7 +350,7 @@ function display_right_side ($wrow) {
               $vgSize = round($vgSize / 1024) ;
               $vgUse  = round($vgUse  / 1024) ;
               $vgFree = round($vgFree / 1024) ;
-              $info = sprintf ("%-15s Size:%-15s GB Use:%-15s GB Free:%-15s GB",$vgName,$vgSize,$vgUse,$vgFree);
+              $info = sprintf ("%-15s %-15s GB Use:%-15s Free:%-15s",$vgName,$vgSize,$vgUse,$vgFree);
               echo $info;
               echo "</div>";
           }   
