@@ -44,11 +44,11 @@ function display_heading($line_title) {
     
     echo "<table id='sadmTable' class='display compact nowrap' width='55%'>";
 
-    # Set Table width, style and Font Size for Table Cell and Heading
-    #echo "<style>\n";
-    #echo "td { font-size: 12px; }\n";
-    #echo "th { font-size: 13px; }\n"; 
-    #echo "</style>\n";
+   # Set Font Size for Table Cell and Table Heading
+    echo "<style>\n";
+    echo "td { font-size: 13px; }\n";
+    echo "th { font-size: 13px; }\n";
+    echo "</style>\n";
     
     # Table Heading
     echo "\n<thead>";
