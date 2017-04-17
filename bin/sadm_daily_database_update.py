@@ -26,6 +26,7 @@
 #           Change field separator in HOSTNAME_sysinfo.txt file from : to = 
 #       Add Error Exception when getting Value
 #       Add time to Last_Daily_Update Column (Timestamp) in the SADM Database
+# 2.4   April 2017  - Jacques Duplessis - Change exception Error Message more verbose
 #
 #
 #===================================================================================================
@@ -47,7 +48,7 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver = "2.3"                                                        # Default Program Version
+sadm.ver = "2.4"                                                        # Default Program Version
 sadm.multiple_exec = "N"                                                # Default Run multiple copy
 sadm.debug = 4                                                          # Default Debug Level (0-9)
 sadm.exit_code = 0                                                      # Script Error Return Code
@@ -358,8 +359,10 @@ def process_active_servers(wconn, wcur, wcolnames):
         try:
             FH_SYSINFO = open(sysfile, 'r')                             # Open Sysinfo File
         except IOError as e:                                            # If Can't open file
-            sadm.writelog("Error open file %s \r\n" % sysfile)          # Print FileName
+            sadm.writelog("Error opening file %s \r\n" % sysfile)       # Print FileName
             sadm.writelog("Error Number : {0}\r\n.format(e.errno)")     # Print Error Number
+            sadm.writelog ("error({0}):{1}".format(e.errno, e.strerror))
+            sadm.writelog (repr(e))           
             sadm.writelog("Error Text   : {0}\r\n.format(e.strerror)")  # Print Error Message
             return 1                                                    # Return Error to Caller
         if sadm.debug > 4: sadm.writelog("File %s opened" % sysfile)    # Opened Sysinfo file Msg
