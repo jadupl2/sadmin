@@ -1,2 +1,0 @@
-aixb50.maison.ca:32 root
-batman.maison.ca:32 root
