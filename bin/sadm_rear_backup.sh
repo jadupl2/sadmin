@@ -12,7 +12,7 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -40,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.8'                             ; export SADM_VER            # Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -66,8 +66,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-#NFS_IP="192.168.1.47"                      ; export NFS_IP             # NFS Server IP
-NFS_IP="rear_server.maison.ca"              ; export NFS_IP             # NFS Server IP
+NFS_SERVER="batnas.maison.ca"               ; export NFS_SERVER         # Remote Backup Name
 NFS_DIR="/volume1/Linux_DR"                 ; export NFS_DIR            # Dir where Backup Go
 NFS_MOUNT="/mnt/nfs1"                       ; export NFS_MOUNT          # Local NFS Mount Point 
 REAR_COPY=2                                 ; export REAR_COPY          # Nb. of images to keep
@@ -118,13 +117,13 @@ rear_housekeeping()
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
 
     # Mount the NFS Mount point 
-    sadm_writelog "Mounting the NFS Drive on $NFS_IP"
+    sadm_writelog "Mounting the NFS Drive on $NFS_SERVER"
     umount ${NFS_MOUNT} > /dev/null 2>&1
-    sadm_writelog "mount ${NFS_IP}:${NFS_DIR} ${NFS_MOUNT}"
-    mount ${NFS_IP}:${NFS_DIR} ${NFS_MOUNT} >>$SADM_LOG 2>&1
+    sadm_writelog "mount ${NFS_SERVER}:${NFS_DIR} ${NFS_MOUNT}"
+    mount ${NFS_SERVER}:${NFS_DIR} ${NFS_MOUNT} >>$SADM_LOG 2>&1
     if [ $? -ne 0 ]
         then RC=1
-             sadm_writelog "Mount of $NFS_DIR on NFS server $NFS_IP Failed"
+             sadm_writelog "Mount of $NFS_DIR on NFS server $NFS_SERVER Failed"
              sadm_writelog "Proces Aborted"
              umount ${NFS_MOUNT} > /dev/null 2>&1
              return 1
