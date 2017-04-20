@@ -92,9 +92,13 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         $sql = $sql . "srv_update_minute = '" . sadm_clean_data($_POST['scr_update_minute']) ."', ";
         $sql = $sql . "srv_maintenance = '"   . sadm_clean_data($_POST['scr_maintenance'])   ."', ";
         $sql = $sql . "srv_last_edit_date = '". date("Y-m-d H:i:s")                          ."', ";
-        $sql = $sql . "srv_ostype        = '" . sadm_clean_data($_POST['scr_ostype'])        ."', ";
-        $sql = $sql . "srv_active        = '" . sadm_clean_data($_POST['scr_active'])        ."'  ";
-        $sql = $sql . "WHERE srv_name = '"    . sadm_clean_data($_POST['scr_name'])          ."'; ";
+        $sql = $sql . "srv_ostype         = '" . sadm_clean_data($_POST['scr_ostype'])       ."', ";
+        $sql = $sql . "srv_active         = '" . sadm_clean_data($_POST['scr_active'])       ."', ";
+        $sql = $sql . "srv_maint_start    = '" . sadm_clean_data($_POST['scr_maint_start'])  ."', ";
+        $sql = $sql . "srv_maint_end      = '" . sadm_clean_data($_POST['scr_maint_end'])    ."', ";
+        $sql = $sql . "srv_backup_hour    = '" . sadm_clean_data($_POST['scr_backup_hour'])  ."', ";
+        $sql = $sql . "srv_backup_minute  = '" . sadm_clean_data($_POST['scr_backup_minute'])."'  ";
+        $sql = $sql . "WHERE srv_name     = '" . sadm_clean_data($_POST['scr_name'])         ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
         # Execute the Row Update SQL
@@ -106,10 +110,11 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
             #sadm_alert ($err_msg) ;
         }else{
             sadm_alert ("Server '" .$_POST['scr_name']. "' updated.");
+            # frees memory and data associated with PostgreSQL query result
+            pg_free_result($row);
         }
 
-        # frees memory and data associated with PostgreSQL query result
-        pg_free_result($row);
+
 
         # CRONTAB SADMIN UPDATE ON LINUX
         if ($_POST['scr_ostype'] == "linux") {

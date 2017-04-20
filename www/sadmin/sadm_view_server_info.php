@@ -201,26 +201,29 @@ function display_left_side ($wrow) {
 
     # Server Backup with Rear ?
     echo "\n\n<div class='server_left_label'>Backup with Rear</div>";
-    echo "\n<div class='server_left_data'>";
-    $rtime = "- Between 1am and 6am"; 
+    echo "\n<div class='server_left_data'>\n";
     switch ($wrow['srv_backup']) {
-        case 0: echo "No";
+        case 0: echo "No Backup";
                       break;
-        case 1: echo "Monday "      . $rtime;
+        case 1: echo "Monday "    ;
                      break;
-        case 2: echo "Tuesday "     . $rtime;
+        case 2: echo "Tuesday "   ;
                       break;
-        case 3: echo "Wednesday "   . $rtime;
+        case 3: echo "Wednesday " ;
                       break;
-        case 4: echo "Thursday "    . $rtime;
+        case 4: echo "Thursday "  ;
                       break;
-        case 5: echo "Friday "      . $rtime;
+        case 5: echo "Friday "    ;
                       break;
-        case 6: echo "Saturday "    . $rtime;
+        case 6: echo "Saturday "  ;
                       break;
-        case 7: echo "Sunday "      . $rtime;
+        case 7: echo "Sunday "    ;
                       break;
     }
+
+    # Date & Time the Backup Start 
+    echo " at " . sprintf("%02d",$wrow['srv_backup_hour']) . ":" ;
+    echo sprintf("%02d",$wrow['srv_backup_minute']) ;
     echo "</div>";
 
     # Server Maintenance Mode
@@ -228,6 +231,13 @@ function display_left_side ($wrow) {
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_maintenance'] == 't')  { echo "Active" ; }else{ echo "Inactive" ; }
     echo "</div>";
+
+    # Maintenance Mode Start and Stop TimeStamp
+    echo "\n\n<div class='server_left_label'>Maintenance Period</div>";
+    echo "\n<div class='server_left_data'>";
+    echo " From: " . substr($wrow['srv_maint_start'],0,16) ;
+    echo " To: "   . substr($wrow['srv_maint_end'],0,16) ;
+    echo "\n</div>";
 
 }
 

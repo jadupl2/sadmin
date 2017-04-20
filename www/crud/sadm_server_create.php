@@ -48,7 +48,6 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_name']); }
         
-
         $wmonth=$_POST['scr_update_month'];
     	if (empty($wmonth)) { for ($i = 0; $i < 12; $i = $i + 1) { $wmonth[$i] = $i; } }
         $wstr=str_repeat('N',12);
@@ -74,6 +73,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
                         srv_update_hour, srv_update_minute, srv_maintenance,
                         srv_update_month, srv_update_dom, srv_update_dow,
                         srv_last_edit_date, srv_creation_date, srv_ostype,
+                        srv_maint_start, srv_maint_end, srv_backup_hour, srv_backup_minute,
                         srv_active) ";
         $sql = $sql . " VALUES ('" .  $_POST['scr_name'] . "','" ;
         $sql = $sql . $_POST['scr_desc']          . "','" ;
@@ -100,6 +100,11 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         $sql = $sql . date("Y-m-d H:i:s")         . "','" ;
         $sql = $sql . date("Y-m-d H:i:s")         . "','" ;
         $sql = $sql . $_POST['scr_ostype']        . "','" ;
+        #
+        $sql = $sql . $_POST['scr_maint_start']   . "','" ;
+        $sql = $sql . $_POST['scr_maint_end']     . "','" ;
+        $sql = $sql . $_POST['scr_backup_hour']   . "','" ;
+        $sql = $sql . $_POST['scr_backup_minute'] . "','" ;
         #
         $sql = $sql . $_POST['scr_active']       . "')"  ;
         if ($DEBUG) { echo "<br>Execute SQL Command = $sql"; }
