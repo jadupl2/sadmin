@@ -13,7 +13,7 @@
 sam/
 sam/sam
 dat/
-cfg/pssh/
+cfg/pssh/*
 jac/*
 !jac/bin
 log/
