@@ -22,11 +22,9 @@
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
 # 1.6   
-# 
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # ctrl-c exit gracefully
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
-
 
 
 #===================================================================================================
@@ -38,14 +36,15 @@ trap 'sadm_stop 0; exit 0' 2                                            # ctrl-c
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.5'                             ; export SADM_VER            # Script Version
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
 
@@ -60,16 +59,40 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 DOW=`date '+%u'`                            ; export DOW                # Day of Week 1=Mon 7=Sunday
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 MAX_HOURS=6                                 ; export MAX_HOURS          # Nb. Hrs to do Today Backup
+ONE_SERVER=" "                              ; export ONE_SERVER         # Server 2 Backup if not all
+DB_DOW=0                                    ; export DB_DOW             # Database Day of Week No.
 
-# Name & Location of backup script
+# Name & Location of Client backup script
 BACKUP_SCRIPT="$SADM_BIN_DIR/sadm_rear_backup.sh"   ; export BACKUP_SCRIPT 
 
+
+#===================================================================================================
+#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
+#===================================================================================================
+help_usage()
+{
+    echo " "
+    echo "sadm_rear_initiator.sh usage :"
+    echo " "
+    echo "sadm_rear_initiator.sh -d[0-9] -t[1-9] -s[server_name] -h[elp] :"
+    echo " "
+    echo "     Set Debug Level (Default is 0)                       :  -d [0-9] "
+    echo "     Perform ReaR Backup of server specified              :  -s [ServerName]"
+    echo "       (If not specified, All Active servers scheduled " 
+    echo "        for today will be backup when this script is run) "
+    echo "     Nb. of Hour allowed to run today Backup (Default 6)  :  -t [1-9] "
+    echo "        (Use when option -s not used)"
+    echo "     To display this help message                         :  -h help"
+    echo " "
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -77,42 +100,54 @@ BACKUP_SCRIPT="$SADM_BIN_DIR/sadm_rear_backup.sh"   ; export BACKUP_SCRIPT
 # --------------------------------------------------------------------------------------------------
 perform_backup()
 {
+    
+   if [ "$ONE_SERVER" == " " ]                                          # More than 1 Server to do
+      then  DOW=`date '+%u'`                                            # Day of Week (0=Sun,6=Sat)
+            # Match Current Day Number with Number in Database (0=Nobackup 1=Monday and 7 Sunday)
+            if [ $DOW -eq 0 ] ; then DOWSTR="We will do backup scheduled for Sunday"    ;DB_DOW=7;fi
+            if [ $DOW -eq 1 ] ; then DOWSTR="We will do backup scheduled for Monday"    ;DB_DOW=1;fi
+            if [ $DOW -eq 2 ] ; then DOWSTR="We will do backup scheduled for Tuesday"   ;DB_DOW=2;fi
+            if [ $DOW -eq 3 ] ; then DOWSTR="We will do backup scheduled for Wednesday" ;DB_DOW=3;fi
+            if [ $DOW -eq 4 ] ; then DOWSTR="We will do backup scheduled for Thursday"  ;DB_DOW=4;fi
+            if [ $DOW -eq 5 ] ; then DOWSTR="We will do backup scheduled for Friday"    ;DB_DOW=5;fi
+            if [ $DOW -eq 6 ] ; then DOWSTR="We will do backup scheduled for Saturday"  ;DB_DOW=6;fi
+            sadm_writelog "$DOWSTR"                                     # Display Today Backup Name
+    fi
 
-    # Display Current Day of the week
-    DOW=`date '+%u'`                                                    # Day of Week 1=Mon-7=Sun
-    if [ $DOW -eq 0 ] ; then DOWSTR="Backup option is OFF"                         ;fi
-    if [ $DOW -eq 1 ] ; then DOWSTR="We will do backup scheduled for Monday"       ;fi
-    if [ $DOW -eq 2 ] ; then DOWSTR="We will do backup scheduled for Tuesday"      ;fi
-    if [ $DOW -eq 3 ] ; then DOWSTR="We will do backup scheduled for Wednesday"    ;fi
-    if [ $DOW -eq 4 ] ; then DOWSTR="We will do backup scheduled for Thursday"     ;fi
-    if [ $DOW -eq 5 ] ; then DOWSTR="We will do backup scheduled for Friday"       ;fi
-    if [ $DOW -eq 6 ] ; then DOWSTR="We will do backup scheduled for Saturday"     ;fi
-    if [ $DOW -eq 7 ] ; then DOWSTR="We will do backup scheduled for Sunday"       ;fi
-    sadm_writelog "$DOWSTR"
 
     # Perform SQL to Select Server to Backup Today
-    SQL1="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active "
-    SQL2="from sadm.server "
-    SQL3="where srv_ostype = 'linux' and srv_active = True and srv_backup = ${DOW} "
-    SQL4="order by srv_name; "
-    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active "
+    SQL="${SQL} from sadm.server "
+    if [ "$ONE_SERVER" == " " ]
+       then SQL="${SQL}where srv_ostype = 'linux' and srv_active = True and "
+            SQL="${SQL}srv_backup = ${DB_DOW}"
+       else SQL="${SQL}where srv_ostype = 'linux' and srv_active = True and " 
+            SQL="${SQL}srv_name = '${ONE_SERVER}'"
+    fi
+    SQL="${SQL} order by srv_name; "
     if [ $DEBUG_LEVEL -gt 5 ] 
        then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
     fi
     $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
 
-    NB_SERVER=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }' | tr -d ' ' `
-    sadm_writelog "We have $NB_SERVER server(s) to backup in $MAX_HOURS hours."
-    WSECONDS=`echo "$MAX_HOURS * 3600" | bc`
-    sadm_writelog "This means we want to backup $NB_SERVER server within $WSECONDS seconds"
-    W_INT_SEC=`echo "$WSECONDS / $NB_SERVER" | bc`
-    W_INT_MIN=`echo "$W_INT_SEC / 60"| bc `
-    sadm_writelog "So we laucnh a backup every $W_INT_MIN minutes"
-    WCUR_DATE=$(date "+%C%y.%m.%d %H:%M:%S")
-    WCUR_EPOCH=$(sadm_date_to_epoch "$WCUR_DATE")
-    sadm_writelog "The current epoch time for $WCUR_DATE is $WCUR_EPOCH"
-    sadm_writelog "Processing each server(s) that are scheduled to be backup today"
-    
+    # Display Execution repartition in time if more than one server
+    if [ "$ONE_SERVER" == " " ]
+        then # Display Number of server(s) to Backup with Rear
+             NB_SERVER=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }' | tr -d ' ' `
+             sadm_writelog "We have $NB_SERVER server(s) to backup in $MAX_HOURS hours."
+             #
+             WSECONDS=`echo "$MAX_HOURS * 3600" | bc`
+             sadm_writelog "This means we want to backup $NB_SERVER server within $WSECONDS seconds"
+             W_INT_SEC=`echo "$WSECONDS / $NB_SERVER" | bc`
+             W_INT_MIN=`echo "$W_INT_SEC / 60"| bc `
+             sadm_writelog "So we laucnh a backup every $W_INT_MIN minutes"
+             WCUR_DATE=$(date "+%C%y.%m.%d %H:%M:%S")
+             WCUR_EPOCH=$(sadm_date_to_epoch "$WCUR_DATE")
+             sadm_writelog "The current epoch time for $WCUR_DATE is $WCUR_EPOCH"
+             sadm_writelog "Processing each server(s) that are scheduled to be backup today"
+    fi
+
+    # Read the SQL Result file and process server(s)
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
@@ -123,25 +158,21 @@ perform_backup()
               server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
               fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
-              
-              
-              # if DEBUG_LEVEL > 0 - Display Server Monitoring and Sporadic Options are ON or OFF
-              if [ $DEBUG_LEVEL -gt 0 ]                            # If Debug Activated
+                      
+              # Display Server Monitoring and Sporadic Options are ON or OFF in Debug Mode
+              if [ $DEBUG_LEVEL -gt 0 ]                                 # If Debug Activated
                  then if [ "$server_monitor" == "t" ]                   # Monitor Flag is at True
                             then sadm_writelog "Monitoring is ON for $fqdn_server"
                             else sadm_writelog "Monitoring is OFF for $fqdn_server"
                       fi
-                      if [ "$server_sporadic" == "t" ]                  # Monitor Flag is at True
+                      if [ "$server_sporadic" == "t" ]                  # Sporadic Flag is at True
                             then sadm_writelog "Sporadic server is ON for $fqdn_server"
                             else sadm_writelog "Sporadic server is OFF for $fqdn_server"
                       fi
               fi              
               
-              # Now that we know we can ping the server, let's try SSH to Server
-              # If Monitor is ON  and ssh doesn't work, Increase Error counter & Alert User (Email)
-              # If Monitor is OFF and ssh doesn't work, Advise User and continue with next server
-              #-------------------------------------------------------------------------------------
-              sadm_writelog "" ; sadm_writelog "-----"
+              # Let's try SSH to Server
+              sadm_writelog " " 
               sadm_writelog "Testing SSH to server $fqdn_server"
               if [ $DEBUG_LEVEL -gt 4 ]                                 # If Debug Activated
                     then sadm_writelog "$SADM_SSH_CMD $fqdn_server date" # Show SSH Command use  
@@ -156,10 +187,22 @@ perform_backup()
               fi
               xcount=`expr $xcount + 1`
                   
-                                
+              # Perform the One server backup
+              if [ "$ONE_SERVER" != " " ]
+                 then CMD="echo \"$SADM_SSH_CMD $fqdn_server $BACKUP_SCRIPT\" "
+                      sadm_writelog "Starting backup on server $fqdn_server :"
+                      sadm_writelog "$CMD" ; sadm_writelog " "
+                      $SADM_SSH_CMD $fqdn_server $BACKUP_SCRIPT 
+                      RC=$?
+                      sadm_writelog "Error code returned by the backup script $BACKUP_SCRIPT is $RC"
+                      if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
+                      continue
+              fi
+
+              # Perform the server backup when running multiple server option
               # Display the Date & Time the backup will start for this server
               if [ $xcount -eq 1 ]
-                    then W_START_EPOCH=`echo "$WCUR_EPOCH + 120" | bc`
+                    then W_START_EPOCH=`echo "$WCUR_EPOCH + 120" | bc`  # Current time + 2 Min.
                     else W_START_EPOCH=`echo "$WCUR_EPOCH + ( ($xcount-1) * $W_INT_SEC) " | bc`
               fi 
               W_START_DATE=$(sadm_epoch_to_date "$W_START_EPOCH")  
@@ -204,11 +247,13 @@ perform_backup()
     fi
     
     # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), Nb hours to do backup (-t[1-9])
-    while getopts "hd:t:" opt ; do                                      # Loop to process Switch
+    while getopts "hd:t:s:" opt ; do                                    # Loop to process Switch
         case $opt in
+            s) ONE_SERVER="$OPTARG"                                     # Backup only One server
+               ;;
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
-            t) MAX_HOURS=$OPTARG                                        # Nb Hours to do the backups            Get Debug Level Specified
+            t) MAX_HOURS=$OPTARG                                        # Nb Hours to do the backups 
                ;;                                                       # No stop after each page
             h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
@@ -223,7 +268,10 @@ perform_backup()
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
-             sadm_writelog "Nb. of hours given to do all today backup is ${MAX_HOURS}"
+             if [ "$ONE_SERVER" == " " ]
+                then sadm_writelog "Nb. of hours given to do all today backup is ${MAX_HOURS}"
+                else sadm_writelog "One Server to backup (${ONE_SERVER})"
+             fi
     fi
     
     perform_backup                                                      # Go Launch ReaR Backup 
