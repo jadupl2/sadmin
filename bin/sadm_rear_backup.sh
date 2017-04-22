@@ -25,6 +25,8 @@
 #  1.7  Dec 2016    Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
 #  1.8  Mar 2017    Move test if rear is installed first, if not abort process up front.
 #                   Error Message more verbose and More Customization
+#  2.0  Apr 2017    Return Code returned by Rear handle correctly
+#                   Script Messages more informative
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.9'                             ; export SADM_VER            # Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -78,25 +80,30 @@ REAR_CFGFILE="/etc/rear/site.conf"          ; export REAR_CFGFILE       # Read C
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
-
     # Create the bootable ISO on the NFS Server
     sadm_writelog " "
-    sadm_writelog "$SADM_TEN_DASH"; sadm_writelog "$REAR mkrescue -v "       
+    sadm_writelog "$SADM_TEN_DASH"; 
+    sadm_writelog "***** CREATING THE 'ReaR' BOOTABLE ISO *****"
+    sadm_writelog " "
+    sadm_writelog "$REAR mkrescue -v "       
     $REAR mkrescue -v | tee -a $SADM_LOG                                 # Produce Bootable ISO
     if [ $? -ne 0 ]
-        then sadm_writelog "Creation of Rescue ISO completed with Error - Aborting Script"
+        then sadm_writelog "***** ISO creation completed with error - Aborting Script *****"
              return 1 
-        else sadm_writelog "Creation of Rescue ISO completed with Success"
+        else sadm_writelog "***** ISO created with Success *****"
     fi
     
     # Create the Backup TGZ file on the NFS Server
     sadm_writelog "" 
-    sadm_writelog "$SADM_TEN_DASH"; sadm_writelog "$REAR mkbackup -v "       
+    sadm_writelog "$SADM_TEN_DASH"; 
+    sadm_writelog "***** CREATING THE 'ReaR' BACKUP *****"
+    sadm_writelog " "
+    sadm_writelog "$REAR mkbackup -v "       
     $REAR mkbackup -v | tee -a $SADM_LOG                                  # Produce Backup for DR
     if [ $? -ne 0 ]
-        then sadm_writelog "Creation of Rear Backup completed with Error - Aborting Script"
+        then sadm_writelog "***** Rear Backup completed with Error - Aborting Script *****"
              return 1 
-        else sadm_writelog "Creation of Rear Backup completed with Success"
+        else sadm_writelog "***** Rear Backup completed with Success *****"
     fi
     
     return 0                                                            # Return Default return code
@@ -110,9 +117,8 @@ create_backup()
 rear_housekeeping()
 {
     FNC_ERROR=0                                                       # Cleanup Error Default 0
-    sadm_writelog "Performing ReaR Housekeeping ... "
-    sadm_writelog " "
- 
+    sadm_writelog "***** Perform ReaR Housekeeping *****"
+    
     # Make sure Local mount point exist
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
 
@@ -147,7 +153,6 @@ rear_housekeeping()
             return 1 
     fi
     
-
     # Create Environnement Variable of all files we are about to deal with below
     REAR_DIR="${NFS_MOUNT}/${SADM_HOSTNAME}"                            # Rear Host Backup Dir.
     REAR_NAME="${REAR_DIR}/rear_${SADM_HOSTNAME}"                       # ISO & Backup Prefix Name
@@ -170,8 +175,7 @@ rear_housekeeping()
     
     # Make a copy of actual Backup file before creating a new one   
     if [ -r "$REAR_BAC" ]
-        then sadm_writelog " "
-             sadm_writelog "Rename actual Backup file before creating a new one"
+        then sadm_writelog "Rename actual Backup file before creating a new one"
              sadm_writelog "mv $REAR_BAC $PREV_BAC"
              mv $REAR_BAC $PREV_BAC >> $SADM_LOG 2>&1
              if [ $? -ne 0 ]
@@ -179,25 +183,24 @@ rear_housekeeping()
                  else sadm_writelog "The rename of the backup file was done successfully"
              fi
     fi
-    
-                 
+                    
     sadm_writelog " "
     sadm_writelog "You choose to keep $REAR_COPY backup files on the NFS server"
     sadm_writelog "Here is a list of ReaR backup and ISO on NFS Server for ${SADM_HOSTNAME}"
     #sadm_writelog "ls -1t ${REAR_NAME}*.iso | sort -r"
     ls -1t ${REAR_NAME}*.iso | sort -r | tee -a $SADM_LOG
-    #sadm_writelog "ls -1t ${REAR_NAME}*.gz  | sort -r"
     ls -1t ${REAR_NAME}*.gz  | sort -r | tee -a $SADM_LOG
 
     COUNT_GZ=` ls -1t  ${REAR_NAME}*.gz  |sort -r |sed 1,${REAR_COPY}d | wc -l`  # Nb of GZ  to Del.
     if [ "$COUNT_GZ" -ne 0 ]
-        then sadm_writelog "Number of backup file(s) to delete is $COUNT_GZ"
-             sadm_writelog " "
+        then sadm_writelog " "
+             sadm_writelog "Number of backup file(s) to delete is $COUNT_GZ"
              sadm_writelog "List of backup file(s) that will be Deleted :"
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${REAR_COPY}d | tee -a $SADM_LOG
              ls -1t ${REAR_NAME}*.gz | sort -r| sed 1,${REAR_COPY}d | xargs rm -f >> $SADM_LOG 2>&1
-             if [ $RC -ne 0 ] ; then sadm_writelog "Problem deleting backup file(s)" ;FNC_ERROR=1; fi
-             if [ $RC -eq 0 ] ; then sadm_writelog "Backup was deleted with success" ; fi
+             RC=$?
+             if [ $RC -ne 0 ] ;then sadm_writelog "Problem deleting backup file(s)" ;FNC_ERROR=1; fi
+             if [ $RC -eq 0 ] ;then sadm_writelog "Backup was deleted with success" ;fi
         else RC=0
              sadm_writelog " "
              sadm_writelog "We don't need to delete any backup file"
@@ -205,11 +208,12 @@ rear_housekeeping()
         
     COUNT_ISO=`ls -1t  ${REAR_NAME}*.iso |sort -r |sed 1,${REAR_COPY}d | wc -l`  # Nb of ISO  to Del.
     if [ "$COUNT_ISO" -ne 0 ]
-        then sadm_writelog "Number of backup file(s) to delete is $COUNT_ISO"
-             sadm_writelog " "
+        then sadm_writelog " "
+             sadm_writelog "Number of ISO file(s) to delete is $COUNT_ISO"
              sadm_writelog "List of ISO file(s) that will be Deleted :"
              ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${REAR_COPY}d | tee -a $SADM_LOG
              ls -1t ${REAR_NAME}*.iso | sort -r| sed 1,${REAR_COPY}d | xargs rm -f >> $SADM_LOG 2>&1
+             RC=$?
              if [ $RC -ne 0 ] ; then sadm_writelog "Problem deleting ISO file(s)"; FNC_ERROR=1; fi
              if [ $RC -eq 0 ] ; then sadm_writelog "ISO file(s) deleted with success" ; fi
         else RC=0
@@ -217,19 +221,21 @@ rear_housekeeping()
              sadm_writelog "We don't need to delete any ISO file"
     fi
         
-
     # Make sure Host Directory permission and files below are ok
-    #sadm_writelog " "
+    sadm_writelog " "
+    sadm_writelog "Make sure backup are readable."
     sadm_writelog "chmod 664 ${REAR_NAME}*"
     chmod 664 ${REAR_NAME}* >> /dev/null 2>&1
         
     # Ok Cleanup up is finish - Unmount the NFS
-    #sadm_writelog " "
     sadm_writelog "Unmounting NFS mount directories"
     sadm_writelog "umount ${NFS_MOUNT}"
     umount ${NFS_MOUNT} >> $SADM_LOG 2>&1
     if [ $? -ne 0 ] ; then sadm_writelog "Error returned on previous command" ; FNC_ERROR=1; fi
 
+    sadm_writelog " "
+    sadm_writelog "***** ReaR Backup Housekeeping is terminated *****"
+    sadm_writelog " "
     return $FNC_ERROR
 }
 
