@@ -218,7 +218,7 @@ run_apt_get()
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Starting the $(sadm_get_osname) update process ..."
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef'' -o Dpkg::Options::='--force-confold' upgrade" 
+    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef -o Dpkg::Options::='--force-confold' upgrade" 
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ] 
@@ -226,7 +226,7 @@ run_apt_get()
             return $RC
     fi
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef'' -o Dpkg::Options::='--force-confold' dist-upgrade" 
+    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade" 
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ] 
