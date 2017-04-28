@@ -90,7 +90,6 @@ process_servers()
 {
     WOSTYPE=$1                                                           # Should be aix or linux
     sadm_writelog " "
-    sadm_writelog "$SADM_DASH" 
     sadm_writelog "Processing active $WOSTYPE server(s)"
     sadm_writelog " "
 
@@ -213,7 +212,7 @@ process_servers()
 
               # MAKE SURE THE RCH RECEIVING DIRECTORY ON THIS SERVER EXIST BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
-              sadm_writelog " "                                         # Separation Blank Line
+              #sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
               if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
 
@@ -235,7 +234,7 @@ process_servers()
 
               # MAKE SURE THE RECEIVING LOG DIRECTORY EXIST ON THIS SERVER  BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
-              sadm_writelog " "                                         # Separation Blank Line
+              #sadm_writelog " "                                         # Separation Blank Line
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
               if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
 
@@ -257,7 +256,7 @@ process_servers()
 
               # MAKE SURE THE RECEIVING RPT DIRECTORY EXIST ON THIS SERVER BEFORE WE POPULATE IT
               #-------------------------------------------------------------------------------------
-              sadm_writelog " "                                         # Separation Blank Line
+              #sadm_writelog " "                                         # Separation Blank Line
               WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"               # Local www Receiving Dir.
               if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
 
@@ -277,7 +276,7 @@ process_servers()
 
 
               sadm_writelog " "                                         # Separation Blank Line
-              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT" 
+              sadm_writelog "** TOTAL ${WOSTYPE} ERROR(S) IS NOW $ERROR_COUNT" 
               done < $SADM_TMP_FILE1                            
     fi
     sadm_writelog " "                                                   # Separation Blank Line
