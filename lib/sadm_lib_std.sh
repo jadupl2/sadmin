@@ -952,46 +952,34 @@ sadm_load_config_file()
 sadm_start() {
 
     # If log Directory doesn't exist, create it.
-    if [ ! -d "$SADM_LOG_DIR" ]
-        then mkdir -p $SADM_LOG_DIR
-             chmod 0775 $SADM_LOG_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_LOG_DIR           
-    fi
+    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
+    chmod 0775 $SADM_LOG_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_LOG_DIR           
 
     # If LOG File doesn't exist, Create it and Make it writable 
-    if [ ! -e "$SADM_LOG" ]
-        then touch $SADM_LOG
-             chmod 664 $SADM_LOG
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
-    fi
+    [ ! -e "$SADM_LOG" ] && touch $SADM_LOG
+    chmod 664 $SADM_LOG
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
 
     # If TMP Directory doesn't exist, create it.
-    if [ ! -d "$SADM_TMP_DIR" ]
-        then mkdir -p $SADM_TMP_DIR
-             chmod 1777 $SADM_TMP_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_TMP_DIR
-    fi
+    [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
+    chmod 1777 $SADM_TMP_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_TMP_DIR
 
     # If LIB Directory doesn't exist, create it.
-    if [ ! -d "$SADM_LIB_DIR" ]
-        then mkdir -p $SADM_LIB_DIR
-             chmod 0775 $SADM_LIB_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
-    fi
+    [ ! -d "$SADM_LIB_DIR" ] && mkdir -p $SADM_LIB_DIR
+    chmod 0775 $SADM_LIB_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
 
     # If Custom Configuration Directory doesn't exist, create it.
-    if [ ! -d "$SADM_CFG_DIR" ]
-        then mkdir -p $SADM_CFG_DIR
-             chmod 0775 $SADM_CFG_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_CFG_DIR
-    fi
+    [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
+    chmod 0775 $SADM_CFG_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_CFG_DIR
 
     # If System Startup/Shutdown Script Directory doesn't exist, create it.
-    if [ ! -d "$SADM_SYS_DIR" ]
-        then mkdir -p $SADM_SYS_DIR
-             chmod 0775 $SADM_SYS_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_SYS_DIR
-    fi
+    [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
+    chmod 0775 $SADM_SYS_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_SYS_DIR
 
     # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
     if [ ! -d "$SADM_PG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
@@ -1003,18 +991,14 @@ sadm_start() {
     fi
 
     # If Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_DAT_DIR" ]
-        then mkdir -p $SADM_DAT_DIR
-             chmod 0775 $SADM_DAT_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_DAT_DIR
-    fi
+    [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
+    chmod 0775 $SADM_DAT_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_DAT_DIR
 
     # If Package Directory doesn't exist, create it.
-    if [ ! -d "$SADM_PKG_DIR" ]
-        then mkdir -p $SADM_PKG_DIR
-             chmod 0775 $SADM_PKG_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
-    fi
+    [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
+    chmod 0775 $SADM_PKG_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
@@ -1053,60 +1037,42 @@ sadm_start() {
     fi
 
     # If NMON Directory doesn't exist, create it.
-    if [ ! -d "$SADM_NMON_DIR" ]
-        then mkdir -p $SADM_NMON_DIR
-             chmod 0775 $SADM_NMON_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_NMON_DIR
-    fi
+    [ ! -d "$SADM_NMON_DIR" ] && mkdir -p $SADM_NMON_DIR
+    chmod 0775 $SADM_NMON_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_NMON_DIR
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
-    if [ ! -d "$SADM_DR_DIR" ]
-        then mkdir -p $SADM_DR_DIR
-             chmod 0775 $SADM_DR_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_DR_DIR
-    fi
+    [ ! -d "$SADM_DR_DIR" ] && mkdir -p $SADM_DR_DIR
+    chmod 0775 $SADM_DR_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_DR_DIR
 
     # If Network/Subnet Information Directory doesn't exist, create it.
-    if [ ! -d "$SADM_NET_DIR" ]
-        then mkdir -p $SADM_NET_DIR
-             chmod 0775 $SADM_NET_DIR
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_NET_DIR
-    fi
+    [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
+    chmod 0775 $SADM_NET_DIR
+    chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_NET_DIR
 
     #If SADM Sysmon Report Directory doesn't exist, create it.
-    if [ ! -d "$SADM_RPT_DIR" ]
-        then mkdir -p $SADM_RPT_DIR
-             chmod 0775 $SADM_RPT_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_RPT_DIR
-    fi
+    [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
+    chmod 0775 $SADM_RPT_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_RPT_DIR
 
     # If Performance Server Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_SAR_DIR" ]
-        then mkdir -p $SADM_SAR_DIR
-             chmod 0775 $SADM_SAR_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_SAR_DIR
-    fi
+    [ ! -d "$SADM_SAR_DIR" ] && mkdir -p $SADM_SAR_DIR
+    chmod 0775 $SADM_SAR_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_SAR_DIR
 
     # If Return Code History Directory doesn't exist, create it.
-    if [ ! -d "$SADM_RCH_DIR" ]
-        then mkdir -p $SADM_RCH_DIR
-             chmod 0775 $SADM_RCH_DIR
-             chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
-    fi
-
+    [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
+    chmod 0775 $SADM_RCH_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
-    if [ "$SADM_LOG_APPEND" = "N" ]                                     # If don't want expand log
-        then echo " " > $SADM_LOG                                       # Clear LOG
-    fi
+    if [ "$SADM_LOG_APPEND" = "N" ] ; then echo " " > $SADM_LOG ; fi
     
     # If Return Code History Log doesn't exist, Create it and Make sure it have right permission
-    if [ ! -e "$SADM_RCHLOG" ]
-        then touch $SADM_RCHLOG
-             chmod 664 $SADM_RCHLOG
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
-    fi
-
+    [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG
+    chmod 664 $SADM_RCHLOG
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
 
     # Feed the Return Code History File stating the script is started
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"` ; export SADM_STIME
