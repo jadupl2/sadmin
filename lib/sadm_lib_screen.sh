@@ -98,7 +98,7 @@ sadm_messok()
            Y|y ) wreturn=1                                              # Yes = Return Value of 1
                  break                                                  # Break of the loop
                  ;; 
-           n|N ) wreturn=0                                              # Yes = Return Value of 0
+           n|N ) wreturn=0                                              # No = Return Value of 0
                  break                                                  # Break of the loop
                  ;;
              * ) ;;                                                     # Other stay in the loop
