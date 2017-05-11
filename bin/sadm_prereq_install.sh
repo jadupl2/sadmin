@@ -38,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -310,6 +310,18 @@ main_process()
        else sadm_install_std_package "$DRYRUN" "$SCMD" "perl-DateTime" "libdatetime-perl libwww-perl"
     fi
     sadm_writelog " "
+  
+    
+    return 0                                                            # Return Default return code
+}
+
+  
+
+# --------------------------------------------------------------------------------------------------
+#         Make sure the sadmin group and sadmin user are created - If not created them
+# --------------------------------------------------------------------------------------------------
+check_groups_and_users()
+{
     
     # Check if 'sadmin' group exist - If not create it.
     sadm_writelog "Checking if ${SADM_GROUP} group is created"
@@ -346,8 +358,7 @@ main_process()
         else sadm_writelog "User ${SADM_USER} Already Created [OK]"     # Advise user will create 
     fi
     sadm_writelog " "
-    
-    return 0                                                            # Return Default return code
+    return 0
 }
 
 
@@ -378,6 +389,7 @@ main_process()
                ;;
         esac                                                            # End of case
     done  
+    check_groups_and_users                                              # Create sadmin User & Group
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
