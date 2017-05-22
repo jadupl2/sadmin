@@ -26,7 +26,9 @@
 # Version 3.2 - May 2017 - Jacques Duplessis
 #               Disable Multiple Logs - Back to one installation Log
 # Version 3.3 - May 2017 - Jacques Duplessis
-#               Raspbeery Pi Post Installation Validated and Working
+#               Raspberry Pi Post Installation Validated and Working
+# Version 3.4 - May 2017 - Jacques Duplessis
+#               Add -y command line switch to run without prompt
 # ================================================================================================
 #set -x
 
@@ -37,7 +39,7 @@
 #                                 GLOBAL VARIABLES DEFINITION
 # ================================================================================================
 #
-PIVER="3.3"                                             ; export PIVER          # PostInstall Ver.
+PIVER="3.4"                                             ; export PIVER          # PostInstall Ver.
 DASH_LINE=`printf %70s |tr " " "="`                     ; export SADM_DASH      # 70 equals sign line
 SRC_DIR=/mnt/nfs                                        ; export SRC_DIR        # NFS MOUNT POINT
 GATEWAY=192.168.1.1                                     ; export GATEWAY        # Def. Net Gateway
@@ -130,6 +132,17 @@ write_log() {
     printf "%s - %s\n" "`date +"%Y-%m-%d %H:%M"`" "$1"                  # write to screen with date
 }
 
+#===================================================================================================
+#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
+#===================================================================================================
+help()
+{
+    echo " "
+    echo "sadm_postinstall.sh usage :"
+    echo "             -y   (Run without prompting)"
+    echo "             -h   (Display this help message)"
+    echo " "
+}
 
 
 # ================================================================================================
@@ -525,7 +538,7 @@ install_additional_software()
                                 UDEB=" $UDEB iftop figlet facter iperf keepass2 bwm-ng qgit telnet "
                                 UDEB=" $UDEB synaptic ftp thunar nmon xpdf deluge dmidecode "
                                 UDEB=" $UDEB xrdp ntp ntpdate postfix git mailutils ethtool lsb-release "
-                                UDEB=" $UDEB openssh-server util-linux bc gawk"
+                                UDEB=" $UDEB openssh-server util-linux bc gawk apt-file dnsutils"
                                 UDEB=" $UDEB libdatetime-perl libwww-perl "
                                 if [ "$OS_VERSION" -lt 8 ] ; then UDEB=" $UDEB chkconfig " ; fi
                                 write_log "Running apt-get update"
@@ -1503,10 +1516,13 @@ setup_services()
     fi
     
     write_log " " 
+    service_enable postfix
+
+    write_log " " 
     service_enable rsyslog
     
     write_log " " 
-    #service_enable ntpdate                             # Seems to have been raplace by chronyd ?
+    service_enable ntpdate                             # Seems to have been raplace by chronyd ?
     
     write_log " " 
     service_enable xrdp
@@ -1528,15 +1544,36 @@ setup_services()
 #                   S T A R T   O F   T H E   M A I N   S C R I P T
 # ==================================================================================================
     tput clear 
-    echo "This is the Post-Intallation script."
-    echo "Server will reboot after running this script."
-    echo "You may want to review this log after the reboot ($LOG_FILE)."
-    echo " "
-    messok "Still want to proceed "
-    if [ "$?" -eq 0 ] ; then exit 1 ; fi            # Do not proceed
-    
     write_log " " ; write_log "========== Start of postinstall script "
     write_env                                       # Write ENv. Variable to log
+    
+    # Optional Command line switches    
+    PROMPT="ON"                                                         # Set Switch Default Value
+    while getopts "yh" opt ; do                                         # Loop to process Switch
+        case $opt in
+            y) PROMPT="OFF"                                             # Run Without Prompt     
+               ;;                                                       # No stop after each page
+            h) help                                                     # Display Help Usage
+               sadm_stop 0                                              # Close the shop
+               exit 0                                                   # Back to shell 
+               ;;
+           \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
+               help                                                     # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done  
+    
+    # If -y command line switch was not specified - Display Warning & Wait for confirmation
+    if [ "$PROMPT" != "OFF" ] 
+        then    echo "This is the Post-Intallation script."
+                echo "Server will reboot after running this script."
+                echo "You may want to review this log after the reboot ($LOG_FILE)."
+                echo " "
+                messok "Still want to proceed "                         # Wait for user Answer (y/n)
+                if [ "$?" -eq 0 ] ; then exit 1 ; fi                    # Do not proceed
+    fi
+    
 
     # Setup Network
     setup_host_file                                 # Setup /etc/hosts file
@@ -1547,7 +1584,6 @@ setup_services()
     # Install and Update Software we want
     perform_os_update                               # Install latest O/S update
     add_epel_repository                             # Add EPEL Repository For CentOS and RedHat
-    remove_packages                                 # Remove certains Packages for security reason
     install_additional_software                     # Install Additional Software From Dist. Repos
     install_favorites_software                      # Install Favorites Custom Software
 
@@ -1576,14 +1612,15 @@ setup_services()
     setup_raspbian_xrdp                             # Special Install/Config for Raspberry Pi XRDP
     setup_services                                  # Disable/Enable Services for Security & Usage
     
-    # Final Setup
+    # Final Setup - Securing the Environment
+    remove_packages                                 # Remove certains Packages for security reason
     remove_unwanted_files                           # remove unwanted files
     remove_unwanted_users_and_groups                # Remove unneeded users and groups
     setup_inittab                                   # Disable CTRL-ALT-DEL (Old Version)
 
     # End of Post-installation
     write_log " " ; write_log " "                   # White lines in Log
-    write_log "End of Postscript file"              # Signal end of script
+    write_log "End of SADM_Postscript file"         # Signal end of script
     write_log " " ; write_log " "                   # White lines in Log
     write_log "Rebooting ... "                      # Signal end of script
     write_log " " ; write_log " "                   # White lines in Log
