@@ -23,7 +23,7 @@
 # Enhancements/Corrections Version Log
 # 1.6  Change NAS Source and Destination Name 
 # 1.7  Change rsync Option (Didn't keep date of source on destination)
-# 
+# 1.8  June 2017 - Add advice to user when error mounting NFS
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -39,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -106,6 +106,8 @@ main_process()
     if [ "$RC" -ne 0 ]
         then RC=1
              sadm_writelog "Mount NFS Failed from $TO_SERVER Proces Aborted"
+             sadm_writelog "Check if NFS is started on $TO_SERVER"
+             sadm_writelog "systemctl status nfs-kernel-server"
              umount ${LOCAL_DIR1} > /dev/null 2>&1
              umount ${LOCAL_DIR2} > /dev/null 2>&1             
              return 1
