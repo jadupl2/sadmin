@@ -38,7 +38,7 @@ echo "\n<div id='sadmSideBar'>\n";
         list($kpart1,$kpart2) = explode(",",$key);
         if ($kpart1 == "srv_osname") {
            echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=os";
-		   echo "&value=" . $kpart2 ."'>$value $kpart2 server(s)</a></li>\n";
+           echo "&value=" . $kpart2 ."'>$value $kpart2 server(s)</a></li>\n";
            $SERVER_COUNT = $SERVER_COUNT + $value;
         }
     }
