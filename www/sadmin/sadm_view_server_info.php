@@ -404,7 +404,7 @@ function display_right_side ($wrow) {
     echo "</div>";
     
     # Month that O/S Update Can Occurs
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Month(s)</div>";
+    echo "\n\n<div class='server_right_label'>Update O/S Allowed Month</div>";
     echo "\n<div class='server_right_data'>";
     $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
     if ($wrow['srv_update_month'] == str_repeat("Y",12)) {
@@ -420,7 +420,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Date in the Month that O/S Update can Occur
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Date(s)</div>";
+    echo "\n\n<div class='server_right_label'>Update O/S Allowed Date</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_update_dom'] == str_repeat("Y",31)) {                 # If it's to run every Day
         echo "Any Date";                                              # Then use a Star
