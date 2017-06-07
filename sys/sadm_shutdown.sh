@@ -7,12 +7,16 @@
 #               Called by /etc/systemd/system/sadmin.service
 # --------------------------------------------------------------------------------------------------
 #set -x
-
+#
+# Version 2.2 - June 2017 - Log Enhancement
+#
+#
+#
 # --------------------------------------------------------------------------------------------------
 #                                   Program Variables Definitions
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                         ; export PN             # Program name
-VER='2.1'                                           ; export VER            # Program version
+VER='2.2'                                           ; export VER            # Program version
 DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Current Host name
@@ -39,26 +43,17 @@ write_log()
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
-    write_log " "
+    write_log " " ;  write_log " " ;  write_log " " ;  write_log " " ;  write_log " " ;
     write_log "${DASH}"
-    write_log "Starting the script $PN on - ${HOSTNAME}"
-    write_log "${DASH}"
+    write_log "Starting the script $PN on ${HOSTNAME}"
+    write_log "Version: ${VER}"
+
 
     # Put Server shutdown commands below
 
-    # Make Sure no fsck will be run upon reboot
-    LVM=1 ; rpm -q lvm2 > /dev/null 2>&1 ; if [ $? -eq 0 ] ; then LVM=2; fi
-    write_log "This system is using LVM version $LVM" ; export LVM
-    #
-    if [ "$LVM" -eq 1 ]
-       then lvscan |grep -v swap| awk -F"\"" '/dev/ { printf "tune2fs -c0 -i0 %s\n",$2 }' >/tmp/LVM$$.sh
-       else lvscan |grep -v swap| awk -F"'"  '/dev/ { printf "tune2fs -c0 -i0 %s\n",$2 }' >/tmp/LVM$$.sh
-    fi
-    write_log "Executing tune2fs on all filesystems"
-    chmod +x /tmp/LVM$$.sh ; /tmp/LVM$$.sh >/dev/null 2>&1 ; rm -f /tmp/LVM$$.sh
  
-    # Indicate the startup is finished is the log
+    # Indicate the shutdown script is finished
     write_log " "
-    write_log "sadmin.service shutdown is finished !"
-
-#
+    write_log "End of $PN"
+    write_log "sadmin.service startup is finished !"
+    write_log "${DASH}"

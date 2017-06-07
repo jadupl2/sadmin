@@ -24,7 +24,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Version 1.7
-# 2017_02_04    Jacques DUplessis - Don't rsync /samin/cfg entirely just sysmon.std file from now on
+# 2017_02_04    Jacques DUplessis - Don't rsync /sadmin/cfg entirely just sysmon.std file from now on
+# Version 1.8
+# 2017_06_03    Jacques DUplessis - Added the /sadmin/sys to rsync processing
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -40,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -99,7 +101,7 @@ process_linux_servers()
               server_name=`  echo $wline|awk -F, '{ print $1 }'`
               server_os=`    echo $wline|awk -F, '{ print $2 }'`
               server_domain=`echo $wline|awk -F, '{ print $3 }'`
-              sadm_writelog "${SADM_DASH}"
+              sadm_writelog "" ; sadm_writelog "${SADM_DASH}"
               info_line="Processing ($xcount) ${server_name}.${server_domain} - "
               info_line="${info_line}os:${server_os}"
               sadm_writelog "$info_line"
@@ -139,7 +141,27 @@ process_linux_servers()
               fi
               
               
+
+              # Test if $SADM_SYS_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_SYS_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_SYS_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_SYS_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_SYS_DIR} >/dev/null 2>&1
+              fi
+
+              # Do the Rsync /sadmin/jac/bin
+              sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_name}.${server_domain}:${SADM_SYS_DIR}/"
+              rsync -ar --delete ${SADM_SYS_DIR}/ ${server_name}.${server_domain}:${SADM_SYS_DIR}/
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "********** ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                 else sadm_writelog "Return Code : 0 - OK"
+              fi
               
+                             
 
               # Test if $SADM_BASE_DIR/jac/bin exist on remote - If not Create it
               sadm_writelog "ssh -n ${server_name} ls -l ${SADM_BASE_DIR/jac/bin}"
@@ -327,7 +349,26 @@ process_aix_servers()
                  else sadm_writelog "Return Code : 0 - OK"
               fi
               
-               
+ 
+              # Test if $SADM_SYS_DIR exist on remote - If not Create it
+              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_SYS_DIR}"
+              ssh -n ${server_name} ls -l ${SADM_SYS_DIR} >/dev/null 2>&1
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "Creating ${SADM_SYS_DIR} on ${server_name}"
+                      ssh ${server_name} mkdir -p ${SADM_SYS_DIR} >/dev/null 2>&1
+              fi
+
+              # Do the Rsync /sadmin/jac/bin
+              sadm_writelog "rsync -ar --delete ${SADM_SYS_DIR}/ ${server_name}.${server_domain}:${SADM_SYS_DIR}/"
+              rsync -ar --delete ${SADM_SYS_DIR}/ ${server_name}.${server_domain}:${SADM_SYS_DIR}/
+              RC=$? 
+              if [ $RC -ne 0 ]
+                 then sadm_writelog "********** ERROR NUMBER $RC for ${server_name}.${server_domain}"
+                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                 else sadm_writelog "Return Code : 0 - OK"
+              fi
+                  
 
               # Test if $SADM_LIB_DIR exist on remote - If not Create it
               sadm_writelog "ssh ${server_name} ls -l ${SADM_LIB_DIR}"
