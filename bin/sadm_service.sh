@@ -26,7 +26,7 @@
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
-
+ 
 
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
