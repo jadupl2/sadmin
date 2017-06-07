@@ -7,12 +7,15 @@
 #               Called by /etc/systemd/system/sadmin.service
 # --------------------------------------------------------------------------------------------------
 #set -x
-
+#
+# Version 2.2 - June 2017 - Log Enhancement
+#
+#
 # --------------------------------------------------------------------------------------------------
 #                                   Program Variables Definitions
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                         ; export PN             # Program name
-VER='2.1'                                           ; export VER            # Program version
+VER='2.2'                                           ; export VER            # Program version
 DASH=`printf %60s |tr " " "="`                      ; export DASH           # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`         ; export INST           # Get script name
 HOSTNAME=`hostname -s`                              ; export HOSTNAME       # Current Host name
@@ -39,15 +42,17 @@ write_log()
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
 #
-    write_log " "
+    write_log " " ;  write_log " " ;  write_log " " ;  write_log " " ;  write_log " " ;
     write_log "${DASH}"
-    write_log "Starting the script $PN on - ${HOSTNAME}"
-    write_log "${DASH}"
+    write_log "Starting the script $PN on ${HOSTNAME}"
+    write_log "Version: ${VER}"
 
     # Put Server startup commands below
 
  
     # Indicate the startup is finished is the log
     write_log " "
-    write_log "Startup script: $PN Version: ${VER} is finished on ${HOSTNAME}!"
+    write_log "End of $PN"
+    write_log "sadmin.service startup is finished !"
+    write_log "${DASH}"
 
