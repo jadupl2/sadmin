@@ -50,8 +50,8 @@ function display_heading($line_title) {
   
     # Set Font Size for Table Cell and Table Heading
     echo "<style>\n";
-    echo "td { font-size: 12px; }\n";
-    echo "th { font-size: 13px; }\n";
+    echo "td { font-size: 11px; }\n";
+    echo "th { font-size: 11px; }\n";
     echo "</style>\n";
     echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
 
@@ -70,7 +70,7 @@ function display_heading($line_title) {
     echo "<th class='text-center'>CPU Speed</th>\n";
     echo "<th class='text-center'>Disk Space</th>\n";
     echo "<th class='text-center'>Report</th>\n";
-    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -89,7 +89,7 @@ function display_heading($line_title) {
     echo "<th class='text-center'>CPU Speed</th>\n";
     echo "<th class='text-center'>Disk Space</th>\n";
     echo "<th class='text-center'>Report</th>\n";
-    echo "<th class='text-center'>Update</th>\n";
+    echo "<th class='text-center'>Edit</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
