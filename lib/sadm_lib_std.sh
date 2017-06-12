@@ -1175,6 +1175,7 @@ sadm_stop() {
     sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
+    cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
