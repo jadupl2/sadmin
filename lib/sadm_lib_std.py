@@ -3,6 +3,9 @@
 #   Author:     Jacques Duplessis
 #   Title:      sadm_lib_std.py
 #   Synopsis:   This is the Standard SADM Python Library 
+#
+# V1.1  Jacques Duplessis - June 2017 
+#       Added Flush before trimming file
 #===================================================================================================
 import os, errno, time, sys, pdb, socket, datetime, getpass, subprocess, smtplib, pwd, grp
 import glob, fnmatch, psycopg2
@@ -13,7 +16,7 @@ from subprocess import Popen, PIPE
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-ver                = "1.0"                                              # Default Program Version
+ver                = "1.1"                                              # Default Program Version
 multiple_exec      = "N"                                                # Default Run multiple copy
 debug              = 0                                                  # Default Debug Level (0-9)
 exit_code          = 0                                                  # Script Error Return Code
@@ -716,7 +719,6 @@ def stop(return_code):
     writelog (now + " - End of " + pn)                                  # Write Final Footer to Log
     writelog (dash)                                                     # 80 = Lines 
     writelog (" ")                                                      # Space Line in the LOG
-    #FH_LOG_FILE.flush()                                                 # Got to do it - Missing end
 
     # Inform UnixAdmin By Email based on his selected choice
     # Now that the user email choice is written to the log, let's send the email now, if needed
@@ -745,6 +747,7 @@ def stop(return_code):
         if ccode != 0 :                                                 # If Cmd Fail
            writelog ("ERROR : Problem sending email to %s" % (cfg_mail_addr)) # Advise USer 
     
+    FH_LOG_FILE.flush()                                                 # Got to do it - Missing end
     FH_LOG_FILE.close()                                                 # Close the Log File
 
     # Trimming the Log 
