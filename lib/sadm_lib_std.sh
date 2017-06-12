@@ -11,6 +11,7 @@
 # --------------------------------------------------------------------------------------------------
 # 2.0 Create log file earlier to prevent error message - 18 Jan - J.Duplessis
 # 2.1 Added Support for Linux Mint - April 2017 - J.D.
+# 2.2 Minor Modifications concerning Trimming the Log File
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -28,7 +29,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.1"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.2"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -189,14 +190,14 @@ sadm_trimfile() {
     
     # Test Number of parameters received
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
-        then sadm_writelog "sadm_trimfile : Should received 2 Parameters" # Show User Info on Error
-             sadm_writelog "Have received $# parameters ($*)"             # Advise User to Correct
+        then sadm_writelog "sadm_trimfile: Should receive 2 Parameters" # Show User Info on Error
+             sadm_writelog "Have received $# parameters ($*)"           # Advise User to Correct
              return 1                                                   # Return Error to Caller
     fi
     
     # Test if filename received exist
     if [ ! -r "$wfile" ]                                                # Check if File Rcvd Exist
-        then sadm_writelog "sadm_trimfile : File don't exist $1"          # Advise user
+        then sadm_writelog "sadm_trimfile : Can't read file $1"         # Advise user
              return 1                                                   # Return Error to Caller
     fi
 
@@ -204,13 +205,14 @@ sadm_trimfile() {
     sadm_isnumeric "$maxline"                                           # Test if an Integer
     if [ $? -ne 0 ]                                                     # If not an Integer
         then wreturn_code=1                                             # Return Code report error
-             sadm_writelog "sadm_trimfile : Nb of line invalid ($2)"    # Advise User
+             sadm_writelog "sadm_trimfile: Nb of line invalid ($2)"     # Advise User
              return 1                                                   # Return Error to Caller
     fi
     
     #tmpfile=`mktemp --tmpdir=${SADM_TMP_DIR}`                          # Problem in RHEL4 
     tmpfile="${SADM_TMP_DIR}/${SADM_INST}.$$"                           # Create Temp Work FileName    
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
+
     tail -${maxline} $wfile > $tmpfile                                  # Trim file to Desired Nb.
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
     rm -f ${wfile} > /dev/null                                          # Remove Original Log
@@ -1130,16 +1132,16 @@ sadm_stop() {
     sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
     sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
 
-    # Update the [R]eturn [C]ode [H]istory File
-    RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"           # Format Part1 of RCH File
+    # Append ending line to the [R]eturn [C]ode [H]istory File
+    RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"               # Format Part1 of RCH File
     RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE"          # Format Part2 of RCH File
     echo "$RCHLINE" >>$SADM_RCHLOG                                      # Append Line to  RCH File
     
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
     sadm_writelog "Trimming $SADM_RCHLOG to max. ${SADM_MAX_RCLINE} lines." # Advise of trimm value
     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
-    chmod 664 ${SADM_RCHLOG}
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
+    chmod 664 ${SADM_RCHLOG}                                            # Writable by O/G Readable W
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}                     # Change RCH file Owner
 
     # Write email choice in the log footer
     if [ "$SADM_MAIL" = "" ] ; then SADM_MAIL_TYPE=4 ; fi               # Mail not Install - no Mail
@@ -1160,22 +1162,22 @@ sadm_stop() {
           ;;
       4)  sadm_writelog "No Mail can be send until the mail command is install"
           sadm_writelog "On CentOS/Red Hat/Fedora  - enter command 'yum -y mail'"
-          sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - enter command 'apt-get install mailx'"
+          sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - use 'apt-get install mailutils'"
           ;;
       *)  sadm_writelog "The SADM_MAIL_TYPE is not set properly - Should be between 0 and 3"
           sadm_writelog "It is now set to $SADM_MAIL_TYPE"
           ;;
     esac
 
-    sadm_writelog "Trimming $SADM_LOG to max. ${SADM_MAX_LOGLINE} lines." # Inform user trimming value
-    sadm_writelog "`date` - End of ${SADM_PN}"                            # Write End Time To Log
-    sadm_writelog "${SADM_DASH}"                                          # Write 80 Dash Line
-    sadm_writelog " "                                                     # Blank Line
+    sadm_writelog "Trim $SADM_LOG to max. ${SADM_MAX_LOGLINE} lines"    # Inform user trimming value
+    sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
+    sadm_writelog "${SADM_DASH}"                                        # Write 80 Dash Line
+    sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
-    sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                        # Trim file to Desired Nb.
-    chmod 664 ${SADM_LOG}
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
+    sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
+    chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
     
     # Inform UnixAdmin By Email based on his selected choice
     case $SADM_MAIL_TYPE in
