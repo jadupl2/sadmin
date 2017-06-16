@@ -45,6 +45,12 @@ function display_heading($line_title) {
     # Display Page Title
     sadm_page_heading ("$line_title");
     
+    # Set Font Size for Table Cell and Table Heading
+    echo "<style>\n";
+    echo "td { font-size: 11px; }\n";
+    echo "th { font-size: 11px; }\n";
+    echo "</style>\n";
+    
     # Row Creation Button 
     echo "\n<div style='text-align:right'>";
     echo "\n<a href='/crud/sadm_server_create.php'>"; 
