@@ -47,6 +47,13 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
 {
     $TITRE="Content of log " . basename($WNAME);
     sadm_page_heading ("$TITRE");
+    
+        # Set Font Size for Table Cell and Table Heading
+    echo "<style>\n";
+    echo "td { font-size: 13px; }\n";
+    echo "th { font-size: 13px; }\n";
+    echo "</style>\n";
+    
     echo "<br><center><table id='table_rch'>\n";    
 
     #echo "<tr>\n" ;
