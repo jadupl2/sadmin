@@ -72,11 +72,13 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 #===================================================================================================
 help()
 {
+    echo "Usage: $SADM_PN"
+    echo "" 
+    echo "Options:
+    echo "             -s <ServerName>"
+    echo "             -h <This help message"
     echo " "
-    echo "sadm_template.sh usage :"
-    echo "             -s [ServerName]"
-    echo "             -h help"
-    echo " "
+
 }
 
 
@@ -185,6 +187,7 @@ main_process()
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
                help                                                     # Display Help Usage
+               sadm_stop 1                                              # Close the shop
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
