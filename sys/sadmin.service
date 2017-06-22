@@ -1,5 +1,11 @@
+# V2.0 - SADMIN Service
+#        Added Require Network.target 
+#
 [Unit]
 Description=Control SysADMin Tools service
+Requires=network.target
+DefaultDependencies=no
+Before=shutdown.target reboot.target
 Wants=network-online.target
 After=network-online.target
 
