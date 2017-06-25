@@ -455,11 +455,346 @@ function display_left_side ( $wrow , $mode) {
     echo "\n</div>";
 
 
+
+    # ----------------------------------------------------------------------------------------------
+    # Monitor SSH Connectivity to Server ?
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label1'>Monitor SSH Connectivity</div>";
+    echo "\n<div class='server_input1'>";
+    if ($mode == 'C') { $wrow['srv_monitor'] = True ; }                 # Set Default Value to True
+    switch ($mode) {
+        case 'D' : if ($wrow['srv_monitor'] == 't') {
+                       echo "\n<input type='radio' name='scr_monitor' value='1' ";
+                       echo "onclick='javascript: return false;' checked> Enable  ";
+                       echo "\n<input type='radio' name='scr_monitor' value='0' ";
+                       echo "onclick='javascript: return false;'> Disable";
+                   }else{
+                       echo "\n<input type='radio' name='scr_monitor' value='1' ";
+                       echo "onclick='javascript: return false;'> Enable  ";
+                       echo "\n<input type='radio' name='scr_monitor' value='0' ";
+                       echo "onclick='javascript: return false;' checked > Disable";
+                   }
+                   break ;
+        default  : if ($wrow['srv_monitor'] == 't') {
+                       echo "\n<input type='radio' name='scr_monitor' value='1' checked > Enable ";
+                       echo "\n<input type='radio' name='scr_monitor' value='0'> Disable";
+                   }else{
+                       echo "\n<input type='radio' name='scr_monitor' value='1'> Enable";
+                       echo "\n<input type='radio' name='scr_monitor' value='0' checked > Disable";
+                   }
+                   break;
+    }
+    echo "\n</div>";
+
+
+
+}
+
+
+
+
+
+
+# ==================================================================================================
+#                      DISPLAY RIGHT SIDE OF SERVER DATA USED IN THE DATA INPUT FORM
+#
+#  wrow  = Array containing table row keys/values
+#  mode  = "[D]isplay" Only show row content - Can't modify any information
+#        = "[C]reate"  Display default values and user can modify all fields, except the row key
+#        = "[U]pdate"  Display row content and user can modify all fields, except the row key
+# ==================================================================================================
+function display_right_side ( $wrow , $mode) {
+
+    echo "<hr size='100'>";
+    #echo "O/S Update";
+    #echo "<hr size='100'>";
+    
+    
+    # ----------------------------------------------------------------------------------------------
+    # Update the O/S Automatically (Yes/No) ?
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Scheduled Update of O/S</div>";
+    echo "\n<div class='server_input2'>";
+    if ($mode == 'C') { $wrow['srv_update_auto'] = True ; }             # Default Regularly
+    switch ($mode) {
+        case 'D' : if ($wrow['srv_update_auto'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
+                        echo "onclick='javascript: return false;' checked> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
+                        echo "onclick='javascript: return false;'> Disable";
+                    }else{
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
+                        echo "onclick='javascript: return false;'> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
+                        echo "onclick='javascript: return false;' checked > Disable ";
+                    }
+                    break;
+        default   : if ($wrow['srv_update_auto'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' checked > Enable ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0'> Disable  ";
+                    }else{
+                        echo "\n<input type='radio' name='scr_update_auto' value='1'> Enable  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > Disable";
+                    }
+                    break;
+    }
+    echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # Reboot after O/S Update (Yes/No) ?
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Reboot after O/S update</div>";
+    echo "\n<div class='server_input2'>";
+    if ($mode == 'C') { $wrow['srv_update_reboot'] = False ; }        # Default Value to No Reboot
+    switch ($mode) {
+        case 'D' :  if ($wrow['srv_update_reboot'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
+                        echo "onclick='javascript: return false;' checked> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
+                        echo "onclick='javascript: return false;'> Disable";
+                    }else{
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
+                        echo "onclick='javascript: return false;'> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
+                        echo "onclick='javascript: return false;' checked > Disable";
+                    }
+                    break;
+        default  :  if ($wrow['srv_update_reboot'] == 't') {
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1' checked> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0'> Disable";
+                    }else{
+                        echo "\n<input type='radio' name='scr_update_reboot' value='1'> Enable";
+                        echo "\n<input type='radio' name='scr_update_reboot' value='0' checked> Disable";
+                    }
+                    break;
+    }
+    echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # O/S Update Months - Specify what month the Update need to run - Default is All months
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Months & Dates to Upd. O/S</div>";
+    echo "\n<div class='server_input2'>";
+    $months = array('January','February','March','April','May','June','July ','August','September',
+                    'October','November','December',);
+    echo "\n<select name='scr_update_month[]' multiple='multiple' size=3>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 12; $i = $i + 1) {
+                        echo "\n<option value='$i' selected/>" . $months[$i] . "</option>";
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 12; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if (substr($wrow['srv_update_month'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo "/>" . $months[$i] . "</option>";
+                    }
+                    break;
+    }
+    echo "\n</select>";
+    #echo "mth = " . $wrow['srv_update_month'];
+    #echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # Date in the month (dom) to Update O/S 
+    # ----------------------------------------------------------------------------------------------
+    echo "..";
+    #echo "\n\n<div class='server_label2'>Date in month to update O/S</div>";
+    #echo "\n<div class='server_input2'>";
+    echo "\n<select name='scr_update_dom[]' multiple='multiple' size=3>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 31; $i = $i + 1) {
+                        echo "\n<option value='$i' selected/>" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 31; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if (substr($wrow['srv_update_dom'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i+1) . "</option>";
+                    }     
+                    break;
+    }
+    echo "\n</select>";
+    echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # Day in the week (dow) to update the O/S
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Day & Time to update O/S</div>";
+    echo "\n<div class='server_input2'>";
+    $days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+    #echo "\n<select name='scr_update_dow[]' multiple='multiple' size=3>";
+    echo "\n<select name='scr_update_dow[]' size=1>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 7; $i = $i + 1) {
+                        echo "\n<option value='$i' ";
+                        if ($i == 6) { echo " selected"; }
+                        echo "/>" . $days[$i] . "</option>";
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 7; $i = $i + 1) {
+                        echo "\n<option value='$i' " ;
+                        if (substr($wrow['srv_update_dow'],$i,1) == "Y") {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo "/>" . $days[$i] . "</option>";
+                    }
+                    break;
+    }
+    echo "\n</select>";
+    #echo "\n</div>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # Hour to update the O/S
+    # ----------------------------------------------------------------------------------------------
+    #echo "\n\n<div class='server_label2'>Time to Update the O/S</div>";
+    #echo "\n<div class='server_input2'>";
+    echo " Hour ";
+    echo "\n<select name='scr_update_hour' size=1>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 24; $i = $i + 1) {
+                        if ($i == 1) { 
+                           echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
+                        }else{
+                           echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
+                        }
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 24; $i = $i + 1) {
+                        echo "\n<option value='$i' " ;
+                        if ($wrow['srv_update_hour'] == $i) {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break;
+    }
+    echo "\n</select>";
+
+
+    # ----------------------------------------------------------------------------------------------
+    # Minute to update the O/S
+    # ----------------------------------------------------------------------------------------------
+    echo " Min ";
+    echo "\n<select name='scr_update_minute' size=1>";
+    switch ($mode) {
+        case 'C' :  for ($i = 0; $i < 60; $i = $i + 1) {
+                        if ($i == 5) { 
+                            echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
+                        }else{
+                            echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
+                        }
+                    }
+                    break ;
+        default  :  for ($i = 0; $i < 60; $i = $i + 1) {
+                        echo "\n<option value='$i'" ;
+                        if ($wrow['srv_update_minute'] == $i) {echo " selected";}
+                        if ($mode == 'D') { echo " disabled" ; }
+                        echo ">" . sprintf("%02d",$i) . "</option>";
+                    }
+                    break;
+    }
+    echo "\n</select>";
+    echo "\n</div>";
+
+    # Space Lines    -------------------------------------------------------------------------------
+    #echo "\n<br>\n";
+    #echo "\n\n<div class='server_label2'>";
+    #echo "\n<div class='server_input2'>";
+    echo "<hr size='100'>";
+    #echo "\n</div>";
+    #echo "\n</div>";
+    
+    # ----------------------------------------------------------------------------------------------
+    # Maintenance Mode ON or OFF Monitor SSH Connectivity to Server ?
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Maintenance Mode</div>";
+    echo "\n<div class='server_input2'>";
+    if ($mode == 'C') { $wrow['srv_maintenance'] = False ; }               # Default Mode is OFF
+    switch ($mode) {
+        case 'D' : if ($wrow['srv_maintenance'] == 't') {
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
+                      echo "onclick='javascript: return false;' checked> On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
+                      echo "onclick='javascript: return false;'> Off  ";
+                   }else{
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
+                      echo "onclick='javascript: return false;'> On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
+                      echo "onclick='javascript: return false;' checked > Off  ";
+                   }
+                   break;
+        default  : if ($wrow['srv_maintenance'] == 't') {
+                      echo "\n<input type='radio' name='scr_maintenance' value='1' checked > On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0'> Off  ";
+                   }else{
+                      echo "\n<input type='radio' name='scr_maintenance' value='1'> On  ";
+                      echo "\n<input type='radio' name='scr_maintenance' value='0' checked > Off  ";
+                   }
+                   break;
+    }
+    echo "\n</div>";
+    
+        
+    # ----------------------------------------------------------------------------------------------
+    # Maintenance Mode Start TimeStamp
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Maintenance Start</div>";
+    echo "\n<div class='server_input2'>";
+    #echo " From: ";
+    if ($mode == 'C') { $wrow['srv_maint_start'] = date("Y-m-d H:i"); } 
+    switch ($mode) {
+        case 'D' : echo "\n<input size='15' type='text' name='scr_maint_start' readonly ";
+                   echo "value='" . substr($wrow['srv_maint_start'],0,16) ."'>";
+                   #echo "' class='form_datetime'/>";
+                   break;
+        default  : echo "\n<input size='15' type='text' name='scr_maint_start' readonly ";
+                   echo "value='" .  substr($wrow['srv_maint_start'],0,16);
+                   echo "' class='form_datetime'/>";
+                   echo "\n<script type='text/javascript'>";
+                   echo "\n $(\".form_datetime\").datetimepicker({format: 'yyyy-mm-dd hh:ii'})";
+                   echo "\n</script>";
+                   break;
+    }
+    echo "\n</div>";
+
+
+         
+    # ----------------------------------------------------------------------------------------------
+    # Maintenance Mode End Timestamp
+    # ----------------------------------------------------------------------------------------------
+    echo "\n\n<div class='server_label2'>Maintenance End</div>";
+    echo "\n<div class='server_input2'>";
+    #echo " To: ";
+    if ($mode == 'C') { $wrow['srv_maint_end'] = date("Y-m-d H:i"); } 
+    switch ($mode) {
+        case 'D' : echo "\n<input size='15' type='text' name='scr_maint_end' readonly ";
+                   echo "value='" . substr($wrow['srv_maint_end'],0,16) ."'>";
+                   #echo "' class='form_datetime'/>";
+                   break;
+        default  : echo "\n<input size='15' type='text' name='scr_maint_end' readonly ";
+                   echo "value='" .  substr($wrow['srv_maint_end'],0,16);
+                   echo "' class='form_datetime'/>";
+                   echo "\n<script type='text/javascript'>";
+                   echo "\n $(\".form_datetime\").datetimepicker({format: 'yyyy-mm-dd hh:ii'})";
+                   echo "\n</script>";
+                   break;
+    }
+    echo "\n</div>";
+
+    echo "<hr size='100'>";
+
+
+
     # ----------------------------------------------------------------------------------------------
     # Indicate the Day of the week that we want to take the ReaR Backup (Done during night time)
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>ReaR Backup Day</div>";
-    echo "\n<div class='server_input1'>";
+    echo "\n\n<div class='server_label2'>ReaR Backup Day</div>";
+    echo "\n<div class='server_input2'>";
     if ($mode == 'D') {
         switch ($wrow['srv_backup']) {
             case 0: $scr_backup=0 ; $scr_backup_desc="No backup" ; break;
@@ -594,334 +929,7 @@ function display_left_side ( $wrow , $mode) {
 
     echo "\n</div>";                                                      # << End of server_input
     
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Monitor SSH Connectivity to Server ?
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Monitor SSH Connectivity</div>";
-    echo "\n<div class='server_input1'>";
-    if ($mode == 'C') { $wrow['srv_monitor'] = True ; }                 # Set Default Value to True
-    switch ($mode) {
-        case 'D' : if ($wrow['srv_monitor'] == 't') {
-                       echo "\n<input type='radio' name='scr_monitor' value='1' ";
-                       echo "onclick='javascript: return false;' checked> Enable  ";
-                       echo "\n<input type='radio' name='scr_monitor' value='0' ";
-                       echo "onclick='javascript: return false;'> Disable";
-                   }else{
-                       echo "\n<input type='radio' name='scr_monitor' value='1' ";
-                       echo "onclick='javascript: return false;'> Enable  ";
-                       echo "\n<input type='radio' name='scr_monitor' value='0' ";
-                       echo "onclick='javascript: return false;' checked > Disable";
-                   }
-                   break ;
-        default  : if ($wrow['srv_monitor'] == 't') {
-                       echo "\n<input type='radio' name='scr_monitor' value='1' checked > Enable ";
-                       echo "\n<input type='radio' name='scr_monitor' value='0'> Disable";
-                   }else{
-                       echo "\n<input type='radio' name='scr_monitor' value='1'> Enable";
-                       echo "\n<input type='radio' name='scr_monitor' value='0' checked > Disable";
-                   }
-                   break;
-    }
-    echo "\n</div>";
-
-    
-    # ----------------------------------------------------------------------------------------------
-    # Maintenance Mode ON or OFF Monitor SSH Connectivity to Server ?
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Maintenance Mode</div>";
-    echo "\n<div class='server_input1'>";
-    if ($mode == 'C') { $wrow['srv_maintenance'] = False ; }               # Default Mode is OFF
-    switch ($mode) {
-        case 'D' : if ($wrow['srv_maintenance'] == 't') {
-                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
-                      echo "onclick='javascript: return false;' checked> On  ";
-                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
-                      echo "onclick='javascript: return false;'> Off  ";
-                   }else{
-                      echo "\n<input type='radio' name='scr_maintenance' value='1' ";
-                      echo "onclick='javascript: return false;'> On  ";
-                      echo "\n<input type='radio' name='scr_maintenance' value='0' ";
-                      echo "onclick='javascript: return false;' checked > Off  ";
-                   }
-                   break;
-        default  : if ($wrow['srv_maintenance'] == 't') {
-                      echo "\n<input type='radio' name='scr_maintenance' value='1' checked > On  ";
-                      echo "\n<input type='radio' name='scr_maintenance' value='0'> Off  ";
-                   }else{
-                      echo "\n<input type='radio' name='scr_maintenance' value='1'> On  ";
-                      echo "\n<input type='radio' name='scr_maintenance' value='0' checked > Off  ";
-                   }
-                   break;
-    }
-    echo "\n</div>";
-    
-        
-    # ----------------------------------------------------------------------------------------------
-    # Maintenance Mode Start TimeStamp
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label1'>Maintenance Period</div>";
-    echo "\n<div class='server_input1'>";
-    echo " From: ";
-    if ($mode == 'C') { $wrow['srv_maint_start'] = date("Y-m-d H:i"); } 
-    switch ($mode) {
-        case 'D' : echo "\n<input size='15' type='text' name='scr_maint_start' readonly ";
-                   echo "value='" . substr($wrow['srv_maint_start'],0,16) ."'>";
-                   #echo "' class='form_datetime'/>";
-                   break;
-        default  : echo "\n<input size='15' type='text' name='scr_maint_start' readonly ";
-                   echo "value='" .  substr($wrow['srv_maint_start'],0,16);
-                   echo "' class='form_datetime'/>";
-                   echo "\n<script type='text/javascript'>";
-                   echo "\n $(\".form_datetime\").datetimepicker({format: 'yyyy-mm-dd hh:ii'})";
-                   echo "\n</script>";
-                   break;
-    }
-
-
-         
-    # ----------------------------------------------------------------------------------------------
-    # Maintenance Mode End Timestamp
-    # ----------------------------------------------------------------------------------------------
-    #echo "\n\n<div class='server_label1'>Maintenance Start</div>";
-    #echo "\n<div class='server_input1'>";
-    echo " To: ";
-    if ($mode == 'C') { $wrow['srv_maint_end'] = date("Y-m-d H:i"); } 
-    switch ($mode) {
-        case 'D' : echo "\n<input size='15' type='text' name='scr_maint_end' readonly ";
-                   echo "value='" . substr($wrow['srv_maint_end'],0,16) ."'>";
-                   #echo "' class='form_datetime'/>";
-                   break;
-        default  : echo "\n<input size='15' type='text' name='scr_maint_end' readonly ";
-                   echo "value='" .  substr($wrow['srv_maint_end'],0,16);
-                   echo "' class='form_datetime'/>";
-                   echo "\n<script type='text/javascript'>";
-                   echo "\n $(\".form_datetime\").datetimepicker({format: 'yyyy-mm-dd hh:ii'})";
-                   echo "\n</script>";
-                   break;
-    }
-    echo "\n</div>";
-
-
-}
-
-
-
-
-
-
-# ==================================================================================================
-#                      DISPLAY RIGHT SIDE OF SERVER DATA USED IN THE DATA INPUT FORM
-#
-#  wrow  = Array containing table row keys/values
-#  mode  = "[D]isplay" Only show row content - Can't modify any information
-#        = "[C]reate"  Display default values and user can modify all fields, except the row key
-#        = "[U]pdate"  Display row content and user can modify all fields, except the row key
-# ==================================================================================================
-function display_right_side ( $wrow , $mode) {
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Update the O/S Automatically (Yes/No) ?
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Scheduled Update of O/S</div>";
-    echo "\n<div class='server_input2'>";
-    if ($mode == 'C') { $wrow['srv_update_auto'] = True ; }             # Default Regularly
-    switch ($mode) {
-        case 'D' : if ($wrow['srv_update_auto'] == 't') {
-                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
-                        echo "onclick='javascript: return false;' checked> Enable  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
-                        echo "onclick='javascript: return false;'> Disable";
-                    }else{
-                        echo "\n<input type='radio' name='scr_update_auto' value='1' ";
-                        echo "onclick='javascript: return false;'> Enable  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' ";
-                        echo "onclick='javascript: return false;' checked > Disable ";
-                    }
-                    break;
-        default   : if ($wrow['srv_update_auto'] == 't') {
-                        echo "\n<input type='radio' name='scr_update_auto' value='1' checked > Enable ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0'> Disable  ";
-                    }else{
-                        echo "\n<input type='radio' name='scr_update_auto' value='1'> Enable  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > Disable";
-                    }
-                    break;
-    }
-    echo "\n</div>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Reboot after O/S Update (Yes/No) ?
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Reboot after O/S update</div>";
-    echo "\n<div class='server_input2'>";
-    if ($mode == 'C') { $wrow['srv_update_reboot'] = False ; }        # Default Value to No Reboot
-    switch ($mode) {
-        case 'D' :  if ($wrow['srv_update_reboot'] == 't') {
-                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
-                        echo "onclick='javascript: return false;' checked> Enable";
-                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
-                        echo "onclick='javascript: return false;'> Disable";
-                    }else{
-                        echo "\n<input type='radio' name='scr_update_reboot' value='1' ";
-                        echo "onclick='javascript: return false;'> Enable";
-                        echo "\n<input type='radio' name='scr_update_reboot' value='0' ";
-                        echo "onclick='javascript: return false;' checked > Disable";
-                    }
-                    break;
-        default  :  if ($wrow['srv_update_reboot'] == 't') {
-                        echo "\n<input type='radio' name='scr_update_reboot' value='1' checked> Enable";
-                        echo "\n<input type='radio' name='scr_update_reboot' value='0'> Disable";
-                    }else{
-                        echo "\n<input type='radio' name='scr_update_reboot' value='1'> Enable";
-                        echo "\n<input type='radio' name='scr_update_reboot' value='0' checked> Disable";
-                    }
-                    break;
-    }
-    echo "\n</div>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # O/S Update Months - Specify what month the Update need to run - Default is All months
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Allowed Months & Dates to Upd. O/S</div>";
-    echo "\n<div class='server_input2'>";
-    $months = array('January','February','March','April','May','June','July ','August','September',
-                    'October','November','December',);
-    echo "\n<select name='scr_update_month[]' multiple='multiple' size=3>";
-    switch ($mode) {
-        case 'C' :  for ($i = 0; $i < 12; $i = $i + 1) {
-                        echo "\n<option value='$i' selected/>" . $months[$i] . "</option>";
-                    }
-                    break ;
-        default  :  for ($i = 0; $i < 12; $i = $i + 1) {
-                        echo "\n<option value='$i'" ;
-                        if (substr($wrow['srv_update_month'],$i,1) == "Y") {echo " selected";}
-                        if ($mode == 'D') { echo " disabled" ; }
-                        echo "/>" . $months[$i] . "</option>";
-                    }
-                    break;
-    }
-    echo "\n</select>";
-    #echo "mth = " . $wrow['srv_update_month'];
-    #echo "\n</div>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Date in the month (dom) to Update O/S 
-    # ----------------------------------------------------------------------------------------------
-    echo "..";
-    #echo "\n\n<div class='server_label2'>Date in month to update O/S</div>";
-    #echo "\n<div class='server_input2'>";
-    echo "\n<select name='scr_update_dom[]' multiple='multiple' size=3>";
-    switch ($mode) {
-        case 'C' :  for ($i = 0; $i < 31; $i = $i + 1) {
-                        echo "\n<option value='$i' selected/>" . sprintf("%02d",$i) . "</option>";
-                    }
-                    break ;
-        default  :  for ($i = 0; $i < 31; $i = $i + 1) {
-                        echo "\n<option value='$i'" ;
-                        if (substr($wrow['srv_update_dom'],$i,1) == "Y") {echo " selected";}
-                        if ($mode == 'D') { echo " disabled" ; }
-                        echo ">" . sprintf("%02d",$i+1) . "</option>";
-                    }     
-                    break;
-    }
-    echo "\n</select>";
-    echo "\n</div>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Day in the week (dow) to update the O/S
-    # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='server_label2'>Day and Time to update O/S</div>";
-    echo "\n<div class='server_input2'>";
-    $days = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
-    #echo "\n<select name='scr_update_dow[]' multiple='multiple' size=3>";
-    echo "\n<select name='scr_update_dow[]' size=1>";
-    switch ($mode) {
-        case 'C' :  for ($i = 0; $i < 7; $i = $i + 1) {
-                        echo "\n<option value='$i' ";
-                        if ($i == 6) { echo " selected"; }
-                        echo "/>" . $days[$i] . "</option>";
-                    }
-                    break ;
-        default  :  for ($i = 0; $i < 7; $i = $i + 1) {
-                        echo "\n<option value='$i' " ;
-                        if (substr($wrow['srv_update_dow'],$i,1) == "Y") {echo " selected";}
-                        if ($mode == 'D') { echo " disabled" ; }
-                        echo "/>" . $days[$i] . "</option>";
-                    }
-                    break;
-    }
-    echo "\n</select>";
-    #echo "\n</div>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Hour to update the O/S
-    # ----------------------------------------------------------------------------------------------
-    #echo "\n\n<div class='server_label2'>Time to Update the O/S</div>";
-    #echo "\n<div class='server_input2'>";
-    echo " Hour ";
-    echo "\n<select name='scr_update_hour' size=1>";
-    switch ($mode) {
-        case 'C' :  for ($i = 0; $i < 24; $i = $i + 1) {
-                        if ($i == 1) { 
-                           echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
-                        }else{
-                           echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
-                        }
-                    }
-                    break ;
-        default  :  for ($i = 0; $i < 24; $i = $i + 1) {
-                        echo "\n<option value='$i' " ;
-                        if ($wrow['srv_update_hour'] == $i) {echo " selected";}
-                        if ($mode == 'D') { echo " disabled" ; }
-                        echo ">" . sprintf("%02d",$i) . "</option>";
-                    }
-                    break;
-    }
-    echo "\n</select>";
-
-
-    # ----------------------------------------------------------------------------------------------
-    # Minute to update the O/S
-    # ----------------------------------------------------------------------------------------------
-    echo " Min ";
-    echo "\n<select name='scr_update_minute' size=1>";
-    switch ($mode) {
-        case 'C' :  for ($i = 0; $i < 60; $i = $i + 1) {
-                        if ($i == 5) { 
-                            echo "\n<option value='$i' selected>" . sprintf("%02d",$i) . "</option>";
-                        }else{
-                            echo "\n<option value='$i'>" . sprintf("%02d",$i) . "</option>";
-                        }
-                    }
-                    break ;
-        default  :  for ($i = 0; $i < 60; $i = $i + 1) {
-                        echo "\n<option value='$i'" ;
-                        if ($wrow['srv_update_minute'] == $i) {echo " selected";}
-                        if ($mode == 'D') { echo " disabled" ; }
-                        echo ">" . sprintf("%02d",$i) . "</option>";
-                    }
-                    break;
-    }
-    echo "\n</select>";
-    echo "\n</div>";
-
-    # Space Lines    -------------------------------------------------------------------------------
-    #echo "\n<br>\n";
-   
-    # Last Edit Date -------------------------------------------------------------------------------
-    #echo "\n\n<div class='server_label2'>Last Edit Date & Time</div>";
-    #echo "\n<div class='server_input2'>";
-    #echo "\n<input type='text' name='scr_last_edit_date' readonly maxlength='18' size='18' ";
-    #echo "value='" . sadm_clean_data($wrow['srv_last_edit_date']). "'/>";
-    #echo "</div>\n";
+    echo "<hr size='100'>";
 
 }
 ?>
