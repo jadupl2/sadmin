@@ -16,6 +16,8 @@
 #               Added removal of files in (pid) /sadmin/tmp at system boot
 # Version 2.5 - June 2017
 #               Added removal of sysmon lock file (/sadmin/sysmon.lock) at system boot
+# Version 2.6 - June 2017
+#               Added Clock Synchronization with 0.ca.pool.ntp.org
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -31,7 +33,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.5'                             ; export SADM_VER            # Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -58,7 +60,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-
+NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada NTP Pool
 
 
 
@@ -75,7 +77,8 @@ main_process()
     sadm_writelog "Removing SADM System Monitor Lock File ${SADM_BASE_DIR/sysmon.lock}"
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
-    sadm_writelog " "
+    sadm_writelog "Synchronize System Clock with $NTP_SERVER"
+    ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1
 
     sadm_writelog " "
     return 0                                                            # Return Default return code
