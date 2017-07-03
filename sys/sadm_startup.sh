@@ -18,6 +18,8 @@
 #               Added removal of sysmon lock file (/sadmin/sysmon.lock) at system boot
 # Version 2.6 - June 2017
 #               Added Clock Synchronization with 0.ca.pool.ntp.org
+# Version 2.7 - July 2017
+#               Add Section to put command to execute on specified Systems
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -33,7 +35,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.6'                             ; export SADM_VER            # Script Version
+SADM_VER='2.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -74,11 +76,26 @@ main_process()
     sadm_writelog "Removing old files in ${SADM_TMP_DIR}"
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
-    sadm_writelog "Removing SADM System Monitor Lock File ${SADM_BASE_DIR/sysmon.lock}"
+    sadm_writelog "Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
     sadm_writelog "Synchronize System Clock with $NTP_SERVER"
     ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1
+
+    # Special Operation for some particular System
+    sadm_writelog " "
+    case "$SADM_HOSTNAME" in
+        "raspi4" )      sadm_writelog "systemctl restart rpcbind"
+                        systemctl restart rpcbind >> $SADM_LOG 2>&1
+                        sadm_writelog "systemctl restart nfs-kernel-server"
+                        systemctl restart nfs-kernel-server >> $SADM_LOG 2>&1
+                        ;;
+        "nomad" )       sadm_writelog "Start SysInfo Web Server"
+                        /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
+                        ;;
+                *)      sadm_writelog "No Special Operation for $SADM_HOSTNAME"
+                        ;;
+    esac
 
     sadm_writelog " "
     return 0                                                            # Return Default return code
