@@ -9,7 +9,7 @@
 *   Requires    :  secure.php.net, postgresql.org, getbootstrap.com, DataTables.net
 *   Description :  This page allow to view the servers alerts information in various ways
 *                  depending on parameters received.
-*   
+*
 *   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 *
 *   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -24,7 +24,7 @@
 *   If not, see <http://www.gnu.org/licenses/>.
 * ==================================================================================================
 */
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
 
@@ -42,13 +42,13 @@ $alert_file = SADM_TMP_DIR . "/www_sysmon_file_" . getmypid() ;         # File B
 
 
 #===================================================================================================
-#                                   Display Alert section Heading 
+#                                   Display Alert section Heading
 #===================================================================================================
 function display_degug_info() {
     global $DEBUG, $tmp_file1, $tmp_file2, $tmp_file3 ;
-    if ($DEBUG)  { 
-        echo "\n<br>Input temp1 file name is " . $tmp_file1 ; 
-        echo "\n<br>Input temp2 file name is " . $tmp_file2 ; 
+    if ($DEBUG)  {
+        echo "\n<br>Input temp1 file name is " . $tmp_file1 ;
+        echo "\n<br>Input temp2 file name is " . $tmp_file2 ;
         echo "\n<br>Input temp3 file name is " . $tmp_file3 ;
     }
 }
@@ -81,15 +81,15 @@ function load_sysmon_array() {
     if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
 
 
-    # CONVERT THESE KIND OF LINES 
+    # CONVERT THESE KIND OF LINES
     # debian7 2017.02.09 00:06:02 2017.02.09 00:06:02 00:00:00 sadm_rear_backup 1
     #   1        2         3         4        5        6          7            8
     # TO THIS TYPE OF LINE
-    # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm; 
+    # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm;
     #   1    2       3        4      5       6             7                     8     9
     $lines = file($tmp_file3);                                          # Load RCH Line into Array
     $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
-       
+
     foreach ($lines as $line_num => $line) {
         if ($DEBUG) { echo "\n<br>RCH Before conversion - Ligne #{$line_num} : " . $line ; }
         list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$wcode) = explode(" ",$line);
@@ -108,7 +108,7 @@ function load_sysmon_array() {
                         break;
         }
         $rhost      = trim($whost);
-        $rmod       = "SADM"; 
+        $rmod       = "SADM";
         $rsubmod    = "SCRIPT";
         $rpage      = "sadm";
         $rmail      = "sadm";
@@ -119,14 +119,14 @@ function load_sysmon_array() {
     }
     fclose($afile);
 
-    if ($DEBUG) { 
-        echo "\n\n<br><br>Debug Information - Alert file Content"; 
+    if ($DEBUG) {
+        echo "\n\n<br><br>Debug Information - Alert file Content";
         $lines = file($alert_file);
         foreach ($lines as $line_num => $line) {
-            echo "\n<br>Ligne #<b>{$line_num}</b> : " . $line . "\n"; 
+            echo "\n<br>Ligne #<b>{$line_num}</b> : " . $line . "\n";
         }
     }
-    
+
     # Delete Work Files
     unlink($tmp_file1);
     unlink($tmp_file2);
@@ -142,7 +142,7 @@ function display_heading($line_title) {
 
     sadm_page_heading ("$line_title");                                  # Display Page Title
     echo "<center>\n";                                                  # Table Centered on Page
-  
+
     # Set Font Size for Table Cell and Table Heading
     echo "<style>\n";
     echo "td { font-size: 12px; }\n";
@@ -161,13 +161,15 @@ function display_heading($line_title) {
     echo "<th>Server Description</th>\n";
     #echo "<th class='text-center'>Module</th>\n";
     echo "<th>Alert Description</th>\n";
-    echo "<th class='text-center'>Date</th>\n";
-    echo "<th class='text-center'>Time</th>\n";
+    echo "<th class='text-center'>Date / Time</th>\n";
+    #echo "<th class='text-center'>Time</th>\n";
     #echo "<th class='text-center'>Cat.</th>\n";
     #echo "<th class='text-center'>SubModule</th>\n";
-    echo "<th class='text-center'>Alert Grp</th>\n";
-    echo "<th class='text-center'>Email Grp</th>\n";
-    echo "</tr>\n"; 
+    #echo "<th class='text-center'>Alert Grp</th>\n";
+    #echo "<th class='text-center'>Email Grp</th>\n";
+    #echo "<th class='text-center'>Alert Grp</th>\n";
+    echo "<th class='text-center'>Alert/Email Grp</th>\n";
+    echo "</tr>\n";
     echo "</thead>\n";
 
     # Server Table Footer
@@ -180,13 +182,15 @@ function display_heading($line_title) {
     echo "<th>Server Description</th>\n";
     #echo "<th class='text-center'>Module</th>\n";
     echo "<th>Alert Description</th>\n";
-    echo "<th class='text-center'>Date</th>\n";
-    echo "<th class='text-center'>Time</th>\n";
+    echo "<th class='text-center'>Date / Time</th>\n";
+    #echo "<th class='text-center'>Time</th>\n";
     #echo "<th class='text-center'>Cat.</th>\n";
     #echo "<th class='text-center'>SubModule</th>\n";
-    echo "<th class='text-center'>Alert Grp</th>\n";
-    echo "<th class='text-center'>Email Grp</th>\n";
-    echo "</tr>\n"; 
+    #echo "<th class='text-center'>Alert Grp</th>\n";
+    #echo "<th class='text-center'>Email Grp</th>\n";
+    #echo "<th class='text-center'>Alert Grp</th>\n";
+    echo "<th class='text-center'>Alert/Email Grp</th>\n";
+    echo "</tr>\n";
     echo "</tfoot>\n";
 
     # Start of Table Body
@@ -207,10 +211,10 @@ function display_data() {
     foreach ($array_sysmon as $line_num => $line) {
         if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n"; }
         list($wstatus,$whost,$wdate,$wtime,$wmod,$wsubmod,$wdesc,$wpage,$wmail)=explode(";",$line);
-        
+
         # DISPLAY ICON STATUS
-        echo "<tr>\n";  
-        #echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";  
+        echo "<tr>\n";
+        #echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";
         echo "<td class='dt-center'>";
         switch (strtoupper($wstatus)) {
             case 'SUCCESS' :
@@ -235,12 +239,12 @@ function display_data() {
                 break;
         }
         echo "style='width:24px;height:24px;'></span></td>\n";
- 
+
         # READ INFO ABOUT THE SERVER IN THE DATABASE
         $query = "SELECT * FROM sadm.server where srv_name = '". $whost . "';";
         $result = pg_query($query) or die('Query failed: ' . pg_last_error());
         $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;
-        $WDESC = $row['srv_desc'];      
+        $WDESC = $row['srv_desc'];
         $WOS   = $row['srv_osname'];
         $WVER  = $row['srv_osversion'];
 
@@ -323,8 +327,8 @@ function display_data() {
         #        echo "style='width:24px;height:24px;'></td>\n";
         #        break;
         #}
-        echo "<td>" . $WDESC                                 . "</td>\n";  
-        #echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";  
+        echo "<td>" . $WDESC                                 . "</td>\n";
+        #echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";
 
         list($wdummy,$wscript) = explode(" ",$wdesc);
         $wlog =  $whost . "_" . $wscript . ".log";
@@ -337,24 +341,24 @@ function display_data() {
             echo $wdesc ;
 
         }
-        echo "</td>\n";  
-        echo "<td class='dt-center'>" . $wdate               . "</td>\n";  
-        echo "<td class='dt-center'>" . $wtime               . "</td>\n";  
- 
+        echo "</td>\n";
+        echo "<td class='dt-center'>" . $wdate . " " . $wtime                . "</td>\n";
+        #echo "<td class='dt-center'>" . $wtime               . "</td>\n";
+
         $WCAT  = sadm_clean_data($row['srv_cat']);
 
         $WOS   = sadm_clean_data($row['srv_osname']);
-        #echo "<td class='dt-center'>" . $WCAT                . "</td>\n";  
-        #echo "<td class='dt-center'>" . strtoupper($wsubmod) . "</td>\n";  
-        echo "<td class='dt-center'>" . $wpage               . "</td>\n";  
-        echo "<td class='dt-center'>" . $wmail               . "</td>\n";  
+        #echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
+        #echo "<td class='dt-center'>" . strtoupper($wsubmod) . "</td>\n";
+        echo "<td class='dt-center'>" . $wpage . " / " . $wmail               . "</td>\n";
+        #echo "<td class='dt-center'>" . $wmail               . "</td>\n";
     }
     echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
     echo "<center>";
     echo "<b>This page will refresh automatically every minute - " . date('l jS \of F Y h:i:s A');
     echo "</br></center>";
 }
-    
+
 
 #===================================================================================================
 #                                      PROGRAM START HERE
