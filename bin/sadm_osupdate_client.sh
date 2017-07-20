@@ -24,6 +24,8 @@
 # Version 3.0 - April 2017 
 #       Not detecting Error correctly on Debian Family update
 #       Add Error Message in the Log
+# Version 3.2 - July 2017 
+#       Now using DNF instead of yum for updating Fedora 25 and beyong.
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -33,7 +35,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='3.1'                             ; export SADM_VER            # This Script Version
+SADM_VER='3.2'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -83,16 +85,16 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 # --------------------------------------------------------------------------------------------------
 
 # Command to issue the shutdown / Reboot after the update if requested
-REBOOT_CMD="/sbin/shutdown -r now"           ; export REBOOT_CMD         # Reboot Command
+REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot Command
 
 # Default to no reboot after an update
-WREBOOT="N"                                 ; export WREBOOT             # No reboot after update
+WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
 
 
 
 
 # --------------------------------------------------------------------------------------------------
-#               Function to check update available before beginning update
+#                      Function to check update available before beginning update
 # Function Return
 # - 0 IF UPDATE ARE AVAILABLE
 # - 1 IF NO UPDATE ARE AVAILABLE
@@ -100,68 +102,109 @@ WREBOOT="N"                                 ; export WREBOOT             # No re
 # --------------------------------------------------------------------------------------------------
 check_available_update()
 {
-    sadm_writelog "Checking update for $(sadm_get_osname) version $(sadm_get_osmajorversion) ..."
+    sadm_writelog "Verifying Update Availibility for $(sadm_get_osname) $(sadm_get_osmajorversion)"
     
-    # RedHat/CentOS/Fedora Base Update 
-    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
-       [ "$(sadm_get_osname)" = "FEDORA" ]
-        then case "$(sadm_get_osmajorversion)" in
-                [3-4]) sadm_writelog "Running \"up2date -l\""           # Update the Log
-                       up2date -l >> $SADM_LOG 2>&1                     # List update available
-                       rc=$?                                            # Save Exit code
-                       sadm_writelog "Return Code after up2date -l is $rc" # Exit code to log
-                       case $rc in
-                          0) UpdateStatus=0                             # Update Exist
-                             sadm_writelog "Update are available ..."   # Update log update avail.
-                             ;;
-                          *) UpdateStatus=2                             # Problem Abort Update
-                             sadm_writelog "NO UPDATE AVAILABLE"        # Update the log
-                             ;;
-                       esac
-                       ;;
-              [5-7])   sadm_writelog "Running \"yum check-update\""     # Update the log
-                       yum check-update >> $SADM_LOG 2>&1               # List Available update
-                       rc=$?                                            # Save Exit Code
-                       sadm_writelog "Return Code after \"yum check-update\" is $rc" # Exit code to log
-                       case $rc in
-                         100) UpdateStatus=0                            # Update Exist
-                              sadm_writelog "Update are available"      # Update the log
-                              ;;
-                           0) UpdateStatus=1                            # No Update available
-                              sadm_writelog "No Update available"
-                              ;;
-                           *) UpdateStatus=2                            # Problem Abort Update
-                              sadm_writelog "Error Encountered - Update aborted"  # Update the log
-                              sadm_writelog "For more information check the log $SADM_LOG"
-                              ;;
+    case "$(sadm_get_osname)" in
+
+        "REDHAT"|"CENTOS" ) 
+            case "$(sadm_get_osmajorversion)" in
+                [3-4])  sadm_writelog "Running \"up2date -l\""              # Update the Log
+                        up2date -l >> $SADM_LOG 2>&1                        # List update available
+                        rc=$?                                               # Save Exit code
+                        sadm_writelog "Return Code is $rc"                  # Exit code to log
+                        case $rc in
+                            0) UpdateStatus=0                               # Update Exist
+                               sadm_writelog "Update are available ..."     # Update log update avail.
+                               ;;
+                            *) UpdateStatus=2                               # Problem Abort Update
+                               sadm_writelog "NO UPDATE AVAILABLE"          # Update the log
+                               ;;
                         esac
                         ;;
-             esac
-    fi
+                [5-7])  sadm_writelog "Running \"yum check-update\""        # Update the log
+                        yum check-update >> $SADM_LOG 2>&1                  # List Available update
+                        rc=$?                                               # Save Exit Code
+                        sadm_writelog "Return Code is $rc"                  # Exit code to log
+                        case $rc in
+                            100) UpdateStatus=0                             # Update Exist
+                                 sadm_writelog "Update are available"       # Update the log
+                                 ;;
+                              0) UpdateStatus=1                             # No Update available
+                                 sadm_writelog "No Update available"
+                                 ;;
+                              *) UpdateStatus=2                             # Problem Abort Update
+                                 sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                                 sadm_writelog "For more information check the log $SADM_LOG"
+                                 ;;
+                        esac
+                        ;;
+            esac
+            ;;
+            
+        "FEDORA" )
+            case "$(sadm_get_osmajorversion)" in
+                [1-24]) sadm_writelog "Running \"yum check-update\""        # Update the log
+                        yum check-update >> $SADM_LOG 2>&1                  # List Available update
+                        rc=$?                                               # Save Exit Code
+                        sadm_writelog "Return Code is $rc"                  # Exit code to log
+                        case $rc in
+                            100) UpdateStatus=0                             # Update Exist
+                                 sadm_writelog "Update are available"       # Update the log
+                                 ;;
+                              0) UpdateStatus=1                             # No Update available
+                                 sadm_writelog "No Update available"
+                                 ;;
+                              *) UpdateStatus=2                             # Problem Abort Update
+                                 sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                                 sadm_writelog "For more information check the log $SADM_LOG"
+                                 ;;
+                        esac
+                        ;; 
+               [24-99]) sadm_writelog "Running \"dnf check-update\""        # Update the log
+                        dnf check-update >> $SADM_LOG 2>&1                  # List Available update
+                        rc=$?                                               # Save Exit Code
+                        sadm_writelog "Return Code after \"yum check-update\" is $rc" # Exit code to log
+                        case $rc in
+                            100) UpdateStatus=0                             # Update Exist
+                                 sadm_writelog "Update are available"       # Update the log
+                                 ;;
+                              0) UpdateStatus=1                             # No Update available
+                                 sadm_writelog "No Update available"
+                                 ;;
+                              *) UpdateStatus=2                             # Problem Abort Update
+                                 sadm_writelog "Error Encountered - Update aborted"  # Update the log
+                                 sadm_writelog "For more information check the log $SADM_LOG"
+                                 ;;
+                        esac
+                        ;;
+            esac
+            ;;
     
-    if [ "$(sadm_get_osname)" = "UBUNTU" ]   || [ "$(sadm_get_osname)" = "DEBIAN" ] ||
-       [ "$(sadm_get_osname)" = "RASPBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
-        then sadm_writelog "Resynchronize package index files from their sources via Internet"
-             sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
-             apt-get update  >> $SADM_LOG 2>&1                          # Get Package List From Repo
-             rc=$?                                                      # Save Exit Code
-             if [ "$rc" -ne 0 ]
-                then UpdateStatus=2
-                     sadm_writelog "We had problem running the \"apt-get update\" command" 
-                     sadm_writelog "We had a return code $rc" 
-                     sadm_writelog "For more information check the log $SADM_LOG"
-                else sadm_writelog "Return Code of apt-get update: $rc" # Show  Return Code
-                     sadm_writelog "Querying list of package that will be updated"
-                     NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
-                     apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
-                     if [ "$NB_UPD" -ne 0 ]
-                        then UpdateStatus=0
-                             sadm_writelog "${NB_UPD} Updates are available"
-                        else UpdateStatus=1
-                             sadm_writelog "No Update available"
-                     fi
-             fi
-    fi         
+    
+        "UBUNTU"|"DEBIAN"|"RASPBIAN"|"LINUXMINT" ) 
+            sadm_writelog "Resynchronize index files with Internet Sources"
+            sadm_writelog "Running \"apt-get update\""                 # Msg Get package list 
+            apt-get update  >> $SADM_LOG 2>&1                          # Get Package List From Repo
+            rc=$?                                                      # Save Exit Code
+            if [ "$rc" -ne 0 ]
+               then UpdateStatus=2
+                    sadm_writelog "We had problem running the \"apt-get update\" command" 
+                    sadm_writelog "We had a return code of $rc" 
+                    sadm_writelog "For more information check the log $SADM_LOG"
+               else sadm_writelog "Return Code of apt-get update is $rc" # Show  Return Code
+                    sadm_writelog "Querying list of package that will be updated"
+                    NB_UPD=`apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }' |wc -l |tr -d ' '`
+                    apt-get -s dist-upgrade |awk '/^Inst/ { print $2 }'
+                    if [ "$NB_UPD" -ne 0 ]
+                       then UpdateStatus=0
+                            sadm_writelog "${NB_UPD} Updates are available"
+                       else UpdateStatus=1
+                            sadm_writelog "No Update available"
+                    fi
+            fi
+            ;;
+    esac 
+    
     sadm_writelog " "
     return $UpdateStatus                                                # 0=UpdExist 1=NoUpd 2=Abort
     
@@ -180,11 +223,11 @@ run_up2date()
     sadm_writelog "Running \"up2date --nox -u\""
     up2date --nox -u >>$SADM_LOG 2>&1
     rc=$?
-    sadm_writelog "Return Code after up2date -u is $rc"
+    sadm_writelog "Return Code is $rc"
     if [ $rc -ne 0 ]
        then sadm_writelog "Problem getting list of the update"
             sadm_writelog "Update not performed - Processing aborted"
-       else sadm_writelog "Return Code = 0"
+       else sadm_writelog "Update Succeeded - Return Code is 0"
     fi
     sadm_writelog "${SADM_TEN_DASH}"
     return $rc
@@ -200,11 +243,27 @@ run_up2date()
 run_yum()
 {
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Starting the $(sadm_get_osname) update process ..."
+    sadm_writelog "Starting $(sadm_get_osname) update process ..."
     sadm_writelog "Running : yum -y update"
     yum -y update  >>$SADM_LOG 2>&1
     rc=$?
     sadm_writelog "Return Code after yum program update is $rc"
+    sadm_writelog "${SADM_TEN_DASH}"
+    return $rc
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                 Function to update the server with dnf command
+# --------------------------------------------------------------------------------------------------
+run_dnf()
+{
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Starting $(sadm_get_osname) update process ..."
+    sadm_writelog "Running : dnf -y update"
+    dnf -y update  >>$SADM_LOG 2>&1
+    rc=$?
+    sadm_writelog "Return Code after dnf program update is $rc"
     sadm_writelog "${SADM_TEN_DASH}"
     return $rc
 }
@@ -216,7 +275,7 @@ run_yum()
 run_apt_get()
 {
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Starting the $(sadm_get_osname) update process ..."
+    sadm_writelog "Starting $(sadm_get_osname) update process ..."
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade" 
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
@@ -259,22 +318,23 @@ run_apt_get()
     if [ $# -eq 1 ]                                                     # If one Param. Recv.
         then WREBOOT=`sadm_toupper $1`                                  # Make sure it is UpperCase
              if [ "$WREBOOT" = "Y" ]                                    # Unless Recv. Param #1=Y
-                then sadm_writelog "A Reboot is requested after a successfull update" 
+                then sadm_writelog "Reboot requested after successfull update" 
                      WREBOOT="Y" 
-                else sadm_writelog "Reboot is not requested after the update"
+                else sadm_writelog "Reboot isn't requested after update"
              fi
     fi
 
     # Check if Actual Server is the Main SADMIN server - No automatic Reboot for that server
     SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
-    if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]
+    if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
         then sadm_writelog "Automatic reboot cancelled for this server"
              sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
+             sadm_writelog "You need to reboot system at your choosen time."
              WREBOOT="N"
     fi         
 
 
-    UPDATE_AVAILABLE=0                                                  # Assume no Upd. Available
+    UPDATE_AVAILABLE=0                                                  # Assume No Upd. Available
     check_available_update                                              # Check if Update is Avail.
     RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
     if [ $RC -eq 0 ]                                                    # If Update are Available
@@ -290,7 +350,7 @@ run_apt_get()
                         ;; 
                                 
                 "FEDORA" ) 
-                        run_yum
+                        run_dnf
                         SADM_EXIT_CODE=$?
                         ;;
                                 
@@ -311,16 +371,16 @@ run_apt_get()
             fi
     fi
 
-    # If server Reboot was requested and update was available and Applied successfully, then reboot
+    # If Reboot was requested and update was applied successfully, then reboot
     SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
     if [ "$WREBOOT" = "Y" ]                                             # If Reboot was requested
        then if [ $UPDATE_AVAILABLE -eq 0 ]                              # If Update was Applied
-               then sadm_writelog "No need to reboot since no update were applied" 
+               then sadm_writelog "No reboot since no update was applied" 
                else if [ "$SADM_EXIT_CODE" -eq 0 ]                      # If Update was a success
-                       then sadm_writelog "Update was successfull, server will reboot in 1 Minute"
+                       then sadm_writelog "Update successfull, server will reboot in 1 Minute"
                             sadm_writelog "Running \"${REBOOT_CMD}\" in 1 Minute" 
                             echo "${REBOOT_CMD}" | at now + 1 Minute 
-                       else sadm_writelog "Update unsuccessfull, no reboot performed"
+                       else sadm_writelog "Update failed, no reboot will be done"
                     fi
                     sadm_writelog "${SADM_DASH}"
             fi
