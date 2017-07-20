@@ -12,10 +12,11 @@
 # 2.0 Create log file earlier to prevent error message - 18 Jan - J.Duplessis
 # 2.1 Added Support for Linux Mint - April 2017 - J.D.
 # 2.2 Minor Modifications concerning Trimming the Log File
+# 2.3 July 2017 - Jacques Duplessis
+#       - Cosmetic change (Use only 50 Dash line at start & end of script)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
-
 
 # --------------------------------------------------------------------------------------------------
 #                             V A R I A B L E S      D E F I N I T I O N S
@@ -24,12 +25,14 @@ trap 'exit 0' 2                                                         # Interc
 HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Current Host name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
+SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
+SADM_TWENTY_DASH=`printf %20s |tr " " "-"`  ; export SADM_TWENTY_DASH   # 20 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.2"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.3"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1081,10 +1084,10 @@ sadm_start() {
     echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     
     # Write Starting Info in the Log
-    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "${SADM_FIFTY_DASH}"
     sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER}"
     sadm_writelog "Server: ${SADM_HOSTNAME} - Type: $(sadm_get_ostype) - O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
-    sadm_writelog "${SADM_DASH}"
+    sadm_writelog "${SADM_TWENTY_DASH}"
     sadm_writelog " "
 
     # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
@@ -1124,7 +1127,7 @@ sadm_stop() {
  
     # Start Writing Log Footer
     sadm_writelog " "                                                   # Blank Line
-    sadm_writelog "${SADM_DASH}"                                        # Dash Line
+    sadm_writelog "${SADM_TWENTY_DASH}"                                 # 20 Dash Line
     sadm_writelog "Script return code is $SADM_EXIT_CODE"               # Final Exit Code to log
     
     # Get End time and Calculate Elapse Time
@@ -1171,7 +1174,10 @@ sadm_stop() {
 
     sadm_writelog "Trim $SADM_LOG to max. ${SADM_MAX_LOGLINE} lines"    # Inform user trimming value
     sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
-    sadm_writelog "${SADM_DASH}"                                        # Write 80 Dash Line
+    sadm_writelog "${SADM_FIFTY_DASH}"                                  # Write 80 Dash Line
+    sadm_writelog " "                                                   # Blank Line
+    sadm_writelog " "                                                   # Blank Line
+    sadm_writelog " "                                                   # Blank Line
     sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
