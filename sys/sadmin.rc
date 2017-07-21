@@ -1,11 +1,18 @@
 #!/bin/sh
 #
 # Run-level Startup script for the SADMIN Applications
+# Provides:          sadmin
+# Required-Start:    $local_fs $network
+# Required-Stop:     $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: sadmin
+# Description:       sadmin startup and shutdown script
 #
 # chkconfig: 345 98 19
-# description: Startup/Shutdown of SADM Applications
-# Version 2.0 Update June 2017
-
+# V2.0 June 2017 - Update
+# V2.1 July 2017 - Added LSB tags to correct warning on Debian 7
+#
 SADM_DIR="${SADMIN:="/sadmin"}/sys"             ; export SADM_DIR
 SADM_START="${SADM_DIR}/sadm_startup.sh"        ; export SADM_START
 SADM_STOP="${SADM_DIR}/sadm_shutdown.sh"        ; export SADM_STOP

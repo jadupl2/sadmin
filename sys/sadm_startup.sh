@@ -20,6 +20,8 @@
 #               Added Clock Synchronization with 0.ca.pool.ntp.org
 # Version 2.7 - July 2017
 #               Add Section to put command to execute on specified Systems
+# Version 2.8 - July 2017
+#               Message display when starting Cosmetic Change 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -35,7 +37,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.7'                             ; export SADM_VER            # Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -72,18 +74,21 @@ NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada
 main_process()
 {
     sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
-
-    sadm_writelog "Removing old files in ${SADM_TMP_DIR}"
+    sadm_writelog " "
+    
+    sadm_writelog "Running Startup Standard Procedure"
+    sadm_writelog " - Removing old files in ${SADM_TMP_DIR}"
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
-    sadm_writelog "Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
+    sadm_writelog " - Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
-    sadm_writelog "Synchronize System Clock with $NTP_SERVER"
+    sadm_writelog " - Synchronize System Clock with $NTP_SERVER"
     ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1
 
     # Special Operation for some particular System
     sadm_writelog " "
+    sadm_writelog "Starting particular startup procedure for $SADM_HOSTNAME"
     case "$SADM_HOSTNAME" in
         "raspi4" )      sadm_writelog "systemctl restart rpcbind"
                         systemctl restart rpcbind >> $SADM_LOG 2>&1
@@ -93,7 +98,7 @@ main_process()
         "nomad" )       sadm_writelog "Start SysInfo Web Server"
                         /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
                         ;;
-                *)      sadm_writelog "No Special Operation for $SADM_HOSTNAME"
+                *)      sadm_writelog " - No particular procedure needed for $SADM_HOSTNAME"
                         ;;
     esac
 
