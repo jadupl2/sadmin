@@ -12,7 +12,7 @@
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
 # 2.4 Install cfg2html from local copy is not present (Jan 2017)
 # 2.5 Added support for LinuxMint (April 2017)
-#
+# 2.6
 #===================================================================================================
 # 
 # --------------------------------------------------------------------------------------------------
@@ -135,3 +135,4 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     exit $SADM_EXIT_CODE                                                  # Exit With Global Error (0/1)
 
 
+# Allo
