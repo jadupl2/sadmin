@@ -1,13 +1,13 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_template_servers.py
-#   Synopsis:   
+#   Synopsis:
 #===================================================================================================
 # Description
 #
 #
-#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -19,6 +19,9 @@
 #
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
+# --------------------------------------------------------------------------------------------------
+# V1.1 July 2017 - Adjust Verification of root user and allow to only run on sadmin server
+#
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
 #pdb.set_trace()                                                       # Activate Python Debugging
@@ -26,7 +29,7 @@ import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
 
 
 #===================================================================================================
-# SADM Library Initialization
+# SADM Library Initialization (Needed to use the SADM Library)
 #===================================================================================================
 # If SADMIN environment variable is defined, use it as the SADM Base Directory else use /sadmin.
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
@@ -38,7 +41,7 @@ sadm.load_config_file()                                                 # Load c
 
 # SADM Variables use on a per script basis
 #===================================================================================================
-sadm.ver                = "1.0"                                         # Default Program Version
+sadm.ver                = "1.1"                                         # Default Program Version
 sadm.multiple_exec      = "N"                                           # Default Run multiple copy
 sadm.debug              = 0                                             # Default Debug Level (0-9)
 sadm.exit_code          = 0                                             # Script Error Return Code
@@ -46,7 +49,7 @@ sadm.log_append         = "N"                                           # Append
 sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
 
 # SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
-sadm.cfg_mail_type      = 1                                                  # 0=No 1=Err 2=Succes 3=All
+sadm.cfg_mail_type      = 1                                             # 0=No 1=Err 2=Succes 3=All
 #cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg
 
 
@@ -93,16 +96,16 @@ def process_linux_servers(wconn,wcur):
         wname,wos,wdomain,wtype,wactive = row
         sadm.writelog (sadm.dash)
         sadm.writelog ("Processing (%d) %-30s - os:%s - type:%s" % (lineno,wname+"."+wdomain,wos,wtype))
-        lineno += 1    
+        lineno += 1
 
     return 0
-    
+
 
 #===================================================================================================
 #                               Process Aix servers selected by the SQL
 #===================================================================================================
 
-def process_aix_servers(wconn,wcur): 
+def process_aix_servers(wconn,wcur):
     sadm.writelog (" ")
     sadm.writelog (" ")
     sadm.writelog (sadm.dash)
@@ -129,13 +132,13 @@ def process_aix_servers(wconn,wcur):
         wname,wos,wdomain,wtype,wactive = row
         sadm.writelog (sadm.dash)
         sadm.writelog ("Processing (%d) %-30s - os:%s - type:%s" % (lineno,wname+"."+wdomain,wos,wtype))
-        lineno += 1    
+        lineno += 1
 
     return 0
-    
+
 
 #===================================================================================================
-#                                   Script Main Process Function 
+#                                   Script Main Process Function
 #===================================================================================================
 def main_process(wconn,wcur):
 
@@ -144,8 +147,8 @@ def main_process(wconn,wcur):
 
     # Process Aix Servers
     aix_errors=process_aix_servers(wconn,wcur)                          # Process Aix Servers
-    
-    # Display the number of error 
+
+    # Display the number of error
     sadm.writelog (sadm.dash)
     sadm.writelog ("Total number of Linux error : %d" % linux_errors)   # Display Nb Linux Error
     sadm.writelog ("Total number of Aix error : %d" % aix_errors)       # Display Nb Aix  Error
@@ -162,24 +165,24 @@ def main_process(wconn,wcur):
 def main():
     sadm.start()                                                        # Open Log, Create Dir ...
 
-    # Test if script is run by root (Optional Code)
-    if os.geteuid() != 0:                                               # UID of user is not zero
-       sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
-       sadm.writelog ("Process aborted")                                # Process Aborted Msg 
-       sadm.stop (1)                                                    # Close and Trim Log/Email
-       sys.exit(1)                                                      # Exit with Error Code
-        
-    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    # Insure that this script only run on the sadmin server (Optional code)
     if socket.getfqdn() != sadm.cfg_server :                            # Only run on SADMIN
        sadm.writelog ("This script can be run only on the SADMIN server (%s)",(sadm.cfg_server))
        sadm.writelog ("Process aborted")                                # Abort advise message
        sadm.stop (1)                                                    # Close and Trim Log
        sys.exit(1)                                                      # Exit To O/S
 
+    # Insure that this script can only be run by the user root (Optional Code)
+    if os.geteuid() != 0:                                               # UID of user is not zero
+       sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
+       sadm.writelog ("Process aborted")                                # Process Aborted Msg
+       sadm.stop (1)                                                    # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
 
     if sadm.debug > 4 : sadm.display_env()                              # Display Env. Variables
     (conn,cur) = sadm.open_sadmin_database()                            # Open Connection 2 Database
     sadm.exit_code=main_process(conn,cur)                               # Main Script Processing
+
     sadm.close_sadmin_database(conn,cur)                                # Close Database Connection
     sadm.stop(sadm.exit_code)                                           # Close log & trim
     sys.exit(sadm.exit_code)                                            # Exit with Error Code
