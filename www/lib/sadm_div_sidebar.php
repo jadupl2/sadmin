@@ -1,7 +1,7 @@
 <?php
 /*
 * ==================================================================================================
-*   Author      :  Jacques Duplessis 
+*   Author      :  Jacques Duplessis
 *   Email       :  jacques.duplessis@sadmin.ca
 *   Title       :  sadm_div_sidebar.php
 *   Version     :  1.8
@@ -22,9 +22,9 @@
 *   You should have received a copy of the GNU General Public License along with this program.
 *   If not, see <http://www.gnu.org/licenses/>.
 * ==================================================================================================
-*/   
+*/
 echo "\n\n\n<!-- ============================================================================= -->";
-echo "\n<div id='sadmSideBar'>\n"; 
+echo "\n<div id='sadmSideBar'>\n";
 
 	# ---------------------------   O/S REPARTITION SIDEBAR     ------------------------------------
 	#$sadm_array = build_sidebar_servers_info($sidebar_array);
@@ -42,11 +42,11 @@ echo "\n<div id='sadmSideBar'>\n";
            $SERVER_COUNT = $SERVER_COUNT + $value;
         }
     }
-    # All Servers Link 
+    # All Servers Link
     echo "<li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'";
 	echo ">All (" . $SERVER_COUNT . ") Servers</a></li>\n";
     echo "</ul>\n";
-  
+
 
 
 	# ------------------------  SERVERS ATTRIBUTES SIDEBAR -----------------------------------------
@@ -61,7 +61,7 @@ echo "\n<div id='sadmSideBar'>\n";
         echo "No active servers</a></li>\n";
     }else{
         echo "${kpart2} active servers</a></li>\n";
-    }    
+    }
 
     # Number of Inactive Servers
     $kpart2 = $sadm_array["srv_inactive,"];
@@ -71,7 +71,7 @@ echo "\n<div id='sadmSideBar'>\n";
     }else{
         echo "${kpart2} inactive servers</a></li>\n";
     }
-    
+
     # Number of Virtual Servers
     $kpart2 = $sadm_array["srv_vm,"];
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=all_vm'>";
@@ -100,29 +100,29 @@ echo "\n<div id='sadmSideBar'>\n";
     }
 
     echo "</ul>\n";
-	
-	
+
+
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
     echo "<br>\n";                                                      # Insert White Line
     echo "<strong>Scripts Status</strong>\n";                           # Display Section Title
 	$script_array = build_sidebar_scripts_info();                       # Build $script_array
     $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
     $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
-    
-    # Loop through Script Array to count Different Return Code 
-    foreach($script_array as $key=>$value) { 
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode,$cfile) 
+
+    # Loop through Script Array to count Different Return Code
+    foreach($script_array as $key=>$value) {
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode,$cfile)
             = explode(",", $value);
         if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
         if ($ccode == 1) { $TOTAL_FAILED  += 1; }
         if ($ccode == 2) { $TOTAL_RUNNING += 1; }
-    } 
-    
+    }
+
     # Display Total number of Scripts
     echo "<ul>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=all'>";
 	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></li>\n";
-    
+
     # Display Total Number of Failed Scripts
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=failed'>";
     if ( $TOTAL_FAILED == 0 ) {
@@ -147,9 +147,9 @@ echo "\n<div id='sadmSideBar'>\n";
         echo "$TOTAL_SUCCESS Success Script(s)</a></li>\n";
     }
     echo "</ul>\n";
-	
 
-	
+
+
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "<br>\n";                                                      # Insert White Line
     echo "<strong>Server Status</strong>\n";                            # Display Section Title
@@ -161,9 +161,9 @@ echo "\n<div id='sadmSideBar'>\n";
     echo "Monitoring Alert(s)";
 	echo "</a></li>\n";
 	echo "</ul>\n";
-	
 
-	
+
+
 	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
     echo "<br>\n";                                                      # Insert White Line
     echo "<strong>Edit Section</strong>\n";                             # Display Section Title
@@ -179,8 +179,8 @@ echo "\n<div id='sadmSideBar'>\n";
 	echo "</a></li>\n";
 	echo "</ul>\n";
     echo "<br>\n";                                                      # Insert White Line
-	
 
-echo "\n</div>                             <!-- End of Div sadmSideBar -->\n";  
+
+echo "\n</div>                             <!-- End of Div sadmSideBar -->\n";
 echo "\n<!-- ================================================================================= -->";
 ?>

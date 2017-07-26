@@ -21,9 +21,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# 1.6   June 2017 - Initial Version
-# 1.7   Corrections for System V service
-# 
+# V1.6 June 2017 - Initial Version
+# V1.7 June 2017 - Corrections for System V service
+# V1.8 July 2017 - Add '-s' switch to display sadmin service status
+# V1.9 July 2017 - Modify Help Message
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -39,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -86,8 +87,9 @@ help()
 {
     echo " "
     echo "sadm_service.sh usage :"
-    echo "             -e   (Enable SADM Startup Service"
-    echo "             -d   (Disable SADM Startup Service"
+    echo "             -e   (Enable SADM Service)"
+    echo "             -d   (Disable SADM Service)"
+    echo "             -s   (Display Status of SADM Service)"
     echo "             -h   (Display this help message)"
     echo " "
 }
@@ -212,7 +214,7 @@ service_start()
 
     # Optional Command line switches    
     P_DISABLE="OFF" ; P_ENABLE="OFF"                                    # Set Switch Default Value
-    while getopts "deh " opt ; do                                       # Loop to process Switch
+    while getopts "desh " opt ; do                                      # Loop to process Switch
         case $opt in
             d) P_DISABLE="ON"                                           # Disable SADM Service 
                service_stop    sadmin                                   # Stop sadmin Service
@@ -225,6 +227,10 @@ service_start()
                service_enable sadmin                                    # Enable sadmin Service
                service_start  sadmin                                    # Start sadmin Service
                service_status sadmin                                    # Status of sadmin Service
+               sadm_stop 0                                              # Close the shop
+               exit 0                                                   # Back to shell 
+               ;;                                                      
+            s) service_status sadmin                                    # Status of sadmin Service
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
