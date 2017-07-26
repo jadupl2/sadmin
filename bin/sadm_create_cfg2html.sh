@@ -12,7 +12,7 @@
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
 # 2.4 Install cfg2html from local copy is not present (Jan 2017)
 # 2.5 Added support for LinuxMint (April 2017)
-#
+# 2.7 on Mac OS
 #===================================================================================================
 # 
 # --------------------------------------------------------------------------------------------------
