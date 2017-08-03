@@ -14,6 +14,8 @@
 # 2.2 Minor Modifications concerning Trimming the Log File
 # 2.3 July 2017 - Jacques Duplessis
 #       - Cosmetic change (Use only 50 Dash line at start & end of script)
+# V2.4 Added SADM_ELOG (Email Log) to store error message encounter to send to user if requested
+#      Split Second line of log header into two lines/ Change Timming Line
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -32,7 +34,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.3"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.4"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -79,8 +81,9 @@ SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HI
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1 
 SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2  # Temp File 2
 SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FILE3  # Temp File 3
-SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"     ; export LOG             # Output LOG 
-SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch"  ; export SADM_RCHLOG     # Return Code 
+SADM_ELOG="${SADM_TMP_DIR}/${SADM_INST}_E.log"              ; export SADM_ELOG       # Email Log Tmp 
+SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"    ; export LOG         # Output LOG 
+SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch" ; export SADM_RCHLOG # Return Code 
 #
 # COMMAND PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                         ; export SADM_LSB_RELEASE   # Command lsb_release Path
@@ -966,6 +969,12 @@ sadm_start() {
     chmod 664 $SADM_LOG
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
 
+    # If Email LOG File doesn't exist, Create it and Make it writable 
+    rm -f $SADM_ELOG >> /dev/null
+    touch $SADM_ELOG
+    chmod 664 $SADM_ELOG
+    chown ${SADM_USER}.${SADM_GROUP} ${SADM_ELOG}
+
     # If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     chmod 1777 $SADM_TMP_DIR
@@ -1086,7 +1095,8 @@ sadm_start() {
     # Write Starting Info in the Log
     sadm_writelog "${SADM_FIFTY_DASH}"
     sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER}"
-    sadm_writelog "Server: ${SADM_HOSTNAME} - Type: $(sadm_get_ostype) - O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
+    sadm_writelog "Server Name: ${SADM_HOSTNAME} - Type: $(sadm_get_ostype)" 
+    sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
     sadm_writelog "${SADM_TWENTY_DASH}"
     sadm_writelog " "
 
@@ -1141,7 +1151,7 @@ sadm_stop() {
     echo "$RCHLINE" >>$SADM_RCHLOG                                      # Append Line to  RCH File
     
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
-    sadm_writelog "Trimming $SADM_RCHLOG to max. ${SADM_MAX_RCLINE} lines." # Advise of trimm value
+    sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" # Advise of trimm value
     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
     chmod 664 ${SADM_RCHLOG}                                            # Writable by O/G Readable W
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}                     # Change RCH file Owner
@@ -1172,7 +1182,7 @@ sadm_stop() {
           ;;
     esac
 
-    sadm_writelog "Trim $SADM_LOG to max. ${SADM_MAX_LOGLINE} lines"    # Inform user trimming value
+    sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines"         # Inform user trimming value
     sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
     sadm_writelog "${SADM_FIFTY_DASH}"                                  # Write 80 Dash Line
     sadm_writelog " "                                                   # Blank Line

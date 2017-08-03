@@ -25,6 +25,7 @@
 # V1.7 June 2017 - Corrections for System V service
 # V1.8 July 2017 - Add '-s' switch to display sadmin service status
 # V1.9 July 2017 - Modify Help Message
+# 2017_08_03 JDuplessis - v1.10 Added a Stop Service beore the start (eliminate problem)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.9'                             ; export SADM_VER            # Script Version
+SADM_VER='1.10'                            ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -225,6 +226,7 @@ service_start()
                ;;                                                      
             e) P_ENABLE="ON"                                            # Enable SADM Service 
                service_enable sadmin                                    # Enable sadmin Service
+               service_stop   sadmin                                    # Stop sadmin Service
                service_start  sadmin                                    # Start sadmin Service
                service_status sadmin                                    # Status of sadmin Service
                sadm_stop 0                                              # Close the shop
