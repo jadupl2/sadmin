@@ -12,6 +12,8 @@
 #               Restructure to use the SADM Library and Send email on execution.
 # Version 2.4 - July 2017
 #               Add sleep of 5 sec. at the end, to allow completion of sending email before shutdown
+# Version 2.5 - July 2017
+#               Added code to run shutdown command based on Hostname
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -26,7 +28,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.4'                             ; export SADM_VER            # Script Version
+SADM_VER='2.5'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -63,6 +65,21 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 main_process()
 {
     sadm_writelog "*** Running SADM System Shutdown Script on $(sadm_get_fqdn)  ***"
+    sadm_writelog " "
+
+
+    # Special Operation for some particular System
+    sadm_writelog " "
+    sadm_writelog "Shutdown procedure for $SADM_HOSTNAME"
+    case "$SADM_HOSTNAME" in
+        "nomad" )       sadm_writelog "  Stop SysInfo Web Server"
+                        /sysinfo/bin/stop_httpd.sh >> $SADM_LOG 2>&1
+                        ;;
+                *)      sadm_writelog "  No particular procedure needed for $SADM_HOSTNAME"
+                        ;;
+    esac
+
+    sadm_writelog " "
     return 0                                                            # Return Default return code
 }
 
