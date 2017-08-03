@@ -16,7 +16,7 @@
 #  V1.9  April 2017  Cosmetic - Remove blank lines inside processing servers
 #  V2.0  July 2017   Remove Ping before doing the SSH to each server (Not really needed)
 #  V2.1  July 2017   When Error Detected - The Error is included at the top of Email (Simplify Diag)
-#                   
+#  2017_08_03 JDuplessis - V2.2 Bug Fix
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -45,13 +45,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.1'                             ; export SADM_VER            # Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh
@@ -97,8 +97,6 @@ process_servers()
     sadm_writelog "Processing active $WOSTYPE server(s)"                # Display/Log O/S type
     sadm_writelog " "
 
-
-  
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
     SQL="${SQL} from sadm.server"
@@ -143,7 +141,7 @@ process_servers()
               if ! host  $fqdn_server >/dev/null 2>&1
                  then SMSG="Can't process server '$fqdn_server' because hostname can't be resolved"
                       sadm_writelog "ERROR : $SMSG"                     # Advise user
-                      echo "ERROR      : $SMSG" >> $SADM_TMP_FILE4      # Log Err. to Email Log
+                      echo "ERROR      : $SMSG" >> $SADM_ELOG      # Log Err. to Email Log
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
                       sadm_writelog " "                                 # Separation Blank Line
                       sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
@@ -173,9 +171,9 @@ process_servers()
                       if [ $server_monitor = 't' ]                      # If monitoring is ON
                          then SMSG="Can't SSH to server '${fqdn_server}'"  # Construct Error Msg
                               sadm_writelog "ERROR : $SMSG"             # Display Error Msg
-                              echo "ERROR   : $SMSG" >> $SADM_TMP_FILE4         # Log Err. to Email Log
-                              echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_TMP_FILE4  
-                              echo "----------" >> $SADM_TMP_FILE4
+                              echo "ERROR   : $SMSG" >> $SADM_ELOG         # Log Err. to Email Log
+                              echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG  
+                              echo "----------" >> $SADM_ELOG
                               #sadm_writelog "Sending email to $SADM_MAIL_ADDR" # Send email Msg
                               #SMSG="$SMSG in $SADM_PN"
                               #alert_user "M" "E" "$fqdn_server" "" "$SMSG"
@@ -205,9 +203,9 @@ process_servers()
               if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_TMP_FILE4 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/" >> $SADM_TMP_FILE4 
-                      echo "----------" >> $SADM_TMP_FILE4
+                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
+                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/" >> $SADM_ELOG 
+                      echo "----------" >> $SADM_ELOG
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
                  else sadm_writelog "The [R]eturn [C]ode [H]istory Files are now in sync - OK ..."
               fi
@@ -230,9 +228,9 @@ process_servers()
               if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_TMP_FILE4 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/"  >> $SADM_TMP_FILE4 
-                      echo "----------" >> $SADM_TMP_FILE4
+                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
+                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/"  >> $SADM_ELOG 
+                      echo "----------" >> $SADM_ELOG
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
                  else sadm_writelog "The Log files are now in sync - OK ..."
               fi
@@ -255,11 +253,11 @@ process_servers()
               if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
               if [ $RC -ne 0 ]                                          # If Error doing rch rsync
                  then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_TMP_FILE4 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/" >> $SADM_TMP_FILE4 
-                      echo "----------" >> $SADM_TMP_FILE4
+                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
+                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/" >> $SADM_ELOG 
+                      echo "----------" >> $SADM_ELOG
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
-                 else sadm_writelog "The Log files are now in sync - OK ..."
+                 else sadm_writelog "System Monitor Report Files (*.rpt) are now in sync - OK ..."
               fi
 
 
@@ -316,11 +314,11 @@ process_servers()
     fi
 
     # Create File that will include only Error message that will be sent to user if requested
-    echo "----------" > $SADM_TMP_FILE4
-    echo "Date/Time  : `date`"     >> $SADM_TMP_FILE4
-    echo "Script Name: ${SADM_PN}" >> $SADM_TMP_FILE4
-    echo "Hostname   : $HOSTNAME " >> $SADM_TMP_FILE4
-    echo "----------" >> $SADM_TMP_FILE4
+    echo "----------" > $SADM_ELOG
+    echo "Date/Time  : `date`"     >> $SADM_ELOG
+    echo "Script Name: ${SADM_PN}" >> $SADM_ELOG
+    echo "Hostname   : $HOSTNAME " >> $SADM_ELOG
+    echo "----------" >> $SADM_ELOG
 
     # Process All Active Linux/Aix servers
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
@@ -342,9 +340,15 @@ process_servers()
     sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
 
     if [ "$SADM_EXIT_CODE" -ne 0 ] 
-        then sadm_writelog "Writing Error Encountered at the top of the log"                                          
-             cat $SADM_TMP_FILE4 $SADM_LOG > $SADM_TMP_FILE3 2>&1
+        then sadm_writelog "Writing Error Encountered at the top of the log"  
+             echo "View the script log by clicking on the link below :" >> $SADM_ELOG
+             echo 'http://sadmin/sadmin/sadm_view_logfile.php?host=holmes&filename=holmes_sadm_fetch_servers.log'  >> $SADM_ELOG
+             echo "----------" >> $SADM_ELOG
+             cat $SADM_ELOG $SADM_LOG > $SADM_TMP_FILE3 2>&1
              cp $SADM_TMP_FILE3 $SADM_LOG  
+             #cp $SADM_ELOG $SADM_LOG  
+             #alert_user "M" "E" "$_server" ""  "`cat $SADM_ELOG`"         # Email User
+             
     fi
 
     # Gracefully Exit the script
