@@ -19,6 +19,11 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+# Change Log
+# 2017_07_31 JDuplessis 
+#   V1.9 Added cleanup for Local USB Disk 
+#
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
@@ -33,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.8'                             ; export SADM_VER            # Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -63,11 +68,14 @@ NFS_REM_MOUNT="/volume1/storix/image"          ; export NFS_REM_MOUNT   # Remote
 NFS_LOC_MOUNT="/mnt/storix"                    ; export NFS_LOC_MOUNT   # Local NFS Mount Point
 NFS_STORIX_DIR="/storix"                       ; export NFS_STORIX_DIR  # Where Storix TOC File Are
 
+USB_ATTACH="Y"                                 ; export USB_ATTACH      # (Y/N) Yes if USB is Attach
+USB_LOC_MOUNT="/disk01"                        ; export USB_LOC_MOUNT   # Local USB Mount Point
+USB_NBCOPY=5                                   ; export USB_NBCOPY      # Nb Image to keep on USB
 																				     
 # ==================================================================================================
 #           Function to only keep $NB_COPY of each server image on the server
 # ==================================================================================================
-clean_storix_dir()
+clean_nfs_storix_dir()
 {
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Keep only $NB_COPY copies of Storix images per host"
@@ -116,13 +124,65 @@ clean_storix_dir()
             done
           done
           
-   # Umount THE NFS Mount of the Images
+    # Umount THE NFS Mount of the Images
     umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
    
     return 0
 }
 
 
+
+# ==================================================================================================
+#           Function to only keep $NB_COPY of each server image on the server
+# ==================================================================================================
+clean_usb_storix_dir()
+{
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Keep only $USB_NBCOPY copies of Storix images on USB Disk"
+
+    # Check if NFS Local mount point exist - If not create it.
+    if [ ! -d ${USB_LOC_MOUNT} ]
+        then mkdir ${USB_LOC_MOUNT} ; chmod 2775 ${USB_LOC_MOUNT} ; fi
+
+    # Check if USB Disk is Mounted 
+    sadm_writelog "Verifying if the USB disk is mounted on ÜSB_LOC_MOUNT"
+    sadm_writelog "mount | grep \'$USB_LOC_MOUNT\'" 
+    mount | awk '{ print $3 }' | grep "$USB_LOC_MOUNT" > /dev/null 2>&1
+    RC=$?
+
+    # If the mount NFS did not work - Abort Script after advising user (update logs)
+    if [ $RC -ne 0 ]
+        then sadm_writelog "Script Aborted - The USB isn't mounted on $USB_LOC_MOUNT"
+             return 1
+    fi
+
+    cd ${USB_LOC_MOUNT}
+    # Build a list of all hostname that have a backup in $USB_LOC_MOUNT
+    sadm_writelog "${SADM_TEN_DASH}"
+    ls -1 SB:*:TOC* | cut -d: -f4 | sort -u | while read stclient
+          do
+          sadm_writelog "Checking images of host $stclient ..."
+        
+          # For each backup ID to be removed...
+          ls -1t SB:*${stclient}*TOC* | sed "1,${USB_NBCOPY}d" | cut -d: -f5 | while read backupid
+            do
+  
+                # Delete all files related to this backup ID
+                sadm_writelog " "
+                sadm_writelog "Need to delete image backup ID #$backupid of $stclient ..."
+                ls -1 SB:*:*:*:$backupid:*:* | while read backup_file
+                    do
+                        sadm_writelog "Deleting file $backup_file ..."
+                        #ls -l $backup_file
+                        rm -f $backup_file
+                    done
+                sadm_writelog " "
+            done
+          done
+    
+    return 0
+}
+         
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
@@ -139,7 +199,13 @@ clean_storix_dir()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    clean_storix_dir                                                    # Clean up old multiple copy
-    rc=$? ; export rc                                                   # Save Return Code
-    sadm_stop $rc                                                       # Saveand trim Logs
-    exit $SADM_EXIT_CODE                                                  # Exit with Error code value
+
+    clean_nfs_storix_dir                                                # Clean up NFS multiple copy
+    rc1=$? ; export rc1                                                 # Save Return Code
+    clean_usb_storix_dir                                                # Clean up USB multiple copy
+    rc2=$? ; export rc2                                                 # Save Return Code
+    SADM_EXIT_CODE=$(($rc1+$rc2))                                       # Total Errors 
+
+    # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+    exit $SADM_EXIT_CODE      
