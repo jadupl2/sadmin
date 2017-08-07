@@ -99,9 +99,12 @@ main_process()
         "nomad" )       sadm_writelog "  Start SysInfo Web Server"
                         /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
                         ;;
-        "holmes" )      sadm_writelog "  Mount External USB (Storix Backup)"
-                        sadm_writelog "  mount /disk01"
-                        mount /disk01  >> $SADM_LOG 2>&1
+        "holmes" )      umount /run/media/jacques/5f5a5d54-7c43-4122-8055-ec8bbc2d08d5  >/dev/null 2>&1
+                        umount /run/media/jacques/C113-470B >/dev/null 2>&1
+                        umount /run/media/jacques/b3a2bafd-f722-4b20-b09c-cf950744f24d >/dev/null 2>&1
+                        #sadm_writelog "  Mount External USB (Storix Backup)"
+                        #sadm_writelog "  mount /disk01"
+                        #mount /disk01  >> $SADM_LOG 2>&1
                         ;;
                 *)      sadm_writelog "  No particular procedure needed for $SADM_HOSTNAME"
                         ;;
