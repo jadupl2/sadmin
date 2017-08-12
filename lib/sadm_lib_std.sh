@@ -16,6 +16,8 @@
 #       - Cosmetic change (Use only 50 Dash line at start & end of script)
 # V2.4 Added SADM_ELOG (Email Log) to store error message encounter to send to user if requested
 #      Split Second line of log header into two lines/ Change Timming Line
+# 2017_08_12 JDuplessis
+#   V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -34,7 +36,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.4"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.5"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1094,8 +1096,8 @@ sadm_start() {
     
     # Write Starting Info in the Log
     sadm_writelog "${SADM_FIFTY_DASH}"
-    sadm_writelog "Starting ${SADM_PN} - Version ${SADM_VER}"
-    sadm_writelog "Server Name: ${SADM_HOSTNAME} - Type: $(sadm_get_ostype)" 
+    sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
+    sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
     sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
     sadm_writelog "${SADM_TWENTY_DASH}"
     sadm_writelog " "
