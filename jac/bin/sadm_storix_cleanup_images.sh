@@ -24,6 +24,8 @@
 #   V1.9  Added cleanup for Local USB Disk
 # 2017_08_07 JDuplessis
 #   V1.10 Added umount to make sure Storix USB Backup work
+# 2017_08_10 JDuplessis
+#   V1.11 Usage of USB External is an option now, based on USB_ATTACH Variable
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -40,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.10'                             ; export SADM_VER            # Script Version
+SADM_VER='1.11'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -221,10 +223,13 @@ clean_usb_storix_dir()
              exit 1                                                     # Exit To O/S
     fi
 
+    rc1=0 ; rc2=0 ; export rc1 rc2                                      # Reset Error Indicator to 0
     clean_nfs_storix_dir                                                # Clean up NFS multiple copy
     rc1=$? ; export rc1                                                 # Save Return Code
-    clean_usb_storix_dir                                                # Clean up USB multiple copy
-    rc2=$? ; export rc2                                                 # Save Return Code
+    if [ "$USB_ATTACH" == "Y" ]                                         # If USB Attached to Server 
+        then clean_usb_storix_dir                                       # Clean up USB multiple copy
+             rc2=$? ; export rc2                                        # Save Return Code
+    fi
     SADM_EXIT_CODE=$(($rc1+$rc2))                                       # Total Errors
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
