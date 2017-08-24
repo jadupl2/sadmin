@@ -40,10 +40,10 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh
 
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
+# These variables are defined in sadmin.cfg file - You can also change them on a per script basis
 SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
 SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
 #SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
@@ -73,17 +73,17 @@ LIMIT_DAYS=60                               ; export LIMIT_DAYS         # RCH+LO
 # --------------------------------------------------------------------------------------------------
 #                               General Directories Housekeeping Function
 # --------------------------------------------------------------------------------------------------
-dir_housekeeping() 
+dir_housekeeping()
 {
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "MY DIRECTORIES HOUSEKEEPING STARTING"
     sadm_writelog "${SADM_TEN_DASH}"
     jgroup=`id -gn jacques`                                           # Get Jacques's Group
 
-    if [ -d "/stbackups" ]  
+    if [ -d "/stbackups" ]
         then sadm_writelog " "
              sadm_writelog "Storix ISO Accessibility"
-             sadm_writelog "find /stbackups -exec chown jacques.${jgroup} {} \;" 
+             sadm_writelog "find /stbackups -exec chown jacques.${jgroup} {} \;"
              find /stbackups -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -92,11 +92,11 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
             fi
     fi
-    
-    if [ -d "/mystuff" ]  
+
+    if [ -d "/mystuff" ]
         then sadm_writelog " "
              sadm_writelog "MyStuff Accessibility"
-             sadm_writelog "find /mystuff -exec chown jacques.${jgroup} {} \;" 
+             sadm_writelog "find /mystuff -exec chown jacques.${jgroup} {} \;"
              find /mystuff -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -105,7 +105,7 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
             fi
     fi
-    
+
     if [ -d "/home/jacques" ]
         then sadm_writelog " "
              sadm_writelog "Jacques Home Directory"
@@ -116,7 +116,7 @@ dir_housekeeping()
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
-            fi  
+            fi
     fi
 
     if [ -d "/install" ]
@@ -129,13 +129,13 @@ dir_housekeeping()
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
-            fi  
-    fi   
-    
+            fi
+    fi
+
     if [ -d "/os" ]
         then sadm_writelog " "
              sadm_writelog "Linux ISO Accessibility"
-             sadm_writelog "find /os -exec chown jacques.${jgroup} {} \;" 
+             sadm_writelog "find /os -exec chown jacques.${jgroup} {} \;"
              find /os -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -143,7 +143,7 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find /os -exec chmod 775 {} \;" 
+             sadm_writelog "find /os -exec chmod 775 {} \;"
              find /os -exec chmod 775 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                  then sadm_writelog "Error occured on the last operation."
@@ -165,7 +165,7 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
+
     # Keep only 60 days of puppet reports online
     if [ -d "/var/lib/puppet/reports" ]
         then sadm_writelog " "
@@ -180,11 +180,11 @@ dir_housekeeping()
              fi
     fi
 
-    
+
     # Make sure directory exist - Contains Storix Custom Scripts Distributed by sadm_rsync_sadmin.sh
     if [ ! -d "/storix/custom" ]
         then sadm_writelog " "
-             sadm_writelog "Creating /storix/custom" 
+             sadm_writelog "Creating /storix/custom"
              sadm_writelog "mkdir -p /storix/custom"
              mkdir -p /storix/custom > /dev/null
              if [ $? -ne 0 ]
@@ -194,13 +194,13 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
-    
+
+
     # Make sure directory exist - Contains Storix Custom Scripts Distributed by sadm_rsync_sadmin.sh
     if [ -d "/sadmin/jac" ]
         then sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right owner" 
-             sadm_writelog "chown ${SADM_USER}.${SADM_GROUP} /sadmin/jac" 
+             sadm_writelog "Make sure /sadmin/jac have right owner"
+             sadm_writelog "chown ${SADM_USER}.${SADM_GROUP} /sadmin/jac"
              chown ${SADM_USER}.${SADM_GROUP} /sadmin/jac
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -209,8 +209,8 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
               fi
              sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right permission" 
-             sadm_writelog "chmod 0775 /sadmin/jac" 
+             sadm_writelog "Make sure /sadmin/jac have right permission"
+             sadm_writelog "chmod 0775 /sadmin/jac"
              chmod 0775 /sadmin/jac
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -219,8 +219,8 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right permission" 
-             sadm_writelog "chmod g-s /sadmin/jac" 
+             sadm_writelog "Make sure /sadmin/jac have right permission"
+             sadm_writelog "chmod g-s /sadmin/jac"
              chmod g-s /sadmin/jac
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -229,12 +229,12 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
+
      # Reset privilege on directory in /sadmin/jac
     if [ -d "$SADM_BASE_DIR/jac" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"       # Change Dir. 
-             find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     # Change Dir. 
+             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"       # Change Dir.
+             find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     # Change Dir.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -242,15 +242,15 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \;"       # Change Dir. 
-             find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \; >/dev/null 2>&1     # Change Dir. 
+             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \;"       # Change Dir.
+             find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \; >/dev/null 2>&1     # Change Dir.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-    fi    
+    fi
     return $ERROR_COUNT
 }
 
@@ -261,16 +261,16 @@ dir_housekeeping()
 # --------------------------------------------------------------------------------------------------
 file_housekeeping()
 {
-    sadm_writelog " " ; 
+    sadm_writelog " " ;
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "MY FILES HOUSEKEEPING STARTING"
     sadm_writelog "${SADM_TEN_DASH}"
-    
+
     # Reset privilege on directory /sadmin/jac
     if [ -d "$SADM_BASE_DIR/jac" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"      
-             find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     
+             sadm_writelog "find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -278,13 +278,13 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
-    
+
+
     # Reset privilege on notes directories
     if [ -d "$SADM_BASE_DIR/jac/notes" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \;"      
-             find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     
+             sadm_writelog "find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \;"
+             find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -292,12 +292,12 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
+
     # Reset privilege on /sadmin/jac/cfg directories
     if [ -d "$SADM_BASE_DIR/jac/cfg" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \;"      
-             find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     
+             sadm_writelog "find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \;"
+             find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -305,7 +305,7 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
+
     # Reset privilege on /sadmin files
     if [ -d "${SADM_BASE_DIR}/jac/bin" ]
         then sadm_writelog " "
@@ -318,9 +318,9 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
-    
+
     # Remove logwatch from sending an email every morning
-    if [ -f /etc/cron.daily/0logwatch ] 
+    if [ -f /etc/cron.daily/0logwatch ]
        then sadm_writelog " "
             sadm_writelog "Removing /etc/cron.daily/0logwatch"          # Advise user
             rm -f /etc/cron.daily/0logwatch >/dev/null 2>&1             # Red Hat / CentOS 5 an Up
@@ -333,7 +333,7 @@ file_housekeeping()
     fi
 
     # Remove logwatch from sending an email every morning
-    if [ -f /etc/cron.daily/00-logwatch ] 
+    if [ -f /etc/cron.daily/00-logwatch ]
        then sadm_writelog " "
             sadm_writelog "Removing /etc/cron.daily/00-logwatch"        # Advise user
             rm -f /etc/cron.daily/00-logwatch >/dev/null 2>&1           # Red Hat 4 and below
@@ -344,7 +344,7 @@ file_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
             fi
     fi
-    
+
     return $ERROR_COUNT
 }
 
@@ -353,11 +353,11 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 special_housekeeping()
 {
-    sadm_writelog " " ; 
+    sadm_writelog " " ;
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "SPECIAL HOUSEKEEPING STARTING"
     sadm_writelog "${SADM_TEN_DASH}"
-    
+
     rm -f ${SADM_DR_DIR}/*lsblk.txt  > /dev/null 2>&1
 
     # Once a day - Delete files in /tmp that have not been modified for 35 days
@@ -378,27 +378,29 @@ special_housekeeping()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
+
+    # Insure that this script can only be run by the user root
+    if ! $(sadm_is_root)                                                # Is it root running script?
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
+
     # If jacques user is not created - Let's created it and put user is sadmin group
     grep "^jacques:" /etc/passwd >/dev/null 2>&1                        # jacques User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
         then sadm_writelog "User 'jacques' not present"                 # Advise user will create
              sadm_writelog "The user will now be created"               # Advise user will create
              useradd -c 'Jacques Duplessis' -g $SADM_GROUP -e '' jacques
-             if [ $? -ne 0 ]                                            # Error creating user 
+             if [ $? -ne 0 ]                                            # Error creating user
                 then sadm_writelog "Error when creating user 'jacques'"
                      sadm_writelog "Process Aborted"                    # Abort got be created
                      sadm_stop 1                                        # Terminate Gracefully
                 else sadm_writelog "User 'jacques' now created"
              fi
     fi
-    
+
     # Check and Change Owner and Group and Permission on Directories
     dir_housekeeping                                                    # Do Dir HouseKeeping
 
@@ -409,6 +411,5 @@ special_housekeeping()
     special_housekeeping                                                # Correct Historical Change
 
     SADM_EXIT_CODE=$ERROR_COUNT                                         # Error COunt = Exit Code
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-

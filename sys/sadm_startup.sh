@@ -22,6 +22,7 @@
 #               Add Section to put command to execute on specified Systems
 # Version 2.8 - July 2017
 #               Message display when starting Cosmetic Change 
+# 2017_08_03 JDuplessis - V2.9 Bug Fix - Missing Quote
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
@@ -37,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.8'                             ; export SADM_VER            # Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -77,28 +78,35 @@ main_process()
     sadm_writelog " "
     
     sadm_writelog "Running Startup Standard Procedure"
-    sadm_writelog " - Removing old files in ${SADM_TMP_DIR}"
+    sadm_writelog "  Removing old files in ${SADM_TMP_DIR}"
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
-    sadm_writelog " - Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
+    sadm_writelog "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
-    sadm_writelog " - Synchronize System Clock with $NTP_SERVER"
+    sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
     ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1
 
     # Special Operation for some particular System
     sadm_writelog " "
     sadm_writelog "Starting particular startup procedure for $SADM_HOSTNAME"
     case "$SADM_HOSTNAME" in
-        "raspi4" )      sadm_writelog "systemctl restart rpcbind"
+        "raspi4" )      sadm_writelog "  systemctl restart rpcbind"
                         systemctl restart rpcbind >> $SADM_LOG 2>&1
-                        sadm_writelog "systemctl restart nfs-kernel-server"
+                        sadm_writelog "  systemctl restart nfs-kernel-server"
                         systemctl restart nfs-kernel-server >> $SADM_LOG 2>&1
                         ;;
-        "nomad" )       sadm_writelog "Start SysInfo Web Server"
+        "nomad" )       sadm_writelog "  Start SysInfo Web Server"
                         /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
                         ;;
-                *)      sadm_writelog " - No particular procedure needed for $SADM_HOSTNAME"
+        "holmes" )      umount /run/media/jacques/5f5a5d54-7c43-4122-8055-ec8bbc2d08d5  >/dev/null 2>&1
+                        umount /run/media/jacques/C113-470B >/dev/null 2>&1
+                        umount /run/media/jacques/b3a2bafd-f722-4b20-b09c-cf950744f24d >/dev/null 2>&1
+                        #sadm_writelog "  Mount External USB (Storix Backup)"
+                        #sadm_writelog "  mount /disk01"
+                        #mount /disk01  >> $SADM_LOG 2>&1
+                        ;;
+                *)      sadm_writelog "  No particular procedure needed for $SADM_HOSTNAME"
                         ;;
     esac
 
@@ -117,7 +125,9 @@ main_process()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+    
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
+    
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

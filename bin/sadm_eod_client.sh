@@ -21,7 +21,7 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# 1.1 Jan 2017 - Cosmetic Log Output change 
+# 1.1 Jan 2017 - Cosmetic Log Output change
 # --------------------------------------------------------------------------------------------------
 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -50,8 +50,8 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh
 
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
@@ -60,7 +60,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 #SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 #SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
 #SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
-#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
+#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner
 #SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
 #SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
 #SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
@@ -74,9 +74,9 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 #SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
 #SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
 #SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
+#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User
 #SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
+#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User
 #SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
 #SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
 #SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
@@ -98,8 +98,7 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-    
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
 
     # Script Got to be run by root user
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
@@ -109,44 +108,43 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
              exit 1                                                     # Exit To O/S
     fi
 
-
     # At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
-    SCRIPT="sadm_nmon_midnight_restart" 
+    SCRIPT="sadm_nmon_midnight_restart"
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
-   
+
 
     # Once a day just before midnight - Create daily Linux performance data file
-    SCRIPT="sadm_create_sar_perfdata" 
+    SCRIPT="sadm_create_sar_perfdata"
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
 
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN client
-    SCRIPT="sadm_housekeeping_client" 
+    SCRIPT="sadm_housekeeping_client"
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
@@ -154,28 +152,28 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
 
     # Save Filesystems Structure for every Volume Group on System
     #  - Used in case of a System Recovery by sadm_fs_recreate.sh script
-    SCRIPT="sadm_fs_save_info" 
+    SCRIPT="sadm_fs_save_info"
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
 
     # Generate System Configuration for this server (Collect by sadmin server)
-    SCRIPT="sadm_create_server_info" 
+    SCRIPT="sadm_create_server_info"
     SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
@@ -187,14 +185,14 @@ SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-             sadm_writelog "Please check Log for further detail about the error :" 
+             sadm_writelog "Please check Log for further detail about the error :"
              sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

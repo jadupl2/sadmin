@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_template_servers.sh
+#   Title    :  sadm_XXXXXXXX.sh
 #   Synopsis : .
-#   Version  :  1.6
-#   Date     :  14 November 2015
+#   Version  :  1.0
+#   Date     :  14 July 2017
 #   Requires :  sh
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -20,9 +20,9 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Enhancements/Corrections Version Log
-# 1.6   
-# 
+# CHANGE LOG
+# 2017_07_07 JDuplessis - V1.7 Minor Code enhancement
+# 2017_07_31 JDuplessis - V1.8 Added Log Template to script
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -38,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -46,15 +46,15 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh
 
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
+# These variables are defined in sadmin.cfg file - You can override them on a per script basis
+SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ;export SADM_SSH_CMD   # SSH Command to Access Farm
+SADM_MAIL_TYPE=1                             ; export SADM_MAIL_TYPE    # 0=No 1=Err 2=Succes 3=All
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR     # Email Address of owner
 #===================================================================================================
 #
 
@@ -67,18 +67,17 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
-#===================================================================================================
+# --------------------------------------------------------------------------------------------------
+#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
 help()
 {
-    echo "Usage: $SADM_PN"
-    echo "" 
-    echo "Options:
-    echo "             -s <ServerName>"
-    echo "             -h <This help message"
     echo " "
-
+    echo "${SADM_PN} usage :"
+    echo "             -e   (Explain )"
+    echo "             -d   (Explain )"
+    echo "             -h   (Display this help message)"
+    echo " "
 }
 
 
@@ -87,49 +86,50 @@ help()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    WOSTYPE=$1                                                           # Should be aix or linux
+    WOSTYPE=$1                                                          # Should be aix or linux
     sadm_writelog " "
-    sadm_writelog "$SADM_DASH" 
+    sadm_writelog "${SADM_FIFTY_DASH}"
     sadm_writelog "Processing active $WOSTYPE server(s)"
     sadm_writelog " "
 
-    # Select From Database Linux Active Servers and output result in $SADM_TMP_FILE
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
     SQL="${SQL} from sadm.server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True"
-    SQL="${SQL} order by srv_name; "
-    sadm_writelog "$SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
-    #$SADM_PSQL -A -F , -t -h $PGHOST sadmin -U $PGUSER -c "$SQL" >$SADM_TMP_FILE1
-    $SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
+    sadm_writelog "$SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL"
+    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
 
-    xcount=0; ERROR_COUNT=0;
-    if [ -s "$SADM_TMP_FILE1" ]
-       then while read wline
+    xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
+    if [ -s "$SADM_TMP_FILE1" ]                                         # File has non zero length?
+       then while read wline                                            # Then Read Line by Line
               do
               xcount=`expr $xcount + 1`                                 # Server Counter
               server_name=`    echo $wline|awk -F, '{ print $1 }'`      # Extract Server Name
               server_os=`      echo $wline|awk -F, '{ print $2 }'`      # Extract O/S (linux/aix)
               server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
-              server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
+              server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor  t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
               server_fqdn=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
-              sadm_writelog " " ; sadm_writelog " "
+              sadm_writelog " " ; sadm_writelog " "                     # Two Blank Lines
               sadm_writelog "${SADM_TEN_DASH}"
               info_line="Processing ($xcount) $server_fqdn"
               sadm_writelog "$info_line"
               if [ "$server_monitor" == "t" ]
-                    then sadm_writelog "Monitoring is ON for $server_fqdn"
-                    else sadm_writelog "Monitoring is OFF for $server_fqdn"
+                    then sadm_writelog "Monitoring of SSH is ON for $server_fqdn"
+                    else sadm_writelog "Monitoring of SSH is OFF for $server_fqdn"
               fi
               if [ "$server_sporadic" == "t" ]
-                    then sadm_writelog "Sporadic server is ON for $server_fqdn"
-                    else sadm_writelog "Sporadic server is OFF for $server_fqdn"
+                    then sadm_writelog "This server is sporadically available (${server_fqdn})"
+                    else sadm_writelog "Server always available (Not Sporadic - $server_fqdn)"
               fi
-              
+
               # PROCESS GOES HERE
+              # ........
+              # ........
               RC=$? ; RC=0
               if [ $RC -ne 0 ]
-                 then sadm_writelog "ERROR NUMBER $RC for $server"
+                 then sadm_writelog "ERROR #${RC} for $server_fqdn"
                       ERROR_COUNT=$(($ERROR_COUNT+1))
                  else sadm_writelog "RETURN CODE IS 0 - OK"
               fi
@@ -144,11 +144,11 @@ process_servers()
 
 
 # --------------------------------------------------------------------------------------------------
-#                      S c r i p t    M a i n     P r o c e s s 
+#                             S c r i p t    M a i n     P r o c e s s
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    
+
     return 0                                                            # Return Default return code
 }
 
@@ -157,31 +157,35 @@ main_process()
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+
+    # Insure that this script only run on the sadmin server
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+
+    # Insure that this script can only be run by the user root
     if ! $(sadm_is_root)                                                # Is it root running script?
         then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
-    # Optional Command line switches    
+
+    # Optional Command line switches
     PAGER="ON" ; MAIL_ONLY="OFF" ; SERVER_NAME=""                       # Set Switch Default Value
     while getopts "pmhs:" opt ; do                                      # Loop to process Switch
         case $opt in
-            p) PAGER="OFF"                                              # Display Continiously    
+            p) PAGER="OFF"                                              # Display Continiously
                ;;                                                       # No stop after each page
             m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
                PAGER="OFF"                                              # Mail need pager to be off
-               ;;                                       
+               ;;
             h) help                                                     # Display Help Usage
                sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
+               exit 0                                                   # Back to shell
                ;;
             s) SERVER_NAME="$OPTARG"                                    # Display Only Server Name
                ;;
@@ -191,23 +195,23 @@ main_process()
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
-    done  
-    
+    done
+
     #main_process                                                        # Main Process
     #SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    
+
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
-    
-    process_servers "linux"                                             # Process Active Linux 
+
+    process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
     sadm_writelog "We had $LINUX_ERROR error(s) while processing Linux servers"
 
     process_servers "aix"                                               # Process Active Aix
     AIX_ERROR=$?                                                        # Save Nb. Errors in process
     sadm_writelog "We had $AIX_ERROR error(s) while processing Aix servers"
-    
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total = AIX+Linux Errors
+
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total Errors = AIX+Linux
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
