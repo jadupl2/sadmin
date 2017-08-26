@@ -17,6 +17,7 @@
 #  V2.0  July 2017   Remove Ping before doing the SSH to each server (Not really needed)
 #  V2.1  July 2017   When Error Detected - The Error is included at the top of Email (Simplify Diag)
 #  2017_08_03 JDuplessis - V2.2 Bug Fix
+#  2017_08_24 JDuplessis - V2.3 Rewrote section of code & Message more concise
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -45,13 +46,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.2'                             ; export SADM_VER            # Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh
@@ -60,18 +61,19 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 #SADM_SSH_CMD="${SADM_SSH} -o 'ConnectTimeout 10' -qnp ${SADM_SSH_PORT} " ; export SADM_SSH_CMD
 SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " ; export SADM_SSH_CMD
 SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
+#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG )
+#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR     # Email Address of owner
 #===================================================================================================
 #
-
 
 
 # --------------------------------------------------------------------------------------------------
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+
+
 
 
 #===================================================================================================
@@ -85,6 +87,48 @@ help_usage()
 }
 
 
+
+#===================================================================================================
+#                Function use to rsync remote SADM client with local directories
+#===================================================================================================
+rsync_function()
+{
+    # Parameters received should always by two - If not write error to log and return to caller
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
+             sadm_writelog "Function received $* and this isn't valid"
+             return 1
+    fi
+
+    # Save rsync information
+    REMOTE_DIR=$1                                                       # user@host:remote directory
+    LOCAL_DIR=$2                                                        # Local Directory
+
+    # If Local directory doesn't exist create it 
+    if [ ! -d "${LOCAL_DIR}" ] ; then mkdir -p ${LOCAL_DIR} ; chmod 2775 ${LOCAL_DIR} ; fi
+
+    # Rsync remote directory on local directory - On error try 3 times before signaling error
+    RETRY=0                                                             # Set Retry counter to zero
+    while [  $RETRY -lt 3 ] ; do                                        # Retry rsync 3 times
+        let RETRY=RETRY+1                                               # Incr Retry counter
+        rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
+        RC=$?                                                           # save error number
+
+        # Consider Error 24 as none critical (Partial transfer due to vanished source files)
+        if [ $RC -eq 24 ] ; then RC=0 ; fi                              # Source File Gone is OK
+
+        if [ $RC -ne 0 ]                                                # If Error doing rsync
+           then if [ $RETRY < 3 ]                                       # If less than 3 retry
+                   then sadm_writelog "[ RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_writelog "[ ERROR ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                        break
+                fi
+           else sadm_writelog "[ OK ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                break
+        fi
+    done
+    return $RC
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -118,12 +162,11 @@ process_servers()
               server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
               fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
-              sadm_writelog " " ; sadm_writelog " "                     # Blank Lines between server
               sadm_writelog "${SADM_TEN_DASH}"                          # Print 10 Dash line
               sadm_writelog "Processing ($xcount) ${fqdn_server}"       # Print Counter/Server Name
 
-              # IF DEBUG_LEVEL > 0 - DISPLAY SERVER MONITORING AND SPORADIC OPTIONS ARE ON OR OFF
-              if [ $DEBUG_LEVEL -gt 0 ]                            # If Debug Activated
+              # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
+              if [ $DEBUG_LEVEL -gt 0 ]                                 # If Debug Activated
                  then if [ "$server_monitor" == "t" ]                   # Monitor Flag is at True
                             then sadm_writelog "Monitoring is ON for $fqdn_server"
                             else sadm_writelog "Monitoring is OFF for $fqdn_server"
@@ -134,138 +177,72 @@ process_servers()
                       fi
               fi
 
-
-              # TEST IF THE SERVER NAME CAN BE RESOLVED - IF NOT NO USE TRYING TO PING SERVER
-              # SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
-              #-------------------------------------------------------------------------------------
+              # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
               if ! host  $fqdn_server >/dev/null 2>&1
-                 then SMSG="Can't process server '$fqdn_server' because hostname can't be resolved"
-                      sadm_writelog "ERROR : $SMSG"                     # Advise user
-                      echo "ERROR      : $SMSG" >> $SADM_ELOG      # Log Err. to Email Log
+                 then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
+                      sadm_writelog "$SMSG"                             # Advise user
+                      echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
-                      sadm_writelog " "                                 # Separation Blank Line
-                      sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                      sadm_writelog "Sending email to $SADM_MAIL_ADDR"
-                      SMSG="$SMSG in $SADM_PN"
-                      #alert_user "M" "E" "$_server" ""  "$SMSG"         # Email User
-                      sadm_writelog "Continuing with the next server"
-                      continue                                          # No need 2 rsync/Nxt Server
+                      if [ $ERROR_COUNT -ne 0 ]
+                         then sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                      fi
+                      continue                                          # skip this server
               fi
 
-              # NOW THAT WE KNOW WE CAN PING THE SERVER, LET'S TRY SSH TO SERVER
-              # IF MONITOR IS ON  AND SSH DOESN'T WORK, INCREASE ERROR COUNTER & ALERT USER (EMAIL)
-              # IF MONITOR IS OFF AND SSH DOESN'T WORK, ADVISE USER AND CONTINUE WITH NEXT SERVER
-              #-------------------------------------------------------------------------------------
-              sadm_writelog "Testing SSH to server $fqdn_server"
-              if [ $DEBUG_LEVEL -gt 4 ]                                 # If Debug Activated
-                 then sadm_writelog "$SADM_SSH_CMD $fqdn_server date"   # Show SSH Command use
-              fi
+              # IF SSH DOESN'T WORK & SPORADIC SERVER IS ON   - DISPLAY WARNING & NEXT SERVER
+              # IF SSH DOESN'T WORK & SERVER MONITORING IS ON - DISPLAY ERROR & NEXT SERVER
               $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1          # SSH to Server for date
-              if [ $? -ne 0 ]                                           # If SSH did not work
-                 then if [ "$server_sporadic" == "t" ]                  # If it's a sporadic server
-                         then sadm_writelog "WARNING : Can't SSH to sporadic server $fqdn_server"
-                              sadm_writelog "Will consider that it's OK (System down or unplugged)"
-                              sadm_writelog "Continuing with the next server"
-                              continue   
-                      fi
-                      if [ $server_monitor = 't' ]                      # If monitoring is ON
-                         then SMSG="Can't SSH to server '${fqdn_server}'"  # Construct Error Msg
-                              sadm_writelog "ERROR : $SMSG"             # Display Error Msg
-                              echo "ERROR   : $SMSG" >> $SADM_ELOG         # Log Err. to Email Log
-                              echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG  
-                              echo "----------" >> $SADM_ELOG
-                              #sadm_writelog "Sending email to $SADM_MAIL_ADDR" # Send email Msg
-                              #SMSG="$SMSG in $SADM_PN"
-                              #alert_user "M" "E" "$fqdn_server" "" "$SMSG"
-                              ERROR_COUNT=$(($ERROR_COUNT+1))           # Consider Error -Incr Cntr
-                              sadm_writelog " "                         # Separation Blank Line
-                              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                      fi
+              RC=$?                                                     # Save Error Number
+
+              # IF SSH TO SERVER FAILED & IT'S A SPORADIC SERVER = WARNING & NEXT SERVER
+              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "t" ]        # SSH don't work & Sporadic
+                 then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
+                      continue                                          # Go process next server
+              fi
+
+              # IF SSH TO SERVER FAILED & MONITORING THIS SERVER IS OFF = WARNING & NEXT SERVER
+              if [ $RC -ne 0 ] &&  [ "$server_monitor" == "f" ]         # SSH don't work/Monitor OFF
+                 then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
+                      continue                                          # Go process next server
+              fi
+
+              # IF SSH TO SERVER FAILED & = ERROR & NEXT SERVER
+              if [ $RC -ne 0 ]   
+                 then SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
+                      sadm_writelog "$SMSG"                             # Display Error Msg
+                      echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
+                      echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
+                      echo "----------" >> $SADM_ELOG
+                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
+                      sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
                       continue                                          # Continue with next server
-                 else sadm_writelog "SSH went OK ..."                   # Good SSH Work
+                 else sadm_writelog "[ OK ] SSH to $fqdn_server worked" # Good SSH Work
               fi
 
-
-
-
-              # MAKE SURE THE RCH RECEIVING DIRECTORY ON THIS SERVER EXIST BEFORE WE POPULATE IT
-              #-------------------------------------------------------------------------------------
-              #sadm_writelog " "                                         # Separation Blank Line
+              # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
-              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+              rsync_function "${fqdn_server}:${SADM_RCH_DIR}/" "${WDIR}/"
+              if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
-              # GET THE RCH (RETURN CODE HISTORY) FILES FROM REMOTE SERVER
-              # RSYNC REMOTE $SADMIN/DAT/RCH/*.RCH TO LOCAL $SADMIN/WWW/DAT/$SERVER/RCH
-              #-------------------------------------------------------------------------------------
-              sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ "
-              rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/ >/dev/null 2>&1
-              RC=$?                                                     # Save error number
-              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
-              if [ $RC -ne 0 ]                                          # If Error doing rch rsync
-                 then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RCH_DIR}/ ${WDIR}/" >> $SADM_ELOG 
-                      echo "----------" >> $SADM_ELOG
-                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
-                 else sadm_writelog "The [R]eturn [C]ode [H]istory Files are now in sync - OK ..."
-              fi
-
-
-
-
-              # MAKE SURE THE RECEIVING LOG DIRECTORY EXIST ON THIS SERVER  BEFORE WE POPULATE IT
-              #-------------------------------------------------------------------------------------
-              #sadm_writelog " "                                         # Separation Blank Line
+              # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"             # Local Receiving Dir.
-              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+              rsync_function "${fqdn_server}:${SADM_LOG_DIR}/" "${WDIR}/"
+              if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
-              # GET THE SERVER LOG FILE
-              # TRANSFER REMOTE LOG FILE(S) $SADMIN/LOG/*.LOG TO LOCAL $SADMIN/WWW/DAT/$SERVER/LOG
-              #-------------------------------------------------------------------------------------
-              sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ "
-              rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/ >/dev/null 2>&1
-              RC=$?                                                     # Save error number
-              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
-              if [ $RC -ne 0 ]                                          # If Error doing rch rsync
-                 then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_LOG_DIR}/ ${WDIR}/"  >> $SADM_ELOG 
-                      echo "----------" >> $SADM_ELOG
-                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
-                 else sadm_writelog "The Log files are now in sync - OK ..."
-              fi
-
-
-
-
-              # MAKE SURE THE RECEIVING RPT DIRECTORY EXIST ON THIS SERVER BEFORE WE POPULATE IT
-              #-------------------------------------------------------------------------------------
-              #sadm_writelog " "                                         # Separation Blank Line
+              # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
               WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"               # Local www Receiving Dir.
-              if [ ! -d "${WDIR}" ] ; then mkdir -p ${WDIR} ; chmod 2775 ${WDIR} ; fi # Create Dir.
+              rsync_function "${fqdn_server}:${SADM_RPT_DIR}/" "${WDIR}/"
+              if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
-              # GET THE SERVER SYSMON REPORT FILE
-              # TRANSFER REMOTE REPORT FILE(S) $SADMIN/RPT/*.RPT TO LOCAL $SADMIN/WWW/DAT/$SERVER/RPT
-              #-------------------------------------------------------------------------------------
-              sadm_writelog "rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ "
-              rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/ >/dev/null 2>&1
-              RC=$?                                                     # Save error number
-              if [ $RC -eq 24 ] ; then RC=0 ; fi                        # Source File Gone is OK
-              if [ $RC -ne 0 ]                                          # If Error doing rch rsync
-                 then sadm_writelog "RSYNC ERROR $RC for $fqdn_server"  # Inform User
-                      echo "ERROR   : RSYNC ERROR $RC for $fqdn_server" >> $SADM_ELOG 
-                      echo "COMMAND : rsync -var --delete ${fqdn_server}:${SADM_RPT_DIR}/ ${WDIR}/" >> $SADM_ELOG 
-                      echo "----------" >> $SADM_ELOG
-                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Increase Error Counter
-                 else sadm_writelog "System Monitor Report Files (*.rpt) are now in sync - OK ..."
+              # IF ERROR OCCURED DISPLAY NUMBER OF ERROR
+              if [ $ERROR_COUNT -ne 0 ]
+                    then sadm_writelog " "                              # Separation Blank Line
+                         sadm_writelog "** TOTAL ${WOSTYPE} ERROR(S) IS NOW $ERROR_COUNT"
               fi
-
-
-
-              sadm_writelog " "                                         # Separation Blank Line
-              sadm_writelog "** TOTAL ${WOSTYPE} ERROR(S) IS NOW $ERROR_COUNT"
+              
               done < $SADM_TMP_FILE1
     fi
+
     sadm_writelog " "                                                   # Separation Blank Line
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
     return $ERROR_COUNT                                                 # Return Total Error Count
@@ -280,7 +257,7 @@ process_servers()
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
@@ -339,16 +316,16 @@ process_servers()
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Exit Code=AIX+Linux Errors
     sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
 
-    if [ "$SADM_EXIT_CODE" -ne 0 ] 
-        then sadm_writelog "Writing Error Encountered at the top of the log"  
+    if [ "$SADM_EXIT_CODE" -ne 0 ]
+        then sadm_writelog "Writing Error Encountered at the top of the log"
              echo "View the script log by clicking on the link below :" >> $SADM_ELOG
              echo 'http://sadmin/sadmin/sadm_view_logfile.php?host=holmes&filename=holmes_sadm_fetch_servers.log'  >> $SADM_ELOG
              echo "----------" >> $SADM_ELOG
              cat $SADM_ELOG $SADM_LOG > $SADM_TMP_FILE3 2>&1
-             cp $SADM_TMP_FILE3 $SADM_LOG  
-             #cp $SADM_ELOG $SADM_LOG  
+             cp $SADM_TMP_FILE3 $SADM_LOG
+             #cp $SADM_ELOG $SADM_LOG
              #alert_user "M" "E" "$_server" ""  "`cat $SADM_ELOG`"         # Email User
-             
+
     fi
 
     # Gracefully Exit the script
