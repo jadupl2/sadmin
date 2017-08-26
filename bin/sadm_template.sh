@@ -154,23 +154,19 @@ main_process()
 
 
 # --------------------------------------------------------------------------------------------------
-#                                Script Start HERE
+#                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env Dir & RC/Log File
-
-    # Insure that this script only run on the sadmin server
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN
+    sadm_start                                                          # Init Env. Dir. & RC/Log
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
-    # Insure that this script can only be run by the user root
     if ! $(sadm_is_root)                                                # Is it root running script?
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User should be root
              sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
+             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
 
