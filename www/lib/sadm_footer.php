@@ -17,7 +17,7 @@
     pg_close($connection);
 	
 	# Delete Temporary File define in sadm_init.php
-	unlink (SADM_WWW_TMP_FILE1);
+	if (file_exists($filename)) { unlink (SADM_WWW_TMP_FILE1); }
 	
  ?>    
 
