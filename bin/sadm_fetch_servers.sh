@@ -18,6 +18,7 @@
 #  V2.1  July 2017   When Error Detected - The Error is included at the top of Email (Simplify Diag)
 #  2017_08_03 JDuplessis - V2.2 Bug Fix
 #  2017_08_24 JDuplessis - V2.3 Rewrote section of code & Message more concise
+#  2017_08_29 JDuplessis - V2.4 Bug Fix - Corrected problem when retrying rsync when failed
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -46,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.3'                             ; export SADM_VER            # Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -109,7 +110,8 @@ rsync_function()
 
     # Rsync remote directory on local directory - On error try 3 times before signaling error
     RETRY=0                                                             # Set Retry counter to zero
-    while [  $RETRY -lt 3 ] ; do                                        # Retry rsync 3 times
+    while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
+        do
         let RETRY=RETRY+1                                               # Incr Retry counter
         rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
         RC=$?                                                           # save error number
@@ -118,9 +120,9 @@ rsync_function()
         if [ $RC -eq 24 ] ; then RC=0 ; fi                              # Source File Gone is OK
 
         if [ $RC -ne 0 ]                                                # If Error doing rsync
-           then if [ $RETRY < 3 ]                                       # If less than 3 retry
-                   then sadm_writelog "[ RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
-                   else sadm_writelog "[ ERROR ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+           then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
+                   then sadm_writelog "[ RETRY $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
+                   else sadm_writelog "[ ERROR $RETRY ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
                         break
                 fi
            else sadm_writelog "[ OK ] rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR}"
@@ -189,8 +191,7 @@ process_servers()
                       continue                                          # skip this server
               fi
 
-              # IF SSH DOESN'T WORK & SPORADIC SERVER IS ON   - DISPLAY WARNING & NEXT SERVER
-              # IF SSH DOESN'T WORK & SERVER MONITORING IS ON - DISPLAY ERROR & NEXT SERVER
+              # TEST SSH TO SERVER
               $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1          # SSH to Server for date
               RC=$?                                                     # Save Error Number
 
@@ -237,7 +238,7 @@ process_servers()
               # IF ERROR OCCURED DISPLAY NUMBER OF ERROR
               if [ $ERROR_COUNT -ne 0 ]
                     then sadm_writelog " "                              # Separation Blank Line
-                         sadm_writelog "** TOTAL ${WOSTYPE} ERROR(S) IS NOW $ERROR_COUNT"
+                         sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
               fi
               
               done < $SADM_TMP_FILE1
@@ -301,20 +302,18 @@ process_servers()
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
     process_servers "linux"                                             # Process Active Linux
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
-    sadm_writelog "Total Linux error(s) : ${LINUX_ERROR}"               # Display Total Linux Errors
     process_servers "aix"                                               # Process Active Aix
     AIX_ERROR=$?                                                        # Save Nb. Errors in process
-    sadm_writelog "Total Aix error(s) : ${AIX_ERROR}"                   # Display Total Aix Errors
-
-    # Being root can update o/s update crontab - Can't while in web interface
-    cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                                # Put in place Final Crontab
-    chmod 600 ${SADM_CRONTAB} ; chown root.root ${SADM_CRONTAB}         # Set Permission on crontab
 
     # Print Total Script Errors
     sadm_writelog " "                                                   # Separation Blank Line
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
     SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Exit Code=AIX+Linux Errors
+    sadm_writelog "Total Linux error(s)  : ${LINUX_ERROR}"              # Display Total Linux Errors
+    sadm_writelog "Total Aix error(s)    : ${AIX_ERROR}"                # Display Total Aix Errors
     sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    sadm_writelog " "                                                   # Separation Blank Line
 
     if [ "$SADM_EXIT_CODE" -ne 0 ]
         then sadm_writelog "Writing Error Encountered at the top of the log"
@@ -327,6 +326,10 @@ process_servers()
              #alert_user "M" "E" "$_server" ""  "`cat $SADM_ELOG`"         # Email User
 
     fi
+
+    # Being root can update o/s update crontab - Can't while in web interface
+    cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                                # Put in place Final Crontab
+    chmod 600 ${SADM_CRONTAB} ; chown root.root ${SADM_CRONTAB}         # Set Permission on crontab
 
     # Gracefully Exit the script
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
