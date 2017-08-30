@@ -18,6 +18,8 @@
 #      Split Second line of log header into two lines/ Change Timming Line
 # 2017_08_12 JDuplessis
 #   V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
+# 2017_08_27 JDuplessis
+#   V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -36,7 +38,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.5"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.6"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1184,7 +1186,10 @@ sadm_stop() {
           ;;
     esac
 
-    sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines"         # Inform user trimming value
+    if [ "$SADM_LOG_APPEND" == "N" ]
+       then sadm_writelog "No log Trim, New log every time ($SADM_LOG)" # No Trim New Log every time
+       else sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
+    fi
     sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
     sadm_writelog "${SADM_FIFTY_DASH}"                                  # Write 80 Dash Line
     sadm_writelog " "                                                   # Blank Line
@@ -1193,8 +1198,10 @@ sadm_stop() {
     sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
-    cat $SADM_LOG > /dev/null                                           # Force buffer to flush
-    sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
+    if [ "$SADM_LOG_APPEND" == "N" ]                                    # Log Not in Create Mode
+        then cat $SADM_LOG > /dev/null                                  # Force buffer to flush
+             sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"              # Trim file to Desired Nb.
+    fi
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
     
