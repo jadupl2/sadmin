@@ -5,7 +5,18 @@
 #  Date:      November 2015
 #  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
+# CHANGE LOG
+# 2016_07_07 JDuplessis - V1.0 Initial Version
+# 2017_09_01 JDuplessis - V1.1 Added Display of SADM Release Number on second line of menu
+# --------------------------------------------------------------------------------------------------
 #set -x
+# 
+
+
+
+# --------------------------------------------------------------------------------------------------
+#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
+# --------------------------------------------------------------------------------------------------
 
 # Screen related variables
 clreol=`tput el`                                ; export clreol         # Clr to end of lne
@@ -156,14 +167,14 @@ sadm_display_heading()
     let wpos="((80 - ${#SADM_CIE_NAME}) / 2)"                           # Calc. Center Pos for Name
     sadm_writexy 01 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
     let wpos="81 - ${#HOSTNAME}"                                        # Calc. Pos. Line 2 on Right
-    sadm_writexy 01 "$wpos" "$(sadm_get_hostname)"                          # Display HostName 
+    sadm_writexy 01 "$wpos" "$(sadm_get_hostname)"                      # Display HostName 
 
     # Display Line 2 - (Host Name + OS Name and OS Version)
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$titre"                                      # Display Title Centered
-    let wpos="81 - ${#VER}"                                             # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "$VER"                                        # Display Script Version
+    let wpos="77 - ${#SADM_RELEASE}"                                    # Calc. Pos. Line 2 on Right
+    sadm_writexy 02 $wpos "Rel $SADM_RELEASE"                           # Display Script Version
 
     sadm_writexy 04 01 "${reset}\c"                                     # Reset to Normal & Pos. Cur
 }
