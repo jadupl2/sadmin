@@ -357,7 +357,7 @@ table.sadm tr:hover {background-color: #ddd;}
 /* ---------------------------------------------------------------------------------------------- */
 #sadmMenu {
     height: 25px;
-    background-color: #814374;
+    background-color: #975489;
     position: relative;
     left: 0px;
     top: 0px;
@@ -419,16 +419,16 @@ table.sadm tr:hover {background-color: #ddd;}
 }
 
 #sadmSideBar {
-    width: 12%;
+    width: 11%;
     background: #CDBB79;
     float: left;
-    padding-left: 10px;
-    font-size: 12px;
+    padding-left: 7px;
+    font-size: 13px;
 }
 
 #sadmSideBar ul {
     margin: 0px;
-    padding-left: 5px;
+    padding-left: 7px;
     list-style-type: none;
     text-align: left;
 
@@ -436,7 +436,7 @@ table.sadm tr:hover {background-color: #ddd;}
 
 #sadmSideBar li {
     font-family: Helvetica, Verdana, Arial, sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     color: #06425C;
 
 }

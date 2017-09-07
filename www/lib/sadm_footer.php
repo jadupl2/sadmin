@@ -7,7 +7,7 @@
 
     echo "\n\n\n<!-- ========================================================================= -->";
     echo "\n<div id='sadmFooter'>";
-    echo "\n   Copyright &copy; 2016 - www.sadmin.ca"; 
+    echo "\n   Copyright &copy; 2015-2017 - www.sadmin.ca"; 
     echo "\n   <br><small>Contact, corrections and suggestions: Jacques Duplessis</small>";
     echo "\n</div>                              <!-- End of Div sadmFooter -->\n";
     echo "\n<!-- ============================================================================= -->";

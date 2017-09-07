@@ -71,7 +71,47 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 
 
+# --------------------------------------------------------------------------------------------------
+#                      Create Remote Directory - If it does not exist
+# --------------------------------------------------------------------------------------------------
+create_remote_dir()
+{
+    # Parameters received should always by two - If not write error to log and return to caller
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
+             sadm_writelog "Function received $* and this isn't valid"
+             sadm_writelog "Should received 'ServerName' and 'Remote Directory'"
+             return 1
+    fi
 
+    # Save rsync information
+    REM_SERVER=$1                                                       # Remote server Name FQDN
+    REM_DIR=$2                                                          # Dir that should exist 
+
+    sadm_writelog "ssh -n ${REM_SERVER} ls -l ${REM_DIR}"
+    ssh -n ${REM_SERVER} ls -l ${REM_DIR} >/dev/null 2>&1
+    RC=$? 
+    
+    # If SSH Connection is OK and Directory exist on server, then OK
+    if [ $RC -eq 0 ]
+        then sadm_writelog "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}"
+             return 0
+    fi 
+
+    # If SSH Connection is OK and BUT Directory doesn't exist on server, then create it
+    if [ $RC -eq 2 ]
+        then ssh ${REM_SERVER} mkdir -p ${REM_DIR} >/dev/null 2>&1
+             if [ $RC -eq 0 ] 
+                then sadm_writelog "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}"
+                     return 0
+                else sadm_writelog "[ ERROR ] Couldn't create directory ${REM_DIR} on ${REM_SERVER}"
+                     return 1
+             fi
+    fi 
+    
+    sadm_writelog "[ ERROR ] Couldn't check existance of ${REM_DIR} on ${REM_SERVER}"
+    return 1
+}
 
 
 
@@ -101,10 +141,9 @@ process_linux_servers()
               server_name=`  echo $wline|awk -F, '{ print $1 }'`
               server_os=`    echo $wline|awk -F, '{ print $2 }'`
               server_domain=`echo $wline|awk -F, '{ print $3 }'`
+              fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name              
               sadm_writelog "" ; sadm_writelog "${SADM_DASH}"
-              info_line="Processing ($xcount) ${server_name}.${server_domain} - "
-              info_line="${info_line}os:${server_os}"
-              sadm_writelog "$info_line"
+              sadm_writelog "Processing ($xcount) ${fqdn_server} - os:${server_os}"
               
               # Ping the server - Server or Laptop may be unplugged
               sadm_writelog "ping -c 2 ${server_name}.${server_domain}"
@@ -122,13 +161,15 @@ process_linux_servers()
                
 
               # Test if $SADM_BIN_DIR exist on remote - If not Create it
-              sadm_writelog "ssh -n ${server_name} ls -l ${SADM_BIN_DIR}"
-              ssh -n ${server_name} ls -l ${SADM_BIN_DIR} >/dev/null 2>&1
-              RC=$? 
-              if [ $RC -ne 0 ]
-                 then sadm_writelog "Creating ${SADM_BIN_DIR} on ${server_name}"
-                      ssh ${server_name} mkdir -p ${SADM_BIN_DIR} >/dev/null 2>&1
-              fi
+              create_remote_dir "${server_name}" "${SADM_BIN_DIR}"
+
+              #sadm_writelog "ssh -n ${server_name} ls -l ${SADM_BIN_DIR}"
+              #ssh -n ${server_name} ls -l ${SADM_BIN_DIR} >/dev/null 2>&1
+              #RC=$? 
+              #if [ $RC -ne 0 ]
+              #   then sadm_writelog "Creating ${SADM_BIN_DIR} on ${server_name}"
+              #        ssh ${server_name} mkdir -p ${SADM_BIN_DIR} >/dev/null 2>&1
+              #fi
              
               # Do the Rsync /sadmin/bin
               sadm_writelog "rsync -ar --delete ${SADM_BIN_DIR}/ ${server_name}.${server_domain}:${SADM_BIN_DIR}/"
