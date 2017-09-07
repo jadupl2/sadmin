@@ -20,7 +20,9 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
+# CHANGE LOG
 # V1.1 July 2017 - Adjust Verification of root user and allow to only run on sadmin server
+# 2017_09_03 JDuplessis - V1.2 Minors changes
 #
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2

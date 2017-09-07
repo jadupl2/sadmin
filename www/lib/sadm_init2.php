@@ -27,7 +27,7 @@ define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disast
 define("SADM_SAR_DIR"      , SADM_DAT_DIR  . "/sar");                   # System Activty Report Dir
 define("SADM_RCH_DIR"      , SADM_DAT_DIR  . "/rch");                   # Result Code History Dir
 define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Network SubNet Info Dir
-define("SADM_SQL_DIR"      , SADM_DAT_DIR  . "/sql");                   # SQLite3 Database Directory
+define("SADM_DB_DIR"       , SADM_DAT_DIR  . "/db");                    # SQLite3 Database Directory
 
 
 # SADMIN WEB SITE DIRECTORIES DEFINITION

@@ -7,7 +7,7 @@
 
     echo "\n\n\n<!-- ========================================================================= -->";
     echo "\n<div id='sadmFooter'>";
-    echo "\n   Copyright &copy; 2016 - www.sadmin.ca"; 
+    echo "\n   Copyright &copy; 2015-2017 - www.sadmin.ca"; 
     echo "\n   <br><small>Contact, corrections and suggestions: Jacques Duplessis</small>";
     echo "\n</div>                              <!-- End of Div sadmFooter -->\n";
     echo "\n<!-- ============================================================================= -->";
@@ -17,7 +17,7 @@
     pg_close($connection);
 	
 	# Delete Temporary File define in sadm_init.php
-	unlink (SADM_WWW_TMP_FILE1);
+	if (file_exists($filename)) { unlink (SADM_WWW_TMP_FILE1); }
 	
  ?>    
 

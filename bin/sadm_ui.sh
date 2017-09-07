@@ -19,8 +19,12 @@
 # History    :
 #   1.0      Initial Version - May 2016 - Jacques Duplessis
 #   1.5      Adapted to work with XFS Filesystem
+# --------------------------------------------------------------------------------------------------
+# CHANGE LOG
+#   1.0      Initial Version - May 2016 - Jacques Duplessis
+#   1.5      Adapted to work with XFS Filesystem
 #   2.0      Major rewrite
-#
+# 2017_09_01 JDuplessis - V2.1 For Now Remove RPM Option from main Menu (May put it back later)
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -35,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.0'                             ; export SADM_VER            # Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -88,16 +92,18 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
     while :
         do
         sadm_display_heading "Main Menu"
-        menu_array="Filesystem_Tools RPM_DataBase_Tools"
+        #menu_array="Filesystem_Tools RPM_DataBase_Tools"
+        menu_array="Filesystem_Tools "
         sadm_display_menu "$menu_array"
         CHOICE=$?
         case $CHOICE in
             1)  . $SADM_BIN_DIR/sadm_ui_fsmenu.sh
                 ;;
-            2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
-                ;;
+            #2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
+            #    ;;
             99) stty $stty_orig
-                cd $CURDIR
+                cd $CURDIR                                              
+                SADM_EXIT_CODE=0
                 break
                 ;;
             *)  # OPTION INVALIDE #
@@ -105,5 +111,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
                 ;;
         esac
         done
-    sadm_stop 0                                                         # Upd. RCH File & Trim Log 
-    exit 0                                                              # Exit With Global Err (0/1)
+
+    # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
+    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

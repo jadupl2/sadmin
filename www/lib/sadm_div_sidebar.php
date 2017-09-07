@@ -38,7 +38,8 @@ echo "\n<div id='sadmSideBar'>\n";
         list($kpart1,$kpart2) = explode(",",$key);
         if ($kpart1 == "srv_osname") {
            echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=os";
-           echo "&value=" . $kpart2 ."'>$value $kpart2 server(s)</a></li>\n";
+           #echo "&value=" . $kpart2 ."'>$value $kpart2 server(s)</a></li>\n";
+           echo "&value=" . $kpart2 ."'>$value $kpart2</a></li>\n";
            $SERVER_COUNT = $SERVER_COUNT + $value;
         }
     }
@@ -51,34 +52,34 @@ echo "\n<div id='sadmSideBar'>\n";
 
 	# ------------------------  SERVERS ATTRIBUTES SIDEBAR -----------------------------------------
     echo "<br>";
-    echo "<strong>Servers Attributes</strong>\n";
+    echo "<strong>Server Attribute</strong>\n";
     echo "<ul>\n";
 
     # Number of Active Servers
     $kpart2 = $sadm_array["srv_active,"];
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=all_active'>";
     if ( ${kpart2} == 0 ) {
-        echo "No active servers</a></li>\n";
+        echo "No active</a></li>\n";
     }else{
-        echo "${kpart2} active servers</a></li>\n";
+        echo "${kpart2} Active(s)</a></li>\n";
     }
 
     # Number of Inactive Servers
     $kpart2 = $sadm_array["srv_inactive,"];
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=all_inactive'>";
     if ( ${kpart2} == 0 ) {
-        echo "No inactive server</a></li>\n";
+        echo "No inactive</a></li>\n";
     }else{
-        echo "${kpart2} inactive servers</a></li>\n";
+        echo "${kpart2} inactive(s)</a></li>\n";
     }
 
     # Number of Virtual Servers
     $kpart2 = $sadm_array["srv_vm,"];
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=all_vm'>";
     if ( ${kpart2} == 0 ) {
-        echo "No virtual servers</a></li>\n";
+        echo "No virtual</a></li>\n";
     }else{
-        echo "${kpart2} virtual(s) server(s)</a></li>\n";
+        echo "${kpart2} virtual(s)</a></li>\n";
     }
 
     # Number of physical Servers
@@ -87,7 +88,7 @@ echo "\n<div id='sadmSideBar'>\n";
     if ( ${kpart2} == 0 ) {
         echo "No physical server</a></li>\n";
     }else{
-        echo "${kpart2} physical(s) server(s)</a></li>\n";
+        echo "${kpart2} physical(s)</a></li>\n";
     }
 
     # Number of Sporadic Servers
@@ -96,7 +97,7 @@ echo "\n<div id='sadmSideBar'>\n";
     if ( ${kpart2} == 0 ) {
         echo "No sporadic server</a></li>\n";
     }else{
-        echo "${kpart2} sporadic(s) server(s)</a></li>\n";
+        echo "${kpart2} sporadic(s)</a></li>\n";
     }
 
     echo "</ul>\n";
@@ -123,29 +124,30 @@ echo "\n<div id='sadmSideBar'>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=all'>";
 	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></li>\n";
 
-    # Display Total Number of Failed Scripts
-    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=failed'>";
-    if ( $TOTAL_FAILED == 0 ) {
-        echo "No Failed Script</a></li>\n";
-    }else{
-        echo "$TOTAL_FAILED Failed Script(s)</a></li>\n";
-    }
-
-    # Display Total Number of Running Scripts
-    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=running'>";
-    if ( $TOTAL_RUNNING == 0 ) {
-        echo "No Running Script</a></li>\n";
-    }else{
-        echo "$TOTAL_RUNNING Running Script(s)</a></li>\n";
-    }
-
     # Display Total Number of Succeeded Scripts
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=success'>";
     if ( $TOTAL_SUCCESS == 0 ) {
         echo "No Script Succeeded</a></li>\n";
     }else{
-        echo "$TOTAL_SUCCESS Success Script(s)</a></li>\n";
+        echo "$TOTAL_SUCCESS Success</a></li>\n";
     }
+
+    # Display Total Number of Failed Scripts
+    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=failed'>";
+    if ( $TOTAL_FAILED == 0 ) {
+        echo "None Failed</a></li>\n";
+    }else{
+        echo "$TOTAL_FAILED Failed</a></li>\n";
+    }
+
+    # Display Total Number of Running Scripts
+    echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_rch_summary.php?sel=running'>";
+    if ( $TOTAL_RUNNING == 0 ) {
+        echo "None Running</a></li>\n";
+    }else{
+        echo "$TOTAL_RUNNING Running</a></li>\n";
+    }
+
     echo "</ul>\n";
 
 
@@ -155,10 +157,10 @@ echo "\n<div id='sadmSideBar'>\n";
     echo "<strong>Server Status</strong>\n";                            # Display Section Title
     echo "<ul>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_schedule.php'>";
-    echo "Update O/S Schedule";
+    echo "O/S Update";
 	echo "</a></li>\n";
     echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_sysmon.php'>";
-    echo "Monitoring Alert(s)";
+    echo "Monitor Alert(s)";
 	echo "</a></li>\n";
 	echo "</ul>\n";
 

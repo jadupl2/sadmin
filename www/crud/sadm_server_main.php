@@ -190,7 +190,7 @@ function display_data($count, $row) {
     echo "\n<td style='text-align: center'>";
     echo "\n<a href=/crud/sadm_server_update.php?sel=" . $row['srv_name'] .">";
     echo "\n<button type='button' class='btn btn-info btn-xs'>";
-    echo "\n<span class='glyphicon glyphicon-pencil'></span> Update</button></a>";
+    echo "\n<span class='glyphicon glyphicon-pencil'></span> Edit</button></a>";
     echo "\n</td>";
     
     # Delete Button

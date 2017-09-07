@@ -41,7 +41,7 @@ echo "\n    </div>                                      <!-- End of Div sadmEnte
 
 echo "\n    <div id='sadmEntete1R'>"; 
 echo "\n        The Unix Servers Farm Control Environment<br>"; 
-echo "\n        <small>Version " . SADM_VERSION . "</small>";
+echo "\n        <small>Release " . SADM_VERSION . "</small>";
 echo "\n    </div>                                      <!-- End of Div sadmEntete1R -->";
 
 echo "\n</div>                                          <!-- End of Div sadmHeader -->\n";

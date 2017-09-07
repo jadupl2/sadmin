@@ -181,7 +181,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     
     # Display Update Button for Submit Form
     echo "\n<center>";
-    echo "\n<button type='submit' class='btn btn-sm btn-primary'>Update </button>";
+    echo "\n<button type='submit' class='btn btn-sm btn-primary'>Save </button>";
 
     # Display Cancel Button To return Back to previous page
     echo "\n<a href='/crud/sadm_server_main.php'>";

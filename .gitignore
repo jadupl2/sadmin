@@ -49,6 +49,7 @@ __pycache__/
 [Tt]humbs.db
 *.obj
 *.exe
+*.EXE
 *.pdb
 *.user
 *.aps
@@ -70,3 +71,7 @@ __pycache__/
 
 # Linux Trash Can
 .Trash-*/
+# Python 3.x Generated Object
+__pycache__/
+#
+#

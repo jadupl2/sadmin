@@ -23,6 +23,7 @@
 # CHANGE LOG
 # 2017_07_07 JDuplessis - V1.7 Minor Code enhancement
 # 2017_07_31 JDuplessis - V1.8 Added Log Template to script
+# 2017_09_02 JDuplessis - V1.9 Change to command line switch
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -38,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.8'                             ; export SADM_VER            # Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -154,48 +155,42 @@ main_process()
 
 
 # --------------------------------------------------------------------------------------------------
-#                                Script Start HERE
+#                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env Dir & RC/Log File
-
-    # Insure that this script only run on the sadmin server
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN
+    sadm_start                                                          # Init Env. Dir. & RC/Log
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
-    # Insure that this script can only be run by the user root
     if ! $(sadm_is_root)                                                # Is it root running script?
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
              sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
+             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
 
-    # Optional Command line switches
-    PAGER="ON" ; MAIL_ONLY="OFF" ; SERVER_NAME=""                       # Set Switch Default Value
-    while getopts "pmhs:" opt ; do                                      # Loop to process Switch
+    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
+    while getopts "hd:" opt ; do                                        # Loop to process Switch
         case $opt in
-            p) PAGER="OFF"                                              # Display Continiously
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
-            m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
-               PAGER="OFF"                                              # Mail need pager to be off
-               ;;
-            h) help                                                     # Display Help Usage
+            h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell
                ;;
-            s) SERVER_NAME="$OPTARG"                                    # Display Only Server Name
-               ;;
-           \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
-               help                                                     # Display Help Usage
+           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
+               help_usage                                               # Display Help Usage
                sadm_stop 1                                              # Close the shop
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
-    done
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
+        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
+    fi
 
     #main_process                                                        # Main Process
     #SADM_EXIT_CODE=$?                                                   # Save Process Exit Code

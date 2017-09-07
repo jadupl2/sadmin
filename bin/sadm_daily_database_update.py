@@ -75,9 +75,8 @@ row_list = []
 #===================================================================================================
 #  Return to the caller a list (colnames) of the column name that are part of the SADM server table
 #===================================================================================================
-#
 def get_columns_name(wconn, wcur, tbname):
-    """Return to the caller a list (colnames) of the column name"""
+    """Return to the caller a list (colnames) of table column name"""
     if sadm.debug > 4:
         sadm.writelog("Get the columns name of %s table" % (tbname))
     try:
@@ -98,17 +97,16 @@ def get_columns_name(wconn, wcur, tbname):
 # With column name (key) of the server table received build a dictionnary with default value (value)
 # DEFINE DEFAULT VALUES OF SERVER TABLE WHEN WE NEED TO ADD A NEW SERVER INTO THE SERVER TABLE
 #===================================================================================================
-#
 def init_row_dictionnary(colnames):
     """DEFINE DEFAULT VALUES OF SERVER TABLE WHEN WE NEED TO ADD A SERVER INTO THE SERVER TABLE"""
     srow = {}                                                           # Create empty Dictionnary
-    cnow = datetime.datetime.now()                                          # Get Current Time
-    #curdate = cnow.strftime("%Y.%m.%d")                                     # Format Current date
-    #curtime = cnow.strftime("%H:%M:%S")                                     # Format Current Time
-    #wdate = datetime.datetime.now()                                     # Get current Date
+    cnow = datetime.datetime.now()                                      # Get Current Time
+    #curdate = cnow.strftime("%Y.%m.%d")                                # Format Current date
+    #curtime = cnow.strftime("%H:%M:%S")                                # Format Current Time
+    #wdate = datetime.datetime.now()                                    # Get current Date
     wdate = cnow.strftime("%Y-%m-%d %H:%M:%S")
-    #for index in range(1, len(colnames)):                               # Loop from 1 to Nb Columns
-    #    srow[colnames[index]] = ""                                      # Set All fields to Blank
+    #for index in range(1, len(colnames)):                              # Loop from 1 to Nb Columns
+    #    srow[colnames[index]] = ""                                     # Set All fields to Blank
 
     srow['srv_domain'] = sadm.cfg_domain                                # Domain in sadmin.cfg
     srow['srv_active'] = True                                           # Server Active is True
