@@ -9,6 +9,7 @@
 # Description
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
+# CHANGE LOG
 # 2.0 Create log file earlier to prevent error message - 18 Jan - J.Duplessis
 # 2.1 Added Support for Linux Mint - April 2017 - J.D.
 # 2.2 Minor Modifications concerning Trimming the Log File
@@ -132,6 +133,7 @@ SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGr
 SADM_SERVER=""                              ; export SADM_SERVER        # Server FQDN Name
 SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
 PGPASSFILE="${SADM_CFG_DIR}/.pgpass"        ; export PGPASSFILE         # PostGres Passwd File
+SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
 
 
 # --------------------------------------------------------------------------------------------------
@@ -166,6 +168,7 @@ sadm_writelog() {
              printf "%-s\n" "$SADM_MSG" >> $SADM_LOG                    # Both = to Log
              ;;
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
+				     ;;
     esac
 }
 
