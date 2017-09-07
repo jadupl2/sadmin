@@ -26,6 +26,7 @@ www/dat/
 www/cfg/
 www/old/
 www/tmp/
+www/db/
 .vscode/
 
 # Specific files to exclude 
