@@ -4,11 +4,15 @@
 #   Title:      sadm_lib_std.py
 #   Synopsis:   This is the Standard SADM Python Library 
 #
+#===================================================================================================
+# CHANGE LOG
 # V1.1  Jacques Duplessis - June 2017 
 #       Added Flush before trimming file
-#===================================================================================================
+# 2017_09_03 JDuplessis - V1.2 Rewritten Trimfile function (Caused error if exec in debug mode)
+#
+# # ==================================================================================================
 import os, errno, time, sys, pdb, socket, datetime, getpass, subprocess, smtplib, pwd, grp
-import glob, fnmatch, psycopg2
+import glob, fnmatch, psycopg2, linecache, shutil
 from subprocess import Popen, PIPE
 #pdb.set_trace() 
 
@@ -16,7 +20,7 @@ from subprocess import Popen, PIPE
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-ver                = "1.1"                                              # Default Program Version
+ver                = "1.2"                                              # Default Program Version
 multiple_exec      = "N"                                                # Default Run multiple copy
 debug              = 0                                                  # Default Debug Level (0-9)
 exit_code          = 0                                                  # Script Error Return Code
@@ -427,41 +431,66 @@ def sendmail(wserver,wport,wuser,wpwd,wsub,wbody) :
 # --------------------------------------------------------------------------------------------------
 #                TRIM THE FILE RECEIVED AS FIRST PARAMETER (MAX LINES IN LOG AS 2ND PARAMATER)
 # --------------------------------------------------------------------------------------------------
-def trimfile(wfile, maxline=500) :
-    #writelog ("Trimming %s to %s lines." %  (wfile, str(maxline)))
+def trimfile(fname, nlines=500) :
+
+    fcname = sys._getframe().f_code.co_name                             # Get Name current function
+    nlines = int(nlines)                                                # Making sure nlines=integer
+
+    # Debug Information
+    if debug > 8 : print ("Trimming %s to %s lines." %  (fname, str(nlines)))
+
+    # Check if fileName to trim exist
+    if (not os.path.exists(fname)):                                     # If fileName doesn't exist
+        print ("[ ERROR ] In '%s' function - File %s doesn't exist" % (fcname,fname))
+        return 1
+    tot_lines = len(open(fname).readlines())                            # Count total no. of lines
+
+    # Create temporary file
     tmpfile = "%s/%s.%s" % (tmp_dir,inst,datetime.datetime.now().strftime("%y%m%d_%H%M%S"))
-    
-    cmd = "tail -%s %s > %s" % (maxline, wfile, tmpfile)
-    ccode, cstdout, cstderr = oscommand(cmd)
-    if not ccode == 0 :
-        writelog ("Error occured with command %s" % (cmd))
-        writelog ("Command stdout : %s" % (cstdout))
-        writelog ("Command stderr : %s" % (cstderr))
+
+    # Open Temporary file in output mode
+    try:
+        FN=open(tmpfile,'w')                                            # Open Temp file for output
+    except IOError as e:                                                # If Can't open output file
+        print ("Error opening file %s" % fname)                         # Print FileName
         return 1
-    
-    cmd = "rm -f %s" % (wfile)
-    ccode, cstdout, cstderr = oscommand(cmd)
-    if not ccode == 0 :
-        writelog ("Error occured with command %s" % (cmd))
-        writelog ("Command stdout : %s" % (cstdout))
-        writelog ("Command stderr : %s" % (cstderr))
+
+    # Use line cache module to read the lines
+    for i in range(tot_lines - nlines + 1, tot_lines+1):                # Start Read at deisred line
+        wline = linecache.getline(fname, i)                             # Get Desired line to keep
+        FN.write ("%s" % (wline))                                       # Write line to tmpFile
+    FN.flush()                                                          # Got to do it - Missing end
+    FN.close()                                                          # Close tempFile
+
+    # Debug Information
+    if debug > 8 : 
+        print ("Original Filename %s" % (fname))
+        print ("TmpFileName %s" % (tmpfile))
+        print ("Removing file %s" % (fname))
+
+
+    # Remove original file
+    try:
+        os.remove(fname)                                                # Remove Original file
+    except OSError, e:
+        print ("[ ERROR ] in %s function - removing %s" % (fcname,fname))
         return 1
-    
-    cmd = "mv %s %s"% (tmpfile, wfile)
-    ccode, cstdout, cstderr = oscommand(cmd)
-    if not ccode == 0 :
-        writelog ("Error occured with command %s" % (cmd))
-        writelog ("Command stdout : %s" % (cstdout))
-        writelog ("Command stderr : %s" % (cstderr))
+
+    # Rename tempFile to original file
+    try:
+        shutil.move (tmpfile,fname)                                     # Rename tmp to original
+    except OSError as e:
+        print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,tmpfile,fname))
+        print ("Rename Error: %s - %s." % (e.fname,e.strerror))
         return 1
-    
-    cmd = "chmod 664 %s" % (wfile)
-    ccode, cstdout, cstderr = oscommand(cmd)
-    if not ccode == 0 :
-        writelog ("Error occured with command %s" % (cmd))
-        writelog ("Command stdout : %s" % (cstdout))
-        writelog ("Command stderr : %s" % (cstderr))
-        return 1
+
+    #cmd = "chmod 664 %s" % (fname)
+    #ccode, cstdout, cstderr = oscommand(cmd)
+    #if not ccode == 0 :
+    #    print ("Error occured with command %s" % (cmd))
+    #    print ("Command stdout : %s" % (cstdout))
+    #    print ("Command stderr : %s" % (cstderr))
+    #    return 1
     return 0
 
 
