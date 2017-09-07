@@ -16,9 +16,10 @@
 #  V1.9  April 2017  Cosmetic - Remove blank lines inside processing servers
 #  V2.0  July 2017   Remove Ping before doing the SSH to each server (Not really needed)
 #  V2.1  July 2017   When Error Detected - The Error is included at the top of Email (Simplify Diag)
-#  2017_08_03 JDuplessis - V2.2 Bug Fix
+#  2017_08_03 JDuplessis - V2.2 Minor Bug Fix
 #  2017_08_24 JDuplessis - V2.3 Rewrote section of code & Message more concise
 #  2017_08_29 JDuplessis - V2.4 Bug Fix - Corrected problem when retrying rsync when failed
+#  2017_08_30 JDuplessis - V2.5 If SSH test to server fail, try a second time (Prevent false Error)
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -47,7 +48,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.4'                             ; export SADM_VER            # Script Version
+SADM_VER='2.5'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -208,17 +209,41 @@ process_servers()
               fi
 
               # IF SSH TO SERVER FAILED & = ERROR & NEXT SERVER
+              RETRY=0                                                   # Set Retry counter to zero
+              while [ $RETRY -lt 3 ]                                    # Retry rsync 3 times
+                do
+                let RETRY=RETRY+1                                       # Incr Retry counter
+                $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1        # SSH to Server for date
+                RC=$?                                                   # Save Error Number
+                if [ $RC -ne 0 ]                                        # If Error doing ssh
+                   then if [ $RETRY -lt 3 ]                             # If less than 3 retry
+                            then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                            else sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                                 break
+                        fi
+                   else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
+                        break
+                fi
+                done
+
+
+              # If First SSH Test Failed try a second (Last Chance - Prevent False Error)
               if [ $RC -ne 0 ]   
-                 then SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
-                      sadm_writelog "$SMSG"                             # Display Error Msg
-                      echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
-                      echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
-                      echo "----------" >> $SADM_ELOG
-                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
-                      sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                      continue                                          # Continue with next server
-                 else sadm_writelog "[ OK ] SSH to $fqdn_server worked" # Good SSH Work
+                 then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1  # SSH to Server for date
+                      RC=$?                                             # Save Error Number
+                      if [ $RC -ne 0 ]                                  # If Error doing ssh
+                         then SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
+                              sadm_writelog "$SMSG"                     # Display Error Msg
+                              echo "$SMSG" >> $SADM_ELOG                # Log Err. to Email Log
+                              echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
+                              echo "----------" >> $SADM_ELOG
+                              ERROR_COUNT=$(($ERROR_COUNT+1))           # Consider Error -Incr Cntr
+                              sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                              continue                                  # Continue with next server
+                      fi
               fi
+              sadm_writelog "[ OK ] SSH to $fqdn_server worked" # Good SSH Work
+
 
               # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
               WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"             # Local Receiving Dir.
