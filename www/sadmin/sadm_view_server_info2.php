@@ -47,8 +47,30 @@ function display_server_data ($wrow) {
     # Server Data DIV
     echo "\n\n<div class='server_data'>             <!-- Start of Data Scr DIV -->";
 
+    # Page Main Table
+    echo "\n<table width='100%' border='0' cellspacing='0' cellpadding='0'";
+    echo "\n<tr>";
+    echo "\n<td>";
+    echo "\n<div align='center'>";
+
+    # Page Heading
+    echo "\n<table width='95%' border='0' cellspacing='0' cellpadding='0'>";
+    echo "\n<tr>";
+    echo "\n<td>";
+    echo "\n<hr size='1' noshade><font color='#663300' size='4' face='Verdana, sans-serif'>";
+    echo "\n<strong>SyncBackPro V7.7.0.0 Log</strong><br>";
+    echo "<strong>Main Page</strong></font>";
+    echo "\n<hr size='1' noshade><font face='Verdana, sans-serif'>&nbsp;</font></td></tr>";
+    echo "\n</table>";
+
+    four_columns_display ("Server","coco.maison.ca","Description","Test Server");
+    two_columns_display("Memoire","6GB");
 
     echo "\n</div>                                  <!-- End of Data Scr DIV -->";
+
+    echo "</table></td></tr>";
+    echo "</table></div></td></tr>";
+
 
     # Edit Button
     echo "\n<center>";
@@ -58,79 +80,25 @@ function display_server_data ($wrow) {
     echo "\n</center>\n<br>                         <!-- Blank Line Before Footer -->";
 }
 
-function four_columns_display($wcol1,$wcol2,$wcol3,$wcol4) {
-
- <tr>
-<td bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">$wcol1</font></strong></td>
-<td width="23%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">$wcol2</font></td>
-<td bgcolor="#FFFFCC"><font color="#663300" size="2" face="Verdana, sans-serif"><strong>Computer Name</strong></font></td>
-<td width="39%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">SHERLOCK</font></td>
-</tr>   
+function four_columns_display($wcol1,$wcol2,$wcol3,$wcol4) 
+{
+    echo "\n<tr>";
+    echo '<td bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">' . $wcol1 . '</font></strong></td>';
+    echo '<td width="23%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">' . $wcol2 . '</font></td>';
+    echo '<td bgcolor="#FFFFCC"><font color="#663300" size="2" face="Verdana, sans-serif"><strong>Computer Name</strong></font></td>';
+    echo '<td width="39%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">SHERLOCK</font></td>';
+    echo "</tr>\n";
 }
 
-function two_columns_display($wcol1,$wcol2) {
-
-<tr>
-<td width="22%" bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">Unattended</font></strong></td>
-<td width="78%" colspan="3"><font size="2" face="Verdana, sans-serif">Yes</font></td>
-</tr>
+function two_columns_display($wcol1,$wcol2) 
+{
+    echo "\n<tr>";
+    echo '<td width="22%" bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">Unattended</font></strong></td>';
+    echo '<td width="78%" colspan="3"><font size="2" face="Verdana, sans-serif">Yes</font></td>';
+    echo "\n</tr>";
 }
 
 
-
-
-</head><body>
-<table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td><div align="center">
-
-<table width="95%" border="0" cellspacing="0" cellpadding="0">
-<tr><td><hr size="1" noshade><font color="#663300" size="4" face="Verdana, sans-serif">
-<strong>SyncBackPro V7.7.0.0 Log</strong><br>
-<strong>Main Page</strong></font>
-<hr size="1" noshade><font face="Verdana, sans-serif">&nbsp;</font></td></tr>
-</table>
-</td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td>
-<table width="100%" border="1" cellpadding="5" cellspacing="0" bordercolor="#C5C5C5">
-<tr><td><font size="2" face="Verdana, sans-serif">Select a link below to view detailed information about the task you carried out:</font><br>
-<br><font color="#CCCCCC">
- | <strong><font size="2" face="Verdana, sans-serif">Copied, deleted, renamed, and changed (0)</font></strong>
- | <strong><font size="2" face="Verdana, sans-serif">Skipped (0)</font></strong>
- | <strong><font size="2" face="Verdana, sans-serif">Warnings (0)</font></strong>
- | <strong><font size="2" face="Verdana, sans-serif">Errors (0)</font></strong>
- | <strong><font size="2" face="Verdana, sans-serif">Non-Critical Errors (0)</font></strong>
- |</font></td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td>
-<table width="100%" border="1" cellpadding="5" cellspacing="0" bordercolor="#C5C5C5">
-
-<tr bgcolor="#996600"><td colspan="4"><strong><font color="#FFFFFF" size="3" face="Verdana, sans-serif">Log Report: Overview</font></strong>
-</td></tr>
-<tr>
-<td bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">Profile Name</font></strong></td>
-<td width="23%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">ds410_software</font></td>
-<td bgcolor="#FFFFCC"><font color="#663300" size="2" face="Verdana, sans-serif"><strong>Type</strong></font></td>
-<td width="39%" bgcolor="#FFFFFF"><font size="2" face="Verdana, sans-serif">Mirror</font></td>
-</tr>
-<tr bgcolor="#996600"><td colspan="4"><strong><font color="#FFFFFF" size="3" face="Verdana, sans-serif">sherlock: F:\Software</font></strong>
-</td></tr>
-<tr>
-<td width="22%" bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">Drive Type</font></strong></td>
-<td width="78%" colspan="3"><font size="2" face="Verdana, sans-serif">Fixed</font></td>
-</tr>
-<tr>
-<td width="22%" bgcolor="#FFFFCC"><strong><font color="#663300" size="2" face="Verdana, sans-serif">Free disk space</font></strong></td>
-<td width="78%" colspan="3"><font size="2" face="Verdana, sans-serif">465223MB</font></td>
-</tr>
-</table></td></tr>
-<tr><td>&nbsp;</td></tr>
-<tr><td><div align="right"><table width="100%"><tr>
-<td><font color="#C1C1C1" size="2" face="Verdana, sans-serif">
-</font></td>
-<td><div align="right"><font size="2" face="Verdana, sans-serif">
-<A href="http://www.2brightsparks.com/"></A></font></div></td></tr></table></div></td></tr>
-</table></div></td></tr></table>
-</body></html>
 
 # ==================================================================================================
 #                               DISPLAY LEFT SIDE OF SERVER DATA 
@@ -579,5 +547,6 @@ function display_right_side ($wrow) {
 
     sadm_page_heading ("Information about server " . $row['srv_name']); # Display Page Title
     display_server_data ($row);                                         # Display Server Data
+
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
 ?>
