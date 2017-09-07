@@ -164,6 +164,7 @@ sadm_writelog() {
              printf "%-s\n" "$SADM_MSG" >> $SADM_LOG                    # Both = to Log
              ;;
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
+             ;;
     esac
 }
 
