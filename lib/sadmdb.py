@@ -34,10 +34,15 @@ import os, sys, sqlite3
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "0.0a"                                             # Default Program Version
-debug              = 0                                                  # Default Debug Level (0-9)
+libver             = "0.0b"                                             # Default Program Version
+debug              = 4                                                  # Default Debug Level (0-9)
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 exit_code          = 0                                                  # Library Return Code
+#
+sadm_cat_nb_field  = 4                                                  # Nb of fields in Cat Table
+sadm_grp_nb_field  = 4                                                  # Nb of fields in Grp Table
+tablist = ["sadm_cat","sadm_grp"]                                       # SADM Table List
+
 
 #===================================================================================================
 #                                   SADM Database Access Class 
@@ -67,7 +72,7 @@ class db_tool:
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
     def db_close_db(self):
         try:
-            print("Closing Database %s" % (self.dbname)) 
+            if debug > 3 : print("Closing Database %s" % (self.dbname)) 
             self.conn.close()
         except Exception as e: 
             print("An error occurred:", e,  '-',  e.args[0])
@@ -76,7 +81,7 @@ class db_tool:
 
     # CREATE SADM TABLE FUNCTION -------------------------------------------------------------------
     def db_create_table(self,tbname):
-        print("Creating %s table." % (tbname)) 
+        if debug > 3 : print("Creating %s table." % (tbname)) 
         try:
             if (tbname == "sadm_cat"):
                 self.cur.execute('''DROP TABLE sadm_cat''')
@@ -102,9 +107,7 @@ class db_tool:
 
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_insert(self,tbname,fields):
-        sadm_cat_nb_field = 4                                           # Nb of fields in Cat Table
-        sadm_grp_nb_field = 4                                           # Nb of fields in Grp Table
-        tablist = ["sadm_cat","sadm_grp"]                               # SADM Table List
+        if debug > 3 : print ("Insert row in %s table with key '%s'" % (tbname,fields[0]))
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:
@@ -136,14 +139,55 @@ class db_tool:
             print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (fields[0],tbname,e))
             self.conn.rollback()            
         except Exception as e: 
-            print("Table %s Insert Key %s Error occurred:" % (tbname,fields[0],e))
+            print("Table %s Insert Key '%s' Error occurred: %s" % (tbname,fields[0],e))
+            self.conn.rollback()
+        return
+
+
+    # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
+    def db_update(self,tbname,tbfields,tbkey):
+        if debug > 3: print ("Updating %s with key '%s" % (tbname,tbkey))
+
+        # Is the table name part of the Database, if not Error
+        if tbname not in tablist:
+            print ("The table %s isn't part of the Database",(tbname))
+            return 1
+
+        # Validate the number of fields for the tablename 
+        condition = ( (tbname == "sadm_cat" and len(tbfields) <> sadm_cat_nb_field)  or 
+                      (tbname == "sadm_grp" and len(tbfields) <> sadm_grp_nb_field) )
+        if condition:
+            print ("Number of field for %s table should be 4, received %d",(tbname,len(tbfields)))
+            return 1
+
+        # In Debug mode print tableName and list of fields received
+        if debug > 4:
+            print("Updating Data in %s table." % (tbname)) 
+            print("Fields to update are %s" % (tbfields)) 
+            for x in range(len(tbfields)):
+                print ("[%s] %s" % (x,tbfields[x]))
+
+        # Update Row
+        try: 
+            if (tbname == "sadm_cat"):
+                sql = 'UPDATE sadm_cat SET cat_code=?, cat_desc=?, cat_active=?, cat_default=? where cat_code=?'
+                self.cur.execute(sql,(tbfields[0],tbfields[1],tbfields[2],tbfields[3],tbkey))
+            if (tbname == "sadm_grp"):
+                sql = 'UPDATE sadm_grp SET grp_code=?, grp_desc=?, grp_active=?, grp_default=? where grp_code=?'
+                self.cur.execute(sql,(tbfields[0],tbfields[1],tbfields[2],tbfields[3],tbkey))
+            self.conn.commit()   
+        except sqlite3.IntegrityError as e: 
+            print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (tbkey,tbname,e))
+            self.conn.rollback()            
+        except Exception as e: 
+            print("Table %s Update Key '%s' \nError occurred: %s" % (tbname,tbkey,e))
             self.conn.rollback()
         return
 
 
     # INITIAL LOAD OF THE CATEGORY TABLE -----------------------------------------------------------
     def db_load_category(self):
-        print ("Loading category table")
+        if debug > 3 : print ("Loading category table")
         categories = [
             ('Legacy','Legacy Unsupported Server',1,0),
             ("Dev","Development Environment",1,1),
@@ -166,7 +210,7 @@ class db_tool:
 
     # INITIAL LOAD OF THE GROUP TABLE --------------------------------------------------------------
     def db_load_group(self):
-        print ("Loading group table")
+        if debug > 3 : print ("Loading group table")
         groups = [
             ("Group2","Group No.2",1,0),
             ("Group3","Group No.3",1,0),
