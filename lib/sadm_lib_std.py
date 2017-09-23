@@ -9,6 +9,8 @@
 # V1.1  Jacques Duplessis - June 2017 
 #       Added Flush before trimming file
 # 2017_09_03 JDuplessis - V1.2 Rewritten Trimfile function (Caused error if exec in debug mode)
+# 2017_09_03 JDuplessis 
+#   V1.3 Added db_dir and db_file for Sqlite3 Database
 #
 # # ==================================================================================================
 import os, errno, time, sys, pdb, socket, datetime, getpass, subprocess, smtplib, pwd, grp
@@ -20,7 +22,7 @@ from subprocess import Popen, PIPE
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-ver                = "1.2"                                              # Default Program Version
+ver                = "1.3"                                              # Default Program Version
 multiple_exec      = "N"                                                # Default Run multiple copy
 debug              = 0                                                  # Default Debug Level (0-9)
 exit_code          = 0                                                  # Script Error Return Code
@@ -58,9 +60,10 @@ dr_dir             = os.path.join(dat_dir,'dr')                         # SADM D
 sar_dir            = os.path.join(dat_dir,'sar')                        # SADM System Activity Rep.
 net_dir            = os.path.join(dat_dir,'net')                        # SADM Network/Subnet Dir 
 rpt_dir            = os.path.join(dat_dir,'rpt')                        # SADM Sysmon Report Dir.
+www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
+db_dir             = os.path.join(www_dir,'db')                         # SADM SQLite3 Database Dir.
 
 # SADM Web Site Directories Structure
-www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
 www_dat_dir        = os.path.join(www_dir,'dat')                        # SADM Web Site Data Dir
 www_cfg_dir        = os.path.join(www_dir,'cfg')                        # SADM Web Site CFG Dir
 www_html_dir       = os.path.join(www_dir,'html')                       # SADM Web Site html Dir
@@ -78,6 +81,7 @@ www_log_dir        = www_dat_dir + '/' + hostname + '/log'              # SADM W
 log_file           = log_dir + '/' + hostname + '_' + inst + '.log'     # Log Filename
 rch_file           = rch_dir + '/' + hostname + '_' + inst + '.rch'     # RCH Filename
 cfg_file           = cfg_dir + '/sadmin.cfg'                            # Configuration Filename
+db_file            = db_dir + '/sadm.db'                                # SQLite3 Database File
 cfg_hidden         = cfg_dir + '/.sadmin.cfg'                           # Hidden Config Filename
 crontab_work       = www_cfg_dir + '/.crontab.txt'                      # Work crontab
 crontab_file       = '/etc/cron.d/sadmin'                               # Final crontab
