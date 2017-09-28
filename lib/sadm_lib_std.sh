@@ -23,6 +23,8 @@
 #   V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
 # 2017_09_23 JDuplessis
 #   V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
+# 2017_09_29 JDuplessis
+#   V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -41,7 +43,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.7"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.8"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1026,28 +1028,28 @@ sadm_start() {
     chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
 
     # If SADM Server Web Site Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
     fi
 
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
@@ -1055,7 +1057,7 @@ sadm_start() {
 
 
     # If SADM Server Web Site Images Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_IMG_DIR
              chmod 0775 $SADM_WWW_IMG_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
@@ -1074,7 +1076,7 @@ sadm_start() {
     # If Network/Subnet Information Directory doesn't exist, create it.
     [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
     chmod 0775 $SADM_NET_DIR
-    chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_NET_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_NET_DIR
 
     #If SADM Sysmon Report Directory doesn't exist, create it.
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
