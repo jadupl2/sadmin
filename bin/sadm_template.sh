@@ -24,6 +24,8 @@
 # 2017_07_07 JDuplessis - V1.7 Minor Code enhancement
 # 2017_07_31 JDuplessis - V1.8 Added Log Template to script
 # 2017_09_02 JDuplessis - V1.9 Change to command line switch
+# 2017_09_02 JDuplessis
+#   V2.0 Rewritten Part of script for performance and flexibility
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -39,7 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.9'                             ; export SADM_VER            # Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -67,6 +69,10 @@ SADM_MAIL_TYPE=1                             ; export SADM_MAIL_TYPE    # 0=No 1
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
+# Array of Directories to rsync to SADM client
+#rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_BASE_DIR}/jac/bin" 
+#                   ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
+
 
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
@@ -75,8 +81,7 @@ help()
 {
     echo " "
     echo "${SADM_PN} usage :"
-    echo "             -e   (Explain )"
-    echo "             -d   (Explain )"
+    echo "             -d   (Debug Level [0-9])"
     echo "             -h   (Display this help message)"
     echo " "
 }
@@ -90,15 +95,17 @@ process_servers()
     WOSTYPE=$1                                                          # Should be aix or linux
     sadm_writelog " "
     sadm_writelog "${SADM_FIFTY_DASH}"
-    sadm_writelog "Processing active $WOSTYPE server(s)"
+    sadm_writelog "Processing active server(s)"
     sadm_writelog " "
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
     SQL="${SQL} from sadm.server"
-    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True"
+    SQL="${SQL} where srv_active = True"
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    sadm_writelog "$SADM_PSQL -A -F , -t -h holmes.maison.ca $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL"
+    if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug is Activated
+       then sadm_writelog "$SADM_PSQL -A -F , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL"
+    fi
     $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
 
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
@@ -114,26 +121,92 @@ process_servers()
               server_fqdn=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
               sadm_writelog " " ; sadm_writelog " "                     # Two Blank Lines
               sadm_writelog "${SADM_TEN_DASH}"
-              info_line="Processing ($xcount) $server_fqdn"
-              sadm_writelog "$info_line"
-              if [ "$server_monitor" == "t" ]
-                    then sadm_writelog "Monitoring of SSH is ON for $server_fqdn"
-                    else sadm_writelog "Monitoring of SSH is OFF for $server_fqdn"
+              sadm_writelog "Processing ($xcount) $server_fqdn"
+
+              # In Debug Mode Display SSH Monitoring and Sporadic Setting
+              if [ $DEBUG_LEVEL -gt 3 ]                                 # If Debug is Activated
+                then if [ "$server_monitor" == "t" ]
+                            then sadm_writelog "Monitoring of SSH is ON for $server_fqdn"
+                            else sadm_writelog "Monitoring of SSH is OFF for $server_fqdn"
+                     fi
+                     if [ "$server_sporadic" == "t" ]
+                            then sadm_writelog "Server defined as sporadically available"
+                            else sadm_writelog "Server always available (Not Sporadic)"
+                     fi
               fi
-              if [ "$server_sporadic" == "t" ]
-                    then sadm_writelog "This server is sporadically available (${server_fqdn})"
-                    else sadm_writelog "Server always available (Not Sporadic - $server_fqdn)"
+
+              # If server name can't be resolved - Signal Error and Continue with next server.
+              if ! host $server_fqdn >/dev/null 2>&1
+                 then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved"
+                      sadm_writelog "$SMSG"                             # Advise user
+                      echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
+                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
+                      if [ $ERROR_COUNT -ne 0 ]
+                         then sadm_writelog "Total Error(s) now at $ERROR_COUNT"
+                      fi
+                      continue                                          # skip this server
               fi
+
+              # Test SSH to Server
+              $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1          # SSH to Server for date
+              RC=$?                                                     # Save Error Number
+
+              # If SSH to server failed & it's a sporadic server = warning & next server
+              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "t" ]        # SSH don't work & Sporadic
+                 then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $server_fqdn"
+                      continue                                          # Go process next server
+              fi
+
+              # If first SSH failed, try again 3 times to prevent false Error
+              if [ $RC -ne 0 ]   
+                then RETRY=0                                            # Set Retry counter to zero
+                     while [ $RETRY -lt 3 ]                             # Retry rsync 3 times
+                        do
+                        let RETRY=RETRY+1                               # Incr Retry counter
+                        $SADM_SSH_CMD $server_fqdn date >/dev/null 2>&1 # SSH to Server for date
+                        RC=$?                                           # Save Error Number
+                        if [ $RC -ne 0 ]                                # If Error doing ssh
+                            then if [ $RETRY -lt 3 ]                    # If less than 3 retry
+                                    then MSG="[ RETRY $RETRY ] $SADM_SSH_CMD $server_fqdn date"
+                                         sadm_writelog "$MSG"
+                                    else break
+                                 fi
+                            else sadm_writelog "[ OK ] $SADM_SSH_CMD $server_fqdn date"
+                                 break
+                        fi
+                        done
+              fi
+
+              # If All SSH test failed, Issue Error Message and continue with next server
+              if [ $RC -ne 0 ]   
+                 then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
+                      sadm_writelog "$SMSG"                             # Display Error Msg
+                      echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
+                      echo "COMMAND : $SADM_SSH_CMD $server_fqdn date" >> $SADM_ELOG
+                      echo "----------" >> $SADM_ELOG
+                      ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
+                      continue                                          # Continue with next server
+              fi
+              sadm_writelog "[ OK ] SSH to $server_fqdn"                # Good SSH Work
+
 
               # PROCESS GOES HERE
               # ........
               # ........
-              RC=$? ; RC=0
-              if [ $RC -ne 0 ]
-                 then sadm_writelog "ERROR #${RC} for $server_fqdn"
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
-                 else sadm_writelog "RETURN CODE IS 0 - OK"
-              fi
+              # Rsync local directory on client
+              #for WDIR in "${rem_dir_to_rsync[@]}"
+              #  do
+              #  if [ $DEBUG_LEVEL -gt 5 ]                               # If Debug is Activated
+              #      then sadm_writelog "rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/"
+              #  fi
+              #  rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/
+              #  RC=$? 
+              #  if [ $RC -ne 0 ]
+              #     then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${WDIR}"
+              #          ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increase Error Counter
+              #     else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${WDIR}" 
+              #  fi
+
               done < $SADM_TMP_FILE1
     fi
     return $ERROR_COUNT
@@ -195,18 +268,9 @@ main_process()
     #main_process                                                        # Main Process
     #SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
 
-    LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
-
-    process_servers "linux"                                             # Process Active Linux
-    LINUX_ERROR=$?                                                      # Save Nb. Errors in process
-    sadm_writelog "We had $LINUX_ERROR error(s) while processing Linux servers"
-
-    process_servers "aix"                                               # Process Active Aix
-    AIX_ERROR=$?                                                        # Save Nb. Errors in process
-    sadm_writelog "We had $AIX_ERROR error(s) while processing Aix servers"
-
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Total Errors = AIX+Linux
+    process_servers                                                     # Process Active Servers
+    SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)

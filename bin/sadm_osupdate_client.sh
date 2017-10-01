@@ -328,7 +328,8 @@ run_apt_get()
     if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
         then sadm_writelog "Automatic reboot cancelled for this server"
              sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
-             sadm_writelog "You need to reboot system at your choosen time."
+             sadm_writelog "You will need to reboot system at your choosen time."
+             sadm_writelog " "
              WREBOOT="N"
     fi
 

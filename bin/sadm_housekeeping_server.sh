@@ -71,10 +71,7 @@ ERROR_COUNT=0                               ; export ERROR_COUNT            # Er
 # --------------------------------------------------------------------------------------------------
 set_dir()
 {
-    VAL_DIR=$1
-    VAL_OCTAL=$2
-    VAL_OWNER=$3
-    VAL_GROUP=$4
+    VAL_DIR=$1 ; VAL_OCTAL=$2 ; VAL_OWNER=$3 ; VAL_GROUP=$4
     RETURN_CODE=0
 
     if [ -d "$VAL_DIR" ]

@@ -21,6 +21,10 @@
 #   V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
 # 2017_08_27 JDuplessis
 #   V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
+# 2017_09_23 JDuplessis
+#   V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
+# 2017_09_29 JDuplessis
+#   V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -39,7 +43,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.6"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.8"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -58,9 +62,10 @@ SADM_SAR_DIR="$SADM_DAT_DIR/sar"            ; export SADM_SAR_DIR       # System
 SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
+SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
+SADM_DB_DIR="$SADM_WWW_DIR/db"              ; export SADM_DB_DIR        # SQLite3 Database Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-SADM_WWW_DIR="$SADM_BASE_DIR/www"                           ; export SADM_WWW_DIR      # Web Dir
 SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                      ; export SADM_WWW_HTML_DIR # www html Dir
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
@@ -79,6 +84,7 @@ SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/log"   ; export SADM_WWW_LO
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
+SADM_DB_FILE="$SADM_DB_DIR/sadm.db"                         ; export SADM_CFG_FILE   # SQLite DB
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_CRON_FILE="$SADM_WWW_CFG_DIR/.crontab.txt"             ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadmin"                           ; export SADM_CRONTAB    # Final crontab
@@ -252,7 +258,7 @@ sadm_check_command_availibility() {
              return 0                                                   # Return 0 if cmd found
         else SADM_VAR1=""                                               # Clear Path of command
              sadm_writelog " "                                            # Inform User 
-             sadm_writelog "WARNING : The \"${SADM_CMD}\" command is not available on this system"
+             sadm_writelog "WARNING : The \"${SADM_CMD}\" command is not available on $HOSTNAME"
              sadm_writelog "To fully benefit the SADMIN Library & give you accurate information"
              sadm_writelog "We will install the package that include the command \"${SADM_CMD}\""
              sadm_writelog "SADMIN Will install it for you ... One moment"
@@ -336,7 +342,7 @@ sadm_check_requirements() {
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which 
         then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save the Path of Which
-        else sadm_writelog " ERROR : The command 'which' could not be found" 
+        else sadm_writelog " ERROR : The command 'which' couldn't be found" 
              sadm_writelog " This program is often used by the SADMIN tools"
              sadm_writelog " Please install it and re-run this script"
              sadm_writelog " To install it, use the following command depending on your distro"
@@ -1022,28 +1028,28 @@ sadm_start() {
     chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
 
     # If SADM Server Web Site Data Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
     fi
 
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
@@ -1051,7 +1057,7 @@ sadm_start() {
 
 
     # If SADM Server Web Site Images Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
+    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_IMG_DIR
              chmod 0775 $SADM_WWW_IMG_DIR  
              chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
@@ -1070,7 +1076,7 @@ sadm_start() {
     # If Network/Subnet Information Directory doesn't exist, create it.
     [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
     chmod 0775 $SADM_NET_DIR
-    chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_NET_DIR
+    chown ${SADM_USER}.${SADM_GROUP} $SADM_NET_DIR
 
     #If SADM Sysmon Report Directory doesn't exist, create it.
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
@@ -1189,7 +1195,7 @@ sadm_stop() {
           ;;
     esac
 
-    if [ "$SADM_LOG_APPEND" == "N" ]
+    if [ "$SADM_LOG_APPEND" = "N" ]
        then sadm_writelog "No log Trim, New log every time ($SADM_LOG)" # No Trim New Log every time
        else sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
     fi
@@ -1201,7 +1207,7 @@ sadm_stop() {
     sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
-    if [ "$SADM_LOG_APPEND" == "N" ]                                    # Log Not in Create Mode
+    if [ "$SADM_LOG_APPEND" = "N" ]                                    # Log Not in Create Mode
         then cat $SADM_LOG > /dev/null                                  # Force buffer to flush
              sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"              # Trim file to Desired Nb.
     fi
