@@ -22,6 +22,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 #   1.6 - Jan 2-17 - Exclude *.iso added to tar command
+#   2017_10_02  JDuplessis
+#       V2.1 Added /wsadmin in the backup
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -37,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.0'                             ; export SADM_VER            # Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -71,10 +73,10 @@ NFS_SERVER="batnas.maison.ca"           ; export NFS_SERVER             # Remote
 REM_BASE_DIR="/volume1/linux"           ; export REM_BASE_DIR           # Remote Base Dir.
 #
 # LIST OF DIRECTORIES THAT WILL BE BACKUP (IF THEY EXIST OF COURSE)
-# YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT
+# YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
 BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www "
+BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin "
 BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
 NB_VERSION_TO_KEEP=4                    ; export NB_VERSION_TO_KEEP     # Nb Version to keep
