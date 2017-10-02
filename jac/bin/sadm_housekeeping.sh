@@ -17,6 +17,10 @@
 #
 # --------------------------------------------------------------------------------------------------
 # 1.6 - 2017_01_27 - Cosmetic Changes to improve log Details
+
+# 2017_10_02 - JDuplessis
+#   V1.7 Added housekeeping for sadmin.ca web site under wsadmin directory
+
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -32,7 +36,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -65,8 +69,8 @@ ERROR_COUNT=0                               ; export ERROR_COUNT        # Error 
 # Number of days to keep unmodified *.rch and *.log file - After that time they are deleted
 LIMIT_DAYS=60                               ; export LIMIT_DAYS         # RCH+LOG Delete after
 
-
-
+# Development Local sadmin.ca Web Site Directory 
+WSADMIN = "/wsadmin" 
 
 
 
@@ -158,6 +162,19 @@ dir_housekeeping()
              sadm_writelog "SysAdmin Accessibility by Jacques"
              sadm_writelog "find /sysadmin -exec chown jacques.${jgroup} {} \;"
              find /sysadmin -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+             fi
+    fi
+
+    if [ -d "/wsadmin" ]
+        then sadm_writelog " "
+             sadm_writelog "/wsadmin - sadmin.ca development web site " "
+             sadm_writelog "find /wsadmin -exec chown apache.apache {} \;"
+             find /wsadmin -exec chown apache.apache {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
