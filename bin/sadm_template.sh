@@ -41,7 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.0'                             ; export SADM_VER            # Script Version
+SADM_VER='2.0a'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -238,7 +238,7 @@ main_process()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    if ! $(sadm_is_root)                                                # Is it root running script?
+    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
         then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
