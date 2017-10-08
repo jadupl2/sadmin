@@ -24,9 +24,15 @@
 #   1.0      Initial Version - May 2016 - Jacques Duplessis
 #   1.5      Adapted to work with XFS Filesystem
 #   2.0      Major rewrite
-# 2017_09_01 JDuplessis - V2.1 For Now Remove RPM Option from main Menu (May put it back later)
+#
+# 2017_09_01 JDuplessis 
+#   V2.1  - For Now Remove RPM Option from main Menu (May put it back later)
+#
 # 2017_09_27 JDuplessis 
-#   V2.1a Don't send email when script terminate with error
+#   V2.1a - Don't send email when script terminate with error
+#  
+# 2017_10_07 JDuplessis 
+#   V2.2  - Correct typo error and correct problem when creating filesystem (when changing type)
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -41,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.1a                             ; export SADM_VER            # Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -61,16 +67,6 @@ SADM_MAIL_TYPE=0                            ; export SADM_MAIL_TYPE      # 0=No 
 #SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
 #
-
-
-
-# --------------------------------------------------------------------------------------------------
-#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
-# --------------------------------------------------------------------------------------------------
-
-
-
-
 
 
 #===================================================================================================

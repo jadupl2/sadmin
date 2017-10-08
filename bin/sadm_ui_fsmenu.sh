@@ -19,6 +19,7 @@
 #   1.5      Revised for xfs -Jul 2016 - Jacques Duplessis
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #   2.1      Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
+#   2.2      Correct cannot change filesystem type (always goes back to xfs)
 #===================================================================================================
 
 # Load Filesystem Library Tools
@@ -96,7 +97,7 @@ create_filesystem()
                                     else  CR_LV=$WDATA
                                  fi
                         fi
-	                    ;;
+                        ;;
                 3 )     sadm_accept_data 08 50 07 A $CR_MB              # Accept Logical Volume Size
                         if [ "$WDATA" -lt 32 ]
                             then sadm_mess "Filesystem Size must be at least 32 MB" 
@@ -113,8 +114,9 @@ create_filesystem()
                         fi
 	                    ;;
                 5 )     sadm_accept_data 10 50 30 A $CR_FT              # Accept Filesystem Type
-                        if [ "$WDATA" != "ext3" ] && [ "$WDATA" != "ext4" ] [ "$WDATA" != "xfs" ]
+                        if [ "$WDATA" != "ext3" ] && [ "$WDATA" != "ext4" ] && [ "$WDATA" != "xfs" ]
                             then sadm_mess "Filesystem supported are ext3, ext4 and xfs." 
+                            else CR_FT=$WDATA
                         fi
 	                    ;;
               p|P )     sadm_messok 22 01 "Want to create $CR_MP filesystem" # Proceed with Creation ? 

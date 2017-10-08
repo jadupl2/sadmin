@@ -69,9 +69,8 @@ SADM_MAIL_TYPE=1                             ; export SADM_MAIL_TYPE    # 0=No 1
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
-# Array of Directories to rsync to SADM client
-#rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_BASE_DIR}/jac/bin" 
-#                   ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
+
+
 
 
 # --------------------------------------------------------------------------------------------------

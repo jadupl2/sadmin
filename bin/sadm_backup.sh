@@ -76,7 +76,7 @@ REM_BASE_DIR="/volume1/linux"           ; export REM_BASE_DIR           # Remote
 # YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
 BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin"
+BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin "
 BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
 NB_VERSION_TO_KEEP=4                    ; export NB_VERSION_TO_KEEP     # Nb Version to keep
