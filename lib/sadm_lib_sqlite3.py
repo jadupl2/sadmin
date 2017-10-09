@@ -34,14 +34,16 @@ import os, sys, sqlite3
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "0.0b"                                             # Default Program Version
+libver             = "0.0c"                                             # Default Program Version
 debug              = 4                                                  # Default Debug Level (0-9)
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 exit_code          = 0                                                  # Library Return Code
 #
+
 sadm_cat_nb_field  = 4                                                  # Nb of fields in Cat Table
 sadm_grp_nb_field  = 4                                                  # Nb of fields in Grp Table
-tablist = ["sadm_cat","sadm_grp"]                                       # SADM Table List
+sadm_srv_nb_field  = 9                                                  # Nb of fields in Srv Table
+tablist = ["sadm_cat","sadm_grp","sadm_srv"]                            # SADM Table List
 
 
 #===================================================================================================
@@ -86,19 +88,32 @@ class db_tool:
             if (tbname == "sadm_cat"):
                 self.cur.execute('''DROP TABLE sadm_cat''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_cat (
-                    cat_code    TEXT    PRIMARY KEY ,
-                    cat_desc    TEXT    NOT NULL CHECK( cat_desc != ''),
-                    cat_active  INTEGER DEFAULT 1,
-                    cat_default INTEGER DEFAULT 0 NOT NULL)
+                    cat_code        TEXT    PRIMARY KEY ,
+                    cat_desc        TEXT    NOT NULL CHECK( cat_desc != ''),
+                    cat_active      INTEGER DEFAULT 1,
+                    cat_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
             if (tbname == "sadm_grp"):
                 self.cur.execute('''DROP TABLE sadm_grp''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_grp (
-                    grp_code    TEXT    PRIMARY KEY ,
-                    grp_desc    TEXT    NOT NULL CHECK( grp_desc != ''),
-                    grp_active  INTEGER DEFAULT 1,
-                    grp_default INTEGER DEFAULT 0 NOT NULL)
+                    grp_code        TEXT    PRIMARY KEY ,
+                    grp_desc        TEXT    NOT NULL CHECK( grp_desc != ''),
+                    grp_active      INTEGER DEFAULT 1,
+                    grp_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
+            if (tbname == "sadm_srv"):
+                self.cur.execute('''DROP TABLE sadm_srv''')
+                self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_srv (
+                    srv_name                TEXT    PRIMARY KEY ,
+                    srv_domain              TEXT    NOT NULL CHECK( srv_domain != ''),
+                    srv_desc                TEXT    NOT NULL CHECK( srv_desc != ''),
+                    srv_notes               TEXT    ,
+                    srv_active              INTEGER DEFAULT 1 NOT NULL,
+                    srv_sporadic            INTEGER DEFAULT 0 NOT NULL,
+                    srv_cat                 TEXT    NOT NULL,
+                    srv_grp                 TEXT    NOT NULL,
+                    src_creation_date       TEXT )
+                    ''')                    
             self.conn.commit()   
         except Exception as e: 
             print("An error occurred:", e)
@@ -107,18 +122,20 @@ class db_tool:
 
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_insert(self,tbname,fields):
-        if debug > 3 : print ("Insert row in %s table with key '%s'" % (tbname,fields[0]))
+        if debug > 3 : 
+            print ("Insert row in %s table with key '%s'" % (tbname,fields[0]))
 
         # Is the table name part of the Database, if not Error
-        if tbname not in tablist:
-            print ("The table %s isn't part of the Database",(tbname))
+        if tbname not in tablist :
+            print ("The table %s is not part of the Database",(tbname))
             return 1
 
         # Validate the number of fields for the tablename 
         condition = ( (tbname == "sadm_cat" and len(fields) <> sadm_cat_nb_field)  or 
-                      (tbname == "sadm_grp" and len(fields) <> sadm_grp_nb_field) )
+                      (tbname == "sadm_grp" and len(fields) <> sadm_grp_nb_field)  or 
+                      (tbname == "sadm_srv" and len(fields) <> sadm_srv_nb_field)  )
         if condition:
-            print ("Number of field for %s table should be 4, received %d",(tbname,len(fields)))
+            print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
             return 1
 
         # In Debug mode print tableName and list of fields received
@@ -134,6 +151,9 @@ class db_tool:
             if (tbname == "sadm_grp"):
                 sql = ''' INSERT INTO sadm_grp VALUES(?,?,?,?)  '''
                 self.cur.execute(sql,(fields[0],fields[1],fields[2],fields[3]))
+            if (tbname == "sadm_srv"):
+                sql = ''' INSERT INTO sadm_srv VALUES(?,?,?,?,?,?,?,?,?)  '''
+                self.cur.execute(sql,(fields[0],fields[1],fields[2],fields[3],fields[4],fields[5],fields[6],fields[7],fields[8]))
             self.conn.commit()   
         except sqlite3.IntegrityError as e: 
             print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (fields[0],tbname,e))
@@ -146,7 +166,7 @@ class db_tool:
 
     # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_update(self,tbname,tbfields,tbkey):
-        if debug > 3: print ("Updating %s with key '%s" % (tbname,tbkey))
+        if debug > 3: print ("Updating %s with key '%s'" % (tbname,tbkey))
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:

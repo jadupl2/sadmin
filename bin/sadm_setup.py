@@ -32,18 +32,10 @@
 #
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, sqlite3
-# #pdb.set_trace()                                                       # Activate Python Debugging
+sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))
+import sadm_lib_sqlite3 as sadmdb
 
-
-
-#===================================================================================================
-# SADM Library Initialization (Needed to use the SADM Library)
-#===================================================================================================
-# If SADMIN environment variable is defined, use it as the SADM Base Directory else use /sadmin.
-sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
-sadm_lib_dir            = os.path.join(sadm_base_dir,'lib')             # Set SADM Library Directory
-sys.path.append(sadm_lib_dir)                                           # Add Library Dir to PyPath
-import sadmdb
+#pdb.set_trace()                                                       # Activate Python Debugging
 
 
 
@@ -51,15 +43,15 @@ import sadmdb
 #===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
+pgmver             = "0.1g"                                             # Program Version
+debug              = 0                                                  # Default Debug Level (0-9)
+exit_code          = 0                                                  # Script Exit Return Code
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
 #
 cnow               = datetime.datetime.now()                            # Get Current Time
 curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
 curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
-pgmver             = "0.1f"                                             # Default Program Version
-debug              = 0                                                  # Default Debug Level (0-9)
-exit_code          = 0                                                  # Script Error Return Code
 
 
 
@@ -68,27 +60,41 @@ exit_code          = 0                                                  # Script
 #                                   Script Main Process Function
 #===================================================================================================
 def main_process(conn,cur):
-    dbo = sadmdb.db_tool()
+    dbo = sadmdb.db_tool()                                              # Create Instance of DBTool
 
-    dbo.db_create_table('sadm_cat')
-    dbo.db_load_category()
-    cdata = ['Test','Test Server',1,0]
-    dbo.db_insert('sadm_cat',cdata)
-    cdata = ['Test','The BatCave Server',1,0]
-    dbo.db_update('sadm_cat',cdata,'Test')
+    # Create if needed the Category Table and load the Initial Data
+    print (" ")
+    dbo.db_create_table('sadm_cat')                                     # Create Cat.Table if needed
+    dbo.db_load_category()                                              # Load Cat.Table Default Col
+    cdata = ['Test','Test Server',1,0]                                  # Test Key Data to Add
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ['Test','The BatCave Server',1,0]                           # Data to Update in Cat. Tab
+    dbo.db_update('sadm_cat',cdata,'Test')                              # Update Test Key in Cat.Tab
+    dbo.db_delete('sadm_cat','Test')                                    # Delete Test Key in Cat.Tab
 
-    dbo.db_create_table('sadm_grp')
-    dbo.db_load_group()
-    cdata = ['Test','Test Group',1,0]
-    dbo.db_insert('sadm_grp',cdata)
-    cdata = ['Test','The Bat Group',1,0]
-    dbo.db_update('sadm_grp',cdata,'Test')
-    dbo.db_delete('sadm_grp','Test')
 
-    row=dbo.db_readkey('sadm_grp','Laptop')
+    # Create if needed the Group Table and load the Initial Data
+    print (" ")
+    dbo.db_create_table('sadm_grp')                                     # Create Grp.Table if needed
+    dbo.db_load_group()                                                 # Load Grp.Table Default Col
+    cdata = ['Test','Test Group',1,0]                                   # Test Key Data to Add
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    row=dbo.db_readkey('sadm_grp','Test')                               # Read Test Group Collumn
     print type(row)
     print(row)
+    cdata = ['Test','The Bat Group',1,0]                                # Data to Update in Grp. Tab
+    dbo.db_update('sadm_grp',cdata,'Test')                              # Update Test Key in Grp.Tab
+    dbo.db_delete('sadm_grp','Test')                                    # Delete Test Key in Grp.Tab
 
+
+    # Create if needed the Server Table and load the Initial Test Server Data
+    print (" ")
+    dbo.db_create_table('sadm_srv')                                     # Create Srv.Table if needed
+    cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
+    dbo.db_insert('sadm_srv',cdata)                                     # Insert Data in Srv. Table
+
+
+ 
     dbo.db_close_db()
     return
 
@@ -98,10 +104,10 @@ def main_process(conn,cur):
 #
 def main():
     
-    # Check if SADMIN Environmebnt variable is defined (MUST be defined so that everything work)
-    try:  
-        os.environ["SADMIN"]                                            # Is Env. SADMIN Defined
-    except KeyError: 
+    # Check if SADMIN Environment variable is defined (MUST be defined so that everything work)
+    if "SADMIN" in os.environ:   
+        sadm_base_dir = os.environ.get('SADMIN')                        # Set SADMIN Base Directory
+    else:
         print "Please set environment variable SADMIN to where you install it"
         sys.exit(1)                                                     # Exit if not defined 
 
