@@ -162,14 +162,13 @@ sadm_display_heading()
     sadm_writexy 02 01 "$eighty_spaces"                                 # Line 2 in Reverse Video
     sadm_writexy 21 01 "$eighty_spaces"                                 # Line 21 in Reverse Video
 
-    # Display Line 1 (Date + Cie Name + Script Version
-    sadm_writexy 01 01 "`date +%d/%m/%Y`"                               # Display Date Line 1 Pos.1 
+    # Display Line 1 (Hostname + Cie Name + Date
+    sadm_writexy 01 01 "$(sadm_get_fqdn)"                               # Display HostName 
     let wpos="((80 - ${#SADM_CIE_NAME}) / 2)"                           # Calc. Center Pos for Name
     sadm_writexy 01 $wpos "$SADM_CIE_NAME"                              # Display Cie Name Centered 
-    let wpos="81 - ${#HOSTNAME}"                                        # Calc. Pos. Line 2 on Right
-    sadm_writexy 01 "$wpos" "$(sadm_get_hostname)"                      # Display HostName 
+    sadm_writexy 01 71 "`date +%Y/%m/%d`"                               # Display Date Line 1 Pos.1 
 
-    # Display Line 2 - (Host Name + OS Name and OS Version)
+    # Display Line 2 - (OS Name and version + Menu Name and SADM Release No.
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$titre"                                      # Display Title Centered
@@ -240,7 +239,7 @@ sadm_display_menu()
 
 
     # Validate number of item in array - Can be from 1 to 30 Maximum
-    if [ "$s_count" -gt 30 ] && [ "$s_count" -lt 1 ]          # Validate NB items in array
+    if [ "$s_count" -gt 30 ] && [ "$s_count" -lt 1 ]                    # Validate NB items in array
         then sadm_mess "Number of items in array ("$s_count") is invalid"
              return 98                                                  # Set Error return code
     fi
@@ -263,7 +262,7 @@ sadm_display_menu()
                 done                                                    # End of loop
             let adm_choice="$adm_choice + 1"                            # Increment menu option no. 
             let wline="2 + ($adm_choice * 2)"                           # Cacl. display Line Number
-            sadm_writexy $wline 22 "[${bold}Q${reset}]  Quit"           # Last Item always Quit item
+            sadm_writexy $wline 22 "[${bold}Q${reset}]  Quit............................"
     fi
     
     # If from 8 to 15 items to display in the menu
@@ -280,7 +279,7 @@ sadm_display_menu()
                 let wline="3 + $adm_choice"                             # Cacl. display Line Number
                 sadm_writexy $wline 22 "$witem"                         # Display Item on screen
                 done                                                    # End of loop
-            sadm_writexy 19 22 "[${bold}Q${reset}]  Quit"               # Last Item always Quit item
+            sadm_writexy 19 22 "[${bold}Q${reset}]  Quit............................"
     fi
 
     # If from 16 to 30 items to display in the menu
@@ -301,7 +300,7 @@ sadm_display_menu()
                          sadm_writexy $wline 43 "$witem"                # Display item on screen
                 fi                          
                 done                                                    # End of loop
-            sadm_writexy 19 43 "[${bold}Q${reset}]  Quit"               # Last Item always Quit item
+            sadm_writexy 19 43 "[${bold}Q${reset}]  Quit............................"
     fi
     
     
