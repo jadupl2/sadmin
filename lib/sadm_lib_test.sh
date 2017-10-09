@@ -10,7 +10,7 @@
 # --------------------------------------------------------------------------------------------------
 # 2.2 Correction in end_process function (April 2014)
 # 2.3 Cosmetic changes - Jan 2017
-#
+# 2.4 Allow to run multiple instance of the script - SADM_MULTIPLE_EXEC="Y"
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -26,16 +26,17 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.3'                             ; export SADM_VER            # Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     
 [ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  
+[ -f ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_screen.sh  
 
 # These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
 SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
@@ -276,42 +277,43 @@ sadm_display_variables()
 
 
     
-#    sadm_display_heading "Small Menu (7 Items or less)"
-#    menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
-#                "Menu Item 6" "Menu Item 7" )
-#    sadm_display_menu "${menu_array[@]}"
-#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
-#
-#
-#    sadm_display_heading "Medium Menu (Up to 15 Items)"
-#    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-#                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-#                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
-#    sadm_display_menu "${menu_array[@]}"
-#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+    sadm_display_heading "Small Menu (7 Items or less)"
+    menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
+                "Menu Item 6" "Menu Item 7" )
+    sadm_display_menu "${menu_array[@]}"
+    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
 
-#    sadm_display_heading "Large Menu (Up to 30 Items)"
-#    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-#                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-#                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
-#                "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
-#                "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
-#                "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
-#    sadm_display_menu "${menu_array[@]}"
-#    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+    sadm_display_heading "Medium Menu (Up to 15 Items)"
+    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
+    sadm_display_menu "${menu_array[@]}"
+    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
+
+
+    sadm_display_heading "Large Menu (Up to 30 Items)"
+    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
+                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
+                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
+                "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
+                "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
+                "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
+    sadm_display_menu "${menu_array[@]}"
+    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
     #tput clear
-    #e_header    "e_eheader"
-    #e_arrow     "e_arrow"
-    #e_success   "e_success"
-    #e_error     "e_error"
-    #e_warning   "e_warning"
-    #e_underline "e_underline"
-    #e_bold      "e_bold"
-    #e_note      "e_note"
+    e_header    "e_eheader"
+    e_arrow     "e_arrow"
+    e_success   "e_success"
+    e_error     "e_error"
+    e_warning   "e_warning"
+    e_underline "e_underline"
+    e_bold      "e_bold"
+    e_note      "e_note"
 
 
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+]
