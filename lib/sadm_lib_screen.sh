@@ -8,6 +8,7 @@
 # CHANGE LOG
 # 2016_07_07 JDuplessis - V1.0 Initial Version
 # 2017_09_01 JDuplessis - V1.1 Added Display of SADM Release Number on second line of menu
+# 2017_10_09 JDuplessis - V1.2 Change Menu Heading & Menu item display
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -17,7 +18,7 @@
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-
+lib_screen_ver=1.2                              ; export lib_screen_ver
 # Screen related variables
 clreol=`tput el`                                ; export clreol         # Clr to end of lne
 clreos=`tput ed`                                ; export clreos         # Clr to end of scr
