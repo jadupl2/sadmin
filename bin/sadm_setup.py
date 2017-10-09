@@ -97,6 +97,15 @@ def main_process(conn,cur):
 #===================================================================================================
 #
 def main():
+    
+    # Check if SADMIN Environmebnt variable is defined (MUST be defined so that everything work)
+    try:  
+        os.environ["SADMIN"]                                            # Is Env. SADMIN Defined
+    except KeyError: 
+        print "Please set environment variable SADMIN to where you install it"
+        sys.exit(1)                                                     # Exit if not defined 
+
+
     sadm_exit_code=main_process(conn,cur)                               # Main Script Processing
     sys.exit(exit_code)                                                 # Exit with Error Code
 
