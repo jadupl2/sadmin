@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_setup.py
@@ -48,6 +48,7 @@ debug              = 0                                                  # Defaul
 exit_code          = 0                                                  # Script Exit Return Code
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
+iostatus           = 0                                                  # Status Return code by dbio
 #
 cnow               = datetime.datetime.now()                            # Get Current Time
 curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
@@ -61,6 +62,26 @@ curtime            = cnow.strftime("%H:%M:%S")                          # Format
 #===================================================================================================
 def main_process(conn,cur):
     dbo = sadmdb.db_tool()                                              # Create Instance of DBTool
+
+    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
+    #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
+
+    record = {}
+    record['srv_name']              = 'holmes'
+    record['srv_domain']            = 'maison.ca'
+    record['srv_desc']              = 'Batcave Server'
+    record['srv_notes']             = 'DNS,Web,GoGit,Nagios,Wiki'
+    record['srv_active']            = True 
+    record['srv_sporadic']          = False
+    record['srv_cat']               = 'Service'
+    record['srv_grp']               = 'Regular'
+    record['srv_creation_date']     = '2017/10/09'
+    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
+    print ("iostatus = %s" % (iostatus))
+    dbo.db_close_db()
+    return
+
+
 
     # Create if needed the Category Table and load the Initial Data
     print (" ")
@@ -80,8 +101,8 @@ def main_process(conn,cur):
     cdata = ['Test','Test Group',1,0]                                   # Test Key Data to Add
     dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
     row=dbo.db_readkey('sadm_grp','Test')                               # Read Test Group Collumn
-    print type(row)
-    print(row)
+    #print type(row)
+    #print(row)
     cdata = ['Test','The Bat Group',1,0]                                # Data to Update in Grp. Tab
     dbo.db_update('sadm_grp',cdata,'Test')                              # Update Test Key in Grp.Tab
     dbo.db_delete('sadm_grp','Test')                                    # Delete Test Key in Grp.Tab
@@ -108,7 +129,7 @@ def main():
     if "SADMIN" in os.environ:   
         sadm_base_dir = os.environ.get('SADMIN')                        # Set SADMIN Base Directory
     else:
-        print "Please set environment variable SADMIN to where you install it"
+        print ("Please set environment variable SADMIN to where you install it")
         sys.exit(1)                                                     # Exit if not defined 
 
 

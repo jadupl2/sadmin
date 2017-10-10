@@ -37,7 +37,6 @@ cur                = ""                                                 # Databa
 libver             = "0.0c"                                             # Default Program Version
 debug              = 4                                                  # Default Debug Level (0-9)
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
-exit_code          = 0                                                  # Library Return Code
 #
 
 sadm_cat_nb_field  = 4                                                  # Nb of fields in Cat Table
@@ -59,11 +58,11 @@ class db_tool:
                 Database Name can by passed to sadm_dbtool or $SADMIN/www/db/sadm.db is used.
         """
         self.dbname = dbname
-        print "Connecting to Database %s" % (self.dbname)
+        print ("Connecting to Database %s" % (self.dbname))
         try : 
-            self.conn = sqlite3.connect(self.dbname)
+            self.conn = sqlite3.connect(self.dbname, timeout=10)
             self.cur = self.conn.cursor()
-            print "Connected to Database %s" % (self.dbname)
+            print ("Connected to Database %s" % (self.dbname))
         except Exception as e: 
             print("An error occurred:", e,  '-',  e.args[0])
             sys.exit(exit_code)                                    # Exit with Error Code
@@ -120,6 +119,93 @@ class db_tool:
             return 1  
 
 
+
+
+
+
+    # TEST    
+    def dbio(self,tbname,tbkey,tbrecord,tbaction='r',tbmode='m'):
+        """ dbio : Tools to read & write to tables in database
+                    tbname      Is the name of table in the Database
+                    tbkey       Is the value of the primary key to read/write
+                    tbrecord    Is a dictionnary that data to write or have been read
+                    tbaction    Tell dbio what to do 
+                                    'r' for read, 
+                                    'i' for insert, 
+                                    'u' for update,
+                                    'd' for delete,
+                    tbmode      If an error occured, what dbio should do ?
+                                'm' Display an error message and continue
+                                'a' Display an error message and abort
+                                'w' Display an error message and for user answer (abort, retry)
+                    tbstatus    0 = success
+                                1 = error
+                                2 = database locked
+                                3 = duplicate key error on insert
+        """        
+        tbstatus = 0                                                    # Set Default of return Val.
+
+         # Is the table name part of the Database, if not Error
+        if tbname not in tablist :
+            print ("Table %s isn't part of the Database",(tbname))
+            return 1
+        
+        if debug > 3 :                                                  # While in debug mode
+            if (tbaction.upper == "R") : print ("Table %s, read key %s" % (tbname,tbkey))
+            if (tbaction.upper == "U") : print ("Table %s, update key %s" % (tbname,tbkey))
+            if (tbaction.upper == "D") : print ("Table %s, delete key %s" % (tbname,tbkey))
+            if (tbaction.upper == "I") : print ("Table %s, insert key %s" % (tbname,tbkey))
+            
+
+
+
+        #print ("Receive fields = \n%s" % (tbrecord))
+        #print ("Receive tbrecord Type is = \n%s" % (type(tbrecord)))
+        #for w in tbrecord:
+        #    print ("Field : %s" % (w))
+        #for num,field in enumerate(tbrecord, start=1):
+        #    print ("Field : {}: {}".format(num,field))
+
+        #for k,v in tbrecord.items():
+        #    print (k,v)
+
+        collist = []
+        collist.append(tbrecord['srv_name'])
+        collist.append(tbrecord['srv_domain'])
+        collist.append(tbrecord['srv_desc'])
+        collist.append(tbrecord['srv_notes'])
+        collist.append(tbrecord['srv_active'])
+        collist.append(tbrecord['srv_sporadic'])
+        collist.append(tbrecord['srv_cat'])
+        collist.append(tbrecord['srv_grp'])
+        collist.append(tbrecord['srv_creation_date'])
+        #print ("collist : %s" % (collist))
+        try: 
+            sql = ''' INSERT INTO sadm_srv VALUES(?,?,?,?,?,?,?,?,?)  '''
+            if debug > 3 :                                                  # While in debug mode
+                print ("Insert statement is :\n%s,%s" % (sql,collist))        
+            self.cur.execute(sql,(collist))
+            self.conn.commit()   
+        except sqlite3.IntegrityError as e: 
+            print("Duplicate Key Error ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()            
+            return 3
+        except sqlite3.OperationalError as e: 
+            print("Database Locked - Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()            
+            return 2
+        except Exception as e: 
+            print("sError Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()
+            return 1
+        return
+
+
+
+
+
+
+
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_insert(self,tbname,fields):
         if debug > 3 : 
@@ -131,10 +217,10 @@ class db_tool:
             return 1
 
         # Validate the number of fields for the tablename 
-        condition = ( (tbname == "sadm_cat" and len(fields) <> sadm_cat_nb_field)  or 
-                      (tbname == "sadm_grp" and len(fields) <> sadm_grp_nb_field)  or 
-                      (tbname == "sadm_srv" and len(fields) <> sadm_srv_nb_field)  )
-        if condition:
+        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
+        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
+        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
+        if (nbField != len(fields)):
             print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
             return 1
 
@@ -174,11 +260,13 @@ class db_tool:
             return 1
 
         # Validate the number of fields for the tablename 
-        condition = ( (tbname == "sadm_cat" and len(tbfields) <> sadm_cat_nb_field)  or 
-                      (tbname == "sadm_grp" and len(tbfields) <> sadm_grp_nb_field) )
-        if condition:
-            print ("Number of field for %s table should be 4, received %d",(tbname,len(tbfields)))
+        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
+        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
+        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
+        if (nbField != len(fields)):
+            print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
             return 1
+
 
         # In Debug mode print tableName and list of fields received
         if debug > 4:
