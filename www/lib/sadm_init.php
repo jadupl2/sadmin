@@ -1,4 +1,5 @@
 <?php
+# V2.0 Now Switching from PostGres to SQLite3 (To Simplify installation and ease of use)
 
 
 
@@ -27,11 +28,11 @@ define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disast
 define("SADM_SAR_DIR"      , SADM_DAT_DIR  . "/sar");                   # System Activty Report Dir
 define("SADM_RCH_DIR"      , SADM_DAT_DIR  . "/rch");                   # Result Code History Dir
 define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Network SubNet Info Dir
-define("SADM_SQL_DIR"      , SADM_DAT_DIR  . "/sql");                   # SQLite3 Database Directory
+define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Site Dir.
+define("SADM_DB_DIR"       , SADM_WWW_DIR  . "/db");                    # SQLite3 Database Directory
 
 
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Site Dir.
 define("SADM_WWW_HTML_DIR" , SADM_WWW_DIR  . "/html");                  # Web server html Dir
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
@@ -48,6 +49,7 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 
 # SADMIN FILE DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
+define("SADM_DB_FILE"      , SADM_DB_DIR  . "/sadm.db");                # SADM SQLite3 Database
 define("SADM_CRON_FILE"    , SADM_WWW_CFG_DIR . "/.crontab.txt");       # SADM Crontab File
 define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
 define("SADM_UPDATE_SCRIPT",SADM_BIN_DIR."/sadm_osupdate_server.sh -s");# O/S Update Script Name
@@ -117,10 +119,13 @@ set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
 # CREATE DATABASE CONNECTION STRING
-$connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
+#$connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
 
 # CONNECT TO POSTGRESQL DATABASE
 $connection = pg_connect($connString);
 if (!$connection) { die("Database connection failed: " . mysql_error()); }
 
+# Connect to SQLite3 Database
+#$sadmPDO = new PDO('sqlite:'. SADM_DB_FILE);
+?>
 ?>
