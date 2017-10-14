@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      sadm_lib_sqlite.py
+#   Title:      sadmlib_db.py
 #   Synopsis:   SADM Module that deal with SADM Database
 # ==================================================================================================
 # Description
@@ -34,10 +34,8 @@ import os, sys, sqlite3
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "0.0c"                                             # Default Program Version
-debug              = 4                                                  # Default Debug Level (0-9)
+libver             = "0.0d"                                             # Default Program Version
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
-exit_code          = 0                                                  # Library Return Code
 #
 
 sadm_cat_nb_field  = 4                                                  # Nb of fields in Cat Table
@@ -49,51 +47,64 @@ tablist = ["sadm_cat","sadm_grp","sadm_srv"]                            # SADM T
 #===================================================================================================
 #                                   SADM Database Access Class 
 #===================================================================================================
-class db_tool:
+class dbtool:
 
-    # DATABASE CONNECTION & INITIALISATION ---------------------------------------------------------
-    def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/db/sadm.db"):
-        """ Class db_tool: Series of function to Insert,Read,Update and delete row(s) in
+    #  INITIALISATION & DATABASE CONNECTION --------------------------------------------------------
+    def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/db/sadm.db", dbdebug=0):
+        """ Class dbtool: Series of function to Insert,Read,Update and delete row(s) in
             the selected Sqlite3 Database.
-            def __init__(self, dbname) 
+            def __init__(self, dbname, dbdebug) 
                 Database Name can by passed to sadm_dbtool or $SADMIN/www/db/sadm.db is used.
         """
         self.dbname = dbname
-        print "Connecting to Database %s" % (self.dbname)
+        self.dbdebug = dbdebug
+        if (self.dbdebug > 1) : print ("Connecting to Database %s" % (self.dbname))
         try : 
-            self.conn = sqlite3.connect(self.dbname)
+            self.conn = sqlite3.connect(self.dbname, timeout=10)
             self.cur = self.conn.cursor()
-            print "Connected to Database %s" % (self.dbname)
+            if (self.dbdebug > 1) : print ("Connected to Database %s" % (self.dbname))
         except Exception as e: 
-            print("An error occurred:", e,  '-',  e.args[0])
-            sys.exit(exit_code)                                    # Exit with Error Code
+            print ("Cannot Open Database %s - Error %s" % (self.dbname,e))
+            sys.exit(1)                                                 # Exit with Error Code
         #return (self.conn,self.cur)
-        return
+        return 
 
 
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
-    def db_close_db(self):
+    def dbclose(self):
         try:
-            if debug > 3 : print("Closing Database %s" % (self.dbname)) 
+            if self.dbdebug > 3 : print ("Closing Database %s" % (self.dbname)) 
             self.conn.close()
         except Exception as e: 
-            print("An error occurred:", e,  '-',  e.args[0])
+            print ("Problem Closing Database %s - Error : %s" % (self.dbname,e))
             return 1       
 
 
-    # CREATE SADM TABLE FUNCTION -------------------------------------------------------------------
-    def db_create_table(self,tbname):
-        if debug > 3 : print("Creating %s table." % (tbname)) 
+
+    # CREATE THE RECEIVED SADM TABLE NAME ----------------------------------------------------------
+    def dbcreate_table(self,tbname):
+        if (self.dbdebug > 3) : print("Creating %s table." % (tbname))  # Show Table Name in Debug
+        if tbname not in tablist :                                      # Is Table Name Valid 
+            print ("Table %s isn't part of the Database",(tbname))      # If Not Advise User
+            dbclose()                                                   # Close DB Before Exiting
+            sys.exit(1)                                                 # Exit with Error Code
         try:
-            if (tbname == "sadm_cat"):
-                self.cur.execute('''DROP TABLE sadm_cat''')
+            if (tbname == "sadm_cat"):                                  # For Category Table
+                try : 
+                    self.cur.execute('''DROP TABLE sadm_cat''')         # Try Drop Category Table
+                except Exception as e:                                  # Trap if Drop Failed
+                    pass                                                # Continue even if failed
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_cat (
                     cat_code        TEXT    PRIMARY KEY ,
                     cat_desc        TEXT    NOT NULL CHECK( cat_desc != ''),
                     cat_active      INTEGER DEFAULT 1,
                     cat_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
-            if (tbname == "sadm_grp"):
+            if (tbname == "sadm_grp"):                                  # For Group Table
+                try : 
+                    self.cur.execute('''DROP TABLE sadm_grp''')         # Try Drop Group Table
+                except Exception as e:                                  # Trap if Drop Failed
+                    pass                                                # Continue even if failed
                 self.cur.execute('''DROP TABLE sadm_grp''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_grp (
                     grp_code        TEXT    PRIMARY KEY ,
@@ -101,7 +112,11 @@ class db_tool:
                     grp_active      INTEGER DEFAULT 1,
                     grp_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
-            if (tbname == "sadm_srv"):
+            if (tbname == "sadm_srv"):                                  # For Server Table
+                try : 
+                    self.cur.execute('''DROP TABLE sadm_srv''')         # Try Drop Server Table
+                except Exception as e:                                  # Trap if Drop Failed
+                    pass                                                # Continue even if failed
                 self.cur.execute('''DROP TABLE sadm_srv''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_srv (
                     srv_name                TEXT    PRIMARY KEY ,
@@ -116,13 +131,100 @@ class db_tool:
                     ''')                    
             self.conn.commit()   
         except Exception as e: 
-            print("An error occurred:", e)
+            print("An error occurred trying to create table %s\nError %s",(tbname,e))
             return 1  
+
+
+
+
+
+
+    # TEST    
+    def dbio(self,tbname,tbkey,tbrecord,tbaction='r',tbmode='m'):
+        """ dbio : Tools to read & write to tables in database
+                    tbname      Is the name of table in the Database
+                    tbkey       Is the value of the primary key to read/write
+                    tbrecord    Is a dictionnary that data to write or have been read
+                    tbaction    Tell dbio what to do 
+                                    'r' for read, 
+                                    'i' for insert, 
+                                    'u' for update,
+                                    'd' for delete,
+                    tbmode      If an error occured, what dbio should do ?
+                                'm' Display an error message and continue
+                                'a' Display an error message and abort
+                                'w' Display an error message and for user answer (abort, retry)
+                    tbstatus    0 = success
+                                1 = error
+                                2 = database locked
+                                3 = duplicate key error on insert
+        """        
+        tbstatus = 0                                                    # Set Default of return Val.
+
+         # Is the table name part of the Database, if not Error
+        if tbname not in tablist :
+            print ("Table %s isn't part of the Database",(tbname))
+            return 1
+        
+        if (self.dbdebug > 3) :                                                  # While in debug mode
+            if (tbaction.upper == "R") : print ("Table %s, read key %s" % (tbname,tbkey))
+            if (tbaction.upper == "U") : print ("Table %s, update key %s" % (tbname,tbkey))
+            if (tbaction.upper == "D") : print ("Table %s, delete key %s" % (tbname,tbkey))
+            if (tbaction.upper == "I") : print ("Table %s, insert key %s" % (tbname,tbkey))
+            
+
+
+
+        #print ("Receive fields = \n%s" % (tbrecord))
+        #print ("Receive tbrecord Type is = \n%s" % (type(tbrecord)))
+        #for w in tbrecord:
+        #    print ("Field : %s" % (w))
+        #for num,field in enumerate(tbrecord, start=1):
+        #    print ("Field : {}: {}".format(num,field))
+
+        #for k,v in tbrecord.items():
+        #    print (k,v)
+
+        collist = []
+        collist.append(tbrecord['srv_name'])
+        collist.append(tbrecord['srv_domain'])
+        collist.append(tbrecord['srv_desc'])
+        collist.append(tbrecord['srv_notes'])
+        collist.append(tbrecord['srv_active'])
+        collist.append(tbrecord['srv_sporadic'])
+        collist.append(tbrecord['srv_cat'])
+        collist.append(tbrecord['srv_grp'])
+        collist.append(tbrecord['srv_creation_date'])
+        #print ("collist : %s" % (collist))
+        try: 
+            sql = ''' INSERT INTO sadm_srv VALUES(?,?,?,?,?,?,?,?,?)  '''
+            if (self.dbdebug) > 3 :                                                  # While in debug mode
+                print ("Insert statement is :\n%s,%s" % (sql,collist))        
+            self.cur.execute(sql,(collist))
+            self.conn.commit()   
+        except sqlite3.IntegrityError as e: 
+            print("Duplicate Key Error ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()            
+            return 3
+        except sqlite3.OperationalError as e: 
+            print("Database Locked - Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()            
+            return 2
+        except Exception as e: 
+            print("sError Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
+            self.conn.rollback()
+            return 1
+        return
+
+
+
+
+
 
 
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_insert(self,tbname,fields):
-        if debug > 3 : 
+        if self.dbdebug > 3 : 
             print ("Insert row in %s table with key '%s'" % (tbname,fields[0]))
 
         # Is the table name part of the Database, if not Error
@@ -131,15 +233,15 @@ class db_tool:
             return 1
 
         # Validate the number of fields for the tablename 
-        condition = ( (tbname == "sadm_cat" and len(fields) <> sadm_cat_nb_field)  or 
-                      (tbname == "sadm_grp" and len(fields) <> sadm_grp_nb_field)  or 
-                      (tbname == "sadm_srv" and len(fields) <> sadm_srv_nb_field)  )
-        if condition:
+        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
+        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
+        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
+        if (nbField != len(fields)):
             print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
             return 1
 
         # In Debug mode print tableName and list of fields received
-        if debug > 4:
+        if self.dbdebug > 4:
             print("Inserting Data in %s table." % (tbname)) 
             print("Fields to insert are %s" % (fields)) 
             for x in range(len(fields)):
@@ -166,7 +268,7 @@ class db_tool:
 
     # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
     def db_update(self,tbname,tbfields,tbkey):
-        if debug > 3: print ("Updating %s with key '%s'" % (tbname,tbkey))
+        if self.dbdebug > 3: print ("Updating %s with key '%s'" % (tbname,tbkey))
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:
@@ -174,14 +276,16 @@ class db_tool:
             return 1
 
         # Validate the number of fields for the tablename 
-        condition = ( (tbname == "sadm_cat" and len(tbfields) <> sadm_cat_nb_field)  or 
-                      (tbname == "sadm_grp" and len(tbfields) <> sadm_grp_nb_field) )
-        if condition:
-            print ("Number of field for %s table should be 4, received %d",(tbname,len(tbfields)))
+        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
+        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
+        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
+        if (nbField != len(fields)):
+            print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
             return 1
 
+
         # In Debug mode print tableName and list of fields received
-        if debug > 4:
+        if self.dbdebug > 4:
             print("Updating Data in %s table." % (tbname)) 
             print("Fields to update are %s" % (tbfields)) 
             for x in range(len(tbfields)):
@@ -214,7 +318,7 @@ class db_tool:
             :tbkey  is the primary key value to delete
             :return:
         """
-        if debug > 3: print ("Deleting in table %s row with key '%s'" % (tbname,tbkey))
+        if self.dbdebug > 3: print ("Deleting in table %s row with key '%s'" % (tbname,tbkey))
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:
@@ -242,7 +346,7 @@ class db_tool:
             :tbkey  is the primary key value to delete
             :return:
         """
-        if debug > 3: print ("Reading in table %s row with key '%s'" % (tbname,tbkey))
+        if self.dbdebug > 3: print ("Reading in table %s row with key '%s'" % (tbname,tbkey))
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:
@@ -268,7 +372,7 @@ class db_tool:
 
     # INITIAL LOAD OF THE CATEGORY TABLE -----------------------------------------------------------
     def db_load_category(self):
-        if debug > 3 : print ("Loading category table")
+        if self.dbdebug > 3 : print ("Loading category table")
         categories = [
             ('Legacy','Legacy Unsupported Server',1,0),
             ("Dev","Development Environment",1,1),
@@ -291,7 +395,7 @@ class db_tool:
 
     # INITIAL LOAD OF THE GROUP TABLE --------------------------------------------------------------
     def db_load_group(self):
-        if debug > 3 : print ("Loading group table")
+        if self.dbdebug > 3 : print ("Loading group table")
         groups = [
             ("Group2","Group No.2",1,0),
             ("Group3","Group No.3",1,0),
