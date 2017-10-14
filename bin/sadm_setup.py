@@ -33,7 +33,7 @@
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, sqlite3
 sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))
-import sadm_lib_sqlite3 as sadmdb
+import sadmlib_db as sadmdb
 
 #pdb.set_trace()                                                       # Activate Python Debugging
 
@@ -61,7 +61,27 @@ curtime            = cnow.strftime("%H:%M:%S")                          # Format
 #                                   Script Main Process Function
 #===================================================================================================
 def main_process(conn,cur):
-    dbo = sadmdb.db_tool()                                              # Create Instance of DBTool
+    dbo = sadmdb.dbtool(dbdebug=3)                                     # Create Instance of DBTool
+
+    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
+    #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
+
+    record = {}
+    record['srv_name']              = 'holmes'
+    record['srv_domain']            = 'maison.ca'
+    record['srv_desc']              = 'Batcave Server'
+    record['srv_notes']             = 'DNS,Web,GoGit,Nagios,Wiki'
+    record['srv_active']            = True 
+    record['srv_sporadic']          = False
+    record['srv_cat']               = 'Service'
+    record['srv_grp']               = 'Regular'
+    record['srv_creation_date']     = '2017/10/09'
+    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
+    print ("iostatus = %s" % (iostatus))
+    dbo.dbclose()
+    return
+
+
 
     #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
     #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
@@ -85,7 +105,7 @@ def main_process(conn,cur):
 
     # Create if needed the Category Table and load the Initial Data
     print (" ")
-    dbo.db_create_table('sadm_cat')                                     # Create Cat.Table if needed
+    dbo.dbcreate_table('sadm_cat')                                      # Create Cat.Table if needed
     dbo.db_load_category()                                              # Load Cat.Table Default Col
     cdata = ['Test','Test Server',1,0]                                  # Test Key Data to Add
     dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
@@ -96,7 +116,7 @@ def main_process(conn,cur):
 
     # Create if needed the Group Table and load the Initial Data
     print (" ")
-    dbo.db_create_table('sadm_grp')                                     # Create Grp.Table if needed
+    dbo.dbcreate_table('sadm_grp')                                      # Create Grp.Table if needed
     dbo.db_load_group()                                                 # Load Grp.Table Default Col
     cdata = ['Test','Test Group',1,0]                                   # Test Key Data to Add
     dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
@@ -110,7 +130,7 @@ def main_process(conn,cur):
 
     # Create if needed the Server Table and load the Initial Test Server Data
     print (" ")
-    dbo.db_create_table('sadm_srv')                                     # Create Srv.Table if needed
+    dbo.dbcreate_table('sadm_srv')                                     # Create Srv.Table if needed
     cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
     dbo.db_insert('sadm_srv',cdata)                                     # Insert Data in Srv. Table
 
