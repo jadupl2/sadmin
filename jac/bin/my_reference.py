@@ -12,69 +12,88 @@ s = "Jacques"
 print ('print "Length of s is " + str(len(s))')	# Get len of string and convert it to string
 print ("Length of s is " + str(len(s)))	# Get len of string and convert it to string
 
-print '-'*80 ; print "raw string suppress" ; print '-'*80
+# ---
+print ('-'*80) ; print ("Raw String Suppress") ; print ('-'*80) 
+print ("path = 'c:\new\text.dat'") 	#without raw string suppress
 path = 'c:\new\text.dat' 	#without raw string suppress
-print path
+print ("print path")
+print (path)
+print ("path = r'c:\new\text.dat'") 	#with raw string suppress \n not equal newline & \t not equal tab
 path = r'c:\new\text.dat' 	#with raw string suppress \n not equal newline & \t not equal tab
-print path
+print ("print path")
+print (path)
 
-print '-'*80 ; print "in string test" ; print '-'*80
-print 'k' in "Jacques" 
-print 'a' in "Jacques" 
+# ---
+print ('-'*80) ; print ("In string Test") ; print ('-'*80) 
+print ("'k' in 'Jacques'") 
+print ('k' in 'Jacques') 
+print ("'a' in 'Jacques'")
+print ('a' in 'Jacques') 
 
-print '-'*80 ; print "string indexing and slicing" ; print '-'*80
+# ---
+print ('-'*80) ; print ("String Indexing and Slicing") ; print ('-'*80) 
 s = "Jacques" 
-print "s = " + s
-print "print s[0] , s[-2]" 
-print s[0] , s[-2] 
-print "print s[1:3], s[1:], s[:-1]"
-print s[1:3], s[1:], s[:-1]
+print ("s = " + s)
+print ("print s[0] , s[-2]") 
+print (s[0] , s[-2]) 
+print ("print s[1:3], s[1:], s[:-1]")
+print (s[1:3], s[1:], s[:-1])
 
-print '-'*80 ; print "convert string to integer & integer to string" ; print '-'*80
-print int("42"), str(42)	# COnvert string to iny and integer to strint
-print int("42") + 1 
+# ---
+print ('-'*80) ; print ("Convert String to Integer and Integer to String") ; print ('-'*80) 
+print ('int("42"), str(42)')	# COnvert string to iny and integer to strint
+print (int("42"), str(42))	# COnvert string to iny and integer to strint
+print ('int("42") + 1')
+print (int("42") + 1)
+ 
 
-print '-'*80 ; print "string fomatting" ; print '-'*80
-print 'That is test number %d by %s' % (5, 'Jacques')
+# ---
+print ('-'*80) ; print ("String Formatting") ; print ('-'*80) 
+print ('That is test number %d by %s' % (5, 'Jacques'))
 x = 1234
 res = "integers: ...%d...%-6d...%06d" % (x,x,x)
-print res
+print (res)
 
 
-print '-'*80 ; print "String Methods" ; print '-'*80
-s = 'Jacques'  ; print 's = Jacques'
-print "s = s[:3] + 'xx' + s[5:]" 
+
+# ---
+print ('-'*80) ; print ("String Method") ; print ('-'*80) 
+s = 'Jacques'  ; print ('s = Jacques')
+print ("s = s[:3] + 'xx' + s[5:]") 
 s = s[:3] + 'xx' + s[5:]
-print s
-s = 'Jacques Duplessis'  ; print 's = ', s
-print "s = s.replace('ques','k')" 
+print (s)
+s = 'Jacques Duplessis'  ; print ('s = ', s)
+print ("s = s.replace('ques','k')") 
 s = s.replace('ques','k')
-print s
-print "wpos = s.find('a')"
+print (s)
+print ("wpos = s.find('a')")
 wpos = s.find('a')
-print wpos
-print "s = s{;wpos] + 'coco' + s[(wpos+3):]"
+print (wpos)
+print ("s = s{;wpos] + 'coco' + s[(wpos+3):]")
 s = s[:wpos] + 'coco' + s[(wpos+3):]
-print s
-s = 'Jacques Joseph Duplessis'  ; print 's = ', s 
+print (s)
+s = 'Jacques Joseph Duplessis'  ; print ('s = ', s) 
 col1 = s[0:3]
-print "col1 = s[0:3] " 
-print col1
-print "col3 = s[8:]" 
+print ("col1 = s[0:3] ") 
+print (col1)
+print ("col3 = s[8:]") 
 col3 = s[8:]
-print col3 
+print (col3) 
 
-s = 'Jacques'  ; print 's = ', s 
-print 'l = list(s)'
+s = 'Jacques'  ; print ('s = ', s) 
+print ('l = list(s)')
 l = list(s)
-print 'l = ', l 
+print ('l = ', l )
 
-print "..\n..",'-'*80, "Line Split" 
+# ---
+print ('-'*80) ; print ("Line Split") ; print ('-'*80) 
 line = 'Bob,Jack,Gille'
-print "line =",line
-print "split_line = line.split(',')"
+print ("line =",line)
+print ("split_line = line.split(',')")
 split_line = line.split(',')
-print "split_line =", split_line
+print ("split_line =", split_line)
+
+
 
 print "..\n..",'-'*80, "USING ARRAY" 
 array = ['Bob','Jack','Gille']

@@ -1,28 +1,32 @@
-#!/usr/bin/env python
-#===================================================================================================
-#   Author:     Jacques Duplessis
-#   Title:      sadm_template_servers.py
-#   Synopsis:
-#===================================================================================================
-# Description
-#
-#
+#!/usr/bin/env python3
+# ==================================================================================================
+#   Author      :   Jacques Duplessis
+#   Date        :   2017-09-09
+#   Name        :   sadm_template_servers.py
+#   Synopsis    :
+#   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
+#                   License, v.2 or above.
+# ==================================================================================================
 #   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
-#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
 #
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
-#
+
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# V1.1 July 2017 - Adjust Verification of root user and allow to only run on sadmin server
-# 2017_09_03 JDuplessis - V1.2 Minors changes
+# 2016_03_01 JDuplessis 
+#   V1.0 Initial Version
+# 2016_10_03 JDuplessis
+#   V1.1 Adjust Verification of root user and allow to only run on sadmin server
+# 2017_09_03 JDuplessis 
+#   V1.2 Minors changes
 #
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch, psycopg2
@@ -175,8 +179,9 @@ def main():
        sys.exit(1)                                                      # Exit To O/S
 
     # Insure that this script can only be run by the user root (Optional Code)
-    if os.geteuid() != 0:                                               # UID of user is not zero
+    if not os.getuid() == 0:                                            # UID of user is not zero
        sadm.writelog ("This script must be run by the 'root' user")     # Advise User Message / Log
+       sadm.writelog ("Try sudo ./%s" % (sadm.pn))                      # Suggest to use 'sudo'
        sadm.writelog ("Process aborted")                                # Process Aborted Msg
        sadm.stop (1)                                                    # Close and Trim Log/Email
        sys.exit(1)                                                      # Exit with Error Code

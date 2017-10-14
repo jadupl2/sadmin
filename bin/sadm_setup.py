@@ -83,6 +83,26 @@ def main_process(conn,cur):
 
 
 
+    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
+    #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
+
+    record = {}
+    record['srv_name']              = 'holmes'
+    record['srv_domain']            = 'maison.ca'
+    record['srv_desc']              = 'Batcave Server'
+    record['srv_notes']             = 'DNS,Web,GoGit,Nagios,Wiki'
+    record['srv_active']            = True 
+    record['srv_sporadic']          = False
+    record['srv_cat']               = 'Service'
+    record['srv_grp']               = 'Regular'
+    record['srv_creation_date']     = '2017/10/09'
+    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
+    print ("iostatus = %s" % (iostatus))
+    dbo.db_close_db()
+    return
+
+
+
     # Create if needed the Category Table and load the Initial Data
     print (" ")
     dbo.dbcreate_table('sadm_cat')                                      # Create Cat.Table if needed
