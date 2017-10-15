@@ -119,7 +119,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
 # CREATE DATABASE CONNECTION STRING
-#$connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
+$connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
 
 # CONNECT TO POSTGRESQL DATABASE
 $connection = pg_connect($connString);
