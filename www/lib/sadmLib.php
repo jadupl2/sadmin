@@ -236,7 +236,7 @@ function sadm_clean_data($wdata) {
 // ================================================================================================
 //                   All SADM Web Page Heading (Page Title Receive as Parameter)
 // ================================================================================================
-function sadm_page_heading($msg) {
+function sadm_page_heading2($msg) {
     $message = $msg;
     echo "\n\n\n<!-- ========================================================================= -->";
     echo "\n<div id='sadmMainBodyHeading'>";
@@ -332,7 +332,7 @@ function build_sidebar_scripts_info() {
     krsort($script_array);                                              # Reverse Sort Array on Keys
     unlink($tmprch);                                                    # Delete Temp File
     # Under Debug - Display The Array Used to build the SideBar
-    if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
+    #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
     return $script_array;
 }
 
@@ -343,102 +343,7 @@ function build_sidebar_scripts_info() {
 // ================================================================================================
 function build_sidebar_servers_info() {
 
-    $query = "SELECT * FROM sadm.server ;";
-    $result = pg_query($query) or die('Query failed: ' . pg_last_error());
-
-    # Reset All Counters
-    $count=0;
-    $sadm_array = array() ;
-
-    # Read All Server Table
-    while ($row = pg_fetch_array($result, null, PGSQL_ASSOC)) {
-        $count+=1;
-
-        # Process Server Type
-        $akey = "srv_type," . $row['srv_type'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
-
-        # Process OS Type
-        $akey = "srv_ostype," . $row['srv_ostype'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
-
-        # Process OS Name
-        $akey = "srv_osname," . $row['srv_osname'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
-
-        # Process OS Version
-        $akey = "srv_osversion," . $row['srv_osversion'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
-
-        # Count Number of Active Servers
-        if ($row['srv_active']  == "t") {
-            $akey = "srv_active," ;
-            if (array_key_exists($akey,$sadm_array)) {
-                $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-            }else{
-                $sadm_array[$akey] = 1 ;
-            }
-        }
-
-        # Count Number of Inactive Servers
-        if ($row['srv_active']  == "f") {
-            $akey = "srv_inactive," ;
-            if (array_key_exists($akey,$sadm_array)) {
-                $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-            }else{
-                $sadm_array[$akey] = 1 ;
-            }
-        }
-
-        # Count Number of Physical and Virtual Servers
-        if ($row['srv_vm']  == "t") {
-            $akey = "srv_vm," ;
-            if (array_key_exists($akey,$sadm_array)) {
-                $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-            }else{
-                $sadm_array[$akey] = 1 ;
-            }
-        }else{
-            $akey = "srv_physical," ;
-            if (array_key_exists($akey,$sadm_array)) {
-                $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-            }else{
-                $sadm_array[$akey] = 1 ;
-            }
-        }
-
-        # Count Number of Physical and Virtual Servers
-        if ($row['srv_sporadic']  == "t") {
-            $akey = "srv_sporadic," ;
-            if (array_key_exists($akey,$sadm_array)) {
-                $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-            }else{
-                $sadm_array[$akey] = 1 ;
-            }
-        }
-
-    }
-    ksort($sadm_array);                                                 # Sort Array Based on Keys
-    #$DEBUG=True;
-    # Under Debug - Display The Array Used to build the SideBar
-    if ($DEBUG) {foreach($sadm_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
-    return $sadm_array;
+    echo "p";
 }
  
 

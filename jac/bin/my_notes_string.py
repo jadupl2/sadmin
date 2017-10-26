@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Python String Related Examples - Oct 2017 - J.D.
+#---------------------------------------------------------------------------------------------------
 
 # ---
 print ("my_notes_string.py")

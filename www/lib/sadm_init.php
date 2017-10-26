@@ -128,4 +128,3 @@ if (!$connection) { die("Database connection failed: " . mysql_error()); }
 # Connect to SQLite3 Database
 #$sadmPDO = new PDO('sqlite:'. SADM_DB_FILE);
 ?>
-?>

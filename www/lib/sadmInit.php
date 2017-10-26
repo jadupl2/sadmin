@@ -126,6 +126,10 @@ set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 #if (!$connection) { die("Database connection failed: " . mysql_error()); }
 
 # Connect to SQLite3 Database
-$sadmPDO = new PDO('sqlite:'. SADM_DB_FILE);
-?>
+#    $sadmdb = new SQLite3(SADM_DB_FILE);
+#    if(!$sadmdb) {
+#        echo $sadmdb->lastErrorMsg();
+#        exit("Unable to open Database (SADM_DB_FILE)");
+#    }
+
 ?>
