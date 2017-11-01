@@ -43,7 +43,7 @@ import sadmlib_db as sadmdb
 #===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
-pgmver             = "0.1g"                                             # Program Version
+pgmver             = "0.1h"                                             # Program Version
 debug              = 0                                                  # Default Debug Level (0-9)
 exit_code          = 0                                                  # Script Exit Return Code
 conn                = ""                                                # Database Connector
@@ -51,7 +51,7 @@ cur                 = ""                                                # Databa
 iostatus           = 0                                                  # Status Return code by dbio
 #
 cnow               = datetime.datetime.now()                            # Get Current Time
-curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
+curdate            = cnow.strftime("%Y-%m-%d")                          # Format Current date
 curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
 
 
@@ -63,53 +63,29 @@ curtime            = cnow.strftime("%H:%M:%S")                          # Format
 def main_process(conn,cur):
     dbo = sadmdb.dbtool(dbdebug=3)                                     # Create Instance of DBTool
 
-    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
-    #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
-
-    record = {}
-    record['srv_name']              = 'holmes'
-    record['srv_domain']            = 'maison.ca'
-    record['srv_desc']              = 'Batcave Server'
-    record['srv_notes']             = 'DNS,Web,GoGit,Nagios,Wiki'
-    record['srv_active']            = True 
-    record['srv_sporadic']          = False
-    record['srv_cat']               = 'Service'
-    record['srv_grp']               = 'Regular'
-    record['srv_creation_date']     = '2017/10/09'
-    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
-    print ("iostatus = %s" % (iostatus))
-    dbo.dbclose()
-    return
-
-
-
-    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
-    #dbo.db_test('sadm_srv',cdata)                                     # Insert Data in Srv. Table
-
-    record = {}
-    record['srv_name']              = 'holmes'
-    record['srv_domain']            = 'maison.ca'
-    record['srv_desc']              = 'Batcave Server'
-    record['srv_notes']             = 'DNS,Web,GoGit,Nagios,Wiki'
-    record['srv_active']            = True 
-    record['srv_sporadic']          = False
-    record['srv_cat']               = 'Service'
-    record['srv_grp']               = 'Regular'
-    record['srv_creation_date']     = '2017/10/09'
-    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
-    print ("iostatus = %s" % (iostatus))
-    dbo.db_close_db()
-    return
-
-
-
     # Create if needed the Category Table and load the Initial Data
     print (" ")
     dbo.dbcreate_table('sadm_cat')                                      # Create Cat.Table if needed
-    dbo.db_load_category()                                              # Load Cat.Table Default Col
-    cdata = ['Test','Test Server',1,0]                                  # Test Key Data to Add
+    #dbo.db_load_category()                                              # Load Cat.Table Default Col
+    cdata = ["Legacy","Legacy Unsupported Server",1,curdate,0]
     dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
-    cdata = ['Test','The BatCave Server',1,0]                           # Data to Update in Cat. Tab
+    cdata = ["Dev","Development Environment",1,curdate,1]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ["Temp","Temporary Environment",1,curdate,0]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ["Service","Infrastructure Services",1,curdate,0]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ["Poc","Proof Of Concept env.",1,curdate,0]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ["Prod","Production Environment",1,curdate,0]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ["Cluster","Clustered Server",1,curdate,0]
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+
+    # Test Insert/Update/Delete
+    cdata = ['Test','Test Server',1,curdate,0]                          # Test Key Data to Add
+    dbo.db_insert('sadm_cat',cdata)                                     # Insert Data in Cat. Table
+    cdata = ['Test','The BatCave Server',1,curdate,0]                   # Data to Update in Cat. Tab
     dbo.db_update('sadm_cat',cdata,'Test')                              # Update Test Key in Cat.Tab
     dbo.db_delete('sadm_cat','Test')                                    # Delete Test Key in Cat.Tab
 
@@ -117,13 +93,28 @@ def main_process(conn,cur):
     # Create if needed the Group Table and load the Initial Data
     print (" ")
     dbo.dbcreate_table('sadm_grp')                                      # Create Grp.Table if needed
-    dbo.db_load_group()                                                 # Load Grp.Table Default Col
-    cdata = ['Test','Test Group',1,0]                                   # Test Key Data to Add
+    cdata = ["Cluster","Clustered Server",1,curdate,0]                  # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Service","Infrastructure Service",1,curdate,0]            # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Retired","Server not in use",1,curdate,0]                 # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Raspberry","Raspberry Pi",1,curdate,0]                    # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Regular","Normal App. Server",1,curdate,0]                # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Temporary","Temporaly in service",1,curdate,0]            # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+    cdata = ["Laptop","Linux Laptop",1,curdate,0]                       # Server Group to create
+    dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
+
+    # Test Insert/Update/Delete
+    cdata = ['Test','Test Group',1,curdate,0]                           # Test Key Data to Add
     dbo.db_insert('sadm_grp',cdata)                                     # Insert Data in Grp. Table
     row=dbo.db_readkey('sadm_grp','Test')                               # Read Test Group Collumn
     #print type(row)
     #print(row)
-    cdata = ['Test','The Bat Group',1,0]                                # Data to Update in Grp. Tab
+    cdata = ['Test','The Bat Group',1,curdate,0]                        # Data to Update in Grp. Tab
     dbo.db_update('sadm_grp',cdata,'Test')                              # Update Test Key in Grp.Tab
     dbo.db_delete('sadm_grp','Test')                                    # Delete Test Key in Grp.Tab
 
@@ -131,8 +122,40 @@ def main_process(conn,cur):
     # Create if needed the Server Table and load the Initial Test Server Data
     print (" ")
     dbo.dbcreate_table('sadm_srv')                                     # Create Srv.Table if needed
-    cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
-    dbo.db_insert('sadm_srv',cdata)                                     # Insert Data in Srv. Table
+
+    cdata1 = ['nomad','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki','linux','CENTOS']
+    cdata2 = ['Core','7.4.1708',0,1,0,'Service','Regular','MyTag','2017/10/09']
+    cdata  = cdata1 + cdata2
+    dbo.db_insert('sadm_srv',cdata)                                     # Insert Data in Server Tab
+
+    # Test Insert/Update/Delete
+
+    # Close Database
+    dbo.dbclose()
+    return
+
+
+    record = {}
+    record['srv_name']              = 'borg'
+    record['srv_domain']            = 'maison.ca'
+    record['srv_desc']              = 'Borg Server'
+    record['srv_notes']             = 'Test Server '
+    record['srv_ostype']            = 'linux'
+    record['srv_osname']            = 'CENTOS' 
+    record['srv_oscodename']        = 'Core'
+    record['srv_osversion']         = '5.1'
+    record['srv_vm']                = True
+    record['srv_active']            = False 
+    record['srv_sporadic']          = True
+    record['srv_cat']               = 'Dev'
+    record['srv_grp']               = 'Retired'
+    record['srv_tag']               = 'MyTag2' 
+    record['srv_creation_date']     = '2017/11/10'
+    iostatus = dbo.dbio('sadm_srv',record['srv_name'],record,'i','m')   # Insert Data in Srv. Table
+    print ("iostatus = %s" % (iostatus))
+
+    #cdata = ['holmes','maison.ca','Batcave Server','DNS,Web,GoGit,Nagios,Wiki',1,0,'Service','Regular','2017/10/09']                                   # Test Key Data to Add
+    #dbo.db_insert('sadm_srv',cdata)                                     # Insert Data in Srv. Table
 
 
  
