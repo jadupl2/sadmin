@@ -25,8 +25,8 @@
 #
 #
 #===================================================================================================
-#import os, time, sys, pdb, socket, datetime, glob, fnmatch, sqlite3, sadmdb
-import os, sys, sqlite3
+import os, sys, sqlite3, datetime
+import pdb
 #pdb.set_trace()                                                       # Activate Python Debugging
 
 #===================================================================================================
@@ -38,9 +38,9 @@ libver             = "0.0d"                                             # Defaul
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 #
 
-sadm_cat_nb_field  = 4                                                  # Nb of fields in Cat Table
-sadm_grp_nb_field  = 4                                                  # Nb of fields in Grp Table
-sadm_srv_nb_field  = 9                                                  # Nb of fields in Srv Table
+sadm_cat_nb_field  = 5                                                  # Nb of fields in Cat Table
+sadm_grp_nb_field  = 5                                                  # Nb of fields in Grp Table
+sadm_srv_nb_field  = 15                                                 # Nb of fields in Srv Table
 tablist = ["sadm_cat","sadm_grp","sadm_srv"]                            # SADM Table List
 
 
@@ -48,6 +48,7 @@ tablist = ["sadm_cat","sadm_grp","sadm_srv"]                            # SADM T
 #                                   SADM Database Access Class 
 #===================================================================================================
 class dbtool:
+
 
     #  INITIALISATION & DATABASE CONNECTION --------------------------------------------------------
     def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/db/sadm.db", dbdebug=0):
@@ -73,7 +74,7 @@ class dbtool:
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
     def dbclose(self):
         try:
-            if self.dbdebug > 3 : print ("Closing Database %s" % (self.dbname)) 
+            if self.dbdebug > 2 : print ("Closing Database %s" % (self.dbname)) 
             self.conn.close()
         except Exception as e: 
             print ("Problem Closing Database %s - Error : %s" % (self.dbname,e))
@@ -89,47 +90,69 @@ class dbtool:
             dbclose()                                                   # Close DB Before Exiting
             sys.exit(1)                                                 # Exit with Error Code
         try:
+
             if (tbname == "sadm_cat"):                                  # For Category Table
                 try : 
                     self.cur.execute('''DROP TABLE sadm_cat''')         # Try Drop Category Table
+                    if (self.dbdebug > 2) :                             # If Lower Debug
+                        print("Drop %s table" % (tbname))               # Show Drop Table Name 
                 except Exception as e:                                  # Trap if Drop Failed
                     pass                                                # Continue even if failed
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_cat (
-                    cat_code        TEXT    PRIMARY KEY ,
+                    cat_id          INTEGER PRIMARY KEY ,
+                    cat_code        TEXT    NOT NULL CHECK( cat_code != ''),
                     cat_desc        TEXT    NOT NULL CHECK( cat_desc != ''),
                     cat_active      INTEGER DEFAULT 1,
+                    cat_date        TEXT,
                     cat_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
+                self.cur.execute('''CREATE UNIQUE INDEX idx_cat_code on sadm_cat (cat_code)''');
+
             if (tbname == "sadm_grp"):                                  # For Group Table
                 try : 
                     self.cur.execute('''DROP TABLE sadm_grp''')         # Try Drop Group Table
+                    if (self.dbdebug > 2) :                             # If Lower Debug
+                        print("Drop %s table" % (tbname))               # Show Drop Table Name 
                 except Exception as e:                                  # Trap if Drop Failed
                     pass                                                # Continue even if failed
-                self.cur.execute('''DROP TABLE sadm_grp''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_grp (
-                    grp_code        TEXT    PRIMARY KEY ,
+                    grp_id          INTEGER PRIMARY KEY ,
+                    grp_code        TEXT    NOT NULL CHECK( grp_code != ''),
                     grp_desc        TEXT    NOT NULL CHECK( grp_desc != ''),
                     grp_active      INTEGER DEFAULT 1,
+                    grp_date        TEXT,
                     grp_default     INTEGER DEFAULT 0 NOT NULL)
                     ''')
+                self.cur.execute('''CREATE UNIQUE INDEX idx_grp_code on sadm_grp (grp_code)''');
+
             if (tbname == "sadm_srv"):                                  # For Server Table
                 try : 
-                    self.cur.execute('''DROP TABLE sadm_srv''')         # Try Drop Server Table
+                    self.cur.execute('''DROP TABLE sadm_srv''')         # Try Drop Group Table
+                    if (self.dbdebug > 2) :                             # If Lower Debug
+                        print("Drop %s table" % (tbname))               # Show Drop Table Name 
                 except Exception as e:                                  # Trap if Drop Failed
                     pass                                                # Continue even if failed
-                self.cur.execute('''DROP TABLE sadm_srv''')
+                #self.cur.execute('''DROP TABLE sadm_srv''')
                 self.cur.execute('''CREATE TABLE IF NOT EXISTS sadm_srv (
-                    srv_name                TEXT    PRIMARY KEY ,
+                    srv_id                  INTEGER PRIMARY KEY ,
+                    srv_name                TEXT    ,
                     srv_domain              TEXT    NOT NULL CHECK( srv_domain != ''),
                     srv_desc                TEXT    NOT NULL CHECK( srv_desc != ''),
                     srv_notes               TEXT    ,
+                    srv_ostype              TEXT    ,
+                    srv_osname              TEXT    ,
+                    srv_oscodename          TEXT    ,
+                    srv_osversion           TEXT    ,
+                    srv_vm                  INTEGER DEFAULT 0 NOT NULL,
                     srv_active              INTEGER DEFAULT 1 NOT NULL,
                     srv_sporadic            INTEGER DEFAULT 0 NOT NULL,
                     srv_cat                 TEXT    NOT NULL,
                     srv_grp                 TEXT    NOT NULL,
-                    src_creation_date       TEXT )
+                    srv_tag                 TEXT    NOT NULL,
+                    srv_creation_date       TEXT )
                     ''')                    
-            self.conn.commit()   
+                self.cur.execute('''CREATE UNIQUE INDEX idx_srv_name on sadm_srv (srv_name)''');
+                self.conn.commit()   
         except Exception as e: 
             print("An error occurred trying to create table %s\nError %s",(tbname,e))
             return 1  
@@ -139,93 +162,16 @@ class dbtool:
 
 
 
-    # TEST    
-    def dbio(self,tbname,tbkey,tbrecord,tbaction='r',tbmode='m'):
-        """ dbio : Tools to read & write to tables in database
-                    tbname      Is the name of table in the Database
-                    tbkey       Is the value of the primary key to read/write
-                    tbrecord    Is a dictionnary that data to write or have been read
-                    tbaction    Tell dbio what to do 
-                                    'r' for read, 
-                                    'i' for insert, 
-                                    'u' for update,
-                                    'd' for delete,
-                    tbmode      If an error occured, what dbio should do ?
-                                'm' Display an error message and continue
-                                'a' Display an error message and abort
-                                'w' Display an error message and for user answer (abort, retry)
-                    tbstatus    0 = success
-                                1 = error
-                                2 = database locked
-                                3 = duplicate key error on insert
-        """        
-        tbstatus = 0                                                    # Set Default of return Val.
-
-         # Is the table name part of the Database, if not Error
-        if tbname not in tablist :
-            print ("Table %s isn't part of the Database",(tbname))
-            return 1
-        
-        if (self.dbdebug > 3) :                                                  # While in debug mode
-            if (tbaction.upper == "R") : print ("Table %s, read key %s" % (tbname,tbkey))
-            if (tbaction.upper == "U") : print ("Table %s, update key %s" % (tbname,tbkey))
-            if (tbaction.upper == "D") : print ("Table %s, delete key %s" % (tbname,tbkey))
-            if (tbaction.upper == "I") : print ("Table %s, insert key %s" % (tbname,tbkey))
-            
-
-
-
-        #print ("Receive fields = \n%s" % (tbrecord))
-        #print ("Receive tbrecord Type is = \n%s" % (type(tbrecord)))
-        #for w in tbrecord:
-        #    print ("Field : %s" % (w))
-        #for num,field in enumerate(tbrecord, start=1):
-        #    print ("Field : {}: {}".format(num,field))
-
-        #for k,v in tbrecord.items():
-        #    print (k,v)
-
-        collist = []
-        collist.append(tbrecord['srv_name'])
-        collist.append(tbrecord['srv_domain'])
-        collist.append(tbrecord['srv_desc'])
-        collist.append(tbrecord['srv_notes'])
-        collist.append(tbrecord['srv_active'])
-        collist.append(tbrecord['srv_sporadic'])
-        collist.append(tbrecord['srv_cat'])
-        collist.append(tbrecord['srv_grp'])
-        collist.append(tbrecord['srv_creation_date'])
-        #print ("collist : %s" % (collist))
-        try: 
-            sql = ''' INSERT INTO sadm_srv VALUES(?,?,?,?,?,?,?,?,?)  '''
-            if (self.dbdebug) > 3 :                                                  # While in debug mode
-                print ("Insert statement is :\n%s,%s" % (sql,collist))        
-            self.cur.execute(sql,(collist))
-            self.conn.commit()   
-        except sqlite3.IntegrityError as e: 
-            print("Duplicate Key Error ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
-            self.conn.rollback()            
-            return 3
-        except sqlite3.OperationalError as e: 
-            print("Database Locked - Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
-            self.conn.rollback()            
-            return 2
-        except Exception as e: 
-            print("sError Trying to insert ('%s') in %s table\nError : %s" % (tbkey,tbname,e))
-            self.conn.rollback()
-            return 1
-        return
-
-
-
-
-
-
-
+    #-----------------------------------------------------------------------------------------------
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
-    def db_insert(self,tbname,fields):
-        if self.dbdebug > 3 : 
-            print ("Insert row in %s table with key '%s'" % (tbname,fields[0]))
+    # Example : cdata = ['Legacy','Legacy Unsupported Server',1,curdate,0],
+    #           dbo.db_insert('sadm_cat',cdata)                     
+    #-----------------------------------------------------------------------------------------------
+    def db_insert(self,tbname,tbdata):
+
+        # In Debug mode print row we are inserting
+        if self.dbdebug > 2: 
+            print("Insert (Table=%s,Col=%d,Key=%s): %s" % (tbname,len(tbdata),tbdata[0],tbdata)) 
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist :
@@ -236,39 +182,59 @@ class dbtool:
         if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
         if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
         if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
-        if (nbField != len(fields)):
-            print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
+        if (nbField != len(tbdata)):
+            print ("ERROR: Wrong nb. of field received (%d) for %s table" % (len(tbdata),tbname))
+            print ("       The parameter(s) received are : %s\n" % (tbdata))
             return 1
 
-        # In Debug mode print tableName and list of fields received
-        if self.dbdebug > 4:
-            print("Inserting Data in %s table." % (tbname)) 
-            print("Fields to insert are %s" % (fields)) 
-            for x in range(len(fields)):
-                print ("[%s] %s" % (x,fields[x]))
+
+        # In Debug Level 7-9 Print Each column we are inserting
+        if self.dbdebug > 6: 
+            for x in range(len(tbdata)): print ("[%s] %s" % (x,tbdata[x]))
+        
+        # Insert the row received as parameter
         try: 
             if (tbname == "sadm_cat"):
-                sql = ''' INSERT INTO sadm_cat VALUES(?,?,?,?)  '''
-                self.cur.execute(sql,(fields[0],fields[1],fields[2],fields[3]))
+               self.cur.execute('''
+                INSERT INTO sadm_cat(cat_code, cat_desc, cat_active, cat_date, cat_default) 
+                VALUES(?,?,?,?,?)
+                ''',
+                (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]))
             if (tbname == "sadm_grp"):
-                sql = ''' INSERT INTO sadm_grp VALUES(?,?,?,?)  '''
-                self.cur.execute(sql,(fields[0],fields[1],fields[2],fields[3]))
+               self.cur.execute('''
+                INSERT INTO sadm_grp(grp_code, grp_desc, grp_active, grp_date, grp_default) 
+                VALUES(?,?,?,?,?)
+                ''',
+                (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]))
             if (tbname == "sadm_srv"):
-                sql = ''' INSERT INTO sadm_srv VALUES(?,?,?,?,?,?,?,?,?)  '''
-                self.cur.execute(sql,(fields[0],fields[1],fields[2],fields[3],fields[4],fields[5],fields[6],fields[7],fields[8]))
+                self.cur.execute('''
+                    INSERT INTO sadm_srv(srv_name, srv_domain, srv_desc, srv_notes, srv_ostype,
+                    srv_osname,  srv_oscodename, srv_osversion, srv_vm, srv_active, srv_sporadic,
+                    srv_cat,     srv_grp,        srv_tag,       srv_creation_date) 
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ''',
+                    (tbdata[0], tbdata[1], tbdata[2], tbdata[3],  tbdata[4],  tbdata[5],  tbdata[6],
+                     tbdata[7], tbdata[8], tbdata[9], tbdata[10], tbdata[11], tbdata[12], tbdata[13],
+                    tbdata[14])
+                    )
             self.conn.commit()   
         except sqlite3.IntegrityError as e: 
-            print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (fields[0],tbname,e))
+            print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (tbdata[0],tbname,e))
             self.conn.rollback()            
         except Exception as e: 
-            print("Table %s Insert Key '%s' Error occurred: %s" % (tbname,fields[0],e))
+            print("Table %s Insert Key '%s'\nError occurred: %s" % (tbname,tbdata[0],e))
             self.conn.rollback()
         return
 
 
+
+
     # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
-    def db_update(self,tbname,tbfields,tbkey):
-        if self.dbdebug > 3: print ("Updating %s with key '%s'" % (tbname,tbkey))
+    def db_update(self,tbname,tbdata,tbkey):
+
+        # In Debug mode print row we are inserting
+        if self.dbdebug > 2: 
+            print("Update (Table=%s,Col=%d,Key=%s): %s" % (tbname,len(tbdata),tbkey,tbdata)) 
 
         # Is the table name part of the Database, if not Error
         if tbname not in tablist:
@@ -279,26 +245,25 @@ class dbtool:
         if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
         if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
         if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
-        if (nbField != len(fields)):
-            print ("Number of field received is incorrect (%d) for %s table",(len(fields),tbname))
+        if (nbField != len(tbdata)):
+            print ("Number of field received is incorrect (%d) for %s table",(len(tbdata),tbname))
             return 1
-
 
         # In Debug mode print tableName and list of fields received
         if self.dbdebug > 4:
             print("Updating Data in %s table." % (tbname)) 
-            print("Fields to update are %s" % (tbfields)) 
-            for x in range(len(tbfields)):
-                print ("[%s] %s" % (x,tbfields[x]))
+            print("Fields to update are %s" % (tbdata)) 
+            for x in range(len(tbdata)):
+                print ("[%s] %s" % (x,tbdata[x]))
 
         # Update Row
         try: 
             if (tbname == "sadm_cat"):
                 sql = 'UPDATE sadm_cat SET cat_code=?, cat_desc=?, cat_active=?, cat_default=? where cat_code=?'
-                self.cur.execute(sql,(tbfields[0],tbfields[1],tbfields[2],tbfields[3],tbkey))
+                self.cur.execute(sql,(tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbkey))
             if (tbname == "sadm_grp"):
                 sql = 'UPDATE sadm_grp SET grp_code=?, grp_desc=?, grp_active=?, grp_default=? where grp_code=?'
-                self.cur.execute(sql,(tbfields[0],tbfields[1],tbfields[2],tbfields[3],tbkey))
+                self.cur.execute(sql,(tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbkey))
             self.conn.commit()   
         except sqlite3.IntegrityError as e: 
             print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (tbkey,tbname,e))
@@ -366,53 +331,3 @@ class dbtool:
                 return list(dbrow)
         except Exception as e: 
             print("Error on Table %s trying to read key '%s' \nError message: %s" % (tbname,tbkey,e))
-
-
-            
-
-    # INITIAL LOAD OF THE CATEGORY TABLE -----------------------------------------------------------
-    def db_load_category(self):
-        if self.dbdebug > 3 : print ("Loading category table")
-        categories = [
-            ('Legacy','Legacy Unsupported Server',1,0),
-            ("Dev","Development Environment",1,1),
-            ("Temp","Temporary Environment",1,0),
-            ("Service","Infrastructure Services",1,0),
-            ("Poc","Proof Of Concept env.",1,0),
-            ("Prod","Production Environment",1,0),
-            ("Cluster","Clustered Server",1,0),
-            ]
-        try: 
-            self.cur.executemany('INSERT INTO sadm_cat VALUES (?,?,?,?)', categories)     
-            self.conn.commit()   
-        except sqlite3.IntegrityError as e: 
-            print("Error trying to write duplicate key in Category table\nError occurred:%s" % (e))
-            self.conn.rollback()   
-        except Exception as e:
-            print("An error occurred:", e)
-            self.conn.rollback()
-
-
-    # INITIAL LOAD OF THE GROUP TABLE --------------------------------------------------------------
-    def db_load_group(self):
-        if self.dbdebug > 3 : print ("Loading group table")
-        groups = [
-            ("Group2","Group No.2",1,0),
-            ("Group3","Group No.3",1,0),
-            ("Group4","Group No.4",1,0),
-            ("Group5","Group No.5",1,0),
-            ("Service","Infrastructure Services",1,0),
-            ("Group1","Group No.1",1,0),
-            ("Retired","Retired Servers",1,0),
-            ("Raspberry","Raspberry Pi Server",1,0),
-            ("Regular","Regular Server",1,0),
-            ("Standard","Standard Install Server",1,1),
-            ("Laptop","Linux Laptop",1,0),
-            ]
-        try:
-            self.cur.executemany('INSERT INTO sadm_grp VALUES (?,?,?,?)', groups)     
-            self.conn.commit()  
-        except Exception as e:
-            print("An error occurred:", e)
-            self.conn.rollback()
-
