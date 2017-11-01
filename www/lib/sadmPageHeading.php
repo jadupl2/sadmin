@@ -6,18 +6,17 @@ echo "\n    <a href='http://sadmin.maison.ca/index.php'>";
 echo "\n        <img width=64 height=64 src=/images/sadmin_logo.png>"; 
 echo "\n    </a>";
 echo "\n    </div>                                      <!-- End of Div sadmLogo -->\n";
-            
-echo "\n    <div id='sadmEntete1L'>"; 
-echo "\n    <a href='http:/index.php'>";
-echo "\n        SADMIN Control Center<br>";
-echo "\n    </a>";
-echo "\n        <small>" . SADM_CIE_NAME .  " <br>";
-echo "\n    </div>                                      <!-- End of Div sadmEntete1L -->\n";
 
-echo "\n    <div id='sadmEntete1R'>"; 
-echo "\n        The Unix Servers Farm Control Environment<br>"; 
-echo "\n        <small>Release " . SADM_VERSION . "</small>";
-echo "\n    </div>                                      <!-- End of Div sadmEntete1R -->";
+echo "\n    <div id='sadmEnteteLine1'>";
+echo "\n        <div id='sadmEntete1L'>SADMIN Control Center</div>";
+echo "\n        <div id='sadmEntete1R'>The Unix Servers Farm Control Environment</div>"; 
+echo "\n    </div></br>";
+
+#echo "\n    <div id='sadmEnteteLine2'>";
+#echo "\n        <div id='sadmEntete2L'>" . SADM_CIE_NAME . "</div>";
+#echo "\n        <div id='sadmEntete2R'>Release " . SADM_VERSION . "</div>";
+#echo "\n    </div>";
 
 echo "\n</div>                                          <!-- End of Div sadmHeader -->\n";
+#echo "\n    <div style='clear: both;'> </div><br>";
 ?>

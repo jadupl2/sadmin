@@ -74,7 +74,9 @@ body,html{
 
 #sadmLeftColumn{
     margin          :   2px;
-    background-color:   rgb(103, 146, 153);
+    /* background-color:   rgb(103, 146, 153); */
+    /* background-color:   #ff9800; */
+    background-color:   #111111; 
     padding         :   10px;
     border-width    :   1px;
     border-style    :   solid;
@@ -83,6 +85,14 @@ body,html{
     line-height     :   1.7;
     font-size       :   14px;
     width           :   15%;
+    color           :   white;
+
+}
+#sadmLeftColumn a:link, #sadmLeftColumn >a:visited
+{
+    color           :   #FFFFFF;
+    white-space     :   nowrap;
+    text-decoration :   none;
 }
 
 #sadmRightColumn{
@@ -101,7 +111,8 @@ body,html{
 
 #sadmFooter{
     clear           :   both;
-    background-color:   #ECEFF3;
+    /* background-color:   #ECEFF3; */
+    background-color:   #FF9800;
     padding         :   12px;
     border-width    :   1px;
     border-style    :   solid;
@@ -115,9 +126,8 @@ body,html{
 }
 
 #CatTable{
-    width           :   50%;
-    margin          :   30px;
-    padding         :   30px;
+    width           :   90%;
+    margin          :   auto;
 }
 
 
@@ -193,5 +203,74 @@ tr:nth-child(odd) { background:#E2E4FF; }
     margin          :   20px 20px 20px 40px;
 }
 
+
+/* ---------------------------------------------------------------------------------------------- */
+/*   TOP of Page - Header CSS Section                                                             */
+/* ---------------------------------------------------------------------------------------------- */
+#sadmHeader {
+    height: 90px;
+    /* background-color: #06425C; */
+    background-color: #262626; 
+    color: white;
+    /* text-align: left; */
+    padding: 1px 1px 1px 5px;
+}
+#sadmLogo {
+    float: left;
+    padding: 10px;
+}
+
+#sadmEnteteLine1{
+    /* clear   : both; */
+    padding : 2px;
+}
+#sadmEntete1L {
+    font-family: Verdana, Geneva, sans-serif;
+    float: left;
+    padding : 10px;
+    /* font-size: x-large; */
+    /* color : white; */
+    color : #FFFFFF;
+    font-size: 20px;
+    text-decoration :   none;
+	font-weight     :   bold;
+}
+#sadmEntete1R {
+    font-family: Verdana, Monaco, monospace;
+    float: right;
+    color : #9B869C;
+    padding : 5px;
+    font-size: 14px;
+    /* text-align: right; */
+    font-weight: bold;
+    /* display: block; */
+}
+
+
+#sadmEnteteLine2{
+    clear   : both;
+    padding : 1px;
+}
+#sadmEntete2L{
+    font-family: Verdana, Geneva, sans-serif;
+    float: left;
+    padding : 10px;
+    /* font-size: x-large; */
+    /* color : white; */
+    color : #DFC48C;
+    font-size: 20px;
+    text-decoration :   none;
+	font-weight     :   bold;
+}
+#sadmEntete2R {
+    font-family: Verdana, Monaco, monospace;
+    float: right;
+    color : #9B869C;
+    padding : 5px;
+    font-size: 14px;
+    text-align: right;
+    font-weight: bold;
+    /* display: block; */
+}
 
 

@@ -89,7 +89,7 @@ main_process()
 
     # Special Operation for some particular System
     sadm_writelog " "
-    sadm_writelog "Starting particular startup procedure for $SADM_HOSTNAME"
+    sadm_writelog "Starting specific startup procedure for $SADM_HOSTNAME"
     case "$SADM_HOSTNAME" in
         "raspi4" )      sadm_writelog "  systemctl restart rpcbind"
                         systemctl restart rpcbind >> $SADM_LOG 2>&1

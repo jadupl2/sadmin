@@ -126,5 +126,10 @@ $connection = pg_connect($connString);
 if (!$connection) { die("Database connection failed: " . mysql_error()); }
 
 # Connect to SQLite3 Database
-#$sadmPDO = new PDO('sqlite:'. SADM_DB_FILE);
+#$sadmdb = new PDO('sqlite:'. SADM_DB_FILE);
+#if(!$sadmdb) {                                                      # If Database isn't Open 
+#    echo $sadmdb->lastErrorMsg();                                   # Display Error Message
+#    exit("Unable to open Database (SADM_DB_FILE)");                 # Advise User and Exit
+#}
+
 ?>
