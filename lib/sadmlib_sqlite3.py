@@ -50,7 +50,9 @@ tablist = ["sadm_cat","sadm_grp","sadm_srv"]                            # SADM T
 class dbtool:
 
 
+    #-----------------------------------------------------------------------------------------------
     #  INITIALISATION & DATABASE CONNECTION --------------------------------------------------------
+    #-----------------------------------------------------------------------------------------------
     def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/db/sadm.db", dbdebug=0):
         """ Class dbtool: Series of function to Insert,Read,Update and delete row(s) in
             the selected Sqlite3 Database.
@@ -71,7 +73,10 @@ class dbtool:
         return 
 
 
+    #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
+    #-----------------------------------------------------------------------------------------------
     def dbclose(self):
         try:
             if self.dbdebug > 2 : print ("Closing Database %s" % (self.dbname)) 
@@ -79,12 +84,14 @@ class dbtool:
         except Exception as e: 
             print ("Problem Closing Database %s - Error : %s" % (self.dbname,e))
             return 1       
+        return 0
 
-
-
+    #-----------------------------------------------------------------------------------------------
     # CREATE THE RECEIVED SADM TABLE NAME ----------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
+    #-----------------------------------------------------------------------------------------------
     def dbcreate_table(self,tbname):
-        if (self.dbdebug > 3) : print("Creating %s table." % (tbname))  # Show Table Name in Debug
+        if (self.dbdebug > 2) : print("Creating %s table." % (tbname))  # Show Table Name in Debug
         if tbname not in tablist :                                      # Is Table Name Valid 
             print ("Table %s isn't part of the Database",(tbname))      # If Not Advise User
             dbclose()                                                   # Close DB Before Exiting
@@ -158,12 +165,9 @@ class dbtool:
             return 1  
 
 
-
-
-
-
     #-----------------------------------------------------------------------------------------------
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
     # Example : cdata = ['Legacy','Legacy Unsupported Server',1,curdate,0],
     #           dbo.db_insert('sadm_cat',cdata)                     
     #-----------------------------------------------------------------------------------------------
@@ -179,10 +183,10 @@ class dbtool:
             return 1
 
         # Validate the number of fields for the tablename 
-        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
-        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
-        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
-        if (nbField != len(tbdata)):
+        if (tbname == "sadm_cat") : nbColumn = sadm_cat_nb_field 
+        if (tbname == "sadm_grp") : nbColumn = sadm_grp_nb_field 
+        if (tbname == "sadm_srv") : nbColumn = sadm_srv_nb_field 
+        if (nbColumn != len(tbdata)):
             print ("ERROR: Wrong nb. of field received (%d) for %s table" % (len(tbdata),tbname))
             print ("       The parameter(s) received are : %s\n" % (tbdata))
             return 1
@@ -221,61 +225,87 @@ class dbtool:
         except sqlite3.IntegrityError as e: 
             print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (tbdata[0],tbname,e))
             self.conn.rollback()            
+            return 1
         except Exception as e: 
             print("Table %s Insert Key '%s'\nError occurred: %s" % (tbname,tbdata[0],e))
             self.conn.rollback()
-        return
+            return 1
+        return 0
 
 
-
-
+    # ----------------------------------------------------------------------------------------------
     # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
+    # Example : cdata = ['Test','The BatCave Server',1,curdate,0]
+    #           dbo.db_update('sadm_cat',cdata,'Test')
+    # ----------------------------------------------------------------------------------------------
     def db_update(self,tbname,tbdata,tbkey):
 
-        # In Debug mode print row we are inserting
-        if self.dbdebug > 2: 
+        if self.dbdebug > 2:                                            # print row Info inserting
             print("Update (Table=%s,Col=%d,Key=%s): %s" % (tbname,len(tbdata),tbkey,tbdata)) 
 
-        # Is the table name part of the Database, if not Error
-        if tbname not in tablist:
-            print ("The table %s isn't part of the Database",(tbname))
-            return 1
+        # Is the table name part of the Database ?
+        if tbname not in tablist:                                       # Part of Valid Table Name ?
+            print ("The table %s isn't part of the Database",(tbname))  # Inform User Invalid Table
+            return 1                                                    # Return Error to Caller
 
         # Validate the number of fields for the tablename 
-        if (tbname == "sadm_cat") : nbField = sadm_cat_nb_field 
-        if (tbname == "sadm_grp") : nbField = sadm_grp_nb_field 
-        if (tbname == "sadm_srv") : nbField = sadm_srv_nb_field 
-        if (nbField != len(tbdata)):
-            print ("Number of field received is incorrect (%d) for %s table",(len(tbdata),tbname))
+        if (tbname == "sadm_cat") : nbColumn = sadm_cat_nb_field        # Set Nb.Column Cat Table
+        if (tbname == "sadm_grp") : nbColumn = sadm_grp_nb_field        # Set Nb.Column Grp Table
+        if (tbname == "sadm_srv") : nbColumn = sadm_srv_nb_field        # Set Nb.Column Srv Table
+        if (nbColumn != len(tbdata)):                                   # Received Correct Nb Column
+            print ("ERROR : Wrong Nb. Column received (%d) for %s table",(len(tbdata),tbname))
+            print ("        The Table %s have %d columns" % (tbname,nbColumn))
             return 1
 
-        # In Debug mode print tableName and list of fields received
-        if self.dbdebug > 4:
-            print("Updating Data in %s table." % (tbname)) 
-            print("Fields to update are %s" % (tbdata)) 
-            for x in range(len(tbdata)):
-                print ("[%s] %s" % (x,tbdata[x]))
+        # In Debug mode print columns received
+        if self.dbdebug > 4:                                            # Print All Columns Recv.
+            for x in range(len(tbdata)):                                # For each element of list
+                print ("Column [%s] = %s" % (x,tbdata[x]))              # Print Col. Nb & Content
 
         # Update Row
         try: 
             if (tbname == "sadm_cat"):
-                sql = 'UPDATE sadm_cat SET cat_code=?, cat_desc=?, cat_active=?, cat_default=? where cat_code=?'
-                self.cur.execute(sql,(tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbkey))
+                sql = ('''UPDATE sadm_cat SET 
+                        cat_code=?,cat_desc=?,cat_active=?,cat_date=?,cat_default=?
+                        where cat_code=?''')
+                sdata = (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
+                self.cur.execute(sql,sdata)
             if (tbname == "sadm_grp"):
-                sql = 'UPDATE sadm_grp SET grp_code=?, grp_desc=?, grp_active=?, grp_default=? where grp_code=?'
-                self.cur.execute(sql,(tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbkey))
+                sql = ('''UPDATE sadm_grp SET 
+                        grp_code=?,grp_desc=?,grp_active=?,grp_date=?,grp_default=?
+                        where grp_code=?''')
+                sdata = (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
+                self.cur.execute(sql,sdata)
+            if (tbname == "sadm_srv"):
+                sql = ('''UPDATE sadm_srv SET 
+                        srv_name=?,     srv_domain=?,       srv_desc=?,         srv_notes=?, 
+                        srv_ostype=?,   srv_osname=?,       srv_oscodename=?,   srv_osversion=?, 
+                        srv_vm=?,       srv_active=?,       srv_sporadic=?,     srv_cat=?, 
+                        srv_grp=?,      srv_tag=?,          srv_creation_date=?
+                        where srv_name=?''')
+                sdata = (tbdata[0], tbdata[1],  tbdata[2],  tbdata[3],  
+                        tbdata[4],  tbdata[5],  tbdata[6],  tbdata[7], 
+                        tbdata[8],  tbdata[9],  tbdata[10], tbdata[11], 
+                        tbdata[12], tbdata[13], tbdata[14],tbkey)
+                self.cur.execute(sql,sdata)
             self.conn.commit()   
         except sqlite3.IntegrityError as e: 
             print("Primary Key '%s' already exist in %s table\nError occurred:%s" % (tbkey,tbname,e))
-            self.conn.rollback()            
+            self.conn.rollback() 
+            return 1           
         except Exception as e: 
             print("Table %s Update Key '%s' \nError occurred: %s" % (tbname,tbkey,e))
             self.conn.rollback()
-        return
+            return 1           
+        return 0 
 
-        
 
+    # ----------------------------------------------------------------------------------------------
     # DELETE ROW IN SELECTED TABLE -----------------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
+    # Example : dbo.db_delete('sadm_cat','Test')   
+    # ----------------------------------------------------------------------------------------------
     def db_delete(self,tbname,tbkey):
         """
             Delete a row in tbname, identified by the table key (tbkey)
@@ -283,51 +313,71 @@ class dbtool:
             :tbkey  is the primary key value to delete
             :return:
         """
-        if self.dbdebug > 3: print ("Deleting in table %s row with key '%s'" % (tbname,tbkey))
+        # In Debug mode print row we are inserting
+        if self.dbdebug > 2: 
+            print("Delete (Table=%s,Key=%s)" % (tbname,tbkey)) 
 
         # Is the table name part of the Database, if not Error
-        if tbname not in tablist:
-            print ("The table %s isn't part of the Database",(tbname))
+        if tbname not in tablist :
+            print ("The table %s is not part of the Database",(tbname))
             return 1
 
         try: 
+            if (tbname == "sadm_cat"):
+                sql = 'DELETE FROM ' + tbname + ' WHERE cat_code=? '
+                self.cur.execute(sql,(tbkey,))
             if (tbname == "sadm_grp"):
                 sql = 'DELETE FROM ' + tbname + ' WHERE grp_code=? '
                 self.cur.execute(sql,(tbkey,))
-            if (tbname == "sadm_cat"):
-                sql = 'DELETE FROM ' + tbname + ' WHERE cat_code=? '
+            if (tbname == "sadm_srv"):
+                sql = 'DELETE FROM ' + tbname + ' WHERE srv_name=? '
                 self.cur.execute(sql,(tbkey,))
             self.conn.commit()
         except Exception as e: 
             print("Error on Table %s trying to delete key '%s' \nError message: %s" % (tbname,tbkey,e))
             self.conn.rollback()
+            return 1
+        return 0
 
             
-    # READ ONE ROW OF THE SELECTED TABLE
-    def db_readkey(self, tbname, tbkey):
+    # ----------------------------------------------------------------------------------------------
+    # READ ONE ROW OF THE SELECTED TABLE -----------------------------------------------------------
+    # Return 0 if no error - Return 1 if error encountered
+    # ----------------------------------------------------------------------------------------------
+    def db_readkey(self, tbname, tbkey, tbquiet='n'):
         """
             Read One row in tbname, identified by the table key (tbkey)
             :tbname is SADM table name
             :tbkey  is the primary key value to delete
             :return:
         """
-        if self.dbdebug > 3: print ("Reading in table %s row with key '%s'" % (tbname,tbkey))
+        # In Debug mode print row we are inserting
+        if self.dbdebug > 2: 
+            print("Read (Table=%s,Key=%s)" % (tbname,tbkey)) 
 
         # Is the table name part of the Database, if not Error
-        if tbname not in tablist:
-            print ("The table %s isn't part of the Database",(tbname))
+        if tbname not in tablist :
+            print ("The table %s is not part of the Database",(tbname))
             return 1
 
         try: 
-            if (tbname == "sadm_grp"):
-                sql = 'SELECT * FROM ' + tbname + ' WHERE grp_code=? '
-                self.cur.execute(sql,(tbkey,))
-                dbrow = self.cur.fetchone()
-                return list(dbrow)
             if (tbname == "sadm_cat"):
                 sql = 'SELECT * FROM ' + tbname + ' WHERE cat_code=? '
                 self.cur.execute(sql,(tbkey,))
                 dbrow = self.cur.fetchone()
                 return list(dbrow)
+            if (tbname == "sadm_grp"):
+                sql = 'SELECT * FROM ' + tbname + ' WHERE grp_code=? '
+                self.cur.execute(sql,(tbkey,))
+                dbrow = self.cur.fetchone()
+                return list(dbrow)
+            if (tbname == "sadm_srv"):
+                sql = 'SELECT * FROM ' + tbname + ' WHERE srv_name=? '
+                self.cur.execute(sql,(tbkey,))
+                dbrow = self.cur.fetchone()
+                return list(dbrow)
         except Exception as e: 
-            print("Error on Table %s trying to read key '%s' \nError message: %s" % (tbname,tbkey,e))
+            if (tbquiet.upper() == "N") :
+                print("Error on Table %s trying to read key '%s' \nError message: %s" % (tbname,tbkey,e))
+            return 1
+        return list(dbrow)
