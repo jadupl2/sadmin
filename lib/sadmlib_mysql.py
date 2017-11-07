@@ -34,7 +34,7 @@ import os, sys, pymysql, datetime
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "1.1"                                              # Default Program Version
+libver             = "1.2                                               # Default Program Version
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 #
 
@@ -187,53 +187,8 @@ class dbtool:
             return (1)                                                  # Return Error to Caller
 
         # Insert the row received as parameter
-        if (tbname == 'server_category' ):                              # If Table Server Category
-            sql = "INSERT INTO server_category SET \
-                    cat_code='%s', cat_desc='%s', cat_active='%s', \
-                    cat_date='%s', cat_default='%d' " % \
-                    (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]);
-            if self.dbdebug > 5:                                        # Debug Higher than 5
-                print ("Insert SQL Command is \n%s " % sql);            # Print Insert SQL Statement
-            try:
-                self.cursor.execute(sql)                                # Insert new Data 
-                self.conn.commit()                                      # Commit the transaction
-                return (0)                                              # return (0) Insert Worked
-            except pymysql.err.InternalError:
-                self.enum, self.emsg = error.args                       # Get Error No. & Message
-                if  (not self.dbsilent):                                # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)         # Print Error No. & Message
-                return (1)                                              # return (1) to indicate Error
-            except pymysql.err.IntegrityError as error:                 # If Insert didn't work
-                self.enum, self.emsg = error.args                       # Get Error No. & Message
-                if  (not self.dbsilent):                                # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)         # Print Error No. & Message
-                return (1)                                              # return (1) to indicate Error
-
-        if (tbname == 'server_group'  ):                                # If Table is Server Group
-            sql = "INSERT INTO server_group SET \
-                    grp_code='%s', grp_desc='%s', grp_active='%s', \
-                    grp_date='%s', grp_default='%d' " % \
-                    (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]);
-            if self.dbdebug > 5:                                    # Debug Higher than 5
-                print ("Insert SQL Command is \n%s " % sql);        # Print Insert SQL Statement
-            try:
-                self.cursor.execute(sql)                            # Insert new Data 
-                self.conn.commit()                                  # Commit the transaction
-                return (0)                                            # return (0) Insert Worked
-            except pymysql.err.InternalError:
-                self.enum, self.emsg = error.args                   # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-            except pymysql.err.IntegrityError as error:             # If Insert didn't work
-                self.enum, self.emsg = error.args                   # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-
-
-        if (tbname == 'server'  ):                                  # If Table is Server 
-            try:
+        try:
+            if (tbname == 'server'  ):                                  # If Server Table
                 sql = "INSERT INTO server SET \
                     srv_name='%s',      srv_domain='%s',        srv_desc='%s',  srv_notes='%s',\
                     srv_active='%d',    srv_creation_date='%s', srv_sporadic='%d', \
@@ -242,35 +197,35 @@ class dbtool:
                     (tbdata[0],  tbdata[1],  tbdata[2],   tbdata[3],   tbdata[4],    tbdata[5],\
                      tbdata[6],  tbdata[7],  tbdata[8],   tbdata[9],   tbdata[10],   tbdata[11],\
                      tbdata[12]);
-            except TypeError as error:                              # If Insert didn't work
-                self.enum=1
-                self.emsg=error                  # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-            except ValueError as error:                              # If Insert didn't work
-                self.enum=1
-                self.emsg=error                  # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-            except IndexError as error:                              # If Insert didn't work
-                self.enum=1
-                self.emsg=error                  # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-            if self.dbdebug > 5:                                    # Debug Higher than 5
-                print ("Insert SQL Command is \n%s " % sql);        # Print Insert SQL Statement
-            try:
-                self.cursor.execute(sql)                            # Insert new Data 
-                self.conn.commit()                                  # Commit the transaction
-            except pymysql.err.IntegrityError as error:             # If Insert didn't work
-                self.enum, self.emsg = error.args                   # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
-            return (0)
+            if (tbname == 'server_group'  ):                            # If Table is Server Group
+                sql = "INSERT INTO server_group SET \
+                    grp_code='%s', grp_desc='%s', grp_active='%s', \
+                    grp_date='%s', grp_default='%d' " % \
+                    (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]);
+            if (tbname == 'server_category' ):                          # If Table Server Category
+                sql = "INSERT INTO server_category SET \
+                    cat_code='%s', cat_desc='%s', cat_active='%s', \
+                    cat_date='%s', cat_default='%d' " % \
+                    (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]);
+        except (TypeError, ValueError, IndexError) as error:            # Mismatch Between Num & Str
+            self.enum=1                                                 # Set Class Error Number 
+            self.emsg=error                                             # Get Error Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
+            return (1)                                                  # return (1) to indicate Error
+
+        if self.dbdebug > 5:                                            # Debug Higher than 5
+            print ("Insert SQL Command is \n%s " % sql);                # Print Insert SQL Statement
+
+        try:
+            self.cursor.execute(sql)                                    # Insert new Data 
+            self.conn.commit()                                          # Commit the transaction
+            return (0)                                                  # return (0) Insert Worked
+        except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
+            return (1)                                                  # return (1) to indicate Error
 
 
     # ----------------------------------------------------------------------------------------------
@@ -286,21 +241,20 @@ class dbtool:
             print (self.emsg)                                           # Inform User
             return (1)                                                  # Return Error to Caller
 
-        # Update Row
+        # Construct The SQL Update Statement
         try: 
             if (tbname == 'server_category' ):
                 sql = "UPDATE server_category SET \
-                        cat_code='%s',cat_desc='%s',cat_active='%s',cat_date='%s',cat_default='%s' \
-                        where cat_code='%s' " % \
-                        (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
+                       cat_code='%s',cat_desc='%s',cat_active='%s',cat_date='%s',cat_default='%s' \
+                       where cat_code='%s' " % \
+                       (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
             if (tbname == 'server_group'  ):
                 sql = "UPDATE server_group SET \
-                        grp_code='%s',grp_desc='%s',grp_active='%s',grp_date='%s',grp_default='%s' \
-                        where grp_code='%s' " % \
-                        (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
+                       grp_code='%s',grp_desc='%s',grp_active='%s',grp_date='%s',grp_default='%s' \
+                       where grp_code='%s' " % \
+                       (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
             if (tbname == 'server'  ):
-                try: 
-                    sql = "UPDATE server SET \
+                sql = "UPDATE server SET \
                        srv_name='%s',      srv_domain='%s',        srv_desc='%s',  srv_notes='%s',\
                        srv_active='%d',    srv_creation_date='%s', srv_sporadic='%d',   \
                        srv_monitor='%d',   srv_tag='%s',           srv_cat='%s',        \
@@ -309,41 +263,31 @@ class dbtool:
                        (tbdata[0],  tbdata[1],  tbdata[2],   tbdata[3],   tbdata[4],    tbdata[5],\
                         tbdata[6],  tbdata[7],  tbdata[8],   tbdata[9],   tbdata[10],   tbdata[11],\
                         tbdata[12],tbkey);
-                except TypeError as error:                              # If Insert didn't work
-                    self.enum=1
-                    self.emsg=error                  # Get Error No. & Message
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                    return (1)                                            # return (1) to indicate Error
-                except ValueError as error:                              # If Insert didn't work
-                    self.enum=1
-                    self.emsg=error                  # Get Error No. & Message
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                    return (1)                                            # return (1) to indicate Error
-                except IndexError as error:                              # If Insert didn't work
-                    self.enum=1
-                    self.emsg=error                  # Get Error No. & Message
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-                    return (1)                                            # return (1) to indicate Error
+        except (TypeError, ValueError, IndexError) as error:            # Mismatch Between Num & Str
+            self.enum=1                                                 # Set Class Error Number 
+            self.emsg=error                                             # Get Error Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
+            return (1)                                                  # return (1) to indicate Err
 
-            self.cursor.execute(sql)
-            self.conn.commit()   
-        except pymysql.err.IntegrityError as error:             # If Insert didn't work
-            self.enum, self.emsg = error.args                   # Get Error No. & Message
-            if  (not self.dbsilent):                            # If not in Silent Mode
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
+        # Execute the SQL Update Statement
+        try:
+            self.cursor.execute(sql)                                    # Insert new Data 
+            self.conn.commit()                                          # Commit the transaction
+            return (0)                                                  # return (0) Insert Worked
+        except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
             self.conn.rollback()
-            return (1)                                            # return (1) to indicate Error            
+            return (1)                                                  # return (1) to indicate Err
         except Exception as error: 
-            print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
-            self.enum, self.emsg = error.args                   # Get Error No. & Message
-            if  (not self.dbsilent):                            # If not in Silent Mode
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
+            self.enum=1                                                 # Set Class Error Number 
+            self.emsg=error                                             # Get Error Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
             self.conn.rollback()
             return (1)           
-        return (0) 
 
 
     # ----------------------------------------------------------------------------------------------
@@ -371,20 +315,23 @@ class dbtool:
                 sql = 'DELETE FROM ' + tbname + " WHERE grp_code='%s' LIMIT 1" % (tbkey)
             if (tbname == 'server'  ):
                 sql = 'DELETE FROM ' + tbname + " WHERE srv_name='%s' LIMIT 1" % (tbkey)
-            print ("SQL =",(sql))
+            if self.dbdebug > 2: print ("SQL =",(sql))
+
+            # Execute the Delete SQL Statement
             delcount=self.cursor.execute(sql)
-            if (delcount == 0):
-                self.enum=1
-                self.emsg="Nothing to delete"
-            else:
-                self.enum=0
-                self.emsg="Row with key %s was deleted" % (tbkey)
-                self.conn.commit()
-        except Error as error:
-            self.enum, self.emsg = error.args                   # Get Error No. & Message
-            if  (not self.dbsilent):                            # If not in Silent Mode
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-            return (1)                                            # return (1) to indicate Error
+            if (delcount == 0):                                         # If 0 row was deleted ?
+                self.enum=1                                             # Set Error number
+                self.emsg="Nothing to delete"                           # Construct Error Message
+                return (1)                                              # return (1) to indicate Err
+            self.conn.commit()                                          # Commit the Delete Stat.
+
+        except (IOError, ValueError) as error:
+            self.enum = 1                                               # Set Error Number
+            self.emsg = error                                           # Set Error Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
+            self.conn.rollback()
+            return (1)                                                  # return (1) to indicate Err
         return (0)
 
             
@@ -405,40 +352,25 @@ class dbtool:
             print (self.emsg)                                           # Inform User
             return (1)                                                  # Return Error to Caller
 
-        try: 
-            if (tbname == 'server_category' ):
-                sql = 'SELECT * FROM ' + tbname + " WHERE cat_code='%s'" % (tbkey)
-                self.cursor.execute(sql)
-                dbrow = self.cursor.fetchone()
-                if (dbrow == None) :
-                    self.enum=1 
-                    self.emsg = "Row not Found for key '%s'" % (tbkey)
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return dbrow
-            if (tbname == 'server_group'  ):
-                sql = 'SELECT * FROM ' + tbname + " WHERE grp_code='%s'" % (tbkey)
-                self.cursor.execute(sql)
-                dbrow = self.cursor.fetchone()
-                if (dbrow == None) :
-                    self.enum=1 
-                    self.emsg = "Row not Found for key '%s'" % (tbkey)
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return dbrow
-            if (tbname == 'server'  ):
-                sql = 'SELECT * FROM ' + tbname + " WHERE srv_name='%s'" % (tbkey)
-                self.cursor.execute(sql)
-                dbrow = self.cursor.fetchone()
-                if (dbrow == None) :
-                    self.enum=1 
-                    self.emsg = "Row not Found for key '%s'" % (tbkey)
-                    if  (not self.dbsilent):                            # If not in Silent Mode
-                        print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return dbrow
-        except pymysql.err.DataError as error:             # If Read Row didn't work
+        if (tbname == 'server_category' ):
+            sql = 'SELECT * FROM ' + tbname + " WHERE cat_code='%s'" % (tbkey)
+        if (tbname == 'server_group'  ):
+            sql = 'SELECT * FROM ' + tbname + " WHERE grp_code='%s'" % (tbkey)
+        if (tbname == 'server'  ):
+            sql = 'SELECT * FROM ' + tbname + " WHERE srv_name='%s'" % (tbkey)
 
-            self.enum, self.emsg = error.args                   # Get Error No. & Message
-            if  (not self.dbsilent):                            # If not in Silent Mode
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-            return (1)                                            # return (1) to indicate Error
+        try :
+            self.cursor.execute(sql)
+            dbrow = self.cursor.fetchone()
+            if (dbrow == None) :
+                self.enum=1 
+                self.emsg = "Row not Found for key '%s'" % (tbkey)
+                if  (not self.dbsilent):                                # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",self.enum,self.emsg)         # Print Error No. & Message
+                    return(1)
+            return dbrow
+        except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
+            return (1)                                                  # return (1) to indicate Error
