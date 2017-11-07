@@ -34,13 +34,13 @@ import os, sys, pymysql, datetime
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "1.0"                                              # Default Program Version
+libver             = "1.1"                                              # Default Program Version
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 #
 
 sadm_cat_nb_field  = 5                                                  # Nb of fields in Cat Table
 sadm_grp_nb_field  = 5                                                  # Nb of fields in Grp Table
-sadm_srv_nb_field  = 15                                                 # Nb of fields in Srv Table
+sadm_srv_nb_field  = 13                                                 # Nb of fields in Srv Table
 tablist = ["server_category","server_group","server"]                   # SADM Table List
 
 #NOTES
@@ -55,7 +55,6 @@ tablist = ["server_category","server_group","server"]                   # SADM T
 #                                   SADM Database Access Class 
 #===================================================================================================
 class dbtool:
-
 
     #-----------------------------------------------------------------------------------------------
     #  INITIALISATION & DATABASE CONNECTION --------------------------------------------------------
@@ -75,12 +74,12 @@ class dbtool:
         self.dbname    = dbname                                         # Set Database Name
         self.dbdebug   = dbdebug                                        # Set Debug Level [0-9]
         self.dbserver  = 'localhost'                                    # Server where Database is
-        self.dbuser    = 'root'                                        # Database User
+        self.dbuser    = 'root'                                         # Database User
         self.dbpasswd  = 'Icu@9am!'                                     # Database User Password
         self.dbsilent  = dbsilent                                       # Silent Mode (N=No Err-Msg)
         if (dbsilent)  : self.dbdebug=0                                 # If Silent No Debug Mode
-        print ("\nDebugging Level set to %d" % (self.dbdebug))          # For Testing Only
-        print ("Silent Mode is set to %s\n" % (self.dbsilent))          # For Testing Only
+        print ("Debugging Level set to %d" % (self.dbdebug))            # For Testing Only
+        print ("Silent Mode is set to %s" % (self.dbsilent))            # For Testing Only
 
        
         # Open connection to selected Database
@@ -115,7 +114,7 @@ class dbtool:
 
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
-    # Return 0 if no error - Return 1 if error encountered
+    # return (0) if no error - return (1) if error encountered
     #-----------------------------------------------------------------------------------------------
     def dbclose(self):
         self.enum = 0                                                   # Reset Error Number
@@ -127,59 +126,90 @@ class dbtool:
             self.enum, self.emsg = error.args                           # Get Error No. & Message
             if  (not self.dbsilent):                                    # If not in Silent Mode
                 print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return 1                                            # Return 1 to indicate Error
-        return 0
+                return (1)                                            # return (1) to indicate Error
+        return (0)
+
+
+    #-----------------------------------------------------------------------------------------------
+    #  Validate Parameters received by the method below --------------------------------------------
+    #-----------------------------------------------------------------------------------------------
+    def db_valid(self, dbcmd,tbname,tbkey,tbdata=""):
+        """
+            def db_valid (self, dbcmd,tbname,tbkey,tbdata=""):
+        """
+        self.enum = 0                                                   # Reset Error Number
+        self.emsg = ""                                                  # Reset Error Message
+
+        # In Debug Mode - Print Table Name , Number of column, Key Index and Data
+        if self.dbdebug > 2: 
+            if (dbcmd == "insert") or (dbcmd == "update") :
+                print(dbcmd.capitalize(),"(Table=%s,Col=%d,Key=%s)\n%s" % (tbname,len(tbdata),tbkey,tbdata)) 
+            if (dbcmd == "delete") or (dbcmd == "readkey") :
+                print(dbcmd.capitalize(),"(Table=%s,Key=%s)" % (tbname,tbkey)) 
+
+        # Is the table name part of the Database ?
+        if tbname not in tablist:                                       # Part of Valid Table Name ?
+            self.enum = 1
+            self.emsg = "Invalid table name (%s), not part of Database",(tbname) 
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>> Invalid table name (%s), not part of Database",(tbname)) 
+            return (1)                                                  # Return Error to Caller
+
+        # Validate the number of column for the tablename 
+        if (len(tbdata) != 0) :
+            if (tbname == 'server_category'): nbColumn=sadm_cat_nb_field    # Cat Table Nb.Col.
+            if (tbname == 'server_group')   : nbColumn=sadm_grp_nb_field    # Grp Table Nb.Col.
+            if (tbname == 'server')         : nbColumn=sadm_srv_nb_field    # Srv Table Nb.Col.
+            if (nbColumn != len(tbdata)):                                   # Received Correct Nb Column
+                self.enum = 1                                               # Set Error Number
+                self.emsg = "Wrong Nb. Column - Received %d instead of %d" % (len(tbdata),nbColumn)
+                if  (not self.dbsilent):                                    # If not in Silent Mode
+                    print (">>>>>",self.emsg,"for %s table",(tbname))       # Advise User
+                return (1)                                                  # Return Error to Caller
+
+        # In Debug mode print columns number and values received
+        if (self.dbdebug > 6) and ((dbcmd == "update") or (dbcmd == "update")):
+            for x in range(len(tbdata)):                                # For each element of list
+                print ("Column [%s] = %s" % (x,tbdata[x]))              # Print Col. Nb & Content
+        return (0)
 
     #-----------------------------------------------------------------------------------------------
     # INSERT ROW IN SELECTED TABLE -----------------------------------------------------------------
-    # Return 0 if no error - Return 1 if error encountered
+    # return (0) if no error - return (1) if error encountered
     # Example : cdata = ['Legacy','Legacy Unsupported Server',1,curdate,0],
     #           dbo.db_insert('server_category',cdata)                     
     #-----------------------------------------------------------------------------------------------
     def db_insert(self,tbname,tbdata):
 
-        # In Debug mode print row we are inserting
-        if self.dbdebug > 2: 
-            print("Insert (Table=%s,Col=%d,Key=%s): %s" % (tbname,len(tbdata),tbdata[0],tbdata)) 
+        self.db_valid("insert",tbname,tbdata[0],tbdata)                 # Validate Parameters Recv.
+        if (self.enum != 0) :                                           # If Error Found in Param.
+            print (self.emsg)                                           # Inform User
+            return (1)                                                  # Return Error to Caller
 
-        # Is the table name part of the Database, if not Error
-        if tbname not in tablist :
-            print ("The table %s is not part of the Database",(tbname))
-            return 1
-
-        # Validate the number of fields for the tablename 
-        if (tbname == 'server_category') : nbColumn = sadm_cat_nb_field 
-        if (tbname == 'server_group')    : nbColumn = sadm_grp_nb_field 
-        if (tbname == 'server')          : nbColumn = sadm_srv_nb_field 
-        if (nbColumn != len(tbdata)):
-            print ("ERROR: Wrong nb. of field received (%d) for %s table" % (len(tbdata),tbname))
-            print ("       The parameter(s) received are : %s\n" % (tbdata))
-            return 1
-
-
-        # In Debug Level 7-9 Print Each column we are inserting
-        if self.dbdebug > 6: 
-            for x in range(len(tbdata)): print ("[%s] %s" % (x,tbdata[x]))
-        
         # Insert the row received as parameter
-        if (tbname == 'server_category' ):                          # If Table Server Category
+        if (tbname == 'server_category' ):                              # If Table Server Category
             sql = "INSERT INTO server_category SET \
                     cat_code='%s', cat_desc='%s', cat_active='%s', \
                     cat_date='%s', cat_default='%d' " % \
                     (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4]);
-            if self.dbdebug > 5:                                    # Debug Higher than 5
-                print ("Insert SQL Command is \n%s " % sql);        # Print Insert SQL Statement
+            if self.dbdebug > 5:                                        # Debug Higher than 5
+                print ("Insert SQL Command is \n%s " % sql);            # Print Insert SQL Statement
             try:
-                self.cursor.execute(sql)                            # Insert new Data 
-                self.conn.commit()                                  # Commit the transaction
-                return 0                                            # Return 0 Insert Worked
-            except pymysql.err.IntegrityError as error:             # If Insert didn't work
-                self.enum, self.emsg = error.args                   # Get Error No. & Message
-                if  (not self.dbsilent):                            # If not in Silent Mode
-                    print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return 1                                            # Return 1 to indicate Error
+                self.cursor.execute(sql)                                # Insert new Data 
+                self.conn.commit()                                      # Commit the transaction
+                return (0)                                              # return (0) Insert Worked
+            except pymysql.err.InternalError:
+                self.enum, self.emsg = error.args                       # Get Error No. & Message
+                if  (not self.dbsilent):                                # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",self.enum,self.emsg)         # Print Error No. & Message
+                return (1)                                              # return (1) to indicate Error
+            except pymysql.err.IntegrityError as error:                 # If Insert didn't work
+                self.enum, self.emsg = error.args                       # Get Error No. & Message
+                if  (not self.dbsilent):                                # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",self.enum,self.emsg)         # Print Error No. & Message
+                return (1)                                              # return (1) to indicate Error
 
-        if (tbname == 'server_group'  ):                            # If Table is Server Group
+        if (tbname == 'server_group'  ):                                # If Table is Server Group
             sql = "INSERT INTO server_group SET \
                     grp_code='%s', grp_desc='%s', grp_active='%s', \
                     grp_date='%s', grp_default='%d' " % \
@@ -189,23 +219,47 @@ class dbtool:
             try:
                 self.cursor.execute(sql)                            # Insert new Data 
                 self.conn.commit()                                  # Commit the transaction
-                return 0                                            # Return 0 Insert Worked
+                return (0)                                            # return (0) Insert Worked
+            except pymysql.err.InternalError:
+                self.enum, self.emsg = error.args                   # Get Error No. & Message
+                if  (not self.dbsilent):                            # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
+                return (1)                                            # return (1) to indicate Error
             except pymysql.err.IntegrityError as error:             # If Insert didn't work
                 self.enum, self.emsg = error.args                   # Get Error No. & Message
                 if  (not self.dbsilent):                            # If not in Silent Mode
                     print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return 1                                            # Return 1 to indicate Error
+                return (1)                                            # return (1) to indicate Error
 
 
         if (tbname == 'server'  ):                                  # If Table is Server 
-            sql = "INSERT INTO server SET \
+            try:
+                sql = "INSERT INTO server SET \
                     srv_name='%s',      srv_domain='%s',        srv_desc='%s',  srv_notes='%s',\
                     srv_active='%d',    srv_creation_date='%s', srv_sporadic='%d', \
                     srv_monitor='%d',   srv_tag='%s',           srv_cat='%s', \
                     srv_group='%s',     srv_backup='%d',        srv_update='%d' " % \
                     (tbdata[0],  tbdata[1],  tbdata[2],   tbdata[3],   tbdata[4],    tbdata[5],\
                      tbdata[6],  tbdata[7],  tbdata[8],   tbdata[9],   tbdata[10],   tbdata[11],\
-                     tbdata[12], tbdata[13], tbdata[14]);
+                     tbdata[12]);
+            except TypeError as error:                              # If Insert didn't work
+                self.enum=1
+                self.emsg=error                  # Get Error No. & Message
+                if  (not self.dbsilent):                            # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                return (1)                                            # return (1) to indicate Error
+            except ValueError as error:                              # If Insert didn't work
+                self.enum=1
+                self.emsg=error                  # Get Error No. & Message
+                if  (not self.dbsilent):                            # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                return (1)                                            # return (1) to indicate Error
+            except IndexError as error:                              # If Insert didn't work
+                self.enum=1
+                self.emsg=error                  # Get Error No. & Message
+                if  (not self.dbsilent):                            # If not in Silent Mode
+                    print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                return (1)                                            # return (1) to indicate Error
             if self.dbdebug > 5:                                    # Debug Higher than 5
                 print ("Insert SQL Command is \n%s " % sql);        # Print Insert SQL Statement
             try:
@@ -215,42 +269,24 @@ class dbtool:
                 self.enum, self.emsg = error.args                   # Get Error No. & Message
                 if  (not self.dbsilent):                            # If not in Silent Mode
                     print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return 1                                            # Return 1 to indicate Error
-            return 0
+                return (1)                                            # return (1) to indicate Error
+            return (0)
 
 
     # ----------------------------------------------------------------------------------------------
     # UPDATE ROW IN SELECTED TABLE -----------------------------------------------------------------
-    # Return 0 if no error - Return 1 if error encountered
+    # return (0) if no error - return (1) if error encountered
     # Example : cdata = ['Test','The BatCave Server',1,curdate,0]
     #           dbo.db_update('server_category',cdata,'Test')
     # ----------------------------------------------------------------------------------------------
     def db_update(self,tbname,tbdata,tbkey):
 
-        if self.dbdebug > 2:                                            # print row Info inserting
-            print("Update (Table=%s,Col=%d,Key=%s): %s" % (tbname,len(tbdata),tbkey,tbdata)) 
-
-        # Is the table name part of the Database ?
-        if tbname not in tablist:                                       # Part of Valid Table Name ?
-            print ("The table %s isn't part of the Database",(tbname))  # Inform User Invalid Table
-            return 1                                                    # Return Error to Caller
-
-        # Validate the number of fields for the tablename 
-        if (tbname == 'server_category' ) : nbColumn=sadm_cat_nb_field  # Cat Table Nb.Col.
-        if (tbname == 'server_group'  )   : nbColumn=sadm_grp_nb_field  # Grp Table Nb.Col.
-        if (tbname == 'server'  )         : nbColumn=sadm_srv_nb_field  # Srv Table Nb.Col.
-        if (nbColumn != len(tbdata)):                                   # Received Correct Nb Column
-            print ("ERROR : Wrong Nb. Column received (%d) for %s table",(len(tbdata),tbname))
-            print ("        The Table %s have %d columns" % (tbname,nbColumn))
-            return 1
-
-        # In Debug mode print columns received
-        if self.dbdebug > 4:                                            # Print All Columns Recv.
-            for x in range(len(tbdata)):                                # For each element of list
-                print ("Column [%s] = %s" % (x,tbdata[x]))              # Print Col. Nb & Content
+        self.db_valid ("update",tbname,tbkey,tbdata)                    # Validate Parameters Recv.
+        if (self.enum != 0) :                                           # If Error Found in Param.
+            print (self.emsg)                                           # Inform User
+            return (1)                                                  # Return Error to Caller
 
         # Update Row
-        #updateStatement = "UPDATE Employee set DepartmentCode = 102 where id=121"
         try: 
             if (tbname == 'server_category' ):
                 sql = "UPDATE server_category SET \
@@ -263,7 +299,8 @@ class dbtool:
                         where grp_code='%s' " % \
                         (tbdata[0],tbdata[1],tbdata[2],tbdata[3],tbdata[4],tbkey)
             if (tbname == 'server'  ):
-                sql = "UPDATE sadm_srv SET \
+                try: 
+                    sql = "UPDATE server SET \
                        srv_name='%s',      srv_domain='%s',        srv_desc='%s',  srv_notes='%s',\
                        srv_active='%d',    srv_creation_date='%s', srv_sporadic='%d',   \
                        srv_monitor='%d',   srv_tag='%s',           srv_cat='%s',        \
@@ -271,7 +308,26 @@ class dbtool:
                        where srv_name='%s' " % \
                        (tbdata[0],  tbdata[1],  tbdata[2],   tbdata[3],   tbdata[4],    tbdata[5],\
                         tbdata[6],  tbdata[7],  tbdata[8],   tbdata[9],   tbdata[10],   tbdata[11],\
-                        tbdata[12], tbdata[13], tbdata[14]);
+                        tbdata[12],tbkey);
+                except TypeError as error:                              # If Insert didn't work
+                    self.enum=1
+                    self.emsg=error                  # Get Error No. & Message
+                    if  (not self.dbsilent):                            # If not in Silent Mode
+                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                    return (1)                                            # return (1) to indicate Error
+                except ValueError as error:                              # If Insert didn't work
+                    self.enum=1
+                    self.emsg=error                  # Get Error No. & Message
+                    if  (not self.dbsilent):                            # If not in Silent Mode
+                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                    return (1)                                            # return (1) to indicate Error
+                except IndexError as error:                              # If Insert didn't work
+                    self.enum=1
+                    self.emsg=error                  # Get Error No. & Message
+                    if  (not self.dbsilent):                            # If not in Silent Mode
+                        print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
+                    return (1)                                            # return (1) to indicate Error
+
             self.cursor.execute(sql)
             self.conn.commit()   
         except pymysql.err.IntegrityError as error:             # If Insert didn't work
@@ -279,20 +335,20 @@ class dbtool:
             if  (not self.dbsilent):                            # If not in Silent Mode
                 print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
             self.conn.rollback()
-            return 1                                            # Return 1 to indicate Error            
+            return (1)                                            # return (1) to indicate Error            
         except Exception as error: 
             print (">>>>>>>>>>>>>",error)     # Print Error No. & Message
             self.enum, self.emsg = error.args                   # Get Error No. & Message
             if  (not self.dbsilent):                            # If not in Silent Mode
                 print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
             self.conn.rollback()
-            return 1           
-        return 0 
+            return (1)           
+        return (0) 
 
 
     # ----------------------------------------------------------------------------------------------
     # DELETE ROW IN SELECTED TABLE -----------------------------------------------------------------
-    # Return 0 if no error - Return 1 if error encountered
+    # return (0) if no error - return (1) if error encountered
     # Example : dbo.db_delete('server_category','Test')   
     # ----------------------------------------------------------------------------------------------
     def db_delete(self,tbname,tbkey):
@@ -302,17 +358,11 @@ class dbtool:
             :tbkey  is the primary key value to delete
             :return:
         """
-        self.enum = 0                                                   # Reset Error Number
-        self.emsg = ""                                                  # Reset Error Message
 
-        # In Debug mode print row we are inserting
-        if self.dbdebug > 2: 
-            print("Delete (Table=%s,Key=%s)" % (tbname,tbkey)) 
-
-        # Is the table name part of the Database, if not Error
-        if tbname not in tablist :
-            print ("The table %s is not part of the Database",(tbname))
-            return 1
+        self.db_valid ("delete",tbname,tbkey)                           # Validate Parameters Recv.
+        if (self.enum != 0) :                                           # If Error Found in Param.
+            print (self.emsg)                                           # Inform User
+            return (1)                                                  # Return Error to Caller
 
         try: 
             if (tbname == 'server_category' ):
@@ -334,13 +384,13 @@ class dbtool:
             self.enum, self.emsg = error.args                   # Get Error No. & Message
             if  (not self.dbsilent):                            # If not in Silent Mode
                 print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-            return (1)                                            # Return 1 to indicate Error
+            return (1)                                            # return (1) to indicate Error
         return (0)
 
             
     # ----------------------------------------------------------------------------------------------
     # READ ONE ROW OF THE SELECTED TABLE -----------------------------------------------------------
-    # Return 0 if no error - Return 1 if error encountered
+    # return (0) if no error - return (1) if error encountered
     # ----------------------------------------------------------------------------------------------
     def db_readkey(self, tbname, tbkey):
         """
@@ -349,17 +399,11 @@ class dbtool:
             :tbkey  is the primary key value to delete
             :return:
         """
-        self.enum = 0                                                   # Reset Error Number
-        self.emsg = ""                                                  # Reset Error Message
-        
-        # In Debug mode print row we are inserting
-        if self.dbdebug > 2: 
-            print("Read (Table=%s,Key=%s)" % (tbname,tbkey)) 
 
-        # Is the table name part of the Database, if not Error
-        if tbname not in tablist :
-            print ("The table %s is not part of the Database",(tbname))
-            return 1
+        self.db_valid ("readkey",tbname,tbkey)                          # Validate Parameters Recv.
+        if (self.enum != 0) :                                           # If Error Found in Param.
+            print (self.emsg)                                           # Inform User
+            return (1)                                                  # Return Error to Caller
 
         try: 
             if (tbname == 'server_category' ):
@@ -375,7 +419,7 @@ class dbtool:
             if (tbname == 'server_group'  ):
                 sql = 'SELECT * FROM ' + tbname + " WHERE grp_code='%s'" % (tbkey)
                 self.cursor.execute(sql)
-                dbrow = self.cur.fetchone()
+                dbrow = self.cursor.fetchone()
                 if (dbrow == None) :
                     self.enum=1 
                     self.emsg = "Row not Found for key '%s'" % (tbkey)
@@ -385,7 +429,7 @@ class dbtool:
             if (tbname == 'server'  ):
                 sql = 'SELECT * FROM ' + tbname + " WHERE srv_name='%s'" % (tbkey)
                 self.cursor.execute(sql)
-                dbrow = self.cur.fetchone()
+                dbrow = self.cursor.fetchone()
                 if (dbrow == None) :
                     self.enum=1 
                     self.emsg = "Row not Found for key '%s'" % (tbkey)
@@ -397,4 +441,4 @@ class dbtool:
             self.enum, self.emsg = error.args                   # Get Error No. & Message
             if  (not self.dbsilent):                            # If not in Silent Mode
                 print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-            return 1                                            # Return 1 to indicate Error
+            return (1)                                            # return (1) to indicate Error
