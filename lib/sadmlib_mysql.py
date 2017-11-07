@@ -34,7 +34,7 @@ import os, sys, pymysql, datetime
 #===================================================================================================
 conn               = ""                                                 # Database Connector
 cur                = ""                                                 # Database Cursor
-libver             = "1.2                                               # Default Program Version
+libver             = "1.2a"                                             # Default Program Version
 sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
 #
 
@@ -45,10 +45,10 @@ tablist = ["server_category","server_group","server"]                   # SADM T
 
 #NOTES
 #except Exception as error: 
-#except pymysql.err.DataError as error:             # If Read Row didn't work
+#except pymysql.err.DataError as error:             
 #except pymysql.err.ProgrammingError as error :
-#except pymysql.err.OperationnalError as error:             # If Read Row didn't work
-#except pymysql.err.IntegrityError as error:             # If Read Row didn't work
+#except pymysql.err.OperationnalError as error:            
+#except pymysql.err.IntegrityError as error:             
 
 
 #===================================================================================================
