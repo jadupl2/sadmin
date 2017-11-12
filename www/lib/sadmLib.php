@@ -2,7 +2,7 @@
 /*
 * ================================================================================================
 *   Author   :  Jacques Duplessis
-*   Title    :  sadm_lib.php
+*   Title    :  sadmlib.php
 *   Version  :  2.0
 *   Date     :  22 March 2016
 *   Requires :  php
@@ -20,6 +20,11 @@
 *
 *   You should have received a copy of the GNU General Public License along with this program.
 *   If not, see <http://www.gnu.org/licenses/>.
+* ================================================================================================
+*
+* V1.0 March 2017 - Initial Version
+* V2.0 Nov 2017 - Modification to align with MySQL instead of PostGres 
+*
 * ================================================================================================
 */
 

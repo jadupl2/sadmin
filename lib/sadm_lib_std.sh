@@ -1094,7 +1094,7 @@ sadm_start() {
     chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
-    if [ "$SADM_LOG_APPEND" = "N" ] ; then echo " " > $SADM_LOG ; fi
+    if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
     
     # If Return Code History Log doesn't exist, Create it and Make sure it have right permission
     [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG
@@ -1195,10 +1195,7 @@ sadm_stop() {
           ;;
     esac
 
-    if [ "$SADM_LOG_APPEND" = "N" ]
-       then sadm_writelog "No log Trim, New log every time ($SADM_LOG)" # No Trim New Log every time
-       else sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
-    fi
+    sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
     sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
     sadm_writelog "${SADM_FIFTY_DASH}"                                  # Write 80 Dash Line
     sadm_writelog " "                                                   # Blank Line
@@ -1207,10 +1204,8 @@ sadm_stop() {
     sadm_writelog " "                                                   # Blank Line
     
     # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
-    if [ "$SADM_LOG_APPEND" = "N" ]                                    # Log Not in Create Mode
-        then cat $SADM_LOG > /dev/null                                  # Force buffer to flush
-             sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"              # Trim file to Desired Nb.
-    fi
+    cat $SADM_LOG > /dev/null                                           # Force buffer to flush
+    sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
     chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
     

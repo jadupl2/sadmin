@@ -1,19 +1,22 @@
 <?php
-# V2.0 Now Switching from PostGres to SQLite3 (To Simplify installation and ease of use)
-
-
+# V2.1 - Nov 2017 - Switching from PostGres to MySQL
 
 # Setting the HOSTNAME Variable
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
-
 # SET SADMIN ROOT BASE DIRECTORY
-$TMPVAR = getenv('SADMIN');   
-if (strlen($TMPVAR) != 0 ) { 
-    define("SADM_BASE_DIR",$TMPVAR); 
-}else{
-    define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir 
-}         # Use Env. SADMIN Var Base
+$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
+if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
+    define("SADM_BASE_DIR",$TMPVAR);                                    # Set SADMIN_BASE_DIR to Env
+}else{                                                                  # If SADMIN Not Defined        
+    define("SADM_BASE_DIR", "/sadmin");                                 # Default SADM Root Base Dir 
+}  
+
+
+define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
+$TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable
+if (strlen($TMPVAR) != 0 ) { define("SADM_BASE_DIR",$TMPVAR); }         # Use Env. SADMIN Var Base
+
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script Root binary Dir.
@@ -26,7 +29,7 @@ define("SADM_DAT_DIR"      , SADM_BASE_DIR . "/dat");                   # Data d
 define("SADM_PG_DIR"       , SADM_BASE_DIR . "/pgsql");                 # PostGres DataBase Dir
 define("SADM_PKG_DIR"      , SADM_BASE_DIR . "/pkg");                   # Package rpm,deb  directory
 define("SADM_NMON_DIR"     , SADM_DAT_DIR  . "/nmon");                  # Where nmon file reside
-define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disaster Recovery  files 
+define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disaster Recovery  files
 define("SADM_SAR_DIR"      , SADM_DAT_DIR  . "/sar");                   # System Activty Report Dir
 define("SADM_RCH_DIR"      , SADM_DAT_DIR  . "/rch");                   # Result Code History Dir
 define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Network SubNet Info Dir
@@ -81,14 +84,14 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_PGGROUP")       { define("SADM_PGGROUP"       , trim($fvalue));}
           if (trim($fname) == "SADM_WWW_USER")      { define("SADM_WWW_USER"      , trim($fvalue));}
           if (trim($fname) == "SADM_WWW_GROUP")     { define("SADM_WWW_GROUP"     , trim($fvalue));}
-          if (trim($fname) == "SADM_RW_PGUSER")     { define("SADM_RW_PGUSER"     , trim($fvalue));}
-          if (trim($fname) == "SADM_RW_PGPWD")      { define("SADM_RW_PGPWD"      , trim($fvalue));}
-          if (trim($fname) == "SADM_RO_PGUSER")     { define("SADM_RO_PGUSER"     , trim($fvalue));}
-          if (trim($fname) == "SADM_RO_PGPWD")      { define("SADM_RO_PGPWD"      , trim($fvalue));}
-          if (trim($fname) == "SADM_PGDB")          { define("SADM_PGDB"          , trim($fvalue));}
+          if (trim($fname) == "SADM_RW_DBUSER")     { define("SADM_RW_DBUSER"     , trim($fvalue));}
+          if (trim($fname) == "SADM_RW_DBPWD")      { define("SADM_RW_DBPWD"      , trim($fvalue));}
+          if (trim($fname) == "SADM_RO_DBUSER")     { define("SADM_RO_DBUSER"     , trim($fvalue));}
+          if (trim($fname) == "SADM_RO_DBPWD")      { define("SADM_RO_DBPWD"      , trim($fvalue));}
+          if (trim($fname) == "SADM_DBNAME")        { define("SADM_DBNAME"        , trim($fvalue));}
           if (trim($fname) == "SADM_PGSCHEMA")      { define("SADM_PGSCHEMA"      , trim($fvalue));}
-          if (trim($fname) == "SADM_PGHOST")        { define("SADM_PGHOST"        , trim($fvalue));}
-          if (trim($fname) == "SADM_PGPORT")        { define("SADM_PGPORT"        , trim($fvalue));}
+          if (trim($fname) == "SADM_DBHOST")        { define("SADM_DBHOST"        , trim($fvalue));}
+          if (trim($fname) == "SADM_DBPORT")        { define("SADM_DBPORT"        , trim($fvalue));}
           if (trim($fname) == "SADM_MAX_LOGLINE")   { define("SADM_MAX_LOGLINE"   , trim($fvalue));}
           if (trim($fname) == "SADM_MAX_RCHLINE")   { define("SADM_MAX_RCHLINE"   , trim($fvalue));}
           if (trim($fname) == "SADM_NMON_KEEPDAYS") { define("SADM_NMON_KEEPDAYS" , trim($fvalue));}
@@ -99,7 +102,7 @@ if ($handle) {                                                          # If Suc
     fclose($handle);
 } else {
     echo "Error opening the file " . SADM_CFG_DIR . "/sadmin.cfg";
-} 
+}
 
 
 # GET THE SADMIN RELEASE NUMBER FORM THE .RELEASE FILE
@@ -108,7 +111,7 @@ if (file_exists($REL_FILE)) {                                           # If Rel
     $f = fopen($REL_FILE, 'r');                                         # Open Release FIle
     $release = fgets($f);                                               # Read Rel No. from File
     fclose($f);                                                         # Close .release file
-    define("SADM_VERSION" , trim($release));                            # Create Var. from Release 
+    define("SADM_VERSION" , trim($release));                            # Create Var. from Release
 }else{
     define("SADM_VERSION" , "00.00");                                   # Default if File Not Exist
     echo "Release file is missing " . $REL_FILE ;                       # Error Mess. - File Missing
@@ -120,18 +123,11 @@ if (file_exists($REL_FILE)) {                                           # If Rel
 set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
-# CREATE DATABASE CONNECTION STRING
-#$connString = "host=".SADM_PGHOST." dbname=".SADM_PGDB." user=".SADM_RW_PGUSER." password=".SADM_RW_PGPWD ;
-
-# CONNECT TO POSTGRESQL DATABASE
-#$connection = pg_connect($connString);
-#if (!$connection) { die("Database connection failed: " . mysql_error()); }
-
-# Connect to SQLite3 Database
-#    $sadmdb = new SQLite3(SADM_DB_FILE);
-#    if(!$sadmdb) {
-#        echo $sadmdb->lastErrorMsg();
-#        exit("Unable to open Database (SADM_DB_FILE)");
-#    }
-
+# Connect to MySQL DataBase
+$con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME);
+if (mysqli_connect_errno())                                             # Check if Error Connecting
+{
+  echo ">>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'<br/>";
+  echo ">>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
+}
 ?>
