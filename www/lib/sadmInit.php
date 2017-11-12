@@ -8,10 +8,12 @@ list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNA
 
 
 # SET SADMIN ROOT BASE DIRECTORY
-define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
-$TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable
-if (strlen($TMPVAR) != 0 ) { define("SADM_BASE_DIR",$TMPVAR); }         # Use Env. SADMIN Var Base
-
+$TMPVAR = getenv('SADMIN');   
+if (strlen($TMPVAR) != 0 ) { 
+    define("SADM_BASE_DIR",$TMPVAR); 
+}else{
+    define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir 
+}         # Use Env. SADMIN Var Base
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script Root binary Dir.
