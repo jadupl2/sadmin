@@ -24,26 +24,35 @@
 #
 # 1.9 - March 2017 - Jacques Duplessis
 #       Add lot of comments in code and enhance code performance 
+# November 2017 - Jacques Duplessis
+#       V2.0 Modify to use MySQL instead of PostGres
 # ==================================================================================================
 #
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_category_common.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+echo "<body>";
+echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
+echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left               
 
 
+
+#
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$DEBUG = False;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$mysqli= "";
 
 
 
 # ==================================================================================================
 #              THIS IS THE SECOND EXECUTION OF PAGE AFTER THE UPDATE BUTTON IS PRESS
 # ==================================================================================================
-
     # Form is submitted - Process the Update of the selected row
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Post Submitted for " . sadm_clean_data($_POST['scr_code']); }
@@ -51,28 +60,28 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 
         # If Default Category is True, Check if there is already a default category, Can't have two
         if ($_POST['scr_default']) {
-            $sql = "SELECT cat_code, cat_default FROM sadm.category ";  # Construct SQL Statement
+            $sql = "SELECT cat_code, cat_default FROM server_category ";  # Construct SQL Statement
             $sql = $sql . "WHERE cat_default = '" . $_POST['scr_default'] . "'; ";
             if ($DEBUG) {                                               # Under Debug
                 echo "<br>Checking if Category Default already exist."; # Display what were doing
                 echo "\nSQL Command = $sql";                            # Display SQL to Check Def.
             }
-            $result = pg_query($sql) ;                                  # Perform the SQL Query
-            $count = pg_num_rows($result);                              # Get Nb Default Category
-            $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;         # Read the Associated row
+            $result = mysqli_query($con,$sql);
+            $count = mysqli_num_rows($result);                          # Nb. of Row with Category
+            $row = mysqli_fetch_assoc($result);
             if (($count > 0) and ($row['cat_code'] != $_POST['scr_code'])) {  # If Already Default Cat.
                 $err_msg = "ERROR: Only one category can be the default."; 
                 $err_msg = $err_msg . "\nCategory '" . $row['cat_code'] . "' is the default now.";
                 $err_msg = $err_msg . "\nRemove default from '" . $row['cat_code'] . "' first.";
                 sadm_alert($err_msg);                                   # Display Abort Delete Msg.
-                pg_free_result($result);                                # Frees memory & date result
-                ?> <script>location.replace("/crud/sadm_category_main.php");</script><?php 
+                mysqli_free_result($result);                            # Clear Result Set
+                ?> <script>location.replace("/crud/cat/sadm_category_main.php");</script><?php 
                 exit;            
             }
         }
 
         # Construct SQL to Update row
-        $sql = "UPDATE sadm.category SET ";
+        $sql = "UPDATE server category SET ";
         $sql = $sql . "cat_code = '"        . sadm_clean_data($_POST['scr_code'])       ."', ";
         $sql = $sql . "cat_desc = '"        . sadm_clean_data($_POST['scr_desc'])       ."', ";
         $sql = $sql . "cat_default = '"     . sadm_clean_data($_POST['scr_default'])    ."', ";
@@ -81,7 +90,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
         # Execute the Row Update SQL
-        $row = pg_query($sql) ;                                         # Perform the SQL Query
+        $row = mysqli_query($con,$sql);
         if (!$row){                                                     # If Update didn't work
             $err_msg = "ERROR : Row wasn't updated\n";                  # Error Message Part 1
             $err_msg = $err_msg . pg_last_error() . "\n";               # Error Message Part 2
@@ -90,10 +99,10 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         }else{                                                          # Update done with success
             sadm_alert ("Category '".$_POST['scr_code']."' updated.");  # Advise user of success
         }
-        pg_free_result($row);                                           # Frees memory and data 
-
+        mysqli_free_result($result);                                        # Free result set 
+        
         # Back to Category List Page
-        ?> <script> location.replace("/crud/sadm_category_main.php"); </script><?php
+        ?> <script> location.replace("/crud/cat/sadm_category_main.php"); </script><?php
         exit;
     }
 
@@ -101,48 +110,57 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 # ==================================================================================================
 #              THIS IS INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
 # ==================================================================================================
-    
-    # Check if the Key Received exist in the Database and retrieve the row Data
-    if ($DEBUG) { echo "<br>Post isn't Submitted"; }                    # Display Debug Information    
-    if (isset($_GET['sel'])) {                                          # If row selection Receive
-        $wkey = $_GET['sel'];                                           # Save Sel. to Work Key
-        if ($DEBUG) { echo "<br>Key received is " . $wkey; }            # Under Debug Show Key Rcv.
-        $query = "SELECT * FROM sadm.category WHERE cat_code = '" . $wkey . "' ;";  # Construct SQL
-        if ($DEBUG) { echo "<br>SQL = $query"; }                        # In Debug display SQL Stat.   
-        $result = pg_query($query);                                     # Execute SQL to Read Row
-        if (!$result) {                                                 # If row wasn't found
-            $err_msg = "ERROR : Category wasn't found in Database\n";   # Row was not found Msg.
-            $err_msg = $err_msg . pg_last_error() . "\n";               # Add PostGres Err. Msg 
-            if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $query ; }
-            sadm_alert ($err_msg) ;                                     # Display Error Msg Box
-            exit;
-        }else{                                                          # If row was found
-            $row = pg_fetch_array($result, null, PGSQL_ASSOC) ;         # Read the Associated row
-        }
-    }else{                                                              # If no selection (Key) Recv
-        $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
-        sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        ?><script>location.replace("/crud/sadm_category_main.php");</script><?php # Back 2 List Page
-        exit ;
-    }
-    $title = "Update a Category" ;                                      # Page Heading Title
-    sadm_page_heading ("$title");                                       # Display Page Heading  
+echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
 
-    # Start of Form - Display Form Ready to Update Data
-    echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_cat_form( $row , "Update");                                 # Display Form Default Value
+# Check if the Key Received exist in the Database and retrieve the row Data
+if ($DEBUG) { echo "<br>Post isn't Submitted"; }                    # Display Debug Information    
+if (isset($_GET['sel'])) {                                          # If row selection Receive
+    $wkey = $_GET['sel'];                                           # Save Sel. to Work Key
+    if ($DEBUG) { echo "<br>Key received is " . $wkey; }            # Under Debug Show Key Rcv.
+    $sql = "SELECT * FROM server_category WHERE cat_code = '" . $wkey . "'";  # Construct SQL
+    if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug display SQL Stat.   
+
+    $result = mysqli_query($con,$sql);
+    if (!$result) {                                                 # If row wasn't found
+        $err_msg = "Category (" . $wkey . ") not found in Database\n";   # Row was not found Msg.
+        $err_msg = $err_msg . "Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error();
+        sadm_alert ($err_msg) ;                                     # Display Error Msg Box
+        exit;
+    }else{                                                          # If row was found
+        $row = mysqli_fetch_assoc($result);                         # Read the Associated row
+    }
+}else{                                                              # If no selection (Key) Recv
+    $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
+    sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
+    ?><script>location.replace("/crud/cat/sadm_category_main.php");</script><?php # Back 2 List Page
+    exit ;
+}
+$title = "Update a Category" ;                                      # Page Heading Title
+display_cat_heading ("$title");                                       # Display Page Heading  
+
+# Start of Form - Display Form Ready to Update Data
+echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
+display_cat_form( $row , "Update");                                 # Display Form Default Value
     
-    # Set the Submitted Flag On - We are done with the Form Data
-    echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
+# Set the Submitted Flag On - We are done with the Form Data
+echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
-    # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "<center>";                                                    # Center Button on Page
-    echo "<button type='submit' class='btn btn-sm btn-primary'> Update </button>   ";
-    echo "<a href='/crud/sadm_category_main.php'>";
-    echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
-    echo "</center>";
+# Display Buttons (Update/Cancel) at the bottom of the form
+echo "<center>";                                                    # Center Button on Page
+echo "<button type='submit' class='btn btn-sm btn-primary'> Update </button>   ";
+echo "<a href='/crud/cat/sadm_category_main.php'>";
+echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
+echo "</center>";
     
-    # End of Form
-    echo "</form>";                                                     
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
+# End of Form
+echo "</form>";                                                     
+ 
+mysqli_free_result($result);                                        # Free result set 
+mysqli_close($con);                                                 # Close Database Connection
+echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+echo "</div> <!-- End of CatTable          -->" ;                   # End Of CatTable Div
+echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
+echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
+include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
+echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
 ?>

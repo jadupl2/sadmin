@@ -24,20 +24,29 @@
 #
 # 1.9 - March 2017 - Jacques Duplessis
 #       Add lot of comments in code and enhance code performance 
+# 2.0 - November 2017 - Jacques Duplessis
+#       Modify to use MySQL instead of PostGres
 # ==================================================================================================
 #
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/sadm_category_common.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+echo "<body>";
+echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
+echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left               
 
 
+
+#
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
-
+$DEBUG = False;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$mysqli= "";
 
 
 # ==================================================================================================
@@ -70,7 +79,7 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
         pg_free_result($row);                                           # Frees memory and data 
 
         # Back to Category List Page
-        ?> <script> location.replace("/crud/sadm_category_main.php"); </script><?php
+        ?> <script> location.replace("/crud/cat/sadm_category_main.php"); </script><?php
         exit;
     }
     
@@ -92,11 +101,20 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
     # Display Buttons (Create/Cancel) at the bottom of the form
     echo "<center>";
     echo "<button type='submit' class='btn btn-sm btn-primary'> Create </button>   ";
-    echo "<a href='/crud/sadm_category_main.php'>";
+    echo "<a href='/crud/cat/sadm_category_main.php'>";
     echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
     echo "</center>";
     
     # End of Form
     echo "</form>"; 
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
+
+
+    mysqli_free_result($result);                                        # Free result set 
+    mysqli_close($con);                                                 # Close Database Connection
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "</div> <!-- End of CatTable          -->" ;                   # End Of CatTable Div
+    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
+    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
+    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
+    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
 ?>

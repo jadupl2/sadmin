@@ -23,7 +23,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # -----
 #   Version 2.0 - October 2017 
-#       - Replace PostGres Database with SQLite3 include by default with Python (Ease User Install)
+#       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 # -----
 #
@@ -46,7 +46,11 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>
     } );
 </script>
 <?php
-                
+     echo "<body>";
+     echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
+     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
+     echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
+     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left               
 
 
 #
@@ -55,9 +59,9 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>
 #===================================================================================================
 #
 $DEBUG = False;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
-$sadmdb= "";
+$mysqli= "";
 
-
+ 
 
 
 #===================================================================================================
@@ -89,7 +93,7 @@ function display_page_heading($prv_page, $line_title) {
         echo "\n<div style='clear: both;'> </div>";                     # Clear Move Down Now
     echo "\n</div>";
     echo "\n<br>";
-    
+        
     # Table creation
     echo "<div id='CatTable'>";                                         # Width Given to Table
     echo '<table id="sadmTable" class="display" cell-border compact row-border nowrap width="100%">';   
@@ -97,8 +101,9 @@ function display_page_heading($prv_page, $line_title) {
     # Page Table Heading
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th dt-right>Category</th>";                                # Right Align Header & Body
+    echo "\n<th dt-head-left>Category</th>";                            # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
+    echo "\n<th dt-head-center>Last Update</th>";                       # Center Header Only
     echo "\n<th dt-center>Nb. Server using it</th>";                    # Center Header & Body
     echo "\n<th>Default Category</th>";
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
@@ -110,11 +115,12 @@ function display_page_heading($prv_page, $line_title) {
     # Page Table Footer
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th>Category</th>";
-    echo "\n<th>Description</th>";
-    echo "\n<th>Nb. Server using it</th>";
+    echo "\n<th dt-head-left>Category</th>";                            # Left Align Header & Body
+    echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
+    echo "\n<th dt-head-center>Last Update</th>";                       # Center Header Only
+    echo "\n<th dt-center>Nb. Server using it</th>";                    # Center Header & Body
     echo "\n<th>Default Category</th>";
-    echo "\n<th>Status</th>";
+    echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th>Update</th>";
     echo "\n<th>Delete</th>";
     echo "\n</tr>";
@@ -124,18 +130,22 @@ function display_page_heading($prv_page, $line_title) {
 
 
 #===================================================================================================
-#                     Display Main Page Data from the row received in parameter
+#                       Display Row detail received in parameter
 #===================================================================================================
-function display_data($sadmdb, $count, $row) {
+function display_data($con,$row) {
     echo "\n<tr>";
     echo "\n<td>"  . $row['cat_code'] . "</td>";                        # Display Category Code
     echo "\n<td dt-nowrap>"  . $row['cat_desc'] . "</td>";              # Display Description
-
+    $wdate = explode(" ",$row['cat_date']);                             # Split Date & Time
+    echo "\n<td style='text-align: center'>" . $wdate[0] . "</td>";     # Row Last Update Date
+    
     # Display the number of servers using that category
-    $sql = "SELECT COUNT(*) as count FROM sadm_srv WHERE srv_cat='" . $row['cat_code'] . "' ;";
-    $cresult = $sadmdb->query($sql);                                    # Execute the Query
-    $crow = $cresult->fetchArray();                                     # Fetch Result
-    $count = $crow['count'];                                            # Get Nb Row Returned
+    $sql = "SELECT * FROM server WHERE srv_cat='" . $row['cat_code'] . "' ;";
+    $count = 0 ;                                                        # Reset Category counter
+    if ($cresult = mysqli_query($con,$sql)) {
+        $count = mysqli_num_rows($cresult);                             # Nb. of Row with Category
+        mysqli_free_result($cresult);                                   # Clear Result Set
+    }
     echo "\n<td style='text-align: center'>" ;                          # Start of Cell
     if ($count > 0) {                                                   # If at least one server
         echo "\n<a href=/sadmin/sadm_view_servers.php?selection=cat&value="; # Display Server Using
@@ -159,59 +169,46 @@ function display_data($sadmdb, $count, $row) {
     }
 
     # Display the Update Button
-    echo "\n<td style='text-align: center'>";
+    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
     echo "\n<a href=/crud/cat/sadm_category_update.php?sel=" . $row['cat_code'] .">";
-    echo "\n<button type='button'>Update</button></a>";
+    echo "\n<button type='button'>Update</button></a>";                 # Display Update Button
     echo "\n</td>";
 
     # Display Delete Button (If not the default Category)
-    echo "\n<td style='text-align: center'>";
+    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
     if ($row['cat_default'] != TRUE) {
         echo "\n<a href=/crud/cat/sadm_category_delete.php?sel=" . $row['cat_code'] .">";
-        echo "\n<button type='button'>Delete</button></a>";
+        echo "\n<button type='button'>Delete</button></a>";             # Display Delete Button
     }else{
-        echo "<img src='/images/nodelete.png' style='width:24px;height:24px;'>\n";
+        echo "<img src='/images/nodelete.png' style='width:24px;height:24px;'>\n"; # Show X Button
     }
-    echo "\n</td>\n</tr>\n";
+    echo "\n</td>\n</tr>\n";                                            # End of Table Line
 }
 
 
-
-
-
-
-#
 # ==================================================================================================
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "<body>";
-    echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-    echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left
-    $sadmdb = new SQLite3(SADM_DB_FILE) or die("Cannot Open Database"); # Open SADM Database
-    $sadmdb->enableExceptions(true);
-    #$sadmdb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);   # Tell PDO 2 throw exception 
-    #$sadmdb->setAttribute(PDO::ATTR_CASE,    PDO::CASE_NATURAL);        # Leave col.name as returned 
     echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
     display_page_heading("home","Category Maintenance");                # Display Content Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     
     # Loop Through Retreived Data and Display each Row
-    $sql = "SELECT * FROM sadm_cat ";                                   # Construct SQL Statement
-    $result = $sadmdb->query($sql) or die('Select Category failed');    # Select All rows in table
-    $count=0;                                                           # Reset Line Counter
-    while ($row = $result->fetchArray()) {                              # Gather Result from Query
-        $count+=1;                                                      # Incr Line Counter
-        display_data($sadmdb, $count, $row);                            # Display Next Server
-        #print_r ($row) ;
-        #var_dump ($row) ;
+    $sql = "SELECT * FROM server_category ";                            # Construct SQL Statement
+    if ($result = mysqli_query($con,$sql)) {                            # If Results to Display
+        while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
+            display_data($con,$row);                                # Display Next Server
+                #print_r ($row) ;
+                #var_dump ($row) ;
+        }
     }
-    $sadmdb->close();                                                   # Close DAtabase
+    
+    mysqli_free_result($result);                                        # Free result set 
+    mysqli_close($con);                                                 # Close Database Connection
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of CatTable          -->" ;                   # End Of CatTable Div
-    echo "</div> <!-- End of sadmLeftColumn    -->" ;                   # End of Left Content Page       
+    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
     echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
     echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page

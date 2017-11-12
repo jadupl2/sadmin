@@ -274,3 +274,34 @@ tr:nth-child(odd) { background:#E2E4FF; }
 }
 
 
+
+/* ---------------------------------------------------------------------------------------------- */
+/*          THIS SECTION IS USED FOR MAINTAINING AND VIEWING THE CATEGORY TABLE                   */
+/*             Used by sadm_category_*.php and sadm_view_category.php Web Pages                   */
+/* ---------------------------------------------------------------------------------------------- */
+/*
+/* ===== FORM ATTRIBUTE ===== */
+.cat_form {
+    font-family: Verdana, Geneva, sans-serif;
+    background-color: #C8DBBE;
+    color: black;
+    width: 50%;
+    margin-top: 5%;
+    margin-left: auto;
+    margin-right: auto;
+    border: 2px solid #000000;
+    font-size: 12px;
+    text-align: left;
+    padding: 2%;
+}
+/* ===== FORM LABEL ===== */
+.cat_label {
+    float : left;
+    width : 200px;
+
+}
+/* ===== FORM INPUT ===== */
+.cat_input {
+    margin-bottom: 8px;
+    color : black;
+}
