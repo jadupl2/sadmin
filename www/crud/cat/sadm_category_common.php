@@ -149,7 +149,20 @@ function display_cat_form ( $wrow , $mode) {
     echo "</div>";      # << End of cat_input
     echo "</div>";      # << End of cat_default
 
+   # Last Update Date 
+   echo "<div class='cat_date'>";
+        echo "<div class='cat_label'>Last Update Date</div>"; 
+        $wdate = explode(" ",$row['cat_date']);                             # Split Date & Time
+        $scr_date = $wdate[0];
+        echo "<div class='cat_input'>"; 
+        echo sadm_clean_data($wrow['scr_date']);
+#        echo "<input type='text' name='scr_date' readonly 
+#                maxlength='12' size='15' value='" . sadm_clean_data($wrow['scr_date']). "'/>\n";
+        echo "</div>";      # << End of cat_input
+   echo "</div>";      # << End of cat_date
 
+
+    echo "<br>";
     echo "</div>";      # << End of cat_form
     echo "<br>";
 }

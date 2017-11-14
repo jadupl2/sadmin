@@ -86,6 +86,7 @@ $mysqli= "";
         $sql = $sql . "cat_desc = '"        . sadm_clean_data($_POST['scr_desc'])       ."', ";
         $sql = $sql . "cat_default = '"     . sadm_clean_data($_POST['scr_default'])    ."', ";
         $sql = $sql . "cat_status = '"      . sadm_clean_data($_POST['scr_status'])     ."'  ";
+        $sql = $sql . "cat_date = '"        . date( "Y-m-d H:i:s",mktime(0, 0, 0))      ."'  ";
         $sql = $sql . "WHERE cat_code = '"  . sadm_clean_data($_POST['scr_code'])       ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
@@ -93,7 +94,7 @@ $mysqli= "";
         $row = mysqli_query($con,$sql);
         if (!$row){                                                     # If Update didn't work
             $err_msg = "ERROR : Row wasn't updated\n";                  # Error Message Part 1
-            $err_msg = $err_msg . pg_last_error() . "\n";               # Error Message Part 2
+            $err_msg = $err_msg . "(" . mysqli_connect_errno() . ") " . mysqli_connect_error() ."\n";
             if ($DEBUG) { $err_msg = $err_msg . "\nProblem with Command :" . $sql ; }
             sadm_alert ($err_msg) ;                                     # Msg. Error Box for User
         }else{                                                          # Update done with success
