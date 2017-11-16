@@ -42,7 +42,7 @@ $URL_HOME   = '/index.php';                                             # Site M
 
 
 #===================================================================================================
-# DISPLAY TWO FIRST HEADING LINES OF PAGE AND SETUP TABLE HEADING AND FOOTER
+# DISPLAY TWO FIRST HEADING LINES OF PAGE 
 #===================================================================================================
 function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
     global $URL_CREATE, $URL_HOME, $SVER;
@@ -107,8 +107,7 @@ function display_cat_form ($wrow,$mode) {
     echo "\n<div class='cat_label'>Category Description</div>"; 
     echo "\n<div class='cat_input'>"; 
     if ($smode == 'DISPLAY') {
-       echo "<input type='text' name='scr_desc' ";
-       echo " readonly placeholder='Enter Category Desc.' ";
+       echo "<input type='text' name='scr_desc' readonly ";
        echo " maxlength='25' size='27' ";
        echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
     }else{
@@ -127,14 +126,14 @@ function display_cat_form ($wrow,$mode) {
     if ($smode == 'DISPLAY') {                                          # Only Display / No Change
        if ($wrow['cat_active'] == 1) {                                  # If Category is Active
           echo "<input type='radio' name='scr_active' value='1' ";      # 1=Active in scr_active
-          echo "onclick='javascript: return 0;' checked> Active  \n";   # And select Active Option
+          echo "onclick='javascript: return false;' checked> Active\n"; # And select Active Option
           echo "<input type='radio' name='scr_active' value='0' ";      # 0=Inactive to scr_active
-          echo "onclick='javascript: return 0;'> Inactive\n";           # Show Inactive Unselected
+          echo "onclick='javascript: return false;'> Inactive\n";       # Show Inactive Unselected
        }else{                                               
           echo "<input type='radio' name='scr_active' value='1' ";      # If Category is Inactive
-          echo "onclick='javascript: return 0;'> Active  \n";           # 0=Inactive to scr_active
+          echo "onclick='javascript: return false;'> Active  \n";       # 0=Inactive to scr_active
           echo "<input type='radio' name='scr_active' value='0' ";      # 1=Active in scr_active
-          echo "onclick='javascript: return 0;' checked > Inactive\n";  # select Inactive Option
+          echo "onclick='javascript: return false;' checked >Inactive"; # select Inactive Option
        }
     }else{                                                              # In Create/Update Mode
        if ($wrow['cat_active'] == 1) {                                  # If Category is Active
@@ -159,14 +158,14 @@ function display_cat_form ($wrow,$mode) {
     if ($smode == 'DISPLAY') {
         if ($wrow['cat_default'] == '1') {
            echo "<input type='radio' name='scr_default' value='1' ";
-           echo " onclick='javascript: return 0;' checked>Yes \n";
+           echo " onclick='javascript: return false;' checked>Yes \n";
            echo "<input type='radio' name='scr_default' value='0' ";
-           echo " onclick='javascript: return 0;'> No\n";
+           echo " onclick='javascript: return false;'> No\n";
         }else{
            echo "<input type='radio' name='scr_default' value='1' ";
-           echo " onclick='javascript: return 0;'> Yes  \n";
+           echo " onclick='javascript: return false;'> Yes  \n";
            echo "<input type='radio' name='scr_default' value='0' ";
-           echo " onclick='javascript: return 0;' checked > No\n";
+           echo " onclick='javascript: return false;' checked > No\n";
         }
     }else{
         if ($wrow['cat_default'] == '1') {
@@ -189,10 +188,5 @@ function display_cat_form ($wrow,$mode) {
     echo sadm_clean_data($wrow['cat_date']);
     echo "</div>";
 
-
-    echo "<br>";
-    echo "</div>";      # << End of cat_form
-    echo "<br>";
+    echo "<br></div><br>";
 }
-
-

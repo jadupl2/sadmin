@@ -76,9 +76,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
             $count = mysqli_num_rows($result);                          # Count Cat that are Default
             $row = mysqli_fetch_assoc($result);                         # Read Cat. That is default 
             if (($count > 0) and ($row['cat_code'] != $_POST['scr_code'])) {  # Already a default ?
-                $err_msg = "Only one category can be the default.";     # Create User Err. Message
-                $err_msg = $err_msg . "\nCategory '" . $row['cat_code'] . "' is the default now.";
-                $err_msg = $err_msg . "\nRemove default from '" . $row['cat_code'] . "' first.";
+                $err_msg1  = "Only one category can be the default.\n"; # Create User Err. Message
+                $err_msg2a = "Current Default Category is '" ;          # Display the Curremt
+                $err_msg2b =  $row['cat_code'] . "' \n";                # Default Category 
+                $err_msg3a = "Remove default from '". $row['cat_code']; # Advise User what to do
+                $err_msg3b = "' category first.";                       # Del. Default from this one
+                $err_msg   = $err_msg1 . $err_msg2a . $err_msg2b . $err_msg3a . $err_msg3b;
                 sadm_alert($err_msg);                                   # Display Abort Delete Msg.
                 mysqli_free_result($result);                            # Clear Result Set
                 ?> <script>location.replace("/crud/cat/sadm_category_main.php");</script><?php 
@@ -150,7 +153,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_page_heading("home","Update Category",$CREATE_BUTTON);      # Display Content Heading
+    display_page_heading("back","Update Category",$CREATE_BUTTON);      # Display Content Heading
     
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_cat_form($row,"Update");                                    # Display Form Default Value
@@ -168,8 +171,6 @@ $CREATE_BUTTON = False ;                                                # Don't 
  
     mysqli_free_result($result);                                        # Free result set 
     mysqli_close($con);                                                 # Close Database Connection
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
-    echo "</div> <!-- End of CatTable          -->" ;                   # End Of CatTable Div
     echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
     echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
