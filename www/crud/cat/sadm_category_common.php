@@ -21,24 +21,30 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
+# ChangeLog
+#   2017_11_15 - Jacques Duplessis
+#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #
+# ==================================================================================================
  
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$SVER  = 2.0 ;                                                          # Current version number
+$DEBUG = False;                                                         # Debug Activated True/False
 
-// ================================================================================================
-//                      DISPLAY CATEGORY MAINTENANCE HEADING
-// ================================================================================================
-function display_cat_heading($title){
+
+# ==================================================================================================
+#                          DISPLAY CATEGORY MAINTENANCE HEADING
+# ==================================================================================================
+function display_cat_heading($title,$sver){
 
     # Display Right Section Page Heading
     echo "\n<div>";
         # Display Page Name at the top left of the first heading line
-        echo "\n<div style='float: left;'>${title}</div>" ;        # Page Title
+        echo "\n<div style='float: left;'>${title} " . "$sver" . "</div>" ;        # Page Title
 
         # Display Today's Date at the far right of the first heading line 
         echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>"; # Date
@@ -68,7 +74,7 @@ function display_cat_form ( $wrow , $mode) {
     echo "<div class='cat_form'>";                                      # Start Category Form Div
 
     # Category Code
-    echo "<div class='cat_code'>";                                      # >Start Div For Cat. Code
+    #echo "<div class='cat_code'>";                                      # >Start Div For Cat. Code
     echo "<div class='cat_label'>Category Code</div>";                  # <End of Div For Code Label
     echo "<div class='cat_input'>"; 
     if ($mode == 'Create') {
@@ -79,11 +85,11 @@ function display_cat_form ( $wrow , $mode) {
              value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
     }
     echo "</div>";  # << End of cat_input
-    echo "</div>";  # << End of cat_code
+    #echo "</div>";  # << End of cat_code
     
     
     # Category Description    
-    echo "<div class='cat_desc'>";
+    #echo "<div class='cat_desc'>";
     echo "<div class='cat_label'>Category Description</div>"; 
     echo "<div class='cat_input'>"; 
     if ($mode == 'Display') {
@@ -94,51 +100,51 @@ function display_cat_form ( $wrow , $mode) {
              maxlength='25' size='27' value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
     }
     echo "</div>";      # << End of cat_input
-    echo "</div>";      # << End of cat_desc
+    #echo "</div>";      # << End of cat_desc
 
  
     
-    # Category Status
-    echo "<div class='cat_status'>";
+    # Category Active ?
+    #echo "<div class='cat_active'>";
     echo "  <div class='cat_label'>Category Status</div>"; 
     echo "<div class='cat_input'>"; 
-    if ($mode == 'Create') { $wrow['cat_status'] = True ; } 
+    if ($mode == 'Create') { $wrow['cat_active'] = True ; } 
     if ($mode == 'Display') {
-       if ($wrow['cat_status'] == 't') {
-          echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;' checked> Active  \n";
-          echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;'> Inactive\n";
+       if ($wrow['cat_active'] == 1) {
+          echo "<input type='radio' name='scr_active' value='1' onclick='javascript: return 0;' checked> Active  \n";
+          echo "<input type='radio' name='scr_active' value='0' onclick='javascript: return 0;'> Inactive\n";
        }else{
-          echo "<input type='radio' name='scr_status' value='1' onclick='javascript: return false;'> Active  \n";
-          echo "<input type='radio' name='scr_status' value='0' onclick='javascript: return false;' checked > Inactive\n";
+          echo "<input type='radio' name='scr_active' value='1' onclick='javascript: return 0;'> Active  \n";
+          echo "<input type='radio' name='scr_active' value='0' onclick='javascript: return 0;' checked > Inactive\n";
        }
     }else{
-       if ($wrow['cat_status'] == 't') {
-          echo "<input type='radio' name='scr_status' value='1' checked > Active  \n";
-          echo "<input type='radio' name='scr_status' value='0'> Inactive\n";
+       if ($wrow['cat_active'] == 1) {
+          echo "<input type='radio' name='scr_active' value='1' checked > Active  \n";
+          echo "<input type='radio' name='scr_active' value='0'> Inactive\n";
        }else{
-          echo "<input type='radio' name='scr_status' value='1'> Active\n";
-          echo "<input type='radio' name='scr_status' value='0' checked > Inactive\n";
+          echo "<input type='radio' name='scr_active' value='1'> Active\n";
+          echo "<input type='radio' name='scr_active' value='0' checked > Inactive\n";
        }
     }
     echo "</div>";      # << End of cat_input
-    echo "</div>";      # << End of cat_status   
+    #echo "</div>";      # << End of cat_active   
 
    
     # Default Category (Yes/No)
-    echo "<div class='cat_default'>";
+    #echo "<div class='cat_default'>";
     echo "<div class='cat_label'>Default Category</div>"; 
     echo "<div class='cat_input'>"; 
     if ($mode == 'Create') { $wrow['cat_default'] = False ; } 
     if ($mode == 'Display') {
-        if ($wrow['cat_default'] == 't') {
-           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return false;' checked>Yes \n";
-           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return false;'> No\n";
+        if ($wrow['cat_default'] == '1') {
+           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return 0;' checked>Yes \n";
+           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return 0;'> No\n";
         }else{
-           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return false;'> Yes  \n";
-           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return false;' checked > No\n";
+           echo "<input type='radio' name='scr_default' value='1' onclick='javascript: return 0;'> Yes  \n";
+           echo "<input type='radio' name='scr_default' value='0' onclick='javascript: return 0;' checked > No\n";
         }
     }else{
-        if ($wrow['cat_default'] == 't') {
+        if ($wrow['cat_default'] == '1') {
            echo "<input type='radio' name='scr_default' value='1' checked> Yes \n";
            echo "<input type='radio' name='scr_default' value='0'> No\n";
         }else{
@@ -147,19 +153,17 @@ function display_cat_form ( $wrow , $mode) {
         }
     }
     echo "</div>";      # << End of cat_input
-    echo "</div>";      # << End of cat_default
+    #echo "</div>";      # << End of cat_default
 
    # Last Update Date 
    echo "<div class='cat_date'>";
         echo "<div class='cat_label'>Last Update Date</div>"; 
-        $wdate = explode(" ",$row['cat_date']);                             # Split Date & Time
-        $scr_date = $wdate[0];
+        #$wdate = explode(" ",$row['cat_date']);                         # Split Date & Time
+        #$scr_date = $wdate[0];                                          # Save Last Update Date
         echo "<div class='cat_input'>"; 
-        echo sadm_clean_data($wrow['scr_date']);
-#        echo "<input type='text' name='scr_date' readonly 
-#                maxlength='12' size='15' value='" . sadm_clean_data($wrow['scr_date']). "'/>\n";
-        echo "</div>";      # << End of cat_input
-   echo "</div>";      # << End of cat_date
+        echo sadm_clean_data($wrow['cat_date']);
+        echo "</div>";                                                  # << End of cat_input
+   echo "</div>";                                                       # << End of cat_date
 
 
     echo "<br>";
