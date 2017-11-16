@@ -5,7 +5,7 @@
 #   Title       :  sadm_category_create.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
-#   Requires    :  php - BootStrap - PostGresSql
+#   Requires    :  php - MySQL
 #   Description :  Web Page used to create a new server category.
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -21,32 +21,40 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
+# ChangeLog
+#   2017_03_09 - Jacques Duplessis
+#       V1.9 Add lot of comments in code and enhance code performance 
+#   2017_11_15 - Jacques Duplessis
+#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #
-# 1.9 - March 2017 - Jacques Duplessis
-#       Add lot of comments in code and enhance code performance 
-# 2.0 - November 2017 - Jacques Duplessis
-#       Modify to use MySQL instead of PostGres
 # ==================================================================================================
 #
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
-echo "<body>";
-echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left               
+echo "<body>";                                                          # Begin HTML body Section
+echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
+echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
+echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
 
 
 
-#
+
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
-$mysqli= "";
+$DEBUG = False ;                                                        # Debug Activated True/False
+$SVER  = "2.0" ;                                                        # Current version number
+$URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
+$URL_HOME   = '/index.php';                                             # Site Main Page
+$CREATE_BUTTON = False ;                                                # Don't Show Create Button
+
+
 
 
 # ==================================================================================================
@@ -88,7 +96,9 @@ $mysqli= "";
 #              THIS IS INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
 # ==================================================================================================
     
-    $title = "Create a Category" ;                                      # Page Heading Title
+    # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
+    display_page_heading("home","Create Category",$CREATE_BUTTON);      # Display Content Heading
+     $title = "Create a Category" ;                                      # Page Heading Title
     sadm_page_heading ("$title");                                       # Display Page Heading  
 
     # Start of Form - Display Form Ready to Accept Data

@@ -29,11 +29,12 @@
 #
 # ==================================================================================================
 #
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
-echo "<body>";
+echo "<body>";                                                          # Begin HTML body Section
 echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
 echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
@@ -41,15 +42,16 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Displa
 echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
 
 
-#
+
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
-$GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to go Back if error
-#$mysqli= "";
+$URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
+$URL_HOME   = '/index.php';                                             # Site Main Page
+$CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
 
 
@@ -91,7 +93,6 @@ $GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to
         $sql = $sql . "cat_default = '"     . sadm_clean_data($_POST['scr_default'])    ."', ";
         $sql = $sql . "cat_active = '"      . sadm_clean_data($_POST['scr_active'])     ."', ";
         $sql = $sql . "cat_date = '"        . date( "Y-m-d H:i:s")                      ."'  ";
-#        $sql = $sql . "cat_date = '"        . date( "Y-m-d H:i:s",mktime(0, 0, 0))      ."'  ";
         $sql = $sql . "WHERE cat_code = '"  . sadm_clean_data($_POST['scr_code'])       ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
@@ -104,9 +105,8 @@ $GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
         }else{                                                          # Update done with success
-            $err_msg = "Category '" . $_POST['scr_code'] . "' updated"; # Advise user of success Msg
-            sadm_alert ($err_msg) ;                                     # Msg. Error Box for User
-            mysqli_free_result($result);                                # Release Free result set 
+            #$err_msg = "Category '" . $_POST['scr_code'] . "' updated"; # Advise user of success Msg
+            #sadm_alert ($err_msg) ;                                     # Msg. Error Box for User
         }
         
         # Back to Category List Page
@@ -119,14 +119,15 @@ $GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to
 # INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
 # ==================================================================================================
 
-    # Check if the Key Received exist in the Database and retrieve the row Data
+
+    # CHECK IF THE KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
     if ($DEBUG) { echo "<br>Post isn't Submitted"; }                    # Display Debug Information    
     if ((isset($_GET['sel'])) and ($_GET['sel'] != ""))  {              # If Key Rcv and not Blank   
-        $wkey = $_GET['sel'];                                           # Save Rcv Key to Work Key
+        $wkey = $_GET['sel'];                                           # Save Key Rcv to Work Key
         if ($DEBUG) { echo "<br>Key received is '" . $wkey ."'"; }      # Under Debug Show Key Rcv.
         $sql = "SELECT * FROM server_category WHERE cat_code = '" . $wkey . "'";  
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.   
-        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute Update Row SQL
+        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
             $err_msg1 = "Category (" . $wkey . ") not found.\n";        # Row was not found Msg.
             $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
@@ -137,20 +138,22 @@ $GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to
         }else{                                                          # If row was found
             $row = mysqli_fetch_assoc($result);                         # Read the Associated row
         }
-    }else{                                                              # If no selection (Key) Recv
+    }else{                                                              # If No Key Rcv or Blank
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
         ?>
         <script>location.replace("/crud/cat/sadm_category_main.php");</script>
         <?php                                                           # Back 2 List Page
-        exit ;
+        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
+        exit ; 
     }
-    $title = "Update a Category" ;                                      # Page Heading Title
-    display_cat_heading ("$title",$SVER);                             # Display Page Heading  
 
-    # Start of Form - Display Form Ready to Update Data
+
+    # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
+    display_page_heading("home","Update Category",$CREATE_BUTTON);      # Display Content Heading
+    
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_cat_form( $row , "Update");                                 # Display Form Default Value
+    display_cat_form($row,"Update");                                    # Display Form Default Value
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
@@ -158,11 +161,9 @@ $GOBACK = "/crud/cat/sadm_category_main.php" ;                          # URL to
     # Display Buttons (Update/Cancel) at the bottom of the form
     echo "<center>";                                                    # Center Button on Page
     echo "<button type='submit' class='btn btn-sm btn-primary'> Update </button>   ";
-    echo "<a href='/crud/cat/sadm_category_main.php'>";
+    echo "<a href='" . $URL_MAIN . "'>";
     echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
     echo "</center>";
-    
-    # End of Form
     echo "</form>";                                                     
  
     mysqli_free_result($result);                                        # Free result set 
