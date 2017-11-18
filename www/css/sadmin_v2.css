@@ -125,10 +125,6 @@ body,html{
     
 }
 
-#CatTable{
-    width           :   90%;
-    margin          :   auto;
-}
 
 
 /*h1,h2,h3,h4,h5,h6{ margin-top:5px; margin-bottom:5px; }*/
@@ -304,4 +300,9 @@ tr:nth-child(odd) { background:#E2E4FF; }
 .cat_input {
     margin-bottom: 8px;
     color : black;
+}
+/* ===== CONTROL CATEGORY TABLE SIZE ===== */
+#CatTable{
+    width           :   90%;
+    margin          :   auto;
 }
