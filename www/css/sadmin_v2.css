@@ -306,3 +306,18 @@ tr:nth-child(odd) { background:#E2E4FF; }
     width           :   90%;
     margin          :   auto;
 }
+
+
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*  SIDEBAR CLASS DEFINITION
+/* ---------------------------------------------------------------------------------------------- */
+.SideBarItem{
+    margin-left: 10px;
+}
+.SideBarTitle{
+    color: #FF9800;
+    font-weight: bold;
+}
