@@ -1,19 +1,31 @@
 <?php
-list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
-echo "<br>HOSTNAME = " . $HOSTNAME;
+# Connect to MySQL DataBase
+$con = mysqli_connect('localhost','sadmin','Nimdas17!','sadmin');
+if (mysqli_connect_errno()) {
+    echo ">>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'<br/>";
+    echo ">>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
+}else{
+    echo "\nopen db work";
+}
 
-define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir
-echo "<br>SADMIN Default = " . SADM_BASE_DIR;
+$sql = 'SELECT * FROM server ;';                                  # Construct SQL Statement
+echo "\nSQL = " . $sql . "\n";
+#echo "con = $con" ;
 
-$TMPVAR = getenv('SADMIN');   
-echo "<br>GetEnv returned $TMPVAR - LEN = " .  strlen($TMPVAR)    ;                                      # Get Env. SADMIN Variable
-#if (strlen($TMPVAR) != 0 ) { 
-echo "<br>define('SADM_BASE_DIR',$TMPVAR);"; 
-define('SADM_BASE_DIR',$TMPVAR); 
-    echo "<br>TMPVAR Not equal 0";
-#}
+if ( ! $result=mysqli_query($con,$sql)) {                       # Execute Update Row SQL
+    $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+    $err_msg1 = "Error on select server\nError (";                  # Advise User Message 
+    $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
+    $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+    $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
+    echo $err_msg1 . $err_msg2 . $err_msg3 . $err_msg4;         # Display Msg. Box for User
+    exit;
+}
+while ($row = mysqli_fetch_assoc($result)) {                                                   # Incr Line Counter
+    print_r ($row);
+}
 
-echo "<br>SADMIN At the end 2 is " . SADM_BASE_DIR;
-echo "<br>TMPVAR = " . $TMPVAR;
+mysqli_free_result($result);                                        # Free result set 
+mysqli_close($con);                                                 # Close Database Connection
 ?>
 
