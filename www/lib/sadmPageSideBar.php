@@ -23,34 +23,47 @@
 *   If not, see <http://www.gnu.org/licenses/>.
 * ==================================================================================================
 */
+# ChangeLog
+#   Version 2.0 - October 2017 
+#       - Replace PostGres Database with MySQL 
+#       - Web Interface changed for ease of maintenance and can concentrate on other things
+#
+# ==================================================================================================
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+echo "<body>";
 
+echo "<div id='sadmLeftColumn'>";
 
 
 // ================================================================================================
 //                   Build Side Bar Based on SideBar Type Desired (server/ip/script)
 // ================================================================================================
 function SideBar_OS_Summary() {
-
+    global $con;
 
     # Loop Through Retreived Data and Display each Row
-    $query = "SELECT * FROM sadm.server ;";                             # Construct SQL Statement
-    $result = $sadmdb->query($query) or die('Select Server failed');    # Select All rows in table
+    $sql = "SELECT * FROM server ;";                                  # Construct SQL Statement
+    
+    # Execute the Row Update SQL
+    if ( ! $result=mysqli_query($con,$sql)) {                       # Execute Update Row SQL
+        $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+        $err_msg1 = "Error on select server\nError (";              # Advise User Message 
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
+        exit;
+    }
 
     # Reset All Counters
     $count=0;
     $sadm_array = array() ;
 
     # Read All Server Table
-    while ($row = $result->fetchArray()) {                              # Gather Result from Query
+    while ($row = mysqli_fetch_assoc($result)) {                             # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
-
-        # Process Server Type
-        $akey = "srv_type," . $row['srv_type'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
 
         # Process OS Type
         $akey = "srv_ostype," . $row['srv_ostype'];
@@ -62,14 +75,6 @@ function SideBar_OS_Summary() {
 
         # Process OS Name
         $akey = "srv_osname," . $row['srv_osname'];
-        if (array_key_exists($akey,$sadm_array)) {
-            $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
-        }else{
-            $sadm_array[$akey] = 1 ;
-        }
-
-        # Process OS Version
-        $akey = "srv_osversion," . $row['srv_osversion'];
         if (array_key_exists($akey,$sadm_array)) {
             $sadm_array[$akey] = $sadm_array[$akey] + 1 ;
         }else{
@@ -125,7 +130,7 @@ function SideBar_OS_Summary() {
 
     }
     ksort($sadm_array);                                                 # Sort Array Based on Keys
-    #$DEBUG=True;
+    $DEBUG=False;
     # Under Debug - Display The Array Used to build the SideBar
     if ($DEBUG) {
         foreach($sadm_array as $key=>$value) { 
@@ -137,45 +142,49 @@ function SideBar_OS_Summary() {
 
 
 
-?>
-<div id="sadmLeftColumn">
-        <div><a href="/index.php">Home & News</a></div>
-        <hr/>
-        <div><a href="/www/features.php">Feature List</a></div>        
-        <div><a href="/www/screenshots.php">Screenshots</a></div>        
-        <div><a href="/www/download.php">Download Latest Version</a></div>        
-        <div><a href="/www/archive.php">Release Archive</a></div>
-        <hr/>
-        <div><a href="/www/quickstart.php">Quick Start</a></div>
-        <div><a href="/doc/index.php">Documentation</a></div>
-        <div><a href="/doc/faq.php">FAQ</a></div>
-    <br />    
-<?php
+#
+#        <div><a href="/index.php">Home & News</a></div>
+#        <hr/>
+#        <div><a href="/www/features.php">Feature List</a></div>        
+#        <div><a href="/www/screenshots.php">Screenshots</a></div>        
+#        <div><a href="/www/download.php">Download Latest Version</a></div>        
+#        <div><a href="/www/archive.php">Release Archive</a></div>
+#        <hr/>
+#        <div><a href="/www/quickstart.php">Quick Start</a></div>
+#        <div><a href="/doc/index.php">Documentation</a></div>
+#        <div><a href="/doc/faq.php">FAQ</a></div>
+#    <br />    
+#
 
 
 
 # ---------------------------   O/S REPARTITION SIDEBAR     ------------------------------------
-	#$sadm_array = build_sidebar_servers_info($sidebar_array);
-	$sadm_array = build_sidebar_servers_info();
+	$sadm_array = SideBar_OS_Summary();
     $SERVER_COUNT=0;
-    echo "<br>";
+    #echo "<br>";
     echo "<strong>O/S Repartition</strong>\n";
-    echo "<ul>\n";
+    #echo "<ul>\n";
     foreach($sadm_array as $key=>$value)
     {
         list($kpart1,$kpart2) = explode(",",$key);
         if ($kpart1 == "srv_osname") {
-           echo "<li class='text-capitalize'><a href='/sadmin/sadm_view_servers.php?selection=os";
-           #echo "&value=" . $kpart2 ."'>$value $kpart2 server(s)</a></li>\n";
-           echo "&value=" . $kpart2 ."'>$value $kpart2</a></li>\n";
+           #echo "<li class='text-capitalize'>";
+           echo "<div><a href='/sadmin/sadm_view_servers.php?selection=os";
+           echo "&value=" . $kpart2 ."'>";
+           echo $value . " " ;
+           if ($kpart2 == "") {
+               echo "Unknown";
+              }else{
+                echo $kpart2;
+              }
+           #echo "</a></li>\n";
+           echo "</a></div>\n";
            $SERVER_COUNT = $SERVER_COUNT + $value;
         }
     }
     # All Servers Link
-    echo "<li><a href='/sadmin/sadm_view_servers.php?selection=all_servers'";
-	echo ">All (" . $SERVER_COUNT . ") Servers</a></li>\n";
-    echo "</ul>\n";
-
-
+    echo "<div><a href='/sadmin/sadm_view_servers.php?selection=all_servers'";
+	echo ">All (" . $SERVER_COUNT . ") Servers</a></div>\n";
+    echo "<hr/>";
 ?>
     </div> <!-- End of sadmLeftColumn  -->
