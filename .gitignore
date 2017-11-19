@@ -20,6 +20,8 @@ log/
 tmp/
 pgsql/
 notes/
+
+# Web Directories
 www/cgi-bin/
 www/html/
 www/dat/

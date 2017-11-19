@@ -272,10 +272,10 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 
 /* ---------------------------------------------------------------------------------------------- */
-/*  CATEGORY MAINTENANCE CLASS DEFINITION
+/*  SIMPLE FORM ATTRIBUTE (CATEGORY,GROUP) MAINTENANCE CLASS DEFINITION
 /* ---------------------------------------------------------------------------------------------- */
-/* Attribute for the Category Maintenance Form */
-.cat_form {
+/* Attribute for the Category, Group Maintenance Form */
+.simple_form {
     font-family         :   Verdana, Geneva, sans-serif;
     background-color    :   #C8DBBE;
     color               :   black;
@@ -289,18 +289,18 @@ tr:nth-child(odd) { background:#E2E4FF; }
     padding             :   2%;
 }
 /* Attribute for Column Name at the left of the form */
-.cat_label {
+.simple_label {
     float               :   left;
     width               :   200px;
 
 }
 /* Attribute for column Input at the right of the screen in the form */
-.cat_input {
+.simple_input {
     margin-bottom       :   8px;
     color               :   black;
 }
-/* Attribute for the Category Main Screen Table (That List All Category) */
-#CatTable{
+/* Attribute for the Category, Group Main Screen Table (That List All Category, Group) */
+#SimpleTable{
     width               :   90%;
     margin              :   auto;
 }
