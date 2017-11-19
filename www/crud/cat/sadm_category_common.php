@@ -85,76 +85,75 @@ function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
 // ================================================================================================
 function display_cat_form ($wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
-    echo "<div class='cat_form'>";                                      # Start Category Form Div
+    echo "\n<div class='cat_form'>";                                    # Start Category Form Div
 
     # CATEGORY CODE
-    echo "\n<div class='cat_label'>Category Code</div>";
-    echo "\n<div class='cat_input'>"; 
-    if ($smode == 'CREATE') {
-        echo "<input type='text' name='scr_code' size='11' ";
-        echo " maxlength='11' placeholder='Cat. Code' ";
-        echo " required value='" . sadm_clean_data($wrow['cat_code']);
-        echo "' >\n";
+    echo "\n<div class='cat_label'>Category Code</div>";                # Display Name of Column
+    echo "\n<div class='cat_input'>";                                   # Class for Column Input
+    if ($smode == 'CREATE') {                                           # If Create Allow Input
+        echo "\n<input type='text' name='scr_code' size='11' ";         # Set Name for field & Size
+        echo " maxlength='11' placeholder='Cat. Code' ";                # Set Default & Max Len
+        echo " required value='" . sadm_clean_data($wrow['cat_code']);  # Field is required
+        echo "' >";                                                     # End of Input 
     }else{
-       echo "<input type='text' name='scr_code' readonly size='11' ";
-       echo " placeholder='Cat. Code' ";
-       echo " value='" . sadm_clean_data($wrow['cat_code']). "' >\n";   
+       echo "\n<input type='text' name='scr_code' readonly size='11' "; # Set Name for Field & Size
+       echo " value='" . sadm_clean_data($wrow['cat_code']). "' >";     # Show Current  Value
     }
-    echo "\n</div>"; 
+    echo "\n</div>";                                                    # << End of cat_input
     
     
     # CATEGORY DESCRIPTION    
-    echo "\n<div class='cat_label'>Category Description</div>"; 
-    echo "\n<div class='cat_input'>"; 
-    if ($smode == 'DISPLAY') {
-       echo "<input type='text' name='scr_desc' readonly ";
-       echo " maxlength='25' size='27' ";
-       echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+    echo "\n<div class='cat_label'>Category Description</div>";         # Display Name of Column
+    echo "\n<div class='cat_input'>";                                   # Class for Column Input
+    if ($smode == 'DISPLAY') {                                          # If Only Display no input
+       echo "\n<input type='text' name='scr_desc' readonly ";           # Set Name and Read Only
+       echo " maxlength='25' size='27' ";                               # Set Max. Length
+       echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>";     # Show Current Value
     }else{
-       echo "<input type='text' name='scr_desc' required ";
-       echo " placeholder='Enter Category Desc.'";
-       echo " maxlength='25' size='27' ";
-       echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>\n";
+       echo "\n<input type='text' name='scr_desc' required ";           # Set Name & Col. is require
+       echo " placeholder='Enter Category Desc.'";                      # Set Default
+       echo " maxlength='25' size='27' ";                               # Set Max. Length
+       echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>";     # Show Current Value
     }
-    echo "\n</div>";      # << End of cat_input
+    echo "\n</div>";                                                    # << End of cat_input
 
     
     # CATEGORY ACTIVE ?
-    echo "\n<div class='cat_label'>Category Status</div>"; 
-    echo "\n<div class='cat_input'>"; 
+    echo "\n<div class='cat_label'>Category Status</div>";              # Display Name of Column
+    echo "\n<div class='cat_input'>";                                   # Class for Column Input
     if ($smode == 'CREATE') { $wrow['cat_active'] = True ; }            # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # Only Display / No Change
        if ($wrow['cat_active'] == 1) {                                  # If Category is Active
-          echo "<input type='radio' name='scr_active' value='1' ";      # 1=Active in scr_active
-          echo "onclick='javascript: return false;' checked> Active\n"; # And select Active Option
-          echo "<input type='radio' name='scr_active' value='0' ";      # 0=Inactive to scr_active
-          echo "onclick='javascript: return false;'> Inactive\n";       # Show Inactive Unselected
+          echo "\n<input type='radio' name='scr_active' value='1' ";    # 1=Active in scr_active
+          echo "onclick='javascript: return false;' checked> Active";   # And select Active Option
+          echo "\n<input type='radio' name='scr_active' value='0' ";    # 0=Inactive to scr_active
+          echo "onclick='javascript: return false;'> Inactive";         # Show Inactive Unselected
        }else{                                               
-          echo "<input type='radio' name='scr_active' value='1' ";      # If Category is Inactive
-          echo "onclick='javascript: return false;'> Active  \n";       # 0=Inactive to scr_active
-          echo "<input type='radio' name='scr_active' value='0' ";      # 1=Active in scr_active
+          echo "\n<input type='radio' name='scr_active' value='1' ";    # If Category is Inactive
+          echo "onclick='javascript: return false;'> Active  ";         # 0=Inactive to scr_active
+          echo "\n<input type='radio' name='scr_active' value='0' ";    # 1=Active in scr_active
           echo "onclick='javascript: return false;' checked >Inactive"; # select Inactive Option
        }
     }else{                                                              # In Create/Update Mode
-       if ($wrow['cat_active'] == 1) {                                  # If Category is Active
-          echo "<input type='radio' name='scr_active' value='1' ";
-          echo " checked > Active  \n";
-          echo "<input type='radio' name='scr_active' value='0'>";
-          echo " Inactive\n";
-       }else{
-          echo "<input type='radio' name='scr_active' value='1'>";      # If Category is Inactive
-          echo " Active\n";
-          echo "<input type='radio' name='scr_active' value='0' ";
-          echo " checked > Inactive\n";
+       if ($wrow['cat_active'] == 1) {                                  # Create/Upd Mode & Cat Act.
+          echo "\n<input type='radio' name='scr_active' value='1' ";    # If Col is active Set to 1
+          echo " checked > Active  ";                                   # Checked Field on screen
+          echo "\n<input type='radio' name='scr_active' value='0'>";    # Inactive set to 0
+          echo " Inactive ";                                            # Uncheck Inactive
+       }else{                                                           # If Cat is not Active
+          echo "\n<input type='radio' name='scr_active' value='1'>";    # If Category is Inactive
+          echo " Active";                                               # Display Uncheck Active
+          echo "\n<input type='radio' name='scr_active' value='0' ";    # Check Inactive on Form 
+          echo " checked > Inactive";                                   # Checked Field on screen
        }
     }
     echo "\n</div>";      # << End of cat_input
 
    
     # DEFAULT CATEGORY (YES/NO)
-    echo "<div class='cat_label'>Default Category</div>"; 
-    echo "<div class='cat_input'>"; 
-    if ($smode == 'CREATE') { $wrow['cat_default'] = False ; } 
+    echo "<div class='cat_label'>Default Category</div>";               # Display Name of Column
+    echo "<div class='cat_input'>";                                     # Class for Column Input
+    if ($smode == 'CREATE') { $wrow['cat_default'] = False ; }          # Creation  Default Value
     if ($smode == 'DISPLAY') {
         if ($wrow['cat_default'] == '1') {
            echo "<input type='radio' name='scr_default' value='1' ";
@@ -180,13 +179,13 @@ function display_cat_form ($wrow,$mode) {
            echo " checked > No\n";
         }
     }
-    echo "</div>";      # << End of cat_input
+    echo "</div>";                                                      # << End of cat_input
 
    # LAST UPDATE DATE 
-    echo "<div class='cat_label'>Last Update Date</div>"; 
-    echo "<div class='cat_input'>";
-    echo sadm_clean_data($wrow['cat_date']);
-    echo "</div>";
+    echo "<div class='cat_label'>Last Update Date</div>";               # Display Name of Column
+    echo "<div class='cat_input'>";                                     # Class for Column Input
+    echo sadm_clean_data($wrow['cat_date']);                            # Display Last Update Date
+    echo "</div>";                                                      # << End of cat_input
 
-    echo "<br></div><br>";
+    echo "<br></div><br>";                                              # << End of cat_form
 }
