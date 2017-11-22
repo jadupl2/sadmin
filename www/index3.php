@@ -1,12 +1,25 @@
 <?php
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>       
-echo "\n<body>"; 
-echo "\nHello ";
+echo "\n<HTML>";
+echo "\n<HEAD>INDEX3.PHP - TEST</HEAD>";
+echo "\n<BODY>"; 
+echo "\nHELLO\n\n ";
 
-sadm_alert   ("Are you sure you want to delete the group " . scr_code . " ?");
-sadm_confirm ("Are you sure you want to delete the group " . scr_code . " ?");
-echo "\n</body></html>";
+#function jac_confirm($msg) {
+#    $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
 ?>
-
+    <!-- 
+    <script language="javascript">
+    answer = confirm("Are you sure you want to delete this category?")
+    if (answer !=0) {
+       echo "You Answer Yes"
+    }else{
+        echo "You Answer No"
+    }
+    </script>   
+    -->
+<?php
+#    return ;
+#jac_confirm ("Are you sure you want to delete the group ?");
+echo "\n</BODY>";
+echo "\n</HTML>";
+?>
