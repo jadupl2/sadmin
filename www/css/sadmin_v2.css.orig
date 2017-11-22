@@ -258,6 +258,45 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /* ---------------------------------------------------------------------------------------------- */
 /*  SIMPLE FORM ATTRIBUTE (CATEGORY,GROUP) MAINTENANCE CLASS DEFINITION
 /* ---------------------------------------------------------------------------------------------- */
+<<<<<<< HEAD
+/*
+/* ===== FORM ATTRIBUTE ===== */
+.cat_form {
+    font-family     :   Verdana, Geneva, sans-serif;
+    background-color:   #8ee9d4;
+    color           :   black;
+    width           :   50%;
+    margin-top      :   5%;
+    margin-left     :   auto;
+    margin-right    :   auto;
+    border          :   2px solid #000000;
+    font-size       :   12px;
+    text-align      :   left;
+    padding         :   2%;
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
+}
+
+/* ===== FORM LABEL ===== */
+.cat_label {
+    float : left;
+    width : 200px;
+}
+
+/* ===== FORM INPUT ===== */
+.cat_input {
+    margin-bottom: 8px;
+    color : black;
+}
+
+/* ===== CONTROL CATEGORY TABLE SIZE ===== */
+#CatTable{
+    width           :   90%;
+    margin          :   auto;
+=======
 /* Attribute for the Category, Group Maintenance Form */
 .simple_form {
     font-family         :   Verdana, Geneva, sans-serif;
@@ -287,6 +326,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
 #SimpleTable{
     width               :   90%;
     margin              :   auto;
+>>>>>>> 1f4880d785ffcb800d3ddbb005a72754e9c1342a
 }
 
 
@@ -297,6 +337,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /* ---------------------------------------------------------------------------------------------- */
 /*  SIDEBAR CLASS DEFINITION                                                                      */
 /* ---------------------------------------------------------------------------------------------- */
+<<<<<<< HEAD
 
 .SideBar{
     margin          :   2px;
@@ -324,10 +365,13 @@ tr:nth-child(odd) { background:#E2E4FF; }
 }
 
 .SideBarTitle{
+    color: #FF9800;
+    font-weight: bold;
+=======
+.SideBarTitle{
     color           :   #FF9800;
     font-weight     :   bold;
 }
-
 .SideBarItem{
     margin-left: 10px;
 } 
@@ -343,4 +387,9 @@ tr:nth-child(odd) { background:#E2E4FF; }
 }
 .SideBarItem a:active {
     color           :   red;
+>>>>>>> 1f4880d785ffcb800d3ddbb005a72754e9c1342a
+}
+
+.SideBarItem{
+    margin-left: 10px;
 }

@@ -1,38 +1,39 @@
 <?php
-/*
-* ================================================================================================
-*   Author   :  Jacques Duplessis
-*   Title    :  sadmlib.php
-*   Version  :  2.0
-*   Date     :  22 March 2016
-*   Requires :  php
-*   Synopsis :  This file is the place to store all SADMIN functions
-*
-*   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
-*
-*   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
-*   of the GNU General Public License as published by the Free Software Foundation; either
-*   version 2 of the License, or (at your option) any later version.
-*
-*   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-*   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*   See the GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License along with this program.
-*   If not, see <http://www.gnu.org/licenses/>.
-* ================================================================================================
-*
-* V1.0 March 2017 - Initial Version
-* V2.0 Nov 2017 - Modification to align with MySQL instead of PostGres 
-*
-* ================================================================================================
-*/
+# ==================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadmlib.php
+#   Version  :  1.0
+#   Date     :  22 March 2016
+#   Requires :  php
+#   Synopsis :  This file is the place to store all SADMIN functions
+#
+#   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   2016_03_16 - Jacques Duplessis
+#       V1.0 Initial Version
+#   2017_11_15 - Jacques Duplessis
+#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#
+# ==================================================================================================
+#
 
 
 
-// ================================================================================================
-//            Function to Calculate the OS Update Time Based on Parameter Received
-// ================================================================================================
+# ==================================================================================================
+#          Function to Calculate the OS Update Time Based on Parameters Received
+# ==================================================================================================
 function calculate_osupdate_date($W1stMth,$WFreq,$Week1,$Week2,$Week3,$Week4,$WUpdDay) {
     
     $DEBUG = True ;                                   # Activate (TRUE) or Deactivate (FALSE) Debug
@@ -56,50 +57,59 @@ function calculate_osupdate_date($W1stMth,$WFreq,$Week1,$Week2,$Week3,$Week4,$WU
     return $UPD_DATE;
 }
 
-// ================================================================================================
-//            Popup Message received as parameter and wait for OK to be pressed
-// ================================================================================================
+# ==================================================================================================
+#               Popup Message received as parameter and wait for OK to be pressed
+# ==================================================================================================
 function sadm_confirm($msg) {
-    $message = $msg;
-    $message = preg_replace("/\r?\n/", "\\n", addslashes($message));
-    echo "\n<script type=\"text/javascript\">";
-    echo "\nvar stay=confirm('Create this Category')";
-    #document.getElementById("demo").innerHTML = x;
-    echo "\n</script>\n";
-    return $reponse;
+    $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
+    echo "<a href='http://stackoverflow.com'";
+    echo "onclick=\"return confirm('Are you sure?');\">My Link</a>";
+    // echo "\n<script type=\"text/javascript\">";
+    // $reponse = "\nwindow.confirm(\"$message\");";
+    // echo "\n</script>\n";
+    // return $reponse;
+    
+    // echo $Confirmation;
+    // if ($Confirmation == true) {
+    //     your code goes here
+    // }
+    // $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
+    // echo "\n<script type=\"text/javascript\">";
+    // echo "\nvar stay=confirm(\"$message\")";
+    // #document.getElementById("demo").innerHTML = x;
+    // echo "\n</script>\n";
+    // return $reponse;
 }
 
 
 
-// ================================================================================================
-//      Popup with the Error Message wait for 5 seconds and return to previous page
-// ================================================================================================
+# ==================================================================================================
+# Popup with the Error Message wait for 5 seconds and return to previous page
+# ==================================================================================================
 function sadm_fatal_error($msg) {
-    $message = $msg;
-    $message = preg_replace("/\r?\n/", "\\n", addslashes($message));
-    echo "<script type=\"text/javascript\">\n";
-    echo " alert(\"$message\");\n";
-    echo " windows.history.back()\n";
-    echo "</script>\n\n";
+    $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
+    echo "\n<script type=\"text/javascript\">";
+    echo "\n alert(\"$message\");";
+    echo "\n windows.history.back()";
+    echo "\n</script>\n";
 }
 
 
 
-// ================================================================================================
-//            Popup Message received as parameter and wait for OK to be pressed
-// ================================================================================================
+# ==================================================================================================
+# Display Popup Message received and wait for User to press OK Button
+# ==================================================================================================
 function sadm_alert($msg) {
-    $message = $msg;
-    $message = preg_replace("/\r?\n/", "\\n", addslashes($message));
-    echo "<script type=\"text/javascript\">\n";
-    echo " alert(\"$message\");\n";
-    echo "</script>\n\n";
+    $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
+    echo "\n<script type=\"text/javascript\">";
+    echo "\nalert(\"$message\");";
+    echo "\n</script>\n";
 }
 
 
-// ================================================================================================
-//                       Transform date (DD/MM/YYY) into MYSQL format
-// ================================================================================================
+# ==================================================================================================
+#                        Transform date (DD/MM/YYY) into MYSQL format
+# ==================================================================================================
 function DDMMYYYY_2_mysqldate( $input_date ) {
     $date_array = explode("/",$input_date);
     $mysql_date = $date_array[2] . '/' . $date_array[1] . '/' . $date_array[0] . " 00:00:00";
@@ -223,10 +233,10 @@ function display_file( $nom_du_fichier ) {
 
 
 
-// ================================================================================================
-// Function to strip unwanted characters (Extra space,tab,newline) from beginning and end of data
-// Strips any quotes escaped with slashes and passes it through htmlspecialschar.
-// ================================================================================================
+# ==================================================================================================
+# Function to strip unwanted characters (Extra space,tab,newline) from beginning and end of data
+# Strips any quotes escaped with slashes and passes it through htmlspecialschar.
+# ==================================================================================================
 function sadm_clean_data($wdata) {
     if (! is_array($wdata)) {
         $wdata = trim($wdata);
