@@ -32,7 +32,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load s
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 echo "\n<body>";
-echo "\n<div id='sadmLeftColumn'>";
+echo "\n<div class='SideBar'>";
 
 #===================================================================================================
 #                                      GLOBAL Variables
@@ -44,8 +44,8 @@ $URL_SERVER   = '/view/sadm_view_servers.php';                          # Show S
 $URL_OSUPDATE = "/view/sadm_view_schedule.php";                         # View O/S Update URL 
 $URL_MONITOR  = "/view/sadm_view_sysmon.php";                           # View System Monitor URL 
 $URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Maintenance Cat. Page URL
-$URL_EDIT_GRP = '/crud/cat/sadm_group_main.php';                        # Maintenance Grp. Page URL
-$URL_EDIT_SRV = '/crud/cat/sadm_server_main.php';                       # Maintenance Srv. Page URL
+$URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
+$URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
 
 
 # ==================================================================================================
@@ -259,6 +259,6 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_EDIT_GRP . "'>Edit Group</a></div>";        # URL To Start Edit Group
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
-    echo "\n</div> <!-- End of sadmLeftColumn  -->\n\n\n"               # End of Left Column Div
+    echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
 ?>
     

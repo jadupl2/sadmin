@@ -72,33 +72,12 @@ body,html{
     display         :   flex;
 }
 
-#sadmLeftColumn{
-    margin          :   2px;
-    /* background-color:   rgb(103, 146, 153); */
-    /* background-color:   #ff9800; */
-    background-color:   #111111; 
-    padding         :   10px;
-    border-width    :   1px;
-    border-style    :   solid;
-    border-color    :   #000000;
-    border-radius   :   10px;
-    line-height     :   1.7;
-    font-size       :   14px;
-    width           :   15%;
-    color           :   white;
-
-}
-#sadmLeftColumn a:link, #sadmLeftColumn >a:visited
-{
-    color           :   #FFFFFF;
-    white-space     :   nowrap;
-    text-decoration :   none;
-}
-
 #sadmRightColumn{
     overflow-y      :   hidden;
     margin          :   2px;
-    background-color:   #f8f8f2;
+    /* background-color:   #f8f8f2; */
+    /* background-color:   #c0f5e8; */
+    background-color:   #e3ecec;
     padding         :   10px;
     border-width    :   1px;
     border-style    :   solid;
@@ -201,16 +180,18 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 
 /* ---------------------------------------------------------------------------------------------- */
-/*   TOP of Page - Header CSS Section                                                             */
+/*          THIS SECTION IS USED FOR THE TOP OF PAGE OF EVERY WEB PAGE                            */
 /* ---------------------------------------------------------------------------------------------- */
 #sadmHeader {
     height: 90px;
     /* background-color: #06425C; */
-    background-color: #262626; 
+    /* background-color: #262626;  */
+    background-color: #124f44; 
     color: white;
     /* text-align: left; */
     padding: 1px 1px 1px 5px;
 }
+
 #sadmLogo {
     float: left;
     padding: 10px;
@@ -220,6 +201,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
     /* clear   : both; */
     padding : 2px;
 }
+
 #sadmEntete1L {
     font-family: Verdana, Geneva, sans-serif;
     float: left;
@@ -231,6 +213,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
     text-decoration :   none;
 	font-weight     :   bold;
 }
+
 #sadmEntete1R {
     font-family: Verdana, Monaco, monospace;
     float: right;
@@ -242,11 +225,11 @@ tr:nth-child(odd) { background:#E2E4FF; }
     /* display: block; */
 }
 
-
 #sadmEnteteLine2{
     clear   : both;
     padding : 1px;
 }
+
 #sadmEntete2L{
     font-family: Verdana, Geneva, sans-serif;
     float: left;
@@ -258,6 +241,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
     text-decoration :   none;
 	font-weight     :   bold;
 }
+
 #sadmEntete2R {
     font-family: Verdana, Monaco, monospace;
     float: right;
@@ -278,29 +262,36 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /*
 /* ===== FORM ATTRIBUTE ===== */
 .cat_form {
-    font-family: Verdana, Geneva, sans-serif;
-    background-color: #C8DBBE;
-    color: black;
-    width: 50%;
-    margin-top: 5%;
-    margin-left: auto;
-    margin-right: auto;
-    border: 2px solid #000000;
-    font-size: 12px;
-    text-align: left;
-    padding: 2%;
+    font-family     :   Verdana, Geneva, sans-serif;
+    background-color:   #8ee9d4;
+    color           :   black;
+    width           :   50%;
+    margin-top      :   5%;
+    margin-left     :   auto;
+    margin-right    :   auto;
+    border          :   2px solid #000000;
+    font-size       :   12px;
+    text-align      :   left;
+    padding         :   2%;
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
 }
+
 /* ===== FORM LABEL ===== */
 .cat_label {
     float : left;
     width : 200px;
-
 }
+
 /* ===== FORM INPUT ===== */
 .cat_input {
     margin-bottom: 8px;
     color : black;
 }
+
 /* ===== CONTROL CATEGORY TABLE SIZE ===== */
 #CatTable{
     width           :   90%;
@@ -312,12 +303,39 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 
 /* ---------------------------------------------------------------------------------------------- */
-/*  SIDEBAR CLASS DEFINITION
+/*  SIDEBAR CLASS DEFINITION                                                                      */
 /* ---------------------------------------------------------------------------------------------- */
-.SideBarItem{
-    margin-left: 10px;
+
+.SideBar{
+    margin          :   2px;
+    /* background-color:   rgb(103, 146, 153); */
+    /* background-color:   #ff9800; */
+    /* background-color:   #111111;  */
+    background-color:   #006456; 
+    padding         :   10px;
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;
+    font-size       :   14px;
+    width           :   15%;
+    color           :   white;
+
 }
+
+.SideBar a:link, #SideBar >a:visited
+{
+    color           :   #FFFFFF;
+    white-space     :   nowrap;
+    text-decoration :   none;
+}
+
 .SideBarTitle{
     color: #FF9800;
     font-weight: bold;
+}
+
+.SideBarItem{
+    margin-left: 10px;
 }
