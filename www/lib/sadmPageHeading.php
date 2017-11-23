@@ -1,10 +1,9 @@
 <?php
 echo "\n<div id='sadmHeader'>";
 
-echo "\n    <div id='sadmLogo'>";
-echo "\n    <a href='http://sadmin.maison.ca/index.php'>";
-echo "\n        <img width=64 height=64 src=/images/sadmin_logo.png>"; 
-echo "\n    </a>";
+echo "\n    <div id='sadmLogo'>\n";
+echo "        <a href='http://sadmin.maison.ca/index.php'>";
+echo "<img width=64 height=64 src=/images/sadmin_logo.png></a>";
 echo "\n    </div>                                      <!-- End of Div sadmLogo -->\n";
 
 echo "\n    <div id='sadmEnteteLine1'>";

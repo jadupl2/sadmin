@@ -85,7 +85,7 @@ function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
 // ================================================================================================
 function display_cat_form ($wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
-    echo "\n<div class='simple_form'>";                                 # Start Category Form Div
+    echo "\n\n<div class='simple_form'>";                               # Start Category Form Div
 
     # CATEGORY CODE
     echo "\n<div class='simple_label'>Category Code</div>";             # Display Name of Column
@@ -100,6 +100,7 @@ function display_cat_form ($wrow,$mode) {
        echo " value='" . sadm_clean_data($wrow['cat_code']). "' >";     # Show Current  Value
     }
     echo "\n</div>";                                                    # << End of simple_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # CATEGORY DESCRIPTION    
@@ -116,7 +117,8 @@ function display_cat_form ($wrow,$mode) {
        echo " value='" . sadm_clean_data($wrow['cat_desc']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
     
     # CATEGORY ACTIVE ?
     echo "\n<div class='simple_label'>Category Status</div>";           # Display Name of Column
@@ -147,8 +149,9 @@ function display_cat_form ($wrow,$mode) {
           echo " checked > Inactive";                                   # Checked Field on screen
        }
     }
-    echo "\n</div>";      # << End of simple_input
-
+    echo "\n</div>";                                                    # << End of simple_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
    
     # DEFAULT CATEGORY (YES/NO)
     echo "<div class='simple_label'>Default Category</div>";            # Display Name of Column
@@ -179,13 +182,15 @@ function display_cat_form ($wrow,$mode) {
            echo " checked > No\n";
         }
     }
-    echo "</div>";                                                      # << End of simple_input
-
+    echo "\n</div>";                                                    # << End of simple_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
    # LAST UPDATE DATE 
     echo "<div class='simple_label'>Last Update Date</div>";            # Display Name of Column
     echo "<div class='simple_input'>";                                  # Class for Column Input
     echo sadm_clean_data($wrow['cat_date']);                            # Display Last Update Date
     echo "</div>";                                                      # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    
     echo "<br></div><br>";                                              # << End of simple_form
 }

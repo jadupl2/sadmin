@@ -74,22 +74,25 @@ $CREATE_BUTTON = True ;                                                 # Yes Di
 # DISPLAY TWO FIRST HEADING LINES OF PAGE AND SETUP TABLE HEADING AND FOOTER
 #===================================================================================================
 function setup_table() {
-    echo "\n<br>>\n";
+    echo "\n<br>\n";
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                         # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border nowrap width="100%">';   
+    echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="98%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
+    echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Category</th>";                               # Center Header & Body
+    echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
+    echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
+    echo "\n<th>Info</th>";                                           # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -99,12 +102,15 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
+    echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Category</th>";                               # Center Header & Body
+    echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
+    echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
+    echo "\n<th>Info</th>";                                           # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -121,6 +127,7 @@ function display_data($con,$row) {
 
     echo "\n<tr>";
     echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
+    echo "\n<td>"            . "None"   . "</td>";            # Display Server Name
     echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
     echo "\n<td dt-center>"  . $row['srv_cat']    . "</td>";            # Display Category
@@ -135,6 +142,17 @@ function display_data($con,$row) {
     }else{                                                              # If not Sporadic
         echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
     }
+    if ($row['srv_vm'] == TRUE ) {                                      # Is VM Server 
+        echo "\n<td style='text-align: center'>Yes</td>";               # If so display Yes
+    }else{                                                              # If not Sporadic
+        echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
+    }
+
+    # DISPLAY THE UPDATE BUTTON
+    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
+    echo "\n<a href='" . $URL_UPDATE . '?sel=' . $row['srv_name'] . "'>";
+    echo "\n<button type='button'>Info</button></a>";                   # Display Update Button
+    echo "\n</td>";
 
     # DISPLAY THE UPDATE BUTTON
     echo "\n<td style='text-align: center'>";                           # Align Button in Center row

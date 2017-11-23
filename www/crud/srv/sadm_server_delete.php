@@ -124,7 +124,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
  
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($row,"Display");                                  # Display No Change Allowed
+    display_srv_form ($con,$row,"Display");                              # Display No Change Allowed
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe

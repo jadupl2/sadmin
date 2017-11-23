@@ -36,11 +36,11 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load P
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 echo "<body>";                                                          # Begin HTML body Section
-echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
+echo "\n<div id='sadmWrapper'>\n";                                      # Whole Page Wrapper Div
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
+echo "\n<div id='sadmPageContents'>\n";                                 # Lower Part of Page
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
-echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
+echo "\n<div id='sadmRightColumn'>\n";                                  # Beginning Content Page
 
 
 
@@ -77,7 +77,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . "srv_cat = '"             . sadm_clean_data($_POST['scr_cat'])        ."', ";
         $sql = $sql . "srv_group = '"           . sadm_clean_data($_POST['scr_group'])      ."', ";
         $sql = $sql . "srv_ostype = '"          . sadm_clean_data($_POST['scr_ostype'])     ."', ";
-        $sql = $sql . "srv_date_creation = '"   . date( "Y-m-d H:i:s")                      ."'  ";
+        $sql = $sql . "srv_date_edit = '"       . date( "Y-m-d H:i:s")                      ."'  ";
         $sql = $sql . "WHERE srv_name = '" . sadm_clean_data($_POST['scr_name'])       ."'; ";
         if ($DEBUG) { echo "<br>Update SQL Command = $sql"; }
 
@@ -137,20 +137,21 @@ $CREATE_BUTTON = False ;                                                # Don't 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     display_page_heading("back","Update Server",$CREATE_BUTTON);        # Display Content Heading
     
-    echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form($row,"Update");                                    # Display Form Default Value
+    echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
+    display_srv_form($con,$row,"Update");                                    # Display Form Default Value
     
     # Set the Submitted Flag On - We are done with the Form Data
-    echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
+    echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
     
     # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "<center>";                                                    # Center Button on Page
-    echo "<button type='submit'> Update </button>   ";
+    echo "\n<center>";                                                  # Center Button on Page
+    echo "\n<button type='submit'> Update </button>   ";
     echo "<a href='" . $URL_MAIN . "'>";
     echo "<button type='button'> Cancel </button></a>";
-    echo "</center>";
-    echo "</form>";                                                     
- 
+    echo "\n</center>";
+    echo "\n</form>";                                                     
+    echo "\n<br>";                                                      # Blank Line After Button
+    
     mysqli_free_result($result);                                        # Free result set 
     mysqli_close($con);                                                 # Close Database Connection
     echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
