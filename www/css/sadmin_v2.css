@@ -256,42 +256,85 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 
 /* ---------------------------------------------------------------------------------------------- */
-/*  SIMPLE FORM ATTRIBUTE (CATEGORY,GROUP) MAINTENANCE CLASS DEFINITION
+/*  SIMPLE FORM (TWO COLUMNS - 1 FOR THE LABEL AND 1 FOR THE DATA                                      */
+/*  WE USED THIS FORM FOR SERVER CATEGORY AND GROUP                                               */
 /* ---------------------------------------------------------------------------------------------- */
 /* Attribute for the Category, Group Maintenance Form */
 .simple_form {
-    font-family         :   Verdana, Geneva, sans-serif;
-    background-color    :   #C8DBBE;
-    color               :   black;
-    width               :   50%;
-    margin-top          :   5%;
-    margin-left         :   auto;
-    margin-right        :   auto;
-    border              :   2px solid #000000;
-    font-size           :   12px;
-    text-align          :   left;
-    padding             :   2%;
+    font-family     :   Verdana, Geneva, sans-serif;
+    background-color:   #8ee9d4;
+    color           :   black;
+    width           :   50%;
+    margin-top      :   5%;
+    margin-left     :   auto;
+    margin-right    :   auto;
+    border          :   2px solid #000000;
+    font-size       :   12px;
+    text-align      :   left;
+    padding         :   2%;
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
 }
 /* Attribute for Column Name at the left of the form */
 .simple_label {
-    float               :   left;
-    width               :   200px;
+    float           :   left;
+    width           :   200px;
+    font-weight     :   bold;    
 
 }
 /* Attribute for column Input at the right of the screen in the form */
 .simple_input {
-    margin-bottom       :   8px;
-    color               :   black;
+    margin-bottom   :   8px;
+    color           :   black;
+    width           :   200px;
+    
 }
 /* Attribute for the Category, Group Main Screen Table (That List All Category, Group) */
 #SimpleTable{
-    width               :   90%;
-    margin              :   auto;
+    width           :   90%;
+    margin          :   auto;
 }
 
 
-
-
+/* ---------------------------------------------------------------------------------------------- */
+/*  DOUBLE FORM (FOUR COLUMNS - 2 FOR THE LABEL AND 2 FOR THE DATA                                */
+/*  WE USED THIS FORM FOR SERVER MAINTENANCE                                                      */
+/* ---------------------------------------------------------------------------------------------- */
+/* Attribute for the Category, Group Maintenance Form */
+.double_form {
+    font-family     :   Verdana, Geneva, sans-serif;
+    background-color:   #8ee9d4;
+    color           :   black;
+    width           :   50%;
+    margin-top      :   5%;
+    margin-left     :   auto;
+    margin-right    :   auto;
+    border          :   2px solid #000000;
+    font-size       :   12px;
+    text-align      :   left;
+    padding         :   2%;
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
+}
+/* Attribute for Column Name at the left of the form */
+.double_label {
+    float           :   left;
+    width           :   200px;
+    font-weight     :   bold;    
+}
+/* Attribute for column Input at the right of the screen in the form */
+.double_input {
+    margin-bottom   :   8px;
+    color           :   black;
+    float           :   left;
+    width           :   200px;
+}
 
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -300,9 +343,6 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 .SideBar{
     margin          :   2px;
-    /* background-color:   rgb(103, 146, 153); */
-    /* background-color:   #ff9800; */
-    /* background-color:   #111111;  */
     background-color:   #006456; 
     padding         :   10px;
     border-width    :   1px;
@@ -316,31 +356,29 @@ tr:nth-child(odd) { background:#E2E4FF; }
 
 }
 
-.SideBar a:link, #SideBar >a:visited
-{
-    color           :   #FFFFFF;
-    white-space     :   nowrap;
-    text-decoration :   none;
-}
-
 .SideBarTitle{
     color           :   #FF9800;
     font-weight     :   bold;
 }
 
 .SideBarItem{
-    margin-left: 10px;
+    margin-left     :   10px;
 } 
+
 .SideBarItem a:visited {
-    color           :   hsl(83, 84%, 71%) ;
+    color           :   rgb(235, 184, 16) ;
 }
+
 .SideBarItem a:link {
-    color           :   yellow;
+    color           :   white;
+    text-decoration :   none;
 }
+
 .SideBarItem a:hover {
-    color           :   blue;
+    color           :   yellow;
     background-color:   #80805c;
 }
+
 .SideBarItem a:active {
     color           :   red;
 }

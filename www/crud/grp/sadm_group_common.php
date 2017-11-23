@@ -34,10 +34,10 @@
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
-$URL_CREATE = '/crud/cat/sadm_group_create.php';                        # Create Page URL
-$URL_UPDATE = '/crud/cat/sadm_group_update.php';                        # Update Page URL
-$URL_DELETE = '/crud/cat/sadm_group_delete.php';                        # Delete Page URL
-$URL_MAIN   = '/crud/cat/sadm_group_main.php';                          # Maintenance Main Page URL
+$URL_CREATE = '/crud/grp/sadm_group_create.php';                        # Create Page URL
+$URL_UPDATE = '/crud/grp/sadm_group_update.php';                        # Update Page URL
+$URL_DELETE = '/crud/grp/sadm_group_delete.php';                        # Delete Page URL
+$URL_MAIN   = '/crud/grp/sadm_group_main.php';                          # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 
 

@@ -2,11 +2,11 @@
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
 #   Email       :  jacques.duplessis@sadmin.ca
-#   Title       :  sadm_category_delete.php
+#   Title       :  sadm_server_delete.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
-#   Description :  Web Page used to delete a category.
+#   Description :  Web Page used to delete a server.
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
@@ -33,7 +33,7 @@
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 echo "<body>";                                                          # Begin HTML body Section
 echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
@@ -49,7 +49,7 @@ echo "<div id='sadmRightColumn'>";                                      # Beginn
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
-$URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
+$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
@@ -62,29 +62,10 @@ $CREATE_BUTTON = False ;                                                # Don't 
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Submitted for " . $_POST['scr_code'];}  # Debug Info Start Submit
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
-        
-        # Check if no server is using this category before deleting it
-        $sql = "SELECT srv_name, srv_cat FROM server ";                 # Construct SQL Statement
-        $sql = $sql . "WHERE srv_cat = '" . sadm_clean_data($_POST['scr_code']) . "'; ";
-        if ($DEBUG) { echo "<br>Checking if Category is still in use.\nSQL Command = $sql"; }
 
-        $result = mysqli_query($con,$sql);                              # Exec SQL search default
-        $count = mysqli_num_rows($result);                              # Count Cat that are Default
-        $row = mysqli_fetch_assoc($result);                             # Read Cat. That is default 
-        if ($count > 0) {                                               # If Server are using Cat.
-            $err_msg = "Error: Delete not permitted\n";
-            $err_msg = $count . " Servers are still using '";
-            $err_msg = $err_msg . $_POST['scr_code'] . "' category";
-            sadm_alert($err_msg);                                       # Display Abort Delete Msg.
-            mysqli_free_result($result);                                # Clear Result Set
-            pg_free_result($row);                                       # Frees memory & date result
-            ?> <script>location.replace("/crud/cat/sadm_category_main.php");</script><?php 
-            exit;            
-        }
-
-        # Ok no server is using this category - Construct SQL to Delete selected row
-        $sql = "DELETE FROM server_category ";                          # Construct SQL Statement 
-        $sql = $sql . "WHERE cat_code = '".$_POST['scr_code'] . "'; ";  # Construct SQL Statement 
+        # Ok no server is using this server - Construct SQL to Delete selected row
+        $sql = "DELETE FROM server ";                                   # Construct SQL Statement 
+        $sql = $sql . "WHERE srv_name = '".$_POST['scr_name'] . "'; ";  # Construct SQL Statement 
         if ($DEBUG) { echo "<br>Delete SQL Command = $sql"; }           # In Debug display SQL Stat.
 
         # Execute the Row Update SQL
@@ -96,12 +77,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
         }else{                                                          # Update done with success
-            #$err_msg = "Category '" . $_POST['scr_code'] ."' updated"; # Advise user of success Msg
+            #$err_msg = "Group '" . $_POST['scr_code'] ."' updated"; # Advise user of success Msg
             #sadm_alert ($err_msg) ;                                    # Msg. Error Box for User
         }
 
         # Back to the List Page
-        ?> <script>location.replace("/crud/cat/sadm_category_main.php");</script><?php
+        ?> <script>location.replace("/crud/srv/sadm_server_main.php");</script><?php
         exit;
     }
     
@@ -115,11 +96,11 @@ $CREATE_BUTTON = False ;                                                # Don't 
     if ((isset($_GET['sel'])) and ($_GET['sel'] != ""))  {              # If Key Rcv and not Blank   
         $wkey = $_GET['sel'];                                           # Save Key Rcv to Work Key
         if ($DEBUG) { echo "<br>Key received is '" . $wkey ."'"; }      # Under Debug Show Key Rcv.
-        $sql = "SELECT * FROM server_category WHERE cat_code = '" . $wkey . "'";  
+        $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'";  
         if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.   
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
-            $err_msg1 = "Category (" . $wkey . ") not found.\n";        # Row was not found Msg.
+            $err_msg1 = "Group (" . $wkey . ") not found.\n";           # Row was not found Msg.
             $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
             $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
@@ -132,18 +113,18 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
         ?>
-        <script>location.replace("/crud/cat/sadm_category_main.php");</script>
+        <script>location.replace("/crud/srv/sadm_server_main.php");</script>
         <?php                                                           # Back 2 List Page
         #echo "<script>location.replace('" . URL_MAIN . "');</script>";
         exit ; 
     }
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_page_heading("back","Delete Category",$CREATE_BUTTON);      # Display Content Heading
+    display_page_heading("back","Delete Server",$CREATE_BUTTON);         # Display Content Heading
  
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_cat_form ($row,"Display");                                  # Display No Change Allowed
+    display_srv_form ($row,"Display");                                  # Display No Change Allowed
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe

@@ -105,9 +105,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # Display Buttons (Create/Cancel) at the bottom of the form
     echo "<center>";
-    echo "<button type='submit' class='btn btn-sm btn-primary'> Create </button>   ";
+    echo "<button type='submit'> Create </button>   ";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
+    echo "<button type='button'> Cancel </button></a>";
     echo "</center>";
     echo "</form>";                                                     # End of Form
 

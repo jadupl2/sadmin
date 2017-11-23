@@ -150,9 +150,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # Display Buttons (Delete/Cancel) at the bottom of the form
     echo "\n<center>";
-    echo "\n<button type='submit' class='btn btn-sm btn-primary'> Delete </button>";
+    echo "\n<button type='submit'> Delete </button>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
+    echo "<button type='button'> Cancel </button></a>";
     echo "\n</center>";
     
     # End of Form
