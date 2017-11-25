@@ -2,11 +2,11 @@
 # ==================================================================================================
 #   Author      :  Jacques Duplessis 
 #   Email       :  jacques.duplessis@sadmin.ca
-#   Title       :  sadm_category_create.php
+#   Title       :  sadm_group_create.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
 #   Requires    :  php - MySQL
-#   Description :  Web Page used to create a new server category.
+#   Description :  Web Page used to create a new server group.
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
@@ -33,7 +33,7 @@
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/grp/sadm_group_common.php');
 echo "<body>";                                                          # Begin HTML body Section
 echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
@@ -50,7 +50,7 @@ echo "<div id='sadmRightColumn'>";                                      # Beginn
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
-$URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
+$URL_MAIN   = '/crud/grp/sadm_group_main.php';                          # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
@@ -65,8 +65,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
 
         # Construct SQL to Insert row
-        $sql = "INSERT INTO server_category ";                          # Construct SQL Statement
-        $sql = $sql . "(cat_code, cat_desc, cat_active, cat_date, cat_default) VALUES ('";
+        $sql = "INSERT INTO server_group ";                          # Construct SQL Statement
+        $sql = $sql . "(grp_code, grp_desc, grp_active, grp_date, grp_default) VALUES ('";
         $sql = $sql . $_POST['scr_code']    . "','" ;
         $sql = $sql . $_POST['scr_desc']    . "','" ;
         $sql = $sql . $_POST['scr_active']  . "','" ;
@@ -83,12 +83,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
             $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
             sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
         }else{                                                          # Update done with success
-            #$err_msg = "Category '". $_POST['scr_code']."' inserted";  # Advise user of success Msg
+            #$err_msg = "Group '". $_POST['scr_code']."' inserted";     # Advise user of success Msg
             #sadm_alert ($err_msg) ;                                    # Msg. Error Box for User
         }
 
-        # Back to Category List Page
-        ?> <script> location.replace("/crud/cat/sadm_category_main.php"); </script><?php
+        # Back to Group List Page
+        ?> <script> location.replace("/crud/grp/sadm_group_main.php"); </script><?php
         exit;
     }
     
@@ -98,9 +98,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_page_heading("back","Create Category",$CREATE_BUTTON);      # Display Content Heading
+    display_page_heading("back","Create Group",$CREATE_BUTTON);         # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_cat_form ($row,"Create");                                   # Display Form Default Value
+    display_grp_form ($row,"Create");                                   # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form

@@ -5,7 +5,7 @@
 #   Title       :  sadm_category_update.php
 #   Version     :  1.8
 #   Date        :  13 June 2016
-#   Requires    :  php - BootStrap - PostGresSql
+#   Requires    :  php - MySQL
 #   Description :  Web Page used to edit a category.
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
@@ -163,9 +163,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # Display Buttons (Update/Cancel) at the bottom of the form
     echo "<center>";                                                    # Center Button on Page
-    echo "<button type='submit' class='btn btn-sm btn-primary'> Update </button>   ";
+    echo "<button type='submit'> Update </button>   ";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button' class='btn btn-sm btn-primary'> Cancel </button></a>";
+    echo "<button type='button'> Cancel </button></a>";
     echo "</center>";
     echo "</form>";                                                     
  
