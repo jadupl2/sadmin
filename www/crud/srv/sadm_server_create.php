@@ -110,11 +110,15 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form
-    echo "<center>";
-    echo "<button type='submit'> Create </button>   ";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'>";
+    echo "<button type='submit'> Create </button></div>";
+    echo "\n<div class='second_button'>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "\n</center>";
+    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
+    
     echo "\n</form>";                                                     
     echo "\n<br>";                                                      # Blank Line After Button
 

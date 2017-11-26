@@ -162,11 +162,13 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
     # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "<center>";                                                    # Center Button on Page
-    echo "<button type='submit'> Update </button>   ";
-    echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "</center>";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
+    echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'><button type='button'> Cancel ";
+    echo "</button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
+    
     echo "</form>";                                                     
  
     mysqli_free_result($result);                                        # Free result set 

@@ -27,7 +27,6 @@ echo "\n\n\n<!-- ===============================================================
 echo "\n<div id='sadmSideBar'>\n";
 
 	# ---------------------------   O/S REPARTITION SIDEBAR     ------------------------------------
-	#$sadm_array = build_sidebar_servers_info($sidebar_array);
 	$sadm_array = build_sidebar_servers_info();
     $SERVER_COUNT=0;
     echo "<br>";

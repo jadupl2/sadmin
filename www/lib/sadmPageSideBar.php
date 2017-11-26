@@ -40,16 +40,89 @@ echo "\n<div class='SideBar'>";
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
-$URL_SERVER   = '/view/sadm_view_servers.php';                          # Show Servers List URL
-$URL_OSUPDATE = "/view/sadm_view_schedule.php";                         # View O/S Update URL 
-$URL_MONITOR  = "/view/sadm_view_sysmon.php";                           # View System Monitor URL 
+$URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
+$URL_OSUPDATE = "/view/srv/sadm_view_schedule.php";                     # View O/S Update URL 
+$URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
 $URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Maintenance Cat. Page URL
 $URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
 $URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
+$URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return Code History View
+
+
+// ================================================================================================
+//                   Build Array Used by SideBar for Scripts Status 
+// ================================================================================================
+function build_sidebar_scripts_info() {
+    
+        #$DEBUG = TRUE;                                                     # Activate/Deactivate Debug
+    
+        # Reset All Counters
+        $count=0;                                                           # Working Counter
+        $script_array = array() ;
+    
+        # Form the base directory name where all the servers 'rch' files are located
+        $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
+        if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
+    
+        # Make sure that the DATA Root directory is a directory
+        if (! is_dir($RCH_ROOT)) {
+            $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
+            alert ("$msg");
+            ?><script type="text/javascript">history.go(-1);</script><?php
+            exit;
+        }
+    
+        # Create unique filename that will contains all servers *.rch filename
+        $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
+        if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
+        $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
+        if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
+        $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
+        if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
+    
+        # Open input file containing the name of all rch filenames
+        $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
+    
+        # Loop through filename list in the file
+        while(! feof($input_fh)) {
+            $wfile = trim(fgets($input_fh));                                # Read rch filename line
+            if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Show rch filename in Debug
+            if ($wfile != "") {                                             # If filename not blank
+                $line_array = file($wfile);                                 # Reads entire file in array
+                $last_index = count($line_array) - 1;                       # Get Index of Last line
+                if ($last_index > 0) {                                      # If last Element Exist
+                    if ($line_array[$last_index] != "") {                   # If None Blank Last Line
+                        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
+                        $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
+                        if ($DEBUG) {                                       # In Debug Show Output Line
+                            echo "<br>Output line is " . $outline ;         # Print Output Line
+                        }
+                        $count+=1;
+                        # Key is "StartDate + StartTime + FileName"
+                        $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
+                        if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
+                        if (array_key_exists("$akey",$script_array)) {
+                            $script_array[$akey] = $outline . "_" . $count ;
+                        }else{
+                            $script_array[$akey] = $outline ;
+                        }
+                    }
+                }
+            }
+        }
+        fclose($input_fh);                                                  # Close Input Filename List
+        krsort($script_array);                                              # Reverse Sort Array on Keys
+        unlink($tmprch);                                                    # Delete Temp File
+        # Under Debug - Display The Array Used to build the SideBar
+        if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
+        return $script_array;
+    }
+
 
 
 # ==================================================================================================
-#                    Build Side Bar Based on SideBar Type Desired (server/ip/script)
+# This function read the server tabe and collect info to build the SideBar (Except Scripts Status)
+# The function return an array with the information needed to display the SideBar info
 # ==================================================================================================
 function SideBar_OS_Summary() {
     global $con;                                                        # Global Database Conn. Obj.
@@ -189,51 +262,46 @@ function SideBar_OS_Summary() {
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
-	# SERVER ATTRIBUTE SIDEBAR
+    # SERVER ATTRIBUTE HEADER
     echo "<div class='SideBarTitle'>Server Attribute</div>";            # SideBar Section Title
 
+	# DISPLAY NUMBER OF ACTIVE SERVER
     $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_SERVER . "?selection=all_active'>";         # View Active server URL
-    if ( ${kpart2} == 0 ) {                                             # If Nb. Active server is 0
-        echo "No active</a></div>";                                     # Print No Active Server
-    }else{                                                              # If we have Active Servers
+    if ( ${kpart2} != 0 ) {                                             # If Nb. Active server is 0
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_active'>";     # View Active server URL
         echo "${kpart2} Active(s)</a></div>";                           # Print Nb. of Active Server
     }
 
+    # DISPLAY NUMBER OF INACTIVE SERVERS
     $kpart2 = $sadm_array["srv_inactive,"];                             # Array Key for Inact. Srv.
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";       # View Inactive server URL
-    if ( ${kpart2} == 0 ) {                                             # If no Inactive server
-        echo "No inactive</a></div>";                                   # Print No Inactive Srv. 
-    }else{                                                              # If we have Inactive Srv.
+    if ( ${kpart2} != 0 ) {                                             # If no Inactive server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
         echo "${kpart2} inactive(s)</a></div>";                         # Print Nb. Inactive Server
     }
 
+    # DISPLAY NUMBER OF VIRTUAL SERVERS
     $kpart2 = $sadm_array["srv_vm,"];                                   # Array Key for Virtual Srv.
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";             # View Virtual server URL
-    if ( ${kpart2} == 0 ) {                                             # If no Virtual Server
-        echo "No virtual</a></div>\n";                                  # Print No Virtual Server
-    }else{                                                              # If we have Virtual Server
+    if ( ${kpart2} != 0 ) {                                             # If no Virtual Server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
         echo "${kpart2} virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
     }
 
+    # DISPLAY NUMBER OF PHYSICAL SERVERS
     $kpart2 = $sadm_array["srv_physical,"];                             # Array Key for Physical Srv
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";       # View Physical server URL
-    if ( ${kpart2} == 0 ) {                                             # If No Physical Server
-        echo "No physical server</a></div>";                            # Print No Physical Server
-    }else{                                                              # If we have Physical Server
+    if ( ${kpart2} != 0 ) {                                             # If No Physical Server
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
         echo "${kpart2} physical(s)</a></div>";                         # Print Nb. of Physical Srv.
     }
 
+    # DISPLAY NUMBER OF SPORADIC SERVERS
     $kpart2 = $sadm_array["srv_sporadic,"];                             # Array Key for Sporadic Srv
-    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";       # View Sporadic server URL
-    if ( ${kpart2} == 0 ) {                                             # If no sporadic servers
-        echo "No sporadic server</a></div>";                            # Print no Sporadic Server
-    }else{                                                              # If we have Sporadic Server
+    if ( ${kpart2} != 0 ) {                                             # If no sporadic servers
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
         echo "${kpart2} sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
@@ -248,6 +316,53 @@ function SideBar_OS_Summary() {
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
+	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
+    echo "\n<div class='SideBarTitle'>Scripts Status</div>";             # SideBar Section Title
+	$script_array = build_sidebar_scripts_info();                       # Build $script_array
+    $TOTAL_SCRIPTS=count($script_array);                                # Get Nb. Scripts in Array
+    $TOTAL_FAILED=0; $TOTAL_SUCCESS=0; $TOTAL_RUNNING=0;                # Initialize Total to Zero
+
+    # Loop through Script Array to count Different Return Code
+    foreach($script_array as $key=>$value) {
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode,$cfile) = explode(",", $value);
+        if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
+        if ($ccode == 1) { $TOTAL_FAILED  += 1; }
+        if ($ccode == 2) { $TOTAL_RUNNING += 1; }
+    }
+
+    # Display Total number of Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=all'>";                  # URL To View O/S Upd. Page
+	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a>\n</div>";            # Display Script Total Count
+
+    # Display Total Number of Succeeded Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=success'>";              # URL To View O/S Upd. Page
+    if ( $TOTAL_SUCCESS == 0 ) {                                        # If None Succeeded
+        echo "No Script Succeeded</a>\n</div>";                         # Advise user
+    }else{                                                              # If Some Scripts succeeded
+        echo "$TOTAL_SUCCESS Success</a>\n</div>";                      # Display Total Succeeded
+    }
+
+    # Display Total Number of Failed Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=failed'>";               # URL To View O/S Upd. Page
+    if ( $TOTAL_FAILED == 0 ) {                                         # If None Succeeded
+        echo "None Failed</a>\n</div>";                                 # No Scripts Failed
+    }else{
+        echo "$TOTAL_FAILED Failed</a>\n</div>";                        # Display Total Script Fail
+    }
+
+    # Display Total Number of Running Scripts
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=running'>";              # URL To View O/S Upd. Page
+    if ( $TOTAL_RUNNING == 0 ) {                                        # If No Script is running
+        echo "None Running</a>\n</div>";                                # Display None Running
+    }else{
+        echo "$TOTAL_RUNNING Running</a>\n</div>";                      # Display Total Running Scr.
+    }
+    echo "\n<hr/>";                                                     # Print Horizontal Line
+    
 
 	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
     echo "\n<div class='SideBarTitle'>Edit Section</div>";              # SideBar Section Title
