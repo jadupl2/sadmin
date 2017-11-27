@@ -61,20 +61,21 @@ $DEBUG = False ;                                                        # Debug 
 $SVER  = "2.0" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
-
+$URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
+$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
 
 # ==================================================================================================
-# DISPLAY RESULT CODE HISTORY FILE RESULTS HEADING FUNCTION
+# SETUP TABLE HEADER AND FOOTER
 # ==================================================================================================
 function setup_table() {
     echo "\n<br>\n";
     
     # TABLE CREATION
-    echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="98%">';   
+    echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
     
     # PAGE TABLE HEADING 
-    echo "<thead>\n";
+    echo "\n<thead>\n";
     echo "<tr>\n";
     echo "<th class='dt-head-left'>Server</th>\n";
     echo "<th class='dt-left'>Script Name</th>\n";
@@ -108,86 +109,93 @@ function setup_table() {
 
 # ==================================================================================================
 # DISPLAY THE SCRIPT ARRAY FUNCTION
-#  1st Parameter is the Page Heading Title
-#  2nd Parameter is the Script Array 
+#   1st Parameter Object connector to Database
+#   2nd Parameter is the Page Type to display (All,Failed,Success,Running)
+#   3rd Parameter is the Script Array 
 # ==================================================================================================
-function display_script_array($con,$PAGE_TYPE, $script_array)
-{
-    global $DEBUG; 
+function display_script_array($con,$wpage_type,$script_array) {
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_VIEW_LOG ; 
     
-    # Loop through the script array 
+    # LOOP THROUGH THE SCRIPT ARRAY ----------------------------------------------------------------
     foreach($script_array as $key=>$value) { 
         list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode,$cfile) = 
-            explode(",", $value);                                       # Split Script RCH Data
+            explode(",", $value);                                       # Split Script RCH Data Line
             
-        # If Page Type Selected match the Return Code of RCH file or All Script selected, Display it
-        if ((($PAGE_TYPE == "failed")  and ($ccode == 1)) or 
-            (($PAGE_TYPE == "running") and ($ccode == 2)) or 
-            (($PAGE_TYPE == "success") and ($ccode == 0)) or 
-             ($PAGE_TYPE == "all")) {
+        # IF PAGE TYPE SELECTED MATCH THE RETURN CODE OF RCH FILE OR ALL SCRIPT SELECTED, DISPLAY IT
+        if ((($wpage_type == "failed")  and ($ccode == 1)) or 
+            (($wpage_type == "running") and ($ccode == 2)) or 
+            (($wpage_type == "success") and ($ccode == 0)) or 
+             ($wpage_type == "all")) {
 
-            # Get Server Description from Database (Use as a tooltip over the servane name)
-            $sql = "SELECT * FROM server where srv_name = '$cserver' ;";
+            # GET SERVER DESCRIPTION FROM DATABASE (USE AS A TOOLTIP OVER THE SERVANE NAME) --------
+            $sql = "SELECT * FROM server where srv_name = '$cserver' "; # Select Statement Read Srv
             $result=mysqli_query($con,$sql);                            # Execute SQL Select
-            $row = mysqli_fetch_assoc($result);
-            if ($row) { $wdesc   = $row['srv_desc']; } else { $wdesc   = "Unknown"; }
-
-            echo "<tr>\n";
-            echo "<td class='dt-left'>" ;
+            $row = mysqli_fetch_assoc($result);                         # Get Column Row Array 
+            if ($row) { $wdesc   = $row['srv_desc']; } else { $wdesc   = "Unknown"; } #Get Srv Desc.
+            
+            # DISPLAY SERVER NAME ------------------------------------------------------------------
+            echo "\n<tr>";
+            echo "\n<td class='dt-left'>" ;
             echo "<a href='" . $URL_HOST_INFO . "?host=" . $cserver . 
-                 "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>\n";
+                 "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
                  
-            # Display Script Name, Start Date, Start Time, End Time and Elapse Script Time
-            echo "<td>"  . $cname . "</td>\n";                          # Server Name Cell
-            echo "<td class='dt-center'>" . $cdate1  . "</td>\n";       # Start Date Cell
-            echo "<td class='dt-center'>" . $ctime1  . "</td>\n";       # Start Time Cell
+            # DISPLAY SCRIPT NAME, START DATE, START TIME, END TIME AND ELAPSE SCRIPT TIME ---------
+            echo "\n<td>"  . $cname . "</td>";                          # Server Name Cell
+            echo "\n<td class='dt-center'>" . $cdate1  . "</td>";       # Start Date Cell
+            echo "\n<td class='dt-center'>" . $ctime1  . "</td>";       # Start Time Cell
             if ($ccode == 2) {
-                echo "<td class='dt-center'>............</td>\n";       # Running - No End date Yet
-                echo "<td class='dt-center'>............</td>\n";       # Running - No Elapse time
+                echo "\n<td class='dt-center'>............</td>";       # Running - No End date Yet
+                echo "\n<td class='dt-center'>............</td>";       # Running - No Elapse time
             }else{
-                echo "<td class='dt-center'>" . $ctime2   . "</td>\n";  # Script Ending Time
-                echo "<td>" . $celapsed . "</td>\n";                    # Script Elapse Time
+                echo "\n<td class='dt-center'>" . $ctime2   . "</td>";  # Script Ending Time
+                echo "\n<td>" . $celapsed . "</td>";                    # Script Elapse Time
             }
             
-            # Display The Script Status based on Return Code 
+            # DISPLAY THE SCRIPT STATUS BASED ON RETURN CODE ---------------------------------------
             switch ($ccode) {
-                case 0:  echo "<td><font color='black'>Success</font></td>\n";
-                         break;
-                case 1:  echo "<td><font color='red'>Failed</font></td>\n";
-                         break;
-                case 2:  echo "<td><font color='green'>Running</font></td>\n";
-                         break;
-                default: echo "<td><font color='red'>Code " . $ccode . "</font></td>\n";
-                         break;;
+                case 0:  
+                    echo "\n<td class='dt-center'><strong>";
+                    echo "<font color='black'>Success</font></strong></td>";
+                    break;
+                case 1:  
+                    echo "\n<td class='dt-center'><strong>";
+                    echo "<font color='red'>Failed</font></strong></td>";
+                    break;
+                case 2:  
+                    echo "\n<td class='dt-center'><strong>";
+                    echo "<font color='green'>Running</font></strong></td>";
+                    break;
+                default: 
+                    echo "\n<td class='dt-center'><font color='red'>Code " .$ccode. "</font></td>";
+                    break;;
             }
             
-            # Display Links to Access History File (RCH) and the Log file 
+            # DISPLAY LINKS TO ACCESS HISTORY FILE (RCH) -------------------------------------------
             list($fname,$fext) = explode ('.',$cfile);                  # Isolate Script Name
             $LOGFILE = $fname . ".log";                                 # Add .log to Script Name
-
-            echo "<td class='dt-center'>" ;
+            echo "\n<td class='dt-center'>" ;
             $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . trim($cfile) ;
             if (file_exists($rch_name)) {
-                echo "<a href='/sadmin/sadm_view_rchfile.php?host=". $cserver ."&filename=". $cfile . 
-                    "' data-toggle='tooltip' title='View Result Code History File'>View History</a>";
+                echo "<a href='" . $URL_VIEW_RCH . "?host=". $cserver ."&filename=". $cfile . 
+                   "' data-toggle='tooltip' title='View Result Code History File'>View History</a>";
             }else{
-                echo "N/A";    
+                echo "No File";                                         # If no RCH Exist
             }
-            echo "</td>\n" ;
+            echo "</td>" ;
 
-            echo "<td class='dt-center'>" ;
+            # DISPLAY LINKS TO ACCESS THE LOG FILE -------------------------------------------------
+            echo "\n<td class='dt-center'>" ;
             $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($LOGFILE) ;
             if (file_exists($log_name)) {
-                echo "<a href='/sadmin/sadm_view_logfile.php?host=". $cserver . "&filename=" . 
+                echo "<a href='" . $URL_VIEW_LOG . "?host=". $cserver . "&filename=" . 
                  $LOGFILE .  "' data-toggle='tooltip' title='View Script Log File'>View Log</a>";
             }else{
-                echo "N/A";    
+                echo "No Log";                                          # If No log exist for script
             }
-            echo "</td>\n" ;
-            echo "</tr>\n";
+            echo "</td>" ;
+            echo "\n</tr>\n";
         }
     }    
-    echo "</tbody></table></center><br><br>\n";
 }
 
 
@@ -198,66 +206,60 @@ function display_script_array($con,$PAGE_TYPE, $script_array)
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
+    echo "\n\n<div id='sadmRightColumn'>";                              # Beginning Content Page
 
-    # If we did not received any parameter, then default to displaying all scripts status
+    # IF WE DID NOT RECEIVED ANY PARAMETER, THEN DEFAULT TO DISPLAYING ALL SCRIPTS STATUS ----------
     if (isset($_GET['sel']) ) {                                         # If Param Type recv.
         $SELECTION = $_GET['sel'];                                      # Get Page Type Received
     }else{                                                              # If No Param received
-        $SELECTION = 'all';                                             # Def. Display All Scripts
+        $SELECTION = 'all';                                             # Default to All Scripts
     }
-    if ($DEBUG) { echo "<br>Selection is " . $SELECTION; }              # Under Debug Show Page Type
-    if ($DEBUG) { echo "<br>SADM_WWW_RCH_DIR = " . SADM_WWW_RCH_DIR; }  # Under Debug Show RCH Dir.
+    if ($DEBUG) { echo "<br>Selection is " . $SELECTION; }              # Display Selection Received
 
 
-    # Validate the page type received - If not supported, Back to Prev page
+    # MAKE SURE THAT /WWW/DAT DIRECTORY EXIST ON WEB SERVER-----------------------------------------
+    if (! SADM_WWW_DAT_DIR) {                                           # If dat Directory not exist
+        $msg = "Data Directory '" .SADM_WWW_DAT_DIR. "' don't exist\n"; # Inform User
+        $msg = $msg."Cannot proceed with request";                      # Can't Proceed
+        sadm_fatal_error ("$msg");
+    }
+
+    # VALIDATE THE PAGE TYPE RECEIVED - IF NOT SUPPORTED, BACK TO PREV PAGE ------------------------
     switch ($SELECTION) {
-        case 'all'      :  break;
-        case 'failed'   :  break;
-        case 'running'  :  break;
-        case 'success'  :  break;
-        default         :  $msg="Invalid Page Type Received (" . $SELECTION . ")";
-                           alert ("$msg");
-                           ?><script type="text/javascript">history.go(-1);</script><?php
-                           exit ;
+        case 'all'      :   $HDESC="All Scripts";                       # View All Scripts
+                            break;                                       
+        case 'failed'   :   $HDESC="Failed Scripts";                    # View Only Failed Scripts
+                            break;                                       
+        case 'running'  :   $HDESC="Running Scripts";                   # View Only Running Scripts
+                            break;                                       
+        case 'success'  :   $HDESC="Success Scripts";                   # View Only Succeed Scripts
+                            break;                                       
+        default         :   $msg="Invalid Page Type Received \n(" . $SELECTION . ")";
+                            sadm_fatal_error ("$msg");                  # Advise user Invalid Type
     }
 
-    # Read Last Line of all *.rch and fill the Script Array with results
+    # READ LAST LINE OF ALL *.RCH AND FILL THE SCRIPT ARRAY WITH RESULTS ---------------------------
 	$script_array = build_sidebar_scripts_info();                       # Build Scripts Array
-    if ($DEBUG) {
+    if ($DEBUG) {                                                       # Display Array Just Build
         $xcount = 0 ;                                                   # Init Line Counter
         echo "<BR><BR>Array Nb. of elements: " . count($script_array);  # Nb. Of Items in Array
-        foreach($script_array as $key=>$value) { 
+        foreach($script_array as $key=>$value) {                        # For each Item in Array
             $xcount += 1;                                               # Increase Line Counter
             echo "<br>$xcount - KEY IS $key AND VALUE IS $value";       # Display Array Key & Value
         }
     }
 
-   # Set and Display Web Page Header
-    $HDESC = "";
-    if ($SELECTION== "all")      { $HDESC="All Scripts"; }
-    if ($SELECTION== "running")  { $HDESC="Running Scripts"; }
-    if ($SELECTION== "failed")   { $HDESC="Failed Scripts"; }
-    if ($SELECTION== "success")  { $HDESC="Success Scripts"; }
-    if ($HDESC == "") {
-        echo "<br>Heading Display Type (" . $SELECTION. ") " . $HDESC . "is invalid<br>";
-        echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-        exit(1);
-    }
-
-   
-    # Display the script array 
-    display_page_heading("NotHome","$HDESC",$CREATE_BUTTON);            # Display Content Heading
-    echo "\n<hr/>";                                                     # Print Horizontal Line
+    # DISPLAY HEADING AND EACH LINES REQUESTED FROM THE ARRAY JUST BUILT ---------------------------
+    display_std_heading("NotHome","$HDESC",$SVER);                      # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
-    display_script_array($con,$SELECTION,$script_array);                     # Go Display Script Array
+    display_script_array($con,$SELECTION,$script_array);                # Go Display Script Array
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
-    echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
+    echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
 
     # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
+    echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page
+    echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    echo "\n</div> <!-- End of sadmWrapper       -->" ;                 # End of Real Full Page
 ?>

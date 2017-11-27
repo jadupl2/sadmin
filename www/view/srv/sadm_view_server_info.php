@@ -42,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Displa
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = True ;                                                        # Debug Activated True/False
+$DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -502,16 +502,12 @@ function display_right_side ($wrow) {
         if ($DEBUG) { echo "\n<br>Select statement is $sql\n"; }        # Display SQL Query 
         
         $result = mysqli_query($con,$sql) ;                             # Execute SQL Select
-        // if (!$result)   {                           # If Server not found
-        //     $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
-        //     $err_msg = $err_msg . mysqli_error($con) ;                     # Add Postgresql Error Msg
-        //     exit;
-        // }else{
-        //     echo "\n\nSQL WAS OK\n";
-        // }
-        $NUMROW = 1;
-        #$NUMROW = mysql_num_rows($result);                               # Get Nb of rows returned
-        echo "NUMROW = " . strval($NUMROW) ;
+        if (!$result)   {                           # If Server not found
+            $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
+            $err_msg = $err_msg . mysqli_error($con) ;                     # Add Postgresql Error Msg
+            exit;
+        }
+        $NUMROW = mysqli_num_rows($result);                               # Get Nb of rows returned
 
          if ((!$result) or ($NUMROW == 0))  {                           # If Server not found
             $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
@@ -530,7 +526,6 @@ function display_right_side ($wrow) {
          }else{
             if ($DEBUG) {                                               # Debug Print Nb Rows
                echo "<br>Number of row(s) returned is ..." . strval($NUMROW) . "... " ;
-               echo "<br>Result is ..." . strval($result) . "... " ;
             }
             $row = mysqli_fetch_assoc($result);
         }

@@ -76,8 +76,8 @@ $CREATE_BUTTON = True ;                                                 # Yes Di
 function setup_table() {
 
     # TABLE CREATION
-    echo "<div id='SimpleTable'>";                                         # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border nowrap width="90%">';   
+    echo "\n<div id='SimpleTable'>";                                    # Width Given to Table
+    echo '\n<table id="sadmTable" class="display" cell-border compact row-border nowrap width="90%">';
     
     # PAGE TABLE HEADING
     echo "\n<thead>";

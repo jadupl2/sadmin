@@ -41,7 +41,7 @@ function display_std_heading($BACK_URL,$WTITLE,$WVER,
     $URL_HOME   = '/index.php';                                         # Site Main Page
     
     # FIRST LINE DISPLAY TITLE, VERSION NUMBER AND DATE/TIME
-    echo "\n<div style='float: left;'>${WTITLE} " . "$WVER" . "</div>"; # Display Title & Version No
+    echo "\n\n<div style='float: left;'>${WTITLE} " ."$WVER". "</div>"; # Display Title & Version No
     echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     
@@ -62,7 +62,7 @@ function display_std_heading($BACK_URL,$WTITLE,$WVER,
         echo "\n</div>\n";                                              # End of Button Div
     }
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    echo "\n<br>";
+    echo "\n<hr/><br>\n\n";                                             # Print Horizontal Line
 }
 
 

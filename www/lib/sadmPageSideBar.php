@@ -32,7 +32,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load s
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 echo "\n<body>";
-echo "\n<div class='SideBar'>";
+echo "\n\n<div class='SideBar'>";
 
 #===================================================================================================
 #                                      GLOBAL Variables
@@ -263,7 +263,7 @@ function SideBar_OS_Summary() {
     
 
     # SERVER ATTRIBUTE HEADER
-    echo "<div class='SideBarTitle'>Server Attribute</div>";            # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>Server Attribute</div>";          # SideBar Section Title
 
 	# DISPLAY NUMBER OF ACTIVE SERVER
     $kpart2 = $sadm_array["srv_active,"];                               # Array Key for Act. Server
@@ -332,34 +332,34 @@ function SideBar_OS_Summary() {
 
     # Display Total number of Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=all'>";                  # URL To View O/S Upd. Page
-	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a>\n</div>";            # Display Script Total Count
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=all'>";                    # URL To View O/S Upd. Page
+	echo "All (" . $TOTAL_SCRIPTS . ") Scripts</a></div>";              # Display Script Total Count
 
     # Display Total Number of Succeeded Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=success'>";              # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=success'>";                # URL To View O/S Upd. Page
     if ( $TOTAL_SUCCESS == 0 ) {                                        # If None Succeeded
-        echo "No Script Succeeded</a>\n</div>";                         # Advise user
+        echo "No Script Succeeded</a></div>";                           # Advise user
     }else{                                                              # If Some Scripts succeeded
-        echo "$TOTAL_SUCCESS Success</a>\n</div>";                      # Display Total Succeeded
+        echo "$TOTAL_SUCCESS Success</a></div>";                        # Display Total Succeeded
     }
 
     # Display Total Number of Failed Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=failed'>";               # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=failed'>";                 # URL To View O/S Upd. Page
     if ( $TOTAL_FAILED == 0 ) {                                         # If None Succeeded
-        echo "None Failed</a>\n</div>";                                 # No Scripts Failed
+        echo "None Failed</a></div>";                                   # No Scripts Failed
     }else{
-        echo "$TOTAL_FAILED Failed</a>\n</div>";                        # Display Total Script Fail
+        echo "$TOTAL_FAILED Failed</a></div>";                          # Display Total Script Fail
     }
 
     # Display Total Number of Running Scripts
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "\n<a href='" . $URL_RCH_SUMM . "?sel=running'>";              # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_RCH_SUMM . "?sel=running'>";                # URL To View O/S Upd. Page
     if ( $TOTAL_RUNNING == 0 ) {                                        # If No Script is running
-        echo "None Running</a>\n</div>";                                # Display None Running
+        echo "None Running</a></div>";                                  # Display None Running
     }else{
-        echo "$TOTAL_RUNNING Running</a>\n</div>";                      # Display Total Running Scr.
+        echo "$TOTAL_RUNNING Running</a></div>";                        # Display Total Running Scr.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
