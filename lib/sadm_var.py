@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_lib_global.py
 #   Synopsis:   This Module contain all common variables used by SADM Libraries and Python Scripts.
 #===================================================================================================
-import os, time, sys, pdb, socket, datetime, getpass, subprocess 
+import os, time, sys, pdb, socket, datetime, getpass, subprocess, pymysql
 #from subprocess import Popen, PIPE
 
 # SADM Library Add to Python Path and Import SADM Library and GLOBAL Variables
