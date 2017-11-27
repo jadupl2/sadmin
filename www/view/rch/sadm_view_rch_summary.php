@@ -60,6 +60,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
+$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 
 
 # ==================================================================================================
@@ -133,7 +134,7 @@ function display_script_array($con,$PAGE_TYPE, $script_array)
 
             echo "<tr>\n";
             echo "<td class='dt-left'>" ;
-            echo "<a href='/sadmin/sadm_view_server_info.php?host=" . $cserver . 
+            echo "<a href='" . $URL_HOST_INFO . "?host=" . $cserver . 
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>\n";
                  
             # Display Script Name, Start Date, Start Time, End Time and Elapse Script Time
