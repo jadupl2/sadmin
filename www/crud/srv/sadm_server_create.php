@@ -65,7 +65,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
 
         # Construct SQL to Insert row
-        $sql = "INSERT INTO server_server ";                          # Construct SQL Statement
+        $sql = "INSERT INTO server ";                                   # Construct SQL Statement
         $sql = $sql . "(srv_name, srv_domain, srv_desc, srv_tag, srv_note, srv_active, ";
         $sql = $sql . " srv_sporadic, srv_monitor, srv_cat, srv_group, srv_ostype, ";
         $sql = $sql . " srv_date_creation) VALUES ('";
@@ -106,16 +106,21 @@ $CREATE_BUTTON = False ;                                                # Don't 
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
     display_page_heading("back","Create Server",$CREATE_BUTTON);        # Display Content Heading
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($row,"Create");                                   # Display Form Default Value
+    display_srv_form ($con,$row,"Create");                                   # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form
-    echo "<center>";
-    echo "<button type='submit'> Create </button>   ";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'>";
+    echo "<button type='submit'> Create </button></div>";
+    echo "\n<div class='second_button'>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "</center>";
-    echo "</form>";                                                     # End of Form
+    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
+    
+    echo "\n</form>";                                                     
+    echo "\n<br>";                                                      # Blank Line After Button
 
     mysqli_close($con);                                                 # Close Database Connection
     echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       

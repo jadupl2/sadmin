@@ -124,20 +124,23 @@ $CREATE_BUTTON = False ;                                                # Don't 
  
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($row,"Display");                                  # Display No Change Allowed
+    display_srv_form ($con,$row,"Display");                              # Display No Change Allowed
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
     # Display Buttons (Delete/Cancel) at the bottom of the form
-    echo "\n<center>";
-    echo "\n<button type='submit'> Delete </button>";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'><button type='submit'> Delete </button></div>";
+    echo "\n<div class='second_button'>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "\n</center>";
+    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
     
     # End of Form
-    echo "</form>"; 
+    echo "</form>";
+    echo "\n<br>"; 
 
     mysqli_close($con);                                                 # Close Database Connection
     echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       

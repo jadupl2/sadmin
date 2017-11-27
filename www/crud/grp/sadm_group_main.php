@@ -77,7 +77,7 @@ function setup_table() {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                         # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border nowrap width="100%">';   
+    echo '<table id="sadmTable" class="display" cell-border compact row-border nowrap width="90%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";

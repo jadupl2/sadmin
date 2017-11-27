@@ -100,6 +100,7 @@ function display_grp_form ($wrow,$mode) {
        echo " value='" . sadm_clean_data($wrow['grp_code']). "' >";     # Show Current  Value
     }
     echo "\n</div>";                                                    # << End of grp_input
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
     
     
     # GROUP DESCRIPTION    
@@ -116,7 +117,8 @@ function display_grp_form ($wrow,$mode) {
        echo " value='" . sadm_clean_data($wrow['grp_desc']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    
     
     # GROUP ACTIVE ?
     echo "\n<div class='simple_label'>Group Status</div>";              # Display Name of Column
@@ -148,7 +150,8 @@ function display_grp_form ($wrow,$mode) {
        }
     }
     echo "\n</div>";      # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    
    
     # DEFAULT GROUP (YES/NO)
     echo "<div class='simple_label'>Default Group</div>";               # Display Name of Column
@@ -180,12 +183,14 @@ function display_grp_form ($wrow,$mode) {
         }
     }
     echo "</div>";                                                      # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    
    # LAST UPDATE DATE 
     echo "<div class='simple_label'>Last Update Date</div>";            # Display Name of Column
     echo "<div class='simple_input'>";                                  # Class for Column Input
     echo sadm_clean_data($wrow['grp_date']);                            # Display Last Update Date
     echo "</div>";                                                      # << End of simple_input
-
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    
     echo "<br></div><br>";                                              # << End of simple_form
 }

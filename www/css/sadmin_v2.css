@@ -108,25 +108,33 @@ body,html{
 
 /*h1,h2,h3,h4,h5,h6{ margin-top:5px; margin-bottom:5px; }*/
 
-h1
-{
+h1 {
 	font-size       :   28px;
 	font-weight     :   bold;
 	margin          :   6px 20px 10px 0px;
 }
-h2
-{
+h2 {
 	font-size       :   26px;
 	font-weight     :   normal;
 	margin          :   6px 20px 10px 0px;
 }
 
-h3
-{
+h3 {
 	font-size       :   22px;
 	font-weight     :   normal;
 	margin          :   6px 20px 10px 0px;
 }
+
+hr {
+    display         :   block;
+    height          :   1px;
+    border          :   0;
+    border-top      :   1px solid #ccc;
+    margin          :   1em 0;
+    padding         :   0;
+    background-color:   black;
+}
+
 
 /*table,th,td{ border:1px solid black; }
 th{ background: #3b56cf; }
@@ -134,14 +142,9 @@ tr:nth-child(even){ background:White; }
 tr:nth-child(odd) { background:#E2E4FF; }
 */
 
-.horizontal-line
-{
-	border-bottom   :   1px solid #AAA;
-	margin-top      :   10px;
-	margin-bottom   :   10px;
-	margin-left     :   10px;
-	margin-right    :   10px;
-}
+
+
+
 
 .sub-section
 {
@@ -287,6 +290,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
 }
 /* Attribute for column Input at the right of the screen in the form */
 .simple_input {
+    float           :   left;
     margin-bottom   :   8px;
     color           :   black;
     width           :   200px;
@@ -294,7 +298,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
 }
 /* Attribute for the Category, Group Main Screen Table (That List All Category, Group) */
 #SimpleTable{
-    width           :   90%;
+    width           :   95%;
     margin          :   auto;
 }
 
@@ -334,6 +338,24 @@ tr:nth-child(odd) { background:#E2E4FF; }
     color           :   black;
     float           :   left;
     width           :   200px;
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/*  CSS TO ALIGN THE TWO BUTTON AT THE BOTTOM OF A FORM (OK/CANCEL) (DELETE/CANCEL)               */
+/*  THE TWO BUTTON ARE ALIGN IN THE CENTER OF PAGE AND HAVE SOME SPACE BETWEEN THEM               */
+/* ---------------------------------------------------------------------------------------------- */
+.two_buttons {
+    width           :   100%;
+}
+.first_button{
+    width           :   49%;
+    float           :   left;
+    text-align      :   right ;
+}
+.second_button{
+    width           :   49%;
+    float           :   right;
+    text-align      :   left ;
 }
 
 

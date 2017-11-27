@@ -149,11 +149,13 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
     # Display Buttons (Delete/Cancel) at the bottom of the form
-    echo "\n<center>";
-    echo "\n<button type='submit'> Delete </button>";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'><button type='submit'> Delete </button></div>";
+    echo "\n<div class='second_button'>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "\n</center>";
+    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
     
     # End of Form
     echo "</form>"; 

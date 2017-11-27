@@ -60,7 +60,7 @@ function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
     }else{
         echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
     }
-    echo "\n</div>"; 
+    echo "</div>"; 
         
     # RIGHT OF SECOND LINE - Display Create Button at the far right
     if ($CREATE_BUTTON) {
@@ -82,58 +82,59 @@ function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
 //       = "Create"  Will display default values and user can modify all fields, except the row key
 //       = "Update"  Will display row content    and user can modify all fields, except the row key
 // ================================================================================================
-function display_srv_form ($wrow,$mode) {
+function display_srv_form ($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
-    echo "\n<div class='double_form'>";                                 # Start server Form Div
-
+    echo "\n\n<div class='double_form'>\n";                             # Start server Form Div
+    
     # Server Name
     echo "\n<div class='double_label'>Server Name</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'CREATE') {                                           # If Create Allow Input
-        echo "\n<input type='text' name='scr_name' size='16' ";         # Set Name for field & Size
+        echo "<input type='text' name='scr_name' size='16' ";           # Set Name for field & Size
         echo " maxlength='15' placeholder='Server Name' ";              # Set Default & Max Len
         echo " required value='" . sadm_clean_data($wrow['srv_name']);  # Field is required
         echo "' >";                                                     # End of Input 
     }else{
-       echo "\n<input type='text' name='scr_name' readonly size='15' "; # Set Name for Field & Size
+       echo "<input type='text' name='scr_name' readonly size='15' ";   # Set Name for Field & Size
        echo " value='" . sadm_clean_data($wrow['srv_name']). "' >";     # Show Current  Value
     }
-    echo "\n</div>";                                                    # << End of srv_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "</div>";                                                      # << End of srv_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
 
     # Server Domain  
     echo "\n<div class='double_label'>Server Domain</div>";             # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
+    if ($smode == 'CREATE') { $wrow['srv_domain'] = SADM_DOMAIN ; }     # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
-       echo "\n<input type='text' name='scr_domain' readonly ";         # Set Name and Read Only
-       echo " maxlength='30' size='31' ";                               # Set Max. Length
+       echo "<input type='text' name='scr_domain' readonly ";           # Set Name and Read Only
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_domain' required ";         # Set Name & Col. is require
+       echo "<input type='text' name='scr_domain' required ";           # Set Name & Col. is require
        echo " placeholder='" . SADM_DOMAIN . "'";                       # Set Default Domain
-       echo " maxlength='30' size='31' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Domain Current Value
     }
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "</div>";                                                      # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # Server Description    
     echo "\n<div class='double_label'>Description</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
-       echo "\n<input type='text' name='scr_desc' readonly ";           # Set Name and Read Only
-       echo " maxlength='35' size='37' ";                               # Set Max. Length
+       echo "<input type='text' name='scr_desc' readonly ";             # Set Name and Read Only
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_desc' required ";           # Set Name & Col. is require
+       echo "<input type='text' name='scr_desc' required ";             # Set Name & Col. is require
        echo " placeholder='Enter server Desc.'";                        # Set Default
-       echo " maxlength='35' size='37' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "</div>";                                                      # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # O/S Type
@@ -159,27 +160,113 @@ function display_srv_form ($wrow,$mode) {
                         break;
     }
     echo "\n</select>";
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # Server Note
     echo "\n<div class='double_label'>Server Note</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
-       echo "\n<input type='text' name='scr_note' readonly ";           # Set Name and Read Only
-       echo " maxlength='30' size='32' ";                               # Set Max. Length
+       echo "<input type='text' name='scr_note' readonly ";             # Set Name and Read Only
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_note' required ";           # Set Name & Col. is require
+       echo "<input type='text' name='scr_note' ";                      # Set Name & Col. is require
        echo " placeholder='Enter server note' ";                        # Set Default
-       echo " maxlength='30' size='32' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
-    
+
+    # Server Category
+    echo "\n<div class='double_label'>Server Category</div>";           # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    switch ($smode) {
+        case 'DISPLAY' :                                                # In Display/Delete Mode
+                echo "\n<input type='text' name='scr_cat' readonly ";   # Input Box is ReadOnly
+                echo "maxlength='10' size='12' ";                       # Input Size & Box Size
+                echo "value='" . sadm_clean_data($wrow['srv_cat']). "'/>";
+                break ;                                                 # End of Display/Delete Mode
+        case 'CREATE' : 
+                echo "\n<select name='scr_cat' size=1>";                # Combo Box 1 Item Display
+                $sqlc = 'SELECT * FROM server_category order by cat_code;';
+                if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
+                        if ($crow['cat_default'] == True) {             # If it is the default
+                            echo "\n<option selected>" ;                # Make it the Selected Item
+                        }else{                                          # If not The Default
+                            echo "\n<option>";                          # Just make part of list
+                        }
+                        echo sadm_clean_data($crow['cat_code']) . "</option>"; # Display Item
+                    }
+                }
+                echo "\n</select>";                                     # End of Select Combo Box
+                break ;                                                 # End of Display/Delete Mode
+        case 'UPDATE' : 
+                echo "\n<select name='scr_cat' size=1>";                # Size of Select Box
+                $sqlc = 'SELECT * FROM server_category order by cat_code;';
+                if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
+                        if (($crow['cat_code']) == ($wrow['srv_cat'])){ # If Default Value=Selected
+                            echo "\n<option selected>" . sadm_clean_data($crow['cat_code'])."</option>";
+                        }else{                                          # If not default Value
+                            echo "\n<option>" . sadm_clean_data($crow['cat_code']) . "</option>";
+                        }
+                    }
+                }
+                echo "\n</select>";                                     # End of Select Combo Box
+                break ;                                                 # End of Display/Delete Mode
+    }
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
+
+    # Server Group
+    echo "\n<div class='double_label'>Server Group</div>";              # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    switch ($smode) {
+        case 'DISPLAY' :                                                # In Display/Delete Mode
+                echo "\n<input type='text' name='scr_group' readonly "; # Input Box is ReadOnly
+                echo "maxlength='10' size='12' ";                       # Input Size & Box Size
+                echo "value='" . sadm_clean_data($wrow['srv_group']). "'/>";
+                break ;                                                 # End of Display/Delete Mode
+        case 'CREATE' : 
+                echo "\n<select name='scr_group' size=1>";              # Combo Box 1 Item Display
+                $sqlc = 'SELECT * FROM server_group order by grp_code;';
+                if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
+                        if ($crow['grp_default'] == True) {             # If it is the default
+                            echo "\n<option selected>" ;                # Make it the Selected Item
+                        }else{                                          # If not The Default
+                            echo "\n<option>";                          # Just make part of list
+                        }
+                        echo sadm_clean_data($crow['grp_code']) . "</option>"; # Display Item
+                    }
+                }
+                echo "\n</select>";                                     # End of Select Combo Box
+                break ;                                                 # End of Display/Delete Mode
+        case 'UPDATE' : 
+                echo "\n<select name='scr_group' size=1>";              # Size of Select Box
+                $sqlc = 'SELECT * FROM server_group order by grp_code;';
+                if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
+                        if (($crow['grp_code']) == ($wrow['srv_group'])){ # If Default Value=Selected
+                            echo "\n<option selected>" . sadm_clean_data($crow['grp_code'])."</option>";
+                        }else{                                          # If not default Value
+                            echo "\n<option>" . sadm_clean_data($crow['grp_code']) . "</option>";
+                        }
+                    }
+                }
+                echo "\n</select>";                                     # End of Select Combo Box
+                break ;                                                 # End of Display/Delete Mode
+    }
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
+
     # Server Active ?
     echo "\n<div class='double_label'>Server Status</div>";             # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
@@ -209,8 +296,8 @@ function display_srv_form ($wrow,$mode) {
           echo " checked > Inactive";                                   # Checked Field on screen
        }
     }
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # Server Tag
@@ -218,16 +305,16 @@ function display_srv_form ($wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_tag' readonly ";            # Set Name and Read Only
-       echo " maxlength='15' size='16' ";                               # Set Max. Length
+       echo " maxlength='15' size='17' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_tag']). "'/>";      # Show Current Value
     }else{
-       echo "\n<input type='text' name='scr_tag' required ";            # Set Name & Col. is require
+       echo "\n<input type='text' name='scr_tag' ";                     # Set Name & Col. is require
        echo " placeholder='Enter server tag' ";                         # Set Default
-       echo " maxlength='15' size='16' ";                               # Set Max. Length
+       echo " maxlength='15' size='17' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_tag']). "'/>";      # Show Current Value
     }
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # Server Sporadic ?
@@ -260,15 +347,15 @@ function display_srv_form ($wrow,$mode) {
        }
     }
     echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
     # Monitor Server ?
     echo "\n<div class='double_label'>Monitor Server</div>";            # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
-    if ($smode == 'CREATE') { $wrow['scr_monitor'] = True ; }           # Default Value = Active
+    if ($smode == 'CREATE') { $wrow['srv_monitor'] = True ; }           # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # Only Display / No Change
-       if ($wrow['scr_monitor'] == 1) {                                 # If server is Monitored
+       if ($wrow['src_monitor'] == 1) {                                 # If server is Monitored
           echo "\n<input type='radio' name='scr_monitor' value='1' ";   # 1=Monitored in scr_monitor
           echo "onclick='javascript: return false;' checked> Yes";      # And select Monitored Yes 
           echo "\n<input type='radio' name='scr_monitor' value='0' ";   # 0=No to scr_monitor
@@ -280,7 +367,7 @@ function display_srv_form ($wrow,$mode) {
           echo "onclick='javascript: return false;' checked >No";       # select No Option
        }
     }else{                                                              # In Create/Update Mode
-       if ($wrow['scr_monitor'] == 1) {                                 # Create/Upd Mode
+       if ($wrow['srv_monitor'] == 1) {                                 # Create/Upd Mode
           echo "\n<input type='radio' name='scr_monitor' value='1' ";   # If Col is Yes Set to 1
           echo " checked > Yes  ";                                      # Checked Field on screen
           echo "\n<input type='radio' name='scr_monitor' value='0'>";   # Inactive set to 0
@@ -293,16 +380,26 @@ function display_srv_form ($wrow,$mode) {
        }
     }
     echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
+    echo "\n<hr/>";
 
 
-   # LAST UPDATE DATE 
+    # DISPLAY CREATION DATE 
+    echo "\n<div class='double_label'>Creation Date</div>";             # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    echo sadm_clean_data($wrow['srv_date_creation']);                   # Display Last Edit Date
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
+
+    # LAST EDIT DATE 
     echo "\n<div class='double_label'>Last Edit Date</div>";            # Display Name of Column
-    echo "<div class='double_input'>";                                  # Class for Column Input
+    echo "\n<div class='double_input'>";                                # Class for Column Input
     echo sadm_clean_data($wrow['srv_date_edit']);                       # Display Last Edit Date
-    echo "\n</div>\n";                                                  # << End of double_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    
-    echo "<br></div><br>";                                              # << End of double_form
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+  
+    echo "\n</div>";                                                    # << End of double_form
+    echo "\n<br>\n\n";                                                  # Blank Lines
 }
