@@ -57,7 +57,7 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 function display_log_file ($WHOST,$WDESC,$WNAME)
 {
     echo "\n<center>";                                                  # Center the Table
-    echo "\n<table border=1>";                                          # Define Table
+    echo "\n<table border=0>";                                          # Define Table
     echo "\n<tr>" ;                                                     # Begin Heading Row
     $TITRE="Content of log " . basename($WNAME);                        # Build the Table Heading
     echo "\n<th colspan=2>" . $TITRE . "</th>";                         # Print 1st Row Heading
@@ -135,7 +135,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
-    display_std_heading("NotHome","File ".$LOGFILE,$SVER);              # Display Content Heading
+    display_std_heading("NotHome","Log Viewer ",$SVER);                 # Display Content Heading
     display_log_file ($HOSTNAME, $HOSTDESC, $LOGFILE);                  # Go Display File Content
 
     # COMMON FOOTING -------------------------------------------------------------------------------
