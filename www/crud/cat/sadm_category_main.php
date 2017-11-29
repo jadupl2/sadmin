@@ -31,7 +31,7 @@
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+
 # DataTable Initialisation Function
 ?>
 <script>
@@ -45,12 +45,10 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php
         } );
     } );
 </script>
+
 <?php
-     echo "<body>";
-     echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-     echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-     require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php'); # Display SideBar on Left               
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
+require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
 
 
 
@@ -77,7 +75,7 @@ function setup_table() {
 
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                    # Width Given to Table
-    echo '\n<table id="sadmTable" class="display" cell-border compact row-border nowrap width="90%">';
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border nowrap width='90%'>";
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
@@ -169,7 +167,6 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
     display_page_heading("home","Category Maintenance",$CREATE_BUTTON); # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
@@ -181,14 +178,7 @@ function display_data($con,$row) {
             display_data($con,$row);                                    # Display Row Data
         }
     }
-    mysqli_free_result($result);                                        # Free result set 
-    mysqli_close($con);                                                 # Close Database Connection
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of CatTable          -->" ;                   # End Of CatTable Div
-
-    # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

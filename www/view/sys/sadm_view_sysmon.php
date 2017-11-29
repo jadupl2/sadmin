@@ -1,4 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <?php
 # ==================================================================================================
 #   Author      :  Jacques Duplessis
@@ -32,7 +31,6 @@
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 
 # DataTable Initialisation Function
 ?>
@@ -47,13 +45,11 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
         } );
     } );
 </script>
+<!--  Refresh Pag every 60 Seconds -->
+<meta http-equiv="refresh" content="60"> 
 
 <?php
-    echo "<body>";
-    echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-    echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');# Display SideBar on Left               
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 
@@ -68,7 +64,9 @@ $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
-$URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$URL_CURRENT= '/view/sys/sadm_view_sysmon.php';                         # This page Current URL
+$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $tmp_file1          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp1_');
 $tmp_file2          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp2_');
@@ -163,55 +161,39 @@ function load_sysmon_array() {
 #                              Display SADMIN Main Page Header
 #===================================================================================================
 function setup_table() {
-    global $DEBUG ;
 
     # TABLE CREATION
     echo "\n\n<div id='SimpleTable'>";                                      # Width Given to Table
     echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
-    #echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
-
+    
     # TABLE HEADING
-    echo "\n<thead>\n";
-    echo "<tr>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th>Server</th>\n";
-    echo "<th>Server Description</th>\n";
-    echo "<th class='text-center'>Module</th>\n";
-    echo "<th>Alert Description</th>\n";
-    echo "<th class='text-center'>Date / Time</th>\n";
-    #echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Cat.</th>\n";
-    echo "<th class='text-center'>SubModule</th>\n";
-    #echo "<th class='text-center'>Alert Grp</th>\n";
-    #echo "<th class='text-center'>Email Grp</th>\n";
-    #echo "<th class='text-center'>Alert Grp</th>\n";
-    echo "<th class='text-center'>Alert/Email Grp</th>\n";
-    echo "</tr>\n";
-    echo "</thead>\n";
+    echo "\n<thead>";
+    echo "\n<tr>";
+    echo "\n<td class='dt-center'>Status</th>";
+    echo "\n<td class='dt-center'>Server</th>";
+    echo "\n<td class='dt-head-left'>Server Description</th>";
+    echo "\n<td class='dt-center'>Module</th>";
+    echo "\n<td class='dt-left'>Alert Description</th>";
+    echo "\n<td class='dt-center'>Date / Time</th>";
+    echo "\n<td class='dt-center'>Cat.</th>";
+    echo "\n<td class='dt-center'>Alert/Email Grp</th>";
+    echo "\n</tr>";
+    echo "\n</thead>\n";
 
     # TABLE FOOTER
-    echo "<tfoot>\n";
-    echo "<tr>\n";
-    #echo "<th class='text-center'>No</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th>Server</th>\n";
-    #echo "<th>O/S</th>\n";
-    echo "<th>Server Description</th>\n";
-    echo "<th class='text-center'>Module</th>\n";
-    echo "<th>Alert Description</th>\n";
-    echo "<th class='text-center'>Date / Time</th>\n";
-    #echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Cat.</th>\n";
-    echo "<th class='text-center'>SubModule</th>\n";
-    #echo "<th class='text-center'>Alert Grp</th>\n";
-    #echo "<th class='text-center'>Email Grp</th>\n";
-    #echo "<th class='text-center'>Alert Grp</th>\n";
-    echo "<th class='text-center'>Alert/Email Grp</th>\n";
-    echo "</tr>\n";
-    echo "</tfoot>\n";
+    echo "\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<td class='dt-center'>Status</th>";
+    echo "\n<td class='dt-center'>Server</th>";
+    echo "\n<td class='dt-head-left'>Server Description</th>";
+    echo "\n<td class='dt-center'>Module</th>";
+    echo "\n<td class='dt-left'>Alert Description</th>";
+    echo "\n<td class='dt-center'>Date / Time</th>";
+    echo "\n<td class='dt-center'>Cat.</th>";
+    echo "\n<td class='dt-center'>Alert/Email Grp</th>";
+    echo "\n</tr>";
+    echo "\n</tfoot>\n";
 
-    # Start of Table Body
-    echo "<tbody>\n";
 }
 
 
@@ -219,8 +201,9 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($con,$alert_file) {
-    global $DEBUG, $URL_HOST_INFO ;
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_LOG ;
 
+    echo "\n<tbody>\n";                                                 # Start of Table Body
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
     rsort($array_sysmon);                                               # Sort Array in Reverse Ord.
 
@@ -234,34 +217,42 @@ function display_data($con,$alert_file) {
         # DISPLAY ICON STATUS
         echo "<tr>\n";
         #echo "<td class='dt-center'>" . nl2br($line_num+1)  . "</td>\n";
-        echo "<td class='dt-center'>";
         switch (strtoupper($wstatus)) {
             case 'SUCCESS' :
+                echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Success '>";
                 echo "<img src='/images/success.png' ";
+                echo "style='width:24px;height:24px;'></span> Success</td>";
                 break;
             case 'ERROR' :
+                echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Error Reported'>";
                 echo "<img src='/images/error.png' ";
+                echo "style='width:24px;height:24px;'></span> Error</td>";
                 break;
             case 'WARNING' :
+                echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Warning Reported'>";
                 echo "<img src='/images/warning.png' ";
+                echo "style='width:24px;height:24px;'></span> Warning</td>";
                 break;
             case 'RUNNING' :
+                echo "\n<td class='dt-justify'>";
                 echo "<span data-toggle='tooltip' title='Running Process'>";
                 echo "<img src='/images/running.png' ";
+                echo "style='width:24px;height:24px;'></span> Running </td>";
                 break;
             default:
+                echo "\n<td class='dt-center' vertical-align: center;>";
                 echo "<span data-toggle='tooltip' title='Unknown Status'>";
                 echo "<img src='/images/question_mark.png' ";
+                echo "style='width:24px;height:24px;'></span> Unknown</td>";
                 break;
         }
-        echo "style='width:24px;height:24px;'></span></td>\n";
 
-        # READ SERVER TABLE TO GET THE DESCRIPTION, O/S Name and O/S Version
+        # READ SERVER TABLE TO GET THE DESCRIPTION -------------------------------------------------
         $sql = "SELECT * FROM server where srv_name = '". $whost . "';";
-        if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $WDESC = "Server not in Database";
             $WOS   = "Unknown";
             $WVER  = "Unknown";
@@ -275,119 +266,57 @@ function display_data($con,$alert_file) {
                 $WDESC = $row['srv_desc'];
                 $WOS   = $row['srv_osname'];
                 $WVER  = $row['srv_osversion'];
-                mysqli_free_result($result);                                        # Free result set 
+                mysqli_free_result($result);                            # Free result set 
             }
         }
 
-        # Server Name
-        echo "<td>";
+        # SERVER NAME ------------------------------------------------------------------------------
+        echo "<td class='dt-center'>";
         echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
         echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
         echo nl2br($whost) . "</a></td>\n";
 
+        # SERVER DESCRIPTION -----------------------------------------------------------------------
+        echo "<td>" . $WDESC . "</td>\n";
 
-        # Display Operating System Logo
-        #switch (strtoupper($WOS)) {
-        #    case 'REDHAT' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='http://www.redhat.com' ";
-        #        echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
-        #        echo "<img src='/images/redhat.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'FEDORA' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://getfedora.org' ";
-        #        echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
-        #        echo "<img src='/images/fedora.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'CENTOS' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.centos.org' ";
-        #        echo "title='Server $whost is a CentOS server - Visit centos.org'>";
-        #        echo "<img src='/images/centos.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'UBUNTU' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.ubuntu.com/' ";
-        #        echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
-        #        echo "<img src='/images/ubuntu.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'LINUXMINT' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://linuxmint.com/' ";
-        #        echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
-        #        echo "<img src='/images/linuxmint.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'DEBIAN' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.debian.org/' ";
-        #        echo "title='Server $whost is a Debian server - Visit debian.org'>";
-        #        echo "<img src='/images/debian.png' ";
-        #        #echo "style='width:24px;height:24px;'></a<</td>\n";
-        #        echo "style='width:24px;height:24px;'></a<</td>\n";
-        #        break;
-        #    case 'RASPBIAN' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.raspbian.org/' ";
-        #        echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
-        #        echo "<img src='/images/raspbian.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'SUSE' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.opensuse.org/' ";
-        #        echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
-        #        echo "<img src='/images/suse.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'AIX' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
-        #        echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
-        #        echo "<img src='/images/aix.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    default:
-        #        echo "<td class='dt-center'>";
-        #        echo "<img src='/images/os_unknown.jpg' ";
-        #        echo "style='width:24px;height:24px;'></td>\n";
-        #        break;
-        #}
-        echo "<td>" . $WDESC                                 . "</td>\n";
-        echo "<td class='dt-left'>" . strtoupper($wmod)    . "</td>\n";
-
+        # ALERT MODULE/SUB MODULE ------------------------------------------------------------------
+        echo "<td class='dt-center'>";
+        echo ucfirst(strtolower($wmod))    . " / " ;
+        echo ucfirst(strtolower($wsubmod)) . "</td>\n";
+        
+        # ALERT DESCRIPTION ------------------------------------------------------------------------
         list($wdummy,$wscript) = explode(" ",$wdesc);
         $wlog =  $whost . "_" . $wscript . ".log";
         echo "<td>";
         if ($wdummy == "Script") {
-            echo "<a href='/sadmin/sadm_view_logfile.php?host=" . $whost ;
-            echo "&filename=" . $wlog . "' title='View the script log - " . $wlog . "'>" . $wdesc ;
-            echo "</a>";
+            echo "<a href='" . $URL_VIEW_LOG . "?host=" . $whost ;
+            echo "&filename=" . $wlog . "' title='View the script log - ";
+            echo $wlog . "'>" . $wdesc . "</a>";
         }else{
             echo $wdesc ;
 
         }
         echo "</td>\n";
-        echo "<td class='dt-center'>" . $wdate . " " . $wtime                . "</td>\n";
-        #echo "<td class='dt-center'>" . $wtime               . "</td>\n";
 
+        # ALERT DATE AND TIME ----------------------------------------------------------------------
+        echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
+
+        # SERVER CATEGORY --------------------------------------------------------------------------
         $WCAT  = sadm_clean_data($row['srv_cat']);
 
         $WOS   = sadm_clean_data($row['srv_osname']);
         echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
-        echo "<td class='dt-center'>" . strtoupper($wsubmod) . "</td>\n";
         echo "<td class='dt-center'>" . $wpage . " / " . $wmail               . "</td>\n";
         #echo "<td class='dt-center'>" . $wmail               . "</td>\n";
     }
-    echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
-    echo "<center>";
-    echo "<b>This page will refresh automatically every minute - " . date('l jS \of F Y h:i:s A');
-    echo "</br></center>";
+    echo "\n</br>";
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    
+    # Remove Work Files
+    @unlink($tmp_file1);                                                # Delete Work Files 1
+    @unlink($tmp_file2);                                                # Delete Work Files 2
+    @unlink($tmp_file3);                                                # Delete Work Files 3
+    @unlink($alert_file);                                               # Delete Work Alert File
 }
 
 
@@ -395,23 +324,10 @@ function display_data($con,$alert_file) {
 #                                      PROGRAM START HERE
 #===================================================================================================
 #
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
-    display_std_heading("NotHome","System Monitor",$SVER);
-    echo "\n<tbody>\n";                                                 # Start of Table Body
+    display_std_heading("NotHome","System Monitor","","Page will refresh every minute",$SVER);
     load_sysmon_array();                                                # Load RPT and RCH File
     setup_table();                                                      # Create Table & Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
-    @unlink($tmp_file1);                                                # Delete Work Files 1
-    @unlink($tmp_file2);                                                # Delete Work Files 2
-    @unlink($tmp_file3);                                                # Delete Work Files 3
-    @unlink($alert_file);                                               # Delete Work Alert File
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-
-    # COMMON FOOTING
-    mysqli_close($con);                                                 # Close Database Connection
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

@@ -35,13 +35,13 @@
 #===================================================================================================
 # DISPLAY HEADING LINES OF THE CONTENT PORTION OF THE WEB PAGE 
 #===================================================================================================
-function display_std_heading($BACK_URL,$WTITLE,$WVER,
+function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
                             $CREATE_BUTTON=False,$CREATE_URL="",$CREATE_LABEL="Create") {
 
     $URL_HOME   = '/index.php';                                         # Site Main Page
     
     # FIRST LINE DISPLAY TITLE, VERSION NUMBER AND DATE/TIME
-    echo "\n\n<div style='float: left;'>${WTITLE} " ."$WVER". "</div>"; # Display Title & Version No
+    echo "\n\n<div style='float: left;'>${LTITLE} " ."$WVER". "</div>"; # Display Title & Version No
     echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     
@@ -60,9 +60,30 @@ function display_std_heading($BACK_URL,$WTITLE,$WVER,
         echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
         echo "\n<button type='button'>" . $CREATE_LABEL . "</button></a>";  # Create Create Button
         echo "\n</div>\n";                                              # End of Button Div
+    }else{
+        echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
     }
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    echo "\n<hr/><br>\n\n";                                             # Print Horizontal Line
+    echo "\n<hr/>\n\n";                                             # Print Horizontal Line
+}
+
+
+# ==================================================================================================
+#        Function called at every end of SADM web page (Close Database and end all std Div)
+# ==================================================================================================
+function std_page_footer($wcon) {
+    if (isset($wcon)) { mysqli_close($wcon); }                                   # Close Database Connection
+    echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
+    echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
+    echo "\n\n<div id='sadmFooter'>";
+    echo "\nCopyright &copy; 2015-2017 - www.sadmin.ca - Suggestions, Questions or Report a problem at";
+    echo '<a href="mailto:webadmin@sadmin.ca">webadmin@sadmin.ca</a></small>';
+    echo "\n</div> <!-- End of Div sadmFooter -->";
+
+    echo "\n\n</div> <!-- End of sadmWrapper       -->" ;                 # End of Real Full Page
+    echo "\n<br>";
+    echo "\n</body>";
+    echo "\n</html>";
 }
 
 
@@ -316,6 +337,78 @@ function sadm_page_heading2($msg) {
 
 
 
+        # Display Operating System Logo
+        #switch (strtoupper($WOS)) {
+        #    case 'REDHAT' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='http://www.redhat.com' ";
+        #        echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
+        #        echo "<img src='/images/redhat.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'FEDORA' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://getfedora.org' ";
+        #        echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
+        #        echo "<img src='/images/fedora.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'CENTOS' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.centos.org' ";
+        #        echo "title='Server $whost is a CentOS server - Visit centos.org'>";
+        #        echo "<img src='/images/centos.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'UBUNTU' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.ubuntu.com/' ";
+        #        echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
+        #        echo "<img src='/images/ubuntu.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'LINUXMINT' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://linuxmint.com/' ";
+        #        echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
+        #        echo "<img src='/images/linuxmint.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'DEBIAN' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.debian.org/' ";
+        #        echo "title='Server $whost is a Debian server - Visit debian.org'>";
+        #        echo "<img src='/images/debian.png' ";
+        #        #echo "style='width:24px;height:24px;'></a<</td>\n";
+        #        echo "style='width:24px;height:24px;'></a<</td>\n";
+        #        break;
+        #    case 'RASPBIAN' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.raspbian.org/' ";
+        #        echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
+        #        echo "<img src='/images/raspbian.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'SUSE' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.opensuse.org/' ";
+        #        echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
+        #        echo "<img src='/images/suse.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'AIX' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
+        #        echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
+        #        echo "<img src='/images/aix.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    default:
+        #        echo "<td class='dt-center'>";
+        #        echo "<img src='/images/os_unknown.jpg' ";
+        #        echo "style='width:24px;height:24px;'></td>\n";
+        #        break;
+        #}
 
 
 ?>

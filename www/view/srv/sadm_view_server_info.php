@@ -539,7 +539,7 @@ function display_right_side ($wrow) {
          exit ;
      }
 
-    display_std_heading("NotHome","Information about server " . $row['srv_name'],$SVER);
+    display_std_heading("NotHome","Information about server " . $row['srv_name'],"","",$SVER);
     #sadm_page_heading ("Information about server " . $row['srv_name']); # Display Page Title
     display_server_data ($row);                                         # Display Server Data
     mysqli_free_result($result);                                        # Free result set 

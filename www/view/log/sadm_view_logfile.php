@@ -135,7 +135,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
-    display_std_heading("NotHome","Log Viewer ",$SVER);                 # Display Content Heading
+    display_std_heading("NotHome","Log Viewer ","","",$SVER);           # Display Content Heading
     display_log_file ($HOSTNAME, $HOSTDESC, $LOGFILE);                  # Go Display File Content
 
     # COMMON FOOTING -------------------------------------------------------------------------------

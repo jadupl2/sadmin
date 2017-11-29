@@ -265,7 +265,7 @@ function display_data($con,$row) {
     }
 
     display_page_heading("NotHome","Server List",$CREATE_BUTTON);       # Display Content Heading
-    #display_std_heading($BACK_URL,$WTITLE,$WVER,$CREATE_BUTTON,$CREATE_URL,$CREATE_LABEL) ;
+    #display_std_heading($BACK_URL,$WTITLE,"","",$WVER,$CREATE_BUTTON,$CREATE_URL,$CREATE_LABEL) ;
     echo "\n<hr/>";                                                     # Print Horizontal Line
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body

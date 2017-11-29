@@ -169,10 +169,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
     
-    mysqli_free_result($result);                                        # Free result set 
     mysqli_close($con);                                                 # Close Database Connection
     echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
     echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
     echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
 ?>

@@ -250,7 +250,7 @@ function display_script_array($con,$wpage_type,$script_array) {
     }
 
     # DISPLAY HEADING AND EACH LINES REQUESTED FROM THE ARRAY JUST BUILT ---------------------------
-    display_std_heading("NotHome","$HDESC",$SVER);                      # Display Content Heading
+    display_std_heading("NotHome","$HDESC","","",$SVER);                # Display Content Heading
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     display_script_array($con,$SELECTION,$script_array);                # Go Display Script Array
