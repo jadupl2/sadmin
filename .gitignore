@@ -8,6 +8,7 @@
 *.rar
 *.tar
 *.zip
+*.log
 
 # SADMIN Directories Exclude
 sam/
@@ -16,7 +17,7 @@ dat/
 cfg/pssh/*
 jac/*
 !jac/bin
-log/
+#log/
 tmp/
 pgsql/
 notes/

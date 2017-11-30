@@ -30,17 +30,11 @@
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
-echo "<body>";                                                          # Begin HTML body Section
-echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
-echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
-
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 #===================================================================================================
@@ -153,7 +147,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
 
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_page_heading("back","Update Category",$CREATE_BUTTON);      # Display Content Heading
+    display_std_heading("NotHome","Update Category","","",$SVER);       # Display Content Heading
     
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_cat_form($row,"Update");                                    # Display Form Default Value
@@ -162,17 +156,12 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
     # Display Buttons (Update/Cancel) at the bottom of the form
-    echo "<center>";                                                    # Center Button on Page
-    echo "<button type='submit'> Update </button>   ";
-    echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "</center>";
-    echo "</form>";                                                     
- 
-    mysqli_free_result($result);                                        # Free result set 
-    mysqli_close($con);                                                 # Close Database Connection
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
+    echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'><button type='button'> Cancel ";
+    echo "</button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
+    
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

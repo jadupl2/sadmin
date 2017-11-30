@@ -30,18 +30,11 @@
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/grp/sadm_group_common.php');
-echo "<body>";                                                          # Begin HTML body Section
-echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
-echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
-
-
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
+require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/grp/sadm_group_common.php');
 
 
 #===================================================================================================
@@ -98,22 +91,21 @@ $CREATE_BUTTON = False ;                                                # Don't 
 # ==================================================================================================
     
     # START OF FORM - DISPLAY FORM READY TO ACCEPT DATA
-    display_page_heading("back","Create Group",$CREATE_BUTTON);         # Display Content Heading
+    display_std_heading("NotHome","Create Group","","",$SVER);
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_grp_form ($row,"Create");                                   # Display Form Default Value
     echo "<input type='hidden' value='1' name='submitted' />";          # Set submitted var. to 1
     
     # Display Buttons (Create/Cancel) at the bottom of the form
-    echo "<center>";
-    echo "<button type='submit'> Create </button>   ";
+    echo "\n\n<div class='two_buttons'>";
+    echo "\n<div class='first_button'>";
+    echo "<button type='submit'> Create </button></div>";
+    echo "\n<div class='second_button'>";
     echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>";
-    echo "</center>";
+    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    echo "\n</div>\n\n";
     echo "</form>";                                                     # End of Form
 
-    mysqli_close($con);                                                 # Close Database Connection
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

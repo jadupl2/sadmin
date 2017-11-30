@@ -41,39 +41,6 @@ $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Mainte
 $URL_HOME   = '/index.php';                                             # Site Main Page
 
 
-#===================================================================================================
-# DISPLAY TWO FIRST HEADING LINES OF PAGE 
-#===================================================================================================
-function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
-    global $URL_CREATE, $URL_HOME, $SVER;
-
-    # DISPLAY FIRST TWO HEADING LINES OF PAGE
-    # FIRST LINE - Display Title & Version No. at the left & Current Date/Time at the right
-    echo "\n<div style='float: left;'>${title} " . "$SVER" . "</div>" ; # Display Title & Version No
-    echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
-    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
-    
-    # LEFT OF SECOND LINE - Display Link to Previous Page or Home Page at the left 
-    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    if (strtoupper($prv_page) != "HOME") {                              # Parameter Recv. = home
-        echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    }else{
-        echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    }
-    echo "</div>"; 
-        
-    # RIGHT OF SECOND LINE - Display Create Button at the far right
-    if ($CREATE_BUTTON) {
-        echo "\n<div style='float: right;'>";                           # Div Position Create Button
-        echo "\n<a href='" . $URL_CREATE . "'>";                        # URL when Button Press
-        echo "\n<button type='button'>Create Server</button></a>";      # Create Create Button
-        echo "\n</div>\n";                                              # End of Button Div
-    }
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-}
-
-
-
 // ================================================================================================
 //                      DISPLAY SERVER DATA USED IN THE DATA INPUT FORM
 //
@@ -85,7 +52,7 @@ function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
 function display_srv_form ($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     echo "\n\n<div class='double_form'>\n";                             # Start server Form Div
-
+    
     # Server Name
     echo "\n<div class='double_label'>Server Name</div>";               # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
@@ -108,12 +75,12 @@ function display_srv_form ($con,$wrow,$mode) {
     if ($smode == 'CREATE') { $wrow['srv_domain'] = SADM_DOMAIN ; }     # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_domain' readonly ";           # Set Name and Read Only
-       echo " maxlength='30' size='31' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Current Value
     }else{
        echo "<input type='text' name='scr_domain' required ";           # Set Name & Col. is require
        echo " placeholder='" . SADM_DOMAIN . "'";                       # Set Default Domain
-       echo " maxlength='30' size='31' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_domain']). "'/>";   # Show Domain Current Value
     }
     echo "</div>";                                                      # << End of double_input
@@ -125,12 +92,12 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_desc' readonly ";             # Set Name and Read Only
-       echo " maxlength='30' size='33' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }else{
        echo "<input type='text' name='scr_desc' required ";             # Set Name & Col. is require
        echo " placeholder='Enter server Desc.'";                        # Set Default
-       echo " maxlength='30' size='33' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_desc']). "'/>";     # Show Current Value
     }
     echo "</div>";                                                      # << End of double_input
@@ -160,7 +127,7 @@ function display_srv_form ($con,$wrow,$mode) {
                         break;
     }
     echo "\n</select>";
-    echo "\n</div>";                                                      # << End of double_input
+    echo "\n</div>";                                                    # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
@@ -169,12 +136,12 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "<input type='text' name='scr_note' readonly ";             # Set Name and Read Only
-       echo " maxlength='30' size='32' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }else{
        echo "<input type='text' name='scr_note' ";                      # Set Name & Col. is require
        echo " placeholder='Enter server note' ";                        # Set Default
-       echo " maxlength='30' size='32' ";                               # Set Max. Length
+       echo " maxlength='30' size='30' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_note']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
@@ -209,7 +176,7 @@ function display_srv_form ($con,$wrow,$mode) {
                 echo "\n<select name='scr_cat' size=1>";                # Size of Select Box
                 $sqlc = 'SELECT * FROM server_category order by cat_code;';
                 if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
-                    while ($crow = mysqli_fetch_assoc($cresult)) {     # Gather Result from Query
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
                         if (($crow['cat_code']) == ($wrow['srv_cat'])){ # If Default Value=Selected
                             echo "\n<option selected>" . sadm_clean_data($crow['cat_code'])."</option>";
                         }else{                                          # If not default Value
@@ -249,10 +216,10 @@ function display_srv_form ($con,$wrow,$mode) {
                 echo "\n</select>";                                     # End of Select Combo Box
                 break ;                                                 # End of Display/Delete Mode
         case 'UPDATE' : 
-                echo "\n<select name='scr_group' size=1>";                # Size of Select Box
+                echo "\n<select name='scr_group' size=1>";              # Size of Select Box
                 $sqlc = 'SELECT * FROM server_group order by grp_code;';
                 if ($cresult = mysqli_query($con,$sqlc)) {              # If Results to Display
-                    while ($crow = mysqli_fetch_assoc($cresult)) {     # Gather Result from Query
+                    while ($crow = mysqli_fetch_assoc($cresult)) {      # Gather Result from Query
                         if (($crow['grp_code']) == ($wrow['srv_group'])){ # If Default Value=Selected
                             echo "\n<option selected>" . sadm_clean_data($crow['grp_code'])."</option>";
                         }else{                                          # If not default Value
@@ -265,9 +232,6 @@ function display_srv_form ($con,$wrow,$mode) {
     }
     echo "\n</div>";                                                    # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
-
-
-
 
 
     # Server Active ?
@@ -387,12 +351,14 @@ function display_srv_form ($con,$wrow,$mode) {
     
     echo "\n<hr/>";
 
+
     # DISPLAY CREATION DATE 
     echo "\n<div class='double_label'>Creation Date</div>";             # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     echo sadm_clean_data($wrow['srv_date_creation']);                   # Display Last Edit Date
     echo "\n</div>";                                                    # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
 
     # LAST EDIT DATE 
     echo "\n<div class='double_label'>Last Edit Date</div>";            # Display Name of Column
@@ -402,5 +368,5 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
   
     echo "\n</div>";                                                    # << End of double_form
-    echo "\n<br><br>\n\n";                                              # Blank Lines
+    echo "\n<br>\n\n";                                                  # Blank Lines
 }

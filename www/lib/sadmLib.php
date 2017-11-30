@@ -5,7 +5,7 @@
 #   Version  :  1.0
 #   Date     :  22 March 2016
 #   Requires :  php
-#   Synopsis :  This file is the place to store all SADMIN functions
+#   Synopsis :  This file is the PHP Library that's used by the SADMIN Web Interface
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
@@ -28,6 +28,64 @@
 #
 # ==================================================================================================
 #
+
+
+    
+
+#===================================================================================================
+# DISPLAY HEADING LINES OF THE CONTENT PORTION OF THE WEB PAGE 
+#===================================================================================================
+function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
+                            $CREATE_BUTTON=False,$CREATE_URL="",$CREATE_LABEL="Create") {
+
+    $URL_HOME   = '/index.php';                                         # Site Main Page
+    
+    # FIRST LINE DISPLAY TITLE, VERSION NUMBER AND DATE/TIME
+    echo "\n\n<div style='float: left;'>${LTITLE} " ."$WVER". "</div>"; # Display Title & Version No
+    echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
+    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
+    
+    # SECOND LINE - LEFT SIDE - DISPLAY LINK TO PREVIOUS PAGE OR TO HOME PAGE
+    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
+    if (strtoupper($BACK_URL) != "HOME") {                              # Parameter Recv. = home
+        echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
+    }else{
+        echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
+    }
+    echo "</div>"; 
+        
+    # SECOND LINE - RIGHT SIDE - DISPLAY CREATE BUTTON AT THE FAR RIGHT, IF $CREATE_BUTTON IS TRUE
+    if ($CREATE_BUTTON) {
+        echo "\n<div style='float: right;'>";                           # Div Position Create Button
+        echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
+        echo "\n<button type='button'>" . $CREATE_LABEL . "</button></a>";  # Create Create Button
+        echo "\n</div>\n";                                              # End of Button Div
+    }else{
+        echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
+    }
+    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    #echo "\n<hr/>\n\n";                                                # Print Horizontal Line
+    echo "\n<br>\n";                                                        # Print Horizontal Line
+}
+
+
+# ==================================================================================================
+#        Function called at every end of SADM web page (Close Database and end all std Div)
+# ==================================================================================================
+function std_page_footer($wcon) {
+    if (isset($wcon)) { mysqli_close($wcon); }                                   # Close Database Connection
+    echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
+    echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
+    echo "\n\n<div id='sadmFooter'>";
+    echo "\nCopyright &copy; 2015-2017 - www.sadmin.ca - Suggestions, Questions or Report a problem at";
+    echo '<a href="mailto:webadmin@sadmin.ca">webadmin@sadmin.ca</a></small>';
+    echo "\n</div> <!-- End of Div sadmFooter -->";
+
+    echo "\n\n</div> <!-- End of sadmWrapper       -->" ;                 # End of Real Full Page
+    echo "\n<br>";
+    echo "\n</body>";
+    echo "\n</html>";
+}
 
 
 
@@ -280,86 +338,78 @@ function sadm_page_heading2($msg) {
 
 
 
+        # Display Operating System Logo
+        #switch (strtoupper($WOS)) {
+        #    case 'REDHAT' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='http://www.redhat.com' ";
+        #        echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
+        #        echo "<img src='/images/redhat.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'FEDORA' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://getfedora.org' ";
+        #        echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
+        #        echo "<img src='/images/fedora.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'CENTOS' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.centos.org' ";
+        #        echo "title='Server $whost is a CentOS server - Visit centos.org'>";
+        #        echo "<img src='/images/centos.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'UBUNTU' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.ubuntu.com/' ";
+        #        echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
+        #        echo "<img src='/images/ubuntu.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'LINUXMINT' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://linuxmint.com/' ";
+        #        echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
+        #        echo "<img src='/images/linuxmint.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'DEBIAN' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.debian.org/' ";
+        #        echo "title='Server $whost is a Debian server - Visit debian.org'>";
+        #        echo "<img src='/images/debian.png' ";
+        #        #echo "style='width:24px;height:24px;'></a<</td>\n";
+        #        echo "style='width:24px;height:24px;'></a<</td>\n";
+        #        break;
+        #    case 'RASPBIAN' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.raspbian.org/' ";
+        #        echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
+        #        echo "<img src='/images/raspbian.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'SUSE' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='https://www.opensuse.org/' ";
+        #        echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
+        #        echo "<img src='/images/suse.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    case 'AIX' :
+        #        echo "<td class='dt-center'>";
+        #        echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
+        #        echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
+        #        echo "<img src='/images/aix.png' ";
+        #        echo "style='width:24px;height:24px;'></a></td>\n";
+        #        break;
+        #    default:
+        #        echo "<td class='dt-center'>";
+        #        echo "<img src='/images/os_unknown.jpg' ";
+        #        echo "style='width:24px;height:24px;'></td>\n";
+        #        break;
+        #}
 
-
-// ================================================================================================
-//                   Build Side Bar Based on SideBar Type Desired (server/ip/script)
-// ================================================================================================
-function build_sidebar_scripts_info() {
-
-    #$DEBUG = TRUE;                                                     # Activate/Deactivate Debug
-
-    # Reset All Counters
-    $count=0;
-    $script_array = array() ;
-
-    # Form the base directory name where all the servers 'rch' files are located
-    $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # /sadmin/www/dat
-    if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
-
-    # Make sure that the DATA Root directory is a directory
-    if (! is_dir($RCH_ROOT)) {
-        $msg="The $RCH_ROOT directory doesn't exist !\nCorrect the situation and retry operation";
-        alert ("$msg");
-        ?><script type="text/javascript">history.go(-1);</script><?php
-        exit;
-    }
-
-    # Create unique filename that will contains all servers *.rch filename
-    $tmprch = tempnam ('tmp/', 'ref_rch_file-');                        # Create unique file name
-    if ($DEBUG) { echo "<br>Temp file of rch filename : " . $tmprch;}   # Show unique filename
-    $CMD="find $RCH_ROOT -name '*.rch'  > $tmprch";                     # Construct find command
-    if ($DEBUG) { echo "<br>Command executed is : " . $CMD ; }          # Show command constructed
-    $a = exec ( $CMD , $FILE_LIST, $RCODE);                             # Execute find command
-    if ($DEBUG) { echo "<br>Return code of command is : " . $RCODE ; }  # Display Return Code
-
-    # Open input file containing the name of all rch filenames
-    $input_fh  = fopen("$tmprch","r") or die ("can't open ref-rch file - " . $tmprch);
-
-    # Loop through filename list in the file
-    while(! feof($input_fh)) {
-        $wfile = trim(fgets($input_fh));                                # Read rch filename line
-        if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Show rch filename in Debug
-        if ($wfile != "") {                                             # If filename not blank
-            $line_array = file($wfile);                                 # Reads entire file in array
-            $last_index = count($line_array) - 1;                       # Get Index of Last line
-            if ($last_index > 0) {                                      # If last Element Exist
-                if ($line_array[$last_index] != "") {                   # If None Blank Last Line
-                    list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
-                    $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
-                    if ($DEBUG) {                                       # In Debug Show Output Line
-                        echo "<br>Output line is " . $outline ;         # Print Output Line
-                    }
-                    $count+=1;
-                    # Key is "StartDate + StartTime + FileName"
-                    $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
-                    if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
-                    if (array_key_exists("$akey",$script_array)) {
-                        $script_array[$akey] = $outline . "_" . $count ;
-                    }else{
-                        $script_array[$akey] = $outline ;
-                    }
-                }
-            }
-        }
-    }
-    fclose($input_fh);                                                  # Close Input Filename List
-    krsort($script_array);                                              # Reverse Sort Array on Keys
-    unlink($tmprch);                                                    # Delete Temp File
-    # Under Debug - Display The Array Used to build the SideBar
-    #if ($DEBUG) {foreach($script_array as $key=>$value) { echo "<br>Key is $key and value is $value";}}
-    return $script_array;
-}
-
-
-
-// ================================================================================================
-//                   Build Side Bar Based on SideBar Type Desired (server/ip/script)
-// ================================================================================================
-function build_sidebar_servers_info() {
-
-    echo "p";
-}
- 
 
 ?>

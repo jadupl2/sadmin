@@ -8,9 +8,12 @@ list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNA
 
 
 # SET SADMIN ROOT BASE DIRECTORY
-define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
-$TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable
-if (strlen($TMPVAR) != 0 ) { define("SADM_BASE_DIR",$TMPVAR); }         # Use Env. SADMIN Var Base
+$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
+if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
+    define("SADM_BASE_DIR",$TMPVAR);                                    # Set SADMIN_BASE_DIR to Env
+}else{                                                                  # If SADMIN Not Defined        
+    define("SADM_BASE_DIR", "/sadmin");                                 # Default SADM Root Base Dir 
+}  
 
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
@@ -45,7 +48,7 @@ define("SADM_WWW_DR_DIR"   , SADM_WWW_DAT_DIR . "/${HOSTNAME}/dr");     # Web Di
 define("SADM_WWW_NMON_DIR" , SADM_WWW_DAT_DIR . "/${HOSTNAME}/nmon");   # Web nmon Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
 define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LOG Dir
-
+echo "SADM_CFG_DIR = ". SADM_CFG_DIR;
 
 # SADMIN FILE DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
