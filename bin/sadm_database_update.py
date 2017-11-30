@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_database_update.py
@@ -30,19 +30,19 @@
 #       V2.4 -  Change exception Error Message more verbose
 #
 # 2017_11_23 -  Jacques Duplessis
-#       V2.5 -  Adapted to move from PostGres SQL to MySQL & Performance Enhanced
+#       V2.5 -  Move from PostGres to MySQL, New SADM Python Library and Performance Enhanced.
 #
 #
 #===================================================================================================
 import os, time, sys, pdb, socket, datetime, glob, fnmatch
-#
-# Add SADM Library Path to Python Path
-sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))
-#import sadmlib_mysql as sadmdb
-import sadmlib_std   as sadm
-#pdb.set_trace()                                                       # Activate Python Debugging
+#pdb.set_trace()                                                        # Activate Python Debugging
 
-#sadm.load_config_file()                                                 # Load cfg from sadmin.cfg
+# Add SADM Library Path to Python Path and Import SADM Python Library
+sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))           # Add $SADMIN/lib to PyPath
+#import sadmlib_mysql as sadmdb
+import sadmlib_std as sadm                                              # Import SADM Python Library
+
+#sadm.load_config_file()                                                # Load cfg from sadmin.cfg
 
 
 
@@ -56,7 +56,20 @@ import sadmlib_std   as sadm
 def main():
     st = sadm.sadmtools()                                               # Create SADM Tools Instance
     print ("Log Directory is %s" % st.log_dir)
-    #sadm.start()                                                        # Open Log, Create Dir ...
+    print ("Configuration File is %s" % st.cfg_file)
+    print ("Release File is %s" % st.rel_file)
+    st.start()
+    msg = "Allo2"
+    st.allo("Allo2")
+    st.hello("Hello2")
+
+    print ("Max Log Line %s" % st.get_max_logline())
+    st.set_max_logline(100)
+    print ("Max Log Line %s" % st.get_max_logline())
+#    st.writelog('Test Message')
+#    st.display_env();
+
+        #sadm.start()                                                        # Open Log, Create Dir ...
 
     # # Test if script is run by root (Optional Code)
     # if os.geteuid() != 0:                                               # UID of user is not zero

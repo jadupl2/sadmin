@@ -39,7 +39,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -61,6 +61,7 @@ $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -122,7 +123,12 @@ function display_data($con,$row) {
     global $URL_UPDATE, $URL_DELETE;
 
     echo "\n<tr>";
-    echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
+    echo "\n<td class='dt-left'>" ;
+    echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'];
+    echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
+    echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
+         
+    #echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
     echo "\n<td>"            . "None"   . "</td>";                      # Display Server Name
     echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
@@ -257,9 +263,7 @@ function display_data($con,$row) {
         exit;                                                           # Exit - Should not occurs
     }
 
-    display_page_heading("NotHome","Server List",$CREATE_BUTTON);       # Display Content Heading
-    #display_std_heading($BACK_URL,$WTITLE,"","",$WVER,$CREATE_BUTTON,$CREATE_URL,$CREATE_LABEL) ;
-    echo "\n<hr/>";                                                     # Print Horizontal Line
+    display_std_heading($BACK_URL,"Server List","","",$WVER) ;
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
@@ -267,8 +271,6 @@ function display_data($con,$row) {
     while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
         display_data($con,$row);                                    # Display Row Data
     }
-    mysqli_free_result($result);                                        # Free result set 
-    mysqli_close($con);                                                 # Close Database Connection
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
