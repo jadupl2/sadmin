@@ -32,6 +32,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load s
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
+
 # DataTable Initialisation Function
 ?>
 <script>
@@ -45,14 +46,9 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
         } );
     } );
 </script>
+
 <?php
-    echo "<body>";
-    echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-    echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');# Display SideBar on Left               
-
-
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 #===================================================================================================
 #                                       Local Variables
@@ -85,7 +81,7 @@ function setup_table() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
+    #echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
     echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
@@ -103,7 +99,7 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
+    #echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
     echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
@@ -128,7 +124,7 @@ function display_data($con,$row) {
 
     echo "\n<tr>";
     echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
-    echo "\n<td>"            . "None"   . "</td>";            # Display Server Name
+    #echo "\n<td>"            . "None"   . "</td>";            # Display Server Name
     echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
     echo "\n<td dt-center>"  . $row['srv_cat']    . "</td>";            # Display Category
@@ -177,8 +173,7 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
-    display_page_heading("home","Server Maintenance",$CREATE_BUTTON);          # Display Content Heading
+    display_std_heading("Home","Server Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     
@@ -189,14 +184,7 @@ function display_data($con,$row) {
             display_data($con,$row);                                    # Display Row Data
         }
     }
-    mysqli_free_result($result);                                        # Free result set 
-    mysqli_close($con);                                                 # Close Database Connection
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-
-    # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

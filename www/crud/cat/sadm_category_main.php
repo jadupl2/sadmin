@@ -48,7 +48,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>
 
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
-require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+
 
 
 
@@ -167,7 +167,7 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    display_page_heading("home","Category Maintenance",$CREATE_BUTTON); # Display Content Heading
+    display_std_heading("Home","Category Maintenance","","",$SVER,$CREATE_BUTTON,$URL_CREATE,"Create");
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
     

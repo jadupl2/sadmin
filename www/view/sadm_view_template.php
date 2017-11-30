@@ -28,10 +28,12 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #
 # ==================================================================================================
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
+
 # DataTable Initialisation Function
 ?>
 <script>
@@ -46,12 +48,6 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
     } );
 </script>
 <?php
-    echo "<body>";
-    echo "<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-    echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');# Display SideBar on Left               
-
 
 
 #===================================================================================================
@@ -176,9 +172,6 @@ function display_data($con,$row) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
-    
-
     # 1st parameter contains type of query that need to be done (all_servers,os,...)   
     if (isset($_GET['selection']) && !empty($_GET['selection'])) { 
         $SELECTION = $_GET['selection'];                                # If Rcv. Save in selection
@@ -264,24 +257,16 @@ function display_data($con,$row) {
         exit;                                                           # Exit - Should not occurs
     }
 
-    display_page_heading("NotHome","Server List",$CREATE_BUTTON);       # Display Content Heading
-    #display_std_heading($BACK_URL,$WTITLE,"","",$WVER,$CREATE_BUTTON,$CREATE_URL,$CREATE_LABEL) ;
+    display_std_heading("NotHome","Template","","",$SVER);              # Display Content Heading
     echo "\n<hr/>";                                                     # Print Horizontal Line
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
     # LOOP THROUGH RETREIVED DATA AND DISPLAY EACH ROW
-    while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
-        display_data($con,$row);                                    # Display Row Data
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+        display_data($con,$row);                                        # Display Row Data
     }
-    mysqli_free_result($result);                                        # Free result set 
-    mysqli_close($con);                                                 # Close Database Connection
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-
-    # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

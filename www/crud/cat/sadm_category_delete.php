@@ -30,16 +30,11 @@
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
-echo "<body>";                                                          # Begin HTML body Section
-echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
-echo "<div id='sadmRightColumn'>";                                      # Beginning Content Page
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/cat/sadm_category_common.php');
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 
@@ -139,8 +134,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
     }
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_page_heading("back","Delete Category",$CREATE_BUTTON);      # Display Content Heading
- 
+    display_std_heading("NotHome","Delete Category","","",$SVER);       # Display Content Heading
+
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_cat_form ($row,"Display");                                  # Display No Change Allowed
@@ -159,10 +154,5 @@ $CREATE_BUTTON = False ;                                                # Don't 
     
     # End of Form
     echo "</form>"; 
-
-    mysqli_close($con);                                                 # Close Database Connection
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

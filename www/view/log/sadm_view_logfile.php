@@ -27,15 +27,11 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #
 # ==================================================================================================
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
-echo "\n\n<body>";                                                      # Start of Web Page Body
-echo "\n\n<div id='sadmWrapper'>";                                      # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left 
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 
@@ -87,8 +83,6 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "\n\n<div id='sadmRightColumn'>";                              # Beginning Content Page
-
     # Get the first Parameter (HostName) and validate it -------------------------------------------
     if (isset($_GET['host']) ) {                                        # Get Content of 'host' Var.
         $HOSTNAME = $_GET['host'];                                      # Save content to HOSTNAME
@@ -137,10 +131,5 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     # Display Standard Page Heading and Display Log ------------------------------------------------
     display_std_heading("NotHome","Log Viewer ","","",$SVER);           # Display Content Heading
     display_log_file ($HOSTNAME, $HOSTDESC, $LOGFILE);                  # Go Display File Content
-
-    # COMMON FOOTING -------------------------------------------------------------------------------
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
-?>
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
+    ?>

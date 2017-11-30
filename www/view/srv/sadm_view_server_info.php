@@ -27,15 +27,11 @@
 #
 # ==================================================================================================
 #
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-echo "<body>";
-echo "<div id='sadmWrapper'>";                                          # Whole Page Wrapper Div
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');    # Top Universal Page Heading
-echo "<div id='sadmPageContents'>";                                     # Lower Part of Page
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');    # Display SideBar on Left               
-
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 #===================================================================================================
@@ -490,8 +486,6 @@ function display_right_side ($wrow) {
 *                                      PROGRAM START HERE
 * ==================================================================================================
 */
-    echo "<div id='sadmRightColumn'>";                                  # Beginning Content Page
-    
     # Get the first Parameter (Should be the server name)
     if (isset($_GET['host']) ) {                                        # Get Parameter Expected
         $HOSTNAME = $_GET['host'];                                      # Parameter is Server Name
@@ -540,15 +534,9 @@ function display_right_side ($wrow) {
      }
 
     display_std_heading("NotHome","Information about server " . $row['srv_name'],"","",$SVER);
-    #sadm_page_heading ("Information about server " . $row['srv_name']); # Display Page Title
     display_server_data ($row);                                         # Display Server Data
     mysqli_free_result($result);                                        # Free result set 
     mysqli_close($con);                                                 # Close Database Connection
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-
-    # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page       
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

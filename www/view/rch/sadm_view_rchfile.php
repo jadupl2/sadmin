@@ -26,10 +26,12 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #
 # ==================================================================================================
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
+
 # DataTable Initialisation Function
 ?>
 <script>
@@ -44,12 +46,6 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
     } );
 </script>
 <?php
-    echo "\n\n<body>";                                                  # Start of Web Page Body
-    echo "\n\n<div id='sadmWrapper'>";                                  # Whole Page Wrapper Div
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeading.php');# Top Universal Page Heading
-    echo "<div id='sadmPageContents'>";                                 # Lower Part of Page
-    require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageSideBar.php');# Display SideBar on Left               
-
 
 
 #===================================================================================================
@@ -146,8 +142,6 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
 #*                                      PROGRAM START HERE
 # ==================================================================================================
 #
-    echo "\n\n<div id='sadmRightColumn'>";                              # Beginning Content Page
-
     # GET THE FIRST PARAMETER (HOSTNAME OF THE RCH FILE TO VIEW) & VALIDATE IT ---------------------
     if (isset($_GET['host']) ) { 
         $HOSTNAME = $_GET['host'];
@@ -215,11 +209,6 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
-
-    # COMMON FOOTING
-    echo "</div> <!-- End of sadmRightColumn   -->" ;                   # End of Left Content Page
-    echo "</div> <!-- End of sadmPageContents  -->" ;                   # End of Content Page
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageFooter.php')  ;    # SADM Std EndOfPage Footer
-    echo "</div> <!-- End of sadmWrapper       -->" ;                   # End of Real Full Page
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
 

@@ -41,39 +41,6 @@ $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Mainte
 $URL_HOME   = '/index.php';                                             # Site Main Page
 
 
-#===================================================================================================
-# DISPLAY TWO FIRST HEADING LINES OF PAGE 
-#===================================================================================================
-function display_page_heading($prv_page, $title,$CREATE_BUTTON) {
-    global $URL_CREATE, $URL_HOME, $SVER;
-
-    # DISPLAY FIRST TWO HEADING LINES OF PAGE
-    # FIRST LINE - Display Title & Version No. at the left & Current Date/Time at the right
-    echo "\n<div style='float: left;'>${title} " . "$SVER" . "</div>" ; # Display Title & Version No
-    echo "\n<div style='float: right;'>" . date('l jS \of F Y, h:i:s A') . "</div>";  
-    echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
-    
-    # LEFT OF SECOND LINE - Display Link to Previous Page or Home Page at the left 
-    echo "\n<div style='float: left;'>";                                # Align Left Link Go Back
-    if (strtoupper($prv_page) != "HOME") {                              # Parameter Recv. = home
-        echo "<a href='javascript:history.go(-1)'>Previous Page</a>";   # URL Go Back Previous Page
-    }else{
-        echo "<a href='" . $URL_HOME . "'>Home Page</a>";               # URL to Go Back Home Page
-    }
-    echo "</div>"; 
-        
-    # RIGHT OF SECOND LINE - Display Create Button at the far right
-    if ($CREATE_BUTTON) {
-        echo "\n<div style='float: right;'>";                           # Div Position Create Button
-        echo "\n<a href='" . $URL_CREATE . "'>";                        # URL when Button Press
-        echo "\n<button type='button'>Create Server</button></a>";      # Create Create Button
-        echo "\n</div>\n";                                              # End of Button Div
-    }
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-}
-
-
-
 // ================================================================================================
 //                      DISPLAY SERVER DATA USED IN THE DATA INPUT FORM
 //

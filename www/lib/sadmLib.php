@@ -64,7 +64,8 @@ function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
         echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
     }
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    echo "\n<hr/>\n\n";                                             # Print Horizontal Line
+    #echo "\n<hr/>\n\n";                                                # Print Horizontal Line
+    echo "\n<br>\n";                                                        # Print Horizontal Line
 }
 
 
