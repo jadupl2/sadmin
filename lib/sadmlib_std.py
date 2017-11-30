@@ -76,53 +76,54 @@ class sadmtools:
         """
         # Check if SADMIN Environment variable is defined (MUST be defined)
         if "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-            base_dir = os.environ.get('SADMIN')                         # Set SADM Base Directory
+            self.base_dir = os.environ.get('SADMIN')                         # Set SADM Base Directory
         else:
             print ("Please set environment variable SADMIN.")           # Advise user
             print ("SADMIN indicate the directory name where you unzip the *.tgz file")
             sys.exit(1)                                                 # Exit if not defined 
 
         # SADM Sub Directories Definitions
-        self.lib_dir            = os.path.join(base_dir,'lib')          # SADM Lib. Directory
-        self.tmp_dir            = os.path.join(base_dir,'tmp')                       # SADM Temp. Directory
-        self.bin_dir            = os.path.join(base_dir,'bin')                       # SADM Scripts Directory
-        self.log_dir            = os.path.join(base_dir,'log')                       # SADM Log Directory
-        self.pkg_dir            = os.path.join(base_dir,'pkg')                       # SADM Package Directory
-        self.cfg_dir            = os.path.join(base_dir,'cfg')                       # SADM Config Directory
-        self.sys_dir            = os.path.join(base_dir,'sys')                       # SADM System Scripts Dir.
-        self.dat_dir            = os.path.join(base_dir,'dat')                       # SADM Data Directory
-        self.nmon_dir           = os.path.join(dat_dir,'nmon')                       # SADM nmon File Directory
-        self.rch_dir            = os.path.join(dat_dir,'rch')                        # SADM Result Code Dir.
-        self.dr_dir             = os.path.join(dat_dir,'dr')                         # SADM Disaster Recovery Dir
-        self.sar_dir            = os.path.join(dat_dir,'sar')                        # SADM System Activity Rep.
-        self.net_dir            = os.path.join(dat_dir,'net')                        # SADM Network/Subnet Dir 
-        self.rpt_dir            = os.path.join(dat_dir,'rpt')                        # SADM Sysmon Report Dir.
-        self.www_dir            = os.path.join(base_dir,'www')                       # SADM WebSite Dir Structure
+        self.lib_dir            = os.path.join(self.base_dir,'lib')          # SADM Lib. Directory
+        self.tmp_dir            = os.path.join(self.base_dir,'tmp')                       # SADM Temp. Directory
+        self.bin_dir            = os.path.join(self.base_dir,'bin')                       # SADM Scripts Directory
+        self.log_dir            = os.path.join(self.base_dir,'log')                       # SADM Log Directory
+        self.pkg_dir            = os.path.join(self.base_dir,'pkg')                       # SADM Package Directory
+        self.cfg_dir            = os.path.join(self.base_dir,'cfg')                       # SADM Config Directory
+        self.sys_dir            = os.path.join(self.base_dir,'sys')                       # SADM System Scripts Dir.
+        self.dat_dir            = os.path.join(self.base_dir,'dat')                       # SADM Data Directory
+        self.nmon_dir           = os.path.join(self.dat_dir,'nmon')                       # SADM nmon File Directory
+        self.rch_dir            = os.path.join(self.dat_dir,'rch')                        # SADM Result Code Dir.
+        self.dr_dir             = os.path.join(self.dat_dir,'dr')                         # SADM Disaster Recovery Dir
+        self.sar_dir            = os.path.join(self.dat_dir,'sar')                        # SADM System Activity Rep.
+        self.net_dir            = os.path.join(self.dat_dir,'net')                        # SADM Network/Subnet Dir 
+        self.rpt_dir            = os.path.join(self.dat_dir,'rpt')                        # SADM Sysmon Report Dir.
+        self.www_dir            = os.path.join(self.base_dir,'www')                       # SADM WebSite Dir Structure
+
         # SADM Web Site Directories Structure
-        self.www_dat_dir        = os.path.join(www_dir,'dat')                        # SADM Web Site Data Dir
-        self.www_cfg_dir        = os.path.join(www_dir,'cfg')                        # SADM Web Site CFG Dir
-        self.www_html_dir       = os.path.join(www_dir,'html')                       # SADM Web Site html Dir
-        self.www_lib_dir        = os.path.join(www_dir,'lib')                        # SADM Web Site Lib Dir
-        self.www_net_dir        = www_dat_dir + '/' + hostname + '/net'              # SADM Web Data Network Dir
-        self.www_rch_dir        = www_dat_dir + '/' + hostname + '/rch'              # SADM Web Data RCH Dir
-        self.www_sar_dir        = www_dat_dir + '/' + hostname + '/sar'              # SADM Web Data SAR Dir
-        self.www_dr_dir         = www_dat_dir + '/' + hostname + '/dr'               # SADM Web Disaster Recovery
-        self.www_nmon_dir       = www_dat_dir + '/' + hostname + '/nmon'             # SADM Web NMON Directory
-        self.www_tmp_dir        = www_dat_dir + '/' + hostname + '/tmp'              # SADM Web tmp Directory
-        self.www_log_dir        = www_dat_dir + '/' + hostname + '/log'              # SADM Web log Directory
+        self.www_dat_dir        = os.path.join(self.www_dir,'dat')                        # SADM Web Site Data Dir
+        self.www_cfg_dir        = os.path.join(self.www_dir,'cfg')                        # SADM Web Site CFG Dir
+        self.www_html_dir       = os.path.join(self.www_dir,'html')                       # SADM Web Site html Dir
+        self.www_lib_dir        = os.path.join(self.www_dir,'lib')                        # SADM Web Site Lib Dir
+        self.www_net_dir        = self.www_dat_dir + '/' + hostname + '/net'              # SADM Web Data Network Dir
+        self.www_rch_dir        = self.www_dat_dir + '/' + hostname + '/rch'              # SADM Web Data RCH Dir
+        self.www_sar_dir        = self.www_dat_dir + '/' + hostname + '/sar'              # SADM Web Data SAR Dir
+        self.www_dr_dir         = self.www_dat_dir + '/' + hostname + '/dr'               # SADM Web Disaster Recovery
+        self.www_nmon_dir       = self.www_dat_dir + '/' + hostname + '/nmon'             # SADM Web NMON Directory
+        self.www_tmp_dir        = self.www_dat_dir + '/' + hostname + '/tmp'              # SADM Web tmp Directory
+        self.www_log_dir        = self.www_dat_dir + '/' + hostname + '/log'              # SADM Web log Directory
         # SADM Files Definition
-        self.log_file           = log_dir + '/' + hostname + '_' + inst + '.log'     # Log Filename
-        self.rch_file           = rch_dir + '/' + hostname + '_' + inst + '.rch'     # RCH Filename
-        self.cfg_file           = cfg_dir + '/sadmin.cfg'                            # Configuration Filename
-        self.cfg_hidden         = cfg_dir + '/.sadmin.cfg'                           # Hidden Config Filename
-        self.crontab_work       = www_cfg_dir + '/.crontab.txt'                      # Work crontab
+        self.log_file           = self.log_dir + '/' + hostname + '_' + inst + '.log'     # Log Filename
+        self.rch_file           = self.rch_dir + '/' + hostname + '_' + inst + '.rch'     # RCH Filename
+        self.cfg_file           = self.cfg_dir + '/sadmin.cfg'                            # Configuration Filename
+        self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'                           # Hidden Config Filename
+        self.crontab_work       = self.www_cfg_dir + '/.crontab.txt'                      # Work crontab
         self.crontab_file       = '/etc/cron.d/sadmin'                               # Final crontab
-        self.rel_file           = cfg_dir + '/.release'                              # SADMIN Release Version No.
-        self.pid_file           = "%s/%s.pid" % (tmp_dir, inst)                      # Process ID File
-        self.tmp_file_prefix    = tmp_dir + '/' + hostname + '_' + inst              # TMP Prefix
-        self.tmp_file1          = "%s_1.%s" % (tmp_file_prefix,tpid)                 # Temp1 Filename
-        self.tmp_file2          = "%s_2.%s" % (tmp_file_prefix,tpid)                 # Temp2 Filename
-        self.tmp_file3          = "%s_3.%s" % (tmp_file_prefix,tpid)                 # Temp3 Filename
+        self.rel_file           = self.cfg_dir + '/.release'                              # SADMIN Release Version No.
+        self.pid_file           = "%s/%s.pid" % (self.tmp_dir, inst)                      # Process ID File
+        self.tmp_file_prefix    = self.tmp_dir + '/' + hostname + '_' + inst              # TMP Prefix
+        self.tmp_file1          = "%s_1.%s" % (self.tmp_file_prefix,tpid)                 # Temp1 Filename
+        self.tmp_file2          = "%s_2.%s" % (self.tmp_file_prefix,tpid)                 # Temp2 Filename
+        self.tmp_file3          = "%s_3.%s" % (self.tmp_file_prefix,tpid)                 # Temp3 Filename
         # SADM Configuration file (sadmin.cfg) content loaded from configuration file 
         self.cfg_mail_type      = 1                                                  # 0=No 1=Err 2=Succes 3=All
         self.cfg_mail_addr      = ""                                                 # Default is in sadmin.cfg

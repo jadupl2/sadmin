@@ -42,7 +42,7 @@ sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))
 import sadmlib_std   as sadm
 #pdb.set_trace()                                                       # Activate Python Debugging
 
-sadm.load_config_file()                                                 # Load cfg from sadmin.cfg
+#sadm.load_config_file()                                                 # Load cfg from sadmin.cfg
 
 
 
