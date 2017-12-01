@@ -38,14 +38,15 @@ import os, time, sys, pdb, socket, datetime, glob, fnmatch
 #pdb.set_trace()                                                        # Activate Python Debugging
 
 # Add SADM Library Path to Python Path and Import SADM Python Library
-sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))           # Add $SADMIN/lib to PyPath
-#import sadmlib_mysql as sadmdb
+if (os.environ.get('SADMIN')):                                          # Is SADMIN Env.Var. Defined
+    sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))       # Add $SADMIN/lib to PyPath
+else:
+    print ("SADMIN Environment variable need to be define")
+    print ("It indicate the directory where you installed SADMIN")
+    print ("Put this line in your ~/.bash_profile")
+    print ("export SADMIN=/INSTALL_DIR")
 import sadmlib_std as sadm                                              # Import SADM Python Library
-
-#sadm.load_config_file()                                                # Load cfg from sadmin.cfg
-
-
-
+#import sadmlib_mysql as sadmdb
 
 
 
@@ -55,19 +56,28 @@ import sadmlib_std as sadm                                              # Import
 #
 def main():
     st = sadm.sadmtools()                                               # Create SADM Tools Instance
-    print ("Log Directory is %s" % st.log_dir)
-    print ("Configuration File is %s" % st.cfg_file)
-    print ("Release File is %s" % st.rel_file)
-    st.start()
-    msg = "Allo2"
-    st.allo("Allo2")
-    st.hello("Hello2")
-
-    print ("Max Log Line %s" % st.get_max_logline())
     st.set_max_logline(100)
     print ("Max Log Line %s" % st.get_max_logline())
+    st.log_type = 'S'
+    print ("Get Log Type = %s" % st.get_log_type())
+    st.cfg_mail_type = 0 
+    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
+
+    st.start()
+
+    print ("Max Log Line %s" % st.get_max_logline())
+    print ("Get Log Type = %s" % st.get_log_type())
+    print ("Log Directory is %s" % st.log_dir)
+    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
+    print ("Configuration File is %s" % st.cfg_file)
+    st.writelog("test writelog")
+    print ("Release File is %s" % st.rel_file)
+    st.display_env();
+
+    st.stop(0)
+
+
 #    st.writelog('Test Message')
-#    st.display_env();
 
         #sadm.start()                                                        # Open Log, Create Dir ...
 

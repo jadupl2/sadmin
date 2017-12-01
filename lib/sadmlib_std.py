@@ -26,12 +26,8 @@ from subprocess import Popen, PIPE
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-ver                = "2.0"                                              # Default Program Version
-multiple_exec      = "N"                                                # Default Run multiple copy
+ver                = "2.1"                                              # Default Program Version
 exit_code          = 0                                                  # Script Error Return Code
-log_append         = "Y"                                                # Append to Existing Log ?
-log_type           = "B"                                                # 4Logger S=Scr L=Log B=Both
-
 pn                 = os.path.basename(sys.argv[0])                      # Program name
 inst               = os.path.basename(sys.argv[0]).split('.')[0]        # Program name without Ext.
 tpid               = str(os.getpid())                                   # Get Current Process ID.
@@ -46,15 +42,7 @@ start_time         = ""                                                 # Script
 stop_time          = ""                                                 # Script Stop Date & Time
 start_epoch        = ""                                                 # Script Start EPoch Time
 
-# SADM Path to various commands used by SADM Tools
-lsb_release        = ""                                                 # Command lsb_release Path
-which              = ""                                                 # whic1h Path - Required
-dmidecode          = ""                                                 # Command dmidecode Path
-bc                 = ""                                                 # Command bc (Do Some Math)
-fdisk              = ""                                                 # fdisk (Read Disk Capacity)
-perl               = ""                                                 # perl Path (for epoch time)
-uname              = ""                                                 # uname command path
-mail               = ""                                                 # mail command path
+
 
 
 #===================================================================================================
@@ -65,7 +53,7 @@ class sadmtools():
     #-----------------------------------------------------------------------------------------------
     #  INITIALISATION OF SADM TOOLS------------------------------------------------------
     #-----------------------------------------------------------------------------------------------
-    def __init__(self, dbname='sadmin', dbdebug=0, dbsilent=False):
+    def __init__(self, dbname='sadmin', sdebug=0, dbsilent=False):
         """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
         """
         # Check if SADMIN Environment variable is defined (MUST be defined)
@@ -75,7 +63,7 @@ class sadmtools():
             print ("Please set environment variable SADMIN.")           # Advise user
             print ("SADMIN indicate the directory name where you unzip the *.tgz file")
             sys.exit(1)                                                 # Exit if not defined 
-        self.debug              = dbdebug                               # Save Rcv.Debug Level (0-9)
+        self.debug              = sdebug                                # Save Rcv.Debug Level (0-9)
         self.dbsilent           = dbsilent                              # True=Nom Err.Msg
         self.dbname             = dbname                                # Database Name
         
@@ -148,21 +136,40 @@ class sadmtools():
         self.cfg_ro_dbpwd       = ""                                    # PostGres Read Only Pwd
         self.cfg_ssh_port       = 22                                    # SSH Port used in Farm
 
+        self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
+        self.multiple_exec      = "N"                                   # Default Run multiple copy
+        self.log_append         = "Y"                                   # Append to Existing Log ?
+        
+        # SADM Path to various commands used by SADM Tools
+        self.lsb_release        = ""                                    # Command lsb_release Path
+        self.which              = ""                                    # whic1h Path - Required
+        self.dmidecode          = ""                                    # Command dmidecode Path
+        self.bc                 = ""                                    # Command bc (Do Some Math)
+        self.fdisk              = ""                                    # fdisk (Read Disk Capacity)
+        self.perl               = ""                                    # perl Path (for epoch time)
+        self.uname              = ""                                    # uname command path
+        self.mail               = ""                                    # mail command path
+        
         # O/S Info
         self.os_type            = self.get_ostype().upper()             # linux/aix
 
         # Load Configuration File ($SADMIN/cfg/sadmin.cfg)
         self.load_config_file(self.cfg_file)                                 # Load cfg var from sadmin.cfg
 
-        msg = "Allo1"
-        self.allo(msg)
-        self.hello("Hello1")
-    
-    def hello(self,mmm):
-        print ("Message = %s" % mmm)
 
-    def allo(self,mmm):
-        print ("Message = %s" % mmm)
+    def set_log_type(self,wlogtype) :
+        wlogtype = wlogtype.upper()
+        if ((wlogtype.upper() != 'S') and (wlogtype != "B") and (wlogtype != 'L')): 
+           print ("Acceptable log_type are 'S','L','B' - Can't set log_type to %s" % (wlogtype))
+           return
+        self.log_type = wlogtype.upper()                                # LogType S=Scr L=Log B=Both
+
+    def get_log_type(self) :
+        return (self.log_type)
+
+#        
+    def get_max_logline(self) :
+        return(self.cfg_max_logline)
 
     def set_max_logline(self,maxline) :
         self.cfg_max_logline = maxline
@@ -181,7 +188,7 @@ class sadmtools():
         # global self.cfg_user ,          self.cfg_group,         self.cfg_server
         # global self.cfg_max_logline,    self.cfg_max_rchline,   self.cfg_domain
         # global self.cfg_www_user,       self.cfg_www_group
-        # global self.cfg_nmon_keepdays,  self.cfg_sar_keepdays  
+        # global self.cfg_nmon_keepdays,  self.cfg_sar_keepdays
         # global self.cfg_log_keepdays,   self.cfg_rch_keepdays
         # global self.cfg_pgdb,           self.cfg_dbhost,        self.cfg_dbport
         # global self.cfg_rw_dbuser,      self.cfg_rw_dbpwd, 
@@ -219,34 +226,34 @@ class sadmtools():
 
                    
         # Set Minimum Default Values - in case we could not load the SADMIN Config File
-        cfg_mail_addr         = "root@localhost"                            # Default email address
-        cfg_cie_name          = "Your Company Name"                         # Company Name
-        cfg_mail_type         = 3                                           # Send Email after each run
-        cfg_user              = "sadmin"                                    # sadmin user account
-        cfg_group             = "sadmin"                                    # sadmin group account
-        cfg_www_user          = "apache"                                    # sadmin/www user account
-        cfg_www_group         = "apache"                                    # sadmin/www group account
-        cfg_max_logline       = 5000                                        # Max Line in each *.log
-        cfg_max_rchline       = 100                                         # Max Line in each *.rch
-        cfg_nmon_keepdays     = 60                                          # Days to keep old *.nmon
-        cfg_sar_keepdays      = 60                                          # Days ro keep old *.sar
-        cfg_rch_keepdays      = 60                                          # Days to keep old *.rch
-        cfg_keepdays          = 60                                          # Days ro keep old *.log
+        self.cfg_mail_addr         = "root@localhost"                            # Default email address
+        self.cfg_cie_name          = "Your Company Name"                         # Company Name
+        self.cfg_mail_type         = 3                                           # Send Email after each run
+        self.cfg_user              = "sadmin"                                    # sadmin user account
+        self.cfg_group             = "sadmin"                                    # sadmin group account
+        self.cfg_www_user          = "apache"                                    # sadmin/www user account
+        self.cfg_www_group         = "apache"                                    # sadmin/www group account
+        self.cfg_max_logline       = 5000                                        # Max Line in each *.log
+        self.cfg_max_rchline       = 100                                         # Max Line in each *.rch
+        self.cfg_nmon_keepdays     = 60                                          # Days to keep old *.nmon
+        self.cfg_sar_keepdays      = 60                                          # Days ro keep old *.sar
+        self.cfg_rch_keepdays      = 60                                          # Days to keep old *.rch
+        self.cfg_keepdays          = 60                                          # Days ro keep old *.log
         ccode, cstdout, cstderr = self.oscommand("host sadmin | cut -d' ' -f1")  # Get FQN of admin server
         if ccode is not 0 :                                                 # If sadmin not resolved
             print ("Error executing 'host sadmin | cut -d' ' -f1")        # Advise User of error
             print ("Assuming 'sadmin' as sadmin server")                  # Will use sadmin no FQN
-            cfg_server        = "sadmin"                                     # Default sadmin hostname
+            self.cfg_server        = "sadmin"                                     # Default sadmin hostname
         else :                                                              # If sadmin was resolvec
-            cfg_server        = cstdout                                      # Used FQN obtained
-        cfg_domain         = ""                                             # Default Domain Name
-        cfg_dbname         = ""                                             # PostGres Database Name
-        cfg_dbhost         = ""                                             # PostGres Database Host
-        cfg_dbport         = 3306                                           # PostGres Database Port
-        cfg_rw_dbuser      = ""                                             # PostGres Read/Write User
-        cfg_rw_dbpwd       = ""                                             # PostGres Read/Write Pwd
-        cfg_ro_dbuser      = ""                                             # PostGres Read Only User
-        cfg_ro_dbpwd       = ""                                             # PostGres Read Only Pwd
+            self.cfg_server        = cstdout                                      # Used FQN obtained
+        self.cfg_domain         = ""                                             # Default Domain Name
+        self.cfg_dbname         = ""                                             # PostGres Database Name
+        self.cfg_dbhost         = ""                                             # PostGres Database Host
+        self.cfg_dbport         = 3306                                           # PostGres Database Port
+        self.cfg_rw_dbuser      = ""                                             # PostGres Read/Write User
+        self.cfg_rw_dbpwd       = ""                                             # PostGres Read/Write Pwd
+        self.cfg_ro_dbuser      = ""                                             # PostGres Read Only User
+        self.cfg_ro_dbpwd       = ""                                             # PostGres Read Only Pwd
 
         # Open Configuration file 
         try:
@@ -269,29 +276,29 @@ class sadmtools():
             #print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
      
             # Save Each Parameter found in Sadmin Configuration File
-            if "SADM_MAIL_ADDR"     in CFG_NAME : cfg_mail_addr      = CFG_VALUE
-            if "SADM_CIE_NAME"      in CFG_NAME : cfg_cie_name       = CFG_VALUE
-            if "SADM_MAIL_TYPE"     in CFG_NAME : cfg_mail_type      = int(CFG_VALUE)
-            if "SADM_SERVER"        in CFG_NAME : cfg_server         = CFG_VALUE
-            if "SADM_DOMAIN"        in CFG_NAME : cfg_domain         = CFG_VALUE
-            if "SADM_USER"          in CFG_NAME : cfg_user           = CFG_VALUE
-            if "SADM_GROUP"         in CFG_NAME : cfg_group          = CFG_VALUE
-            if "SADM_WWW_USER"      in CFG_NAME : cfg_www_user       = CFG_VALUE
-            if "SADM_WWW_GROUP"     in CFG_NAME : cfg_www_group      = CFG_VALUE
-            if "SADM_MAX_LOGLINE"   in CFG_NAME : cfg_max_logline    = int(CFG_VALUE)
-            if "SADM_MAX_RCHLINE"   in CFG_NAME : cfg_max_rchline    = int(CFG_VALUE)
-            if "SADM_NMON_KEEPDAYS" in CFG_NAME : cfg_nmon_keepdays  = int(CFG_VALUE)
-            if "SADM_SAR_KEEPDAYS"  in CFG_NAME : cfg_sar_keepdays   = int(CFG_VALUE)
-            if "SADM_RCH_KEEPDAYS"  in CFG_NAME : cfg_rch_keepdays   = int(CFG_VALUE)
-            if "SADM_LOG_KEEPDAYS"  in CFG_NAME : cfg_log_keepdays   = int(CFG_VALUE)
-            if "SADM_DBNAME"        in CFG_NAME : cfg_dbname         = CFG_VALUE
-            if "SADM_DBHOST"        in CFG_NAME : cfg_dbhost         = CFG_VALUE 
-            if "SADM_DBPORT"        in CFG_NAME : cfg_dbport         = int(CFG_VALUE)
-            if "SADM_RW_DBUSER"     in CFG_NAME : cfg_rw_dbuser      = CFG_VALUE
-            if "SADM_RW_DBPWD"      in CFG_NAME : cfg_rw_dbpwd       = CFG_VALUE
-            if "SADM_RO_DBUSER"     in CFG_NAME : cfg_ro_dbuser      = CFG_VALUE
-            if "SADM_RO_DBPWD"      in CFG_NAME : cfg_ro_dbpwd       = CFG_VALUE
-            if "SADM_SSH_PORT"      in CFG_NAME : cfg_ssh_port       = int(CFG_VALUE)
+            if "SADM_MAIL_ADDR"     in CFG_NAME : self.cfg_mail_addr      = CFG_VALUE
+            if "SADM_CIE_NAME"      in CFG_NAME : self.cfg_cie_name       = CFG_VALUE
+            if "SADM_MAIL_TYPE"     in CFG_NAME : self.cfg_mail_type      = int(CFG_VALUE)
+            if "SADM_SERVER"        in CFG_NAME : self.cfg_server         = CFG_VALUE
+            if "SADM_DOMAIN"        in CFG_NAME : self.cfg_domain         = CFG_VALUE
+            if "SADM_USER"          in CFG_NAME : self.cfg_user           = CFG_VALUE
+            if "SADM_GROUP"         in CFG_NAME : self.cfg_group          = CFG_VALUE
+            if "SADM_WWW_USER"      in CFG_NAME : self.cfg_www_user       = CFG_VALUE
+            if "SADM_WWW_GROUP"     in CFG_NAME : self.cfg_www_group      = CFG_VALUE
+            if "SADM_MAX_LOGLINE"   in CFG_NAME : self.cfg_max_logline    = int(CFG_VALUE)
+            if "SADM_MAX_RCHLINE"   in CFG_NAME : self.cfg_max_rchline    = int(CFG_VALUE)
+            if "SADM_NMON_KEEPDAYS" in CFG_NAME : self.cfg_nmon_keepdays  = int(CFG_VALUE)
+            if "SADM_SAR_KEEPDAYS"  in CFG_NAME : self.cfg_sar_keepdays   = int(CFG_VALUE)
+            if "SADM_RCH_KEEPDAYS"  in CFG_NAME : self.cfg_rch_keepdays   = int(CFG_VALUE)
+            if "SADM_LOG_KEEPDAYS"  in CFG_NAME : self.cfg_log_keepdays   = int(CFG_VALUE)
+            if "SADM_DBNAME"        in CFG_NAME : self.cfg_dbname         = CFG_VALUE
+            if "SADM_DBHOST"        in CFG_NAME : self.cfg_dbhost         = CFG_VALUE
+            if "SADM_DBPORT"        in CFG_NAME : self.cfg_dbport         = int(CFG_VALUE)
+            if "SADM_RW_DBUSER"     in CFG_NAME : self.cfg_rw_dbuser      = CFG_VALUE
+            if "SADM_RW_DBPWD"      in CFG_NAME : self.cfg_rw_dbpwd       = CFG_VALUE
+            if "SADM_RO_DBUSER"     in CFG_NAME : self.cfg_ro_dbuser      = CFG_VALUE
+            if "SADM_RO_DBPWD"      in CFG_NAME : self.cfg_ro_dbpwd       = CFG_VALUE
+            if "SADM_SSH_PORT"      in CFG_NAME : self.cfg_ssh_port       = int(CFG_VALUE)
 
         FH_CFG_FILE.close()                                                 # Close Config File
         return        
@@ -304,11 +311,14 @@ class sadmtools():
     def writelog(self,sline):
         global FH_LOG_FILE
     
+        #print ("log_type = %s" % (log_type))
+        #print ("self.log_type = %s" % (self.log_type))
+
         now = datetime.datetime.now()
         logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
-        if log_type.upper() == "L" :  FH_LOG_FILE.write ("%s\n" % (logLine))
-        if log_type.upper() == "S" :  print ("%s" % logLine)
-        if log_type.upper() == "B" :  
+        if self.log_type.upper() == "L" :  FH_LOG_FILE.write ("%s\n" % (logLine))
+        if self.log_type.upper() == "S" :  print ("%s" % logLine)
+        if self.log_type.upper() == "B" :  
             FH_LOG_FILE.write ("%s\n" % (logLine))
             print ("%s" % logLine) 
 
@@ -360,7 +370,7 @@ class sadmtools():
         if os.path.exists(self.rel_file):
             wcommand = "head -1 %s" % (self.rel_file)
             ccode, cstdout, cstderr = self.oscommand("%s" % (wcommand))      # Execute O/S CMD 
-            wrelease=cstdout
+            wrelease=cstdout.decode()
         else:
             wrelease="00.00"
         return wrelease
@@ -436,7 +446,7 @@ class sadmtools():
     def get_ostype(self):
         ccode, cstdout, cstderr = self.oscommand("uname -s")
         wostype=cstdout.upper()
-        return wostype
+        return wostype.decode()
 
 
     
@@ -444,12 +454,13 @@ class sadmtools():
     #                   RETURN THE OS  NAME (ALWAYS RETURNED IN UPPERCASE)
     # ----------------------------------------------------------------------------------------------
     def get_osname(self) :
-        ccode, cstdout, cstderr = self.oscommand(lsb_release + " -si")
+        wcmd = "%s %s" % (lsb_release,"-si")
+        ccode, cstdout, cstderr = self.oscommand(wcmd)
         osname=cstdout.upper()
         if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
         if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
         if self.os_type == "AIX" : osname="AIX"
-        return osname
+        return osname.decode()
 
  
     # ----------------------------------------------------------------------------------------------
@@ -473,10 +484,11 @@ class sadmtools():
     #                             RETURN THE OS PROJECT CODE NAME
     # ----------------------------------------------------------------------------------------------
     def get_oscodename(self) :
-        ccode, cstdout, cstderr = self.oscommand(lsb_release + " -sc")
+        wcmd = "%s %s" % (lsb_release,"-sc")
+        ccode, cstdout, cstderr = self.oscommand(wcmd)
         oscodename=cstdout.upper()
         if self.os_type == "AIX" : oscodename="IBM AIX"
-        return oscodename
+        return oscodename.decode()
 
 
     # ----------------------------------------------------------------------------------------------
@@ -493,7 +505,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             min_ver=cstdout
             osversion="%s.%s" % (maj.version,min.version)
-        return osversion
+        return osversion.decode()
 
 
     # ----------------------------------------------------------------------------------------------
@@ -502,11 +514,11 @@ class sadmtools():
     def get_osmajorversion(self) :
         if self.os_type == "LINUX" :
             ccode, cstdout, cstderr = self.oscommand(lsb_release + " -sr")
-            osversion=cstdout
+            osversion=cstdout.decode()
             osmajorversion=osversion.split('.')[0]
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -v")
-            osmajorversion=cstdout
+            osmajorversion=cstdout.decode()
         return osmajorversion
 
     
@@ -568,11 +580,11 @@ class sadmtools():
         tot_lines = len(open(fname).readlines())                            # Count total no. of lines
 
         # Create temporary file
-        tmpfile = "%s/%s.%s" % (tmp_dir,inst,datetime.datetime.now().strftime("%y%m%d_%H%M%S"))
+        self.tmpfile = "%s/%s.%s" % (self.tmp_dir,inst,datetime.datetime.now().strftime("%y%m%d_%H%M%S"))
 
         # Open Temporary file in output mode
         try:
-            FN=open(tmpfile,'w')                                            # Open Temp file for output
+            FN=open(self.tmpfile,'w')                                       # Open Temp file for output
         except IOError as e:                                                # If Can't open output file
             print ("Error opening file %s" % fname)                         # Print FileName
             return 1
@@ -600,7 +612,7 @@ class sadmtools():
 
         # Rename tempFile to original file
         try:
-            shutil.move (tmpfile,fname)                                     # Rename tmp to original
+            shutil.move (self.tmpfile,fname)                                # Rename tmp to original
         except OSError as e:
             print ("[ ERROR ] in %s function - Error renaming %s to %s" % (fcname,tmpfile,fname))
             print ("Rename Error: %s - %s." % (e.fname,e.strerror))
@@ -622,7 +634,7 @@ class sadmtools():
     def check_command_availibility(self,cmd) :
         global FH_LOG_FILE
 
-        ccode, cstdout, cstderr = self.oscommand("which " + cmd)             # Try to Locate Command
+        ccode, cstdout, cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
             self.writelog ("Warning : Command '%s' couldn't be found" % (cmd)) # Displat Warning for User
             self.writelog ("   This program is used by the SADMIN tools")    # Command is needed by SADM
@@ -635,6 +647,7 @@ class sadmtools():
                 self.writelog ("Command '%s' located at %s" % (cmd,cmd_path))# Print Cmd Location
             else :                                                      # If Cmd was not Found
                 self.writelog ("Command '%s' could not be located" % (cmd))  # Cmd Not Found to User 
+        cmd_path = cmd_path.decode()
         return (cmd_path)                                               # Return Cmd Path
 
 
@@ -643,7 +656,7 @@ class sadmtools():
     # IF REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global FH_LOG_FILE, which, lsb_release, dmidecode, uname, fdisk, mail
+        global FH_LOG_FILE, lsb_release, dmidecode, uname, fdisk, mail
     
         if self.debug > 5 :                                                  # If Debug Run Level 7
             self.writelog (" ")                                              # Space Line in the LOG
@@ -663,10 +676,10 @@ class sadmtools():
             self.writelog ("        Use 'yum install which' or 'apt-get install debianutils'")
             self.writelog ("Script Aborted")
             sys.exit(1)
-        which = cstdout
+        self.which = cstdout.decode()
         if self.debug > 2 :
-            if which != "" :
-                self.writelog ("Command 'which' located at %s" % which) # Print Cmd Location
+            if self.which != "" :
+                self.writelog ("Command 'which' located at %s" % self.which) # Print Cmd Location
             else :
                 self.writelog ("Command 'which' could not be located ") # Cmd Not Found 
         requisites_status=False
@@ -702,7 +715,7 @@ class sadmtools():
         # First thing Make sure the log file is Open and Log Directory created
         try:                                                            # Try to Open/Create Log
             if not os.path.exists(self.log_dir)  : os.mkdir(self.log_dir,2775) # Create SADM Log Dir
-            if log_append == "Y" :                                      # User Want to Append to Log
+            if self.log_append == "Y" :                                 # User Want to Append to Log
                 FH_LOG_FILE=open(self.log_file,'a')                     # Open Log in append  mode
             else:                                                       # User Want Fresh New Log
                 FH_LOG_FILE=open(self.log_file,'w')                     # Open Log in a new log
@@ -735,6 +748,7 @@ class sadmtools():
         if self.get_hostname() == self.cfg_server :
             if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web  Network  Dir.
 
+            # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
             uid = pwd.getpwnam(cfg_user).pw_uid                         # Get UID User in sadmin.cfg 
             gid = grp.getgrnam(cfg_group).gr_gid                        # Get GID User in sadmin.cfg 
 
@@ -756,20 +770,20 @@ class sadmtools():
     
         
         # Write SADM Header to Script Log
-        self.writelog (dash)                                                 # 80 = Lines 
+        self.writelog (dash)                                            # 80 = Lines 
         wmess = "Starting %s - Version.%s on %s" % (pn,ver,hostname)    # Build Log Starting Line
-        self.writelog (wmess)                                                # Write Start line to Log
+        self.writelog (wmess)                                           # Write Start line to Log
         wmess = "%s %s %s %s" % (self.os_type,self.get_osname(),self.get_osversion(),self.get_oscodename())
-        self.writelog (wmess)                                                # Write OS Info to Log Head
-        self.writelog (dash)                                                 # 80 = Lines 
-        self.writelog (" ")                                                  # Space Line in the LOG
+        self.writelog (wmess)                                           # Write OS Info to Log Head
+        self.writelog (dash)                                            # 80 = Lines 
+        self.writelog (" ")                                             # Space Line in the LOG
 
         # If the PID file already exist - Script is already Running
-        if os.path.exists(pid_file) and multiple_exec == "N" :          # PID Exist & No MultiRun
-            self.writelog ("Script %s is already runnin" % pn)               # Same script is running
-            self.writelog ("PID File %s exist." % pid_file)                  # Display PID File Location
-            self.writelog ("Will not run a second copy of this script")      # Advise the user
-            self.writelog ("Script Aborted")                                 # Script Aborted
+        if os.path.exists(self.pid_file) and self.multiple_exec == "N" :# PID Exist & No MultiRun
+            self.writelog ("Script %s is already runnin" % pn)          # Same script is running
+            self.writelog ("PID File %s exist." % pid_file)             # Display PID File Location
+            self.writelog ("Will not run a second copy of this script") # Advise the user
+            self.writelog ("Script Aborted")                            # Script Aborted
             sys.exit(1)                                                 # Exit with Error
     
         # Record Date & Time the script is starting in the RCH File
@@ -777,7 +791,7 @@ class sadmtools():
         start_time=i.strftime('%Y.%m.%d %H:%M:%S')                      # Save Start Date & Time
         start_epoch = int(time.time())                                  # StartTime in Epoch Time
         try:
-            FH_RCH_FILE=open(rch_file,'a')                              # Open RC Log in append mode
+            FH_RCH_FILE=open(self.rch_file,'a')                         # Open RC Log in append mode
         except IOError as e:                                            # If Can't Create or open
             print ("Error open file %s \r\n" % rch_file)                # Print Log FileName
             print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number    
@@ -789,21 +803,22 @@ class sadmtools():
         return 0
 
 
+
     # ----------------------------------------------------------------------------------------------
     # Method that write script Footer in the Log, Close the Database
     # Record the End Time in the RCH, close the log amd RCH File , Trim the RCH file and Log
     # ----------------------------------------------------------------------------------------------
     def stop(self,return_code):
-        global FH_LOG_FILE, start_time, start_epoch, cfg_mail_type, cfg_mail_addr
+        global FH_LOG_FILE, start_time, start_epoch
 
         exit_code = return_code                                         # Save Param.Recv Code
         if exit_code is not 0 :                                         # If Return code is not 0
             exit_code=1                                                 # Making Sure code is 1 or 0
  
         # Write the Script Exit code of the script to the log
-        self.writelog (" ")                                                  # Space Line in the LOG
-        self.writelog (dash)                                                 # 80 = Lines 
-        self.writelog ("Script return code is " + str(exit_code))            # Script ExitCode to Log
+        self.writelog (" ")                                             # Space Line in the LOG
+        self.writelog (dash)                                            # 80 = Lines 
+        self.writelog ("Script return code is " + str(exit_code))       # Script ExitCode to Log
         #time.sleep(1)                                                  # Sleep 1 seconds
 
     
@@ -821,43 +836,43 @@ class sadmtools():
         # Update the [R]eturn [C]ode [H]istory File
         i = datetime.datetime.now()                                     # Get Current Stop Time
         stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                       # Format Stop Date & Time
-        FH_RCH_FILE=open(rch_file,'a')                                  # Open RCH Log - append mode
+        FH_RCH_FILE=open(self.rch_file,'a')                             # Open RCH Log - append mode
         rch_line="%s %s %s %s %s %s" % (hostname,start_time,stop_time,elapse_time,inst,exit_code)
         FH_RCH_FILE.write ("%s\n" % (rch_line))                         # Write Line to RCH Log
         FH_RCH_FILE.close()                                             # Close RCH File
-        self.writelog ("Trimming %s to %s lines." %  (rch_file, str(cfg_max_rchline)))
+        self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
 
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
         # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
-        if cfg_mail_type == 0 :                                         # User don't want any email
+        if self.cfg_mail_type == 0 :                                    # User don't want any email
             MailMess="No mail is requested when script end - No mail sent" # Message User Email Choice
 
-        if cfg_mail_type == 1 :                                         # Want Email on Error Only
+        if self.cfg_mail_type == 1 :                                    # Want Email on Error Only
             if exit_code != 0 :                                         # If Script Failed = Email
                 MailMess="Mail requested if script fail - Mail sent"    # Message User Email Choice
             else :                                                      # Script Success = No Email
                 MailMess="Mail requested if script fail - No mail sent" # Message User Email Choice
 
-        if cfg_mail_type == 2 :                                         # Email on Success Only
+        if self.cfg_mail_type == 2 :                                    # Email on Success Only
             if not exit_code == 0 :                                     # If script is a Success
                 MailMess="Mail requested on Success only - Mail sent"   # Message User Email Choice
             else :                                                      # If Script not a Success
                 MailMess="Mail requested on Success only - No mail sent"# Message User Email Choice
 
-        if cfg_mail_type == 3 :                                         # User always Want email 
+        if self.cfg_mail_type == 3 :                                    # User always Want email 
             MailMess="Mail requested on Success or Error - Mail sent"   # Message User Email Choice
     
-        if cfg_mail_type > 3 or cfg_mail_type < 0 :                     # User Email Choice Invalid
+        if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :                # User Email Choice Invalid
             MailMess="SADM_MAIL_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
 
         if mail == "" :                                                 # If Mail Program not found
             MailMess="No Mail can be send - Until mail command is install"  # Message User Email Choice    
-        self.writelog ("%s" % (MailMess))                                    # Write user choice to log
+        self.writelog ("%s" % (MailMess))                               # Write user choice to log
     
           
         # Advise user the Log will be trimm
-        self.writelog ("Trimming %s to %s lines." %  (log_file, str(cfg_max_logline)))
+        self.writelog ("Trimming %s to %s lines." %  (self.log_file, str(self.cfg_max_logline)))
     
         # Write Script Log Footer
         now = time.strftime("%c")                                       # Get Current Date & Time
@@ -872,46 +887,57 @@ class sadmtools():
         wsub_success="SADM : SUCCESS of %s on %s" % (pn,hostname)       # Format Success Subject
         wsub_error="SADM : ERROR of %s on %s" % (pn,hostname)           # Format Failed Subject
     
-        if exit_code != 0 and (cfg_mail_type == 1 or cfg_mail_type == 3): # If Error & User want email
+        if exit_code != 0 and (self.cfg_mail_type == 1 or self.cfg_mail_type == 3): # If Error & User want email
             wsubject=wsub_error                                         # Build the Subject Line
            
-        if cfg_mail_type == 2 and exit_code == 0 :                      # Success & User Want Email
+        if self.cfg_mail_type == 2 and exit_code == 0 :                 # Success & User Want Email
             wsubject=wsub_success                                       # Format Subject Line
 
-        if cfg_mail_type == 3 :                                         # USer Always want Email
+        if self.cfg_mail_type == 3 :                                    # USer Always want Email
             if exit_code == 0 :                                         # If Script is a Success
                 wsubject=wsub_success                                   # Build the Subject Line
-            else :                                                      # If Script Failed                                            
+            else :                                                      # If Script Failed 
                 wsubject=wsub_error                                     # Build the Subject Line
 
-        if wsubject != "" :                                             # subject = Email Needed
+        if wsubject != "" :                                             # subject Then Email Needed
             time.sleep(1)                                               # Sleep 1 seconds
-        
-            cmd = "cat %s | %s -s '%s' %s" % (log_file,mail,wsubject,cfg_mail_addr) # Format Email Cmd
-            ccode, cstdout, cstderr = self.oscommand("%s" % (cmd))           # Go send email 
+            cmd = "cat %s | %s -s '%s' %s" % (self.log_file,mail,wsubject,self.cfg_mail_addr) 
+            ccode, cstdout, cstderr = self.oscommand("%s" % (cmd))      # Go send email 
             if ccode != 0 :                                             # If Cmd Fail
-                self.writelog ("ERROR : Problem sending email to %s" % (cfg_mail_addr)) # Advise USer 
+                self.writelog ("ERROR : Problem sending mail to %s" % (self.cfg_mail_addr))
     
         FH_LOG_FILE.flush()                                             # Got to do it - Missing end
         FH_LOG_FILE.close()                                             # Close the Log File
 
         # Trimming the Log 
-        trimfile (log_file, cfg_max_logline)                            # Trim the Script Log 
-        trimfile (rch_file, cfg_max_rchline)                            # Trim the Script RCH Log 
+        self.trimfile (self.log_file, self.cfg_max_logline)             # Trim the Script Log 
+        self.trimfile (self.rch_file, self.cfg_max_rchline)             # Trim the Script RCH Log 
     
-        # Make sure the RCH File and the Script log belong to sadmin.cfg user/group
-        uid = pwd.getpwnam(cfg_user).pw_uid                             # Get UID User in sadmin.cfg 
-        gid = grp.getgrnam(cfg_group).gr_gid                            # Get GID User in sadmin.cfg 
-        os.chown(log_file, uid, gid)                                    # Change owner of log file
-        os.chown(rch_file, uid, gid)                                    # Change owner of rch file
-        os.chmod(log_file, 0o0644)                                      # Change Log File Permission
-        os.chmod(rch_file, 0o0644)                                      # Change RCH File Permission
-    
+        # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+        uid = pwd.getpwnam(self.cfg_user).pw_uid                        # Get UID User in sadmin.cfg
+        gid = grp.getgrnam(self.cfg_group).gr_gid                       # Get GID User in sadmin.cfg
+
+        # Make Sure Owner/Group of Log File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+        try : 
+            os.chown(self.log_file, uid, gid)                           # Change owner of log file
+            os.chmod(self.log_file, 0o0644)                             # Change Log File Permission
+        except Exception as e: 
+            msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
+            print ("%s %s to %s.%s" % (msg,self.log_file,self.cfg_user,self.cfg_group))
+
+        # Make Sure Owner/Group of RCH File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+        try : 
+            os.chown(self.rch_file, uid, gid)                           # Change owner of rch file
+            os.chmod(self.rch_file, 0o0644)                             # Change RCH File Permission
+        except Exception as e: 
+            msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
+            print ("%s %s to %s.%s" % (msg,self.rch_file,self.cfg_user,self.cfg_group))
+
         # Delete Temproray files used
-        silentremove (pid_file)                                         # Delete PID File
-        silentremove (tmp_file1)                                        # Delete Temp file 1
-        silentremove (tmp_file2)                                        # Delete Temp file 2
-        silentremove (tmp_file3)                                        # Delete Temp file 3
+        self.silentremove (self.pid_file)                               # Delete PID File
+        self.silentremove (self.tmp_file1)                              # Delete Temp file 1
+        self.silentremove (self.tmp_file2)                              # Delete Temp file 2
+        self.silentremove (self.tmp_file3)                              # Delete Temp file 3
         return exit_code
 
 
@@ -919,19 +945,17 @@ class sadmtools():
     # For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
     # ----------------------------------------------------------------------------------------------
     def display_env(self):
-
         print(" ")                                                      # Space Line in the LOG
         print(dash)                                                     # 80 = Lines 
         print("Display Important Environment Variables")                # Introduce Display Below
         print(dash)                                                     # 80 = Lines 
         print("SADMIN Release No.  = " + self.get_release())            # Get SADMIN Release Version
-        print("This Script Ver No. = " + ver)                           # Program Version
+        print("sadmlib_std.py      = " + ver)                           # Program Version
         print("pn                  = " + pn)                            # Program name
         print("inst                = " + inst)                          # Program name without Ext.
         print("hostname            = " + hostname)                      # Program name without Ext.
         print("username            = " + username)                      # Current User Name
         print("tpid                = " + tpid)                          # Get Current Process ID.
-        print("multiple_exec       = " + multiple_exec)                 # Can Script run Multiple
         print("self.debug          = " + str(self.debug))               # Debug Level
         print("get_ostype()        = " + self.os_type)                  # OS Type Linux or Aix
         print("get_osname()        = " + self.get_osname())             # Distribution of OS
@@ -939,7 +963,8 @@ class sadmtools():
         print("get_osmajorversion()= " + self.get_osmajorversion())     # Distribution Major Ver#
         print("get_oscodename()    = " + self.get_oscodename())         # Distribution Code Name
         print("log_type            = " + self.log_type)                 # 4Logger S=Scr L=Log B=Both
-        print("log_append          = " + self.log_append)               # Append to existing  Log 
+        print("multiple_exec       = " + self.multiple_exec)            # Permit Multiple Execution
+        print("log_append          = " + self.log_append)               # Do not overwrite Prev. Log
         print("base_dir            = " + self.base_dir)                 # Base Dir. where appl. is
         print("tmp_dir             = " + self.tmp_dir)                  # SADM Temp. Directory
         print("cfg_dir             = " + self.cfg_dir)                  # SADM Config Directory
@@ -970,6 +995,7 @@ class sadmtools():
         print("uname               = " + self.uname)                    # Location of uname
         print(" ")                                                      # Space Line in the LOG
         print(dash)                                                     # 80 = Lines 
+
         print("Global variables setting after reading the SADM Configuration file")
         print(dash)                                                     # 80 = Lines 
         print("cfg_mail_addr       = ..." + self.cfg_mail_addr + "...")
