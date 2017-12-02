@@ -48,6 +48,40 @@ else:
 import sadmlib_std as sadm                                              # Import SADM Python Library
 #import sadmlib_mysql as sadmdb
 
+#===================================================================================================
+#                                 Initialize SADM Tools Function
+#===================================================================================================
+#
+def initSADM():
+    st = sadm.sadmtools()                       # create Sadm Tools instance
+    st.set_max_logline(5000)                    # Maximum Nb of line in log
+    st.cfg_max_rchline(100)                     # Maximum Nb Lines in RCH (Return Code History) file
+    st.log_type = 'S'                           # LogType L=LogFileOnly S=StdOutOnly B=Both
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script
+    st.log_append = "Y"                         # Append Existing Log ? (Or allways start a new one)
+    st.cfg_mail_type = 0                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.cfg_mail_addr = ""                       # Override Default Email Address is in sadmin.cfg
+SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
+SADM_VER='3.2'                             ; export SADM_VER            # This Script Version
+SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
+SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
+SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+
+
+    st.cfg_cie_name       = ""                                    # Company Name
+    st.cfg_nmon_keepdays  = 60                  # Delete *.nmon files older than 60 days
+    st.cfg_sar_keepdays   = 60                  # Delete *.sar  files older than 60 days
+    st.cfg_rch_keepdays   = 60                  # Delete *.rch  files older than 60 days
+    st.cfg_log_keepdays   = 60                  # Delete *.log  files older than 60 days
+
+    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
+    print ("Get Log Type = %s" % st.get_log_type())
+    print ("Max Log Line %s" % st.get_max_logline())
+    st.start()
 
 
 #===================================================================================================
@@ -55,16 +89,7 @@ import sadmlib_std as sadm                                              # Import
 #===================================================================================================
 #
 def main():
-    st = sadm.sadmtools()                                               # Create SADM Tools Instance
-    st.set_max_logline(100)
-    print ("Max Log Line %s" % st.get_max_logline())
-    st.log_type = 'S'
-    print ("Get Log Type = %s" % st.get_log_type())
-    st.cfg_mail_type = 0 
-    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
-
-    st.start()
-
+    initSADM()
     print ("Max Log Line %s" % st.get_max_logline())
     print ("Get Log Type = %s" % st.get_log_type())
     print ("Log Directory is %s" % st.log_dir)
