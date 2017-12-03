@@ -17,22 +17,29 @@
 #
 # 
 # ==================================================================================================
-import os, errno, time, sys, pdb, socket, datetime, getpass, subprocess, smtplib, pwd, grp
-import glob, fnmatch, linecache, shutil
-from subprocess import Popen, PIPE
-#pdb.set_trace() 
+try :
+    import errno, time, socket, subprocess, smtplib, pwd, grp
+    import glob, fnmatch, linecache
+    from subprocess import Popen, PIPE
+    import os, sys, pymysql, datetime, getpass, pymysql, shutil
+    #import pdb                                                         # Python Debugger
+    #pdb.set_trace()                                                    # Activate Python Debugging
+except ImportError as e:
+    print ("Import Error : %s " % e)
+    sys.exit(1)
+
 
 
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
+libver              = "2.1"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 username            = getpass.getuser()                                 # Get Current User Name
 args                = len(sys.argv)                                     # Nb. argument receive
 osname              = os.name                                           # OS name (nt,dos,posix,...)
 platform            = sys.platform                                      # Platform (darwin,linux)
-
 # To calculate execution Time 
 start_time          = ""                                                # Script Start Date & Time
 stop_time           = ""                                                # Script Stop Date & Time
@@ -122,29 +129,38 @@ class sadmtools():
         self.tmp_file3          = "%s_3.%s" % (self.tmp_file_prefix,self.tpid)  # Temp3 Filename
         
         # SADM Configuration file (sadmin.cfg) content loaded from configuration file 
-        self.cfg_mail_type      = 1                                     # 0=No 1=Err 2=Succes 3=All
-        self.cfg_mail_addr      = ""                                    # Default is in sadmin.cfg
-        self.cfg_cie_name       = ""                                    # Company Name
-        self.cfg_user           = ""                                    # sadmin user account
-        self.cfg_group          = ""                                    # sadmin group account
-        self.cfg_www_user       = ""                                    # sadmin/www user account
-        self.cfg_www_group      = ""                                    # sadmin/www group owner
-        self.cfg_server         = ""                                    # sadmin FQN Server
-        self.cfg_domain         = ""                                    # sadmin Default Domain
-        self.cfg_max_logline    = 5000                                  # Max Nb. Lines in LOG )
-        self.cfg_max_rchline    = 100                                   # Max Nb. Lines in RCH file
-        self.cfg_nmon_keepdays  = 60                                    # Days to keep old *.nmon
-        self.cfg_sar_keepdays   = 60                                    # Days to keep old *.sar
-        self.cfg_rch_keepdays   = 60                                    # Days to keep old *.rch
-        self.cfg_log_keepdays   = 60                                    # Days to keep old *.log
-        self.cfg_dbname         = ""                                    # MySQL Database Name
-        self.cfg_dbhost         = ""                                    # MySQL Database Host
-        self.cfg_dbport         = 3306                                  # MySQL Database Port
-        self.cfg_rw_dbuser      = ""                                    # MySQL Read Write User
-        self.cfg_rw_dbpwd       = ""                                    # MySQL Read Write Pwd
-        self.cfg_ro_dbuser      = ""                                    # MySQL Read Only User
-        self.cfg_ro_dbpwd       = ""                                    # MySQL Read Only Pwd
-        self.cfg_ssh_port       = 22                                    # SSH Port used in Farm
+        self.cfg_mail_type              = 1                             # 0=No 1=Err 2=Succes 3=All
+        self.cfg_mail_addr              = ""                            # Default is in sadmin.cfg
+        self.cfg_cie_name               = ""                            # Company Name
+        self.cfg_user                   = ""                            # sadmin user account
+        self.cfg_group                  = ""                            # sadmin group account
+        self.cfg_www_user               = ""                            # sadmin/www user account
+        self.cfg_www_group              = ""                            # sadmin/www group owner
+        self.cfg_server                 = ""                            # sadmin FQN Server
+        self.cfg_domain                 = ""                            # sadmin Default Domain
+        self.cfg_max_logline            = 5000                          # Max Nb. Lines in LOG )
+        self.cfg_max_rchline            = 100                           # Max Nb. Lines in RCH file
+        self.cfg_nmon_keepdays          = 60                            # Days to keep old *.nmon
+        self.cfg_sar_keepdays           = 60                            # Days to keep old *.sar
+        self.cfg_rch_keepdays           = 60                            # Days to keep old *.rch
+        self.cfg_log_keepdays           = 60                            # Days to keep old *.log
+        self.cfg_dbname                 = ""                            # MySQL Database Name
+        self.cfg_dbhost                 = ""                            # MySQL Database Host
+        self.cfg_dbport                 = 3306                          # MySQL Database Port
+        self.cfg_rw_dbuser              = ""                            # MySQL Read Write User
+        self.cfg_rw_dbpwd               = ""                            # MySQL Read Write Pwd
+        self.cfg_ro_dbuser              = ""                            # MySQL Read Only User
+        self.cfg_ro_dbpwd               = ""                            # MySQL Read Only Pwd
+        self.cfg_ssh_port               = 22                            # SSH Port used in Farm
+        self.cfg_backup_nfs_server      = ""                            # Backup NFS Server
+        self.cfg_backup_nfs_mount_point = ""                            # Backup Mount Point
+        self.cfg_backup_to_keep         = 3                             # Nb of backup to Keep
+        self.cfg_rear_nfs_server        = ""                            # Rear NFS Server
+        self.cfg_rear_nfs_mount_point   = ""                            # Rear NFS Mount Point
+        self.cfg_rear_backup_to_keep    = 3                             # Nb of Rear Backup to keep
+        self.cfg_storix_nfs_server      = ""                            # Storix Nfs Server
+        self.cfg_storix_mount_point     = ""                            # Storix NFS Mount Point
+        self.cfg_storix_backup_to_keep  = 3                             # Nb Storix Backup to Keep
 
         # O/S Path to various commands used by SADM Tools
         self.lsb_release        = ""                                    # Command lsb_release Path
@@ -158,6 +174,60 @@ class sadmtools():
 
         # Load Configuration File ($SADMIN/cfg/sadmin.cfg)
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
+
+    #-----------------------------------------------------------------------------------------------
+    # CLOSE THE DATABASE ---------------------------------------------------------------------------
+    # return (0) if no error - return (1) if error encountered
+    #-----------------------------------------------------------------------------------------------
+    def dbconnect(self):       
+        self.enum = 0                                                   # Reset Error Number
+        self.emsg = ""                                                  # Reset Error Message
+        conn_string  = "%s, " % (self.cfg_dbhost)
+        conn_string += "%s, " % (self.cfg_rw_dbuser)
+        conn_string += "%s, " % (self.cfg_rw_dbpwd)
+        conn_string += "%s"   % (self.cfg_dbname)
+        if (self.debug > 3) :                                           # Debug Display Conn. Info
+            print ("Connect(%s)" % (conn_string))
+        try :
+            self.conn=pymysql.connect(conn_string)
+        except pymysql.err.OperationalError as error :
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            print ("Error connecting to Database '%s'" % (self.dbname))  
+            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+            sys.exit(1)                                                 # Exit Pgm with Error Code 1
+
+        # Define a cursor object using cursor() method
+        # ------------------------------------------------------------------------------------------
+        try :
+            self.cursor = self.conn.cursor()                            # Create Database cursor
+        except AttributeError as error:
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print ("Error creating cursor for %s" % (self.dbname))  # Inform User print DB Name 
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
+        except pymysql.InternalError as error:
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            print ("Error creating cursor for %s" % (self.dbname))      # Inform User print DB Name 
+            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+            sys.exit(1)                                                 # Exit Pgm with Error Code 1
+        return(conn,cursor)
+
+    #-----------------------------------------------------------------------------------------------
+    # CLOSE THE DATABASE ---------------------------------------------------------------------------
+    # return (0) if no error - return (1) if error encountered
+    #-----------------------------------------------------------------------------------------------
+    def dbclose(self):
+        self.enum = 0                                                   # Reset Error Number
+        self.emsg = ""                                                  # Reset Error Message
+        try:
+            if self.dbdebug > 2 : print ("Closing Database %s" % (self.dbname)) 
+            self.conn.close()
+        except Exception as error: 
+            self.enum, self.emsg = error.args                           # Get Error No. & Message
+            if  (not self.dbsilent):                                    # If not in Silent Mode
+                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
+                return (1)                                            # return (1) to indicate Error
+        return (0)
 
         
     # ----------------------------------------------------------------------------------------------
@@ -194,36 +264,6 @@ class sadmtools():
                     print ("Restore the file from a backup & review the file content.")
                     sys.exit(1)
                    
-        # # Set Default Values - in case we could not load the SADMIN Config File
-        # self.cfg_mail_addr         = "root@localhost"                   # Default email address
-        # self.cfg_cie_name          = "Your Company Name"                # Company Name
-        # self.cfg_mail_type         = 1                                  # Send Email after each run
-        # self.cfg_user              = "sadmin"                           # sadmin user account
-        # self.cfg_group             = "sadmin"                           # sadmin group account
-        # self.cfg_www_user          = "apache"                           # sadmin/www user account
-        # self.cfg_www_group         = "apache"                           # sadmin/www group account
-        # self.cfg_max_logline       = 5000                               # Max Line in each *.log
-        # self.cfg_max_rchline       = 100                                # Max Line in each *.rch
-        # self.cfg_nmon_keepdays     = 60                                 # Days to keep old *.nmon
-        # self.cfg_sar_keepdays      = 60                                 # Days ro keep old *.sar
-        # self.cfg_rch_keepdays      = 60                                 # Days to keep old *.rch
-        # self.cfg_keepdays          = 60                                 # Days ro keep old *.log
-        # ccode,cout,cerr = self.oscommand("host sadmin |cut -d' ' -f1")  # FQN of sadmin srv
-        # if ccode is not 0 :                                             # If sadmin not resolved
-        #     print ("Error executing 'host sadmin | cut -d' ' -f1")      # Advise User of error
-        #     print ("Assuming 'sadmin' as the sadmin server")            # Will use sadmin no FQN
-        #     self.cfg_server        = "sadmin"                           # Default sadmin hostname
-        # else :                                                          # If sadmin was resolved
-        #     self.cfg_server        = cstdout                            # Used FQN obtained
-        # self.cfg_domain         = ""                                    # Default Domain Name
-        # self.cfg_dbname         = ""                                    # MySQL Database Name
-        # self.cfg_dbhost         = ""                                    # MySQL Database Host
-        # self.cfg_dbport         = 3306                                  # MySQL Database Port
-        # self.cfg_rw_dbuser      = "sadmin"                              # MySQL Read/Write User
-        # self.cfg_rw_dbpwd       = ""                                    # MySQL Read/Write Pwd
-        # self.cfg_ro_dbuser      = "squery"                              # MySQL Read Only User
-        # self.cfg_ro_dbpwd       = ""                                    # MySQL Read Only Pwd
-
         # Open Configuration file 
         try:
             FH_CFG_FILE = open(self.cfg_file,'r')                       # Open Config File
@@ -234,49 +274,55 @@ class sadmtools():
             sys.exit(1) 
 
         # Read Configuration file and Save Options values 
-        for cfg_line in FH_CFG_FILE :                                       # Loop until on all servers
-            wline        = cfg_line.strip()                                 # Strip CR/LF & Trailing spaces
-            if (wline[0:1] == '#' or len(wline) == 0) :                     # If comment or blank line
-                continue                                                    # Go read the next line
-            split_line   = wline.split('=')                                 # Split based on equal sign 
-            CFG_NAME   = split_line[0].upper().strip()                      # Param Name Uppercase Trim
-            CFG_VALUE  = str(split_line[1]).strip()                         # Get Param Value Trimmed
+        for cfg_line in FH_CFG_FILE :                                   # Loop until on all servers
+            wline        = cfg_line.strip()                             # Strip CR/LF & Trail spaces
+            if (wline[0:1] == '#' or len(wline) == 0) :                 # If comment or blank line
+                continue                                                # Go read the next line
+            split_line   = wline.split('=')                             # Split based on equal sign 
+            CFG_NAME   = split_line[0].upper().strip()                  # Param Name Uppercase Trim
+            CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
 
-            #print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
+            if (self.debug) :                                           # Debug = Print Line
+                print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
      
             # Save Each Parameter found in Sadmin Configuration File
-            if "SADM_MAIL_ADDR"     in CFG_NAME : self.cfg_mail_addr      = CFG_VALUE
-            if "SADM_CIE_NAME"      in CFG_NAME : self.cfg_cie_name       = CFG_VALUE
-            if "SADM_MAIL_TYPE"     in CFG_NAME : self.cfg_mail_type      = int(CFG_VALUE)
-            if "SADM_SERVER"        in CFG_NAME : self.cfg_server         = CFG_VALUE
-            if "SADM_DOMAIN"        in CFG_NAME : self.cfg_domain         = CFG_VALUE
-            if "SADM_USER"          in CFG_NAME : self.cfg_user           = CFG_VALUE
-            if "SADM_GROUP"         in CFG_NAME : self.cfg_group          = CFG_VALUE
-            if "SADM_WWW_USER"      in CFG_NAME : self.cfg_www_user       = CFG_VALUE
-            if "SADM_WWW_GROUP"     in CFG_NAME : self.cfg_www_group      = CFG_VALUE
-            if "SADM_MAX_LOGLINE"   in CFG_NAME : self.cfg_max_logline    = int(CFG_VALUE)
-            if "SADM_MAX_RCHLINE"   in CFG_NAME : self.cfg_max_rchline    = int(CFG_VALUE)
-            if "SADM_NMON_KEEPDAYS" in CFG_NAME : self.cfg_nmon_keepdays  = int(CFG_VALUE)
-            if "SADM_SAR_KEEPDAYS"  in CFG_NAME : self.cfg_sar_keepdays   = int(CFG_VALUE)
-            if "SADM_RCH_KEEPDAYS"  in CFG_NAME : self.cfg_rch_keepdays   = int(CFG_VALUE)
-            if "SADM_LOG_KEEPDAYS"  in CFG_NAME : self.cfg_log_keepdays   = int(CFG_VALUE)
-            if "SADM_DBNAME"        in CFG_NAME : self.cfg_dbname         = CFG_VALUE
-            if "SADM_DBHOST"        in CFG_NAME : self.cfg_dbhost         = CFG_VALUE
-            if "SADM_DBPORT"        in CFG_NAME : self.cfg_dbport         = int(CFG_VALUE)
-            if "SADM_RW_DBUSER"     in CFG_NAME : self.cfg_rw_dbuser      = CFG_VALUE
-            if "SADM_RW_DBPWD"      in CFG_NAME : self.cfg_rw_dbpwd       = CFG_VALUE
-            if "SADM_RO_DBUSER"     in CFG_NAME : self.cfg_ro_dbuser      = CFG_VALUE
-            if "SADM_RO_DBPWD"      in CFG_NAME : self.cfg_ro_dbpwd       = CFG_VALUE
-            if "SADM_SSH_PORT"      in CFG_NAME : self.cfg_ssh_port       = int(CFG_VALUE)
-
-            if "SADM_NFS_SERVER"    in CFG_NAME : self.cfg_nfs_server     = CFG_VALUE
-    #         if "SADM_NFS_REAR_MOUNT_POINT = /volume1/Linux_DR
-    # 36  SADM_NB_REAR_BACKUP_TO_KEEP = 3
-    # 37  SADM_NFS_STORIX_MOUNT_POINT = /volume1/storix
-    # 38  SADM_NB_STORIX_BACKUP_TO_KEEP = 3
-    # 39  SADM_BACKUP_SERVER = "batnas.maison.ca"
-    # 40  SADM_BACKUP_DIR = "/volume1/linux"
-
+            if "SADM_MAIL_ADDR"              in CFG_NAME:  self.cfg_mail_addr      = CFG_VALUE
+            if "SADM_CIE_NAME"               in CFG_NAME:  self.cfg_cie_name       = CFG_VALUE
+            if "SADM_MAIL_TYPE"              in CFG_NAME:  self.cfg_mail_type      = int(CFG_VALUE)
+            if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
+            if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
+            if "SADM_USER"                   in CFG_NAME:  self.cfg_user           = CFG_VALUE
+            if "SADM_GROUP"                  in CFG_NAME:  self.cfg_group          = CFG_VALUE
+            if "SADM_WWW_USER"               in CFG_NAME:  self.cfg_www_user       = CFG_VALUE
+            if "SADM_WWW_GROUP"              in CFG_NAME:  self.cfg_www_group      = CFG_VALUE
+            if "SADM_SSH_PORT"               in CFG_NAME:  self.cfg_ssh_port       = int(CFG_VALUE)
+            if "SADM_MAX_LOGLINE"            in CFG_NAME:  self.cfg_max_logline    = int(CFG_VALUE)
+            if "SADM_MAX_RCHLINE"            in CFG_NAME:  self.cfg_max_rchline    = int(CFG_VALUE)
+            #
+            if "SADM_NMON_KEEPDAYS"          in CFG_NAME:  self.cfg_nmon_keepdays  = int(CFG_VALUE)
+            if "SADM_SAR_KEEPDAYS"           in CFG_NAME:  self.cfg_sar_keepdays   = int(CFG_VALUE)
+            if "SADM_RCH_KEEPDAYS"           in CFG_NAME:  self.cfg_rch_keepdays   = int(CFG_VALUE)
+            if "SADM_LOG_KEEPDAYS"           in CFG_NAME:  self.cfg_log_keepdays   = int(CFG_VALUE)
+            #
+            if "SADM_DBNAME"                 in CFG_NAME:  self.cfg_dbname         = CFG_VALUE
+            if "SADM_DBHOST"                 in CFG_NAME:  self.cfg_dbhost         = CFG_VALUE
+            if "SADM_DBPORT"                 in CFG_NAME:  self.cfg_dbport         = int(CFG_VALUE)
+            if "SADM_RW_DBUSER"              in CFG_NAME:  self.cfg_rw_dbuser      = CFG_VALUE
+            if "SADM_RW_DBPWD"               in CFG_NAME:  self.cfg_rw_dbpwd       = CFG_VALUE
+            if "SADM_RO_DBUSER"              in CFG_NAME:  self.cfg_ro_dbuser      = CFG_VALUE
+            if "SADM_RO_DBPWD"               in CFG_NAME:  self.cfg_ro_dbpwd       = CFG_VALUE
+            #
+            if "SADM_BACKUP_NFS_SERVER"      in CFG_NAME: self.cfg_backup_nfs_server     = CFG_VALUE
+            if "SADM_BACKUP_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_backup_nfs_mount_point= CFG_VALUE
+            if "SADM_BACKUP_TO_KEEP"         in CFG_NAME: self.cfg_backup_to_keep        = int(CFG_VALUE)
+            #
+            if "SADM_REAR_NFS_SERVER"        in CFG_NAME: self.cfg_rear_nfs_server       = CFG_VALUE
+            if "SADM_REAR_NFS_MOUNT_POINT"   in CFG_NAME: self.cfg_rear_nfs_mount_point  = CFG_VALUE
+            if "SADM_REAR_BACKUP_TO_KEEP"    in CFG_NAME: self.cfg_rear_backup_to_keep   = int(CFG_VALUE)
+            #
+            if "SADM_STORIX_NFS_SERVER"      in CFG_NAME: self.cfg_storix_nfs_server     = CFG_VALUE
+            if "SADM_STORIX_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_storix_nfs_mount_point= CFG_VALUE
+            if "SADM_STORIX_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_storix_backup_to_keep = int(CFG_VALUE)
         FH_CFG_FILE.close()                                                 # Close Config File
         return        
 
@@ -353,37 +399,43 @@ class sadmtools():
         return wrelease
 
 
-    # ----------------------------------------------------------------------------------------------
-    #                                 RETURN THE HOSTNAME (SHORT)
-    # ----------------------------------------------------------------------------------------------
-    def get_hostname(self):
-        cstdout="unknown"
-        if self.os_type == "LINUX" :                                         # Under Linux
-            ccode, cstdout, cstderr = self.oscommand("hostname -s")          # Execute O/S CMD 
-        if self.os_type == "AIX" :                                      # Under AIX
-            ccode, cstdout, cstderr = self.oscommand("hostname")             # Execute O/S CMD 
-        whostname=cstdout.upper()
-        return whostname
+    # # ----------------------------------------------------------------------------------------------
+    # #                                 RETURN THE HOSTNAME (SHORT)
+    # # ----------------------------------------------------------------------------------------------
+    # def get_hostname(self):
+    #     cstdout="unknown"
+    #     if self.os_type == "LINUX" :                                         # Under Linux
+    #         ccode, cstdout, cstderr = self.oscommand("hostname -s")          # Execute O/S CMD 
+    #     if self.os_type == "AIX" :                                      # Under AIX
+    #         ccode, cstdout, cstderr = self.oscommand("hostname")             # Execute O/S CMD 
+    #     whostname=cstdout.upper()
+    #     return whostname
 
 
     # ----------------------------------------------------------------------------------------------
     #                                 RETURN THE DOMAINNAME 
     # ----------------------------------------------------------------------------------------------
     def get_domainname(self):
-        whostname = get_hostname()
+        whostname = self.hostname
         if self.os_type == "LINUX" :                                        # Under Linux
-            ccode, cstdout, cstderr = self.oscommand("host $whostname) |head -1 |awk '{ print $1 }' |cut -d. -f2-3")
+            cmd = "host %s |head -1 |awk '{ print $1 }' |cut -d. -f2-3" % (self.hostname)
+            ccode, cstdout, cstderr = self.oscommand(cmd)
         if self.os_type == "AIX" :                                          # Under AIX
             ccode, cstdout, cstderr = self.oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
-        wdomainname=cstdout.upper()
+        wdomainname=cstdout.lower().decode()
         return wdomainname
  
+    # ----------------------------------------------------------------------------------------------
+    #                                 RETURN THE SERVER FQDN 
+    # ----------------------------------------------------------------------------------------------
+    def get_fqdn(self):
+        return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
     # ----------------------------------------------------------------------------------------------
     def get_host_ip(self):
-        whostname = get_hostname()
+        whostname = self.hostname
         wdomain = get_domainname()
         if self.os_type == "LINUX" :                                    # Under Linux
             ccode, cstdout, cstderr = self.oscommand("host $whostname |awk '{ print $4 }' |head -1") 
@@ -734,7 +786,7 @@ class sadmtools():
         if not os.path.exists(self.rpt_dir)  : os.mkdir(self.rpt_dir,0o0775)# Create SADM RCH Dir.
 
         # These Directories are only created on the SADM Server (Data Base and Web Directories)
-        if self.get_hostname() == self.cfg_server :
+        if self.hostname == self.cfg_server :
             if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web  Network  Dir.
 
             # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
@@ -760,9 +812,16 @@ class sadmtools():
         
         # Write SADM Header to Script Log
         self.writelog (dash)                                            # 80 = Lines 
-        wmess = "Starting %s - Version.%s on %s" % (self.pn,self.ver ,self.hostname)    # Build Log Starting Line
+        wmess = "Starting %s " % (self.pn)                              # Script Name
+        wmess += "V%s " % (self.ver)                                    # Script Version
+        wmess += "- SADM Lib. V%s" % (libver)                           # SADMIN Library Version
         self.writelog (wmess)                                           # Write Start line to Log
-        wmess = "%s %s %s %s" % (self.os_type,self.get_osname(),self.get_osversion(),self.get_oscodename())
+        wmess = "Server Name: %s" % (self.get_fqdn())                   # FQDN Server Name
+        wmess += " - Type: %s" % (self.os_type.capitalize())            # O/S Type Linux/Aix
+        self.writelog (wmess)                                           # Write OS Info to Log Head
+        wmess  = "O/S: %s " % (self.get_osname().capitalize())          # O/S Distribution Name
+        wmess += " %s - Code Name:" % (self.get_osversion())            # O/S Distribution Version
+        wmess += " %s" % (self.get_oscodename().capitalize())           # O/S Dist. Code Name Alias
         self.writelog (wmess)                                           # Write OS Info to Log Head
         self.writelog (dash)                                            # 80 = Lines 
         self.writelog (" ")                                             # Space Line in the LOG
@@ -990,29 +1049,38 @@ class sadmtools():
         print(dash)                                                     # 80 = Lines 
         print("Global variables setting after reading the SADM Configuration file")
         print(dash)                                                     # 80 = Lines 
-        print("cfg_mail_addr       = ..." + self.cfg_mail_addr + "...")
-        print("cfg_cie_name        = ..." + self.cfg_cie_name + "...")
-        print("cfg_mail_type       = ..." + str(self.cfg_mail_type) + "...")
-        print("cfg_server          = ..." + self.cfg_server + "...")
-        print("cfg_domain          = ..." + self.cfg_domain + "...")
-        print("cfg_user            = ..." + self.cfg_user + "...")
-        print("cfg_group           = ..." + self.cfg_group + "...")
-        print("cfg_www_user        = ..." + self.cfg_www_user + "...")
-        print("cfg_www_group       = ..." + self.cfg_www_group + "...")
-        print("cfg_max_logline     = ..." + str(self.cfg_max_logline) + "...")
-        print("cfg_max_rchline     = ..." + str(self.cfg_max_rchline) + "...")
-        print("cfg_nmon_keepdays   = ..." + str(self.cfg_nmon_keepdays) + "...")
-        print("cfg_sar_keepdays    = ..." + str(self.cfg_sar_keepdays) + "...")
-        print("cfg_rch_keepdays    = ..." + str(self.cfg_rch_keepdays) + "...")
-        print("cfg_log_keepdays    = ..." + str(self.cfg_log_keepdays) + "...")
-        print("cfg_dbname          = ..." + self.cfg_dbname + "...")
-        print("cfg_dbhost          = ..." + self.cfg_dbhost + "...")
-        print("cfg_dbport          = ..." + str(self.cfg_dbport) + "...")
-        print("cfg_rw_dbuser       = ..." + str(self.cfg_rw_dbuser) + "...")
-        print("cfg_rw_dbpwd        = ..." + str(self.cfg_rw_dbpwd) + "...")
-        print("cfg_ro_dbuser       = ..." + str(self.cfg_ro_dbuser) + "...")
-        print("cfg_ro_dbpwd        = ..." + str(self.cfg_ro_dbpwd) + "...")
-        print("cfg_ssh_port        = ..." + str(self.cfg_ssh_port) + "...")
+        print("cfg_mail_addr              = ..." + self.cfg_mail_addr + "...")
+        print("cfg_cie_name               = ..." + self.cfg_cie_name + "...")
+        print("cfg_mail_type              = ..." + str(self.cfg_mail_type) + "...")
+        print("cfg_server                 = ..." + self.cfg_server + "...")
+        print("cfg_domain                 = ..." + self.cfg_domain + "...")
+        print("cfg_user                   = ..." + self.cfg_user + "...")
+        print("cfg_group                  = ..." + self.cfg_group + "...")
+        print("cfg_www_user               = ..." + self.cfg_www_user + "...")
+        print("cfg_www_group              = ..." + self.cfg_www_group + "...")
+        print("cfg_max_logline            = ..." + str(self.cfg_max_logline) + "...")
+        print("cfg_max_rchline            = ..." + str(self.cfg_max_rchline) + "...")
+        print("cfg_nmon_keepdays          = ..." + str(self.cfg_nmon_keepdays) + "...")
+        print("cfg_sar_keepdays            ..." + str(self.cfg_sar_keepdays) + "...")
+        print("cfg_rch_keepdays           = ..." + str(self.cfg_rch_keepdays) + "...")
+        print("cfg_log_keepdays           = ..." + str(self.cfg_log_keepdays) + "...")
+        print("cfg_dbname                 = ..." + self.cfg_dbname + "...")
+        print("cfg_dbhost                 = ..." + self.cfg_dbhost + "...")
+        print("cfg_dbport                 = ..." + str(self.cfg_dbport) + "...")
+        print("cfg_rw_dbuser              = ..." + str(self.cfg_rw_dbuser) + "...")
+        print("cfg_rw_dbpwd               = ..." + str(self.cfg_rw_dbpwd) + "...")
+        print("cfg_ro_dbuser              = ..." + str(self.cfg_ro_dbuser) + "...")
+        print("cfg_ro_dbpwd               = ..." + str(self.cfg_ro_dbpwd) + "...")
+        print("cfg_ssh_port               = ..." + str(self.cfg_ssh_port) + "...")
+        print("cfg_backup_nfs_server      = ..." + self.cfg_backup_nfs_server + "...")
+        print("cfg_backup_nfs_mount_point = ..." + self.cfg_backup_nfs_mount_point + "...")
+        print("cfg_backup_to_keep         = ..." + str(self.cfg_backup_to_keep) + "...")
+        print("cfg_rear_nfs_server        = ..." + self.cfg_rear_nfs_server + "...")
+        print("cfg_rear_nfs_mount_point   = ..." + self.cfg_rear_nfs_mount_point + "...")
+        print("cfg_rear_backup_to_keep    = ..." + str(self.cfg_rear_backup_to_keep) + "...")
+        print("cfg_storix_nfs_server      = ..." + self.cfg_storix_nfs_server + "...")
+        print("cfg_storix_nfs_mount_point = ..." + self.cfg_storix_nfs_mount_point + "...")
+        print("cfg_storix_backup_to_keep  = ..." + str(self.cfg_storix_backup_to_keep) + "...")
 
         # print(" ")                                                      # Space Line in the LOG
         # print(dash)                                                     # 80 = Lines 
