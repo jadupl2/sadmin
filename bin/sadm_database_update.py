@@ -38,36 +38,98 @@ import os, time, sys, pdb, socket, datetime, glob, fnmatch
 #pdb.set_trace()                                                        # Activate Python Debugging
 
 # Add SADM Library Path to Python Path and Import SADM Python Library
-sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))           # Add $SADMIN/lib to PyPath
-#import sadmlib_mysql as sadmdb
+print (('=' * 65))
+for a in os.environ:
+    print('Var: ', a, 'Value: ', os.getenv(a))
+print("all done")
+
+print (os.environ.get('SADMIN'))                                          # Is SADMIN Env.Var. Defined
+print (os.environ["SADMIN"])                                          # Is SADMIN Env.Var. Defined
+
+if (os.environ.get('SADMIN')):                                          # Is SADMIN Env.Var. Defined
+    sys.path.append(os.path.join(os.environ.get('SADMIN'),'lib'))       # Add $SADMIN/lib to PyPath
+else:
+    print (('=' * 65))
+    print ("SADMIN Environment variable need to be define")
+    print ("It indicate the directory where you installed the SADMIN Tools")
+    print ("Put this line in your ~/.bash_profile")
+    print ("export SADMIN=/INSTALL_DIR")
+    print (('=' * 65))
 import sadmlib_std as sadm                                              # Import SADM Python Library
-
-#sadm.load_config_file()                                                # Load cfg from sadmin.cfg
-
+#import sadmlib_mysql as sadmdb
 
 
 
+#===================================================================================================
+#                      Global Variables Definition use on a per script basis
+#===================================================================================================
 
+
+
+
+#===================================================================================================
+#                                 Initialize SADM Tools Function
+#===================================================================================================
+#
+def initSADM():
+    """
+    Start the SADM Tools 
+      - Make sure All SADM Directories exist, 
+      - Open log in append mode if attribute log_append="Y", otherwise a new Log file is started.
+      - Write Log Header
+      - Record the start Date/Time and Status Code 2(Running) to RCH file
+      - Check if Script is already running (pid_file) 
+        - Advise user & Quit if Attribute multiple_exec="N"
+    """
+    st = sadm.sadmtools()                       # Create Sadm Tools Instance
+    st.ver  = "2.5"                             # This Script Version 
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
+    st.log_append = True                        # True=Append to Existing Log  False=Start a new log
+    st.debug = 0                                # Debug Level (0-9)
+    
+    # Send Script Log by Mail -  [0]=NoMail  [1]=OnlyOnError  [2]=OnlyOnSucces  [3]=Allways
+    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+
+    # False = Return MySQL Error Code & Display MySQL Error Message
+    # True  = Return MySQL Error Code & Display MySQL No Error Message
+    st.dbsilent = False                         # True or False
+
+    #st.cfg_mail_addr = ""                      # Override Default Email Address is in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
+    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
+    print ("Log Directory is %s" % st.log_dir)
+    print ("st.cfg_mail_type = %d" % st.cfg_mail_type)
+    print ("Configuration File is %s" % st.cfg_file)
+    print ("Release File is %s" % st.rel_file)
+
+
+    # Start the SADM Tools 
+    #   - Make sure All SADM Directories exist, 
+    #   - Open log in append mode if st_log_append="Y" else create a new Log file.
+    #   - Write Log Header
+    #   - Write Start Date/Time and Status Code 2(Running) to RCH file
+    #   - Check if Script is already running (pid_file) - Advise user & Quit if st-multiple_exec="N"
+    st.start()                                  # Make SADM Sertup is OK - Initialize SADM Env.
+
+    st.writelog("test writelog")
+    return(st)
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
 def main():
-    st = sadm.sadmtools()                                               # Create SADM Tools Instance
-    print ("Log Directory is %s" % st.log_dir)
-    print ("Configuration File is %s" % st.cfg_file)
-    print ("Release File is %s" % st.rel_file)
-    #st.start()
-    msg = "Allo2"
-    st.allo("Allo2")
-    st.hello("Hello2")
+    st = initSADM()                                                          # Initialize SADM Tools
+    # st = sadm.sadmtools()                       # Create Sadm Tools Instance
+    # initSADM(st)                                                          # Initialize SADM Tools
 
-    print ("Max Log Line %s" % st.get_max_logline())
-    st.set_max_logline(100)
-    print ("Max Log Line %s" % st.get_max_logline())
+    st.display_env();                                                   # Display SADM Environment
+
+    st.stop(st.exit_code)                                               # Close SADM Environment
+
+
 #    st.writelog('Test Message')
-#    st.display_env();
 
         #sadm.start()                                                        # Open Log, Create Dir ...
 
