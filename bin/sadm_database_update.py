@@ -58,7 +58,7 @@ def main():
     print ("Log Directory is %s" % st.log_dir)
     print ("Configuration File is %s" % st.cfg_file)
     print ("Release File is %s" % st.rel_file)
-    st.start()
+    #st.start()
     msg = "Allo2"
     st.allo("Allo2")
     st.hello("Hello2")
