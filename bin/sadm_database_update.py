@@ -126,7 +126,7 @@ def main():
         st.writelog("This script must be run by the 'root' user")       # Advise User Message / Log
         st.writelog("Process aborted")                                  # Process Aborted Msg
         st.stop(1)                                                      # Close and Trim Log/Email
-        sysy.exit(1)                                                    # Exit with Error Code
+        sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if socket.getfqdn() != st.cfg_server:                               # Only run on SADMIN
