@@ -82,7 +82,7 @@ class sadmtools():
         
         # O/S Info
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
-        self.os_type            = self.get_ostype().upper()             # O/S is Linux or / Aix
+        self.os_type            = self.get_ostype()                     # O/S LINUX,AIX,DARWIN
 
         # SADM Sub Directories Definitions
         self.lib_dir            = os.path.join(self.base_dir,'lib')     # SADM Lib. Directory
@@ -417,10 +417,10 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def get_domainname(self):
         whostname = self.hostname
-        if self.os_type == "LINUX" :                                        # Under Linux
+        if (self.os_type != "AIX"):                                        # Under Linux
             cmd = "host %s |head -1 |awk '{ print $1 }' |cut -d. -f2-3" % (self.hostname)
             ccode, cstdout, cstderr = self.oscommand(cmd)
-        if self.os_type == "AIX" :                                          # Under AIX
+        else:
             ccode, cstdout, cstderr = self.oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
         wdomainname=cstdout.lower().decode()
         return wdomainname
@@ -470,7 +470,7 @@ class sadmtools():
 
  
     # ----------------------------------------------------------------------------------------------
-    #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+    #                RETURN THE OS TYPE LINUX, AIX, DARWIN ) -- ALWAYS RETURNED IN UPPERCASE
     # ----------------------------------------------------------------------------------------------
     def get_ostype(self):
         ccode, cstdout, cstderr = self.oscommand("uname -s")
@@ -483,12 +483,18 @@ class sadmtools():
     #                   RETURN THE OS  NAME (ALWAYS RETURNED IN UPPERCASE)
     # ----------------------------------------------------------------------------------------------
     def get_osname(self) :
-        wcmd = "%s %s" % (lsb_release,"-si")
-        ccode, cstdout, cstderr = self.oscommand(wcmd)
-        osname=cstdout.upper()
-        if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
-        if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
-        if self.os_type == "AIX" : osname="AIX"
+        if self.os_type == "DARWIN":
+            wcmd = "sw_vers -productName | tr -d ' '"
+            ccode, cstdout, cstderr = self.oscommand(wcmd)
+            osname=cstdout.upper()
+        if self.os_type == "LINUX":
+            wcmd = "%s %s" % (lsb_release,"-si")
+            ccode, cstdout, cstderr = self.oscommand(wcmd)
+            osname=cstdout.upper()
+            if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
+            if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
+        if self.os_type == "AIX" : 
+            osname="AIX"
         return osname.decode()
 
  
@@ -513,11 +519,30 @@ class sadmtools():
     #                             RETURN THE OS PROJECT CODE NAME
     # ----------------------------------------------------------------------------------------------
     def get_oscodename(self) :
-        wcmd = "%s %s" % (lsb_release,"-sc")
-        ccode, cstdout, cstderr = self.oscommand(wcmd)
-        oscodename=cstdout.upper()
-        if self.os_type == "AIX" : oscodename="IBM AIX"
-        return oscodename.decode()
+        oscodename=""
+        #print ("self.os_type = %s major is ...%s..." % (self.os_type,self.get_osmajorversion()))
+        if self.os_type == "DARWIN":
+            if (self.get_osmajorversion() == "10.0")  : oscodename="Cheetah"
+            if (self.get_osmajorversion() == "10.1")  : oscodename="Puma"
+            if (self.get_osmajorversion() == "10.2")  : oscodename="Jaguar"
+            if (self.get_osmajorversion() == "10.3")  : oscodename="Panther"
+            if (self.get_osmajorversion() == "10.4")  : oscodename="Tiger"
+            if (self.get_osmajorversion() == "10.5")  : oscodename="Leopard"
+            if (self.get_osmajorversion() == "10.6")  : oscodename="Snow Leopard"
+            if (self.get_osmajorversion() == "10.7")  : oscodename="Lion"
+            if (self.get_osmajorversion() == "10.8")  : oscodename="Mountain Lion"
+            if (self.get_osmajorversion() == "10.9")  : oscodename="Mavericks"
+            if (self.get_osmajorversion() == "10.10") : oscodename="Yosemite"
+            if (self.get_osmajorversion() == "10.11") : oscodename="El Capitan"
+            if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
+            if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
+        if self.os_type == "LINUX":
+            wcmd = "%s %s" % (lsb_release,"-sc")
+            ccode, cstdout, cstderr = self.oscommand(wcmd)
+            oscodename=cstdout.upper()
+        if self.os_type == "AIX" : 
+            oscodename="IBM AIX"
+        return (oscodename)
 
 
     # ----------------------------------------------------------------------------------------------
@@ -527,6 +552,10 @@ class sadmtools():
         osversion="0.0"                                                 # Default Value
         if self.os_type == "LINUX" :
             ccode, cstdout, cstderr = self.oscommand(lsb_release + " -sr")
+            osversion=cstdout
+        if self.os_type == "DARWIN" :
+            cmd = "sw_vers -productVersion"
+            ccode, cstdout, cstderr = self.oscommand(cmd)
             osversion=cstdout
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -v")
@@ -548,7 +577,11 @@ class sadmtools():
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -v")
             osmajorversion=cstdout.decode()
-        return osmajorversion
+        if self.os_type == "DARWIN":
+            wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
+            ccode, cstdout, cstderr = self.oscommand(wcmd)
+            osmajorversion=cstdout
+        return osmajorversion.decode()
 
     
     # ----------------------------------------------------------------------------------------------
@@ -715,11 +748,12 @@ class sadmtools():
  
     
         # Get the location of the lsb_release command
-        lsb_release = self.check_command_availibility('lsb_release')    # location of lsb_release
-        if lsb_release == "" :
-            self.writelog ("CRITICAL: The 'lsb_release' is needed and is not present")
-            self.writelog ("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if (self.os_type == "LINUX"):
+            lsb_release = self.check_command_availibility('lsb_release')    # location of lsb_release
+            if lsb_release == "" :
+                self.writelog ("CRITICAL: The 'lsb_release' is needed and is not present")
+                self.writelog ("Please correct the situation and re-execute this script")
+                requisites_status=False
  
     
         uname = self.check_command_availibility('uname')                # location of uname 
@@ -728,9 +762,29 @@ class sadmtools():
             self.writelog ("Please correct the situation and re-execute this script")
             requisites_status=False
     
-        fdisk =     self.check_command_availibility('fdisk')            # location of fdisk 
-        mail =      self.check_command_availibility('mail')             # location of mail
-        dmidecode = self.check_command_availibility('dmidecode')        # location of dmidecode   
+        # Get the Location of fdisk
+        if (self.os_type == "LINUX"):
+            self.fdisk = self.check_command_availibility('fdisk')       # location of fdisk
+            if self.fdisk == "" :                                       # If Command was not found
+                self.writelog ("CRITICAL: The 'fdisk' is needed and is not present")
+                self.writelog ("Please correct the situation and re-execute this script")
+                requisites_status=False
+                
+        # Get the location of mail command
+        self.mail = self.check_command_availibility('mail')             # location of mail
+        if self.mail == "" :                                            # If Command was not found
+            self.writelog ("CRITICAL: The 'mail' is needed and is not present")
+            self.writelog ("Please correct the situation and re-execute this script")
+            requisites_status=False
+
+        # Get the Location of dmidecode
+        if (self.os_type == "LINUX"):
+            self.dmidecode =self.check_command_availibility('dmidecode')# location of dmidecode
+            if self.dmidecode == "" :                                   # If Command was not found
+                self.writelog ("CRITICAL: The 'dmidecode' is needed and is not present")
+                self.writelog ("Please correct the situation and re-execute this script")
+                requisites_status=False
+
         return requisites_status
  
 
@@ -914,7 +968,7 @@ class sadmtools():
         if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :                # User Email Choice Invalid
             MailMess="SADM_MAIL_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
 
-        if mail == "" :                                                 # If Mail Program not found
+        if self.mail == "" :                                                 # If Mail Program not found
             MailMess="No Mail can be send - Until mail command is install"  # Message User Email Choice    
         self.writelog ("%s" % (MailMess))                               # Write user choice to log
     
@@ -949,7 +1003,7 @@ class sadmtools():
 
         if wsubject != "" :                                             # subject Then Email Needed
             time.sleep(1)                                               # Sleep 1 seconds
-            cmd = "cat %s | %s -s '%s' %s" % (self.log_file,mail,wsubject,self.cfg_mail_addr) 
+            cmd = "cat %s | %s -s '%s' %s" % (self.log_file,self.mail,wsubject,self.cfg_mail_addr) 
             ccode, cstdout, cstderr = self.oscommand("%s" % (cmd))      # Go send email 
             if ccode != 0 :                                             # If Cmd Fail
                 self.writelog ("ERROR : Problem sending mail to %s" % (self.cfg_mail_addr))
