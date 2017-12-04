@@ -5,7 +5,10 @@
 # ---
 print ("my_notes_dict.py")
 print ('-'*80) ; print ("DICTIONNARY EXAMPLES") ; print ('-'*80) 
-s
+
+print ("Create an empty Dictionary")
+print ("table = {}")
+table = {}
 
 
 print ("..\n..",'-'*80, "USING Dictionnary")
@@ -71,8 +74,5 @@ print ("table = ", table)
 print ("\nLooping thru Dictionnary with for loop")
 print ("table = ", table)
 for wline in table.keys():
-    print (wline, '\t', table[wline]
-
-    
-
+    print (wline, '\t', table[wline])
 

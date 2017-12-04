@@ -204,8 +204,8 @@ def test_server(conn,cur):
 
     # Test Insert
     print ("\nTesting Datatbase Class for Server Table")
-    cdata1 = ['Test','maison.ca','Test Server','DNS,Web,GoGit,Nagios,Wiki',1,'2017/10/11',0,]
-    cdata2 = [1,'MyTag','Service','Regular',1,1]
+    cdata1 = ['Test','maison.ca','DNS,Web,GoGit,Nagios,Wiki','Server Tag','Server Note',1,0,1,]
+    cdata2 = ['mycat','mygroup',1,'Ubuntu','Linux']
     cdata  = cdata1 + cdata2
     dbo.db_insert('server' ,cdata)                                      # Insert Data in Server Tab
     if (dbo.enum ==0) :

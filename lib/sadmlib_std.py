@@ -79,7 +79,8 @@ class sadmtools():
         self.tpid               = str(os.getpid())                      # Get Current Process ID.
         self.exit_code          = 0                                     # Set Default Return Code
         self.debug              = 0                                     # Debug Level (0-9)
-        
+        self.dbsilent           = False                                 # True or False Show ErrMsg
+
         # O/S Info
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
         self.os_type            = self.get_ostype()                     # O/S LINUX,AIX,DARWIN
@@ -175,6 +176,7 @@ class sadmtools():
         # Load Configuration File ($SADMIN/cfg/sadmin.cfg)
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
 
+
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
     # return (0) if no error - return (1) if error encountered
@@ -182,17 +184,19 @@ class sadmtools():
     def dbconnect(self):       
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
-        conn_string  = "%s, " % (self.cfg_dbhost)
-        conn_string += "%s, " % (self.cfg_rw_dbuser)
-        conn_string += "%s, " % (self.cfg_rw_dbpwd)
-        conn_string += "%s"   % (self.cfg_dbname)
+        conn_string  = "'%s', " % (self.cfg_dbhost)
+        conn_string += "'%s', " % (self.cfg_rw_dbuser)
+        conn_string += "'%s', " % (self.cfg_rw_dbpwd)
+        conn_string += "'%s'"   % (self.cfg_dbname)
         if (self.debug > 3) :                                           # Debug Display Conn. Info
             print ("Connect(%s)" % (conn_string))
         try :
-            self.conn=pymysql.connect(conn_string)
+            #self.conn = pymysql.connect(conn_string)
+            self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+            
         except pymysql.err.OperationalError as error :
             self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.dbname))  
+            print ("Error connecting to Database '%s'" % (self.cfg_dbname))  
             print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
@@ -200,17 +204,13 @@ class sadmtools():
         # ------------------------------------------------------------------------------------------
         try :
             self.cursor = self.conn.cursor()                            # Create Database cursor
-        except AttributeError as error:
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
-            if  (not self.dbsilent):                                    # If not in Silent Mode
-                print ("Error creating cursor for %s" % (self.dbname))  # Inform User print DB Name 
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
-        except pymysql.InternalError as error:
+        #except AttributeError pymysql.InternalError as error:
+        except Exception as error:
             self.enum, self.emsg = error.args                           # Get Error No. & Message
             print ("Error creating cursor for %s" % (self.dbname))      # Inform User print DB Name 
             print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
-        return(conn,cursor)
+        return(self.conn,self.cursor)
 
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
@@ -220,13 +220,17 @@ class sadmtools():
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
         try:
-            if self.dbdebug > 2 : print ("Closing Database %s" % (self.dbname)) 
+            if self.debug > 2 : print ("Closing Database %s" % (self.cfg_dbname)) 
             self.conn.close()
-        except Exception as error: 
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
+        except Exception as e: 
+            print ("type e = ",type(e))
+            print ("e.args = ",e.args)
+            print ("e = ",e)
+            self.enum, self.emsg = e.args                               # Get Error No. & Message
             if  (not self.dbsilent):                                    # If not in Silent Mode
-                print (">>>>>>>>>>>>>",self.enum,self.emsg)     # Print Error No. & Message
-                return (1)                                            # return (1) to indicate Error
+                #print (">>>>>>>>>>>>>",e.message,e.args)               # Print Error No. & Message
+                print (">>>>>>>>>>>>>",e.args)                          # Print Error No. & Message
+                return (1)                                              # return (1) to Show Error
         return (0)
 
         
@@ -333,9 +337,6 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def writelog(self,sline):
         global FH_LOG_FILE
-    
-        #print ("log_type = %s" % (log_type))
-        #print ("self.log_type = %s" % (self.log_type))
 
         now = datetime.datetime.now()
         logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
@@ -429,7 +430,8 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN 
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        return ("%s.%s" % (self.hostname,self.get_domainname()))
+        return (socket.getfqdn())
+        #return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
@@ -539,7 +541,7 @@ class sadmtools():
         if self.os_type == "LINUX":
             wcmd = "%s %s" % (lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
-            oscodename=cstdout.upper()
+            oscodename=cstdout.upper().decode()
         if self.os_type == "AIX" : 
             oscodename="IBM AIX"
         return (oscodename)

@@ -89,7 +89,7 @@ class dbtool:
         if (self.dbdebug > 3) :                                         # Debug Display Conn. Info
             print ("Connect(%s,%s,%s,%s)" % (self.dbserver,self.dbuser,self.dbpasswd,self.dbname))
         try :
-            self.conn=pymysql.connect(self.dbserver,self.dbuser,self.dbpasswd,dbname)
+            self.conn=pymysql.connect(self.dbserver,self.dbuser,self.dbpasswd,self.dbname)
         except pymysql.err.OperationalError as error :
             self.enum, self.emsg = error.args                           # Get Error No. & Message
             print ("Error while connection to Database '%s'" % (self.dbname))  
