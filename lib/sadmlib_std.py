@@ -430,8 +430,8 @@ class sadmtools():
     #                                 RETURN THE SERVER FQDN 
     # ----------------------------------------------------------------------------------------------
     def get_fqdn(self):
-        return (socket.getfqdn())
-        #return ("%s.%s" % (self.hostname,self.get_domainname()))
+        #return (socket.getfqdn())
+        return ("%s.%s" % (self.hostname,self.get_domainname()))
 
     # ----------------------------------------------------------------------------------------------
     #                              RETURN THE IP OF THE CURRENT HOSTNAME

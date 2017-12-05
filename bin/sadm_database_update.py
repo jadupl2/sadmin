@@ -53,9 +53,10 @@ except ImportError as e:
 # st                  = ""
     
 #
-cnow               = datetime.datetime.now()                            # Get Current Time
-curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
-curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
+cnow            = datetime.datetime.now()                               # Get Current Time
+curdate         = cnow.strftime("%Y.%m.%d")                             # Format Current date
+curtime         = cnow.strftime("%H:%M:%S")                             # Format Current Time
+wdict           = {} 
 
 
 
@@ -127,7 +128,7 @@ def initSADM():
 #                   UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
 #===================================================================================================
 #
-# def update_row(wconn, wcur, wrow):
+def update_row(wconn, wcur, wdict):
 
     try:
         sql = "UPDATE server SET \
@@ -145,6 +146,8 @@ def initSADM():
     try:
         wcur.execute(sql)                                    # Insert new Data 
         wconn.commit()                                          # Commit the transaction
+        st.writelog("Total number of rows updated : %s " % (wcur.rowcount))
+        st.writelog("Update of server %s Succeeded" % (m_name))
         return (0)                                                  # return (0) Insert Worked
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
         enum, emsg = error.args                           # Get Error No. & Message
@@ -157,7 +160,7 @@ def initSADM():
         print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
         wconn.rollback()
         return (1)           
-
+    return 0
 
 
 
