@@ -30,12 +30,12 @@
 #       V2.4 -  Change exception Error Message more verbose
 #
 # 2017_11_23 -  Jacques Duplessis
-#       V2.5 -  Move from PostGres to MySQL, New SADM Python Library and Performance Enhanced.
+#       V2.6 -  Move from PostGres to MySQL, New SADM Python Library and Performance Enhanced.
 #
 #
 #===================================================================================================
 try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
+    import os, time, sys, pdb, datetime, pymysql
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -48,15 +48,8 @@ except ImportError as e:
 #===================================================================================================
 #                      Global Variables Definition use on a per script basis
 #===================================================================================================
-# conn                = ""                                                # Database Connector
-# cur                 = ""                                                # Database Cursor
-# st                  = ""
-    
 #
-cnow            = datetime.datetime.now()                               # Get Current Time
-curdate         = cnow.strftime("%Y.%m.%d")                             # Format Current date
-curtime         = cnow.strftime("%H:%M:%S")                             # Format Current Time
-wdict           = {} 
+wdict           = {}                                                    # Dict for Server Columns
 
 
 
@@ -97,7 +90,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you need-------------------------------
-    st.ver  = "2.5"                             # This Script Version 
+    st.ver  = "2.6"                             # This Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
@@ -128,94 +121,69 @@ def initSADM():
 #                   UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE
 #===================================================================================================
 #
-def update_row(wconn, wcur, wdict):
+def update_row(st,wconn, wcur, wdict):
+    st.writelog ("Updating %s.%s server data" % (wdict['srv_name'],wdict['srv_domain']))
 
+    # Update Server Row With Info collected from the sysinfo.txt file
     try:
-        sql = "UPDATE server SET \
-        srv_ostype='%s', srv_osname='%s' \
-        where srv_name='%s' " % \
-        (m_ostype, m_osname, m_name);
-    except (TypeError, ValueError, IndexError) as error:            # Mismatch Between Num & Str
-        self.enum=1                                                 # Set Class Error Number 
-        self.emsg=error                                             # Get Error Message
-        if  (not self.dbsilent):                                    # If not in Silent Mode
-            print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
-            return (1)                                                  # return (1) to indicate Err
+        sql =   "UPDATE server SET \
+                srv_ostype='%s',            srv_osname='%s', \
+                srv_domain='%s',            srv_vm='%d', \
+                srv_ostype='%s',            srv_oscodename='%s', \
+                srv_osversion='%s',         srv_osver_major='%s', \
+                srv_kernel_version='%s',    srv_kernel_bitmode='%d', \
+                srv_hwd_bitmode='%s',       srv_model='%s', \
+                srv_serial='%s',            srv_memory='%d', \
+                srv_nb_cpu='%d',            srv_cpu_speed='%d', \
+                srv_nb_socket='%d',         srv_core_per_socket='%d', \
+                srv_thread_per_core='%d',   srv_ip='%s', \
+                srv_ips_info='%s',          srv_disks_info='%s', \
+                srv_vgs_info='%s',          srv_date_update='%s' \
+                where srv_name='%s' " %  \
+                (wdict['srv_ostype'],           wdict['srv_osname'], \
+                wdict['srv_domain'],            wdict['srv_vm'], \
+                wdict['srv_ostype'],            wdict['srv_oscodename'], \
+                wdict['srv_osversion'],         wdict['srv_osver_major'], \
+                wdict['srv_kernel_version'],    wdict['srv_kernel_bitmode'], \
+                wdict['srv_hwd_bitmode'],       wdict['srv_model'], \
+                wdict['srv_serial'],            wdict['srv_memory'], \
+                wdict['srv_nb_cpu'],            wdict['srv_cpu_speed'], \
+                wdict['srv_nb_socket'],         wdict['srv_core_per_socket'],\
+                wdict['srv_thread_per_core'],   wdict['srv_ip'], \
+                wdict['srv_ips_info'],          wdict['srv_disks_info'], \
+                wdict['srv_vgs_info'],          wdict['srv_date_update'], \
+                wdict['srv_name'])
+    except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
+        #enum, emsg = error.args                                         # Get Error No. & Message
+        enum=1
+        emsg=error                                                     # Get Error Message
+        st.writelog(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
+        st.writelog("sql=%s" % (sql))
+        return(1)                                                      # return (1) to indicate Err
 
     # Execute the SQL Update Statement
     try:
-        wcur.execute(sql)                                    # Insert new Data 
-        wconn.commit()                                          # Commit the transaction
-        st.writelog("Total number of rows updated : %s " % (wcur.rowcount))
-        st.writelog("Update of server %s Succeeded" % (m_name))
+        wcur.execute(sql)                                               # Update Server Data 
+        wconn.commit()                                                  # Commit the transaction
+        st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
         return (0)                                                  # return (0) Insert Worked
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
-        enum, emsg = error.args                           # Get Error No. & Message
-        print (">>>>>>>>>>>>>",self.enum,self.emsg)             # Print Error No. & Message
-        wconn.rollback()
-        return (1)                                                  # return (1) to indicate Err
+        enum, emsg = error.args                                         # Get Error No. & Message
+        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+        if st.debug > 4: st.writelog("sql=%s" % (sql))
+        wconn.rollback()                                                # RollBack Transaction
+        return (1)                                                      # return (1) to indicate Err
     except Exception as error: 
-        enum=1                                                 # Set Class Error Number 
-        emsg=error                                             # Get Error Message
-        print (">>>>>>>>>>>>>",self.enum,error)                 # Print Error No. & Message
-        wconn.rollback()
-        return (1)           
-    return 0
+        enum, emsg = error.args                                         # Get Error No. & Message
+        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+        if st.debug > 4: st.writelog("sql=%s" % (sql))
+        wconn.rollback()                                                # RollBack Transaction
+        return (1)                                                      # return (1) to indicate Err
+    return(0)                                                           # Return 0 = update went OK
 
 
 
 
-
-
-
-
-
-#     """UPDATE ROW INTO FROM THE WROW DICTIONNARY THE SERVER TABLE"""
-
-#     sadm.writelog("Update information of server %s in server table" % (wrow['srv_name']))
-#     wdate = datetime.datetime.now()                                     # Get current Date
-#     wrow['srv_last_daily_update'] = wdate.strftime('%Y-%m-%d %H:%M:%S') # Last Daily update date
-#     #sadm.writelog("Last Daily Update TimeStamp is %s" % (wrow['srv_last_daily_update']))
-#     #sadm.writelog("IPS Info is %s" % (wrow['srv_ips_info']))
-
-#     try:
-#         sql = """ update sadm.server set 
-#                 srv_ostype = %s, srv_osname = %s,
-#                 srv_oscodename  = %s, srv_domain = %s, 
-#                 srv_memory = %s, srv_last_daily_update = %s,
-#                 srv_osversion = %s, srv_osver_major = %s, 
-#                 srv_ip = %s, srv_kernel_version = %s, srv_kernel_bitmode = %s,
-#                 srv_model = %s, srv_serial = %s,
-#                 srv_hwd_bitmode = %s, srv_nb_cpu = %s, 
-#                 srv_cpu_speed = %s, srv_nb_socket = %s,
-#                 srv_core_per_socket = %s, srv_thread_per_core = %s, 
-#                 srv_ips_info = %s, srv_disks_info = %s, srv_vgs_info = %s 
-#                 where srv_name = %s 
-#               """
-
-#         wcur.execute(sql, (wrow['srv_ostype'], wrow['srv_osname'], 
-#              wrow['srv_oscodename'], wrow['srv_domain'], 
-#              wrow['srv_memory'], wrow['srv_last_daily_update'],
-#              wrow['srv_osversion'], wrow['srv_osver_major'], 
-#              wrow['srv_ip'], wrow['srv_kernel_version'], wrow['srv_kernel_bitmode'], 
-#              wrow['srv_model'], wrow['srv_serial'],  
-#              wrow['srv_hwd_bitmode'], wrow['srv_nb_cpu'], 
-#              wrow['srv_cpu_speed'], wrow['srv_nb_socket'], 
-#              wrow['srv_core_per_socket'], wrow['srv_thread_per_core'], 
-#              wrow['srv_ips_info'], wrow['srv_disks_info'], wrow['srv_vgs_info'], 
-#              wrow['srv_name']))
-
-#     except(psycopg2.IntegrityError, psycopg2.ProgrammingError, KeyError, psycopg2.DataError), e:
-#         sadm.writelog("ERROR: Updating server %s row into server table" % (wrow['srv_name']))
-#         sadm.writelog("%s" % e)
-#         wconn.rollback()
-#         print_server_row(wrow)
-#         return 1
-
-#     wconn.commit()
-#     sadm.writelog("Total number of rows updated : %s " % (wcur.rowcount))
-#     sadm.writelog("Update of server %s Succeeded" % (wrow['srv_name']))
-#     return 0
 
 #===================================================================================================
 #                        Process all Actives Servers in the Database
@@ -228,7 +196,7 @@ def process_servers(wconn,wcur,st):
     st.writelog ("PROCESSING ALL ACTIVES SERVERS")
     st.writelog (" ")
 
-    # Read All Actives Servers 
+    # Read All Actives Servers
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
@@ -238,10 +206,11 @@ def process_servers(wconn,wcur,st):
     except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
         self.enum, self.emsg = error.args                               # Get Error No. & Message
         print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-        return (1)   
+        return (1)
     
     # Process each server
     lineno = 1
+    total_error = 0 
     for row in rows:
         #st.writelog ("%02d %s" % (lineno, row))
         wname   = row[0]                                                # Extract Server Name
@@ -249,10 +218,11 @@ def process_servers(wconn,wcur,st):
         wdomain = row[2]                                                # Extract Server Domain Name
         wos     = row[3]                                                # Extract Server O/S Name
         st.writelog("")                                                 # Insert Blank Line
+        st.writelog (('-' * 40))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
 
         sysfile = st.www_dat_dir + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
-        st.writelog("Processing filename : " + sysfile)                 # Display Sysinfo File
+        st.writelog("Processing file : " + sysfile)                     # Display Sysinfo File
 
         # Open sysinfo.txt file for the current server
         if st.debug > 4: st.writelog("Opening %s" % (sysfile))          # Opened Sysinfo file Msg
@@ -269,11 +239,11 @@ def process_servers(wconn,wcur,st):
             set.writelog("Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
             return 1                                                    # Return Error to Caller
         if st.debug > 4: set.writelog("File %s opened" % sysfile)       # Opened Sysinfo file Msg
-        st.writelog("File %s opened" % (sysfile))                       # Opened Sysinfo file Msg
 
         # Process the content of the sysinfo
         if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg
-        wrec = {}                                                       # Create an empty Dictionary
+        wdict = {}                                                      # Create an empty Dictionary
+        wdict['srv_date_update'] = ""                                   # Default Value Upd.Date
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -293,149 +263,136 @@ def process_servers(wconn,wcur,st):
                 continue                                                # Go Read Next Line
 
             # Save Information Found in SysInfo file into our row dictionnary (server_row)
-        #     try:
-        #         NO_ERROR_OCCUR = True                                   # Assume no error will Occur
-        #         if "SADM_HOSTNAME"          in CFG_NAME: srow['srv_name'] = CFG_VALUE.lower()
-        #         if "SADM_OS_TYPE"           in CFG_NAME: srow['srv_ostype'] = CFG_VALUE.lower()
-        #         if "SADM_DOMAINNAME"        in CFG_NAME: srow['srv_domain'] = CFG_VALUE.lower()
-        #         if "SADM_HOST_IP"           in CFG_NAME: srow['srv_ip'] = CFG_VALUE
-        #         if "SADM_OS_VERSION"        in CFG_NAME: srow['srv_osversion'] = CFG_VALUE
-        #         if "SADM_OS_MAJOR_VERSION"  in CFG_NAME: srow['srv_osver_major'] = CFG_VALUE
-        #         if "SADM_OS_NAME"           in CFG_NAME: srow['srv_osname'] = CFG_VALUE.lower()
-        #         if "SADM_OS_CODE_NAME"      in CFG_NAME: srow['srv_oscodename'] = CFG_VALUE
-        #         if "SADM_KERNEL_VERSION"    in CFG_NAME: srow['srv_kernel_version'] = CFG_VALUE
-        #         if "SADM_SERVER_MODEL"      in CFG_NAME: srow['srv_model'] = CFG_VALUE
-        #         if "SADM_SERVER_SERIAL"     in CFG_NAME: srow['srv_serial'] = CFG_VALUE
-        #         if "SADM_SERVER_IPS"        in CFG_NAME: srow['srv_ips_info'] = CFG_VALUE
-        #         #if "SADM_SERVER_IPS"        in CFG_NAME: 
-        #         #    sadm.writelog("IPS INFO = %s" % srow['srv_ips_info'])
-        #         #    sadm.writelog("CFG_VALUE = %s" % CFG_VALUE)
+            try:
+                NO_ERROR_OCCUR = True                                   # Assume no error will Occur
+                if "SADM_HOSTNAME"          in CFG_NAME: wdict['srv_name']      = CFG_VALUE.lower()
+                if "SADM_OS_TYPE"           in CFG_NAME: wdict['srv_ostype']    = CFG_VALUE.lower()
+                if "SADM_DOMAINNAME"        in CFG_NAME: wdict['srv_domain']    = CFG_VALUE.lower()
+                if "SADM_HOST_IP"           in CFG_NAME: wdict['srv_ip']                = CFG_VALUE
+                if "SADM_OS_VERSION"        in CFG_NAME: wdict['srv_osversion']         = CFG_VALUE
+                if "SADM_OS_MAJOR_VERSION"  in CFG_NAME: wdict['srv_osver_major']       = CFG_VALUE
+                if "SADM_OS_NAME"           in CFG_NAME: wdict['srv_osname']    = CFG_VALUE.lower()
+                if "SADM_OS_CODE_NAME"      in CFG_NAME: wdict['srv_oscodename']        = CFG_VALUE
+                if "SADM_KERNEL_VERSION"    in CFG_NAME: wdict['srv_kernel_version']    = CFG_VALUE
+                if "SADM_SERVER_MODEL"      in CFG_NAME: wdict['srv_model']             = CFG_VALUE
+                if "SADM_SERVER_SERIAL"     in CFG_NAME: wdict['srv_serial']            = CFG_VALUE
+                if "SADM_SERVER_IPS"        in CFG_NAME: wdict['srv_ips_info']          = CFG_VALUE
+                if "SADM_UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
 
-        #         # PHYSICAL OR VIRTUAL SERVER
-        #         if "SADM_SERVER_TYPE" in CFG_NAME:
-        #             if CFG_VALUE == 'P':
-        #                 srow['srv_vm'] = False
-        #             else:
-        #                 srow['srv_vm'] = True
+                # PHYSICAL OR VIRTUAL SERVER
+                if "SADM_SERVER_TYPE" in CFG_NAME:
+                    if CFG_VALUE == 'P':
+                        wdict['srv_vm'] = 0
+                    else:
+                        wdict['srv_vm'] = 1
 
-        #         # RUNNING KERNEL IS 32 OR 64 BITS (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_KERNEL_BITMODE" in CFG_NAME: srow['srv_kernel_bitmode'] = int(CFG_VALUE)
-        #         except ValueError as e:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_kernel_bitmode'] = int(0)                 # Set Kernel Bits to Zero
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                 # RUNNING KERNEL IS 32 OR 64 BITS (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_KERNEL_BITMODE" in CFG_NAME: wdict['srv_kernel_bitmode'] = int(CFG_VALUE)
+                except ValueError as e:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_kernel_bitmode'] = int(0)                # Set Kernel Bits to Zero
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # MEMORY AMOUNT IN SERVER IN MB (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_MEMORY" in CFG_NAME: srow['srv_memory'] = int(CFG_VALUE)
-        #         except ValueError as e:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_memory'] = int(0)                         # Set Memory Amount to 0
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # MEMORY AMOUNT IN SERVER IN MB (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_MEMORY" in CFG_NAME: wdict['srv_memory'] = int(CFG_VALUE)
+                except ValueError as e:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_memory'] = int(0)                        # Set Memory Amount to 0
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # HARDWARE CAPABILITY RUN 32 OR 64 BITS (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_HARDWARE_BITMODE" in CFG_NAME:
-        #                 srow['srv_hwd_bitmode'] = int(CFG_VALUE)
-        #         except ValueError as e:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_hwd_bitmode'] = int(0)                    # Set Hard Bits to Zero
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # HARDWARE CAPABILITY RUN 32 OR 64 BITS (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_HARDWARE_BITMODE" in CFG_NAME:
+                        wdict['srv_hwd_bitmode'] = int(CFG_VALUE)
+                except ValueError as e:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_hwd_bitmode'] = int(0)                   # Set Hard Bits to Zero
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # NUMBER OF CPU ON THE SERVER  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_NB_CPU"  in CFG_NAME: srow['srv_nb_cpu'] = int(CFG_VALUE)
-        #         except ValueError as e:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_nb_cpu'] = int(0)                         # Set Nb Cpu to 0
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # NUMBER OF CPU ON THE SERVER  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_NB_CPU"  in CFG_NAME: wdict['srv_nb_cpu'] = int(CFG_VALUE)
+                except ValueError as e:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_nb_cpu'] = int(0)                        # Set Nb Cpu to 0
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # CPU SPEED  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_CPU_SPEED" in CFG_NAME: srow['srv_cpu_speed'] = int(CFG_VALUE)
-        #         except ValueError as e:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_cpu_speed'] = int(0)                      # Set CPU Speed to 0
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # CPU SPEED  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_CPU_SPEED" in CFG_NAME: wdict['srv_cpu_speed'] = int(CFG_VALUE)
+                except ValueError as e:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_cpu_speed'] = int(0)                     # Set CPU Speed to 0
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # NUMBER OF SOCKET  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_NB_SOCKET" in CFG_NAME: srow['srv_nb_socket'] = int(CFG_VALUE)
-        #         except:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_nb_socket'] = int(0)                      # Set Nb Socket to Zero
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # NUMBER OF SOCKET  (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_NB_SOCKET" in CFG_NAME: wdict['srv_nb_socket'] = int(CFG_VALUE)
+                except:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_nb_socket'] = int(0)                     # Set Nb Socket to Zero
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # NUMBER OF CORE PER SOCKET (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_CORE_PER_SOCKET"  in CFG_NAME:
-        #                 srow['srv_core_per_socket'] = int(CFG_VALUE)
-        #         except:
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             srow['srv_core_per_socket'] = int(0)                # Set Nb Core/Socket to Zero
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # NUMBER OF CORE PER SOCKET (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_CORE_PER_SOCKET"  in CFG_NAME:
+                        wdict['srv_core_per_socket'] = int(CFG_VALUE)
+                except:
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    wdict['srv_core_per_socket'] = int(0)               # Set Nb Core/Socket to Zero
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # NUMBER OF THREAD PER CORE (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
-        #         try:
-        #             if "SADM_SERVER_THREAD_PER_CORE"  in CFG_NAME:
-        #                 srow['srv_thread_per_core'] = int(CFG_VALUE)
-        #         except:
-        #             srow['srv_thread_per_core'] = int(0)                # Set Nb Threads to zero
-        #             sadm.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # NUMBER OF THREAD PER CORE (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                try:
+                    if "SADM_SERVER_THREAD_PER_CORE"  in CFG_NAME:
+                        wdict['srv_thread_per_core'] = int(CFG_VALUE)
+                except:
+                    wdict['srv_thread_per_core'] = int(0)                # Set Nb Threads to zero
+                    st.writelog("ERROR: Converting %s to an integer (%s)" % (CFG_NAME, CFG_VALUE))
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # All Disks defined on the servers with Dev, Size
-        #         try:
-        #             if "SADM_SERVER_DISKS" in CFG_NAME: srow['srv_disks_info'] = CFG_VALUE
-        #         except:
-        #             sadm.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
+                # All Disks defined on the servers with Dev, Size
+                try:
+                    if "SADM_SERVER_DISKS" in CFG_NAME: wdict['srv_disks_info'] = CFG_VALUE
+                except:
+                    st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
+                # All VGs Information
+                try:
+                    if "SADM_SERVER_VG" in CFG_NAME: wdict['srv_vgs_info'] = CFG_VALUE
+                except:
+                    st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                    total_error = total_error + 1                       # Add 1 To Total Error
+                    NO_ERROR_OCCUR = False                              # Now No "Error" is False
 
-        #         # All VGs Information
-        #         try:
-        #             if "SADM_SERVER_VG"      in CFG_NAME: srow['srv_vgs_info'] = CFG_VALUE
-        #         except:
-        #             sadm.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
-        #             total_error = total_error + 1                       # Add 1 To Total Error
-        #             NO_ERROR_OCCUR = False                              # Now No "Error" is False
-
-
-        #     except IndexError as e:
-        #         sadm.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
-        #         sadm.writelog("%s" % e)
-        #         total_error = total_error + 1                           # Add 1 To Total Error
-        #         NO_ERROR_OCCUR = False                                  # Now No "Error" is False
-
-        # if sadm.debug > 4: sadm.writelog("Closing %s" % sysfile)        # Closing Sysinfo file Msg
-        FH.close()                                                        # Close the Sysinfo File
-
-        # # Check if the server we are processing in already in the server table of SADMIN Database
-        # if NO_ERROR_OCCUR:                                              # If No Error Moving Fld
-        #     found_key = read_row(wconn, wcur, srow['srv_name'])         # Try To Read Server from DB
-        #     if found_key:                                               # If Server Found in DB
-        #         RC = update_row(wconn, wcur, srow)                      # Go Update Row
-        #         total_error = total_error + RC                          # RC=0=Success RC=1=Error
-        #     else:                                                       # If Server was not found
-        #         RC = insert_row(wconn, wcur, srow)                        # Go Insert new row
-        #         total_error = total_error + RC                          # RC=0=Success RC=1=Error
-        # sadm.writelog(" ")
-        # sadm.writelog("Total Error Count at %d now" % (total_error))    # Total Error after each Srv
-
-
+            except IndexError as e:
+                st.writelog("ERROR: Converting %s and value is (%s)" % (CFG_NAME, CFG_VALUE))
+                st.writelog("%s" % e)
+                total_error = total_error + 1                           # Add 1 To Total Error
+                NO_ERROR_OCCUR = False                                  # Now No "Error" is False
+        if st.debug > 4: st.writelog("Closing %s" % sysfile)            # Closing Sysinfo file Msg
+        FH.close()                                                      # Close the Sysinfo File
+        if NO_ERROR_OCCUR:                                              # If No Error Moving Fld
+           RC = update_row(st,wconn, wcur, wdict)                       # Go Update Row
+           total_error = total_error + RC                               # RC=0=Success RC=1=Error
+        if (total_error != 0):                                          # Not SHow if Total Error=0
+            st.writelog(" ")                                            # Space line
+            st.writelog("Total Error Count at %d now" % (total_error))  # Total Error after each Srv
         lineno += 1
 
-    return 0
+    return(total_error)                                                 # Return Nb Error to caller
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
@@ -452,22 +409,18 @@ def main():
         sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
-    if socket.getfqdn() != st.cfg_server:                               # Only run on SADMIN
+    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
         st.writelog("Script can only be run on SADMIN server (%s)", (st.cfg_server))
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
     else:                                                               # If Running on SADMIN Server
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-    
-    st.writelog("test writelog")
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
-    
     if st.debug > 4: st.display_env()                                   # Display Env. Variables
-    if socket.getfqdn() == st.cfg_server:                               # If Run on SADMIN Server
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
-
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
