@@ -406,3 +406,81 @@ tr:nth-child(odd) { background:#E2E4FF; }
 .SideBarItem a:active {
     color           :   red;
 }
+
+
+
+/* ---------------------------------------------------------------------------------------------- */
+/*          THIS SECTION IS USED FOR DISPLAYING THE SERVER TABLE                                  */
+/*             Used by sadm_view_server_info.php Web Pages                                        */
+/* ---------------------------------------------------------------------------------------------- */
+div.server_data {
+    /* font-family: Verdana, Geneva, sans-serif; */
+    background-color: #ffffff;
+    color: black;
+    margin-left     :   auto;
+    margin-right    :   auto;
+    width: 96%;
+    height: 600px; 
+    /* margin: 1px; */
+    border: 1px solid #000000;
+    /* font-size: 12px; */
+    text-align: left;
+    padding: 1%;
+}
+
+/* ===== Server Left side of screen  ===== */
+div.server_leftside {
+    width: 48%;
+    float: left;
+    /* background-color: rgb(69, 73, 77); */
+    margin-left: 15px; 
+    padding: 5px;
+}
+/* ===== Server Right side of screen  ===== */
+div.server_rightside {
+    width: 48%;
+    float: left;
+    /* background-color: rgb(78, 157, 236); */
+    margin-left: 15px; 
+    padding: 5px;
+}
+
+/* ===== Label on left size of the screen ==== */
+div.server_left_label {
+    float : left;
+    width : 45%;
+    /*font-family: "Verdana";*/
+    /* font: 13px arial, sans-serif; */
+    font-weight: bold;
+    /*background-color: yellow;*/
+}
+
+/* ===== Label on right size of the screen ==== */
+div.server_right_label {
+    float : left;
+    width : 45%;
+    /* font: 13px arial, sans-serif; */
+    font-weight: bold;
+    /*background-color: yellow;*/
+}
+
+/* ===== Data on right size of screen  ===== */
+div.server_left_data {
+    margin-bottom: 4px;
+    margin-left: 40%;
+    color : black;
+    /* font: 13px arial, sans-serif; */
+    width : 60%;
+    /*background-color: green;*/
+}
+
+/* ===== Data on left size of screen  ===== */
+div.server_right_data {
+    margin-bottom: 4px;
+    margin-left: 40%;
+    padding-left: 5px;
+    color : black;
+    /* font: 13px arial, sans-serif; */
+    width : 60%;
+    /*background-color: green;*/
+}

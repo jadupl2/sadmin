@@ -63,6 +63,7 @@ $URL_UPDATE = '/crud/cat/sadm_category_update.php';                     # Update
 $URL_DELETE = '/crud/cat/sadm_category_delete.php';                     # Delete Page URL
 $URL_MAIN   = '/crud/cat/sadm_category_main.php';                       # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
 $CREATE_BUTTON = True ;                                                 # Yes Display Create Button
 
 
@@ -110,7 +111,7 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE;
+    global $URL_UPDATE, $URL_DELETE, $URL_SERVER;
 
     echo "\n<tr>";
     echo "\n<td>"  . $row['cat_code'] . "</td>";                        # Display Category Code
@@ -125,7 +126,7 @@ function display_data($con,$row) {
     }
     echo "\n<td style='text-align: center'>" ;                          # Start of Cell
     if ($count > 0) {                                                   # If at least one server
-        echo "\n<a href=/sadmin/sadm_view_servers.php?selection=cat&value="; # Display Server Using
+        echo "\n<a href=" . $URL_SERVER . "?selection=cat&value=";      # Display Server Using
         echo $row['cat_code'] . ">" . strval($count) . "</a></td>";     # Display Count Using Cat
     }else{                                                              # If Cat is not use at all
         echo $count . "</td>";                                          # Display Count without link

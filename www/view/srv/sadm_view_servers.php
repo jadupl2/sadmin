@@ -61,6 +61,7 @@ $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
@@ -120,7 +121,7 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE;
+    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO ;
 
     echo "\n<tr>";
     echo "\n<td class='dt-left'>" ;
@@ -211,11 +212,11 @@ function display_data($con,$row) {
             break;
         case 'cat'           : 
             $sql = "SELECT * FROM server where srv_cat = '". $VALUE . "' order by srv_name;";
-            $TITLE = "Server(s) using  " . ucwords($VALUE) . " category";
+            $TITLE = "Server(s) using '" . ucwords($VALUE) . "' Category";
             break;
         case 'group'           : 
             $sql = "SELECT * FROM server where srv_group = '". $VALUE . "' order by srv_name;";
-            $TITLE = "Server(s) using " . ucwords($VALUE) . " group";
+            $TITLE = "Server(s) using '" . ucwords($VALUE) . "' Group";
             break;
         case 'os'           : 
             if ($VALUE == NULL) {
@@ -263,7 +264,7 @@ function display_data($con,$row) {
         exit;                                                           # Exit - Should not occurs
     }
 
-    display_std_heading($BACK_URL,"Server List","","",$WVER) ;
+    display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 

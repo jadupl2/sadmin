@@ -39,7 +39,7 @@ try :
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                                        # Activate Python Debugging
+pdb.set_trace()                                                        # Activate Python Debugging
 
 
 
@@ -277,7 +277,9 @@ def process_servers(wconn,wcur,st):
                 if "SADM_SERVER_MODEL"      in CFG_NAME: wdict['srv_model']             = CFG_VALUE
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: wdict['srv_serial']            = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: wdict['srv_ips_info']          = CFG_VALUE
-                if "SADM_UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
+                if "SADM_UPDATE_DATE"       in CFG_NAME: 
+                    wdict['srv_date_update']       = CFG_VALUE
+                    st.writelog("srv_date_update : %s" % (wdict['srv_date_update']))
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
