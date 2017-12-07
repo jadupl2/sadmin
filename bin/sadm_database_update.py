@@ -32,6 +32,9 @@
 # 2017_11_23 -  Jacques Duplessis
 #       V2.6 -  Move from PostGres to MySQL, New SADM Python Library and Performance Enhanced.
 #
+# 2017_12_07 -  Jacques Duplessis
+#       V2.7 -  Correct Problem dealing with srv_date_update on newly added server.
+#
 #
 #===================================================================================================
 try :
@@ -90,7 +93,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you need-------------------------------
-    st.ver  = "2.6"                             # This Script Version 
+    st.ver  = "2.7"                             # This Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
@@ -224,7 +227,7 @@ def process_servers(wconn,wcur,st):
         sysfile = st.www_dat_dir + "/" + wname + "/dr/" + wname + "_sysinfo.txt"
         st.writelog("Processing file : " + sysfile)                     # Display Sysinfo File
 
-        # Open sysinfo.txt file for the current server
+        # Open sysinfo.txt file for the current server ---------------------------------------------
         if st.debug > 4: st.writelog("Opening %s" % (sysfile))          # Opened Sysinfo file Msg
         try:
             FH = open(sysfile, 'r')                                     # Open Sysinfo File
@@ -240,10 +243,10 @@ def process_servers(wconn,wcur,st):
             return 1                                                    # Return Error to Caller
         if st.debug > 4: set.writelog("File %s opened" % sysfile)       # Opened Sysinfo file Msg
 
-        # Process the content of the sysinfo
+        # Process the content of the sysinfo.txt file ----------------------------------------------
         if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg
         wdict = {}                                                      # Create an empty Dictionary
-        wdict['srv_date_update'] = "0000-00-00 00:00:00"                # Default Value Upd.Date
+        wdict['srv_date_update'] = "None"                               # Default Value Upd.Date
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -262,7 +265,7 @@ def process_servers(wconn,wcur,st):
                 st.writelog("CONTINUE WITH THE NEXT SERVER")            # Advise user we continue
                 continue                                                # Go Read Next Line
 
-            # Save Information Found in SysInfo file into our row dictionnary (server_row)
+            # Save Information Found in SysInfo file into our row dictionnary (server_row)----------
             try:
                 NO_ERROR_OCCUR = True                                   # Assume no error will Occur
                 if "SADM_HOSTNAME"          in CFG_NAME: wdict['srv_name']      = CFG_VALUE.lower()
