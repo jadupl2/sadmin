@@ -14,6 +14,8 @@
 #   V1.3 Added db_dir and db_file for Sqlite3 Database
 # 2017_11_23 - JDuplessis
 #   V2.0 Major Redesign of the Library and switch to MySQL Database
+# 2017_12_07 - JDuplessis
+#   V2.1 Correct problem change group of rch and log file in the stop function
 #
 # 
 # ==================================================================================================
@@ -1023,16 +1025,18 @@ class sadmtools():
 
         # Make Sure Owner/Group of Log File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
         try : 
-            os.chown(self.log_file, uid, gid)                           # Change owner of log file
-            os.chmod(self.log_file, 0o0644)                             # Change Log File Permission
+            os.chown(self.log_file, -1, gid)                            # -1 leave UID unchange 
+            os.chmod(self.log_file, 0o0660)                             # Change Log File Permission
         except Exception as e: 
             msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
             print ("%s %s to %s.%s" % (msg,self.log_file,self.cfg_user,self.cfg_group))
+            print ("%s" % (e))
 
         # Make Sure Owner/Group of RCH File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
         try : 
-            os.chown(self.rch_file, uid, gid)                           # Change owner of rch file
-            os.chmod(self.rch_file, 0o0644)                             # Change RCH File Permission
+            #os.chown(self.rch_file, uid, gid)                           # Change owner of rch file
+            os.chown(self.rch_file, -1, gid)                            # -1 leave UID unchange 
+            os.chmod(self.rch_file, 0o0660)                             # Change RCH File Permission
         except Exception as e: 
             msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
             print ("%s %s to %s.%s" % (msg,self.rch_file,self.cfg_user,self.cfg_group))
