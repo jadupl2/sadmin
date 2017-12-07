@@ -39,7 +39,7 @@ try :
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-pdb.set_trace()                                                        # Activate Python Debugging
+#pdb.set_trace()                                                        # Activate Python Debugging
 
 
 
@@ -243,7 +243,7 @@ def process_servers(wconn,wcur,st):
         # Process the content of the sysinfo
         if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg
         wdict = {}                                                      # Create an empty Dictionary
-        wdict['srv_date_update'] = ""                                   # Default Value Upd.Date
+        wdict['srv_date_update'] = "0000-00-00 00:00:00"                # Default Value Upd.Date
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -277,9 +277,7 @@ def process_servers(wconn,wcur,st):
                 if "SADM_SERVER_MODEL"      in CFG_NAME: wdict['srv_model']             = CFG_VALUE
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: wdict['srv_serial']            = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: wdict['srv_ips_info']          = CFG_VALUE
-                if "SADM_UPDATE_DATE"       in CFG_NAME: 
-                    wdict['srv_date_update']       = CFG_VALUE
-                    st.writelog("srv_date_update : %s" % (wdict['srv_date_update']))
+                if "SADM_UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
@@ -404,15 +402,15 @@ def main():
     st = initSADM()                                                     # Initialize SADM Tools
 
     # Test if script is run by root (Optional Code)
-    if os.geteuid() != 0:                                               # UID of user is not zero
-        st.writelog("This script must be run by the 'root' user")       # Advise User Message / Log
-        st.writelog("Process aborted")                                  # Process Aborted Msg
-        st.stop(1)                                                      # Close and Trim Log/Email
-        sys.exit(1)                                                     # Exit with Error Code
+    #if os.geteuid() != 0:                                               # UID of user is not zero
+    #    st.writelog("This script must be run by the 'root' user")       # Advise User Message / Log
+    #    st.writelog("Process aborted")                                  # Process Aborted Msg
+    #    st.stop(1)                                                      # Close and Trim Log/Email
+    #    sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
-        st.writelog("Script can only be run on SADMIN server (%s)", (st.cfg_server))
+        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
