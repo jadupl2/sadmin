@@ -55,7 +55,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$WVER  = "2.0" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -81,36 +81,36 @@ function setup_table() {
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-head-left>Alert</th>";                               # Left Align Header & Body
-    echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
-    echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
-    echo "\n<th>Group</th>";                                            # Identify Default Group
-    echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
-    echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
-    echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                             # Update Button Placement
-    echo "\n<th>Update</th>";                                           # Update Button Placement
-    echo "\n<th>Delete</th>";                                           # Delete or X button Column
+    echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
+    echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
+    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
+    echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
+    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
+    echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
+    echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
+    echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
+    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n</tr>";
     echo "\n</thead>\n";
     
     # PAGE TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th dt-head-left>Alert</th>";                               # Left Align Header & Body
-    echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
-    echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
-    echo "\n<th>Group</th>";                                            # Identify Default Group
-    echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
-    echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
-    echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                             # Update Button Placement
-    echo "\n<th>Update</th>";                                           # Update Button Placement
-    echo "\n<th>Delete</th>";                                           # Delete or X button Column
+    echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
+    echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
+    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
+    echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
+    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
+    echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
+    echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
+    echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
+    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -129,49 +129,63 @@ function display_data($con,$row) {
     echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
     echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
          
-    #echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
-    echo "\n<td>"            . "None"   . "</td>";                      # Display Server Name
-    echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
-    echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
-    echo "\n<td dt-center>"  . $row['srv_cat']    . "</td>";            # Display Category
-    echo "\n<td dt-center>"  . $row['srv_group']  . "</td>";            # Display Group
+    # Display Server Alert
+    echo "\n<td class='dt-center'>" ."None". "</td>";                   # Display Server Alert
+    
+    # Display O/S Name
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=os";  
+    echo "&value=" . $row['srv_osname']  ."'>"  . $row['srv_osname'] . "</a></td>";
+    
+    # Display O/S Version
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
+    echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
+    
+    # Display Server Desc.
+    echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
+    
+    # Display Server Category
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
+    echo "&value=" . $row['srv_cat']  ."'>"  . $row['srv_cat'] . "</a></td>";
+
+    # Display Server Group
+    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";
+    echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a></td>";
+
+    # Display if server is Active or Inactive
     if ($row['srv_active'] == TRUE ) {                                  # Is Server Active
-        echo "\n<td style='text-align: center'>Active</td>";            # If so display Active
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_active'>Active</a></td>";
     }else{                                                              # If not Activate
-        echo "\n<td style='text-align: center'>Inactive</td>";          # Display Inactive in Cell
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_inactive'>Inactive</a></td>";
     }
+
+    # Display if server is Sporadically online or not
     if ($row['srv_sporadic'] == TRUE ) {                                # Is Server Sporadic
-        echo "\n<td style='text-align: center'>Yes</td>";               # If so display Yes
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_sporadic'>Yes</a></td>";
     }else{                                                              # If not Sporadic
-        echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_non_sporadic'>No</a></td>";
     }
+
+    # Display if it is a physical or a virtual server
     if ($row['srv_vm'] == TRUE ) {                                      # Is VM Server 
-        echo "\n<td style='text-align: center'>Yes</td>";               # If so display Yes
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_vm'>Yes</a></td>";
     }else{                                                              # If not Sporadic
-        echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
+        echo "\n<td class='dt-center'>";
+        echo "<a href='" .$URL_SERVER. "?selection=all_physical'>No</a></td>";
     }
 
-    # DISPLAY THE UPDATE BUTTON
-    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    echo "\n<a href='" . $URL_UPDATE . '?sel=' . $row['srv_name'] . "'>";
-    echo "\n<button type='button'>Info</button></a>";                   # Display Update Button
-    echo "\n</td>";
+    # Display Memory 
+    echo "\n<td class='dt-center'>" . $row['srv_memory'] . " MB</td>";     # Display Server Alert
+    
 
-    # DISPLAY THE UPDATE BUTTON
-    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    echo "\n<a href='" . $URL_UPDATE . '?sel=' . $row['srv_name'] . "'>";
-    echo "\n<button type='button'>Update</button></a>";                 # Display Update Button
-    echo "\n</td>";
+    # Display CPU And Speed
+    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] ."x". $row['srv_cpu_speed'] . " Mhz</td>";
 
-    # DISPLAY DELETE BUTTON (IF NOT THE DEFAULT CATEGORY)
-    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    if ($row['srv_default'] != TRUE) {                                  # If not Default Group
-        echo "\n<a href='" . $URL_DELETE . "?sel=" . $row['srv_name'] ."'>";
-        echo "\n<button type='button'>Delete</button></a>";             # Display Delete Button
-    }else{
-        echo "<img src='/images/nodelete.png' style='width:24px;height:24px;'>\n"; # Show X Button
-    }
-    echo "\n</td>\n</tr>\n";                                            # End of Table Line
+    echo "\n\n</tr>\n";                                                 # End of Table Line
 }
 
 
@@ -226,6 +240,14 @@ function display_data($con,$row) {
             }
             $TITLE = "List of " . ucwords($VALUE) . " Servers";
             break;
+        case 'osv'           : 
+            if ($VALUE == NULL) {
+                $sql = "SELECT * FROM server where srv_osversion is NULL order by srv_name;";
+            }else{
+                $sql = "SELECT * FROM server where srv_osversion = '". $VALUE . "' order by srv_name;";
+            }
+            $TITLE = "List of " . ucwords($VALUE) . " Servers";
+            break;
         case 'all_active'   : 
             $sql = 'SELECT * FROM server where srv_active = True order by srv_name;';
             $TITLE = "List of Active Servers";
@@ -242,9 +264,13 @@ function display_data($con,$row) {
             $sql = 'SELECT * FROM server where srv_vm = False order by srv_name;';
             $TITLE = "List of Physical Servers";
             break;
-        case 'all_sporadic' : 
+            case 'all_sporadic' : 
             $sql = 'SELECT * FROM server where srv_sporadic = True order by srv_name;';
             $TITLE = "List of Sporadic Servers";
+            break;
+        case 'all_non_sporadic' : 
+            $sql = 'SELECT * FROM server where srv_sporadic = False order by srv_name;';
+            $TITLE = "List of Non Sporadic Servers";
             break;
         default             : 
             echo "<br>The sort order received (" . $SELECTION . ") is invalid<br>";

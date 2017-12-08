@@ -28,16 +28,18 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #
 # ==================================================================================================
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 # DataTable Initialisation Function
 ?>
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -164,33 +166,34 @@ function setup_table() {
 
     # TABLE CREATION
     echo "\n\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
+    #echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
+    echo "\n<table id='sadmTable' cell-border compact  width='98%'>";
     
     # TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<td class='dt-center'>Status</th>";
-    echo "\n<td class='dt-center'>Server</th>";
-    echo "\n<td class='dt-head-left'>Server Description</th>";
-    echo "\n<td class='dt-center'>Module</th>";
-    echo "\n<td class='dt-left'>Alert Description</th>";
-    echo "\n<td class='dt-center'>Date / Time</th>";
-    echo "\n<td class='dt-center'>Cat.</th>";
-    echo "\n<td class='dt-center'>Alert/Email Grp</th>";
+    echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-head-left'>Server Description</th>";
+    echo "\n<th class='dt-center'>Module</th>";
+    echo "\n<th class='dt-left'>Alert Description</th>";
+    echo "\n<th class='dt-center'>Date / Time</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
+    echo "\n<th class='dt-center'>Alert/Email Grp</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
     # TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<td class='dt-center'>Status</th>";
-    echo "\n<td class='dt-center'>Server</th>";
-    echo "\n<td class='dt-head-left'>Server Description</th>";
-    echo "\n<td class='dt-center'>Module</th>";
-    echo "\n<td class='dt-left'>Alert Description</th>";
-    echo "\n<td class='dt-center'>Date / Time</th>";
-    echo "\n<td class='dt-center'>Cat.</th>";
-    echo "\n<td class='dt-center'>Alert/Email Grp</th>";
+    echo "\n<th class='dt-center'>Status</th>";
+    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-head-left'>Server Description</th>";
+    echo "\n<th class='dt-center'>Module</th>";
+    echo "\n<th class='dt-left'>Alert Description</th>";
+    echo "\n<th class='dt-center'>Date / Time</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
+    echo "\n<th class='dt-center'>Alert/Email Grp</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 

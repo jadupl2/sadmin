@@ -16,6 +16,8 @@
 #   V2.0 Major Redesign of the Library and switch to MySQL Database
 # 2017_12_07 - JDuplessis
 #   V2.1 Correct problem change group of rch and log file in the stop function
+# 2017_12_07 - JDuplessis
+#   V2.2 Revert Change Cause reading problem with apache 
 #
 # 
 # ==================================================================================================

@@ -97,17 +97,7 @@ function display_left_side ($wrow) {
     echo $wrow['srv_name'] . "." . $wrow['srv_domain'] ;
     echo "</div>";
  
-    # Server IP
-    echo "\n\n<div class='server_left_label'>Server IP</div>";
-    echo "\n<div class='server_left_data'>" ;
-    if (empty($wrow['srv_ip']) or $wrow['srv_ip'] == " " ) { 
-        echo "No IP ?" ; 
-    }else{ 
-        echo $wrow['srv_ip'];
-    }
-    echo "</div>";
- 
-     # Server Description
+    # Server Description
     echo "\n\n<div class='server_left_label'>Description</div>";
     echo "\n<div class='server_left_data'>" . $wrow['srv_desc'] . "</div>";
  
@@ -143,16 +133,6 @@ function display_left_side ($wrow) {
         echo "&nbsp" ; 
     }else{ 
         echo $wrow['srv_hwd_bitmode'] . " Bits" ; 
-    }
-    echo "</div>";
-    
-    # Creation Date 
-    echo "\n\n<div class='server_left_label'>Creation Date</div>";
-    echo "\n<div class='server_left_data'>";
-    if (empty($wrow['srv_date_creation'])) { 
-        echo "&nbsp" ; 
-    }else{ 
-        echo $wrow['srv_date_creation']; 
     }
     echo "</div>";
 
@@ -215,6 +195,61 @@ function display_left_side ($wrow) {
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_monitor'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>"; 
+    
+    # Creation Date 
+    echo "\n\n<div class='server_left_label'>Creation Date</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_date_creation'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_date_creation']; 
+    }
+    echo "</div>";
+    
+    # Last Edit Date 
+    echo "\n\n<div class='server_left_label'>Last Edit Date</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_date_edit'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_date_edit']; 
+    }
+    echo "</div>";
+
+    # Last Update Date 
+    echo "\n\n<div class='server_left_label'>Last Update Date</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_date_update'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_date_update']; 
+    }
+    echo "</div>";
+    
+    # Last O/S Update Date 
+    echo "\n\n<div class='server_left_label'>Last O/S Update Date</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_date_osupdate'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_date_osupdate']; 
+    }
+    echo "</div>";
+    
+    # Last O/S Update Status
+    echo "\n\n<div class='server_left_label'>Last O/S Update Status</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_date_osupdate'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        $os_status = "Unknown";
+        if ($wrow['srv_date_osupdate'] =="R") { $os_status = "Running" ; } 
+        if ($wrow['srv_date_osupdate'] =="F") { $os_status = "Failed"  ; } 
+        if ($wrow['srv_date_osupdate'] =="S") { $os_status = "Success" ; } 
+        echo "$os_status";
+    }
+    echo "</div>";
+
 
     # Server Backup 
     echo "\n\n<div class='server_left_label'>Run Backup Script</div>";
@@ -250,10 +285,13 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Maintenance Mode Start and Stop TimeStamp
-    echo "\n\n<div class='server_left_label'>Maintenance Period</div>";
+    echo "\n\n<div class='server_left_label'>Maintenance Period Start</div>";
     echo "\n<div class='server_left_data'>";
-    echo " From: " . $wrow['srv_maint_date_start'] ;
-    echo " To: "   . $wrow['srv_maint_date_end'] ;
+    echo $wrow['srv_maint_date_start'] ;
+    echo "\n</div>";
+    echo "\n\n<div class='server_left_label'>Maintenance Period End</div>";
+    echo "\n<div class='server_left_data'>";
+    echo $wrow['srv_maint_date_end'] ;
     echo "\n</div>";
 
 }
@@ -265,45 +303,27 @@ function display_left_side ($wrow) {
 # ==================================================================================================
 function display_right_side ($wrow) {
 
-    # Last Update Date
-    echo "\n\n<div class='server_right_label'>Date Last Update</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_date_update'])) { 
-        echo "&nbsp" ; 
-    }else{ 
-        echo $wrow['srv_date_update']; 
-    }
-    echo "</div>";
-
-    # Last Edit Date 
-    echo "\n\n<div class='server_right_label'>Date Last Edit</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_date_edit'])) { 
-        echo "&nbsp" ; 
-    }else{ 
-        echo $wrow['srv_date_edit']; 
-    }
-    echo "</div>";
-
     # Secondary IP Address 
     if (! empty($wrow['srv_ips_info'])) { 
        $ipArray  = explode(",",$wrow['srv_ips_info']);
        $ipNumber = sizeof($ipArray);
        $ipLine   = ""; 
-       if (count($ipArray) > 1) {
+       if (count($ipArray) > 0) {
           for ($i = 0; $i < count($ipArray); ++$i) {
               list($Dev,$Ip,$Netmask,$MacAddr) = explode("|", $ipArray[$i] );
               echo "\n\n<div class='server_right_label'>Network Interface(".$i.")</div>";
               echo "\n<div class='server_right_data'>";
               #$info = sprintf ("%-7s %16s / %-15s / %s",$Dev,$Ip,$Netmask,$MacAddr);
               $IpName = gethostbyaddr ( $Ip );
-              $info = sprintf ("%-9s %16s %-10s",$Dev,$Ip,$IpName);
+              $info = sprintf ("%-10s  %-17s  %-20s",$Dev,$Ip,$IpName);
               echo $info;
               echo "</div>";
           }   
         }
+    }else{
+        echo "\n\n<div class='server_right_label'>Network Interface</div>";
+        echo "\n<div class='server_right_data'>No Secondary IP</div>";
     }
-
 
     # Server Memory 
     echo "\n\n<div class='server_right_label'>Server Memory</div>";
@@ -386,23 +406,6 @@ function display_right_side ($wrow) {
     #echo "&nbsp";
     #echo "</div>";
  
-
-    # Last O/S Update Date 
-    echo "\n\n<div class='server_right_label'>Last O/S Update Date</div>";
-    echo "\n<div class='server_right_data'>";
-    if (empty($wrow['srv_update_date'])) { 
-        echo "&nbsp" ; 
-    }else{ 
-        echo $wrow['srv_update_date']; 
-    }
-    echo "</div>";
-
-    # Last O/S Update Status
-    echo "\n\n<div class='server_right_label'>Last O/S Update Status</div>";
-    echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_status']) { echo "Success" ; }else{ echo "Failed" ; }
-    echo "</div>";
-    
     # Reboot after Update
     echo "\n\n<div class='server_right_label'>Reboot after O/S Update</div>";
     echo "\n<div class='server_right_data'>";
