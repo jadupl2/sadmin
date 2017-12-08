@@ -1,4 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <?php
 #
 # ==================================================================================================
@@ -22,54 +21,77 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
-# 1.0 February 2017 - Jacques DUplessis
-#       Added options for editing server from that page
-#       Added O/S Icons
-#       Added VM or Physical Server
+# February 2017 - Jacques DUplessis
+#       1.0 Added options for editing server from that page
+#           Added O/S Icons
+#           Added VM or Physical Server
+# December 2017 - Jacques DUplessis
+#       2.0 Adapted for MySQL and various look enhancement
 #   
 # ==================================================================================================
+#
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
+# DataTable Initialisation Function
+?>
+<script>
+    $(document).ready(function() {
+        $('#sadmTable').DataTable( {
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "bJQueryUI" : true,
+            "paging"    : true,
+            "ordering"  : true,
+            "info"      : true
+        } );
+    } );
+</script>
+<?php
+
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
+$DEBUG = False ;                                                        # Debug Activated True/False
+$WVER  = "2.0" ;                                                        # Current version number
+$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
+$URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
+$URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
+$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
+$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
+$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
+$CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
 #===================================================================================================
 #                              Display SADMIN Main Page Header
 #===================================================================================================
-function display_heading($line_title) {
-    sadm_page_heading ("$line_title");                                  # Display Page Title
-    echo "<center>\n";                                                  # Table Centered on Page
-  
-    # Set Font Size for Table Cell and Table Heading
-    echo "<style>\n";
-    echo "td { font-size: 13px; }\n";
-    echo "th { font-size: 13px; }\n";
-    echo "</style>\n";
-    echo '<table id="sadmTable" class="display compact nowrap" width="100%">';
+function setup_table() {
+
+    # TABLE CREATION
+    echo "<div id='SimpleTable'>";                                      # Width Given to Table
+    echo '<table id="sadmTable" class="display" compact row-border wrap width="80%">';   
 
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    #echo "<th class='text-center'>Grp</th>\n";
-    echo "<th class='text-center'>Auto</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
+    echo "<th class='text-center'>Automatic Update</th>\n";
+    echo "<th class='text-center'>Reboot after Update</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last O/S Update</th>\n";
+    echo "<th class='text-center'>Date Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>Log</th>\n";
-    #echo "<th class='text-center'>Edit</th>\n";
+    echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -78,17 +100,15 @@ function display_heading($line_title) {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    #echo "<th class='text-center'>Grp</th>\n";
-    echo "<th class='text-center'>Auto</th>\n";
-    echo "<th class='text-center'>Reboot</th>\n";
+    echo "<th class='text-center'>Automatic Update</th>\n";
+    echo "<th class='text-center'>Reboot after Update</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last O/S Update</th>\n";
+    echo "<th class='text-center'>Date Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>Log</th>\n";
-    #echo "<th class='text-center'>Edit</th>\n";
+    echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -102,7 +122,8 @@ function display_heading($line_title) {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-
+    global $URL_HOST_INFO, $URL_VIEW_LOG ; 
+    
     echo "<tr>\n";  
     #echo "<td class='dt-center'>" . $count . "</td>\n";  
 
@@ -110,7 +131,7 @@ function display_data($count, $row) {
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td>";
-    echo "<a href='/sadmin/sadm_view_server_info.php?host=" . nl2br($row['srv_name']) ;
+    echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'] ;
     echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] ." - Click for more info'>" ;
     echo $row['srv_name']  . "</a></td>\n";
 
@@ -211,12 +232,11 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
     if (file_exists($log_name)) {
-        echo "<a href='/sadmin/sadm_view_logfile.php?host=".  $row['srv_name'];
+        echo "<a href='" . $URL_VIEW_LOG . "?host=".  $row['srv_name'];
         echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
-        echo " title='View Update Log'>";
-        echo "<img src='/images/cfg2html.png' style='width:24px;height:24px;'></a>";
+        echo " title='View Update Log'>View Log</a>";
     }else{
-        echo "<img src='/images/noreport.jpg' style='width:24px;height:24px;'>";
+        echo "Log N/A";
     }
     echo "</td>\n";  
 
@@ -263,13 +283,11 @@ function display_data($count, $row) {
 # Validate the view option received, Set Page Heading and Retreive Selected Data from Database
     switch ($SELECTION) {
         case 'all_servers'  : 
-            $query = 'SELECT * FROM sadm.server order by srv_name;';
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
+            $sql = 'SELECT * FROM server order by srv_name;';
             $TITLE = "O/S Update Schedule";
             break;
         case 'host'         : 
-            $query = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
-            $result = pg_query($query) or die('Query failed: ' . pg_last_error());
+            $sql = "SELECT * FROM sadm.server where srv_name = '". $VALUE . "';";
             $TITLE = "O/S Update Schedule for server " . ucwords($VALUE) . " Server";
             break;
         default             : 
@@ -277,17 +295,29 @@ function display_data($count, $row) {
             echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>";
             exit ;
     }
+    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
+        exit;                                                           # Exit - Should not occurs
+    }
+    
     
 
 # Display Page Heading
-    display_heading("$TITLE");                                          # Display Page Heading
+    display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
+    setup_table();                                                      # Create Table & Heading
     
 # Loop Through Retreived Data and Display each Row
-    $count=0;                                                           # Reset Line Counter
-    while ($row = pg_fetch_array($result, null, PGSQL_ASSOC)) {
+    $count=0;   
+    while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }
-    echo "</tbody></table></center><br><br>\n";                         # End of tbody,table
-    include ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;       # SADM Std EndOfPage Footer
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

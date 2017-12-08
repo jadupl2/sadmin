@@ -506,7 +506,9 @@ table {
 }
 th {
     font-family: arial;
-    padding: 2px;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     background-color:   #006456; 
     color: #fff;
     text-transform: uppercase;
