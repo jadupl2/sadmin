@@ -496,7 +496,7 @@ table {
     /* border: medium solid #6495ed; */
     font-family: 'Arial';
     border-collapse: collapse;
-    width: 78%;
+    width: 90%;
     border: 1px solid #eee;
     border-bottom: 2px solid #00cccc;
     box-shadow: 0px 0px 20px rgba(0,0,0,0.10),
@@ -506,17 +506,17 @@ table {
 }
 th {
     font-family: arial;
-    padding: 13px;
+    padding: 2px;
     background-color:   #006456; 
     color: #fff;
     text-transform: uppercase;
-    font-size: 14px;
+    font-size: 12px;
 }
 td {
     font-family: arial;
     /* font-family: monospace; */
     /* border: thin solid #6495ed; */
-    padding: 2px;
+    padding: 1px;
     text-align: left;
     background-color: #ffffff;
 }

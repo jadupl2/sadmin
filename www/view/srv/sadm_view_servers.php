@@ -76,7 +76,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="98%">';   
+    echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
@@ -91,8 +91,8 @@ function setup_table() {
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
     echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
+    #echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    #echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n</tr>";
     echo "\n</thead>\n";
     
@@ -109,8 +109,8 @@ function setup_table() {
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
     echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
+    #echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    #echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -179,11 +179,11 @@ function display_data($con,$row) {
     }
 
     # Display Memory 
-    echo "\n<td class='dt-center'>" . $row['srv_memory'] . " MB</td>";     # Display Server Alert
+    #echo "\n<td class='dt-center'>" . $row['srv_memory'] . " MB</td>";     # Display Server Alert
     
 
     # Display CPU And Speed
-    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] ."x". $row['srv_cpu_speed'] . " Mhz</td>";
+    #echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] ."x". $row['srv_cpu_speed'] . " Mhz</td>";
 
     echo "\n\n</tr>\n";                                                 # End of Table Line
 }

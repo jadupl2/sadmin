@@ -51,7 +51,6 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <meta http-equiv="refresh" content="60"> 
 
 <?php
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
 
 
@@ -167,7 +166,8 @@ function setup_table() {
     # TABLE CREATION
     echo "\n\n<div id='SimpleTable'>";                                      # Width Given to Table
     #echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
-    echo "\n<table id='sadmTable' cell-border compact  width='98%'>";
+    echo "\n<table id='sadmTable' class='display' cell-border compact  width='98%'>";
+    #echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
     
     # TABLE HEADING
     echo "\n<thead>";
