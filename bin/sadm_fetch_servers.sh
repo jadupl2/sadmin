@@ -130,6 +130,8 @@ rsync_function()
                 break
         fi
     done
+    sadm_writelog 'chmod 664 ${LOCAL_DIR}/*' 
+    chmod 664 ${LOCAL_DIR}/*
     return $RC
 }
 

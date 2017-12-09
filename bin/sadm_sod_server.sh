@@ -23,8 +23,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# 1.6 Cosmetics and Refresh changes 
-# 
+# V1.6 Cosmetics and Refresh changes 
+# V1.7 Added execution of MySQL Database Python Update
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.6'                             ; export SADM_VER            # Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -109,8 +109,18 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
-    #  Daily DataBase Update with the Data Collected
+    #  OLD Daily DataBase Update with the Data Collected
     SCMD="${SADM_BIN_DIR}/sadm_daily_database_update.py"
+    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
+    $SCMD >/dev/null 2>&1 
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
+
+    # NEW Daily DataBase Update with the Data Collected
+    SCMD="${SADM_BIN_DIR}/sadm_database_update.py"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter

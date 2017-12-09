@@ -25,6 +25,8 @@
 #   Version 2.0 - November 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+#   Version 2.1 - December 2017 
+#       - Enhance viewing experience
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -33,14 +35,21 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');       # <head>CSS,JavaScript</Head>
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-
+echo "<style>";
+echo "table { ";
+echo "    display: table;";
+echo "    border-collapse: separate;";
+echo "    border-spacing: 2px;";
+echo "    border-color: black;";
+echo "}";
+echo "</style>";
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -53,10 +62,10 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 function display_log_file ($WHOST,$WDESC,$WNAME)
 {
     echo "\n<center>";                                                  # Center the Table
-    echo "\n<table border=0>";                                          # Define Table
+    echo "\n<table>";                                # Define Table
     echo "\n<tr>" ;                                                     # Begin Heading Row
     $TITRE="Content of log " . basename($WNAME);                        # Build the Table Heading
-    echo "\n<th colspan=2>" . $TITRE . "</th>";                         # Print 1st Row Heading
+    echo "\n<th colspan=2 >" . $TITRE . "</th>";                         # Print 1st Row Heading
     echo "\n</tr>";                                                     # Enf of Row Heading
     
     $count=0; $ddate = 0 ; 
@@ -66,14 +75,14 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
         if (strlen($wline) > 0) {                                       # Don't process empty Line
             $count+=1;                                                  # Increase Line Counter
             echo "\n<tr>";                                              # Begin Table Row
-            if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
+            if ($count % 2 == 0) { $BGCOLOR="#f8f1f8" ; }else{ $BGCOLOR="#f5d7f5" ;}
             echo "\n<td width=40>" . $count   . "</td>\n";              # Print Line Counter
             echo "\n<td>" . $wline  . "</td>";                          # Print Log Line
             echo "\n</tr>";                                             # End of Row
         }
     }
     fclose($fh);                                                        # Close Log
-    echo "</table></center>\n";                                         # End of Table
+    echo "</table></center><br>\n";                                         # End of Table
     return ;
 }
 

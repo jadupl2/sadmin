@@ -120,11 +120,13 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE;
+    global $URL_UPDATE, $URL_DELETE, $URL_INFO;
 
     echo "\n<tr>";
-    echo "\n<td>"            . $row['srv_name']   . "</td>";            # Display Server Name
-    #echo "\n<td>"            . "None"   . "</td>";            # Display Server Name
+    echo "\n<td><a href='" . $URL_INFO . "?host=" . $row['srv_name'];   # Display Server Name
+    echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
+    echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
+    #echo "\n<td>"            . "None"   . "</td>";            
     echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
     echo "\n<td dt-center>"  . $row['srv_cat']    . "</td>";            # Display Category

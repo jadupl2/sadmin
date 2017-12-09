@@ -11,6 +11,7 @@
 # 1.8 - Aug 2016 - Added lsblk output to script
 # 1.9 - Dec 2016 - Replace lsblk by parted to output disk name and size
 # 2.0 - Dec 2016 - Added lsdev to PVS_FILE in Aix 
+# 2.1 - Dec 2017 - Added filed SADM_UPDATE_DATE to sysinfo.txt file
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -25,7 +26,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.0'                             ; export SADM_VER            # Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -336,6 +337,7 @@ create_summary_file()
     echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
     echo "SADM_OS_TYPE                          = $(sadm_get_ostype)"                >> $HWD_FILE
+    echo "SADM_UPDATE_DATE                      = $(date "+%Y-%m-%d %H:%M:%S")"      >> $HWD_FILE
     echo "SADM_HOSTNAME                         = $(sadm_get_hostname)"              >> $HWD_FILE
     echo "SADM_DOMAINNAME                       = $(sadm_get_domainname)"            >> $HWD_FILE
     echo "SADM_HOST_IP                          = $(sadm_get_host_ip)"               >> $HWD_FILE

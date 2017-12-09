@@ -62,6 +62,7 @@ $URL_UPDATE = '/crud/grp/sadm_group_update.php';                        # Update
 $URL_DELETE = '/crud/grp/sadm_group_delete.php';                        # Delete Page URL
 $URL_MAIN   = '/crud/grp/sadm_group_main.php';                          # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
 $CREATE_BUTTON = True ;                                                 # Yes Display Create Button
 
 
@@ -109,14 +110,14 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE;
+    global $URL_UPDATE, $URL_DELETE, $URL_SERVER;
 
     echo "\n<tr>";
     echo "\n<td>"  . $row['grp_code'] . "</td>";                        # Display Group Code
     echo "\n<td dt-nowrap>"  . $row['grp_desc'] . "</td>";              # Display Description
     
     # DISPLAY THE NUMBER OF SERVERS USING THAT CATEGORY
-    $sql = "SELECT * FROM server WHERE srv_cat='" . $row['grp_code'] . "' ;";
+    $sql = "SELECT * FROM server WHERE srv_group='" . $row['grp_code'] . "' ;";
     $count = 0 ;                                                        # Reset Group counter
     if ($cresult = mysqli_query($con,$sql)) {                           # Read Server with this Cat.
         $count = mysqli_num_rows($cresult);                             # Nb. of Row with Group
@@ -124,7 +125,7 @@ function display_data($con,$row) {
     }
     echo "\n<td style='text-align: center'>" ;                          # Start of Cell
     if ($count > 0) {                                                   # If at least one server
-        echo "\n<a href=/sadmin/sadm_view_servers.php?selection=cat&value="; # Display Server Using
+        echo "\n<a href=" . $URL_SERVER . "?selection=group&value=";      # Display Server Using
         echo $row['grp_code'] . ">" . strval($count) . "</a></td>";     # Display Count Using Cat
     }else{                                                              # If Cat is not use at all
         echo $count . "</td>";                                          # Display Count without link
