@@ -220,7 +220,8 @@ tr:nth-child(odd) { background:#E2E4FF; }
 #sadmEntete1R {
     font-family: Verdana, Monaco, monospace;
     float: right;
-    color : #9B869C;
+    /* color : #9B869C; */
+    color           :   #FF9800;
     padding : 5px;
     font-size: 14px;
     /* text-align: right; */
@@ -239,7 +240,8 @@ tr:nth-child(odd) { background:#E2E4FF; }
     padding : 10px;
     /* font-size: x-large; */
     /* color : white; */
-    color : #DFC48C;
+    /* color : #DFC48C; */
+    color           :   #FF9800;
     font-size: 20px;
     text-decoration :   none;
 	font-weight     :   bold;
@@ -248,7 +250,8 @@ tr:nth-child(odd) { background:#E2E4FF; }
 #sadmEntete2R {
     font-family: Verdana, Monaco, monospace;
     float: right;
-    color : #9B869C;
+    /* color : #9B869C; */
+    color           :   #FF9800;
     padding : 5px;
     font-size: 14px;
     text-align: right;
