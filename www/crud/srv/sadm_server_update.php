@@ -128,14 +128,9 @@ $CREATE_BUTTON = False ;                                                # Don't 
         exit ; 
     }
 
-
-    # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     display_std_heading("NotHome","Update Server","","",$SVER);         # Display Content Heading
-    
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form($con,$row,"Update");                                    # Display Form Default Value
-    
-    # Set the Submitted Flag On - We are done with the Form Data
+    display_srv_form($con,$row,"Update");                               # Display Form Default Value
     echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
     
     # Display Buttons (Update/Cancel) at the bottom of the form

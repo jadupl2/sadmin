@@ -295,9 +295,10 @@ function display_data($con,$row) {
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
     # LOOP THROUGH RETREIVED DATA AND DISPLAY EACH ROW
-    while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
-        display_data($con,$row);                                    # Display Row Data
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+        display_data($con,$row);                                        # Display Row Data
     }
+
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer

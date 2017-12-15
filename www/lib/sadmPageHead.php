@@ -16,5 +16,4 @@
     <link rel="icon" 		            type="image/x-icon" href="/img/favicon.ico" />
     <link rel="stylesheet" 	            type="text/css"     href="/css/jquery.dataTables.min.css"/>
     <link rel="stylesheet"              type="text/css"     href="/css/sadmin_v2.css"/>
-</head>
 

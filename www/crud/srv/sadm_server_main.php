@@ -54,14 +54,16 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
-$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
-$URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
-$URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
-$URL_INFO   = '/view/srv/sadm_view_servers.php';                        # Servers View Page URL
-$URL_HOME   = '/index.php';                                             # Site Main Page
+$DEBUG         = False ;                                                # Debug Activated True/False
+$SVER          = "2.0" ;                                                # Current version number
+$URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
+$URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
+$URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
+$URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
+$URL_MAIN      = '/crud/srv/sadm_server_main.php';                      # Maintenance Main Page URL
+$URL_MENU      = '/crud/srv/sadm_server_menu.php';                      # Maintenance Main Menu URL
+$URL_INFO      = '/view/srv/sadm_view_server_info.php';                 # Servers View Page URL
+$URL_HOME      = '/index.php';                                          # Site Main Page
 $CREATE_BUTTON = True ;                                                 # Yes Display Create Button
 
 
@@ -74,22 +76,22 @@ function setup_table() {
     echo "\n<br>\n";
     
     # TABLE CREATION
-    echo "<div id='SimpleTable'>";                                         # Width Given to Table
+    echo "<div id='SimpleTable'>";                                      # Width Given to Table
     echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="95%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    #echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
+    #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
+    echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
     echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                           # Update Button Placement
+    echo "\n<th>Info</th>";                                             # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -99,15 +101,15 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    #echo "\n<th dt-head-left>Alert</th>";                                 # Left Align Header & Body
+    #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
-    echo "\n<th dt-center>Cat</th>";                               # Center Header & Body
+    echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
     echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                           # Update Button Placement
+    echo "\n<th>Info</th>";                                             # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -120,7 +122,7 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE, $URL_INFO;
+    global $URL_UPDATE, $URL_DELETE, $URL_INFO, $URL_MENU, $URL_OSUPDATE;
 
     echo "\n<tr>";
     echo "\n<td><a href='" . $URL_INFO . "?host=" . $row['srv_name'];   # Display Server Name
@@ -149,13 +151,13 @@ function display_data($con,$row) {
 
     # DISPLAY THE INFO BUTTON
     echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    echo "\n<a href='" . $URL_INFO . '?sel=' . $row['srv_name'] . "'>";
+    echo "\n<a href='" . $URL_INFO . '?host=' . $row['srv_name'] . "'>";
     echo "\n<button type='button'>Info</button></a>";                   # Display Update Button
     echo "\n</td>";
 
     # DISPLAY THE UPDATE BUTTON
     echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    echo "\n<a href='" . $URL_UPDATE . '?sel=' . $row['srv_name'] . "'>";
+    echo "\n<a href='" . $URL_MENU . '?sel=' . $row['srv_name'] . "'>";
     echo "\n<button type='button'>Update</button></a>";                 # Display Update Button
     echo "\n</td>";
 

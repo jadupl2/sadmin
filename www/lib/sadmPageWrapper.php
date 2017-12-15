@@ -1,4 +1,5 @@
 <?php
+    echo "</head>";
     echo "\n<body>";
     echo "\n<div id='sadmWrapper'>";                                    # Whole Page Wrapper Div
     echo "\n\n<div id='sadmHeader'>";

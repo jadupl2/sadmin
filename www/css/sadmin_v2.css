@@ -1,7 +1,7 @@
 body,html{
     min-height      :   100vh;
     font-family     :   Arial, "Segoe UI", Tahoma, Helvetica, sans-serif;
-    font-size       :   13px;
+    font-size       :   12px;
     margin          :   0 auto;
     box-shadow      :   1px 1px 8px #888;
 }
@@ -220,7 +220,8 @@ tr:nth-child(odd) { background:#E2E4FF; }
 #sadmEntete1R {
     font-family: Verdana, Monaco, monospace;
     float: right;
-    color : #9B869C;
+    /* color : #9B869C; */
+    color           :   #FF9800;
     padding : 5px;
     font-size: 14px;
     /* text-align: right; */
@@ -239,7 +240,8 @@ tr:nth-child(odd) { background:#E2E4FF; }
     padding : 10px;
     /* font-size: x-large; */
     /* color : white; */
-    color : #DFC48C;
+    /* color : #DFC48C; */
+    color           :   #FF9800;
     font-size: 20px;
     text-decoration :   none;
 	font-weight     :   bold;
@@ -248,14 +250,14 @@ tr:nth-child(odd) { background:#E2E4FF; }
 #sadmEntete2R {
     font-family: Verdana, Monaco, monospace;
     float: right;
-    color : #9B869C;
+    /* color : #9B869C; */
+    color           :   #FF9800;
     padding : 5px;
     font-size: 14px;
     text-align: right;
     font-weight: bold;
     /* display: block; */
 }
-
 
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -265,7 +267,9 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /* Attribute for the Category, Group Maintenance Form */
 .simple_form {
     font-family     :   Verdana, Geneva, sans-serif;
-    background-color:   #8ee9d4;
+    /* background-color:   #8ee9d4; */
+    background-color:   #fff5c3;
+    
     color           :   black;
     width           :   50%;
     margin-top      :   5%;
@@ -310,10 +314,11 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /* Attribute for the Category, Group Maintenance Form */
 .double_form {
     font-family     :   Verdana, Geneva, sans-serif;
-    background-color:   #8ee9d4;
+    /* background-color:   #8ee9d4;      */
+    background-color:   #fff5c3;
     color           :   black;
     width           :   50%;
-    margin-top      :   5%;
+    margin-top      :   2%;
     margin-left     :   auto;
     margin-right    :   auto;
     border          :   2px solid #000000;
@@ -359,6 +364,7 @@ tr:nth-child(odd) { background:#E2E4FF; }
     float           :   right;
     text-align      :   left ;
 }
+
 
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -415,12 +421,12 @@ tr:nth-child(odd) { background:#E2E4FF; }
 /* ---------------------------------------------------------------------------------------------- */
 div.server_data {
     /* font-family: Verdana, Geneva, sans-serif; */
-    background-color: #ffffff;
+    background-color:   #fff5c3;
     color: black;
-    margin-left     :   auto;
+    margin-left     :   15px;
     margin-right    :   auto;
-    width: 90%;
-    height: 700px; 
+    width: 95%;
+    height: 650px; 
     /* margin: 1px; */
     border: 1px solid #000000;
     /* font-size: 12px; */
@@ -430,18 +436,18 @@ div.server_data {
 
 /* ===== Server Left side of screen  ===== */
 div.server_leftside {
-    width: 48%;
+    width: 43%;
     float: left;
-    /* background-color: rgb(69, 73, 77); */
-    margin-left: 15px; 
+    /* background-color: red; */
+    margin-left: 10px; 
     padding: 5px;
 }
 /* ===== Server Right side of screen  ===== */
 div.server_rightside {
-    width: 48%;
+    width: 50%;
     float: left;
-    /* background-color: rgb(78, 157, 236); */
-    margin-left: 15px; 
+    /* background-color: blue; */
+    margin-left: 10px; 
     padding: 5px;
 }
 
@@ -506,7 +512,9 @@ table {
 }
 th {
     font-family: arial;
-    padding: 2px;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     background-color:   #006456; 
     color: #fff;
     text-transform: uppercase;
