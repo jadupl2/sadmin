@@ -56,14 +56,15 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$WVER  = "2.0" ;                                                        # Current version number
-$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
-$URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
-$URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
-$URL_HOME   = '/index.php';                                             # Site Main Page
-$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
+$DEBUG         = False ;                                                # Debug Activated True/False
+$WVER          = "2.0" ;                                                # Current version number
+$URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
+$URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
+$URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
+$URL_MAIN      = '/crud/srv/sadm_server_main.php';                      # Maintenance Main Page URL
+$URL_HOME      = '/index.php';                                          # Site Main Page
+$URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # View Servers List
+$URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
 $URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
@@ -83,7 +84,8 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th class='text-center'>Automatic Update</th>\n";
+    echo "<th>Cat.</th>\n";
+    echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot after Update</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
@@ -100,7 +102,8 @@ function setup_table() {
     echo "<tr>\n";
     echo "<th>Server</th>\n";
     echo "<th>Description</th>\n";
-    echo "<th class='text-center'>Automatic Update</th>\n";
+    echo "<th>Cat.</th>\n";
+    echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot after Update</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
@@ -122,7 +125,7 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_LOG ; 
+    global $URL_HOST_INFO, $URL_VIEW_LOG, $URL_OSUPDATE ; 
     
     echo "<tr>\n";  
     #echo "<td class='dt-center'>" . $count . "</td>\n";  
@@ -131,28 +134,28 @@ function display_data($count, $row) {
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td>";
-    echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'] ;
+    echo "<a href='" . $URL_OSUPDATE . "?sel=" . $row['srv_name'] ;
     echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] ." - Click for more info'>" ;
     echo $row['srv_name']  . "</a></td>\n";
 
     # Description of Server
     echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
-    # Groupe de Serveur
-    #echo "<td class='dt-center'>" . nl2br( $row['srv_group']) . "</td>\n";  
+    # Category de Serveur
+    echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
 
     # Operating System Version
     #echo "<td class='dt-center'>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
 
     # Automatic Update (Yes/No)
-    if ($row['srv_update_auto']   == 't' ) { 
+    if ($row['srv_update_auto']   == True ) { 
         echo "<td class='dt-center'>Yes</td>\n"; 
     }else{ 
         echo "<td class='dt-center'><B>No</b></td>\n";
     }
 
     # Reboot after Update (Yes/No)
-    if ($row['srv_update_reboot']   == 't' ) { 
+    if ($row['srv_update_reboot']   == True ) { 
         echo "<td class='dt-center'>Yes</td>\n"; 
     }else{ 
         echo "<td class='dt-center'>No</td>\n";
@@ -160,59 +163,60 @@ function display_data($count, $row) {
 
     # Month that Update can occur
     echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == 't' ) { 
-        $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
-        if (trim($row['srv_update_month']) == "YYYYYYYYYYYY") {
-            echo "Any Month" ;
+    if ($row['srv_update_auto']   == True ) { 
+        $months = array('Any','Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
+        if (trim($row['srv_update_month']) == "YNNNNNNNNNNNN") {
+            echo "Any" ;
         }else{
-            for ($i = 0; $i < 12; $i = $i + 1) {
+            for ($i = 1; $i < 13; $i = $i + 1) {
                 if (substr($row['srv_update_month'],$i,1) == "Y") { echo $months[$i] . ","; }
             }
         }
     }else{
-        echo "N/A";
+        echo "Manual";
     }    
     echo "</td>\n";  
     
     # Date of the month (1-31) that update can occur
-    #echo "<td class='dt-center'>" . $row['srv_update_dom'] . "- ". strlen(trim($row['srv_update_dom'])) .  "</td>\n";  
+    #echo "<td class='dt-center'>" . $row['srv_update_dom'] . "- ".
+    # strlen(trim($row['srv_update_dom'])) .  "</td>\n";  
     echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == 't' ) { 
-        if (trim($row['srv_update_dom']) == "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY") {
-            echo "Any Date" ;
+    if ($row['srv_update_auto']   == True ) { 
+        if (trim($row['srv_update_dom']) == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") {
+            echo "Any" ;
         }else{
-            for ($i = 0; $i < 31; $i = $i + 1) {
+            for ($i = 1; $i < 32; $i = $i + 1) {
                 if (substr($row['srv_update_dom'],$i,1) == "Y") { echo $i+1 . ","; }
             }
         }
     }else{
-        echo "N/A";
+        echo "Manual";
     }    
     echo "</td>\n";
 
     # Day of the week that update can occur
     echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == 't' ) { 
-        $days = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-        if (trim($row['srv_update_dow']) == "YYYYYYY") {
-            echo "Every Day" ;
+    if ($row['srv_update_auto']   == True ) { 
+        $days = array('Any','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+        if (trim($row['srv_update_dow']) == "YNNNNNNN") {
+            echo "Any" ;
         }else{
-            for ($i = 0; $i < 7; $i = $i + 1) {
+            for ($i = 1; $i < 8; $i = $i + 1) {
                 if (substr($row['srv_update_dow'],$i,1) == "Y") { echo $days[$i] . ","; }
             }
         }
     }else{
-        echo "N/A";
+        echo "Manual";
     }    
     echo "</td>\n";
     
     # Hour of the Update
     echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == 't' ) { 
+    if ($row['srv_update_auto']   == True ) { 
         echo sprintf("%02d",$row['srv_update_hour']) . ":";
         echo sprintf("%02d",$row['srv_update_minute']) ;
     }else{
-        echo "N/A";
+        echo "Man";
     }    
     echo "</td>\n";  
     
@@ -224,6 +228,7 @@ function display_data($count, $row) {
     switch ( strtoupper($row['srv_update_status']) ) {
         case 'S'  : echo "Success" ; break ;
         case 'F'  : echo "Failed"  ; break ;
+        case 'R'  : echo "Running" ; break ;
         default   : echo "Unknown" ; break ;
     }
     echo "</td>\n";  
@@ -234,18 +239,11 @@ function display_data($count, $row) {
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_LOG . "?host=".  $row['srv_name'];
         echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
-        echo " title='View Update Log'>View Log</a>";
+        echo " title='View Update Log'>Log</a>";
     }else{
-        echo "Log N/A";
+        echo "N/A";
     }
     echo "</td>\n";  
-
-    
-    # Display Icon to Edit Server Static information
-    #echo "<td class='dt-center'>";
-    #echo "<a href='/crud/sadm_server_update.php?sel=" . $row['srv_name'] . "'";
-    #echo " title='Edit " . ucwords($row['srv_name']) . " Static Information'>";
-    #echo "<img src='/images/update.png'   style='width:24px;height:24px;'></a></td>\n";
 
     echo "</tr>\n"; 
 }
@@ -255,16 +253,11 @@ function display_data($count, $row) {
 
 
 
-/*
-* ==================================================================================================
-*                                      PROGRAM START HERE
-* ==================================================================================================
-*/
+# ==================================================================================================
+#                                      PROGRAM START HERE
+# ==================================================================================================
 
-    #$PURL = "http://" . $_SERVER[HTTP_HOST] . $_SERVER[REQUEST_URI];
-    #setcookie("PURL", $PURL);
-
-# The "selection" (1st) parameter contains type of query that need to be done (all_servers,os,...)   
+    # The "selection" (1st) parameter contains type of query that need to do (all_servers,os,...)   
     if (isset($_GET['selection']) && !empty($_GET['selection'])) { 
         $SELECTION = $_GET['selection'];                                # If Rcv. Save in selection
     }else{
@@ -273,14 +266,14 @@ function display_data($count, $row) {
     if ($DEBUG) { echo "<br>1st Parameter Received is " . $SELECTION; } # Under Debug Display Param.
 
     
-# The 2nd Paramaters is sometime used to specify the type of server received as 1st parameter.
-# Example: http://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
+    # The 2nd Paramaters is sometime used to specify the type of server received as 1st parameter.
+    # Example: http://sadmin/sadmin/sadm_view_servers.php?selection=os&value=centos
     if (isset($_GET['value']) && !empty($_GET['value'])) {              # If Second Value Specified
         $VALUE = $_GET['value'];                                        # Save 2nd Parameter Value
         if ($DEBUG) { echo "<br>2nd Parameter Received is " . $VALUE; } # Under Debug Show 2nd Parm.
     }
 
-# Validate the view option received, Set Page Heading and Retreive Selected Data from Database
+    # Validate the view option received, Set Page Heading and Retreive Selected Data from Database
     switch ($SELECTION) {
         case 'all_servers'  : 
             $sql = 'SELECT * FROM server order by srv_name;';
@@ -305,15 +298,13 @@ function display_data($count, $row) {
         exit;                                                           # Exit - Should not occurs
     }
     
-    
-
-# Display Page Heading
+    # Display Page Heading
     display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
     setup_table();                                                      # Create Table & Heading
     
-# Loop Through Retreived Data and Display each Row
+    # Loop Through Retreived Data and Display each Row
     $count=0;   
-    while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         $count+=1;                                                      # Incr Line Counter
         display_data($count, $row);                                     # Display Next Server
     }

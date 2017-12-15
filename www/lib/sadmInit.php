@@ -57,7 +57,7 @@ define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM C
 define("SADM_DB_FILE"      , SADM_DB_DIR  . "/sadm.db");                # SADM SQLite3 Database
 define("SADM_CRON_FILE"    , SADM_WWW_CFG_DIR . "/.crontab.txt");       # SADM Crontab File
 define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
-define("SADM_UPDATE_SCRIPT",SADM_BIN_DIR."/sadm_osupdate_server.sh -s");# O/S Update Script Name
+define("SADM_UPDATE_SCRIPT", SADM_BIN_DIR."/sadm_osupdate_server.sh -s ");  # O/S Update Script Name
 
 
 # LOADING CONFIGURATION FILE AND DEFINE GLOBAL SADM ENVIRONMENT VARIABLE

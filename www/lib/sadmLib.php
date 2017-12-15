@@ -58,14 +58,14 @@ function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
     if ($CREATE_BUTTON) {
         echo "\n<div style='float: right;'>";                           # Div Position Create Button
         echo "\n<a href='" . $CREATE_URL . "'>";                        # URL when Button Press
-        echo "\n<button type='button'>" . $CREATE_LABEL . "</button></a>";  # Create Create Button
+        echo "\n<button type='button'>" .$CREATE_LABEL. "</button></a>";# Create Create Button
         echo "\n</div>\n";                                              # End of Button Div
     }else{
         echo "\n<div style='float: right;'>" . $RTITLE . "</div>";  
     }
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
-    #echo "\n<hr/>\n\n";                                                # Print Horizontal Line
-    echo "\n<br>\n";                                                        # Print Horizontal Line
+    echo "\n<hr/>";                                                     # Print Horizontal Line
+    echo "\n<br>\n";                                                    # Print Horizontal Line
 }
 
 
@@ -85,6 +85,141 @@ function std_page_footer($wcon) {
     echo "\n<br>";
     echo "\n</body>";
     echo "\n</html>";
+}
+
+
+# ==================================================================================================
+#                      Update the crontab based on the $paction parameter
+#
+#   pscript  The name of the script to execute (With the path) 
+#   pname    The hostname of the server to include/modify/delete in crontab
+#   paction  [C] for create entry  [U] for Updating the crontab   [D] Delete crontab entry
+#   pmonth   13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
+#            Position 0 = Y Then ALL Months are Selected
+#            Position 1-12 represent the month that are selected (Y or N)             
+#            Default is YNNNNNNNNNNNN meaning will run every month 
+#   pdom     32 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
+#            Position 0 = Y Then ALL Date in the month are Selected
+#            Position 1-31 Indicate (Y) date of the month that script will run or not (N)
+#   pdow     8 Characters (either a Y or a N) 
+#            If Position 0 = Y then will run every day of the week
+#            Position 1-7 Indicate a week day () Starting with Sunday
+#            Default is all Week (YNNNNNNN)
+#   phour    Hour when the update should begin (00-23) - Default 1am
+#   pmin     Minute when the update will begin (00-50) - Default 5min
+#
+# Example of line generated
+#  +---------------- minute (0 - 59)
+#  |  +------------- hour (0 - 23)
+#  |  | +----------- date of month (1 - 31)
+#  |  | | +--------- month (1 - 12)
+#  |  | | |  +------ day of week (0 - 6) (Sunday=0 or 7)
+#  |  | | |  | User |Command to execute  
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_server.sh -s nano >/dev/null 2>&1
+# ==================================================================================================
+#
+function update_crontab ($pscript,$paction = "U",$pmonth = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN",
+                        $pdom = "YNNNNNNNNNNNN",$pdow="NNNNNNNY",$phour=01,$pmin=00) 
+{
+    if ($DEBUG) { echo "<BR>I'm in update crontab" ; } 
+    
+    # Begin constructing our crontab line ($cline) based on parameters received
+    $cline = sprintf ("%02d %02d ",$pmin,$phour);                       # Hour & Min. of Execution
+
+    # Construct Date of the month (1-31) to run and add it to crontab line ($cline)
+    if ($pdom == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") {                  # If it's to run every Date
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Date 
+        $cdom = "";                                                     # Clear Work Variable
+        for ($i = 1; $i < 32; $i = $i + 1) {                            # Check for Y or N in DOM
+            if (substr($pdom,$i,1) == "Y") {                            # If Yes to run that Date
+                if (strlen($cdom) == 0) {                               # And first date to add
+                    $cdom = sprintf("%02d",$i);                         # Add Date number 
+                }else{                                                  # If not 1st month in list
+                    $cdom = $cdom . "," . sprintf("%02d",$i);           # More Date add , before
+                }
+            }    
+        }
+        $cline = $cline . $cdom . " " ;                                 # Add DOM in Crontab Line
+    }
+    
+    # Construct the month(s) (1-12) to run and add it to crontab line ($cline)
+    if ($pmonth == "YNNNNNNNNNNNN") {                                   # If it's to run every Month
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Months
+        $cmonth = "";                                                   # Clear Work Variable
+        for ($i = 1; $i < 13; $i = $i + 1) {                            # Check for Y or N in Month
+            if (substr($pmonth,$i,1) == "Y") {                          # If Yes to run that month
+                if (strlen($cmonth) == 0) {                             # And first month to add
+                    $cmonth = sprintf("%02d",$i);                       # Add month number 
+                }else{                                                  # If not 1st month in list
+                    $cmonth = $cmonth . "," . sprintf("%02d",$i);       # More Mth add , before Mth
+                }
+            }    
+        }
+        $cline = $cline . $cmonth . " " ;                               # Add Month in Crontab Line
+    }
+    
+    # Construct the day of the week (0-6) to run and add it to crontab line ($cline)
+    if ($pdow == "YNNNNNNN") {                                          # If it's to run every Day
+        $cline = $cline . "* ";                                         # Then use a Star
+    }else{                                                              # If not to run every Day
+        $cdow = "";                                                     # Clear Work Variable
+        for ($i = 1; $i < 8; $i = $i + 1) {                             # Check for Y or N in Week
+            if (substr($pdow,$i,1) == "Y") {                            # If Yes to run that Day
+                if (strlen($cdow) == 0) {                               # And first add day of week
+                    $cdow = sprintf("%02d",$i);                         # Add Day number 
+                }else{                                                  # If not 1st Day in list
+                    $cdow = $cdow . "," . sprintf("%02d",$i);           # More Day add , before Day
+                }
+            }    
+        }
+        $cline = $cline . $cdow . " " ;                                 # Add Month in Crontab Line
+    }
+    
+    # Add User, script name and script parameter to crontab line
+    $cline = $cline . "root " . $pscript . " >/dev/null 2>&1\n";        # Add user & cmd on $cline
+    if ($DEBUG) { echo "\n<br>Final crontab line : " . $cline ; }       # Debug Show crontab line
+   
+    # Opening what will become the new crontab file
+    $newtab = fopen(SADM_WWW_TMP_FILE1,"w");                            # Create new Crontab File
+    if (! $newtab) {                                                    # If Create didn't work
+        sadm_fatal_error ("Can't create file " . SADM_WWW_TMP_FILE1) ;  # Show Err & Back Prev. Page
+    } 
+    # Write Crontab File Header
+    $wline = "# Please don't edit manually, SADMIN generated file ". date("Y-m-d H:i:s") ."\n"; 
+    fwrite($newtab,$wline);                                             # Write SADM Cron Header
+    fwrite($newtab,"# \n");                                             # Write Comment Line
+
+    # Open existing crontab File - If don't exist create empty one
+    if (!file_exists(SADM_CRON_FILE)) {                                 # SADM crontab doesn't exist
+        touch(SADM_CRON_FILE);                                          # Create empty crontab file
+        chmod(SADM_CRON_FILE,0640);                                     # Set Permission on crontab
+        #chown(SADM_CRON_FILE,'root');                                   # Set Crontab Owner
+        #chgrp(SADM_CRON_FILE,'root');                                   # Set Crontab Group Owner
+    }
+
+    # Load actual crontab in array and process each line in array
+    $alines = file(SADM_CRON_FILE);                                     # Load Crontab in Array
+    $UPD_DONE = False;                                                  # AutoUpdate was Off now ON?
+    foreach ($alines as $line_num => $line) {                           # Process each line in Array
+        if ($DEBUG) { echo "\n<br>Before Processing Ligne #{$line_num} : " . $line ; }        
+        if (strpos(trim($line), '#') === 0) continue;                   # Next line if comment
+        $line = trim($line);                                            # Trim Crontab Line
+        $wpos = strpos($line,$pscript);                                 # Get Pos. of script on line
+        if ($wpos == false) {                                           # If Script is not on line
+            fwrite($newtab,${line}."\n");                               # Write line to new crontab
+        }else{                                                          # If script to Upd or Del
+            continue;                                                   # Line Match then skip it
+        }    
+    }
+    if ($paction == 'C') { fwrite($newtab,$cline); }                    # Add new line to crontab 
+    if ($paction == "U") { fwrite($newtab,$cline); }                    # Add Update line to crontab 
+    fclose($newtab);                                                    # Close sadm new crontab
+    if (! copy(SADM_WWW_TMP_FILE1,SADM_CRON_FILE)) {                    # Copy new over existing 
+        sadm_fatal_error ("Error copying " . SADM_WWW_TMP_FILE1 . " to " . SADM_CRON_FILE . " ");
+    }
+    unlink(SADM_WWW_TMP_FILE1);                                         # Delete Crontab tmp file
 }
 
 
@@ -253,22 +388,6 @@ function accept_key($server_key) {
 
 
 
-
-
-
-
-
-// ================================================================================================
-//                                        Standard Page footer
-// ================================================================================================
-function display_row_footer() {
-    echo "</table></center><br>";
-}
-
-
-
-
-
 // ================================================================================================
 //                   Display Content of file receive as parameter
 // ================================================================================================
@@ -290,7 +409,6 @@ function display_file( $nom_du_fichier ) {
 
 
 
-
 # ==================================================================================================
 # Function to strip unwanted characters (Extra space,tab,newline) from beginning and end of data
 # Strips any quotes escaped with slashes and passes it through htmlspecialschar.
@@ -303,113 +421,5 @@ function sadm_clean_data($wdata) {
     }
     return $wdata;
 }
-
-
-
-// ================================================================================================
-//                   All SADM Web Page Heading (Page Title Receive as Parameter)
-// ================================================================================================
-function sadm_page_heading2($msg) {
-    $message = $msg;
-    echo "\n\n\n<!-- ========================================================================= -->";
-    echo "\n<div id='sadmMainBodyHeading'>";
-    
-    echo "\n<div id='sadmMainBodyHeadingLeft'>\n";
-    if ($message != "List of all Servers") {
-        echo "<a href='javascript:history.go(-1)'>" . 
-            "<class='btn btn-info btn-sm'><span class='glyphicon glyphicon-arrow-left'></span>" ; 
-        echo "</a>";
-    }
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingLeft -->";
-
-    echo "\n<div id='sadmMainBodyHeadingCenter'>\n";
-    echo "${msg}\n";
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingCenter -->";
-        
-    echo "\n<div id='sadmMainBodyHeadingRight'>\n"; 
-    echo date('l jS \of F Y, h:i:s A');
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeadingRight -->";
-
-    echo "\n</div>                              <!-- End of Div sadmMainBodyHeading -->\n";  
-    echo "\n<!-- ============================================================================= -->";    
-    #echo "\n<br>";
-    echo "\n\n<div id='sadmMainBodyPage'>\n";   
-}
-
-
-
-        # Display Operating System Logo
-        #switch (strtoupper($WOS)) {
-        #    case 'REDHAT' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='http://www.redhat.com' ";
-        #        echo "title='Server $whost is a RedHat server - Visit redhat.com'>";
-        #        echo "<img src='/images/redhat.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'FEDORA' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://getfedora.org' ";
-        #        echo "title='Server $whost is a Fedora server - Visit getfedora.org'>";
-        #        echo "<img src='/images/fedora.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'CENTOS' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.centos.org' ";
-        #        echo "title='Server $whost is a CentOS server - Visit centos.org'>";
-        #        echo "<img src='/images/centos.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'UBUNTU' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.ubuntu.com/' ";
-        #        echo "title='Server $whost is a Ubuntu server - Visit ubuntu.com'>";
-        #        echo "<img src='/images/ubuntu.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'LINUXMINT' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://linuxmint.com/' ";
-        #        echo "title='Server $whost is a LinuxMint server - Visit linuxmint.com'>";
-        #        echo "<img src='/images/linuxmint.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'DEBIAN' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.debian.org/' ";
-        #        echo "title='Server $whost is a Debian server - Visit debian.org'>";
-        #        echo "<img src='/images/debian.png' ";
-        #        #echo "style='width:24px;height:24px;'></a<</td>\n";
-        #        echo "style='width:24px;height:24px;'></a<</td>\n";
-        #        break;
-        #    case 'RASPBIAN' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.raspbian.org/' ";
-        #        echo "title='Server $whost is a Raspbian server - Visit raspian.org'>";
-        #        echo "<img src='/images/raspbian.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'SUSE' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='https://www.opensuse.org/' ";
-        #        echo "title='Server $whost is a OpenSUSE server - Visit opensuse.org'>";
-        #        echo "<img src='/images/suse.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    case 'AIX' :
-        #        echo "<td class='dt-center'>";
-        #        echo "<a href='http://www-03.ibm.com/systems/power/software/aix/' ";
-        #        echo "title='Server $whost is an AIX server - Visit Aix Home Page'>";
-        #        echo "<img src='/images/aix.png' ";
-        #        echo "style='width:24px;height:24px;'></a></td>\n";
-        #        break;
-        #    default:
-        #        echo "<td class='dt-center'>";
-        #        echo "<img src='/images/os_unknown.jpg' ";
-        #        echo "style='width:24px;height:24px;'></td>\n";
-        #        break;
-        #}
-
 
 ?>

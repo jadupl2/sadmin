@@ -45,6 +45,7 @@ $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
+$URL_MENU      = '/crud/srv/sadm_server_menu.php';                      # Maintenance Main Menu URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -58,7 +59,7 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 #        = "[U]pdate"  Display row content and user can modify all fields, except the row key
 # ==================================================================================================
 function display_server_data ($wrow) {
-    global $URL_UPDATE;
+    global $URL_UPDATE, $URL_MENU;
 
     # Server Data DIV
     echo "\n\n<div class='server_data'>             <!-- Start of Data Scr DIV -->";
@@ -77,7 +78,7 @@ function display_server_data ($wrow) {
 
     # Update Button
     echo "\n<center><br>";
-    echo "\n<a href=" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] .">";
+    echo "\n<a href=" . $URL_MENU . "?sel=" . $wrow['srv_name'] .">";
     echo "\n<button type='button'>Update</button></a>";
     echo "\n</center>\n<br>                         <!-- Blank Line Before Footer -->";
 }
@@ -409,13 +410,13 @@ function display_right_side ($wrow) {
     # Reboot after Update
     echo "\n\n<div class='server_right_label'>Reboot after O/S Update</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_reboot'] == 't') { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_update_reboot'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
        
     # Server Auto Update
     echo "\n\n<div class='server_right_label'>Update O/S Automatically</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_auto'] == 't') { echo "Yes" ; }else{ echo "No" ; }
+    if ($wrow['srv_update_auto'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
     
     # Month that O/S Update Can Occurs

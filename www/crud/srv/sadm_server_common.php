@@ -43,7 +43,7 @@ $URL_HOME   = '/index.php';                                             # Site M
 
 // ================================================================================================
 //                      DISPLAY SERVER DATA USED IN THE DATA INPUT FORM
-//
+// con   = Connector Object to Database
 // wrow  = Array containing table row keys/values
 // mode  = "Display" Will Only show row content - Can't modify any information
 //       = "Create"  Will display default values and user can modify all fields, except the row key
