@@ -38,13 +38,11 @@
 # Version 3.1 - April 2017 - Jacques Duplessis
 #       Allow program to run more than once at the same time, to allow simultanious Update
 #       Put Back cumulative Log, so we don't miss anything, when multiple update are running
+# December 2017 - Jacques Duplessis
+#       V3.2 Adapt program to use MySQL instead of PostGres 
 #
 # --------------------------------------------------------------------------------------------------
 #
-#
-
-
-
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
@@ -59,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='3.1'                             ; export SADM_VER            # Script Version
+SADM_VER='3.2'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -116,22 +114,26 @@ update_server_db()
     WSERVER=$1                                                          # Save Server name Recv.
     WSTATUS=$2                                                          # Save Server Update Status
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
-    sadm_writelog "Update $WSERVER row in DataBase" 
-    SQL1="UPDATE sadm.server SET " 
-    SQL2="srv_update_date = '${WCURDAT}', "
-    SQL3="srv_update_status = '${WSTATUS}' "
-    SQL4="where srv_name = '${WSERVER}' ;"
-    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
-    if [ $DEBUG_LEVEL -gt 5 ] 
-       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RW_PGUSER -c $SQL" 
-            sadm_writelog "PGPASSFILE = $PGPASSFILE" 
-    fi
-    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RW_PGUSER -c "$SQL" >> $SADM_LOG 2>&1
-    if [ $? -ne 0 ]
-        then sadm_writelog "Error updating the row of $WSERVER in Database" 
-             RCU=1
-        else sadm_writelog "Last O/S Update date and status is updated for $WSERVER" 
-             RCU=0
+
+    # Construct SQL Statement
+    sadm_writelog "Record O/S Update Status & Date for $WSERVER in DataBase" # Advise user
+    SQL1="UPDATE server SET "                                           # SQL Update Statement
+    SQL2="srv_date_update   = '${WCURDAT}', "                           # Update Date of this Update
+    SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
+    SQL4="where srv_name    = '${WSERVER}' ;"                           # Server name to update
+    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Create final SQL Statement
+    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_PGPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+
+    # Execute SQL to Update Server O/S Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -e "$SQL" >>$SADM_LOG 2>&1
+    if [ $? -ne 0 ]                                                     # If Error while updating
+        then sadm_writelog "Error updating $WSERVER in Database"        # Inform user of Error 
+             RCU=1                                                      # Set Error Code
+        else sadm_writelog "Database Update Succeeded"                  # Inform User of success
+             RCU=0                                                      # Set Error Code = Success 
     fi
     return $RCU
 }
@@ -150,19 +152,23 @@ process_linux_servers()
     sadm_writelog "${SADM_DASH}"
     sadm_writelog "PROCESS LINUX SERVERS"
 
-    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, srv_update_reboot, "
-    SQL2=" srv_sporadic, srv_active from sadm.server "
+    SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
+    SQL2="srv_update_reboot, srv_sporadic, srv_active from server "
     if [ "$ONE_SERVER" != "" ] 
-        then SQL3="where srv_ostype = 'linux' and srv_active = True and srv_name = '$ONE_SERVER' " 
-             SQL4=" ;"
+        then SQL3="where srv_ostype = 'linux' and srv_active = True " 
+             SQL4="and srv_name = '$ONE_SERVER' ;"
         else SQL3="where srv_ostype = 'linux' and srv_active = True "
              SQL4="order by srv_name; "
     fi
-    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"
-    if [ $DEBUG_LEVEL -gt 5 ] 
-       then sadm_writelog "$SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL" 
-    fi
-    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
+
+    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_PGPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+
+    # Execute SQL to Update Server O/S Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
    
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]

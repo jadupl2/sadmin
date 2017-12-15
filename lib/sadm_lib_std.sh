@@ -111,6 +111,7 @@ SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path t
 SADM_PSQL=""                                ; export SADM_PSQL          # Path to PostGresql Exec.
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
+SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
@@ -446,12 +447,26 @@ sadm_check_requirements() {
     sadm_check_command_availibility "ssh"                               # ssh needed (epoch time)
     SADM_SSH=$SADM_VAR1                                                 # Save ssh path
 
-    # psql is only present (at least the DB is) - Do not want to install automatically if not there
-    if ${SADM_WHICH} psql >/dev/null 2>&1                               # Command is found ?
-        then SADM_PSQL=`${SADM_WHICH} psql`                             # Store Path of command
-        else SADM_PSQL=""                                               # Clear Path of command
+    # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
+    SADM_MYSQL=""                                                       # Default mysql Location
+    if [ "$SADM_HOSTNAME" == "$SADM_SERVER" ]                           # Only Check on SADMIN Srv
+        then sadm_check_command_availibility "mysql"                      # Command available?
+             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
+                then sadm_install_package "mysql" "mysql"                  # Go Install Missing Package
+                     if [ $? -eq 0 ]                                     # If Install Went OK
+                        then sadm_check_command_availibility mysql       # Check if command now Avail
+                             if [ $? -eq 0 ] 
+                                then SADM_MYSQL=$SADM_VAR1                                        # Save Command Path
+                                else sadm_writelog "Please install mysql software"
+                                     sadm_stop 1
+                             fi
+                        else sadm_writelog "Please install mysql software"
+                             sadm_stop 1
+                    fi
+             else
+                SADM_MYSQL=$SADM_VAR1                                        # Save Command Path
+             fi
     fi
-
     return 0
 }
 
@@ -587,9 +602,16 @@ sadm_date_to_epoch() {
     HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0//'` # Extract Hours
     MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }' | sed 's/^0//'` # Extract Min   
     SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0//'` # Extract Sec
-    
+
+#jacques@mycroftw:~/Documents/Dev/sadmin/bin$ date -j -f "%Y/%m/%d %T" "2009/10/15 04:58:06" +"%s"
+#1255597086
+#jacques@holmes:~$ date "+%s" -d "2009/10/15 04:58:06"
+#1255597086
+   
     # Call Perl to Return Epoch Time for Date Received   
+    #sadm_writelog ("timelocal $SS , $MM , $HH , $DD ,$MTH , $YYYY")
     sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
+
     echo "$sadm_date_to_epoch"                                          # Return Epoch of Date Rcv.
 }
 
@@ -638,12 +660,14 @@ sadm_elapse_time() {
 #                THIS FUNCTION DETERMINE THE OS (DISTRIBUTION) VERSION NUMBER 
 # --------------------------------------------------------------------------------------------------
 sadm_get_osversion() {
-    wosversion="0.0"                                                # Default Value
+    wosversion="0.0"                                                    # Default Value
     case "$(sadm_get_ostype)" in                                            
-        "LINUX") wosversion=`$SADM_LSB_RELEASE -sr`                 # Use lsb_release to Get Ver
-                 ;; 
-        "AIX")   wosversion="`uname -v`.`uname -r`"                 # Get Aix Version 
-                 ;;
+        "LINUX")    wosversion=`$SADM_LSB_RELEASE -sr`                  # Use lsb_release to Get Ver
+                    ;; 
+        "AIX")      wosversion="`uname -v`.`uname -r`"                  # Get Aix Version 
+                    ;;
+        "DARWIN")   wosversion=`sw_vers -productVersion`                # Get O/S Version on MacOS
+                    ;;   
     esac
     echo "$wosversion"
 }
@@ -653,10 +677,12 @@ sadm_get_osversion() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_osmajorversion() {
     case "$(sadm_get_ostype)" in
-        "LINUX") wosmajorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $1 }'| tr -d ' '`
-                 ;;
-        "AIX")   wosmajorversion=`uname -v`
-                 ;;
+        "LINUX")    wosmajorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $1 }'| tr -d ' '`
+                    ;;
+        "AIX")      wosmajorversion=`uname -v`
+                    ;;
+        "DARWIN")   wosmajorversion=`sw_vers -productVersion | awk -F '.' '{print $1 "." $2}'`
+                    ;;                 
     esac
     echo "$wosmajorversion"
 }
@@ -667,10 +693,12 @@ sadm_get_osmajorversion() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_osminorversion() {
     case "$(sadm_get_ostype)" in
-        "LINUX") wosminorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' '`
-                 ;;
-        "AIX")   wosminorversion=`uname -r`
-                 ;;
+        "LINUX")    wosminorversion=`echo $(sadm_get_osversion) | awk -F. '{ print $2 }'| tr -d ' '`
+                    ;;
+        "AIX")      wosminorversion=`uname -r`
+                    ;;
+        "DARWIN")   wosminorversion=`sw_vers -productVersion | awk -F '.' '{print $3 }'`
+                    ;;
     esac
     echo "$wosminorversion"
 }
@@ -679,7 +707,7 @@ sadm_get_osminorversion() {
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
 # --------------------------------------------------------------------------------------------------
 sadm_get_ostype() {
-    sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`                # Get OS Name (AIX or LINUX)
+    sadm_get_ostype=`uname -s | tr '[:lower:]' '[:upper:]'`             # OS Name (AIX/LINUX/DARWIN)
     echo "$sadm_get_ostype"
 }
 
@@ -688,8 +716,25 @@ sadm_get_ostype() {
 #                             RETURN THE OS PROJECT CODE NAME
 # --------------------------------------------------------------------------------------------------
 sadm_get_oscodename() {
-    if [ "$(sadm_get_ostype)" = "LINUX" ] ; then woscodename=`$SADM_LSB_RELEASE -sc`; fi
-    if [ "$(sadm_get_ostype)" = "AIX" ]   ; then woscodename="IBM_AIX" ; fi
+    if [ "$(sadm_get_ostype)" == "LINUX" ] ; then woscodename=`$SADM_LSB_RELEASE -sc`; fi
+    if [ "$(sadm_get_ostype)" == "AIX" ]   ; then woscodename="IBM_AIX" ; fi
+    if [ "$(sadm_get_ostype)" == "DARWIN" ] 
+        then wver="$(sadm_get_osmajorversion)"
+             if [ "$wver"  == "10.0" ]  ; then woscodename="Cheetah"          ;fi
+             if [ "$wver"  == "10.1" ]  ; then woscodename="Puma"             ;fi
+             if [ "$wver"  == "10.2" ]  ; then woscodename="Jaguar"           ;fi
+             if [ "$wver"  == "10.3" ]  ; then woscodename="Panther"          ;fi
+             if [ "$wver"  == "10.4" ]  ; then woscodename="Tiger"            ;fi
+             if [ "$wver"  == "10.5" ]  ; then woscodename="Leopard"          ;fi
+             if [ "$wver"  == "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
+             if [ "$wver"  == "10.7" ]  ; then woscodename="Lion"             ;fi
+             if [ "$wver"  == "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
+             if [ "$wver"  == "10.9" ]  ; then woscodename="Mavericks"        ;fi
+             if [ "$wver"  == "10.10" ] ; then woscodename="Yosemite"         ;fi
+             if [ "$wver"  == "10.11" ] ; then woscodename="El Capitan"       ;fi
+             if [ "$wver"  == "10.12" ] ; then woscodename="Sierra"           ;fi
+             if [ "$wver"  == "10.13" ] ; then woscodename="High Sierra"      ;fi
+    fi
     echo "$woscodename"
 }
 
@@ -704,6 +749,10 @@ sadm_get_osname() {
              if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
     fi 
     if [ "$(sadm_get_ostype)" = "AIX" ]   ; then wosname="AIX" ; fi
+    if [ "$(sadm_get_ostype)" == "DARWIN" ]; 
+        then wosname=`sw_vers -productName | tr -d ' '`
+             wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
+    fi
     echo "$wosname"
 }
 
@@ -975,38 +1024,38 @@ sadm_start() {
     # If log Directory doesn't exist, create it.
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
     chmod 0775 $SADM_LOG_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_LOG_DIR           
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR           
 
     # If LOG File doesn't exist, Create it and Make it writable 
     [ ! -e "$SADM_LOG" ] && touch $SADM_LOG
     chmod 664 $SADM_LOG
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
 
     # If Email LOG File doesn't exist, Create it and Make it writable 
     rm -f $SADM_ELOG >> /dev/null
     touch $SADM_ELOG
     chmod 664 $SADM_ELOG
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_ELOG}
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
 
     # If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     chmod 1777 $SADM_TMP_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_TMP_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
 
     # If LIB Directory doesn't exist, create it.
     [ ! -d "$SADM_LIB_DIR" ] && mkdir -p $SADM_LIB_DIR
     chmod 0775 $SADM_LIB_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
 
     # If Custom Configuration Directory doesn't exist, create it.
     [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
     chmod 0775 $SADM_CFG_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_CFG_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
 
     # If System Startup/Shutdown Script Directory doesn't exist, create it.
     [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
     chmod 0775 $SADM_SYS_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_SYS_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
 
     # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
     if [ ! -d "$SADM_PG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
@@ -1020,39 +1069,39 @@ sadm_start() {
     # If Data Directory doesn't exist, create it.
     [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
     chmod 0775 $SADM_DAT_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DAT_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
 
     # If Package Directory doesn't exist, create it.
     [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
     chmod 0775 $SADM_PKG_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
         then mkdir -p $SADM_WWW_DIR
              chmod 0775 $SADM_WWW_DIR
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
 
     # If SADM Server Web Site Data Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_DAT_DIR
              chmod 0775 $SADM_WWW_DAT_DIR  
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_DIR
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
         then mkdir -p $SADM_WWW_HTML_DIR
              chmod 0775 $SADM_WWW_HTML_DIR  
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
     fi
 
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_LIB_DIR
              chmod 0775 $SADM_WWW_LIB_DIR  
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
     fi
 
 
@@ -1060,38 +1109,38 @@ sadm_start() {
     if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_IMG_DIR
              chmod 0775 $SADM_WWW_IMG_DIR  
-             chown ${SADM_WWW_USER}.${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
     fi
 
     # If NMON Directory doesn't exist, create it.
     [ ! -d "$SADM_NMON_DIR" ] && mkdir -p $SADM_NMON_DIR
     chmod 0775 $SADM_NMON_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_NMON_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
     [ ! -d "$SADM_DR_DIR" ] && mkdir -p $SADM_DR_DIR
     chmod 0775 $SADM_DR_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DR_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR
 
     # If Network/Subnet Information Directory doesn't exist, create it.
     [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
     chmod 0775 $SADM_NET_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_NET_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
 
     #If SADM Sysmon Report Directory doesn't exist, create it.
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
     chmod 0775 $SADM_RPT_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_RPT_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
 
     # If Performance Server Data Directory doesn't exist, create it.
     [ ! -d "$SADM_SAR_DIR" ] && mkdir -p $SADM_SAR_DIR
     chmod 0775 $SADM_SAR_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_SAR_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_SAR_DIR
 
     # If Return Code History Directory doesn't exist, create it.
     [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
     chmod 0775 $SADM_RCH_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
     if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
@@ -1099,7 +1148,7 @@ sadm_start() {
     # If Return Code History Log doesn't exist, Create it and Make sure it have right permission
     [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG
     chmod 664 $SADM_RCHLOG
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
 
     # Feed the Return Code History File stating the script is started
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"` ; export SADM_STIME
@@ -1167,7 +1216,7 @@ sadm_stop() {
     sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" # Advise of trimm value
     sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
     chmod 664 ${SADM_RCHLOG}                                            # Writable by O/G Readable W
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}                     # Change RCH file Owner
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}                     # Change RCH file Owner
 
     # Write email choice in the log footer
     if [ "$SADM_MAIL" = "" ] ; then SADM_MAIL_TYPE=4 ; fi               # Mail not Install - no Mail
@@ -1207,7 +1256,7 @@ sadm_stop() {
     cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
     
     # Inform UnixAdmin By Email based on his selected choice
     case $SADM_MAIL_TYPE in
