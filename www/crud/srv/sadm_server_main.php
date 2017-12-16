@@ -73,7 +73,6 @@ $CREATE_BUTTON = True ;                                                 # Yes Di
 # DISPLAY TWO FIRST HEADING LINES OF PAGE AND SETUP TABLE HEADING AND FOOTER
 #===================================================================================================
 function setup_table() {
-    echo "\n<br>\n";
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table

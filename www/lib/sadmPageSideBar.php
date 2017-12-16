@@ -249,7 +249,7 @@ function SideBar_OS_Summary() {
             if ($kpart2 == "") {                                        # If O/S as no Name
                 echo "Unknown";                                         # Print Unknown
             }else{                                                      # Else
-                echo $kpart2;                                           # Print O/S Name
+                echo ucfirst($kpart2);                                  # Print O/S Name
             }
             echo "</a></div>";                                           # End of HREF and Div
             $SERVER_COUNT = $SERVER_COUNT + $value;                      # Add Value to Total OS Name
