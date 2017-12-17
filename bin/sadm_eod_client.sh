@@ -57,29 +57,6 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 #SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-#SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
-#SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
-#SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner
-#SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
-#SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
-#SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-#SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
-#SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-#SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
-#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User
-#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User
-#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
-#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
 
 #===================================================================================================
 #

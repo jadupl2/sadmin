@@ -64,18 +64,6 @@ SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1
 #SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
 #SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
 #SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-#SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-#SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-#SADM_PGDB=""                                ; export SADM_PGDB          # PostGres DataBase Name
-#SADM_PGSCHEMA=""                            ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-#SADM_PGHOST=""                              ; export SADM_PGHOST        # PostGres DataBase Host
-#SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-#SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User
-#SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-#SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User
-#SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
-#SADM_SERVER=""                              ; export SADM_SERVER        # Server FQN Name
-#SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
 
 #===================================================================================================
 #
