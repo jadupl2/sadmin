@@ -12,6 +12,7 @@
 # 1.9 - Dec 2016 - Replace lsblk by parted to output disk name and size
 # 2.0 - Dec 2016 - Added lsdev to PVS_FILE in Aix 
 # 2.1 - Dec 2017 - Added filed SADM_UPDATE_DATE to sysinfo.txt file
+# 2.2 - Dec 2017 - Corrected Problem related to vgs returned info (< sign return now) 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -26,7 +27,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.1'                             ; export SADM_VER            # Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -89,6 +90,7 @@ IFCONFIG=""                                     ; export IFCONFIG       # ifconf
 FACTER=""                                       ; export FACTER         # facter Cmd with Path
 DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
 SADM_CPATH=""                                   ; export SADM_CPATH     # Tmp Var Store Cmd Path
+LSBLK=""                                        ; export LSBLK          # lsblk Cmd Path
 LSVG=""                                         ; export LSVG           # Tmp Var Store Cmd Path
 LSPV=""                                         ; export LSPV           # Tmp Var Store Cmd Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Confing Cmd
@@ -184,6 +186,7 @@ pre_validation()
                 command_available "pvdisplay"   ; PVDISPLAY=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
+                command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
     fi
 
     # Aix and Linux Common Commands
@@ -261,6 +264,9 @@ create_linux_config_files()
     create_command_output "pvs/parted"  "$PVS"                  "$PVS_FILE"
     echo "#" >> $PVS_FILE ; echo "# Result of parted -l command" >> $PVS_FILE
     cat $SADM_TMP_FILE3 >> $PVS_FILE
+    echo "#" >> $PVS_FILE ; echo "# Result of '$LSBLK | grep disk' command" >> $PVS_FILE
+    $LSBLK | head -1    >> $PVS_FILE
+    $LSBLK | grep disk  >> $PVS_FILE
     #
     create_command_output "pvscan"      "$PVSCAN"               "$PVSCAN_FILE"
     create_command_output "pvdisplay"   "$PVDISPLAY"            "$PVDISPLAY_FILE"
@@ -368,26 +374,20 @@ create_summary_file()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
-
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
     pre_validation                                                      # Input File > Cmd present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
     if [ $SADM_EXIT_CODE -ne 0 ]                                        # Cmd|File missing = exit
         then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & Set RC
              exit 1
     fi
-    echo ""
     if [ $(sadm_get_ostype) = "LINUX" ] ;then create_linux_config_files ;fi
     if [ $(sadm_get_ostype) = "AIX"   ] ;then create_aix_config_files   ;fi
-    
     create_summary_file
-    
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
+    sadm_stop $SADM_EXIT_CODE                                           # Upd RCH & Trim Log & RCH
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)
-

@@ -113,15 +113,6 @@ dir_housekeeping()
     sadm_writelog "Server Directories HouseKeeping Starting"
     sadm_writelog " "
 
-
-    # If on the SADMIN Server - Set Privilege on Database Directories.
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" = "$SADM_SERVER" ]
-       then set_dir "$SADM_PG_DIR"           "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Dir
-            set_dir "${SADM_PG_DIR}/data"    "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Data
-            set_dir "${SADM_PG_DIR}/backups" "0700" "$SADM_PGUSER"   "$SADM_PGGROUP"   # PostGres Backups
-            chmod -R g-s $SADM_PG_DIR                                                  # No Sticky Bit on PostGres
-    fi
-
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_WWW_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -214,19 +205,6 @@ file_housekeeping()
         then sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DIR}/dat and delete them"
              find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
              find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
-             fi
-    fi
-
-    # Make sure PostGres $SADM_PG_DIR Directory files is own by PostGres
-    if [ -d "$SADM_PG_DIR" ]
-        then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_PG_DIR -type f -exec chown ${SADM_PGUSER}.${SADM_PGGROUP} {} \;"
-             find $SADM_PG_DIR -type f -exec chown ${SADM_PGUSER}.${SADM_PGGROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

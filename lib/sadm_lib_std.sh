@@ -114,7 +114,7 @@ SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Defaul
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
+SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
@@ -127,19 +127,21 @@ SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days t
 SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
 SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
 SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
-SADM_PGUSER="postgres"                      ; export SADM_PGUSER        # PostGres User Name
-SADM_PGGROUP="postgres"                     ; export SADM_PGGROUP       # PostGres Group Name
-SADM_PGDB="sadmin"                          ; export SADM_PGDB          # PostGres DataBase Name
-SADM_PGSCHEMA="sadm_schema"                 ; export SADM_PGSCHEMA      # PostGres DataBase Schema
-SADM_PGHOST="sadmin.maison.ca"              ; export SADM_PGHOST        # PostGres DataBase Host
-SADM_PGPORT=5432                            ; export SADM_PGPORT        # PostGres Listening Port
-SADM_RW_PGUSER=""                           ; export SADM_RW_PGUSER     # Postgres Read/Write User 
-SADM_RW_PGPWD=""                            ; export SADM_RW_PGPWD      # PostGres Read/Write Passwd
-SADM_RO_PGUSER=""                           ; export SADM_RO_PGUSER     # Postgres Read Only User 
-SADM_RO_PGPWD=""                            ; export SADM_RO_PGPWD      # PostGres Read Only Passwd
+SADM_DBNAME="sadmin"                        ; export SADM_DBNAME        # MySQL DataBase Name
+SADM_DBHOST="sadmin.maison.ca"              ; export SADM_DBHOST        # MySQL DataBase Host
+SADM_DBPORT=3306                            ; export SADM_DBPORT        # MySQL Listening Port
+SADM_RW_DBUSER=""                           ; export SADM_RW_DBUSER     # MySQL Read/Write User 
+SADM_RW_DBPWD=""                            ; export SADM_RW_DBPWD      # MySQL Read/Write Passwd
+SADM_RO_DBUSER=""                           ; export SADM_RO_DBUSER     # MySQL Read Only User 
+SADM_RO_DBPWD=""                            ; export SADM_RO_DBPWD      # MySQL Read Only Passwd
 SADM_SERVER=""                              ; export SADM_SERVER        # Server FQDN Name
 SADM_DOMAIN=""                              ; export SADM_DOMAIN        # Default Domain Name
-PGPASSFILE="${SADM_CFG_DIR}/.pgpass"        ; export PGPASSFILE         # PostGres Passwd File
+SADM_NETWORK1=""                            ; export SADM_NETWORK1      # Network 1 to Scan 
+SADM_NETWORK2=""                            ; export SADM_NETWORK2      # Network 2 to Scan 
+SADM_NETWORK3=""                            ; export SADM_NETWORK3      # Network 3 to Scan 
+SADM_NETWORK4=""                            ; export SADM_NETWORK4      # Network 4 to Scan 
+SADM_NETWORK5=""                            ; export SADM_NETWORK5      # Network 5 to Scan 
+DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL Passwd File
 SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
 
 
@@ -254,6 +256,7 @@ sadm_trimfile() {
 #
 sadm_check_command_availibility() {
     SADM_CMD=$1                                                         # Save Parameter received
+
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # command is found ?
         then SADM_VAR1=`${SADM_WHICH} ${SADM_CMD}`                      # Store Path of command
              return 0                                                   # Return 0 if cmd found
@@ -449,7 +452,7 @@ sadm_check_requirements() {
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     SADM_MYSQL=""                                                       # Default mysql Location
-    if [ "$SADM_HOSTNAME" == "$SADM_SERVER" ]                           # Only Check on SADMIN Srv
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                            # Only Check on SADMIN Srv
         then sadm_check_command_availibility "mysql"                      # Command available?
              if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                 then sadm_install_package "mysql" "mysql"                  # Go Install Missing Package
@@ -935,38 +938,44 @@ sadm_load_config_file()
         echo "$wline" |grep -i "^SADM_LOG_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_LOG_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_DBNAME" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGGROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGGROUP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_DBHOST" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGDB" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGDB=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_DBPORT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DBPORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGSCHEMA" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGSCHEMA=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_RW_DBUSER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RW_DBUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGHOST" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_RW_DBPWD" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RW_DBPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_PGPORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_PGPORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_RO_DBUSER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RO_DBUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_RW_PGUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RW_PGPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_PGPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RO_PGUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_PGUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_RO_PGPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_PGPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_RO_DBPWD" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RO_DBPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NETWORK1" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NETWORK1=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NETWORK2" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NETWORK2=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NETWORK3" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NETWORK3=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NETWORK4" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NETWORK4=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_NETWORK5" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_NETWORK5=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         done < $SADM_CFG_FILE
 
@@ -1002,6 +1011,11 @@ sadm_load_config_file()
                  sadm_writelog "  - SADM_RW_PGPWD=$SADM_RW_PGPWD"           # PostGres RW User Pwd
                  sadm_writelog "  - SADM_RO_PGUSER=$SADM_RO_PGUSER"         # PostGres RO User
                  sadm_writelog "  - SADM_RO_PGPWD=$SADM_RO_PGPWD"           # PostGres RO User Pwd
+                 sadm_writelog "  - SADM_NETWORK1 = $SADM_NETWORK1"         # Subnet to Scan
+                 sadm_writelog "  - SADM_NETWORK2 = $SADM_NETWORK2"         # Subnet to Scan
+                 sadm_writelog "  - SADM_NETWORK3 = $SADM_NETWORK3"         # Subnet to Scan
+                 sadm_writelog "  - SADM_NETWORK4 = $SADM_NETWORK4"         # Subnet to Scan
+                 sadm_writelog "  - SADM_NETWORK5 = $SADM_NETWORK5"         # Subnet to Scan
         fi                 
         return 0
 }
@@ -1296,9 +1310,10 @@ sadm_stop() {
 #                                THING TO DO WHEN FIRST CALLED
 # --------------------------------------------------------------------------------------------------
 #
-    # Make sure ALL basic requirement are met - If not then exit 1
-    sadm_check_requirements                                             # Check Lib Requirements
-    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
     
     # Load SADMIN Configuration file
     sadm_load_config_file                                               # Load SADM cfg file
+
+    # Make sure ALL basic requirement are met - If not then exit 1
+    sadm_check_requirements                                             # Check Lib Requirements
+    if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met

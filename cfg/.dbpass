@@ -1,0 +1,4 @@
+sadmin.maison.ca:5432:sadmin:squery:squery
+sadmin:5432:sadmin:squery:squery
+sadmin.maison.ca:5432:sadmin:sadmin:nimdas
+sadmin:5432:sadmin:sadmin:nimdas

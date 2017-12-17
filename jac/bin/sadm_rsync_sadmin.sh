@@ -159,13 +159,17 @@ process_servers()
 
     # Select From Database Active Servers & output result in $SADM_TMP_FILE
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
-    SQL="${SQL} from sadm.server"
+    SQL="${SQL} from server"
     SQL="${SQL} where srv_active = True"
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug is Activated
-       then sadm_writelog "$SADM_PSQL -A -F , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL"
-    fi
-    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
+   
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+
+    # Execute SQL to Update Server O/S Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
     if [ -s "$SADM_TMP_FILE1" ]                                         # File has non zero length?
@@ -181,14 +185,10 @@ process_servers()
               sadm_writelog " " ; sadm_writelog " "                     # Two Blank Lines
               sadm_writelog "${SADM_TEN_DASH}"
               sadm_writelog "Processing ($xcount) $server_fqdn"
-
+              
               # In Debug Mode Display SSH Monitoring and Sporadic Setting
               if [ $DEBUG_LEVEL -gt 3 ]                                 # If Debug is Activated
-                then if [ "$server_monitor" == "t" ]
-                            then sadm_writelog "Monitoring of SSH is ON for $server_fqdn"
-                            else sadm_writelog "Monitoring of SSH is OFF for $server_fqdn"
-                     fi
-                     if [ "$server_sporadic" == "t" ]
+                then if [ "$server_sporadic" == "1" ]
                             then sadm_writelog "Server defined as sporadically available"
                             else sadm_writelog "Server always available (Not Sporadic)"
                      fi
@@ -211,7 +211,7 @@ process_servers()
               RC=$?                                                     # Save Error Number
 
               # If SSH to server failed & it's a sporadic server = warning & next server
-              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "t" ]        # SSH don't work & Sporadic
+              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]        # SSH don't work & Sporadic
                  then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $server_fqdn"
                       continue                                          # Go process next server
               fi

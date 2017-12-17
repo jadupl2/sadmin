@@ -1,41 +1,63 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <?php
-/*
-* ==================================================================================================
-*   Author   :  Jacques Duplessis
-*   Title    :  sadm_subnet.php
-*   Version  :  1.5
-*   Date     :  14 April 2016
-*   Requires :  php
-*
-*   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
-*
-*   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
-*   of the GNU General Public License as published by the Free Software Foundation; either
-*   version 2 of the License, or (at your option) any later version.
-*
-*   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-*   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*   See the GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License along with this program.
-*   If not, see <http://www.gnu.org/licenses/>.
-* ==================================================================================================
-*/
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_init.php'); 
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_lib.php');
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_header.php');
+# ==================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadm_subnet.php
+#   Version  :  1.5
+#   Date     :  14 April 2016
+#   Requires :  php
+#
+#
+#
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   Version 2.0 - October 2017 
+#       - Replace PostGres Database with MySQL 
+#       - Web Interface changed for ease of maintenance and can concentrate on other things
+#
+# ==================================================================================================
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');       # <head>CSS,JavaScript</Head>
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-#<style type="text/css">
-#.subnet_container { color:#990000; text-align:center; }
-#</style>
+# DataTable Initialisation Function
+?>
+<script>
+    $(document).ready(function() {
+        $('#sadmTable').DataTable( {
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "bJQueryUI" : true,
+            "paging"    : true,
+            "ordering"  : true,
+            "info"      : true
+        } );
+    } );
+</script>
+
+<?php
+
+
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                       # Activate (TRUE) or Deactivate (FALSE) Debug
-
+$DEBUG = False ;                                                        # Debug Activated True/False
+$SVER  = "2.0" ;                                                        # Current version number
+$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 
 
 
@@ -59,11 +81,10 @@ $DEBUG = False ;                                       # Activate (TRUE) or Deac
 function print_subnet($wfile,$woption,$wsubnet) {
 
     # SUBNET DIV START
-    echo "\n\n<div class='subnet_container'>                 <!-- Start Subnet Container DIV -->\n";
+    #echo "\n\n<div class='subnet_container'>                 <!-- Start Subnet Container DIV -->\n";
     
     # Print Heading and Start Body Section
     print_ip_heading ("$woption",$wsubnet);
-    echo "\n<tbody>"; 
     
     # Load the IP File into $lines Array.
     $lines = file($wfile);
@@ -88,7 +109,7 @@ function print_subnet($wfile,$woption,$wsubnet) {
     echo "\n</tbody>\n</table></center><br>";
    
     # SUBNET DIV END
-    echo "\n\n</div'>                                        <!-- End Subnet Container DIV -->\n";
+#    echo "\n\n</div'>                                        <!-- End Subnet Container DIV -->\n";
     echo "\n<BR>                                             <!-- Blank Line -->\n";
 }
 
@@ -98,14 +119,11 @@ function print_subnet($wfile,$woption,$wsubnet) {
 # ==================================================================================================
 #
 function print_ip_heading($iptype,$wsubnet) {
-    
-    # Display the Standard Page Heading 
-    sadm_page_heading (ucfirst ($iptype) . " IP of Subnet ${wsubnet}/24");
-       
-    #echo '<table id="sadmTable" class="display compact nowrap">';
-    #echo "\n<center><table class='table table-bordered'>";
-    echo "\n<center>";
-    echo '<table class="display compact table-bordered cellpadding="55" cellspacing="55" border="1">';
+
+    # TABLE CREATION
+    echo "<div id='SimpleTable'>";                                      # Width Given to Table
+    echo '<table id="sadmTable" class="display" compact row-border wrap width="80%">';   
+
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th width=150 halign='center'>IP Address</th>";
@@ -113,7 +131,19 @@ function print_ip_heading($iptype,$wsubnet) {
     echo "\n<th width=250>DNS Hostname</th>";
     echo "\n<th width=220>IP Status</th>";
     echo "\n</tr>";
-    echo "\n</thead>";}
+    echo "\n</thead>";
+
+    echo "\n<tfoot>";
+    echo "\n<tr>";
+    echo "\n<th width=150 halign='center'>IP Address</th>";
+    echo "\n<th width=150>Ping Response</th>";
+    echo "\n<th width=250>DNS Hostname</th>";
+    echo "\n<th width=220>IP Status</th>";
+    echo "\n</tr>";
+    echo "\n</tfoot>";
+
+    echo "\n\n<tbody>";
+}
 
 
 
@@ -139,8 +169,9 @@ function print_ip_heading($iptype,$wsubnet) {
     $OPTION= $_GET['option'];
     if ($DEBUG)  { echo "<br>Subnet page option is $OPTION "; }
     
-    # Verify if subnet file exist         
-    $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $SUBNET . ".txt";
+    # Verify if subnet file exist    
+    list($network,$mask) = explode('/',$SUBNET);
+    $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $network . ".txt";
     if (! file_exists($subnet_file))  {
        echo "<br>The subnet file " . $subnet_file . " does not exist.\n";
        echo "<br>Correct the situation and retry request\n";
@@ -157,8 +188,12 @@ function print_ip_heading($iptype,$wsubnet) {
            exit ;
     }
     
+    # Display Content Heading
+     display_std_heading("NotHome",ucfirst ($iptype) . " IP of Subnet ${SUBNET}","",""," - $SVER");
     # Print the Subnet File
     print_subnet ("$subnet_file","$OPTION",$SUBNET);
-    
-    include           ($_SERVER['DOCUMENT_ROOT'].'/lib/sadm_footer.php')  ;
+
+    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
+    echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>

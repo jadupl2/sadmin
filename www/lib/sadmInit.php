@@ -98,6 +98,11 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_SAR_KEEPDAYS")  { define("SADM_SAR_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_RCH_KEEPDAYS")  { define("SADM_RCH_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_LOG_KEEPDAYS")  { define("SADM_LOG_KEEPDAYS"  , trim($fvalue));}
+          if (trim($fname) == "SADM_NETWORK1")      { define("SADM_NETWORK1"      , trim($fvalue));}
+          if (trim($fname) == "SADM_NETWORK2")      { define("SADM_NETWORK2"      , trim($fvalue));}
+          if (trim($fname) == "SADM_NETWORK3")      { define("SADM_NETWORK3"      , trim($fvalue));}
+          if (trim($fname) == "SADM_NETWORK4")      { define("SADM_NETWORK4"      , trim($fvalue));}
+          if (trim($fname) == "SADM_NETWORK5")      { define("SADM_NETWORK5"      , trim($fvalue));}
     }
     fclose($handle);
 } else {

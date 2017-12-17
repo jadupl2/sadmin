@@ -109,17 +109,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
-    #  OLD Daily DataBase Update with the Data Collected
-    SCMD="${SADM_BIN_DIR}/sadm_daily_database_update.py"
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
-    $SCMD >/dev/null 2>&1 
-    if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
-             SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
-    fi
-
-    # NEW Daily DataBase Update with the Data Collected
+    # Daily DataBase Update with the Data Collected
     SCMD="${SADM_BIN_DIR}/sadm_database_update.py"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1

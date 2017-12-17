@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_template_servers.sh
+#   Title    :  sadm_create_mksysb.sh
 #   Synopsis : .
 #   Version  :  1.6
 #   Date     :  14 November 2015
@@ -21,8 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# 1.6   
-# 
+# 1.5   Initial Version 
+# 1.6   Minor Corrections
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -65,19 +65,6 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
-
-
-
-# --------------------------------------------------------------------------------------------------
-#                      S c r i p t    M a i n     P r o c e s s 
-# --------------------------------------------------------------------------------------------------
-main_process()
-{
-    
-    return 0                                                            # Return Default return code
-}
-
-
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
@@ -89,7 +76,7 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    mksysb -i -e -X /export/images/${MYHOST}.mksysb  >> $SADM_LOG 2>&1
+    mksysb -i -e -X $SADMIN/dat/dr/${MYHOST}.mksysb  >> $SADM_LOG 2>&1
     SADM_EXIT_CODE=$?
     
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File

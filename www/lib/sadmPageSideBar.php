@@ -30,7 +30,7 @@
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');  # <head>CSS,JavaScript</Head>
 #echo "\n<body>";
 echo "\n\n<div class='SideBar'>";
 
@@ -47,6 +47,7 @@ $URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Mainte
 $URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
 $URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
 $URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return Code History View
+$URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
 
 
 // ================================================================================================
@@ -372,6 +373,36 @@ function SideBar_OS_Summary() {
     echo "<a href='" . $URL_EDIT_CAT . "'>Edit Category</a></div>";     # URL To Start Edit Cat.
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_EDIT_GRP . "'>Edit Group</a></div>";        # URL To Start Edit Group
+    echo "\n<hr/>";                                                     # Print Horizontal Line
+    
+
+	# ----------------------------------   Network SIDEBAR   ---------------------------------------
+    echo "\n<div class='SideBarTitle'>Network Section</div>";           # SideBar Section Title
+    if (SADM_NETWORK1 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK1 ;     # URL To Network 1 Page
+        echo "&option=all'>" . SADM_NETWORK1 . "</a></div>";            # URL To Network 1 Page
+    }
+    if (SADM_NETWORK2 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK2 ;     # URL To Network 2 Page
+        echo "&option=all'>" . SADM_NETWORK2 . "</a></div>";            # URL To Network 2 Page
+    }
+    if (SADM_NETWORK3 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK3 ;     # URL To Network 3 Page
+        echo "&option=all'>" . SADM_NETWORK3 . "</a></div>";            # URL To Network 3 Page
+    }
+    if (SADM_NETWORK4 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK4 ;     # URL To Network 4 Page
+        echo "&option=all'>" . SADM_NETWORK4 . "</a></div>";            # URL To Network 4 Page
+    }
+    if (SADM_NETWORK5 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK5 ;     # URL To Network 5 Page
+        echo "&option=all'>" . SADM_NETWORK5 . "</a></div>";            # URL To Network 5 Page
+    }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div

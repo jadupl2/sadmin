@@ -166,6 +166,11 @@ class sadmtools():
         self.cfg_storix_nfs_server      = ""                            # Storix Nfs Server
         self.cfg_storix_mount_point     = ""                            # Storix NFS Mount Point
         self.cfg_storix_backup_to_keep  = 3                             # Nb Storix Backup to Keep
+        self.cfg_network1               = ""                            # Network Subnet 1 to report
+        self.cfg_network2               = ""                            # Network Subnet 2 to report
+        self.cfg_network3               = ""                            # Network Subnet 3 to report
+        self.cfg_network4               = ""                            # Network Subnet 4 to report
+        self.cfg_network5               = ""                            # Network Subnet 5 to report
 
         # O/S Path to various commands used by SADM Tools
         self.lsb_release        = ""                                    # Command lsb_release Path
@@ -331,6 +336,12 @@ class sadmtools():
             if "SADM_STORIX_NFS_SERVER"      in CFG_NAME: self.cfg_storix_nfs_server     = CFG_VALUE
             if "SADM_STORIX_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_storix_nfs_mount_point= CFG_VALUE
             if "SADM_STORIX_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_storix_backup_to_keep = int(CFG_VALUE)
+            #
+            if "SADM_NETWORK1 "              in CFG_NAME: self.cfg_network1        = CFG_VALUE
+            if "SADM_NETWORK2 "              in CFG_NAME: self.cfg_network2        = CFG_VALUE
+            if "SADM_NETWORK3 "              in CFG_NAME: self.cfg_network3        = CFG_VALUE
+            if "SADM_NETWORK4 "              in CFG_NAME: self.cfg_network4        = CFG_VALUE
+            if "SADM_NETWORK5 "              in CFG_NAME: self.cfg_network5        = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
         return        
 
@@ -1143,6 +1154,11 @@ class sadmtools():
         print("cfg_storix_nfs_server      = ..." + self.cfg_storix_nfs_server + "...")
         print("cfg_storix_nfs_mount_point = ..." + self.cfg_storix_nfs_mount_point + "...")
         print("cfg_storix_backup_to_keep  = ..." + str(self.cfg_storix_backup_to_keep) + "...")
+        print("cfg_network1               = ..." + str(self.cfg_network1) + "...")
+        print("cfg_network2               = ..." + str(self.cfg_network2) + "...")
+        print("cfg_network3               = ..." + str(self.cfg_network3) + "...")
+        print("cfg_network4               = ..." + str(self.cfg_network4) + "...")
+        print("cfg_network5               = ..." + str(self.cfg_network5) + "...")
 
         # print(" ")                                                      # Space Line in the LOG
         # print(dash)                                                     # 80 = Lines 

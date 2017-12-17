@@ -4,11 +4,20 @@
 #  Title      sadm_lib_server.sh
 #  Date:      August 2015
 #  Synopsis:  SADMIN Standard Shell Script Library specific to get server information 
+#  Requires : sh 
 # --------------------------------------------------------------------------------------------------
+# 2017_12_17 JDuplessis
+#   V2.1 Modification of sadm_server_vg function (vgs is returning a '<' before disk size now ?)
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-
+# --------------------------------------------------------------------------------------------------
+#                             V A R I A B L E S      D E F I N I T I O N S
+# --------------------------------------------------------------------------------------------------
+#
+SADM_LIB_SERVER_VER="2.1"              ; export SADM_LIB_SERVER__VER    # This Library Version
 
 
 
@@ -432,7 +441,7 @@ sadm_server_vg() {
     case "$(sadm_get_ostype)" in
         "LINUX") ${SADM_WHICH} vgs >/dev/null 2>&1
                  if [ $? -eq 0 ]
-                    then vgs --noheadings -o vg_name,vg_size,vg_free >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null
+                    then vgs --noheadings -o vg_name,vg_size,vg_free | tr -d '<' >$SADM_TMP_DIR/sadm_vg_$$ 2>/dev/null
                          while read sadm_wvg                                                 # Read VG one per line
                             do
                             if [ "$index" -ne 0 ]                                           # Don't add ; for 1st VG

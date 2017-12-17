@@ -28,9 +28,9 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #
 # ==================================================================================================
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
-require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHead.php');  # <head>CSS,JavaScript</Head>
+require_once    ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');        # Load sadmin.cfg & Set Env.
+require_once    ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');         # Load PHP sadmin Library
+require_once    ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');  # <head>CSS,JavaScript
 
 # DataTable Initialisation Function
 ?>

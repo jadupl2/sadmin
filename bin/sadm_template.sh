@@ -105,7 +105,7 @@ process_servers()
     SQL="${SQL} where srv_active = True"
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
-    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_PGPWD "                       # Set Authentication String 
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
