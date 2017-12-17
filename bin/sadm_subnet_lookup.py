@@ -67,12 +67,6 @@ sadm.cfg_mail_type       = 1                                             # 0=No 
 #sadm.cfg_sar_keepdays   = 60                                            # Days to keep old *.sar
 #sadm.cfg_rch_keepdays   = 60                                            # Days to keep old *.rch
 #sadm.cfg_log_keepdays   = 60                                            # Days to keep old *.log
-#sadm.cfg_pguser         = ""                                            # PostGres Database user
-#sadm.cfg_pggroup        = ""                                            # PostGres Database Group
-#sadm.cfg_pgdb           = ""                                            # PostGres Database Name
-#sadm.cfg_pgschema       = ""                                            # PostGres Database Schema
-#sadm.cfg_pghost         = ""                                            # PostGres Database Host
-#sadm.cfg_pgport         = 5432                                          # PostGres Database Port
 
 
 #===================================================================================================
