@@ -20,6 +20,7 @@
 #  2017_08_24 JDuplessis - V2.3 Rewrote section of code & Message more concise
 #  2017_08_29 JDuplessis - V2.4 Bug Fix - Corrected problem when retrying rsync when failed
 #  2017_08_30 JDuplessis - V2.5 If SSH test to server fail, try a second time (Prevent false Error)
+#  2017_12_17 JDuplessis - V2.6 Modify to use MySQL instead of PostGres
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.5'                             ; export SADM_VER            # Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -148,13 +149,17 @@ process_servers()
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
-    SQL="${SQL} from sadm.server"
-    SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True"
+    SQL="${SQL} from server"
+    SQL="${SQL} where srv_active = True"
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    if [ $DEBUG_LEVEL -gt 5 ]
-       then sadm_writelog "$SADM_PSQL -AF , -th $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c $SQL"
-    fi
-    $SADM_PSQL -AF , -t -h $SADM_PGHOST $SADM_PGDB -U $SADM_RO_PGUSER -c "$SQL" >$SADM_TMP_FILE1
+    
+    WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
+    CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
+    CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
+
+    # Execute SQL to Update Server O/S Data
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]                                         # File has a non zero len ?
@@ -172,11 +177,11 @@ process_servers()
 
               # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
               if [ $DEBUG_LEVEL -gt 0 ]                                 # If Debug Activated
-                 then if [ "$server_monitor" == "t" ]                   # Monitor Flag is at True
+                 then if [ "$server_monitor" == "1" ]                   # Monitor Flag is at True
                             then sadm_writelog "Monitoring is ON for $fqdn_server"
                             else sadm_writelog "Monitoring is OFF for $fqdn_server"
                       fi
-                      if [ "$server_sporadic" == "t" ]                  # Monitor Flag is at True
+                      if [ "$server_sporadic" == "1" ]                  # Sporadic Flag is at True
                             then sadm_writelog "Sporadic server is ON for $fqdn_server"
                             else sadm_writelog "Sporadic server is OFF for $fqdn_server"
                       fi
@@ -199,13 +204,13 @@ process_servers()
               RC=$?                                                     # Save Error Number
 
               # IF SSH TO SERVER FAILED & IT'S A SPORADIC SERVER = WARNING & NEXT SERVER
-              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "t" ]        # SSH don't work & Sporadic
+              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]        # SSH don't work & Sporadic
                  then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
                       continue                                          # Go process next server
               fi
 
               # IF SSH TO SERVER FAILED & MONITORING THIS SERVER IS OFF = WARNING & NEXT SERVER
-              if [ $RC -ne 0 ] &&  [ "$server_monitor" == "f" ]         # SSH don't work/Monitor OFF
+              if [ $RC -ne 0 ] &&  [ "$server_monitor" == "0" ]         # SSH don't work/Monitor OFF
                  then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
                       continue                                          # Go process next server
               fi
