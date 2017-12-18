@@ -609,7 +609,7 @@ sadm_date_to_epoch() {
                     HH=`printf "%02d" $HH`
                     MM=`printf "%02d" $MM`
                     SS=`printf "%02d" $SS`                   
-                    sadm_date_to_epoch=`date -j -f "%Y/%m/%d %T" "$YYYY/$MTH/$DD $HH:$MM:$SS" +"%s"`
+                    sadm_date_to_epoch=`date +"%s" -d "$YYYY/$MTH/$DD $HH:$MM:$SS" `
                     ;; 
         "AIX")      if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
                     MTH=`echo "$MTH -1" | $SADM_BC`
