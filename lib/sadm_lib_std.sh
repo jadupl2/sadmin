@@ -37,6 +37,7 @@ HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Curren
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
+SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_TWENTY_DASH=`printf %20s |tr " " "-"`  ; export SADM_TWENTY_DASH   # 20 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
@@ -363,14 +364,6 @@ sadm_check_requirements() {
             SADM_DMIDECODE=$SADM_VAR1                                   # Save Command Path
             sadm_check_command_availibility "fdisk"                     # FDISK cmd available?
             SADM_FDISK=$SADM_VAR1                                       # Save Command Path
-            sadm_check_command_availibility "bc"                        # bc cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "bc" "bc"                      # Go Install Missing Package
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility "bc"        # Check if command now Avail
-                    fi
-            fi
-            SADM_BC=$SADM_VAR1                                          # Save Command Path
             
             # Check Availibility of the "nmon" command
             sadm_check_command_availibility "nmon"                      # Command available?
@@ -449,6 +442,10 @@ sadm_check_requirements() {
     SADM_PERL=$SADM_VAR1                                                # Save perl path
     sadm_check_command_availibility "ssh"                               # ssh needed (epoch time)
     SADM_SSH=$SADM_VAR1                                                 # Save ssh path
+    sadm_check_command_availibility "bc"                                # bc cmd available?
+    SADM_BC=$SADM_VAR1                                                  # Save Command Path
+    sadm_check_command_availibility "mail"                              # Mail cmd available?
+    SADM_MAIL=$SADM_VAR1                                                # Save Command Path
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     SADM_MYSQL=""                                                       # Default mysql Location
@@ -478,10 +475,9 @@ sadm_check_requirements() {
 # --------------------------------------------------------------------------------------------------
 #      Called when we need to advise the user of an error or when his attention is required.
 # --------------------------------------------------------------------------------------------------
-alert_user()
-{
+alert_user()    {
     
-# Save Received Parameters
+    # Save Received Parameters
     a_type=$1                                                           # Proto M=Mail T=Text P=Page
     a_severity=$2                                                       # E=Error W=Warning I=info
     a_server=$3                                                         # Problematic Server Name 
@@ -489,7 +485,7 @@ alert_user()
     a_mess=$5                                                           # Alert Message
     a_exit_code=0                                                       # Def. Function Return Code
 
-# Build the SADM uniform Subject Prefix - Based on Alert Severity Received
+    # Build the SADM uniform Subject Prefix - Based on Alert Severity Received
     case "$a_severity" in                                               # Depend on Severity E/W/I
         e|E) a_prefix="SADM: ERROR "                                    # Error SADM Subject Prefix        
              ;; 
@@ -502,7 +498,7 @@ alert_user()
              ;; 
     esac
 
-# Send the Alert Message using the Protocol requested
+    # Send the Alert Message using the Protocol requested
     case "$a_type" in 
         m|M) if [ "$SADM_MAIL" == "" ] 
                 then sadm_writelog "Function 'alert_user' was requested to send an email" 
@@ -593,28 +589,49 @@ sadm_date_to_epoch() {
              sadm_stop 1                                                # Prepare to exit gracefully
              exit 1                                                     # Terminate the script
     fi
+
     WDATE=$1                                                            # Save Received Date
     YYYY=`echo $WDATE | awk -F. '{ print $1 }'`                         # Extract Year from Rcv Date
     MTH=` echo $WDATE | awk -F. '{ print $2 }'`                         # Extract MTH  from Rcv Date
-    #let "MTH=$MTH -1"                                                  # Month less one for perl
-    #MTH=$(($MTH - 1 ))                                                  # Month less one for perl
-    MTH=`echo "$MTH -1" | $SADM_BC`
-
-    if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
-    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0//'` # Extract Day
-    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0//'` # Extract Hours
-    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }' | sed 's/^0//'` # Extract Min   
-    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0//'` # Extract Sec
+    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }'`    # Extract Day
+    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }'`    # Extract Hours
+    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }'`    # Extract Min   
+    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }'`    # Extract Sec
 
 #jacques@mycroftw:~/Documents/Dev/sadmin/bin$ date -j -f "%Y/%m/%d %T" "2009/10/15 04:58:06" +"%s"
 #1255597086
 #jacques@holmes:~$ date "+%s" -d "2009/10/15 04:58:06"
 #1255597086
-   
+    #sadm_writelog "OSTYPE = $(sadm_get_ostype) - date $YYYY/$MTH/$DD $HH:$MM:$SS"
+    case "$(sadm_get_ostype)" in                                            
+        "LINUX")    DD=`printf "%02d" $DD` 
+                    MTH=`printf "%02d" $MTH`
+                    HH=`printf "%02d" $HH`
+                    MM=`printf "%02d" $MM`
+                    SS=`printf "%02d" $SS`                   
+                    sadm_date_to_epoch=`date -j -f "%Y/%m/%d %T" "$YYYY/$MTH/$DD $HH:$MM:$SS" +"%s"`
+                    ;; 
+        "AIX")      if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
+                    MTH=`echo "$MTH -1" | $SADM_BC`
+                    DD=`echo   $WDATE | awk -F. '{ print $3 }' | awk '{ print $1 }' | sed 's/^0//'` # Extract Day
+                    HH=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $1 }' | sed 's/^0//'` # Extract Hours
+                    MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }' | sed 's/^0//'` # Extract Min   
+                    SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0//'` # Extract Sec
+                    sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
+                    ;;
+        "DARWIN")   #set -x 
+                    DD=` printf "%02d" $DD` 
+                    MTH=`printf "%02d" $MTH`
+                    HH=` printf "%02d" $HH`
+                    MM=` printf "%02d" $MM`
+                    SS=` printf "%02d" $SS`                   
+                    sadm_date_to_epoch=`date -j -f "%Y/%m/%d %T" "$YYYY/$MTH/$DD $HH:$MM:$SS" +"%s"`
+                    ;;   
+    esac
     # Call Perl to Return Epoch Time for Date Received   
     #sadm_writelog ("timelocal $SS , $MM , $HH , $DD ,$MTH , $YYYY")
-    sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
-
+    #sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
+    #sadm_writelog "epoch is $sadm_date_to_epoch"
     echo "$sadm_date_to_epoch"                                          # Return Epoch of Date Rcv.
 }
 
@@ -862,8 +879,7 @@ sadm_get_kernel_version() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 #
-sadm_load_config_file() 
-{
+sadm_load_config_file() {
 
     # Configuration file MUST be present - If .sadm_config exist, then create sadm_config from it.
     if [ ! -r "$SADM_CFG_FILE" ]
@@ -1169,7 +1185,7 @@ sadm_start() {
     echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     
     # Write Starting Info in the Log
-    sadm_writelog "${SADM_FIFTY_DASH}"
+    sadm_writelog "${SADM_80_DASH}"
     sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
     sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
     sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
@@ -1260,7 +1276,7 @@ sadm_stop() {
 
     sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
     sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
-    sadm_writelog "${SADM_FIFTY_DASH}"                                  # Write 80 Dash Line
+    sadm_writelog "${SADM_80_DASH}"                                  # Write 80 Dash Line
     sadm_writelog " "                                                   # Blank Line
     sadm_writelog " "                                                   # Blank Line
     sadm_writelog " "                                                   # Blank Line

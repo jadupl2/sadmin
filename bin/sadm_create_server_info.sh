@@ -377,6 +377,7 @@ create_summary_file()
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
+             sleep 5 
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
