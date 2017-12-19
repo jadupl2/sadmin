@@ -598,23 +598,21 @@ sadm_date_to_epoch() {
     MM=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $2 }'`    # Extract Min   
     SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }'`    # Extract Sec
 
-#jacques@mycroftw:~/Documents/Dev/sadmin/bin$ date -j -f "%Y/%m/%d %T" "2009/10/15 04:58:06" +"%s"
-#1255597086
-#jacques@holmes:~$ date "+%s" -d "2009/10/15 04:58:06"
-#1255597086
-    #sadm_writelog "OSTYPE = $(sadm_get_ostype) - date $YYYY/$MTH/$DD $HH:$MM:$SS"
     case "$(sadm_get_ostype)" in                                            
-        "LINUX")    DD=`printf "%02d" $DD` 
-                    MTH=`printf "%02d" $MTH`
-                    HH=`printf "%02d" $HH`
-                    MM=`printf "%02d" $MM`
-                    SS=`printf "%02d" $SS`                   
 <<<<<<< HEAD
-                    sadm_date_to_epoch=`date +"%s" -d "$YYYY/$MTH/$DD $HH:$MM:$SS" `
+        "LINUX")    DD= `printf "%02d" $DD` 
+                    MTH=`printf "%02d" $MTH`
+                    HH=` printf "%02d" $HH`
+                    MM=` printf "%02d" $MM`
+                    SS=` printf "%02d" $SS`                   
 =======
-                    #sadm_date_to_epoch=`date -j -f "%Y/%m/%d %T" "$YYYY/$MTH/$DD $HH:$MM:$SS" +"%s"`
-		    sadm_date_to_epoch=`date +"%s" -d "$YYYY/$MTH/$DD $HH:$MM:$SS" `
->>>>>>> 26db248297291b8503fe4f1e37d1f9d772604ea0
+        "LINUX")    if [ ${#DD} -lt 2 ]     ; then  DD=` printf "%02d" $DD`     ; fi 
+                    if [ ${#MTH} -lt 2 ]    ; then  MTH=`printf "%02d" $MTH`    ; fi
+                    if [ ${#HH} -lt 2 ]     ; then  HH=` printf "%02d" $HH`     ; fi
+                    if [ ${#MM} -lt 2 ]     ; then  MM=` printf "%02d" $MM`     ; fi
+                    if [ ${#SS} -lt 2 ]     ; then  SS=` printf "%02d" $SS`     ; fi               
+>>>>>>> 15e196493c17ffd25d5826ca96942dca0c3598e9
+                    sadm_date_to_epoch=`date +"%s" -d "$YYYY/$MTH/$DD $HH:$MM:$SS" `
                     ;; 
         "AIX")      if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth
                     MTH=`echo "$MTH -1" | $SADM_BC`
@@ -624,19 +622,14 @@ sadm_date_to_epoch() {
                     SS=`echo   $WDATE | awk '{ print $2 }' | awk -F: '{ print $3 }' | sed 's/^0//'` # Extract Sec
                     sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
                     ;;
-        "DARWIN")   #set -x 
-                    DD=` printf "%02d" $DD` 
-                    MTH=`printf "%02d" $MTH`
-                    HH=` printf "%02d" $HH`
-                    MM=` printf "%02d" $MM`
-                    SS=` printf "%02d" $SS`                   
+        "DARWIN")   if [ ${#DD} -lt 2 ]     ; then  DD=` printf "%02d" $DD`     ; fi 
+                    if [ ${#MTH} -lt 2 ]    ; then  MTH=`printf "%02d" $MTH`    ; fi
+                    if [ ${#HH} -lt 2 ]     ; then  HH=` printf "%02d" $HH`     ; fi
+                    if [ ${#MM} -lt 2 ]     ; then  MM=` printf "%02d" $MM`     ; fi
+                    if [ ${#SS} -lt 2 ]     ; then  SS=` printf "%02d" $SS`     ; fi                     
                     sadm_date_to_epoch=`date -j -f "%Y/%m/%d %T" "$YYYY/$MTH/$DD $HH:$MM:$SS" +"%s"`
                     ;;   
     esac
-    # Call Perl to Return Epoch Time for Date Received   
-    #sadm_writelog ("timelocal $SS , $MM , $HH , $DD ,$MTH , $YYYY")
-    #sadm_date_to_epoch=`perl -e "use Time::Local; print timelocal($SS,$MM,$HH,$DD,$MTH,$YYYY)"`
-    #sadm_writelog "epoch is $sadm_date_to_epoch"
     echo "$sadm_date_to_epoch"                                          # Return Epoch of Date Rcv.
 }
 
@@ -800,12 +793,12 @@ sadm_get_release() {
 #                                 RETURN THE HOSTNAME (SHORT)
 # --------------------------------------------------------------------------------------------------
 sadm_get_hostname() {
-    if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
-        then whostname=`hostname -s`                                    # Get rid of domain name
-    fi
-    if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under AIX
-        then whostname=`hostname | awk -F. '{ print $1 }'`              # Get HostName
-    fi
+    case "$(sadm_get_ostype)" in
+        "AIX")      whostname=`hostname | awk -F. '{ print $1 }'`       # Get HostName
+                    ;;
+        *)          whostname=`hostname -s`                             # Get rid of domain name
+                    ;;
+    esac
     echo "$whostname"
 }
 
@@ -839,10 +832,12 @@ sadm_get_fqdn() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_host_ip() {
     case "$(sadm_get_ostype)" in
-        "LINUX") whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1` 
-                 ;;
-        "AIX")   whost_ip=`host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }'` 
-                 ;;
+        "LINUX")    whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1` 
+                    ;;
+        "AIX")      whost_ip=`host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }'` 
+                    ;;
+        "DARWIN")   whost_ip=`ifconfig |grep inet | grep broadcast | awk '{ print $2 }'`
+                    ;;
     esac    
     echo "$whost_ip"
 }
@@ -858,6 +853,8 @@ sadm_get_kernel_bitmode() {
                    ;;
         "AIX")     wkernel_bitmode=`getconf KERNEL_BITMODE`
                    ;;
+         "DARWIN") wkernel_bitmode=64
+                   ;; 
     esac
     echo "$wkernel_bitmode"
 }
@@ -869,12 +866,13 @@ sadm_get_kernel_bitmode() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_kernel_version() {
     case "$(sadm_get_ostype)" in
-        "LINUX")   wkernel_version=`uname -r | cut -d. -f1-3`
-                   ;;
-        "AIX")     wkernel_version=`uname -r`
-                   ;;
+        "LINUX")    wkernel_version=`uname -r | cut -d. -f1-3`
+                    ;;
+        "AIX")      wkernel_version=`uname -r`
+                    ;;
+        *)          wkernel_version=`uname -r`
+                    ;;
     esac
-    
     echo "$wkernel_version"
 }
 
