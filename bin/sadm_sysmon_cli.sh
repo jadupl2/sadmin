@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_sysmon_cli.sh
@@ -23,7 +23,8 @@
 # Enhancements/Corrections Version Log
 # 1.7  Added Print Content of Error reported by RCH Files
 #       Output now colorized
-# 
+# 2017_12_18    JDuplessis
+#   V1.8 Exit with Error when sadm_sysmon.pl was already running - Now Show Message & Exit 0
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -38,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -137,8 +138,15 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
     awk 'match($8,/1/) { print }' $SADM_TMP_FILE2 > $SADM_TMP_FILE3 
 
+    # Run the System Monitor
     $SADM_BIN_DIR/sadm_sysmon.pl
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
+    if [ "$SADM_EXIT_CODE" -ne "0" ] 
+        then echo "System Monitor (sadm_sysmon.pl) is running" 
+             echo "Try running 'smon' in a couple of seconds"
+             sadm_stop 0                                                # Upd. RCH File & Trim Log 
+             exit 0    
+    fi
 
     tput clear 
     echo "----------------------------------------------------------------------------------"

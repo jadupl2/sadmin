@@ -56,136 +56,18 @@ Debug=true                                      ; export Debug          # Debug 
 #
 
 
-# --------------------------------------------------------------------------------------------------
-# Display All SADM Variables Available to USER
-# --------------------------------------------------------------------------------------------------
-sadm_display_variables()
-{
-
-# SADMIN DIRECTORIES STRUCTURES DEFINITIONS
-    tput clear  ; printf "DIRECTORIES VARIABLES\n" ; printf "\n"
-    printf "SADM_BASE_DIR        = $SADM_BASE_DIR\n" 
-    printf "SADM_BIN_DIR         = $SADM_LIB_DIR\n" 
-    printf "SADM_TMP_DIR         = $SADM_TMP_DIR\n" 
-    printf "SADM_LIB_DIR         = $SADM_LIB_DIR\n" 
-    printf "SADM_LOG_DIR         = $SADM_LOG_DIR\n" 
-    printf "SADM_CFG_DIR         = $SADM_CFG_DIR\n" 
-    printf "SADM_SYS_DIR         = $SADM_SYS_DIR\n" 
-    printf "SADM_DAT_DIR         = $SADM_DAT_DIR\n"
-    printf "SADM_PG_DIR          = $SADM_PG_DIR\n" 
-    printf "SADM_PKG_DIR         = $SADM_PKG_DIR\n" 
-    printf "SADM_NMON_DIR        = $SADM_NMON_DIR\n" 
-    printf "SADM_DR_DIR          = $SADM_DR_DIR\n"
-    printf "SADM_SAR_DIR         = $SADM_SAR_DIR\n" 
-    printf "SADM_RCH_DIR         = $SADM_RCH_DIR\n" 
-    printf "SADM_NET_DIR         = $SADM_NET_DIR\n" 
-#
-# SADMIN WEB SITE DIRECTORIES DEFINITION
-    printf "SADM_WWW_DIR         = $SADM_WWW_DIR\n" 
-    printf "SADM_WWW_HTML_DIR    = $SADM_WWW_HTML_DIR\n" 
-    printf "SADM_WWW_DAT_DIR     = $SADM_WWW_DAT_DIR\n" 
-    printf "SADM_WWW_LIB_DIR     = $SADM_WWW_LIB_DIR\n" 
-    printf "SADM_WWW_RCH_DIR     = $SADM_WWW_RCH_DIR\n" 
-    printf "SADM_WWW_SAR_DIR     = $SADM_WWW_SAR_DIR\n"
-    printf "SADM_WWW_NET_DIR     = $SADM_WWW_NET_DIR\n" 
-    printf "SADM_WWW_DR_DIR      = $SADM_WWW_DR_DIR\n" 
-    printf "SADM_WWW_NMON_DIR    = $SADM_WWW_NMON_DIR\n" 
-    printf "SADM_WWW_TMP_DIR     = $SADM_WWW_TMP_DIR\n" 
-    printf "SADM_WWW_LOG_DIR     = $SADM_WWW_LOG_DIR\n" 
-    echo "Press [ENTER] to Continue" ; read dummy
-
-#
-# SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
-    tput clear ; printf "FILES VARIABLES\n" ; printf "\n"
-    printf "SADM_PID_FILE        = $SADM_PID_FILE\n" 
-    printf "SADM_CFG_FILE        = $SADM_CFG_FILE\n" 
-    printf "SADM_REL_FILE        = $SADM_REL_FILE\n" 
-    printf "SADM_CFG_HIDDEN      = $SADM_CFG_HIDDEN\n" 
-    printf "SADM_TMP_FILE1       = $SADM_TMP_FILE1\n" 
-    printf "SADM_TMP_FILE2       = $SADM_TMP_FILE2\n" 
-    printf "SADM_TMP_FILE3       = $SADM_TMP_FILE3\n" 
-    printf "SADM_LOG             = $SADM_LOG\n" 
-    printf "SADM_RCHLOG          = $SADM_RCHLOG\n" 
-    printf "DBPASSFILE           = $DBPASSFILE\n" 
-    printf "SADM_SERVER          = $SADM_SERVER\n" 
-    printf "SADM_DOMAIN          = $SADM_DOMAIN\n"
-#    
-# COMMAND PATH REQUIRE TO RUN SADM
-    printf "\n" ; printf "PROGRAM USED & MISC. VARIABLES\n" ; printf "\n"
-    printf "SADM_LSB_RELEASE     = $SADM_LSB_RELEASE\n"
-    printf "SADM_DMIDECODE       = $SADM_DMIDECODE\n" 
-    printf "SADM_BC              = $SADM_BC\n" 
-    printf "SADM_FDISK           = $SADM_FDISK\n" 
-    printf "SADM_WHICH           = $SADM_WHICH\n" 
-    printf "SADM_PERL            = $SADM_PERL\n"
-    printf "SADM_MAIL            = $SADM_MAIL\n" 
-    printf "SADM_LSCPU           = $SADM_LSCPU\n"
-    printf "SADM_NMON            = $SADM_NMON\n"
-    printf "SADM_PARTED          = $SADM_PARTED\n" 
-    printf "SADM_ETHTOOL         = $SADM_ETHTOOL\n"
-    printf "SADM_PSQL            = $SADM_PSQL\n"
-    printf "SADM_SSH             = $SADM_SSH\n" 
-    printf "SADM_DASH            = $SADM_DASH\n" 
-    printf "SADM_TEN_DASH        = $SADM_TEN_DASH\n" 
-    echo "Press [ENTER] to Continue" ; read dummy
-    
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-    tput clear ; printf "VARIABLES LOADED FROM SADM CONFIGURATION FILE\n" ; printf "\n"
-    printf "SADM_MAIL_ADDR       = $SADM_MAIL_ADDR\n"
-    printf "SADM_MAIL_TYPE       = $SADM_MAIL_TYPE\n" 
-    printf "SADM_CIE_NAME        = $SADM_CIE_NAME\n" 
-    printf "SADM_USER            = $SADM_USER\n"
-    printf "SADM_GROUP           = $SADM_GROUP\n"
-    printf "SADM_WWW_USER        = $SADM_WWW_USER\n" 
-    printf "SADM_WWW_GROUP       = $SADM_GROUP\n" 
-    printf "SADM_MAX_LOGLINE     = $SADM_MAX_LOGLINE\n" 
-    printf "SADM_MAX_RCLINE      = $SADM_MAX_RCLINE\n" 
-    printf "SADM_NMON_KEEPDAYS   = $SADM_NMON_KEEPDAYS\n" 
-    printf "SADM_SAR_KEEPDAYS    = $SADM_SAR_KEEPDAYS\n" 
-    printf "SADM_RCH_KEEPDAYS    = $SADM_RCH_KEEPDAYS\n" 
-    printf "SADM_LOG_KEEPDAYS    = $SADM_LOG_KEEPDAYS\n" 
-    #
-    printf "SADM_DBNAME          = $SADM_DBNAME\n" 
-    printf "SADM_DBHOST          = $SADM_DBHOST\n" 
-    printf "SADM_DBPORT          = $SADM_DBPORT\n" 
-    printf "SADM_RW_DBUSER       = $SADM_RW_DBUSER\n" 
-    printf "SADM_RW_PGPWD        = $SADM_RW_DBPWD\n" 
-    printf "SADM_RO_DBUSER       = $SADM_RO_DBUSER\n"
-    printf "SADM_RO_DBPWD        = $SADM_RO_DBPWD\n" 
-    #
-    printf "SADM_SSH_PORT        = $SADM_SSH_PORT\n"
-    #
-    printf "SADM_NETWORK1        = $SADM_NETWORK1\n"
-    printf "SADM_NETWORK2        = $SADM_NETWORK2\n"
-    printf "SADM_NETWORK3        = $SADM_NETWORK3\n"
-    printf "SADM_NETWORK4        = $SADM_NETWORK4\n"
-    printf "SADM_NETWORK5        = $SADM_NETWORK5\n"
-    #
-    printf "SADM_REAR_NFS_SERVER        = $SADM_REAR_NFS_SERVER\n"
-    printf "SADM_REAR_NFS_MOUNT_POINT   = $SADM_REAR_NFS_MOUNT_POINT\n"
-    printf "SADM_REAR_BACKUP_TO_KEEP    = $SADM_REAR_BACKUP_TO_KEEP\n" 
-    printf "SADM_BACKUP_NFS_SERVER      = $SADM_BACKUP_NFS_SERVER\n"
-    printf "SADM_BACKUP_NFS_MOUNT_POINT = $SADM_BACKUP_NFS_MOUNT_POINT\n"
-    printf "SADM_BACKUP_TO_KEEP         = $SADM_BACKUP_TO_KEEP\n"
-    printf "SADM_STORIX_NFS_SERVER      = $SADM_STORIX_NFS_SERVER\n"
-    printf "SADM_STORIX_NFS_MOUNT_POINT = $SADM_STORIX_NFS_MOUNT_POINT\n"
-    printf "SADM_STORIX_BACKUP_TO_KEEP  = $SADM_STORIX_BACKUP_TO_KEEP\n"
-    #
-    echo "Press [ENTER] to Continue" ; read dummy
-}
-
 
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    tput clear
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
     
     
+    tput clear
     printf "=========================================================================================================================================\n"
-    printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part I)                                                    \n"
-    printf "                                                                                                                    RETURN VALUE         \n"
+    printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part I)                       \n"
+    printf "                                                                                                                   RETURN VALUE \n"
     printf "VARIABLE AVAILABLE TO USE                   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================================\n"
     printf "\$(sadm_get_release)                         SADMIN Release Number (XX.XX)                                    : ...$(sadm_get_release)...\n"
@@ -214,13 +96,14 @@ sadm_display_variables()
     printf " \n"
     printf "=========================================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
+
     tput clear
     printf "=========================================================================================================================================\n"
-    printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part II)                                           \n"
-    printf "                                                                                                    RETURN VALUE         \n"
-    printf "VARIABLE AVAILABLE TO USE           DESCRIPTION                                                 PREFIX & SUFFIX BY 3 DOTS \n"
+    printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part II)                      \n"
+    printf "                                                                 \n"
+    printf "FUNCTION NAME                       DESCRIPTION OF IMPORTANT FUNCTION  \n"
     printf "=========================================================================================================================================\n"
-    printf "sadm_start                          Start and initialize sadm environment\n"
+    printf "sadm_start                          Start and initialize sadm environment - Accept no Parameter\n"
     printf "                                    If SADMIN root directory is not /sadmin, make sure the SADMIN Env. variable is set to proper directory.\n"
     printf "                                    Please call this function when your script is starting\n"
     printf "                                    What this function will do for us :\n" 
@@ -247,9 +130,10 @@ sadm_display_variables()
     printf " \n"
     printf "=========================================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
+
     tput clear
     printf "=========================================================================================================================================\n"
-    printf "                                      FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH  (PART III)                                           \n"
+    printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part III)                  \n"
     printf "                                                                                                    RETURN VALUE         \n"
     printf "VARIABLE AVAILABLE TO USE   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS \n"
     printf "=========================================================================================================================================\n"
@@ -270,31 +154,127 @@ sadm_display_variables()
     printf "=========================================================================================================================\n"
     echo "Press [ENTER] to Continue" ; read dummy
 
+    tput clear
+    printf "=========================================================================================================================================\n"
+    printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       GLOBAL VARIABLES AVAILABLE TO USER (Part I)                  \n"
+    printf "                                                                                                      \n"
+    printf "VARIABLE NAME    VALUE \n"
+    printf "=========================================================================================================================================\n"
+    printf "DIRECTORIES VARIABLES\n" ; printf "\n"
+    printf "SADM_BASE_DIR        = $SADM_BASE_DIR\n" 
+    printf "SADM_BIN_DIR         = $SADM_LIB_DIR\n" 
+    printf "SADM_TMP_DIR         = $SADM_TMP_DIR\n" 
+    printf "SADM_LIB_DIR         = $SADM_LIB_DIR\n" 
+    printf "SADM_LOG_DIR         = $SADM_LOG_DIR\n" 
+    printf "SADM_CFG_DIR         = $SADM_CFG_DIR\n" 
+    printf "SADM_SYS_DIR         = $SADM_SYS_DIR\n" 
+    printf "SADM_DAT_DIR         = $SADM_DAT_DIR\n"
+    printf "SADM_PKG_DIR         = $SADM_PKG_DIR\n" 
+    printf "SADM_NMON_DIR        = $SADM_NMON_DIR\n" 
+    printf "SADM_DR_DIR          = $SADM_DR_DIR\n"
+    printf "SADM_SAR_DIR         = $SADM_SAR_DIR\n" 
+    printf "SADM_RCH_DIR         = $SADM_RCH_DIR\n" 
+    printf "SADM_NET_DIR         = $SADM_NET_DIR\n" 
+    printf "SADM_WWW_DIR         = $SADM_WWW_DIR\n" 
+    printf "SADM_WWW_HTML_DIR    = $SADM_WWW_HTML_DIR\n" 
+    printf "SADM_WWW_DAT_DIR     = $SADM_WWW_DAT_DIR\n" 
+    printf "SADM_WWW_LIB_DIR     = $SADM_WWW_LIB_DIR\n" 
+    printf "SADM_WWW_RCH_DIR     = $SADM_WWW_RCH_DIR\n" 
+    printf "SADM_WWW_SAR_DIR     = $SADM_WWW_SAR_DIR\n"
+    printf "SADM_WWW_NET_DIR     = $SADM_WWW_NET_DIR\n" 
+    printf "SADM_WWW_DR_DIR      = $SADM_WWW_DR_DIR\n" 
+    printf "SADM_WWW_NMON_DIR    = $SADM_WWW_NMON_DIR\n" 
+    printf "SADM_WWW_TMP_DIR     = $SADM_WWW_TMP_DIR\n" 
+    printf "SADM_WWW_LOG_DIR     = $SADM_WWW_LOG_DIR\n" 
+    echo "Press [ENTER] to Continue" ; read dummy
+
+#
+# SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
+    tput clear ; printf "FILES VARIABLES\n" ; printf "\n"
+    printf "SADM_PID_FILE        = $SADM_PID_FILE\n" 
+    printf "SADM_CFG_FILE        = $SADM_CFG_FILE\n" 
+    printf "SADM_REL_FILE        = $SADM_REL_FILE\n" 
+    printf "SADM_CFG_HIDDEN      = $SADM_CFG_HIDDEN\n" 
+    printf "SADM_TMP_FILE1       = $SADM_TMP_FILE1\n" 
+    printf "SADM_TMP_FILE2       = $SADM_TMP_FILE2\n" 
+    printf "SADM_TMP_FILE3       = $SADM_TMP_FILE3\n" 
+    printf "SADM_LOG             = $SADM_LOG\n" 
+    printf "SADM_RCHLOG          = $SADM_RCHLOG\n" 
+    printf "DBPASSFILE           = $DBPASSFILE\n" 
+    printf "SADM_SERVER          = $SADM_SERVER\n" 
+    printf "SADM_DOMAIN          = $SADM_DOMAIN\n"
    
-     
-    sadm_display_variables
-
-     
-    #tput clear
-    #echo " "
-    #echo "TEST EPOCH AND ELAPSE TIME CALCULTATION FUNCTIONS"
-    #echo " "
-    #wstart_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    #epoch_start=`sadm_date_to_epoch  "$wstart_time"`
-    #printf "Start Date is $wstart_time - Epoch is $epoch_start \n"
-    #echo "Please wait - Sleeping for 5 seconds"
-    #sleep 5 
-    #wend_time=`date "+%C%y.%m.%d %H:%M:%S"`
-    #epoch_end=`sadm_date_to_epoch "$wend_time"`
-    #welapse=$(sadm_elapse_time "$wend_time" "$wstart_time")
-    #printf "End   Date is $wend_time - Epoch is $epoch_end \n"
-    #printf "Elapsed time is $welapse \n"
-
-
+    # COMMAND PATH REQUIRE TO RUN SADM
+    printf "\nPROGRAM USED & MISC. VARIABLES\n\n"
+    printf "SADM_LSB_RELEASE     = $SADM_LSB_RELEASE\n"
+    printf "SADM_DMIDECODE       = $SADM_DMIDECODE\n" 
+    printf "SADM_BC              = $SADM_BC\n" 
+    printf "SADM_FDISK           = $SADM_FDISK\n" 
+    printf "SADM_WHICH           = $SADM_WHICH\n" 
+    printf "SADM_PERL            = $SADM_PERL\n"
+    printf "SADM_MAIL            = $SADM_MAIL\n" 
+    printf "SADM_LSCPU           = $SADM_LSCPU\n"
+    printf "SADM_NMON            = $SADM_NMON\n"
+    printf "SADM_PARTED          = $SADM_PARTED\n" 
+    printf "SADM_ETHTOOL         = $SADM_ETHTOOL\n"
+    printf "SADM_SSH             = $SADM_SSH\n" 
+    printf "SADM_DASH            = $SADM_DASH\n" 
+    printf "SADM_TEN_DASH        = $SADM_TEN_DASH\n" 
+    echo "Press [ENTER] to Continue" ; read dummy
     
+# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+    tput clear
+    printf "VARIABLES LOADED FROM SADM CONFIGURATION FILE\n\n" 
+    printf "SADM_MAIL_ADDR              = $SADM_MAIL_ADDR\n"
+    printf "SADM_MAIL_TYPE              = $SADM_MAIL_TYPE\n" 
+    printf "SADM_CIE_NAME               = $SADM_CIE_NAME\n" 
+    printf "SADM_USER                   = $SADM_USER\n"
+    printf "SADM_GROUP                  = $SADM_GROUP\n"
+    printf "SADM_SSH_PORT               = $SADM_SSH_PORT\n"
+    printf "SADM_WWW_USER               = $SADM_WWW_USER\n" 
+    printf "SADM_WWW_GROUP              = $SADM_GROUP\n" 
+    printf "SADM_MAX_LOGLINE            = $SADM_MAX_LOGLINE\n" 
+    printf "SADM_MAX_RCLINE             = $SADM_MAX_RCLINE\n" 
+    printf "SADM_NMON_KEEPDAYS          = $SADM_NMON_KEEPDAYS\n" 
+    printf "SADM_SAR_KEEPDAYS           = $SADM_SAR_KEEPDAYS\n" 
+    printf "SADM_RCH_KEEPDAYS           = $SADM_RCH_KEEPDAYS\n" 
+    printf "SADM_LOG_KEEPDAYS           = $SADM_LOG_KEEPDAYS\n" 
+    #
+    printf "SADM_DBNAME                 = $SADM_DBNAME\n" 
+    printf "SADM_DBDIR                  = $SADM_DBDIR\n" 
+    printf "SADM_DBHOST                 = $SADM_DBHOST\n" 
+    printf "SADM_DBPORT                 = $SADM_DBPORT\n" 
+    printf "SADM_RW_DBUSER              = $SADM_RW_DBUSER\n" 
+    printf "SADM_RW_PGPWD               = $SADM_RW_DBPWD\n" 
+    printf "SADM_RO_DBUSER              = $SADM_RO_DBUSER\n"
+    printf "SADM_RO_DBPWD               = $SADM_RO_DBPWD\n" 
+    #
+    printf "SADM_NETWORK1               = $SADM_NETWORK1\n"
+    printf "SADM_NETWORK2               = $SADM_NETWORK2\n"
+    printf "SADM_NETWORK3               = $SADM_NETWORK3\n"
+    printf "SADM_NETWORK4               = $SADM_NETWORK4\n"
+    printf "SADM_NETWORK5               = $SADM_NETWORK5\n"
+    #
+    printf "SADM_MKSYSB_NFS_SERVER      = $SADM_MKSYSB_NFS_SERVER\n"
+    printf "SADM_MKSYSB_NFS_MOUNT_POINT = $SADM_MKSYSB_NFS_MOUNT_POINT\n"
+    printf "SADM_MKSYSB_BACKUP_TO_KEEP  = $SADM_MKSYSB_BACKUP_TO_KEEP\n" 
+    printf "SADM_REAR_NFS_SERVER        = $SADM_REAR_NFS_SERVER\n"
+    printf "SADM_REAR_NFS_MOUNT_POINT   = $SADM_REAR_NFS_MOUNT_POINT\n"
+    printf "SADM_REAR_BACKUP_TO_KEEP    = $SADM_REAR_BACKUP_TO_KEEP\n" 
+    printf "SADM_BACKUP_NFS_SERVER      = $SADM_BACKUP_NFS_SERVER\n"
+    printf "SADM_BACKUP_NFS_MOUNT_POINT = $SADM_BACKUP_NFS_MOUNT_POINT\n"
+    printf "SADM_BACKUP_NFS_TO_KEEP     = $SADM_BACKUP_NFS_TO_KEEP\n"
+    printf "SADM_STORIX_NFS_SERVER      = $SADM_STORIX_NFS_SERVER\n"
+    printf "SADM_STORIX_NFS_MOUNT_POINT = $SADM_STORIX_NFS_MOUNT_POINT\n"
+    printf "SADM_STORIX_BACKUP_TO_KEEP  = $SADM_STORIX_BACKUP_TO_KEEP\n"
+    #
+    echo "Press [ENTER] to Continue" ; read dummy
+     
+   
     sadm_display_heading "Small Menu (7 Items or less)"
     menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
                 "Menu Item 6" "Menu Item 7" )
+
     sadm_display_menu "${menu_array[@]}"
     echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
@@ -306,7 +286,6 @@ sadm_display_variables()
     sadm_display_menu "${menu_array[@]}"
     echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
-
     sadm_display_heading "Large Menu (Up to 30 Items)"
     menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
                 "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
@@ -317,7 +296,7 @@ sadm_display_variables()
     sadm_display_menu "${menu_array[@]}"
     echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
 
-    #tput clear
+    tput clear
     e_header    "e_eheader"
     e_arrow     "e_arrow"
     e_success   "e_success"

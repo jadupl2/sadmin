@@ -25,6 +25,8 @@
 #   V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
 # 2017_09_29 JDuplessis
 #   V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
+# 2017_12_18 JDuplessis
+#   V2.9 Function were changed to run on MacOS and Some Restructuration was done
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -39,12 +41,11 @@ SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equ
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
-SADM_TWENTY_DASH=`printf %20s |tr " " "-"`  ; export SADM_TWENTY_DASH   # 20 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.8"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.9"                          ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -55,7 +56,6 @@ SADM_LOG_DIR="$SADM_BASE_DIR/log"           ; export SADM_LOG_DIR       # Script
 SADM_CFG_DIR="$SADM_BASE_DIR/cfg"           ; export SADM_CFG_DIR       # Configuration Directory
 SADM_SYS_DIR="$SADM_BASE_DIR/sys"           ; export SADM_SYS_DIR       # System related scripts
 SADM_DAT_DIR="$SADM_BASE_DIR/dat"           ; export SADM_DAT_DIR       # Data directory
-SADM_PG_DIR="$SADM_BASE_DIR/pgsql"          ; export SADM_PG_DIR        # PostGres DataBase Dir
 SADM_PKG_DIR="$SADM_BASE_DIR/pkg"           ; export SADM_PKG_DIR       # Package rpm,deb  directory
 SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where nmon file reside
 SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files 
@@ -64,7 +64,6 @@ SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
-SADM_DB_DIR="$SADM_WWW_DIR/db"              ; export SADM_DB_DIR        # SQLite3 Database Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
 SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                      ; export SADM_WWW_HTML_DIR # www html Dir
@@ -85,7 +84,6 @@ SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/log"   ; export SADM_WWW_LO
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
-SADM_DB_FILE="$SADM_DB_DIR/sadm.db"                         ; export SADM_CFG_FILE   # SQLite DB
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_CRON_FILE="$SADM_WWW_CFG_DIR/.crontab.txt"             ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadmin"                           ; export SADM_CRONTAB    # Final crontab
@@ -109,7 +107,6 @@ SADM_LSCPU=""                               ; export SADM_LSCPU         # Path t
 SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
 SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
 SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
-SADM_PSQL=""                                ; export SADM_PSQL          # Path to PostGresql Exec.
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
@@ -129,6 +126,7 @@ SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days t
 SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
 SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
 SADM_DBNAME="sadmin"                        ; export SADM_DBNAME        # MySQL DataBase Name
+SADM_DBDIR=""                               ; export SADM_DBDIR         # Location of DB
 SADM_DBHOST="sadmin.maison.ca"              ; export SADM_DBHOST        # MySQL DataBase Host
 SADM_DBPORT=3306                            ; export SADM_DBPORT        # MySQL Listening Port
 SADM_RW_DBUSER=""                           ; export SADM_RW_DBUSER     # MySQL Read/Write User 
@@ -144,7 +142,18 @@ SADM_NETWORK4=""                            ; export SADM_NETWORK4      # Networ
 SADM_NETWORK5=""                            ; export SADM_NETWORK5      # Network 5 to Scan 
 DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL Passwd File
 SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
-
+SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER
+SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT
+SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP   
+SADM_STORIX_NFS_SERVER=""                   ; export SADM_STORIX_NFS_SERVER
+SADM_STORIX_NFS_MOUNT_POINT=""              ; export SADM_STORIX_NFS_MOUNT_POINT
+SADM_STORIX_BACKUP_TO_KEEP=3                ; export SADM_STORIX_BACKUP_TO_KEEP
+SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
+SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
+SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
+SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER
+SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT
+SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP
 
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
@@ -168,7 +177,7 @@ sadm_tolower() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_writelog() {
-    SADM_MSG="$(date "+%C%y.%m.%d %H:%M:%S") - $@"                      # Join Cur Date & Msg Recv.
+    SADM_MSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                        # Join Cur Date & Msg Recv.
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) printf "%-s\n" "$SADM_MSG"                                 # Write Msg To Screen
              ;; 
@@ -726,25 +735,28 @@ sadm_get_ostype() {
 #                             RETURN THE OS PROJECT CODE NAME
 # --------------------------------------------------------------------------------------------------
 sadm_get_oscodename() {
-    if [ "$(sadm_get_ostype)" == "LINUX" ] ; then woscodename=`$SADM_LSB_RELEASE -sc`; fi
-    if [ "$(sadm_get_ostype)" == "AIX" ]   ; then woscodename="IBM_AIX" ; fi
-    if [ "$(sadm_get_ostype)" == "DARWIN" ] 
-        then wver="$(sadm_get_osmajorversion)"
-             if [ "$wver"  == "10.0" ]  ; then woscodename="Cheetah"          ;fi
-             if [ "$wver"  == "10.1" ]  ; then woscodename="Puma"             ;fi
-             if [ "$wver"  == "10.2" ]  ; then woscodename="Jaguar"           ;fi
-             if [ "$wver"  == "10.3" ]  ; then woscodename="Panther"          ;fi
-             if [ "$wver"  == "10.4" ]  ; then woscodename="Tiger"            ;fi
-             if [ "$wver"  == "10.5" ]  ; then woscodename="Leopard"          ;fi
-             if [ "$wver"  == "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
-             if [ "$wver"  == "10.7" ]  ; then woscodename="Lion"             ;fi
-             if [ "$wver"  == "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
-             if [ "$wver"  == "10.9" ]  ; then woscodename="Mavericks"        ;fi
-             if [ "$wver"  == "10.10" ] ; then woscodename="Yosemite"         ;fi
-             if [ "$wver"  == "10.11" ] ; then woscodename="El Capitan"       ;fi
-             if [ "$wver"  == "10.12" ] ; then woscodename="Sierra"           ;fi
-             if [ "$wver"  == "10.13" ] ; then woscodename="High Sierra"      ;fi
-    fi
+    case "$(sadm_get_ostype)" in
+        "DARWIN")   wver="$(sadm_get_osmajorversion)"                   # Default is OX Version
+                    if [ "$wver"  == "10.0" ]  ; then woscodename="Cheetah"          ;fi
+                    if [ "$wver"  == "10.1" ]  ; then woscodename="Puma"             ;fi
+                    if [ "$wver"  == "10.2" ]  ; then woscodename="Jaguar"           ;fi
+                    if [ "$wver"  == "10.3" ]  ; then woscodename="Panther"          ;fi
+                    if [ "$wver"  == "10.4" ]  ; then woscodename="Tiger"            ;fi
+                    if [ "$wver"  == "10.5" ]  ; then woscodename="Leopard"          ;fi
+                    if [ "$wver"  == "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
+                    if [ "$wver"  == "10.7" ]  ; then woscodename="Lion"             ;fi
+                    if [ "$wver"  == "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
+                    if [ "$wver"  == "10.9" ]  ; then woscodename="Mavericks"        ;fi
+                    if [ "$wver"  == "10.10" ] ; then woscodename="Yosemite"         ;fi
+                    if [ "$wver"  == "10.11" ] ; then woscodename="El Capitan"       ;fi
+                    if [ "$wver"  == "10.12" ] ; then woscodename="Sierra"           ;fi
+                    if [ "$wver"  == "10.13" ] ; then woscodename="High Sierra"      ;fi
+                    ;;
+        "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
+                    ;;
+        "AIX")      woscodename="IBM_AIX"
+                    ;;
+    esac
     echo "$woscodename"
 }
 
@@ -952,6 +964,9 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_DBNAME" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_DBDIR" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DBDIR=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
         echo "$wline" |grep -i "^SADM_DBHOST" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -972,6 +987,47 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        #
+        echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_BACKUP_NFS_MOUNT_POINT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_BACKUP_NFS_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        #
+        echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MKSYSB_NFS_MOUNT_POINT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MKSYSB_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        # 
+        echo "$wline" |grep -i "^SADM_STORIX_NFS_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_STORIX_NFS_MOUNT_POINT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_STORIX_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_STORIX_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        # 
+        echo "$wline" |grep -i "^SADM_REAR_NFS_SERVER" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_REAR_NFS_MOUNT_POINT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_REAR_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_REAR_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
         #
         echo "$wline" |grep -i "^SADM_NETWORK1" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_NETWORK1=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -1012,16 +1068,26 @@ sadm_load_config_file() {
                  sadm_writelog "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
                  sadm_writelog "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS"  # Days to keep old *.rch
                  sadm_writelog "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.log
-                 sadm_writelog "  - SADM_PGUSER=$SADM_PGUSER"               # PostGres User Name
-                 sadm_writelog "  - SADM_PGGROUP=$SADM_PGGROUP"             # PostGres Group Name
-                 sadm_writelog "  - SADM_PGDB=$SADM_PGDB"                   # PostGres DataBase Name
-                 sadm_writelog "  - SADM_PGSCHEMA=$SADM_PGSCHEMA"           # PostGres DataBase Schema
-                 sadm_writelog "  - SADM_PGHOST=$SADM_PGHOST"               # PostGres DataBase Host
-                 sadm_writelog "  - SADM_PGPORT=$SADM_PGPORT"               # PostGres Listening Port
-                 sadm_writelog "  - SADM_RW_PGUSER=$SADM_RW_PGUSER"         # PostGres RW User
-                 sadm_writelog "  - SADM_RW_PGPWD=$SADM_RW_PGPWD"           # PostGres RW User Pwd
-                 sadm_writelog "  - SADM_RO_PGUSER=$SADM_RO_PGUSER"         # PostGres RO User
-                 sadm_writelog "  - SADM_RO_PGPWD=$SADM_RO_PGPWD"           # PostGres RO User Pwd
+                 sadm_writelog "  - SADM_DBNAME=$SADM_DBNAME"               # MySQL DataBase Name
+                 sadm_writelog "  - SADM_DBDIR=$SADM_DBDIR"                 # MySQL DataBase Dir.
+                 sadm_writelog "  - SADM_DBHOST=$SADM_DBHOST"               # MySQL DataBase Host
+                 sadm_writelog "  - SADM_DBPORT=$SADM_DBPORT"               # MySQL Listening Port
+                 sadm_writelog "  - SADM_RW_DBUSER=$SADM_RW_DBUSER"         # MySQL RW User
+                 sadm_writelog "  - SADM_RW_DBPWD=$SADM_RW_DBPWD"           # MySQL RW User Pwd
+                 sadm_writelog "  - SADM_RO_DBUSER=$SADM_RO_DBUSER"         # MySQL RO User
+                 sadm_writelog "  - SADM_RO_DBPWD=$SADM_RO_DBPWD"           # MySQL RO User Pwd
+                 sadm_writelog "  - SADM_REAR_NFS_SERVER=$SADM_REAR_NFS_SERVER" 
+                 sadm_writelog "  - SADM_REAR_NFS_MOUNT_POINT=$SADM_REAR_NFS_MOUNT_POINT" 
+                 sadm_writelog "  - SADM_REAR_BACKUP_TO_KEEP=$SADM_REAR_BACKUP_TO_KEEP   " 
+                 sadm_writelog "  - SADM_STORIX_NFS_SERVER=$SADM_STORIX_NFS_SERVER" 
+                 sadm_writelog "  - SADM_STORIX_NFS_MOUNT_POINT=$SADM_STORIX_NFS_MOUNT_POINT" 
+                 sadm_writelog "  - SADM_STORIX_BACKUP_TO_KEEP=$SADM_STORIX_BACKUP_TO_KEEP" 
+                 sadm_writelog "  - SADM_BACKUP_NFS_SERVER=$SADM_BACKUP_NFS_SERVER" 
+                 sadm_writelog "  - SADM_BACKUP_NFS_MOUNT_POINT=$SADM_BACKUP_NFS_MOUNT_POINT" 
+                 sadm_writelog "  - SADM_BACKUP_NFS_TO_KEEP=$SADM_BACKUP_NFS_TO_KEEP" 
+                 sadm_writelog "  - SADM_MKSYSB_NFS_SERVER=$SADM_MKSYSB_NFS_SERVER" 
+                 sadm_writelog "  - SADM_MKSYSB_NFS_MOUNT_POINT=$SADM_MKSYSB_NFS_MOUNT_POINT" 
+                 sadm_writelog "  - SADM_MKSYSB_NFS_TO_KEEP=$SADM_MKSYSB_NFS_TO_KEEP" 
                  sadm_writelog "  - SADM_NETWORK1 = $SADM_NETWORK1"         # Subnet to Scan
                  sadm_writelog "  - SADM_NETWORK2 = $SADM_NETWORK2"         # Subnet to Scan
                  sadm_writelog "  - SADM_NETWORK3 = $SADM_NETWORK3"         # Subnet to Scan
@@ -1081,15 +1147,6 @@ sadm_start() {
     [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
     chmod 0775 $SADM_SYS_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
-
-    # If PostGres DataBase Directories doesn't exist, create it. (If on SADM Server)
-    if [ ! -d "$SADM_PG_DIR" ] && [ "${SADM_HOSTNAME}.$(sadm_get_domainname)" = "$SADM_SERVER" ]    
-        then mkdir -p $SADM_PG_DIR
-             mkdir -p $SADM_PG_DIR/data
-             mkdir -p $SADM_PG_DIR/backups
-             chmod -R 0700 $SADM_PG_DIR
-             chown -R ${SADM_PGUSER}.${SADM_PGGROUP} $SADM_PG_DIR
-    fi
 
     # If Data Directory doesn't exist, create it.
     [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
@@ -1184,7 +1241,7 @@ sadm_start() {
     sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
     sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
     sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
-    sadm_writelog "${SADM_TWENTY_DASH}"
+    sadm_writelog "${SADM_FIFTY_DASH}"
     sadm_writelog " "
 
     # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
@@ -1224,7 +1281,7 @@ sadm_stop() {
  
     # Start Writing Log Footer
     sadm_writelog " "                                                   # Blank Line
-    sadm_writelog "${SADM_TWENTY_DASH}"                                 # 20 Dash Line
+    sadm_writelog "${SADM_FIFTY_DASH}"                                 # 20 Dash Line
     sadm_writelog "Script return code is $SADM_EXIT_CODE"               # Final Exit Code to log
     
     # Get End time and Calculate Elapse Time

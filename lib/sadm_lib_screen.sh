@@ -231,16 +231,8 @@ sadm_ask_password()
 #---------------------------------------------------------------------------------------------------
 sadm_display_menu() 
 {
-    s_count=0
-    s_item_list=$*
-    for s_item in $s_item_list ; do  s_count=$(($s_count+1)) ; s_array[$s_count]=$s_item ; done
-#    sadm_writelog "Count is $s_count"
-#    for (( c=1; c<=$s_count; c++ ))
-#        do
-#        sadm_writelog "[$c] ${s_array[$c]}"
-#        done
-#    exit
-
+    s_array=("$@")                                                      # Save Array Received
+    s_count=${#s_array[@]}                                              # get length of an array
 
     # Validate number of item in array - Can be from 1 to 30 Maximum
     if [ "$s_count" -gt 30 ] && [ "$s_count" -lt 1 ]                    # Validate NB items in array

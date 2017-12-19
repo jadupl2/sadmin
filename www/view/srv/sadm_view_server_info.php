@@ -455,12 +455,12 @@ function display_right_side ($wrow) {
     echo "\n\n<div class='server_right_label'>Update O/S Allowed Day(s)</div>";
     echo "\n<div class='server_right_data'>";
     $days = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-    if ($wrow['srv_update_dow'] == str_repeat("Y",7)) {                 # If it's to run every Day
-        echo "Any Day";                                              # Then use a Star
+    if ($wrow['srv_update_dow'] == "YNNNNNNN") {                        # If it's to run every Day
+        echo "Any Day";                                                 # Then use a Star
     }else{                                                              # If not to run every Day
         $mess = "";
-        for ($i = 0; $i < 7; $i = $i + 1) {
-            if (substr($wrow['srv_update_dow'],$i,1) == "Y") {$mess = $mess . $days[$i] . ",";}
+        for ($i = 1; $i < 8; $i = $i + 1) {
+            if (substr($wrow['srv_update_dow'],$i,1) == "Y") {$mess = $mess . $days[$i-1] . ",";}
         }
         $mess = substr($mess, 0, -1);
         echo $mess;
