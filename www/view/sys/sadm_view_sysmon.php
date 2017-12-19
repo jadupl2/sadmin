@@ -174,9 +174,9 @@ function setup_table() {
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-center'>Alert/Email Grp</th>";
@@ -188,9 +188,9 @@ function setup_table() {
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
     echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-left'>Alert Description</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-center'>Alert/Email Grp</th>";
@@ -279,14 +279,6 @@ function display_data($con,$alert_file) {
         echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
         echo nl2br($whost) . "</a></td>\n";
 
-        # SERVER DESCRIPTION -----------------------------------------------------------------------
-        echo "<td>" . $WDESC . "</td>\n";
-
-        # ALERT MODULE/SUB MODULE ------------------------------------------------------------------
-        echo "<td class='dt-center'>";
-        echo ucfirst(strtolower($wmod))    . " / " ;
-        echo ucfirst(strtolower($wsubmod)) . "</td>\n";
-        
         # ALERT DESCRIPTION ------------------------------------------------------------------------
         list($wdummy,$wscript) = explode(" ",$wdesc);
         $wlog =  $whost . "_" . $wscript . ".log";
@@ -301,6 +293,14 @@ function display_data($con,$alert_file) {
         }
         echo "</td>\n";
 
+        # SERVER DESCRIPTION -----------------------------------------------------------------------
+        echo "<td>" . $WDESC . "</td>\n";
+
+        # ALERT MODULE/SUB MODULE ------------------------------------------------------------------
+        echo "<td class='dt-center'>";
+        echo ucfirst(strtolower($wmod))    . " / " ;
+        echo ucfirst(strtolower($wsubmod)) . "</td>\n";
+        
         # ALERT DATE AND TIME ----------------------------------------------------------------------
         echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
 

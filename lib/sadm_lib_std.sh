@@ -604,11 +604,11 @@ sadm_date_to_epoch() {
 #1255597086
     #sadm_writelog "OSTYPE = $(sadm_get_ostype) - date $YYYY/$MTH/$DD $HH:$MM:$SS"
     case "$(sadm_get_ostype)" in                                            
-        "LINUX")    DD=`printf "%02d" $DD` 
+        "LINUX")    DD= `printf "%02d" $DD` 
                     MTH=`printf "%02d" $MTH`
-                    HH=`printf "%02d" $HH`
-                    MM=`printf "%02d" $MM`
-                    SS=`printf "%02d" $SS`                   
+                    HH=` printf "%02d" $HH`
+                    MM=` printf "%02d" $MM`
+                    SS=` printf "%02d" $SS`                   
                     sadm_date_to_epoch=`date +"%s" -d "$YYYY/$MTH/$DD $HH:$MM:$SS" `
                     ;; 
         "AIX")      if [ "$MTH" -gt 0 ] ; then MTH=`echo $MTH | sed 's/^0//'` ; fi      # Remove Leading 0 from Mth

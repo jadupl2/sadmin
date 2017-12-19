@@ -366,10 +366,11 @@ function display_right_side ($wrow) {
        $pvArray  = explode(",",$wrow['srv_disks_info']);
        $pvNumber = sizeof($pvArray);
        $pvLine   = ""; 
-       if (count($pvArray) > 1) {
+       #echo "count = " . count($pvArray);
+       if (count($pvArray) > 0) {
           for ($i = 0; $i < count($pvArray); ++$i) {
               list($pvDev,$pvSize) = explode("|", $pvArray[$i] );
-              echo "\n\n<div class='server_right_label'>Disk Information(".$i.")</div>";
+              echo "\n\n<div class='server_right_label'>Disk " . $i . " Information</div>";
               echo "\n<div class='server_right_data'>";
               $pvSize = $pvSize / 1000 ;
               $info = sprintf ("%-10s %16s GB",$pvDev,$pvSize);
@@ -423,11 +424,11 @@ function display_right_side ($wrow) {
     echo "\n\n<div class='server_right_label'>Update O/S Allowed Month</div>";
     echo "\n<div class='server_right_data'>";
     $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
-    if ($wrow['srv_update_month'] == str_repeat("Y",12)) {
+    if ($wrow['srv_update_month'] == "YNNNNNNNNNNNN" ) {
         echo "Any Month";
     }else{
         $mess = "";
-        for ($i = 0; $i < 12; $i = $i + 1) {
+        for ($i = 1; $i < 13; $i = $i + 1) {
             if (substr($wrow['srv_update_month'],$i,1) == "Y") {$mess = $mess . $months[$i] . ",";}
         }
         $mess = substr($mess, 0, -1);
@@ -438,11 +439,11 @@ function display_right_side ($wrow) {
     # Date in the Month that O/S Update can Occur
     echo "\n\n<div class='server_right_label'>Update O/S Allowed Date</div>";
     echo "\n<div class='server_right_data'>";
-    if ($wrow['srv_update_dom'] == str_repeat("Y",31)) {                 # If it's to run every Day
-        echo "Any Date";                                              # Then use a Star
+    if ($wrow['srv_update_dom'] == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"){ # If it's to run every Day
+        echo "Any Date";                                                # Then use a Star
     }else{                                                              # If not to run every Day
         $mess = "";
-        for ($i = 0; $i < 31; $i = $i + 1) {
+        for ($i = 1; $i < 32; $i = $i + 1) {
             if (substr($wrow['srv_update_dom'],$i,1) == "Y") {$mess = $mess . $i + 1 . ","; }
         }
         $mess = substr($mess, 0, -1);
