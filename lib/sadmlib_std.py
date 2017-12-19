@@ -150,6 +150,7 @@ class sadmtools():
         self.cfg_rch_keepdays           = 60                            # Days to keep old *.rch
         self.cfg_log_keepdays           = 60                            # Days to keep old *.log
         self.cfg_dbname                 = ""                            # MySQL Database Name
+        self.cfg_dbdir                  = ""                            # MySQL Database Dir
         self.cfg_dbhost                 = ""                            # MySQL Database Host
         self.cfg_dbport                 = 3306                          # MySQL Database Port
         self.cfg_rw_dbuser              = ""                            # MySQL Read Write User
@@ -159,13 +160,16 @@ class sadmtools():
         self.cfg_ssh_port               = 22                            # SSH Port used in Farm
         self.cfg_backup_nfs_server      = ""                            # Backup NFS Server
         self.cfg_backup_nfs_mount_point = ""                            # Backup Mount Point
-        self.cfg_backup_to_keep         = 3                             # Nb of backup to Keep
+        self.cfg_backup_nfs_to_keep     = 3                             # Nb of NFS backup to Keep
         self.cfg_rear_nfs_server        = ""                            # Rear NFS Server
         self.cfg_rear_nfs_mount_point   = ""                            # Rear NFS Mount Point
         self.cfg_rear_backup_to_keep    = 3                             # Nb of Rear Backup to keep
         self.cfg_storix_nfs_server      = ""                            # Storix Nfs Server
         self.cfg_storix_mount_point     = ""                            # Storix NFS Mount Point
         self.cfg_storix_backup_to_keep  = 3                             # Nb Storix Backup to Keep
+        self.cfg_mksysb_nfs_server      = ""                            # Aix Mksysb Nfs Server
+        self.cfg_mksysb_mount_point     = ""                            # Aix Mksysb NFS Mount Point
+        self.cfg_mksysb_backup_to_keep  = 3                             # Aix Mksysb Backup to Keep
         self.cfg_network1               = ""                            # Network Subnet 1 to report
         self.cfg_network2               = ""                            # Network Subnet 2 to report
         self.cfg_network3               = ""                            # Network Subnet 3 to report
@@ -318,6 +322,7 @@ class sadmtools():
             if "SADM_LOG_KEEPDAYS"           in CFG_NAME:  self.cfg_log_keepdays   = int(CFG_VALUE)
             #
             if "SADM_DBNAME"                 in CFG_NAME:  self.cfg_dbname         = CFG_VALUE
+            if "SADM_DBDIR"                  in CFG_NAME:  self.cfg_dbdir          = CFG_VALUE
             if "SADM_DBHOST"                 in CFG_NAME:  self.cfg_dbhost         = CFG_VALUE
             if "SADM_DBPORT"                 in CFG_NAME:  self.cfg_dbport         = int(CFG_VALUE)
             if "SADM_RW_DBUSER"              in CFG_NAME:  self.cfg_rw_dbuser      = CFG_VALUE
@@ -327,7 +332,7 @@ class sadmtools():
             #
             if "SADM_BACKUP_NFS_SERVER"      in CFG_NAME: self.cfg_backup_nfs_server     = CFG_VALUE
             if "SADM_BACKUP_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_backup_nfs_mount_point= CFG_VALUE
-            if "SADM_BACKUP_TO_KEEP"         in CFG_NAME: self.cfg_backup_to_keep        = int(CFG_VALUE)
+            if "SADM_BACKUP_NFS_TO_KEEP"     in CFG_NAME: self.cfg_backup_nfs_to_keep    = int(CFG_VALUE)
             #
             if "SADM_REAR_NFS_SERVER"        in CFG_NAME: self.cfg_rear_nfs_server       = CFG_VALUE
             if "SADM_REAR_NFS_MOUNT_POINT"   in CFG_NAME: self.cfg_rear_nfs_mount_point  = CFG_VALUE
@@ -336,6 +341,10 @@ class sadmtools():
             if "SADM_STORIX_NFS_SERVER"      in CFG_NAME: self.cfg_storix_nfs_server     = CFG_VALUE
             if "SADM_STORIX_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_storix_nfs_mount_point= CFG_VALUE
             if "SADM_STORIX_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_storix_backup_to_keep = int(CFG_VALUE)
+            #
+            if "SADM_MKSYSB_NFS_SERVER"      in CFG_NAME: self.cfg_mksysb_nfs_server     = CFG_VALUE
+            if "SADM_MKSYSB_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_mksysb_nfs_mount_point= CFG_VALUE
+            if "SADM_MKSYSB_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_mksysb_backup_to_keep = int(CFG_VALUE)
             #
             if "SADM_NETWORK1 "              in CFG_NAME: self.cfg_network1        = CFG_VALUE
             if "SADM_NETWORK2 "              in CFG_NAME: self.cfg_network2        = CFG_VALUE
@@ -864,10 +873,6 @@ class sadmtools():
             uid = pwd.getpwnam(cfg_user).pw_uid                         # Get UID User in sadmin.cfg 
             gid = grp.getgrnam(cfg_group).gr_gid                        # Get GID User in sadmin.cfg 
 
-            uid = pwd.getpwnam(cfg_pguser).pw_uid                       # Get UID User in sadmin.cfg 
-            gid = grp.getgrnam(cfg_pggroup).gr_gid                      # Get GID User in sadmin.cfg 
-            os.chown(pg_dir, uid, gid)                                  # Change owner of rch file
-
             if not os.path.exists(www_dir)      : os.mkdir(www_dir,0o0775)      # Create SADM WWW Dir.
             if not os.path.exists(www_html_dir) : os.mkdir(www_html_dir,0o0775) # Create SADM HTML Dir.
             if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,0o0775)  # Create Web  DAT  Dir.
@@ -1139,6 +1144,7 @@ class sadmtools():
         print("cfg_log_keepdays           = ..." + str(self.cfg_log_keepdays) + "...")
         print("cfg_dbname                 = ..." + self.cfg_dbname + "...")
         print("cfg_dbhost                 = ..." + self.cfg_dbhost + "...")
+        print("cfg_dbdir                  = ..." + self.cfg_dbdir + "...")
         print("cfg_dbport                 = ..." + str(self.cfg_dbport) + "...")
         print("cfg_rw_dbuser              = ..." + str(self.cfg_rw_dbuser) + "...")
         print("cfg_rw_dbpwd               = ..." + str(self.cfg_rw_dbpwd) + "...")
@@ -1147,13 +1153,16 @@ class sadmtools():
         print("cfg_ssh_port               = ..." + str(self.cfg_ssh_port) + "...")
         print("cfg_backup_nfs_server      = ..." + self.cfg_backup_nfs_server + "...")
         print("cfg_backup_nfs_mount_point = ..." + self.cfg_backup_nfs_mount_point + "...")
-        print("cfg_backup_to_keep         = ..." + str(self.cfg_backup_to_keep) + "...")
+        print("cfg_backup_nfs_to_keep     = ..." + str(self.cfg_backup_nfs_to_keep) + "...")
         print("cfg_rear_nfs_server        = ..." + self.cfg_rear_nfs_server + "...")
         print("cfg_rear_nfs_mount_point   = ..." + self.cfg_rear_nfs_mount_point + "...")
         print("cfg_rear_backup_to_keep    = ..." + str(self.cfg_rear_backup_to_keep) + "...")
         print("cfg_storix_nfs_server      = ..." + self.cfg_storix_nfs_server + "...")
         print("cfg_storix_nfs_mount_point = ..." + self.cfg_storix_nfs_mount_point + "...")
         print("cfg_storix_backup_to_keep  = ..." + str(self.cfg_storix_backup_to_keep) + "...")
+        print("cfg_mksysb_nfs_server      = ..." + self.cfg_mksysb_nfs_server + "...")
+        print("cfg_mksysb_nfs_mount_point = ..." + self.cfg_mksysb_nfs_mount_point + "...")
+        print("cfg_mksysb_backup_to_keep  = ..." + str(self.cfg_mksysb_backup_to_keep) + "...")
         print("cfg_network1               = ..." + str(self.cfg_network1) + "...")
         print("cfg_network2               = ..." + str(self.cfg_network2) + "...")
         print("cfg_network3               = ..." + str(self.cfg_network3) + "...")

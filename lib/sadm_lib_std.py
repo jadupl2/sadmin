@@ -50,7 +50,6 @@ tmp_dir            = os.path.join(base_dir,'tmp')                       # SADM T
 cfg_dir            = os.path.join(base_dir,'cfg')                       # SADM Config Directory
 bin_dir            = os.path.join(base_dir,'bin')                       # SADM Scripts Directory
 log_dir            = os.path.join(base_dir,'log')                       # SADM Log Directory
-pg_dir             = os.path.join(base_dir,'pgsql')                     # SADM PostGres Database Dir
 pkg_dir            = os.path.join(base_dir,'pkg')                       # SADM Package Directory
 sys_dir            = os.path.join(base_dir,'sys')                       # SADM System Scripts Dir.
 dat_dir            = os.path.join(base_dir,'dat')                       # SADM Data Directory
@@ -618,15 +617,10 @@ def start () :
 
     # These Directories are only created on the SADM Server (Data Base and Web Directories)
     if get_hostname() == cfg_server :
-        if not os.path.exists(pg_dir)       : os.mkdir(pg_dir,0700)     # Create SADM Database Dir.
         if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0775) # Web  Network  Dir.
 
         uid = pwd.getpwnam(cfg_user).pw_uid                             # Get UID User in sadmin.cfg 
         gid = grp.getgrnam(cfg_group).gr_gid                            # Get GID User in sadmin.cfg 
-
-        uid = pwd.getpwnam(cfg_pguser).pw_uid                           # Get UID User in sadmin.cfg 
-        gid = grp.getgrnam(cfg_pggroup).gr_gid                          # Get GID User in sadmin.cfg 
-        os.chown(pg_dir, uid, gid)                                      # Change owner of rch file
 
         if not os.path.exists(www_dir)      : os.mkdir(www_dir,0775)    # Create SADM WWW Dir.
         if not os.path.exists(www_html_dir) : os.mkdir(www_html_dir,0775) # Create SADM HTML Dir.

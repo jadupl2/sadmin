@@ -26,7 +26,6 @@ define("SADM_LOG_DIR"      , SADM_BASE_DIR . "/log");                   # Script
 define("SADM_CFG_DIR"      , SADM_BASE_DIR . "/cfg");                   # Configuration Directory
 define("SADM_SYS_DIR"      , SADM_BASE_DIR . "/sys");                   # System related scripts
 define("SADM_DAT_DIR"      , SADM_BASE_DIR . "/dat");                   # Data directory
-define("SADM_PG_DIR"       , SADM_BASE_DIR . "/pgsql");                 # PostGres DataBase Dir
 define("SADM_PKG_DIR"      , SADM_BASE_DIR . "/pkg");                   # Package rpm,deb  directory
 define("SADM_NMON_DIR"     , SADM_DAT_DIR  . "/nmon");                  # Where nmon file reside
 define("SADM_DR_DIR"       , SADM_DAT_DIR  . "/dr");                    # Disaster Recovery  files
@@ -54,7 +53,6 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 
 # SADMIN FILE DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
-define("SADM_DB_FILE"      , SADM_DB_DIR  . "/sadm.db");                # SADM SQLite3 Database
 define("SADM_CRON_FILE"    , SADM_WWW_CFG_DIR . "/.crontab.txt");       # SADM Crontab File
 define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
 define("SADM_UPDATE_SCRIPT", SADM_BIN_DIR."/sadm_osupdate_server.sh -s ");  # O/S Update Script Name
@@ -89,7 +87,7 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_RO_DBUSER")     { define("SADM_RO_DBUSER"     , trim($fvalue));}
           if (trim($fname) == "SADM_RO_DBPWD")      { define("SADM_RO_DBPWD"      , trim($fvalue));}
           if (trim($fname) == "SADM_DBNAME")        { define("SADM_DBNAME"        , trim($fvalue));}
-          if (trim($fname) == "SADM_PGSCHEMA")      { define("SADM_PGSCHEMA"      , trim($fvalue));}
+          if (trim($fname) == "SADM_DB_DIR")        { define("SADM_DB_DIR"        , trim($fvalue));}
           if (trim($fname) == "SADM_DBHOST")        { define("SADM_DBHOST"        , trim($fvalue));}
           if (trim($fname) == "SADM_DBPORT")        { define("SADM_DBPORT"        , trim($fvalue));}
           if (trim($fname) == "SADM_MAX_LOGLINE")   { define("SADM_MAX_LOGLINE"   , trim($fvalue));}
