@@ -106,7 +106,7 @@ sadm_display_variables()
     printf "SADM_TMP_FILE3       = $SADM_TMP_FILE3\n" 
     printf "SADM_LOG             = $SADM_LOG\n" 
     printf "SADM_RCHLOG          = $SADM_RCHLOG\n" 
-    printf "PGPASSFILE           = $PGPASSFILE\n" 
+    printf "DBPASSFILE           = $DBPASSFILE\n" 
     printf "SADM_SERVER          = $SADM_SERVER\n" 
     printf "SADM_DOMAIN          = $SADM_DOMAIN\n"
 #    
@@ -144,19 +144,34 @@ sadm_display_variables()
     printf "SADM_SAR_KEEPDAYS    = $SADM_SAR_KEEPDAYS\n" 
     printf "SADM_RCH_KEEPDAYS    = $SADM_RCH_KEEPDAYS\n" 
     printf "SADM_LOG_KEEPDAYS    = $SADM_LOG_KEEPDAYS\n" 
-    printf "SADM_PGUSER          = $SADM_PGUSER\n" 
-    printf "SADM_PGGROUP         = $SADM_PGGROUP\n" 
-    printf "SADM_PGDB            = $SADM_PGDB\n" 
-    printf "SADM_PGSCHEMA        = $SADM_PGSCHEMA\n" 
-    printf "SADM_PGHOST          = $SADM_PGHOST\n" 
-    printf "SADM_PGPORT          = $SADM_PGPORT\n" 
-    printf "SADM_RW_PGUSER       = $SADM_RW_PGUSER\n" 
-    #printf "SADM_RW_PGPWD        = $SADM_RW_PGPWD\n" 
-    printf "SADM_RO_PGUSER       = $SADM_RO_PGUSER\n"
-    printf "SADM_RO_PGPWD        = $SADM_RO_PGPWD\n" 
+    #
+    printf "SADM_DBNAME          = $SADM_DBNAME\n" 
+    printf "SADM_DBHOST          = $SADM_DBHOST\n" 
+    printf "SADM_DBPORT          = $SADM_DBPORT\n" 
+    printf "SADM_RW_DBUSER       = $SADM_RW_DBUSER\n" 
+    printf "SADM_RW_PGPWD        = $SADM_RW_DBPWD\n" 
+    printf "SADM_RO_DBUSER       = $SADM_RO_DBUSER\n"
+    printf "SADM_RO_DBPWD        = $SADM_RO_DBPWD\n" 
+    #
     printf "SADM_SSH_PORT        = $SADM_SSH_PORT\n"
+    #
+    printf "SADM_NETWORK1        = $SADM_NETWORK1\n"
+    printf "SADM_NETWORK2        = $SADM_NETWORK2\n"
+    printf "SADM_NETWORK3        = $SADM_NETWORK3\n"
+    printf "SADM_NETWORK4        = $SADM_NETWORK4\n"
+    printf "SADM_NETWORK5        = $SADM_NETWORK5\n"
+    #
+    printf "SADM_REAR_NFS_SERVER        = $SADM_REAR_NFS_SERVER\n"
+    printf "SADM_REAR_NFS_MOUNT_POINT   = $SADM_REAR_NFS_MOUNT_POINT\n"
+    printf "SADM_REAR_BACKUP_TO_KEEP    = $SADM_REAR_BACKUP_TO_KEEP\n" 
+    printf "SADM_BACKUP_NFS_SERVER      = $SADM_BACKUP_NFS_SERVER\n"
+    printf "SADM_BACKUP_NFS_MOUNT_POINT = $SADM_BACKUP_NFS_MOUNT_POINT\n"
+    printf "SADM_BACKUP_TO_KEEP         = $SADM_BACKUP_TO_KEEP\n"
+    printf "SADM_STORIX_NFS_SERVER      = $SADM_STORIX_NFS_SERVER\n"
+    printf "SADM_STORIX_NFS_MOUNT_POINT = $SADM_STORIX_NFS_MOUNT_POINT\n"
+    printf "SADM_STORIX_BACKUP_TO_KEEP  = $SADM_STORIX_BACKUP_TO_KEEP\n"
+    #
     echo "Press [ENTER] to Continue" ; read dummy
-    
 }
 
 

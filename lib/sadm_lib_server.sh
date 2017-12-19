@@ -135,14 +135,16 @@ sadm_server_ips() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
     case "$(sadm_get_ostype)" in
-        "LINUX") $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1       # Search vmware in dmidecode
-                 if [ $? -eq 0 ]                                        # If vmware was found
-                    then sadm_server_type="V"                           # If VMware Server
-                    else sadm_server_type="P"                           # Default Assume Physical
-                 fi
-                 ;;
-        "AIX")   sadm_server_type="P"                                   # Default Assume Physical
-                 ;;
+        "LINUX")    $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1    # Search vmware in dmidecode
+                    if [ $? -eq 0 ]                                     # If vmware was found
+                        then sadm_server_type="V"                       # If VMware Server
+                        else sadm_server_type="P"                       # Default Assume Physical
+                    fi
+                    ;;
+        "AIX")      sadm_server_type="P"                                # Default Assume Physical
+                    ;;        
+        "DARWIN")   sadm_server_type="P"                                # Default Assume Physical
+                    ;;
     esac
     echo "$sadm_server_type"
 }
@@ -259,13 +261,15 @@ sadm_server_nb_cpu() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_socket() { 
     case "$(sadm_get_ostype)" in
-       "LINUX") wns=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
-                if [ "$SADM_LSCPU" != "" ]
-                    then wns=`$SADM_LSCPU | grep -i '^Socket(s)' | cut -d ':' -f 2 | tr -d ' '`
-                fi
-                ;;
-        "AIX")  wns=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
-                ;;
+       "LINUX")     wns=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
+                    if [ "$SADM_LSCPU" != "" ]
+                        then wns=`$SADM_LSCPU | grep -i '^Socket(s)' | cut -d ':' -f 2 | tr -d ' '`
+                    fi
+                    ;;
+        "AIX")      wns=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
+                    ;;
+        "DARWIN")   wns=1
+                    ;;    
     esac
     if [ "$wns" -eq 0 ] ; then wns=1 ; fi
     echo "$wns"

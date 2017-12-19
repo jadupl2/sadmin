@@ -83,12 +83,15 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
 #---------------------------------------------------------------------------------------------------
 sadm_writexy()
 {
-    
+
     tput cup `expr $1 - 1`  `expr $2 - 1`                               # tput command pos. cursor
-    if [ "$(sadm_get_ostype)" = "AIX" ]                                    # In AIX just Echo Message
-       then echo "$3\c"                                                 # Don't need the -e in AIX
-       else echo -e "$3\c"                                              # -e enable interpretation
-    fi
+    case "$(sadm_get_ostype)" in
+        "LINUX")    echo -e "$3\c"                                      # -e enable interpretation  
+                    ;;
+        "AIX")      echo "$3\c"                                         # Don't need the -e in AIX
+                    ;;
+        *)          echo "$3\c"       
+    esac
 }
 
 
