@@ -65,7 +65,7 @@ function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
     }
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
     echo "\n<hr/>";                                                     # Print Horizontal Line
-    echo "\n<br>\n";                                                    # Print Horizontal Line
+    #echo "\n<br>\n";                                                    # Print Horizontal Line
 }
 
 

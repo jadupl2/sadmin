@@ -41,6 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
+if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_VER='2.1'                             ; export SADM_VER            # Script Version
@@ -123,76 +124,81 @@ process_servers()
               server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
               server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor  t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
-              server_fqdn=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
+              fqdn_server=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
               sadm_writelog " " ; sadm_writelog " "                     # Two Blank Lines
               sadm_writelog "${SADM_TEN_DASH}"
-              sadm_writelog "Processing ($xcount) $server_fqdn"
+              sadm_writelog "Processing ($xcount) $fqdn_server"
 
-              # In Debug Mode Display SSH Monitoring and Sporadic Setting
-              if [ $DEBUG_LEVEL -gt 3 ]                                 # If Debug is Activated
-                then if [ "$server_monitor" == "t" ]
-                            then sadm_writelog "Monitoring of SSH is ON for $server_fqdn"
-                            else sadm_writelog "Monitoring of SSH is OFF for $server_fqdn"
-                     fi
-                     if [ "$server_sporadic" == "t" ]
-                            then sadm_writelog "Server defined as sporadically available"
-                            else sadm_writelog "Server always available (Not Sporadic)"
-                     fi
+              # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
+              if [ $DEBUG_LEVEL -gt 0 ]                                 # If Debug Activated
+                 then if [ "$server_monitor" == "1" ]                   # Monitor Flag is at True
+                            then sadm_writelog "Monitoring is ON for $fqdn_server"
+                            else sadm_writelog "Monitoring is OFF for $fqdn_server"
+                      fi
+                      if [ "$server_sporadic" == "1" ]                  # Sporadic Flag is at True
+                            then sadm_writelog "Sporadic server is ON for $fqdn_server"
+                            else sadm_writelog "Sporadic server is OFF for $fqdn_server"
+                      fi
               fi
 
-              # If server name can't be resolved - Signal Error and Continue with next server.
-              if ! host $server_fqdn >/dev/null 2>&1
-                 then SMSG="[ ERROR ] Can't process '$server_fqdn', hostname can't be resolved"
+              # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
+              if ! host  $fqdn_server >/dev/null 2>&1
+                 then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
                       sadm_writelog "$SMSG"                             # Advise user
                       echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
                       if [ $ERROR_COUNT -ne 0 ]
-                         then sadm_writelog "Total Error(s) now at $ERROR_COUNT"
+                         then sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
                       fi
                       continue                                          # skip this server
               fi
 
-              # Test SSH to Server
-              $SADM_SSH_CMD $server_fqdn date > /dev/null 2>&1          # SSH to Server for date
+              # TEST SSH TO SERVER
+              $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1          # SSH to Server for date
               RC=$?                                                     # Save Error Number
 
-              # If SSH to server failed & it's a sporadic server = warning & next server
-              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "t" ]        # SSH don't work & Sporadic
-                 then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $server_fqdn"
+              # IF SSH TO SERVER FAILED & IT'S A SPORADIC SERVER = WARNING & NEXT SERVER
+              if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]        # SSH don't work & Sporadic
+                 then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
                       continue                                          # Go process next server
               fi
 
-              # If first SSH failed, try again 3 times to prevent false Error
-              if [ $RC -ne 0 ]   
-                then RETRY=0                                            # Set Retry counter to zero
-                     while [ $RETRY -lt 3 ]                             # Retry rsync 3 times
-                        do
-                        let RETRY=RETRY+1                               # Incr Retry counter
-                        $SADM_SSH_CMD $server_fqdn date >/dev/null 2>&1 # SSH to Server for date
-                        RC=$?                                           # Save Error Number
-                        if [ $RC -ne 0 ]                                # If Error doing ssh
-                            then if [ $RETRY -lt 3 ]                    # If less than 3 retry
-                                    then MSG="[ RETRY $RETRY ] $SADM_SSH_CMD $server_fqdn date"
-                                         sadm_writelog "$MSG"
-                                    else break
-                                 fi
-                            else sadm_writelog "[ OK ] $SADM_SSH_CMD $server_fqdn date"
+              # IF SSH TO SERVER FAILED & MONITORING THIS SERVER IS OFF = WARNING & NEXT SERVER
+              if [ $RC -ne 0 ] &&  [ "$server_monitor" == "0" ]         # SSH don't work/Monitor OFF
+                 then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
+                      continue                                          # Go process next server
+              fi
+
+              # IF SSH TO SERVER FAILED & = ERROR & NEXT SERVER
+              RETRY=0                                                   # Set Retry counter to zero
+              while [ $RETRY -lt 3 ]                                    # Retry rsync 3 times
+                do
+                let RETRY=RETRY+1                                       # Incr Retry counter
+                $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1        # SSH to Server for date
+                RC=$?                                                   # Save Error Number
+                if [ $RC -ne 0 ]                                        # If Error doing ssh
+                   then if [ $RETRY -lt 3 ]                             # If less than 3 retry
+                            then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                            else sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
                                  break
                         fi
-                        done
-              fi
+                   else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
+                        break
+                fi
+                done
+
 
               # If All SSH test failed, Issue Error Message and continue with next server
               if [ $RC -ne 0 ]   
-                 then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
+                 then SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
                       sadm_writelog "$SMSG"                             # Display Error Msg
                       echo "$SMSG" >> $SADM_ELOG                        # Log Err. to Email Log
-                      echo "COMMAND : $SADM_SSH_CMD $server_fqdn date" >> $SADM_ELOG
+                      echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
                       echo "----------" >> $SADM_ELOG
                       ERROR_COUNT=$(($ERROR_COUNT+1))                   # Consider Error -Incr Cntr
                       continue                                          # Continue with next server
               fi
-              sadm_writelog "[ OK ] SSH to $server_fqdn"                # Good SSH Work
+              sadm_writelog "[ OK ] SSH to $fqdn_server"                # Good SSH Work
 
 
               # PROCESS GOES HERE
@@ -202,14 +208,14 @@ process_servers()
               #for WDIR in "${rem_dir_to_rsync[@]}"
               #  do
               #  if [ $DEBUG_LEVEL -gt 5 ]                               # If Debug is Activated
-              #      then sadm_writelog "rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/"
+              #      then sadm_writelog "rsync -ar --delete ${WDIR}/ ${fqdn_server}:${WDIR}/"
               #  fi
-              #  rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/
+              #  rsync -ar --delete ${WDIR}/ ${fqdn_server}:${WDIR}/
               #  RC=$? 
               #  if [ $RC -ne 0 ]
-              #     then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${WDIR}"
+              #     then sadm_writelog "[ ERROR ] rsync error($RC) for ${fqdn_server}:${WDIR}"
               #          ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increase Error Counter
-              #     else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${WDIR}" 
+              #     else sadm_writelog "[ OK ] rsync for ${fqdn_server}:${WDIR}" 
               #  fi
 
               done < $SADM_TMP_FILE1
@@ -236,10 +242,8 @@ main_process()
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir. & RC/Log
-    sadm_stop 1
-    exit 1
-    
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message

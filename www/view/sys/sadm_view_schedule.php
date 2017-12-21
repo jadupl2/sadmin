@@ -77,7 +77,7 @@ function setup_table() {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border wrap width="80%">';   
+    echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
 
     # Table Heading
     echo "<thead>\n";
@@ -221,7 +221,7 @@ function display_data($count, $row) {
     echo "</td>\n";  
     
     # Last O/S Update Date 
-    echo "<td class='dt-center'>" . nl2br( $row['srv_update_date']) . "</td>\n";  
+    echo "<td class='dt-center'>" . nl2br( $row['srv_date_osupdate']) . "</td>\n";  
         
     # Last Update Status
     echo "<td class='dt-center'>";

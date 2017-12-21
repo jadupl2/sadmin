@@ -367,6 +367,14 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n</div>";                                                    # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
   
+
+    # LAST O/S UPDATE DATE 
+    echo "\n<div class='double_label'>Last O/S Update Date</div>";      # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    echo sadm_clean_data($wrow['srv_date_osupdate']);                   # Last O/S Update Date
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+  
     echo "\n</div>";                                                    # << End of double_form
     echo "\n<br>\n\n";                                                  # Blank Lines
 }

@@ -509,7 +509,7 @@ alert_user()    {
 
     # Send the Alert Message using the Protocol requested
     case "$a_type" in 
-        m|M) if [ "$SADM_MAIL" == "" ] 
+        m|M) if [ "$SADM_MAIL" = "" ] 
                 then sadm_writelog "Function 'alert_user' was requested to send an email" 
                      sadm_writelog "But the mail program was not found (SADM_MAIL=${SADM_MAIL})" 
                      sadm_writelog "Correct the situation and try again"
@@ -737,20 +737,20 @@ sadm_get_ostype() {
 sadm_get_oscodename() {
     case "$(sadm_get_ostype)" in
         "DARWIN")   wver="$(sadm_get_osmajorversion)"                   # Default is OX Version
-                    if [ "$wver"  == "10.0" ]  ; then woscodename="Cheetah"          ;fi
-                    if [ "$wver"  == "10.1" ]  ; then woscodename="Puma"             ;fi
-                    if [ "$wver"  == "10.2" ]  ; then woscodename="Jaguar"           ;fi
-                    if [ "$wver"  == "10.3" ]  ; then woscodename="Panther"          ;fi
-                    if [ "$wver"  == "10.4" ]  ; then woscodename="Tiger"            ;fi
-                    if [ "$wver"  == "10.5" ]  ; then woscodename="Leopard"          ;fi
-                    if [ "$wver"  == "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
-                    if [ "$wver"  == "10.7" ]  ; then woscodename="Lion"             ;fi
-                    if [ "$wver"  == "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
-                    if [ "$wver"  == "10.9" ]  ; then woscodename="Mavericks"        ;fi
-                    if [ "$wver"  == "10.10" ] ; then woscodename="Yosemite"         ;fi
-                    if [ "$wver"  == "10.11" ] ; then woscodename="El Capitan"       ;fi
-                    if [ "$wver"  == "10.12" ] ; then woscodename="Sierra"           ;fi
-                    if [ "$wver"  == "10.13" ] ; then woscodename="High Sierra"      ;fi
+                    if [ "$wver"  = "10.0" ]  ; then woscodename="Cheetah"          ;fi
+                    if [ "$wver"  = "10.1" ]  ; then woscodename="Puma"             ;fi
+                    if [ "$wver"  = "10.2" ]  ; then woscodename="Jaguar"           ;fi
+                    if [ "$wver"  = "10.3" ]  ; then woscodename="Panther"          ;fi
+                    if [ "$wver"  = "10.4" ]  ; then woscodename="Tiger"            ;fi
+                    if [ "$wver"  = "10.5" ]  ; then woscodename="Leopard"          ;fi
+                    if [ "$wver"  = "10.6" ]  ; then woscodename="Snow Leopard"     ;fi
+                    if [ "$wver"  = "10.7" ]  ; then woscodename="Lion"             ;fi
+                    if [ "$wver"  = "10.8" ]  ; then woscodename="Mountain Lion"    ;fi
+                    if [ "$wver"  = "10.9" ]  ; then woscodename="Mavericks"        ;fi
+                    if [ "$wver"  = "10.10" ] ; then woscodename="Yosemite"         ;fi
+                    if [ "$wver"  = "10.11" ] ; then woscodename="El Capitan"       ;fi
+                    if [ "$wver"  = "10.12" ] ; then woscodename="Sierra"           ;fi
+                    if [ "$wver"  = "10.13" ] ; then woscodename="High Sierra"      ;fi
                     ;;
         "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
                     ;;
@@ -765,16 +765,19 @@ sadm_get_oscodename() {
 #                   RETURN THE OS  NAME (ALWAYS RETURNED IN UPPERCASE)
 # --------------------------------------------------------------------------------------------------
 sadm_get_osname() {
-    if [ "$(sadm_get_ostype)" = "LINUX" ]
-        then wosname=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
-             if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ; fi
-             if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
-    fi 
-    if [ "$(sadm_get_ostype)" = "AIX" ]   ; then wosname="AIX" ; fi
-    if [ "$(sadm_get_ostype)" == "DARWIN" ]; 
-        then wosname=`sw_vers -productName | tr -d ' '`
-             wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
-    fi
+    case "$(sadm_get_ostype)" in
+        "DARWIN")   wosname=`sw_vers -productName | tr -d ' '`
+                    wosname=`echo $wosname | tr '[:lower:]' '[:upper:]'`
+                    ;;
+        "LINUX")    wosname=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
+                    if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ; fi
+                    if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
+                    ;;
+        "AIX")      wosname="AIX"
+                    ;;
+        *)          wosname="UNKNOWN"                    
+                    ;;
+    esac
     echo "$wosname"
 }
 
@@ -1017,7 +1020,7 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_STORIX_BACKUP_TO_KEEP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_STORIX_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
+        #SADM_MKSYSB_BACKUP_TO_KEEP
         # 
         echo "$wline" |grep -i "^SADM_REAR_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi

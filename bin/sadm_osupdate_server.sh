@@ -40,6 +40,8 @@
 #       Put Back cumulative Log, so we don't miss anything, when multiple update are running
 # December 2017 - Jacques Duplessis
 #       V3.2 Adapt program to use MySQL instead of PostGres 
+# December 2017 - Jacques Duplessis
+#       V3.3 Correct Problem connecting to Database
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -57,7 +59,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='3.2'                             ; export SADM_VER            # Script Version
+SADM_VER='3.3'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -99,6 +101,7 @@ help()
 {
     echo " "
     echo "sadm_osupdate_server.sh usage :"
+    echo "             -d [Debug Level (1-9)]"
     echo "             -s [ServerName]"
     echo "             -h help"
     echo " "
@@ -115,14 +118,14 @@ update_server_db()
     WSTATUS=$2                                                          # Save Server Update Status
     WCURDAT=`date "+%C%y.%m.%d %H:%M:%S"`                               # Get & Format Update Date
 
-    # Construct SQL Statement
+    # Construct SQL Update Statement
     sadm_writelog "Record O/S Update Status & Date for $WSERVER in DataBase" # Advise user
     SQL1="UPDATE server SET "                                           # SQL Update Statement
-    SQL2="srv_date_update   = '${WCURDAT}', "                           # Update Date of this Update
+    SQL2="srv_date_osupdate = '${WCURDAT}', "                           # Update Date of this Update
     SQL3="srv_update_status = '${WSTATUS}' "                            # [S]uccess [F]ail [R]unning
-    SQL4="where srv_name    = '${WSERVER}' ;"                           # Server name to update
+    SQL4="where srv_name = '${WSERVER}' ;"                              # Server name to update
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Create final SQL Statement
-    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_PGPWD "                       # Set Authentication String 
+    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -e '$SQL'"           # Build Full Command Line
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
@@ -145,13 +148,9 @@ update_server_db()
 # --------------------------------------------------------------------------------------------------
 #                      Process Linux servers selected by the SQL
 # --------------------------------------------------------------------------------------------------
-process_linux_servers()
+process_servers()
 {
-    sadm_writelog ""
-    sadm_writelog ""
-    sadm_writelog "${SADM_DASH}"
     sadm_writelog "PROCESS LINUX SERVERS"
-
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active from server "
     if [ "$ONE_SERVER" != "" ] 
@@ -162,7 +161,7 @@ process_linux_servers()
     fi
     SQL="${SQL1}${SQL2}${SQL3}${SQL4}"                                  # Build Final SQL Statement 
 
-    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_PGPWD "                       # Set Authentication String 
+    WAUTH="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL'"        # Build Full Command Line
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
@@ -181,36 +180,36 @@ process_linux_servers()
             server_update_auto=`        echo $wline|awk -F, '{ print $4 }'`
             server_update_reboot=`      echo $wline|awk -F, '{ print $5 }'`
             server_sporadic=`           echo $wline|awk -F, '{ print $6 }'`
+            fqdn_server=`echo ${server_name}.${server_domain}`          # Create FQN Server Name
             sadm_writelog " "
-            sadm_writelog "${STAR_LINE}"
             sadm_writelog "${STAR_LINE}"
             info_line="Processing ($xcount) ${server_name}.${server_domain} - "
             info_line="${info_line}os:${server_os}"
             sadm_writelog "$info_line"
             
-            # Ping Server to check if it is network reachable.
-            sadm_writelog "Ping the selected host ${server_name}.${server_domain}"
-            ping -c2 ${server_name}.${server_domain} >> /dev/null 2>&1
+            # Ping Server to check if it is network reachable --------------------------------------
+            sadm_writelog "Ping host $fqdn_server"
+            ping -c2 $fqdn_server >> /dev/null 2>&1
             if [ $? -ne 0 ]
-              then sadm_writelog "Error trying to ping the server ${server_name}.${server_domain}"
-                   if [ "$server_sporadic" == "t" ]
-                       then sadm_writelog "*** SERVER CLASS IS SPORADIC - NOT CONSIDER AS AN ERROR"
-                            sadm_writelog "*** WILL CONTINUE UPDATE WITH NEXT SERVER"
-                            if [ "$SADM_MAIL_TYPE" == "3" ]
-                                then wsubject="SADM: WARNING O/S Update - Server $server_name (OFFLINE)" 
-                                     echo "Server $server was OFFLINE at `date`"  | mail -s "$wsubject" $SADM_MAIL_ADDR
-                            fi
-                       else sadm_writelog "Update of server ${server_name}.${server_domain} Aborted"
-                            WARNING_COUNT=$(($WARNING_COUNT+1))
-                   fi
-                   sadm_writelog "Total error count is at $ERROR_COUNT and warning at $WARNING_COUNT"
-                   continue
-              else sadm_writelog "Ping went OK"
+                then    sadm_writelog "Error trying to ping host $fqdn_server"
+                        if [ "$server_sporadic" == "1" ]
+                            then    sadm_writelog "[WARNING] This host is sporadically online"
+                                    sadm_writelog "Will continue with next server"
+                                    WARNING_COUNT=$(($WARNING_COUNT+1))
+                            else    sadm_writelog "Update of server $fqdn_server Aborted"
+                                    ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
+                        if [ "$ERROR_COUNT" != "0" ] || [ "$WARNING_COUNT" != "0" ] 
+                            then sadm_writelog "Error at ${ERROR_COUNT}, Warning at $WARNING_COUNT"
+                        fi
+                        continue
+                else
+                        sadm_writelog "[OK] Ping worked"
             fi
 
 
             # If Server is network reachable, but the O/S Update field is OFF in DB Skip Update
-            if [ "$server_update_auto" == "f" ]
+            if [ "$server_update_auto" == "0" ] && [ "$ONE_SERVER" == "" ] 
                 then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
                      sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
                      if [ "$SADM_MAIL_TYPE" == "3" ]
@@ -218,7 +217,7 @@ process_linux_servers()
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
                 else WREBOOT=" N"                                       # Default is no reboot
-                     if [ "$server_update_reboot" == "t" ]            # If Requested in Database
+                     if [ "$server_update_reboot" == "1" ]            # If Requested in Database
                         then WREBOOT="Y"                                # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
@@ -266,10 +265,12 @@ process_linux_servers()
     fi
 
     ONE_SERVER=""                                                       # Set Switch Default Value
-    while getopts "hs:" opt ; do                                        # Loop to process Switch
+    while getopts "hd:s:" opt ; do                                      # Loop to process Switch
         case $opt in
             s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
                ;;
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page               
             h) help                                                     # Display Help Usage
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
@@ -282,9 +283,7 @@ process_linux_servers()
         esac                                                            # End of case
         done             
 
-    process_linux_servers                                               # Go Update Linux Servers
+    process_servers                                                     # Go Update Servers
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
-
-    # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

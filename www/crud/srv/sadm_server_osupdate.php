@@ -85,7 +85,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = True ;                                                        # Debug Activated True/False
+$DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
@@ -307,7 +307,7 @@ function display_osschedule($con,$wrow,$mode) {
     echo "\n</div>";
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
   
-    echo "\n</div>";                                                    # << End of double_form
+    echo "\n</div>";                                                    # << End of O/S Update Form
     echo "\n<br>\n\n";                                                  # Blank Lines
 }
 

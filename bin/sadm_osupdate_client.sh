@@ -26,6 +26,8 @@
 #       Add Error Message in the Log
 # Version 3.2 - July 2017 
 #       Now using DNF instead of yum for updating Fedora 25 and beyong.
+# Version 3.3 - December 2017 
+#       No longer Support Redhat/CentOS 3 and 4
 # --------------------------------------------------------------------------------------------------
 #
 
@@ -35,7 +37,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='3.2'                             ; export SADM_VER            # This Script Version
+SADM_VER='3.3'                             ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -96,18 +98,7 @@ check_available_update()
 
         "REDHAT"|"CENTOS" ) 
             case "$(sadm_get_osmajorversion)" in
-                [3-4])  sadm_writelog "Running \"up2date -l\""              # Update the Log
-                        up2date -l >> $SADM_LOG 2>&1                        # List update available
-                        rc=$?                                               # Save Exit code
-                        sadm_writelog "Return Code is $rc"                  # Exit code to log
-                        case $rc in
-                            0) UpdateStatus=0                               # Update Exist
-                               sadm_writelog "Update are available ..."     # Update log update avail.
-                               ;;
-                            *) UpdateStatus=2                               # Problem Abort Update
-                               sadm_writelog "NO UPDATE AVAILABLE"          # Update the log
-                               ;;
-                        esac
+                [3-4])  UpdateStatus=1                                      # No Update available
                         ;;
                 [5-7])  sadm_writelog "Running \"yum check-update\""        # Update the log
                         yum check-update >> $SADM_LOG 2>&1                  # List Available update
@@ -325,14 +316,14 @@ run_apt_get()
     UPDATE_AVAILABLE=0                                                  # Assume No Upd. Available
     check_available_update                                              # Check if Update is Avail.
     RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
-    if [ $RC -eq 0 ]                                                    # If Update are Available
+    if [ "$RC" -eq 0 ]                                                  # If Update are Available
        then UPDATE_AVAILABLE=1                                          # Set Upd to be done Flag ON
             case "$(sadm_get_osname)" in                                # Test OS Name
                 "REDHAT"|"CENTOS" )
-                        if [ $(sadm_get_osmajorversion) -lt 5 ]
-                            then    run_up2date                         # Version 3 or 4 use up2date
+                        if [ $(sadm_get_osmajorversion) -lt 8 ]
+                            then    run_yum                             # V 5 and above use yum cmd
                                     SADM_EXIT_CODE=$?                   # Save Return Code
-                            else    run_yum                             # V 5 and above use yum cmd
+                            else    run_dnf                             # V 8 and up use dnf
                                     SADM_EXIT_CODE=$?                   # Save Return Code
                         fi
                         ;; 
