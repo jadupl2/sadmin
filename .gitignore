@@ -35,7 +35,7 @@ www/db/
 # Specific files to exclude 
 sysmon.lock
 sys/*.log
-cfg/.pgpass
+cfg/.dbpass
 cfg/.sadmin.cfg
 cfg/sadmin.cfg
 cfg/holmes.cfg
