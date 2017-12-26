@@ -52,8 +52,8 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 # --------------------------------------------------------------------------------------------------
 # Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
 # --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadm_lib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadm_lib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadm_lib_server.sh  # sadm server lib
+[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     # sadm std Lib
+[ -f ${SADM_BASE_DIR}/lib/sadmlib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadmlib_server.sh  # sadm server lib
 
 # --------------------------------------------------------------------------------------------------
 # These Global Variables, get their default from the sadmin.cfg file, but can be overridden here

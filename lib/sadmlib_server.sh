@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #  Author:    Jacques Duplessis
-#  Title      sadm_lib_server.sh
+#  Title      sadmlib_server.sh
 #  Date:      August 2015
 #  Synopsis:  SADMIN Standard Shell Script Library specific to get server information 
 #  Requires : sh 

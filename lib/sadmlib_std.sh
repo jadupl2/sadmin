@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 #===================================================================================================
 #  Author:    Jacques Duplessis
-#  Title      sadm_lib_std.sh
+#  Title      sadmlib_std.sh
 #  Date:      August 2015
 #  Synopsis:  SADMIN  Shell Script Main Library
 #  
@@ -27,6 +27,8 @@
 #   V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
 # 2017_12_18 JDuplessis
 #   V2.9 Function were changed to run on MacOS and Some Restructuration was done
+# 2017_12_23 JDuplessis
+#   V2.10 SSH Command line construction added at the end of script
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -45,7 +47,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.9"                          ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.10"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -110,6 +112,7 @@ SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path t
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
+
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
@@ -1381,10 +1384,13 @@ sadm_stop() {
 #                                THING TO DO WHEN FIRST CALLED
 # --------------------------------------------------------------------------------------------------
 #
-    
     # Load SADMIN Configuration file
     sadm_load_config_file                                               # Load SADM cfg file
 
-    # Make sure ALL basic requirement are met - If not then exit 1
+    # Make sure Minimum requirement are met - If not then exit 1
     sadm_check_requirements                                             # Check Lib Requirements
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
+
+    # SSH Command to Access Farm
+    SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}" ;export SADM_SSH_CMD  
+

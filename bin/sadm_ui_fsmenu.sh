@@ -23,7 +23,7 @@
 #===================================================================================================
 
 # Load Filesystem Library Tools
-[ -f ${SADM_LIB_DIR}/sadm_lib_fs.sh ] && . ${SADM_LIB_DIR}/sadm_lib_fs.sh  
+[ -f ${SADM_LIB_DIR}/sadmlib_fs.sh ] && . ${SADM_LIB_DIR}/sadmlib_fs.sh  
 
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T

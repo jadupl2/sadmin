@@ -1,12 +1,12 @@
 #!/bin/bash
 #---------------------------------------------------------------------------------------------------
-# Shellscript:	sadm_lib_fs.sh - Contains SADM FileSystem Related functions
+# Shellscript:	sadmlib_fs.sh - Contains SADM FileSystem Related functions
 # Version    :	2.0
 # Author     :	jacques duplessis (duplessis.jacques@gmail.com)
 # Date       :	2016-06-01
 # Requires   :	bash shell - lvm installed
 # Category   :	filesystem tools
-# SCCS-Id.   :	@(#) sadm_lib_fs.sh 1.5 June 2016
+# SCCS-Id.   :	@(#) sadmlib_fs.sh 1.5 June 2016
 #---------------------------------------------------------------------------------------------------
 # Description
 #   Library of functions to deal with various LVM commands

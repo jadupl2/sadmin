@@ -18,6 +18,8 @@
 #   V2.1 Correct problem change group of rch and log file in the stop function
 # 2017_12_07 - JDuplessis
 #   V2.2 Revert Change Cause reading problem with apache 
+# 2017_12_26 - JDuplessis
+#   V2.2 Adapted to work on OSX and To Adapt to Python 3 
 #
 # 
 # ==================================================================================================
@@ -37,10 +39,9 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.1"                                             # This Library Version
+libver              = "2.2"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
-username            = getpass.getuser()                                 # Get Current User Name
 args                = len(sys.argv)                                     # Nb. argument receive
 osname              = os.name                                           # OS name (nt,dos,posix,...)
 platform            = sys.platform                                      # Platform (darwin,linux)
@@ -88,6 +89,8 @@ class sadmtools():
         # O/S Info
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
         self.os_type            = self.get_ostype()                     # O/S LINUX,AIX,DARWIN
+        self.username           = getpass.getuser()                     # Get Current User Name
+
 
         # SADM Sub Directories Definitions
         self.lib_dir            = os.path.join(self.base_dir,'lib')     # SADM Lib. Directory
@@ -185,10 +188,12 @@ class sadmtools():
         self.perl               = ""                                    # perl Path (for epoch time)
         self.uname              = ""                                    # uname command path
         self.mail               = ""                                    # mail command path
+        self.ssh                = ""                                    # ssh command path       
 
-        # Load Configuration File ($SADMIN/cfg/sadmin.cfg)
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
+        self.check_requirements()                                       # Check SADM Requirement Met
 
+        self.ssh_cmd = "%s -qnp %s " % (self.ssh,self.cfg_ssh_port)     # SSH Command we use
 
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
@@ -346,11 +351,11 @@ class sadmtools():
             if "SADM_MKSYSB_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_mksysb_nfs_mount_point= CFG_VALUE
             if "SADM_MKSYSB_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_mksysb_backup_to_keep = int(CFG_VALUE)
             #
-            if "SADM_NETWORK1 "              in CFG_NAME: self.cfg_network1        = CFG_VALUE
-            if "SADM_NETWORK2 "              in CFG_NAME: self.cfg_network2        = CFG_VALUE
-            if "SADM_NETWORK3 "              in CFG_NAME: self.cfg_network3        = CFG_VALUE
-            if "SADM_NETWORK4 "              in CFG_NAME: self.cfg_network4        = CFG_VALUE
-            if "SADM_NETWORK5 "              in CFG_NAME: self.cfg_network5        = CFG_VALUE
+            if "SADM_NETWORK1"               in CFG_NAME: self.cfg_network1        = CFG_VALUE
+            if "SADM_NETWORK2"               in CFG_NAME: self.cfg_network2        = CFG_VALUE
+            if "SADM_NETWORK3"               in CFG_NAME: self.cfg_network3        = CFG_VALUE
+            if "SADM_NETWORK4"               in CFG_NAME: self.cfg_network4        = CFG_VALUE
+            if "SADM_NETWORK5"               in CFG_NAME: self.cfg_network5        = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
         return        
 
@@ -377,8 +382,8 @@ class sadmtools():
     def oscommand(self,command) :
         if self.debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
         p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-        out = p.stdout.read().strip()
-        err = p.stderr.read().strip()
+        out = p.stdout.read().strip().decode()
+        err = p.stderr.read().strip().decode()
         returncode = p.wait()
         if self.debug > 8 :
             self.writelog ("In sadm_oscommand function stdout is      : %s" % (out))
@@ -418,7 +423,7 @@ class sadmtools():
         if os.path.exists(self.rel_file):
             wcommand = "head -1 %s" % (self.rel_file)
             ccode, cstdout, cstderr = self.oscommand("%s" % (wcommand))      # Execute O/S CMD 
-            wrelease=cstdout.decode()
+            wrelease=cstdout
         else:
             wrelease="00.00"
         return wrelease
@@ -447,7 +452,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand(cmd)
         else:
             ccode, cstdout, cstderr = self.oscommand("namerslv -s | grep domain | awk '{ print $2 }'")
-        wdomainname=cstdout.lower().decode()
+        wdomainname=cstdout.lower()
         return wdomainname
  
     # ----------------------------------------------------------------------------------------------
@@ -461,14 +466,42 @@ class sadmtools():
     #                              RETURN THE IP OF THE CURRENT HOSTNAME
     # ----------------------------------------------------------------------------------------------
     def get_host_ip(self):
-        whostname = self.hostname
-        wdomain = get_domainname()
-        if self.os_type == "LINUX" :                                    # Under Linux
-            ccode, cstdout, cstderr = self.oscommand("host $whostname |awk '{ print $4 }' |head -1") 
-        if self.os_type == "AIX" :                                      # Under AIX
-            ccode, cstdout, cstderr = self.oscommand("host $whostname.$wdomain |head -1 |awk '{ print $3 }'")
-        whostip=cstdout.upper()
+        whostname = self.get_fqdn()
+        whostip = socket.gethostbyname(whostname)
+        #if self.os_type == "LINUX" :                                    # Under Linux
+        #    print ("whostname = %s " % (whostname))
+        #    ccode, cstdout, cstderr = self.oscommand("host $whostname |awk '{ print $4 }' |head -1") 
+        #    print ("ccode = %d - cstderr = %s  - cstdout %s - whostname = %s " % (ccode,cstderr,cstdout,whostname))
+        #if self.os_type == "AIX" :                                      # Under AIX
+        #    ccode, cstdout, cstderr = self.oscommand("host $whostname.$wdomain |head -1 |awk '{ print $3 }'")
+        #whostip=cstdout
         return whostip
+
+
+    # ----------------------------------------------------------------------------------------------
+    #                               Return Current Epoch Time 
+    # ----------------------------------------------------------------------------------------------
+    def get_epoch_time(self):
+        return int(time.time())
+
+
+    # ----------------------------------------------------------------------------------------------
+    #                               Return Current Epoch Time 
+    # ----------------------------------------------------------------------------------------------
+    def epoch_to_date(self,wepoch):
+        ws = time.localtime(wepoch)
+        wdate = "%04d.%02d.%02d %02d:%02d:%02d" % (ws[0],ws[1],ws[2],ws[3],ws[4],ws[5])
+        return wdate
+
+
+    # ----------------------------------------------------------------------------------------------
+    #           Convert Date Received (YYYY.MM.DD HH:MM:SS) to Epoch Time 
+    # ----------------------------------------------------------------------------------------------
+    def date_to_epoch(self,wd):
+        pattern = '%Y.%m.%d %H:%M:%S'
+        we = int(time.mktime(time.strptime(wd, pattern)))
+        return we
+
 
 
     # ----------------------------------------------------------------------------------------------
@@ -479,7 +512,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("getconf LONG_BIT") 
         if self.os_type == "AIX" :                                      # Under AIX
            ccode, cstdout, cstderr = self.oscommand("getconf KERNEL_BITMODE")
-        wkbits=cstdout.upper()
+        wkbits=cstdout
         return wkbits
 
 
@@ -491,7 +524,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("uname -r | cut -d. -f1-3") 
         if self.os_type == "AIX" :                                      # Under AIX
             ccode, cstdout, cstderr = self.oscommand("uname -r")
-        wkver=cstdout.upper()
+        wkver=cstdout
         return wkver
 
  
@@ -501,7 +534,7 @@ class sadmtools():
     def get_ostype(self):
         ccode, cstdout, cstderr = self.oscommand("uname -s")
         wostype=cstdout.upper()
-        return wostype.decode()
+        return wostype
 
 
     
@@ -514,14 +547,14 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osname=cstdout.upper()
         if self.os_type == "LINUX":
-            wcmd = "%s %s" % (lsb_release,"-si")
+            wcmd = "%s %s" % (self.lsb_release,"-si")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osname=cstdout.upper()
             if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
             if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
         if self.os_type == "AIX" : 
             osname="AIX"
-        return osname.decode()
+        return osname
 
  
     # ----------------------------------------------------------------------------------------------
@@ -563,9 +596,9 @@ class sadmtools():
             if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
             if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
         if self.os_type == "LINUX":
-            wcmd = "%s %s" % (lsb_release,"-sc")
+            wcmd = "%s %s" % (self.lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
-            oscodename=cstdout.upper().decode()
+            oscodename=cstdout.upper()
         if self.os_type == "AIX" : 
             oscodename="IBM AIX"
         return (oscodename)
@@ -577,7 +610,7 @@ class sadmtools():
     def get_osversion(self) :
         osversion="0.0"                                                 # Default Value
         if self.os_type == "LINUX" :
-            ccode, cstdout, cstderr = self.oscommand(lsb_release + " -sr")
+            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
             osversion=cstdout
         if self.os_type == "DARWIN" :
             cmd = "sw_vers -productVersion"
@@ -589,7 +622,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             min_ver=cstdout
             osversion="%s.%s" % (maj.version,min.version)
-        return osversion.decode()
+        return osversion
 
 
     # ----------------------------------------------------------------------------------------------
@@ -597,17 +630,35 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def get_osmajorversion(self) :
         if self.os_type == "LINUX" :
-            ccode, cstdout, cstderr = self.oscommand(lsb_release + " -sr")
-            osversion=cstdout.decode()
+            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
+            osversion=cstdout
             osmajorversion=osversion.split('.')[0]
         if self.os_type == "AIX" :
             ccode, cstdout, cstderr = self.oscommand("uname -v")
-            osmajorversion=cstdout.decode()
+            osmajorversion=cstdout
         if self.os_type == "DARWIN":
             wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osmajorversion=cstdout
-        return osmajorversion.decode()
+        return osmajorversion
+
+    
+    # ----------------------------------------------------------------------------------------------
+    #                     RETURN THE OS (DISTRIBUTION) MINOR VERSION NUMBER
+    # ----------------------------------------------------------------------------------------------
+    def get_osminorversion(self) :
+        if self.os_type == "LINUX" :
+            ccode, cstdout, cstderr = self.oscommand(self.lsb_release + " -sr")
+            osversion=cstdout
+            osminorversion=osversion.split('.')[1]
+        if self.os_type == "AIX" :
+            ccode, cstdout, cstderr = self.oscommand("uname -r")
+            osminorversion=cstdout
+        if self.os_type == "DARWIN":
+            wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
+            ccode, cstdout, cstderr = self.oscommand(wcmd)
+            osminorversion=cstdout
+        return osminorversion
 
     
     # ----------------------------------------------------------------------------------------------
@@ -720,22 +771,22 @@ class sadmtools():
     #   THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
     # ----------------------------------------------------------------------------------------------
     def check_command_availibility(self,cmd) :
-        global FH_LOG_FILE
 
         ccode, cstdout, cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
-            self.writelog ("Warning : Command '%s' couldn't be found" % (cmd)) # Displat Warning for User
-            self.writelog ("   This program is used by the SADMIN tools")    # Command is needed by SADM
-            self.writelog ("   Please install it and re-run this script")    # May want to install it
+            print ("Warning : Command '%s' couldn't be found" % (cmd))  # Displat Warning for User
+            print ("   This program is used by the SADMIN tools")       # Command is needed by SADM
+            print ("   Please install it and re-run this script")       # May want to install it
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
-        if self.debug > 2 :                                                  # Prt Cmd Location if debug
+        if self.debug > 2 :                                             # Prt Cmd Location if debug
             if cmd_path != "" :                                         # If Cmd was Found
-                self.writelog ("Command '%s' located at %s" % (cmd,cmd_path))# Print Cmd Location
+                print ("Command '%s' located at %s" % (cmd,cmd_path))# Print Cmd Location
             else :                                                      # If Cmd was not Found
-                self.writelog ("Command '%s' could not be located" % (cmd))  # Cmd Not Found to User 
-        cmd_path = cmd_path.decode()
+                print ("Command '%s' could not be located" % (cmd))     # Cmd Not Found to User 
+        cmd_path = cmd_path
+        #print ("cmd_path = %s" (cmd_path))
         return (cmd_path)                                               # Return Cmd Path
 
 
@@ -744,74 +795,80 @@ class sadmtools():
     # IF REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global FH_LOG_FILE, lsb_release, dmidecode, uname, fdisk, mail
+        global FH_LOG_FILE, lsb_release, dmidecode, uname, fdisk, mail, ssh
     
-        if self.debug > 5 :                                                  # If Debug Run Level 7
-            self.writelog (" ")                                              # Space Line in the LOG
-            self.writelog (dash)                                             # 80 = Lines 
-            self.writelog ("Checking Libraries Requirements")                # Inform user in Debug
-            self.writelog (dash)                                             # 80 = Lines 
-        requisites_status=True                                          # Default Requisite met
+        requisites_status=True                                          # Assume Requirement all Met
     
         # Get the location of the which command
-        if self.debug > 2 : self.writelog ("Is 'which' command available ...")    # Command Available ?
+        if self.debug > 2 : print ("Is 'which' command available ...") 
         ccode, cstdout, cstderr = self.oscommand("which which")
         if ccode is not 0 :
-            self.writelog ("Error : The command 'which' could not be found")
-            self.writelog ("        This program is often used by the SADMIN tools")
-            self.writelog ("        Please install it and re-run this script")
-            self.writelog ("        To install it, use the following command depending on your distro")
-            self.writelog ("        Use 'yum install which' or 'apt-get install debianutils'")
-            self.writelog ("Script Aborted")
+            print ("Error : The command 'which' could not be found")
+            print  ("        This program is often used by the SADMIN tools")
+            print ("        Please install it and re-run this script")
+            print ("        To install it, use the following command depending on your distro")
+            print ("        Use 'yum install which' or 'apt-get install debianutils'")
+            print ("Script Aborted")
             sys.exit(1)
-        self.which = cstdout.decode()
-        if self.debug > 2 :
-            if self.which != "" :
-                self.writelog ("Command 'which' located at %s" % self.which) # Print Cmd Location
-            else :
-                self.writelog ("Command 'which' could not be located ") # Cmd Not Found 
-        requisites_status=False
- 
+        self.which = cstdout
+        if self.debug > 2 : print ("Yes it is at %s" % (self.which)) 
     
         # Get the location of the lsb_release command
         if (self.os_type == "LINUX"):
-            lsb_release = self.check_command_availibility('lsb_release')    # location of lsb_release
-            if lsb_release == "" :
-                self.writelog ("CRITICAL: The 'lsb_release' is needed and is not present")
-                self.writelog ("Please correct the situation and re-execute this script")
+            self.lsb_release = self.check_command_availibility('lsb_release')
+            if self.lsb_release == "" :
+                print("CRITICAL: The 'lsb_release' is needed and is not present")
+                print("Please correct the situation and re-execute this script")
                 requisites_status=False
- 
-    
-        uname = self.check_command_availibility('uname')                # location of uname 
-        if uname == "" :
-            self.writelog ("CRITICAL: The 'uname' is needed and is not present")
-            self.writelog ("Please correct the situation and re-execute this script")
+
+        self.uname = self.check_command_availibility('uname')           # location of uname command
+        if self.uname == "" :
+            print("CRITICAL: The 'uname' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
+            requisites_status=False
+
+        self.bc = self.check_command_availibility('bc')                 # location of uname command
+        if self.bc == "" :
+            print("CRITICAL: The 'bc' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
             requisites_status=False
     
         # Get the Location of fdisk
-        if (self.os_type == "LINUX"):
-            self.fdisk = self.check_command_availibility('fdisk')       # location of fdisk
-            if self.fdisk == "" :                                       # If Command was not found
-                self.writelog ("CRITICAL: The 'fdisk' is needed and is not present")
-                self.writelog ("Please correct the situation and re-execute this script")
-                requisites_status=False
+        self.fdisk = self.check_command_availibility('fdisk')           # location of fdisk
+        if self.fdisk == "" :                                           # If Command was not found
+            print("CRITICAL: The 'fdisk' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
+            requisites_status=False
                 
         # Get the location of mail command
         self.mail = self.check_command_availibility('mail')             # location of mail
         if self.mail == "" :                                            # If Command was not found
-            self.writelog ("CRITICAL: The 'mail' is needed and is not present")
-            self.writelog ("Please correct the situation and re-execute this script")
+            print("CRITICAL: The 'mail' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
             requisites_status=False
 
-        # Get the Location of dmidecode
-        if (self.os_type == "LINUX"):
-            self.dmidecode =self.check_command_availibility('dmidecode')# location of dmidecode
-            if self.dmidecode == "" :                                   # If Command was not found
-                self.writelog ("CRITICAL: The 'dmidecode' is needed and is not present")
-                self.writelog ("Please correct the situation and re-execute this script")
-                requisites_status=False
+        # Get the location of ssh command
+        self.ssh = self.check_command_availibility('ssh')               # location of ssh
+        if self.ssh == "" :                                             # If Command was not found
+            print("CRITICAL: The 'ssh' is needed and is not present")
+            print("Please correct the print re-execute this script")
+            requisites_status=False
 
-        return requisites_status
+        # Get the location of dmidecode command
+        self.dmidecode =self.check_command_availibility('dmidecode')    # location of dmidecode
+        if self.dmidecode == "" :                                       # If Command was not found
+            print("CRITICAL: The 'dmidecode' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
+            requisites_status=False
+
+        # Get the location of perl command
+        self.perl =self.check_command_availibility('perl')              # location of dmidecode
+        if self.dmidecode == "" :                                       # If Command was not found
+            print("CRITICAL: The 'perl' is needed and is not present")
+            print("Please correct the situation and re-execute this script")
+            requisites_status=False
+
+        return requisites_status                                        # Requirement Met True/False
  
 
     # ----------------------------------------------------------------------------------------------
@@ -846,8 +903,6 @@ class sadmtools():
             print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
             sys.exit(1)                                                 # Exit with Error
 
-        # Second thing chack if requirement are met
-        self.check_requirements()                                       # Check SADM Requirement Met
     
         # Make sure all SADM Directories structure exist
         if not os.path.exists(self.cfg_dir)  : os.mkdir(self.cfg_dir,0o0775)# Create Configuration Dir
@@ -1071,110 +1126,142 @@ class sadmtools():
     # For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
     # ----------------------------------------------------------------------------------------------
     def display_env(self):
-        print(" ")                                                      # Space Line in the LOG
-        print(dash)                                                     # 80 = Lines 
-        print("Display Important Environment Variables")                # Introduce Display Below
-        print(dash)                                                     # 80 = Lines 
-        print("SADMIN Release No.  = " + self.get_release())            # Get SADMIN Release Version
-        print("sadmlib_std.py      = " + self.ver)                           # Program Version
-        print("pn                  = " + self.pn)                            # Program name
-        print("inst                = " + self.inst)                          # Program name without Ext.
-        print("hostname            = " + self.hostname)                      # Program name without Ext.
-        print("username            = " + username)                      # Current User Name
-        print("tpid                = " + self.tpid)                          # Get Current Process ID.
-        print("self.debug          = " + str(self.debug))               # Debug Level
-        print("get_ostype()        = " + self.os_type)                  # OS Type Linux or Aix
-        print("get_osname()        = " + self.get_osname())             # Distribution of OS
-        print("get_osversion()     = " + self.get_osversion())          # Distribution Version
-        print("get_osmajorversion()= " + self.get_osmajorversion())     # Distribution Major Ver#
-        print("get_oscodename()    = " + self.get_oscodename())         # Distribution Code Name
-        print("log_type            = " + self.log_type)                 # 4Logger S=Scr L=Log B=Both
-        print("multiple_exec       = " + self.multiple_exec)            # Permit Multiple Execution
-        if (self.log_append):
-            print("log_append          = True")                         # Log Append is set to True
-        else:
-            print("log_append          = False")                        # Log Append is set to False
-        print("base_dir            = " + self.base_dir)                 # Base Dir. where appl. is
-        print("tmp_dir             = " + self.tmp_dir)                  # SADM Temp. Directory
-        print("cfg_dir             = " + self.cfg_dir)                  # SADM Config Directory
-        print("lib_dir             = " + self.lib_dir)                  # SADM Library Directory
-        print("bin_dir             = " + self.bin_dir)                  # SADM Scripts Directory
-        print("log_dir             = " + self.log_dir)                  # SADM Log Directory
-        print("www_dir             = " + self.www_dir)                  # SADM WebSite Dir Structure
-        print("pkg_dir             = " + self.pkg_dir)                  # SADM Package Directory
-        print("sys_dir             = " + self.sys_dir)                  # SADM System Scripts Dir.
-        print("dat_dir             = " + self.dat_dir)                  # SADM Data Directory
-        print("nmon_dir            = " + self.nmon_dir)                 # SADM nmon File Directory
-        print("rch_dir             = " + self.rch_dir)                  # SADM Result Code Dir.
-        print("dr_dir              = " + self.dr_dir)                   # SADM Disaster Recovery Dir
-        print("sar_dir             = " + self.sar_dir)                  # SADM System Activity Rep.
-        print("www_dat_dir         = " + self.www_dat_dir)              # SADM Web Site Data Dir
-        print("www_html_dir        = " + self.www_html_dir)             # SADM Web Site Dir
-        print("log_file            = " + self.log_file)                 # SADM Log File
-        print("rch_file            = " + self.rch_file)                 # SADM RCH File
-        print("cfg_file            = " + self.cfg_file)                 # SADM Config File
-        print("pid_file            = " + self.pid_file)                 # SADM PID FileName
-        print("tmp_file1           = " + self.tmp_file1)                # SADM Tmp File 1
-        print("tmp_file2           = " + self.tmp_file2)                # SADM Tmp File 2
-        print("tmp_file3           = " + self.tmp_file3)                # SADM Tmp File 3
-        print("which               = " + self.which)                    # Location of which
-        print("lsb_release         = " + self.lsb_release)              # Location of lsb_release
-        print("dmidecode           = " + self.dmidecode)                # Location of dmidecode
-        print("fdisk               = " + self.fdisk)                    # Location of fdisk
-        print("uname               = " + self.uname)                    # Location of uname
+        print ("==================================================================================")
+        print ("Library V%s - Script V%s" % (libver,self.ver))    
+        print(" ")                                                    
+        print("SADMIN Various Methods and Attributes")
+        print(dash)                                                   
+        print ("obj.get_release()                       Release Number                          : %s" % (self.get_release()))
+        print("obj.get_ostype()                         O/S Type (Always Uppercase)             : %s" % (self.os_type))
+        print("obj.get_osversion()                      Return O/S Version                      : %s" % (self.get_osversion()))
+        print("obj.get_osmajorversion()                 Return Major O/S Version                : %s" % (self.get_osmajorversion()))
+        print("obj.get_osminorversion()                 Return Minor O/S Version                : %s" % (self.get_osminorversion()))
+        print("obj.get_osname()                         O/S Name                                : %s" % (self.get_osname()))  
+        print("obj.get_oscodename()                     Return O/S Code Name                    : %s" % (self.get_oscodename()))
+        print("obj.get_kernel_version()                 Return O/S Kernel Version               : %s" % (self.get_kernel_version()))
+        print("obj.get_kernel_bitmode()                 Return O/S Kernel Bit Mode              : %s" % (str(self.get_kernel_bitmode())))
+        print("obj.hostname                             Hostname without Domain                 : %s" % (self.hostname))
+        print("obj.get_host_ip()                        Return Hostname IP Address              : %s" % (self.get_host_ip()))
+        print("obj.get_domainname()                     Return Hostname Domain Name             : %s" % (self.get_domainname()))
+        print("obj.get_fqdn()                           Return FQDN Hostname                    : %s" % (self.get_fqdn()))
+        wepoch= self.get_epoch_time()
+        print("obj.get_epoch_time()                     Return Current Epoch Time               : %d" % (self.get_epoch_time()))
+        print("obj.epoch_to_date(%d)            Return Date/Time from Epoch             : %s" % (wepoch,self.epoch_to_date(wepoch)))
+        wd = self.epoch_to_date(wepoch)
+        print("obj.date_to_epoch(%s)   Convert Date/Time to Epoch              : %d" % (wd,self.date_to_epoch(wd)))
+        print("obj.pn                                   PN  Program (Script) Name               : %s" % (self.pn)) 
+        print("obj.inst                                 PN without extension                    : %s" % (self.inst))
+        print("obj.username                             Current User Name                       : %s" % (self.username))
+        print("obj.tpid                                 Current Process ID.                     : %s" % (self.tpid))
+        print("obj.debug                                Current Debug Level [1-9]               : %s" % (str(self.debug)))
+        print("obj.log_type                             Set/Get Logtype(Both,Scr,Log)           : %s" % (self.log_type))
+        print("obj.multiple_exec                        Allow Simultanious Execution            : %s" % (self.multiple_exec))
+        print("obj.log_append                           Open log in Append Mode                 : %s" % (self.log_append))
 
         print(" ")                                                      # Space Line in the LOG
+        print("SADM Client & Servers Directories Attribute")
         print(dash)                                                     # 80 = Lines 
+        print("obj.base_dir             Root Dir. of SADMIN Tools     : %s" % (self.base_dir))
+        print("obj.tmp_dir              SADMIN Temp. Directory        : %s" % (self.tmp_dir))
+        print("obj.cfg_dir              SADMIN Configuration Dir.     : %s" % (self.cfg_dir))
+        print("obj.lib_dir              SADMIN Shell & Python Lib.    : %s" % (self.lib_dir))
+        print("obj.bin_dir              SADMIN Shell & Python Scripts : %s" % (self.bin_dir))
+        print("obj.log_dir              SADMIN Log Directory          : %s" % (self.log_dir))
+        print("obj.pkg_dir              Software Pkg use in SADMIN    : %s" % (self.pkg_dir))
+        print("obj.sys_dir              Host Scripts(Startup/Shutdown): %s" % (self.sys_dir))
+        print("obj.dat_dir              Host system Info Data Dir.    : %s" % (self.dat_dir))
+        print("obj.nmon_dir             Host nmon performance files   : %s" % (self.nmon_dir))
+        print("obj.rch_dir              Host Result Code History files: %s" % (self.rch_dir))
+        print("obj.dr_dir               Host Disaster Recovery files  : %s" % (self.dr_dir))
+        print("obj.sar_dir              System Activity Report files  : %s" % (self.sar_dir))
+
+        print(" ")                                                     
+        print("SADM Servers Only Directories Attribute")
+        print(dash)                                                    
+        print("obj.www_dir              Web Root Dir.(On Server Only) : %s" % (self.www_dir))
+        print("obj.www_dat_dir          Web Systems Info Dir (Server) : %s" % (self.www_dat_dir))
+        print("obj.www_html_dir         Web html Dir. (Server Only)   : %s" % (self.www_html_dir))
+
+        print(" ")                                                      # Space Line in the LOG
+        print("SADM Files Variables")                                   # Introduce Display Below
+        print(dash)                                                     # 80 = Lines 
+        print("obj.log_file             Cur. Script Log File          : %s" % (self.log_file))
+        print("obj.rch_file             Cur. Script Result Code File  : %s" % (self.rch_file))
+        print("obj.cfg_file             SADMIN Configuration File     : %s" % (self.cfg_file))
+        print("obj.pid_file             Current Process ID. File      : %s" % (self.pid_file))
+        print("obj.tmp_file1            Cur. Script Avail Tmp File 1  : %s" % (self.tmp_file1))
+        print("obj.tmp_file2            Cur. Script Avail Tmp File 2  : %s" % (self.tmp_file2))
+        print("obj.tmp_file3            Cur. Script Avail Tmp File 3  : %s" % (self.tmp_file3))
+
+        print(" ")                                                      
+        print("SADM O/S Executable Full Path (If they exist on Host)")    
+        print(dash)                                                     
+        print("obj.which                Location of the executable    : %s" % (self.which))
+        print("obj.bc                   Location of the executable    : %s" % (self.bc))
+        print("obj.lsb_release          Location of the executable    : %s" % (self.lsb_release))
+        print("obj.dmidecode            Location of the executable    : %s" % (self.dmidecode))
+        print("obj.fdisk                Location of the executable    : %s" % (self.fdisk))
+        print("obj.uname                Location of the executable    : %s" % (self.uname)) 
+        print("obj.perl                 Location of the executable    : %s" % (self.perl)) 
+        print("obj.ssh                  Location of the executable    : %s" % (self.ssh)) 
+        print("obj.mail                 Location of the executable    : %s" % (self.mail)) 
+        print("obj.ssh_cmd              Cmd used to connect client    : %s" % (self.ssh_cmd))
+
+        print(" ")                                                      # Space Line in the LOG
         print("Global variables setting after reading the SADM Configuration file")
         print(dash)                                                     # 80 = Lines 
-        print("cfg_mail_addr              = ..." + self.cfg_mail_addr + "...")
-        print("cfg_cie_name               = ..." + self.cfg_cie_name + "...")
-        print("cfg_mail_type              = ..." + str(self.cfg_mail_type) + "...")
-        print("cfg_server                 = ..." + self.cfg_server + "...")
-        print("cfg_domain                 = ..." + self.cfg_domain + "...")
-        print("cfg_user                   = ..." + self.cfg_user + "...")
-        print("cfg_group                  = ..." + self.cfg_group + "...")
-        print("cfg_www_user               = ..." + self.cfg_www_user + "...")
-        print("cfg_www_group              = ..." + self.cfg_www_group + "...")
-        print("cfg_max_logline            = ..." + str(self.cfg_max_logline) + "...")
-        print("cfg_max_rchline            = ..." + str(self.cfg_max_rchline) + "...")
-        print("cfg_nmon_keepdays          = ..." + str(self.cfg_nmon_keepdays) + "...")
-        print("cfg_sar_keepdays            ..." + str(self.cfg_sar_keepdays) + "...")
-        print("cfg_rch_keepdays           = ..." + str(self.cfg_rch_keepdays) + "...")
-        print("cfg_log_keepdays           = ..." + str(self.cfg_log_keepdays) + "...")
-        print("cfg_dbname                 = ..." + self.cfg_dbname + "...")
-        print("cfg_dbhost                 = ..." + self.cfg_dbhost + "...")
-        print("cfg_dbdir                  = ..." + self.cfg_dbdir + "...")
-        print("cfg_dbport                 = ..." + str(self.cfg_dbport) + "...")
-        print("cfg_rw_dbuser              = ..." + str(self.cfg_rw_dbuser) + "...")
-        print("cfg_rw_dbpwd               = ..." + str(self.cfg_rw_dbpwd) + "...")
-        print("cfg_ro_dbuser              = ..." + str(self.cfg_ro_dbuser) + "...")
-        print("cfg_ro_dbpwd               = ..." + str(self.cfg_ro_dbpwd) + "...")
-        print("cfg_ssh_port               = ..." + str(self.cfg_ssh_port) + "...")
-        print("cfg_backup_nfs_server      = ..." + self.cfg_backup_nfs_server + "...")
-        print("cfg_backup_nfs_mount_point = ..." + self.cfg_backup_nfs_mount_point + "...")
-        print("cfg_backup_nfs_to_keep     = ..." + str(self.cfg_backup_nfs_to_keep) + "...")
-        print("cfg_rear_nfs_server        = ..." + self.cfg_rear_nfs_server + "...")
-        print("cfg_rear_nfs_mount_point   = ..." + self.cfg_rear_nfs_mount_point + "...")
-        print("cfg_rear_backup_to_keep    = ..." + str(self.cfg_rear_backup_to_keep) + "...")
-        print("cfg_storix_nfs_server      = ..." + self.cfg_storix_nfs_server + "...")
-        print("cfg_storix_nfs_mount_point = ..." + self.cfg_storix_nfs_mount_point + "...")
-        print("cfg_storix_backup_to_keep  = ..." + str(self.cfg_storix_backup_to_keep) + "...")
-        print("cfg_mksysb_nfs_server      = ..." + self.cfg_mksysb_nfs_server + "...")
-        print("cfg_mksysb_nfs_mount_point = ..." + self.cfg_mksysb_nfs_mount_point + "...")
-        print("cfg_mksysb_backup_to_keep  = ..." + str(self.cfg_mksysb_backup_to_keep) + "...")
-        print("cfg_network1               = ..." + str(self.cfg_network1) + "...")
-        print("cfg_network2               = ..." + str(self.cfg_network2) + "...")
-        print("cfg_network3               = ..." + str(self.cfg_network3) + "...")
-        print("cfg_network4               = ..." + str(self.cfg_network4) + "...")
-        print("cfg_network5               = ..." + str(self.cfg_network5) + "...")
+        print("obj.cfg_mail_addr        Send Mail Address             : %s" % (self.cfg_mail_addr))
+        print("obj.cfg_cie_name         Your Company Name             : %s" % (self.cfg_cie_name))
+        print("obj.cfg_mail_type        0=No 1=Error 2=Success 3=All  : %s" % (str(self.cfg_mail_type)))
+        print("obj.cfg_server           SADMIN Server FQDN Name       : %s" % (self.cfg_server))
+        print("obj.cfg_domain           Your Default Domain           : %s" % (self.cfg_domain))
+        print("obj.cfg_user             Super User Name (sudo)        : %s" % (self.cfg_user))
+        print("obj.cfg_group            Super User Group              : %s" % (self.cfg_group))
+        print("obj.cfg_www_user         Web Server User (apache)      : %s" % (self.cfg_www_user))
+        print("obj.cfg_www_group        Web Server Group (apache)     : %s" % (self.cfg_www_group))
+        print("obj.cfg_max_logline      Max. Nb. of Lines in Log file : %s" % (str(self.cfg_max_logline)))
+        print("obj.cfg_max_rchline      Max. Nb. of Line in .rch file : %s" % (str(self.cfg_max_rchline)))
+        print("obj.cfg_nmon_keepdays    Nb. Days to keep .nmon files  : %s" % (str(self.cfg_nmon_keepdays)))
+        print("obj.cfg_sar_keepdays     Nb. Days to keep .sar files   : %s" % (str(self.cfg_sar_keepdays)))
+        print("obj.cfg_rch_keepdays     Nb. Days to keep .rch files   : %s" % (str(self.cfg_rch_keepdays)))
+        print("obj.cfg_log_keepdays     Nb. Days to keep .log files   : %s" % (str(self.cfg_log_keepdays)))
+        print("obj.cfg_dbname           SADMIN MySQL Database Name    : %s" % (self.cfg_dbname))
+        print("obj.cfg_dbhost           SADMIN MySQL Host Name        : %s" % (self.cfg_dbhost))
+        print("obj.cfg_dbdir            SADMIN MySQL Data Dir.        : %s" % (self.cfg_dbdir))
+        print("obj.cfg_dbport           SADMIN MySQL TCP/IP Port      : %s" % (str(self.cfg_dbport)))
+        print("obj.cfg_rw_dbuser        SADMIN MySQL Read/Write User  : %s" % (self.cfg_rw_dbuser))
+        print("obj.cfg_rw_dbpwd         SADMIN MySQL Read/Write Pwd   : %s" % (self.cfg_rw_dbpwd))
+        print("obj.cfg_ro_dbuser        SADMIN MySQL Read Only User   : %s" % (self.cfg_ro_dbuser))
+        print("obj.cfg_ro_dbpwd         SADMIN MySQL Read Only Pwd    : %s" % (self.cfg_ro_dbpwd))
+        print("obj.cfg_ssh_port         SSH Port (Default 22)         : %s" % (str(self.cfg_ssh_port)))
+        print("obj.cfg_network1         Network 1 Scan for Info       : %s" % (self.cfg_network1))
+        print("obj.cfg_network2         Network 2 Scan for Info       : %s" % (self.cfg_network2))
+        print("obj.cfg_network3         Network 3 Scan for Info       : %s" % (self.cfg_network3))
+        print("obj.cfg_network4         Network 4 Scan for Info       : %s" % (self.cfg_network4))
+        print("obj.cfg_network5         Network 5 Scan for Info       : %s" % (self.cfg_network5))
 
-        # print(" ")                                                      # Space Line in the LOG
-        # print(dash)                                                     # 80 = Lines 
-        # print("This is the O/S Environment")
-        # print(dash)                                                     # 80 = Lines 
-        # for a in os.environ:
-        #     print('Var: ', a, 'Value: ', os.getenv(a))
-        # print("all done")
+        print(" ")                                                      
+        print("SADMIN Backup Server Information (If Used)")    
+        print(dash)                                                     
+        print("obj.cfg_backup_nfs_server       Backup NFS Server Name        : %s" % (self.cfg_backup_nfs_server))
+        print("obj.cfg_backup_nfs_mount_point  Backup NFS Mount Point        : %s" % (self.cfg_backup_nfs_mount_point))
+        print("obj.cfg_backup_nfs_to_keep      Nb. Of Backup to Keep         : %s" % (str(self.cfg_backup_nfs_to_keep)))
+        print("obj.cfg_rear_nfs_server         Rear NFS Backup Server        : %s" % (self.cfg_rear_nfs_server))
+        print("obj.cfg_rear_nfs_mount_point    Rear NFS Mount Point          : %s" % (self.cfg_rear_nfs_mount_point))
+        print("obj.cfg_rear_backup_to_keep     Rear Backup to Keep           : %s" % (str(self.cfg_rear_backup_to_keep)))
+        print("obj.cfg_storix_nfs_server       Storix NFS Server             : %s" % (self.cfg_storix_nfs_server))
+        print("obj.cfg_storix_nfs_mount_point  Storix NFS Mount Point        : %s" % (self.cfg_storix_nfs_mount_point))
+        print("obj.cfg_storix_backup_to_keep   Storix NFS Backup to Keep     : %s" % (str(self.cfg_storix_backup_to_keep)))
+        print("obj.cfg_mksysb_nfs_serve        Aix mksysb NFS Backup Server  : %s" % (self.cfg_mksysb_nfs_server))
+        print("obj.cfg_mksysb_nfs_mount_point  Aix mksysb NFS Mount Point    : %s" % (self.cfg_mksysb_nfs_mount_point))
+        print("obj.cfg_mksysb_backup_to_keep   Aix mksysb NFS Backup to Keep : %s" % (str(self.cfg_mksysb_backup_to_keep)))
 
+        # When Really Wanted (Level 9) - Print O/S Environnement
+        if (self.debug > 8) :                                               
+            print(" ")                                                  
+            print("This is the O/S Environment")
+            print(dash)                                                 
+            for a in os.environ:
+                print('Var: ', a, 'Value: ', os.getenv(a))
+            print(dash)                                                 
         return 0

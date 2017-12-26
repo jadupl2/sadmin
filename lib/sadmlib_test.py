@@ -1,38 +1,41 @@
-#!/usr/bin/env python  
+#!/usr/bin/env python3
 #===================================================================================================
-#   Author:     Jacques Duplessis
-#   Title:      ping_lookup.py
-#   Synopsis:   ping and do a nslookup on all IP in the subnet and produce a report
-#               Support Redhat/Centos v3,4,5,6,7 - Ubuntu - Debian V7,8 - Raspbian V7,8 - Fedora
+#   Author:     : Jacques Duplessis
+#   Title:      : sadmlib_std.py
+#   Version     :  1.0
+#   Date        :  14 July 2017
+#   Requires    :  python3 and SADM Library
+#   Description :  SADM Python 3 Standard Library
+#
+#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# --------------------------------------------------------------------------------------------------
+# CHANGE LOG
+# 2017_07_07 JDuplessis 
+#   V1.7 Minor Code enhancement
+# 2017_07_31 JDuplessis 
+#   V1.8 Added Log Template to script
+# 2017_09_02 JDuplessis 
+#   V1.9 Add Command line switch 
+# 2017_09_02 JDuplessis
+#   V2.0 Rewritten Part of script for performance and flexibility
+# 2017_12_12 JDuplessis
+#   V2.1 Adapted to use MySQL instead of Postgres Database
+# 2017_12_23 JDuplessis
+#   V2.3 Changes for performance and flexibility
 #===================================================================================================
-# Description
-#  This script ping and do a nslookup for every IP specify in the "SUBNET" Variable.
-#  Result of each subnet is recorded in their own file ${SADM_BASE_DIR}/dat/net/subnet_SUBNET.txt
-#  These file are used by the Web Interface to inform user what IP is free and what IP is used.
-#  On the Web interface the file can be seen by selecting the IP Inventory page.
-#  It is run once a day from the crontab.
-#
-# --------------------------------------------------------------------------------------------------
-# Version 2.6 - Nov 2016 
-#       Insert Logic to Reboot the server after a successfull update
-#        (If Specified in Server information in the Database)
-#        The script receive a Y or N (Uppercase) as the first command line parameter to 
-#        indicate if a reboot is requested.
-# Version 2.7 - Nov 2016
-#       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking 
-#       if update were available. Now Script return an error (1) when checking for update.
-# Version 2.8 - Dec 2016
-#       Correction minor bug with shutdown reboot command on Raspberry Pi
-#       Now Checking if Script is running of SADMIN server at the beginning
-#           - No automatic reboot on the SADMIN server while it is use to start update on client
-# Version 2.9 - April 2017
-#       Email log only when error for now on
-# --------------------------------------------------------------------------------------------------
-#
 try :
     import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
-    import getpass, subprocess, pwd, grp
-    from subprocess import Popen, PIPE   
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -40,11 +43,11 @@ except ImportError as e:
 
 
 #===================================================================================================
-#                                 Local Variables used by this script
+#                             Local Variables used by this script
 #===================================================================================================
-SUBNET= ['192.168.1', '192.168.0' ]                                    # Subnet to Scan
-
-
+conn                = ""                                                # Database Connector
+cur                 = ""                                                # Database Cursor
+#
 
 #===================================================================================================
 #                                 Initialize SADM Tools Function
@@ -82,9 +85,9 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.9"                             # Your Script Version 
+    st.ver  = "2.3"                             # Your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
+    st.log_type = 'L'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
     st.debug = 5                                # Debug Level (0-9)
     
@@ -109,50 +112,6 @@ def initSADM():
     return(st)                                  # Return Instance Object to caller
 
 
-
-#===================================================================================================
-#                                  M A I N     P R O G R A M
-#===================================================================================================
-#
-def main_process(wconn,wcur,st) :
-   for net in SUBNET:
-      SFILE = st.www_net_dir + '/subnet_' + net + '.txt'                 # Construct Subnet FileName
-      st.writelog ("Opening %s" % SFILE)                              # Log File Name been created
-      SH=open(SFILE,'w')                                                # Open Output Subnet File
-      for host in range(1,255):                                         # Define Range IP in Subnet
-         ip = net + '.' + str(host)                                     # Cronstruct IP Address
-         rc = os.system("ping -c 1 " + ip + " > /dev/null 2>&1")        # Ping THe IP Address
-         if ( rc == 0 ) :                                               # Ping Work
-            host_state = 'Yes'                                          # State = Yes = Alive
-         else :                                                         # Ping don't work
-           host_state = 'No'                                            # State = No = No response
-        
-         try:
-            line = socket.gethostbyaddr(ip)                             # Try to resolve IP Address
-            hostname = line[0]                                          # Save DNS Name 
-         except:
-      	    hostname = ' '                                              # No Name = Clear Name
-
-         WLINE = "%s, %s, %s" % (ip, host_state, hostname)
-         st.writelog ("%s" % WLINE)
-         #print "%s" % WLINE
-         SH.write ("%s\n" % (WLINE))
-      SH.close()                                                           # Close Subnet File
-      
-      # Copy the resutant subnet txt file into the SADM Web Data Directory
-      st.writelog ("Copy %s into %s" % (SFILE,sadm.www_net_dir))
-      rc = os.system("cp " + SFILE + " " + sadm.www_net_dir + " >/dev/null 2>&1")       
-      if ( rc != 0 ) :                                                  
-         sadm.writelog ("ERROR : Could not copy %s into %s" % (SFILE,sadm.www_net_dir))
-         return (1)
-      st.writelog ("Change file owner and group to %s.%s" % (sadm.cfg_www_user, sadm.cfg_www_group))
-      wuid = pwd.getpwnam(sadm.cfg_www_user).pw_uid                     # Get UID User of Wev User 
-      wgid = grp.getgrnam(sadm.cfg_www_group).gr_gid                    # Get GID User of Web Group 
-      os.chown(sadm.www_net_dir + '/subnet_' + net + '.txt', wuid, wgid) # Change owner of Subnet 
-   return(0)
-
-
-
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
@@ -174,10 +133,15 @@ def main():
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
-        
-    #if st.debug > 4: st.display_env()                                  # Display Env. Variables
-    st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
+
+    st.display_env()                                                    # Display Env. Variables
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
+        st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
+
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #  Author:    Jacques Duplessis
-#  Title      sadm_lib_screen.sh
+#  Title      sadmlib_screen.sh
 #  Date:      November 2015
 #  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
