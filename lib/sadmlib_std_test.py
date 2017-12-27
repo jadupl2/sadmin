@@ -87,9 +87,9 @@ def initSADM():
     # Variables are specific to this program, change them if you want or need to -------------------
     st.ver  = "2.3"                             # Your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
+    st.log_type = 'L'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
-    st.debug = 5                                # Debug Level (0-9)
+    st.debug = 0                                # Debug Level (0-9)
     
     # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways

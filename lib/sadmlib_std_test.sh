@@ -1,49 +1,59 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  template.sh
+#   Title    :  sadmlib_std_test.sh
 #   Synopsis : .
 #   Version  :  1.0 
-#   Date     :  14 August 2013
+#   Date     :  14 August 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) template.sh 2.0 2013/08/14
+#   SCCS-Id. :  @(#) template.sh 1.0 2015/08/14
 # --------------------------------------------------------------------------------------------------
 # 2.2 Correction in end_process function (April 2014)
 # 2.3 Cosmetic changes - Jan 2017
 # 2.4 Allow to run multiple instance of the script - SADM_MULTIPLE_EXEC="Y"
+# 2.5 Adapt with New Library Version & Remove Screen test (Move to sadmlib_screen_test.sh)
 # 
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
+# You can run $sadmin/lib/sadmlib_test.sh for viewing functions and informations avail. to you .
 # --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
+if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
+wlib="${SADMIN}/lib/sadmlib_std.sh"                                     # SADMIN Library Location
+if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
+#
+# These are Global variables used by SADMIN Libraries - Some influence the behavior of some function
+# These variables need to be defined prior to loading the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.4'                             ; export SADM_VER            # Script Version
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadmlib_server.sh  
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_screen.sh ] && . ${SADM_BASE_DIR}/lib/sadmlib_screen.sh  
-
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
+SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+#
+# Load SADMIN Libraries
+[ -f ${SADMIN}/lib/sadmlib_std.sh ]    && . ${SADMIN}/lib/sadmlib_std.sh
+[ -f ${SADMIN}/lib/sadmlib_server.sh ] && . ${SADMIN}/lib/sadmlib_server.sh
+#
+# These variables are defined in sadmin.cfg file - You can override them here on a per script basis
+# --------------------------------------------------------------------------------------------------
+#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG file
+#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR    # Email Address to send status
+#
+# An email can be sent at the end of the script depending on the ending status
+# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=OnErr 2=Success 3=All
+#
 #===================================================================================================
 #
 
@@ -95,9 +105,9 @@ Debug=true                                      ; export Debug          # Debug 
     printf "sadm_is_root                                True if script is running as root, False if not.                 : ...${wmess}...\n"
     printf " \n"
     printf "=========================================================================================================================================\n"
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
 
-    tput clear
+    #tput clear
     printf "=========================================================================================================================================\n"
     printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part II)                      \n"
     printf "                                                                 \n"
@@ -129,9 +139,9 @@ Debug=true                                      ; export Debug          # Debug 
     printf "                                    10) Delete the Uers 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)\n"
     printf " \n"
     printf "=========================================================================================================================================\n"
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
 
-    tput clear
+    #tput clear
     printf "=========================================================================================================================================\n"
     printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       FUNCTIONS AVAILABLE IN SADM_LIB_STD.SH (Part III)                  \n"
     printf "                                                                                                    RETURN VALUE         \n"
@@ -152,9 +162,9 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\$(sadm_server_vg)                Server vg(s) list (MB) (Ex: VGNAME|SIZE|USED|FREE,...)        : ...$(sadm_server_vg)...\n"
     printf " \n"
     printf "=========================================================================================================================\n"
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
 
-    tput clear
+    #tput clear
     printf "=========================================================================================================================================\n"
     printf "Library V$SADM_LIB_VER - Script V$SADM_VER                       GLOBAL VARIABLES AVAILABLE TO USER (Part I)                  \n"
     printf "                                                                                                      \n"
@@ -186,11 +196,11 @@ Debug=true                                      ; export Debug          # Debug 
     printf "SADM_WWW_NMON_DIR    = $SADM_WWW_NMON_DIR\n" 
     printf "SADM_WWW_TMP_DIR     = $SADM_WWW_TMP_DIR\n" 
     printf "SADM_WWW_LOG_DIR     = $SADM_WWW_LOG_DIR\n" 
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
 
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
-    tput clear ; printf "FILES VARIABLES\n" ; printf "\n"
+    #tput clear ; printf "FILES VARIABLES\n" ; printf "\n"
     printf "SADM_PID_FILE        = $SADM_PID_FILE\n" 
     printf "SADM_CFG_FILE        = $SADM_CFG_FILE\n" 
     printf "SADM_REL_FILE        = $SADM_REL_FILE\n" 
@@ -220,10 +230,10 @@ Debug=true                                      ; export Debug          # Debug 
     printf "SADM_SSH             = $SADM_SSH\n" 
     printf "SADM_DASH            = $SADM_DASH\n" 
     printf "SADM_TEN_DASH        = $SADM_TEN_DASH\n" 
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
     
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-    tput clear
+    #tput clear
     printf "VARIABLES LOADED FROM SADM CONFIGURATION FILE\n\n" 
     printf "SADM_MAIL_ADDR              = $SADM_MAIL_ADDR\n"
     printf "SADM_MAIL_TYPE              = $SADM_MAIL_TYPE\n" 
@@ -268,43 +278,8 @@ Debug=true                                      ; export Debug          # Debug 
     printf "SADM_STORIX_NFS_MOUNT_POINT = $SADM_STORIX_NFS_MOUNT_POINT\n"
     printf "SADM_STORIX_BACKUP_TO_KEEP  = $SADM_STORIX_BACKUP_TO_KEEP\n"
     #
-    echo "Press [ENTER] to Continue" ; read dummy
+    #echo "Press [ENTER] to Continue" ; read dummy
      
-   
-    sadm_display_heading "Small Menu (7 Items or less)"
-    menu_array=("Menu Item 1" "Menu Item 2" "Menu Item 3" "Menu Item 4" "Menu Item 5" \
-                "Menu Item 6" "Menu Item 7" )
-
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
-
-
-    sadm_display_heading "Medium Menu (Up to 15 Items)"
-    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  )
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
-
-    sadm_display_heading "Large Menu (Up to 30 Items)"
-    menu_array=("Menu Item 1"  "Menu Item 2"  "Menu Item 3"  "Menu Item 4"  "Menu Item 5"   \
-                "Menu Item 6"  "Menu Item 7"  "Menu Item 8"  "Menu Item 9"  "Menu Item 10"  \
-                "Menu Item 11" "Menu Item 12" "Menu Item 13" "Menu Item 14" "Menu Item 15"  \
-                "Menu Item 16" "Menu Item 17" "Menu Item 18" "Menu Item 19" "Menu Item 20"  \
-                "Menu Item 21" "Menu Item 22" "Menu Item 23" "Menu Item 24" "Menu Item 25"  \
-                "Menu Item 26" "Menu Item 27" "Menu Item 28" "Menu Item 29" "Menu Item 30"  )
-    sadm_display_menu "${menu_array[@]}"
-    echo  "Value Returned to Function Caller is $? - Press [ENTER] to continue" ; read dummy
-
-    tput clear
-    e_header    "e_eheader"
-    e_arrow     "e_arrow"
-    e_success   "e_success"
-    e_error     "e_error"
-    e_warning   "e_warning"
-    e_underline "e_underline"
-    e_bold      "e_bold"
-    e_note      "e_note"
 
 
     SDAM_EXIT_CODE=0                                                    # For Test purpose

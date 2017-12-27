@@ -114,7 +114,7 @@ def initSADM():
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(wconn,wcur,st) :
+def main_process(st) :
    for net in SUBNET:
       SFILE = st.www_net_dir + '/subnet_' + net + '.txt'                 # Construct Subnet FileName
       st.writelog ("Opening %s" % SFILE)                              # Log File Name been created
@@ -176,7 +176,7 @@ def main():
         sys.exit(1)                                                     # Exit To O/S
         
     #if st.debug > 4: st.display_env()                                  # Display Env. Variables
-    st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
+    st.exit_code = main_process(st)                                     # Process Subnet
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line

@@ -417,9 +417,9 @@ def main_process(conn,cur):
     dummy = input("Press [ENTER] to begin testing table 'server_group' I/O")
     test_group(conn,cur)
 
-    print ("=" * 80)
-    dummy = input("Press [ENTER] to begin testing table 'server' I/O")
-    test_server(conn,cur)
+    #print ("=" * 80)
+    #dummy = input("Press [ENTER] to begin testing table 'server' I/O")
+    #test_server(conn,cur)
 
     # print ("=" * 80)
     # dummy = input("Press [ENTER] to load initial data in tables")

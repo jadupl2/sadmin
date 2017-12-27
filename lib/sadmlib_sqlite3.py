@@ -53,7 +53,7 @@ class dbtool:
     #-----------------------------------------------------------------------------------------------
     #  INITIALISATION & DATABASE CONNECTION --------------------------------------------------------
     #-----------------------------------------------------------------------------------------------
-    def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/db/sadm.db", dbdebug=0):
+    def __init__(self, dbname=os.path.join(sadm_base_dir) + "/www/dat/sadm.db", dbdebug=0):
         """ Class dbtool: Series of function to Insert,Read,Update and delete row(s) in
             the selected Sqlite3 Database.
             def __init__(self, dbname, dbdebug) 
