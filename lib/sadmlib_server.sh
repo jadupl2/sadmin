@@ -185,20 +185,35 @@ sadm_server_model() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_serial() {
     case "$(sadm_get_ostype)" in
-      "LINUX") if [ "$(sadm_server_type)" = "V" ]                       # If Virtual Machine
-                  then wserial=" "                                      # VM as no serial 
-                  else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
-                       if [ -r /proc/cpuinfo ]                          # Serial in cpuinfo (raspi)
-                          then grep -i serial /proc/cpuinfo > /dev/null 2>&1
-                               if [ $? -eq 0 ]                          # If Serial found in cpuinfo
-                                  then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
-                                       wserial=`echo $wserial | sed -e 's/^[ \t]*//'` #Del Lead Space
-                               fi
-                       fi
-               fi 
-               ;;
-      "AIX")   wserial=`uname -u | awk -F, '{ print $2 }'`
-               ;;
+        "LINUX")    if [ "$(sadm_server_type)" = "V" ]                  # If Virtual Machine
+                        then wserial=" "                                # VM as no serial 
+                        else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
+                            if [ -r /proc/cpuinfo ]                     # Serial in cpuinfo (raspi)
+                                then grep -i serial /proc/cpuinfo > /dev/null 2>&1
+                                     if [ $? -eq 0 ]                    # If Serial found in cpuinfo
+                                        then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
+                                             wserial=`echo $wserial | sed -e 's/^[ \t]*//'` #Del Lead Space
+                                     fi
+                            fi
+                    fi 
+                    ;;
+        "AIX")      wserial=`uname -u | awk -F, '{ print $2 }'`
+                    ;;
+        "DARWIN")   SP="${SADM_CFG_DIR}/SystemProfiler.txt"
+                    SN="${SADM_CFG_DIR}/SerialNumber.txt"
+                    if [ ! -f "$SP" ] 
+                        then sadm_swritelog " "
+                             sadm_writelog "Running System Profiler (can take 2 minutes)"
+                             sadm_writelog "We need to run it only once"
+                             sadm_writelog "Information collected are saved to $SP"
+                             system_profiler 2>/dev/null 1>$SP
+                             grep 'Serial Number (system)' $SP |head -1 |awk '{ print $4 }'>$SN
+                    fi
+                    if [ ! -f "$SN" ] 
+                        then grep 'Serial Number (system)' $SP |head -1 |awk '{ print $4 }'>$SN
+                    fi
+                    wserial=`cat $SN`
+                    ;;
     esac
     echo "$wserial"
 }

@@ -36,6 +36,7 @@ www/db/
 sysmon.lock
 sys/*.log
 cfg/.dbpass
+cfg/*.txt
 cfg/.sadmin.cfg
 cfg/sadmin.cfg
 cfg/holmes.cfg
