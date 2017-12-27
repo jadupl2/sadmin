@@ -87,7 +87,7 @@ def initSADM():
     # Variables are specific to this program, change them if you want or need to -------------------
     st.ver  = "2.3"                             # Your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'L'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
+    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
     st.debug = 5                                # Debug Level (0-9)
     
@@ -121,14 +121,16 @@ def main():
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
-       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st.writelog ("Try sudo ./%s" % (sadm.pn))                        # Suggest to use 'sudo'
-       st.writelog ("Process aborted")                                  # Process Aborted Msg
-       st.stop (1)                                                      # Close and Trim Log/Email
-       sys.exit(1)                                                      # Exit with Error Code
+        st.log_type = 'B'                                               # Make Sure Show on Scr+Log
+        st.writelog ("This script must be run by the 'root' user")      # Advise User Message / Log
+        st.writelog ("Try sudo ./%s" % (st.pn))                         # Suggest to use 'sudo'
+        st.writelog ("Process aborted")                                 # Process Aborted Msg
+        st.stop (1)                                                     # Close and Trim Log/Email
+        sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
+        st.log_type = 'B'                                               # Make Sure Show on Scr+Log
         st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log

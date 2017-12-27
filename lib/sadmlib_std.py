@@ -503,11 +503,36 @@ class sadmtools():
         return we
 
 
+    # ----------------------------------------------------------------------------------------------
+    #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
+    #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
+    # ----------------------------------------------------------------------------------------------
+    def elapse_time(self,wend,wstart):
+        epoch_start = self.date_to_epoch(wstart)                        # Get Epoch for Start Time
+        epoch_end   = self.date_to_epoch(wend)                          # Get Epoch for End Time
+        epoch_elapse = epoch_end - epoch_start                          # Substract End - Start time
+
+        whour=00 ; wmin=00 ; wsec=00
+
+        # Calculate number of hours (1 hr = 3600 Seconds)
+        if epoch_elapse > 3599 :                                        # If nb Sec Greater than 1Hr
+            whour = epoch_elapse / 3600                                 # Calculate nb of Hours
+            epoch_elapse = epoch_elapse - (whour * 3600)                # Sub Hr*Sec from elapse
+    
+        # Calculate number of minutes 1 Min = 60 Seconds)
+        if epoch_elapse > 59 :                                          # If more than 1 min left
+            wmin = epoch_elapse / 60                                    # Calc. Nb of minutes
+            epoch_elapse = epoch_elapse - (wmin * 60)                   # Sub Min*Sec from elapse
+
+        wsec = epoch_elapse                                             # left is less than 60 sec
+        sadm_elapse= "%02d:%02d:%02d" % (whour,wmin,wsec)               # Format Result
+        return(sadm_elapse)                                             # Return Result to caller
 
     # ----------------------------------------------------------------------------------------------
     #                     Return if running 32 or 64 Bits Kernel version
     # ----------------------------------------------------------------------------------------------
     def get_kernel_bitmode(self):
+        cstdout = 64
         if self.os_type == "LINUX" :                                    # Under Linux
             ccode, cstdout, cstderr = self.oscommand("getconf LONG_BIT") 
         if self.os_type == "AIX" :                                      # Under AIX
@@ -520,10 +545,13 @@ class sadmtools():
     #                                 RETURN KERNEL RUNNING VERSION
     # ----------------------------------------------------------------------------------------------
     def get_kernel_version(self):
+        cstdout = "unknown"
         if self.os_type == "LINUX" :                                    # Under Linux
             ccode, cstdout, cstderr = self.oscommand("uname -r | cut -d. -f1-3") 
         if self.os_type == "AIX" :                                      # Under AIX
             ccode, cstdout, cstderr = self.oscommand("uname -r")
+        if self.os_type == "DARWIN" :                                   # Under MacOS
+            ccode, cstdout, cstderr = self.oscommand("uname -mrs | awk '{ print $2 }'")
         wkver=cstdout
         return wkver
 
@@ -655,7 +683,7 @@ class sadmtools():
             ccode, cstdout, cstderr = self.oscommand("uname -r")
             osminorversion=cstdout
         if self.os_type == "DARWIN":
-            wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
+            wcmd = "sw_vers -productVersion | awk -F '.' '{print $2}'"
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osminorversion=cstdout
         return osminorversion
@@ -771,22 +799,13 @@ class sadmtools():
     #   THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
     # ----------------------------------------------------------------------------------------------
     def check_command_availibility(self,cmd) :
-
-        ccode, cstdout, cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
+        ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
-            print ("Warning : Command '%s' couldn't be found" % (cmd))  # Displat Warning for User
-            print ("   This program is used by the SADMIN tools")       # Command is needed by SADM
-            print ("   Please install it and re-run this script")       # May want to install it
+            print ("[WARNING] Command '%s' couldn't be found" % (cmd))  # Display Warning for User
+            print ("          If available, it should be install") 
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
-        if self.debug > 2 :                                             # Prt Cmd Location if debug
-            if cmd_path != "" :                                         # If Cmd was Found
-                print ("Command '%s' located at %s" % (cmd,cmd_path))# Print Cmd Location
-            else :                                                      # If Cmd was not Found
-                print ("Command '%s' could not be located" % (cmd))     # Cmd Not Found to User 
-        cmd_path = cmd_path
-        #print ("cmd_path = %s" (cmd_path))
         return (cmd_path)                                               # Return Cmd Path
 
 
@@ -795,78 +814,50 @@ class sadmtools():
     # IF REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global FH_LOG_FILE, lsb_release, dmidecode, uname, fdisk, mail, ssh
+        global FH_LOG_FILE, lsb_release, dmidecode, bc, uname, fdisk, mail, ssh
     
         requisites_status=True                                          # Assume Requirement all Met
     
         # Get the location of the which command
-        if self.debug > 2 : print ("Is 'which' command available ...") 
-        ccode, cstdout, cstderr = self.oscommand("which which")
+        ccode,cstdout,cstderr = self.oscommand("which which")
         if ccode is not 0 :
-            print ("Error : The command 'which' could not be found")
-            print  ("        This program is often used by the SADMIN tools")
-            print ("        Please install it and re-run this script")
-            print ("        To install it, use the following command depending on your distro")
-            print ("        Use 'yum install which' or 'apt-get install debianutils'")
-            print ("Script Aborted")
+            print("[ERROR] The command 'which' couldn't be found")
+            print("        This program is needed by the SADMIN tools")
+            print("        Please install it and re-run this script")
+            print("        Script Aborted")
             sys.exit(1)
         self.which = cstdout
-        if self.debug > 2 : print ("Yes it is at %s" % (self.which)) 
     
         # Get the location of the lsb_release command
         if (self.os_type == "LINUX"):
             self.lsb_release = self.check_command_availibility('lsb_release')
-            if self.lsb_release == "" :
-                print("CRITICAL: The 'lsb_release' is needed and is not present")
-                print("Please correct the situation and re-execute this script")
-                requisites_status=False
+            if self.lsb_release == "" : requisites_status=False
 
         self.uname = self.check_command_availibility('uname')           # location of uname command
-        if self.uname == "" :
-            print("CRITICAL: The 'uname' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if self.uname == "" : requisites_status=False
 
         self.bc = self.check_command_availibility('bc')                 # location of uname command
-        if self.bc == "" :
-            print("CRITICAL: The 'bc' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if self.bc == "" : requisites_status=False
     
         # Get the Location of fdisk
         self.fdisk = self.check_command_availibility('fdisk')           # location of fdisk
-        if self.fdisk == "" :                                           # If Command was not found
-            print("CRITICAL: The 'fdisk' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if self.fdisk == "" : requisites_status=False
                 
         # Get the location of mail command
         self.mail = self.check_command_availibility('mail')             # location of mail
-        if self.mail == "" :                                            # If Command was not found
-            print("CRITICAL: The 'mail' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if self.mail == "" : requisites_status=False
 
         # Get the location of ssh command
         self.ssh = self.check_command_availibility('ssh')               # location of ssh
-        if self.ssh == "" :                                             # If Command was not found
-            print("CRITICAL: The 'ssh' is needed and is not present")
-            print("Please correct the print re-execute this script")
-            requisites_status=False
+        if self.ssh == "" : requisites_status=False
 
         # Get the location of dmidecode command
         self.dmidecode =self.check_command_availibility('dmidecode')    # location of dmidecode
-        if self.dmidecode == "" :                                       # If Command was not found
-            print("CRITICAL: The 'dmidecode' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        if self.dmidecode == "" : requisites_status=False
 
         # Get the location of perl command
-        self.perl =self.check_command_availibility('perl')              # location of dmidecode
-        if self.dmidecode == "" :                                       # If Command was not found
-            print("CRITICAL: The 'perl' is needed and is not present")
-            print("Please correct the situation and re-execute this script")
-            requisites_status=False
+        self.perl =self.check_command_availibility('perl')              # location of perl
+        if self.perl == "" : requisites_status=False
 
         return requisites_status                                        # Requirement Met True/False
  
@@ -1126,12 +1117,11 @@ class sadmtools():
     # For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
     # ----------------------------------------------------------------------------------------------
     def display_env(self):
-        print ("==================================================================================")
         print ("Library V%s - Script V%s" % (libver,self.ver))    
-        print(" ")                                                    
+        print("-" * 100)                                                   
         print("SADMIN Various Methods and Attributes")
-        print(dash)                                                   
-        print ("obj.get_release()                       Release Number                          : %s" % (self.get_release()))
+        print("-" * 100)                                                   
+        print ("obj.get_release()                        Release Number                          : %s" % (self.get_release()))
         print("obj.get_ostype()                         O/S Type (Always Uppercase)             : %s" % (self.os_type))
         print("obj.get_osversion()                      Return O/S Version                      : %s" % (self.get_osversion()))
         print("obj.get_osmajorversion()                 Return Major O/S Version                : %s" % (self.get_osmajorversion()))
@@ -1149,7 +1139,7 @@ class sadmtools():
         print("obj.epoch_to_date(%d)            Return Date/Time from Epoch             : %s" % (wepoch,self.epoch_to_date(wepoch)))
         wd = self.epoch_to_date(wepoch)
         print("obj.date_to_epoch(%s)   Convert Date/Time to Epoch              : %d" % (wd,self.date_to_epoch(wd)))
-        print("obj.pn                                   PN  Program (Script) Name               : %s" % (self.pn)) 
+        print("obj.elapse_time('2016.01.30 10:00:44','2016.01.30 10:00:03') Elapse vs 2 Dates   : %s" % (self.elapse_time('2016.01.30 10:00:44','2016.01.30 10:00:03'))) 
         print("obj.inst                                 PN without extension                    : %s" % (self.inst))
         print("obj.username                             Current User Name                       : %s" % (self.username))
         print("obj.tpid                                 Current Process ID.                     : %s" % (self.tpid))
@@ -1160,7 +1150,7 @@ class sadmtools():
 
         print(" ")                                                      # Space Line in the LOG
         print("SADM Client & Servers Directories Attribute")
-        print(dash)                                                     # 80 = Lines 
+        print("-" * 100)                                                   
         print("obj.base_dir             Root Dir. of SADMIN Tools     : %s" % (self.base_dir))
         print("obj.tmp_dir              SADMIN Temp. Directory        : %s" % (self.tmp_dir))
         print("obj.cfg_dir              SADMIN Configuration Dir.     : %s" % (self.cfg_dir))
@@ -1177,25 +1167,29 @@ class sadmtools():
 
         print(" ")                                                     
         print("SADM Servers Only Directories Attribute")
-        print(dash)                                                    
-        print("obj.www_dir              Web Root Dir.(On Server Only) : %s" % (self.www_dir))
-        print("obj.www_dat_dir          Web Systems Info Dir (Server) : %s" % (self.www_dat_dir))
-        print("obj.www_html_dir         Web html Dir. (Server Only)   : %s" % (self.www_html_dir))
+        print("-" * 100)                                                   
+        print("obj.www_dir              Web Root Dir. (On Server Only): %s" % (self.www_dir))
+        print("obj.www_dat_dir          Web Systems Info Dir  (Server): %s" % (self.www_dat_dir))
+        print("obj.www_lib_dir          Web Systems Lib Dir   (Server): %s" % (self.www_lib_dir))
+        print("obj.www_cfg_dir          Web Systems Config Dir(Server): %s" % (self.www_cfg_dir))
+        print("obj.www_net_dir          Web Systems Net Data  (Server): %s" % (self.www_net_dir))
+        print("obj.www_html_dir         Web html Dir.         (Server): %s" % (self.www_html_dir))
 
         print(" ")                                                      # Space Line in the LOG
         print("SADM Files Variables")                                   # Introduce Display Below
-        print(dash)                                                     # 80 = Lines 
+        print("-" * 100)                                                   
         print("obj.log_file             Cur. Script Log File          : %s" % (self.log_file))
         print("obj.rch_file             Cur. Script Result Code File  : %s" % (self.rch_file))
         print("obj.cfg_file             SADMIN Configuration File     : %s" % (self.cfg_file))
         print("obj.pid_file             Current Process ID. File      : %s" % (self.pid_file))
+        print("obj.crontab_file         Crontab file for SADMIN       : %s" % (self.crontab_file))
         print("obj.tmp_file1            Cur. Script Avail Tmp File 1  : %s" % (self.tmp_file1))
         print("obj.tmp_file2            Cur. Script Avail Tmp File 2  : %s" % (self.tmp_file2))
         print("obj.tmp_file3            Cur. Script Avail Tmp File 3  : %s" % (self.tmp_file3))
 
         print(" ")                                                      
         print("SADM O/S Executable Full Path (If they exist on Host)")    
-        print(dash)                                                     
+        print("-" * 100)                                                   
         print("obj.which                Location of the executable    : %s" % (self.which))
         print("obj.bc                   Location of the executable    : %s" % (self.bc))
         print("obj.lsb_release          Location of the executable    : %s" % (self.lsb_release))
@@ -1209,7 +1203,7 @@ class sadmtools():
 
         print(" ")                                                      # Space Line in the LOG
         print("Global variables setting after reading the SADM Configuration file")
-        print(dash)                                                     # 80 = Lines 
+        print("-" * 100)                                                   
         print("obj.cfg_mail_addr        Send Mail Address             : %s" % (self.cfg_mail_addr))
         print("obj.cfg_cie_name         Your Company Name             : %s" % (self.cfg_cie_name))
         print("obj.cfg_mail_type        0=No 1=Error 2=Success 3=All  : %s" % (str(self.cfg_mail_type)))
@@ -1242,7 +1236,7 @@ class sadmtools():
 
         print(" ")                                                      
         print("SADMIN Backup Server Information (If Used)")    
-        print(dash)                                                     
+        print("-" * 100)                                                   
         print("obj.cfg_backup_nfs_server       Backup NFS Server Name        : %s" % (self.cfg_backup_nfs_server))
         print("obj.cfg_backup_nfs_mount_point  Backup NFS Mount Point        : %s" % (self.cfg_backup_nfs_mount_point))
         print("obj.cfg_backup_nfs_to_keep      Nb. Of Backup to Keep         : %s" % (str(self.cfg_backup_nfs_to_keep)))
