@@ -359,81 +359,50 @@ sadm_check_requirements() {
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which 
         then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save the Path of Which
-        else sadm_writelog " ERROR : The command 'which' couldn't be found" 
-             sadm_writelog " This program is often used by the SADMIN tools"
-             sadm_writelog " Please install it and re-run this script"
-             sadm_writelog " To install it, use the following command depending on your distro"
-             sadm_writelog " Use 'yum install which' or 'apt-get install debianutils'"
-             sadm_writelog " *** Script Aborted"
+        else sadm_writelog "[ERROR] The command 'which' couldn't be found" 
+             sadm_writelog "        This program is often used by the SADMIN tools"
+             sadm_writelog "        Please install it and re-run this script"
+             sadm_writelog "        *** Script Aborted"
              return 1                                                   # Return Error to Caller
     fi
     
-    # Commands require on Linux O/S ----------------------------------------------------------------
-    if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux
+    # Commands available on Linux O/S --------------------------------------------------------------
+    if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
        then sadm_check_command_availibility "lsb_release"               # lsb_release cmd available?
-            SADM_LSB_RELEASE=$SADM_VAR1                                 # Save Command Path
+            SADM_LSB_RELEASE=$SADM_VAR1   
             sadm_check_command_availibility "dmidecode"                 # dmidecode cmd available?
-            SADM_DMIDECODE=$SADM_VAR1                                   # Save Command Path
-            sadm_check_command_availibility "fdisk"                     # FDISK cmd available?
-            SADM_FDISK=$SADM_VAR1                                       # Save Command Path
-            
-            # Check Availibility of the "nmon" command
+            SADM_DMIDECODE=$SADM_VAR1    
             sadm_check_command_availibility "nmon"                      # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "nmon" "nmon"                  # Go Install Missing Package
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility nmon        # Check if command now Avail
-                    fi
+                then sadm_install_package "nmon" "nmon"                 # Go Install Missing Package
+                     if [ $? -eq 0 ] ; then sadm_check_command_availibility nmon ;fi
             fi
             SADM_NMON=$SADM_VAR1                                        # Save Command Path
-           
-            # Check Availibility of the "ethtool" command
             sadm_check_command_availibility "ethtool"                   # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "ethtool" "ethtool"            # Go Install Missing Package
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility ethtool     # Check if command now Avail
-                    fi
+                then sadm_install_package "ethtool" "ethtool"           # Go Install Missing Package
+                    if [ $? -eq 0 ] ;then sadm_check_command_availibility ethtool ;fi
             fi
             SADM_ETHTOOL=$SADM_VAR1                                     # Save Command Path
-            
-            # Check Availibility of the "parted" command
             sadm_check_command_availibility "parted"                    # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "parted" "parted"              # Go Install Missing Package
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility "parted"    # Check if command now Avail
-                    fi
+                then sadm_install_package "parted" "parted"             # Go Install Missing Package
+                    if [ $? -eq 0 ] ;then sadm_check_command_availibility "parted" ;fi
             fi
             SADM_PARTED=$SADM_VAR1                                      # Save Command Path
-            
             sadm_check_command_availibility "mail"                      # Mail cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then sadm_install_package "mailx" "mailutils"            # Go Install Missing Package
-                    if [ $? -eq 0 ]                                     # If Install Went OK
-                       then sadm_check_command_availibility "mail"      # Check if command now Avail
-                    fi               
-
+                then sadm_install_package "mailx" "mailutils"            # Go Install Missing Package
+                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mail" ; fi
             fi
-            SADM_MAIL=$SADM_VAR1                                        # Save Command Path
-
+            SADM_MAIL=$SADM_VAR1                                        # Save Command Path    
             sadm_check_command_availibility lscpu                       # lscpu cmd available?
-            SADM_LSCPU=$SADM_VAR1                                       # Save Command Path
-            #if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-            #   then sadm_install_package "util-linux" "util-linux"      # Go Install RPM/DEBIAN pkg
-            #        if [ $? -eq 0 ]                                     # If Install Went OK
-            #           then sadm_check_command_availibility "lscpu"     # Check if command now Avail
-            #        fi               
-            #fi
+            SADM_LSCPU=$SADM_VAR1                                       # Save Command Path    
     fi
-    
-    # Commands Require on Aix O/S ------------------------------------------------------------------
+                            
+    # Commands on Aix O/S --------------------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under Aix O/S
-       then sadm_check_command_availibility "bc"                        # bc cmd available?
-            SADM_BC=$SADM_VAR1                                          # Save Command Path
-            sadm_check_command_availibility "mail"                      # mail cmd available?
-            SADM_MAIL=$SADM_VAR1       
-            sadm_check_command_availibility "nmon"                      # nmon cmd available?
+       then sadm_check_command_availibility "nmon"                      # nmon cmd available?
             SADM_NMON=$SADM_VAR1       
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                then NMON_WDIR="${SADM_PKG_DIR}/nmon/aix/" 
@@ -442,14 +411,14 @@ sadm_check_requirements() {
                     if [ ! -x "$NMON_USE" ]
                         then sadm_writelog "The nmon for AIX $(sadm_get_osversion) isn't available"
                              sadm_writelog "The nmon executable we need is $NMON_USE" 
-                        else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon" 
+                       else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon" 
                              ln -s ${NMON_USE} /usr/bin/nmon
                              if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi 
                     fi
             fi
     fi
     
-    # Commands require on ALL platform 
+    # Commands require on ALL platform -------------------------------------------------------------
     sadm_check_command_availibility "perl"                              # perl needed (epoch time)
     SADM_PERL=$SADM_VAR1                                                # Save perl path
     sadm_check_command_availibility "ssh"                               # ssh needed (epoch time)
@@ -458,17 +427,19 @@ sadm_check_requirements() {
     SADM_BC=$SADM_VAR1                                                  # Save Command Path
     sadm_check_command_availibility "mail"                              # Mail cmd available?
     SADM_MAIL=$SADM_VAR1                                                # Save Command Path
+    sadm_check_command_availibility "fdisk"                             # FDISK cmd available?
+    SADM_FDISK=$SADM_VAR1                                               # Save Command Path
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     SADM_MYSQL=""                                                       # Default mysql Location
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                            # Only Check on SADMIN Srv
-        then sadm_check_command_availibility "mysql"                      # Command available?
-             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "mysql" "mysql"                  # Go Install Missing Package
-                     if [ $? -eq 0 ]                                     # If Install Went OK
-                        then sadm_check_command_availibility mysql       # Check if command now Avail
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
+        then sadm_check_command_availibility "mysql"                    # Command available?
+             if [ "$SADM_VAR1" = "" ]                                   # If Command not found
+                then sadm_install_package "mysql" "mysql"               # Go Install Missing Package
+                     if [ $? -eq 0 ]                                    # If Install Went OK
+                        then sadm_check_command_availibility mysql      # Check if command now Avail
                              if [ $? -eq 0 ] 
-                                then SADM_MYSQL=$SADM_VAR1                                        # Save Command Path
+                                then SADM_MYSQL=$SADM_VAR1              # Save Command Path
                                 else sadm_writelog "Please install mysql software"
                                      sadm_stop 1
                              fi
@@ -476,7 +447,7 @@ sadm_check_requirements() {
                              sadm_stop 1
                     fi
              else
-                SADM_MYSQL=$SADM_VAR1                                        # Save Command Path
+                SADM_MYSQL=$SADM_VAR1                                   # Save Command Path
              fi
     fi
     return 0
@@ -852,6 +823,351 @@ sadm_get_host_ip() {
     echo "$whost_ip"
 }
 
+
+
+# --------------------------------------------------------------------------------------------------
+#                           Return The IPs of the current Hostname
+# --------------------------------------------------------------------------------------------------
+sadm_server_ips() {
+    
+    index=0 ; sadm_server_ips=""                                        # Init Variables at Start
+    xfile="$SADM_TMP_DIR/sadm_ips_$$"                                   # IP Info Work File Name
+    if [ -f "$xfile" ] ; then rm -f $xfile >/dev/null 2>&1 ;fi          # Make sure doesn't exist 
+    
+    case "$(sadm_get_ostype)" in
+        "LINUX")    ip addr |grep 'inet ' |grep -v '127.0.0' |awk '{ printf "%s %s\n",$2,$NF }'>$xfile
+                    while read sadm_wip                                 # Read IP one per line
+                        do
+                        if [ "$index" -ne 0 ]                           # Don't add ; for 1st IP
+                            then sadm_servers_ips="${sadm_servers_ips},"# For others IP add ";"
+                        fi
+                        SADM_IP=`echo $sadm_wip |awk -F/ '{ print $1 }'`# Get IP Address 
+                        SADM_MASK_NUM=`echo $sadm_wip |awk -F/ '{ print $2 }' |awk '{ print $1 }'`
+                        SADM_IF=`echo $sadm_wip | awk '{ print $2 }'`   # Get Interface Name
+                        if [ "$SADM_MASK_NUM" == "1"  ] ; then SADM_MASK="128.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "2"  ] ; then SADM_MASK="192.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "3"  ] ; then SADM_MASK="224.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "4"  ] ; then SADM_MASK="240.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "5"  ] ; then SADM_MASK="248.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "6"  ] ; then SADM_MASK="252.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "7"  ] ; then SADM_MASK="254.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "8"  ] ; then SADM_MASK="255.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" == "9"  ] ; then SADM_MASK="255.128.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "10" ] ; then SADM_MASK="255.192.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "11" ] ; then SADM_MASK="255.224.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "12" ] ; then SADM_MASK="255.240.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "13" ] ; then SADM_MASK="255.248.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "14" ] ; then SADM_MASK="255.252.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "15" ] ; then SADM_MASK="255.254.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "16" ] ; then SADM_MASK="255.255.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" == "17" ] ; then SADM_MASK="255.255.128.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "18" ] ; then SADM_MASK="255.255.192.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "19" ] ; then SADM_MASK="255.255.224.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "20" ] ; then SADM_MASK="255.255.240.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "21" ] ; then SADM_MASK="255.255.248.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "22" ] ; then SADM_MASK="255.255.252.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "23" ] ; then SADM_MASK="255.255.254.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "24" ] ; then SADM_MASK="255.255.255.0"    ; fi
+                        if [ "$SADM_MASK_NUM" == "25" ] ; then SADM_MASK="255.255.255.128"  ; fi
+                        if [ "$SADM_MASK_NUM" == "26" ] ; then SADM_MASK="255.255.255.192"  ; fi
+                        if [ "$SADM_MASK_NUM" == "27" ] ; then SADM_MASK="255.255.255.224"  ; fi
+                        if [ "$SADM_MASK_NUM" == "28" ] ; then SADM_MASK="255.255.255.240"  ; fi
+                        if [ "$SADM_MASK_NUM" == "29" ] ; then SADM_MASK="255.255.255.248"  ; fi
+                        if [ "$SADM_MASK_NUM" == "30" ] ; then SADM_MASK="255.255.255.252"  ; fi
+                        if [ "$SADM_MASK_NUM" == "31" ] ; then SADM_MASK="255.255.255.254"  ; fi
+                        if [ "$SADM_MASK_NUM" == "32" ] ; then SADM_MASK="255.255.255.255"  ; fi
+                        SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' |head -1 | awk '{ print $2 }'` 
+                        sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
+                        index=`expr $index + 1`                         # Increment Index by 1
+                        done < $xfile                                   # Read IP From Generated File
+                    rm -f $xfile > /dev/null 2>&1    # Remove TMP IP File Output
+                    ;;
+        "AIX")      rm -f $xfile > /dev/null 2>&1    # Del TMP file - Make sure
+                    ifconfig -a | grep 'flags' | grep -v 'lo0:' | awk -F: '{ print $1 }' >$xfile
+                    while read sadm_wip                                 # Read IP one per line
+                        do
+                        if [ "$index" -ne 0 ]                           # Don't add ; for 1st IP
+                            then sadm_servers_ips="${sadm_servers_ips},"# For others IP add ";"
+                        fi
+                        SADM_IP=`ifconfig $sadm_wip |grep inet |awk '{ print $2 }'` # Get IP Address 
+                        SADM_MASK=`lsattr -El $sadm_wip | grep -i netmask | awk '{ print $2 }'` 
+                        SADM_IF="$sadm_wip"                             # Get Interface Name
+                        SADM_MAC=`entstat -d $sadm_wip | grep 'Hardware Address:' | awk  '{  print $3 }'`
+                        sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
+                        index=`expr $index + 1`                         # Increment Index by 1
+                        done < $xfile                                   # Read IP From Generated File
+                    ;;
+        "DARWIN")   FirstTime=0 
+                    while [ $index -le 10 ]                             # Process from en0 to en9
+                        do
+                        ipconfig getpacket en${index} >$xfile 2>&1      # Get Info about Interface 
+                        if [ $? -eq 0 ]                                 # If Device in use
+                            then SADM_IP=`ipconfig getifaddr en${index} | tr -d '\n'` 
+                                 SADM_MASK=`ipconfig getpacket en${index} |grep subnet_mask |awk '{ print $3 }'`
+                                 SADM_IF="en${index}"                   # Set Interface Name
+                                 SADM_MAC=`ipconfig getpacket en${index} | grep chaddr | awk '{ print $3 }'` 
+                                 NEWIP="${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
+                                 if [ "$FirstTime" -eq 0 ]              # If First IP to be Added             
+                                     then sadm_servers_ips="${NEWIP}"   # List of IP = New Ip
+                                          FirstTime=1                   # No More the first Time
+                                     else sadm_servers_ips="${sadm_servers_ips},${NEWIP}"
+                                 fi
+                        fi 
+                        index=$((index + 1))
+                        done
+                    ;;
+    esac 
+    if [ -f "$xfile" ] ; then rm -f $xfile >/dev/null 2>&1  ; fi        # Del. WorkFile before exit                 
+    echo "$sadm_servers_ips"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                    Return a "P" if server is physical and "V" if it is Virtual
+# --------------------------------------------------------------------------------------------------
+sadm_server_type() {
+    case "$(sadm_get_ostype)" in
+        "LINUX")    $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1    # Search vmware in dmidecode
+                    if [ $? -eq 0 ]                                     # If vmware was found
+                        then sadm_server_type="V"                       # If VMware Server
+                        else sadm_server_type="P"                       # Default Assume Physical
+                    fi
+                    ;;
+        "AIX")      sadm_server_type="P"                                # Default Assume Physical
+                    ;;        
+        "DARWIN")   sadm_server_type="P"                                # Default Assume Physical
+                    ;;
+    esac
+    echo "$sadm_server_type"
+}
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#                               RETURN THE MODEL OF THE SERVER
+# --------------------------------------------------------------------------------------------------
+sadm_server_model() {
+    case "$(sadm_get_ostype)" in
+        "LINUX") sadm_sm=`${SADM_DMIDECODE} |grep -i "Product Name:" |head -1 |awk -F: '{print $2}'`
+                 sadm_sm=`echo ${sadm_sm}| sed 's/ProLiant//'`
+                 sadm_sm=`echo ${sadm_sm}|sed -e 's/^[ \t]*//' |sed 's/^[ \t]*//;s/[ \t]*$//' `
+                 sadm_server_model="${sadm_sm}"
+                 if [ "$(sadm_server_type)" = "V" ]
+                     then sadm_server_model="VM"
+                     else grep -i '^revision' /proc/cpuinfo > /dev/null 2>&1
+                          if [ $? -eq 0 ]
+                            then wrev=`grep -i '^revision' /proc/cpuinfo |cut -d ':' -f 2)` 
+                                 wrev=`echo $wrev | sed -e 's/^[ \t]*//'` #Del Lead Space
+                                 sadm_server_model="Raspberry Rev.${wrev}"
+                          fi
+                 fi
+                 ;;
+        "AIX")   sadm_server_model=`uname -M | sed 's/IBM,//'`
+                 ;;
+       "DARWIN") syspro="system_profiler SPHardwareDataType" 
+                 sadm_server_model=`$syspro |grep 'Ident' |awk -F: '{ print $2 }' |tr -d ' '`
+                 ;;
+    esac
+    echo "$sadm_server_model"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SERVER SERIAL NUMBER
+# --------------------------------------------------------------------------------------------------
+sadm_server_serial() {
+    case "$(sadm_get_ostype)" in
+        "LINUX")    if [ "$(sadm_server_type)" = "V" ]                  # If Virtual Machine
+                        then wserial=" "                                # VM as no serial 
+                        else wserial=`${SADM_DMIDECODE} |grep "Serial Number" |head -1 |awk '{ print $3 }'`
+                            if [ -r /proc/cpuinfo ]                     # Serial in cpuinfo (raspi)
+                                then grep -i serial /proc/cpuinfo > /dev/null 2>&1
+                                     if [ $? -eq 0 ]                    # If Serial found in cpuinfo
+                                        then wserial="$(grep -i Serial /proc/cpuinfo |cut -d ':' -f 2)"
+                                             wserial=`echo $wserial | sed -e 's/^[ \t]*//'` #Del Lead Space
+                                     fi
+                            fi
+                    fi 
+                    ;;
+        "AIX")      wserial=`uname -u | awk -F, '{ print $2 }'`
+                    ;;
+        "DARWIN")   syspro="system_profiler SPHardwareDataType" 
+                    wserial=`$syspro |grep -i 'Serial' |awk -F: '{ print $2 }' |tr -d ' '`
+                    ;;
+    esac
+    echo "$wserial"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                     RETURN THE SERVER AMOUNT OF PHYSICAL MEMORY IN MB
+# --------------------------------------------------------------------------------------------------
+sadm_server_memory() {
+    case "$(sadm_get_ostype)" in
+        "LINUX")    sadm_server_memory=`grep -i "memtotal:" /proc/meminfo | awk '{ print $2 }'`
+                    sadm_server_memory=`echo "$sadm_server_memory / 1024" | bc`
+                    ;;
+        "AIX")      sadm_server_memory=`bootinfo -r`
+                    sadm_server_memory=`echo "${sadm_server_memory} /1024" | $SADM_BC` 
+                    ;;
+        "DARWIN")   sadm_server_memory=`sysctl hw.memsize | awk '{ print $2 }'`
+                    sadm_server_memory=`echo "${sadm_server_memory} /1048576" | $SADM_BC` 
+                    ;;
+    esac
+    echo "$sadm_server_memory"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SERVER NUMBER OF PHYSICAL CPU
+# --------------------------------------------------------------------------------------------------
+sadm_server_nb_cpu() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX")    wnbcpu=`grep '^physical id' /proc/cpuinfo| sort -u | wc -l| tr -d ' '`
+                    if [ $wnbcpu -eq 0 ] ; then wnbcpu=1 ; fi
+                    ;;
+        "AIX")      wnbcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
+                    ;;
+        "DARWIN")   syspro="system_profiler SPHardwareDataType" 
+                    wnbcpu=`$syspro | grep "Number of Processors"| awk -F: '{print$2}' | tr -d ' '`
+                    #wnbcpu=`sysctl -n hw.ncpu`
+                    ;;
+    esac
+    echo "$wnbcpu"
+}
+
+ 
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SERVER NUMBER OF LOGICAL CPU
+# --------------------------------------------------------------------------------------------------
+sadm_server_nb_logical_cpu() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX")    wlcpu=`nproc --all`
+                    if [ $wlcpu -eq 0 ] ; then wlcpu=1 ; fi
+                    ;;
+        "AIX")      wlcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
+                    ;;        
+        "DARWIN")   wlcpu=`sysctl -n hw.logicalcpu`
+                    ;;
+    esac
+    echo "$wlcpu"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                                   Return the CPU Speed in Mhz
+# --------------------------------------------------------------------------------------------------
+sadm_server_cpu_speed() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX") 
+                 if [ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq ]
+                    then freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
+                         sadm_server_cpu_speed=`echo "$freq / 1000" | $SADM_BC `
+                    else sadm_server_cpu_speed=`cat /proc/cpuinfo | grep -i "cpu MHz" | tail -1 | awk -F: '{ print $2 }'`
+                         sadm_server_cpu_speed=`echo "$sadm_server_cpu_speed / 1" | $SADM_BC`
+                         #if [ "$sadm_server_cpu_speed" -gt 1000 ]
+                         #   then sadm_server_cpu_speed=`expr $sadm_server_cpu_speed / 1000`
+                         #fi
+                 fi
+                 ;;
+        "AIX")   sadm_server_cpu_speed=`pmcycles -m | awk '{ print $5 }'`
+                 ;;
+        "DARWIN")   syspro="system_profiler SPHardwareDataType" 
+                    w=`$syspro | grep -i "Speed" | awk -F: '{print $2}'|awk '{print$1}'` 
+                    sadm_server_cpu_speed=`echo "$w * 1000 / 1" | $SADM_BC`
+                    ;;
+    esac
+    echo "$sadm_server_cpu_speed"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                         Return the Server Number of Core per Socket
+# --------------------------------------------------------------------------------------------------
+sadm_server_core_per_socket() {
+    case "$(sadm_get_ostype)" in
+       "LINUX")     wcps=`cat /proc/cpuinfo |egrep "core id|physical id" |tr -d "\n" |sed s/physical/\\nphysical/g |grep -v ^$ |sort |uniq |wc -l`
+                    if [ "$wcps" -eq 0 ] ;then wcps=1 ; fi
+                    if [ "$SADM_LSCPU" != "" ]
+                        then wcps=`$SADM_LSCPU | grep -i '^core(s) per socket' | cut -d ':' -f 2 | tr -d ' '`
+                    fi
+                    ;;
+        "AIX")      wcps=1
+                    ;;
+        "DARWIN")   syspro="system_profiler SPHardwareDataType" 
+                    wcps=`$syspro | grep -i "Number of Cores"| awk -F: '{print$2}' | tr -d ' '`
+                    ;;
+    esac
+    echo "$wcps"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                       RETURN THE SERVER NUMBER OF THREAD(S) PER CORE
+# --------------------------------------------------------------------------------------------------
+sadm_server_thread_per_core() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX")    sadm_wht=`cat /proc/cpuinfo |grep -E "cpu cores|siblings|physical id" |xargs -n 11 echo |sort |uniq |head -1`
+                    sadm_sibbling=`echo $sadm_wht | awk -F: '{ print $3 }' | awk '{ print $1 }'`
+                    if [ -z "$sadm_sibbling" ] ; then sadm_sibbling=0 ; fi
+                    sadm_cores=`echo $sadm_wht | awk -F: '{ print $4 }' | tr -d ' '`
+                    if [ -z "$sadm_cores" ] ; then sadm_cores=0 ; fi
+                    if [ "$sadm_sibbling" -gt 0 ] && [ "$sadm_cores" -gt 0 ]
+                        then sadm_server_thread_per_core=`echo "$sadm_sibbling / $sadm_cores" | bc`
+                        else sadm_server_thread_per_core=1
+                    fi
+                    if [ "$SADM_LSCPU" != "" ]
+                        then wnbcpu=`$SADM_LSCPU | grep -i '^thread' | cut -d ':' -f 2 | tr -d ' '`
+                    fi
+                    ;;
+        "AIX")      sadm_server_thread_per_core=1
+                    ;;
+        "DARWIN")   w=`sysctl -n machdep.cpu.thread_count` 
+                    sadm_server_thread_per_core=`echo "$w / $(sadm_server_core_per_socket) " | $SADM_BC`
+                    ;;
+    esac
+    echo "$sadm_server_thread_per_core"
+}
+
+# --------------------------------------------------------------------------------------------------
+#                             RETURN THE SERVER NUMBER OF CPU SOCKET
+# --------------------------------------------------------------------------------------------------
+sadm_server_nb_socket() { 
+    case "$(sadm_get_ostype)" in
+       "LINUX")     wns=`cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l`
+                    if [ "$SADM_LSCPU" != "" ]
+                        then wns=`$SADM_LSCPU | grep -i '^Socket(s)' | cut -d ':' -f 2 | tr -d ' '`
+                    fi
+                    ;;
+        "AIX")      wns=`lscfg -vpl sysplanar0 | grep WAY | wc -l | tr -d ' '`
+                    ;;
+        "DARWIN")   wns=1
+                    ;;    
+    esac
+    if [ "$wns" -eq 0 ] ; then wns=1 ; fi
+    echo "$wns"
+}
+
+
+# --------------------------------------------------------------------------------------------------
+#                     Return 32 or 64 Bits Depending of CPU Hardware Capability
+# --------------------------------------------------------------------------------------------------
+sadm_server_hardware_bitmode() { 
+    case "$(sadm_get_ostype)" in
+        "LINUX")   sadm_server_hardware_bitmode=`grep -o -w 'lm' /proc/cpuinfo | sort -u`
+                   if [ "$sadm_server_hardware_bitmode" = "lm" ]
+                       then sadm_server_hardware_bitmode=64
+                       else sadm_server_hardware_bitmode=32
+                   fi
+                   ;;
+        "AIX")     sadm_server_hardware_bitmode=`bootinfo -y`
+                   ;;
+        "DARWIN")  sadm_server_hardware_bitmode=64
+                   ;;
+    esac
+    echo "$sadm_server_hardware_bitmode"
+}
 
 
 # --------------------------------------------------------------------------------------------------

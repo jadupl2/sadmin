@@ -120,13 +120,13 @@ def main():
     st = initSADM()                                                     # Initialize SADM Tools
 
     # Insure that this script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not zero
-        st.log_type = 'B'                                               # Make Sure Show on Scr+Log
-        st.writelog ("This script must be run by the 'root' user")      # Advise User Message / Log
-        st.writelog ("Try sudo ./%s" % (st.pn))                         # Suggest to use 'sudo'
-        st.writelog ("Process aborted")                                 # Process Aborted Msg
-        st.stop (1)                                                     # Close and Trim Log/Email
-        sys.exit(1)                                                     # Exit with Error Code
+    #if not os.getuid() == 0:                                            # UID of user is not zero
+    #    st.log_type = 'B'                                               # Make Sure Show on Scr+Log
+    #    st.writelog ("This script must be run by the 'root' user")      # Advise User Message / Log
+    #    st.writelog ("Try sudo ./%s" % (st.pn))                         # Suggest to use 'sudo'
+    #    st.writelog ("Process aborted")                                 # Process Aborted Msg
+    #    st.stop (1)                                                     # Close and Trim Log/Email
+    #    sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
