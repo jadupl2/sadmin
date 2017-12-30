@@ -37,9 +37,8 @@ sysmon.lock
 sys/*.log
 cfg/.dbpass
 cfg/*.txt
-cfg/.sadmin.cfg
-cfg/sadmin.cfg
-cfg/holmes.cfg
+cfg/*.cfg
+cfg/*.smon
 
 __pycache__/
 *.pyc
