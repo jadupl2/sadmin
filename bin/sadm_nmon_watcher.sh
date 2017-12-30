@@ -17,54 +17,52 @@
 # 1.9   Dec 2016
 #       Change to run on Aix 7.x and minor corrections
 #
-#set +x
+# --------------------------------------------------------------------------------------------------
+# 2017_12_29 J.Duplessis 
+#       V2.0 Add Warning message stating that nmon not available on MacOS
+# --------------------------------------------------------------------------------------------------
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
+#set -x
 
-#
+
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
-#===================================================================================================
-
+# You can run $sadmin/lib/sadmlib_test.sh for viewing functions and informations avail. to you .
 # --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
+if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
+wlib="${SADMIN}/lib/sadmlib_std.sh"                                     # SADMIN Library Location
+if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
+#
+# These are Global variables used by SADMIN Libraries - Some influence the behavior of some function
+# These variables need to be defined prior to loading the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='1.9'                             ; export SADM_VER            # This Script Version
+SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
+SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
+SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # Logger S=Scr L=Log B=Both
+SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-
+#
+# Load SADMIN Libraries
+[ -f ${SADMIN}/lib/sadmlib_std.sh ]    && . ${SADMIN}/lib/sadmlib_std.sh
+[ -f ${SADMIN}/lib/sadmlib_server.sh ] && . ${SADMIN}/lib/sadmlib_server.sh
+#
+# These variables are defined in sadmin.cfg file - You can override them here on a per script basis
 # --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     # sadm std Lib
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_server.sh ] && . ${SADM_BASE_DIR}/lib/sadmlib_server.sh  # sadm server lib
-
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
-#SADM_USER="sadmin"                        ; export SADM_USER            # sadmin user account
-#SADM_GROUP="sadmin"                       ; export SADM_GROUP           # sadmin group account
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE     # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE      # Max Nb. Lines in RCH file
-#SADM_NMON_KEEPDAYS=40                     ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
-#SADM_SAR_KEEPDAYS=40                      ; export SADM_NMON_KEEPDAYS   # Days to keep old *.nmon
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
+#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG file
+#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR    # Email Address to send status
+#
+# An email can be sent at the end of the script depending on the ending status
+# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=OnErr 2=Success 3=All
+#
 #===================================================================================================
 #
-
-
 
 
 
@@ -82,6 +80,7 @@ TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`                       # Nb Sec. be
 TOT_MIN=`echo "${TOT_SEC}/60"| bc`                                  # Nb of Minutes till 23:55
 TOT_SNAPSHOT=`echo "${TOT_MIN}/5"| bc`                              # Nb. of 5 MIn till 23:55
 TOT_SNAPSHOT=`expr $TOT_SNAPSHOT - 1 `			                    # Sub. 1 SnapShot just to be sure
+
 
     
 # --------------------------------------------------------------------------------------------------
@@ -209,6 +208,13 @@ check_nmon()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
+    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # nmon not available on OSX
+        then sadm_writelog "The command nmon is not available on MacOS" # Advise user that won't run
+             sadm_writelog "Script can't continue"                      # Process can't continue
+             sadm_stop 0                                                # Close Everything Cleanly
+             exit 0                                                     # Exit back to bash
+    fi
+    
     pre_validation                                                      # nmon Cmd present ?
     if [ $? -ne 0 ]                                                     # If not there
         then sadm_stop 1                                                # Upd. RC & Trim Log & Set RC
