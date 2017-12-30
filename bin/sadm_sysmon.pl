@@ -8,7 +8,7 @@
 #   Requires :  sh
 #===================================================================================================
 # 2017_12_30 JDuplessis
-#   V2.7 Defaut Virtual Machine presence to 'N'
+#   V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
 #===================================================================================================
 #
 use English;
