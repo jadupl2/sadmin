@@ -7,6 +7,10 @@
 #   Date     :  15 Janvier 2016
 #   Requires :  sh
 #===================================================================================================
+# 2017_12_30 JDuplessis
+#   V2.7 Defaut Virtual Machine presence to 'N'
+#===================================================================================================
+#
 use English;
 use DateTime; 
 use File::Basename;
@@ -19,7 +23,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.6";                                        # Version Number
+my $VERSION_NUMBER      = "2.7";                                        # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -1391,17 +1395,19 @@ sub init_process {
     }
    
     # UNDER LINUX CHECK TO SEE IF WE ARE RUNNING IN A VM (DO NOT CHECK FOR HP ERROR IF IN VM)
-    $COMMAND = "$CMD_DMIDECODE | grep -i vmware >/dev/null 2>&1" ;
-    #print "Command sent ${COMMAND}\n"; 
-    @args = ("$COMMAND");
-    system(@args) ;
-    if (($? >> 8) == 0 ) {
-        $VM = "Y" ;
-    }else{
-        $VM = "N" ;
+    $VM = "N" ;
+    if ( $OSNAME eq "linux" ) {
+        $COMMAND = "$CMD_DMIDECODE | grep -i vmware >/dev/null 2>&1" ;
+        #print "Command sent ${COMMAND}\n"; 
+         @args = ("$COMMAND");
+        system(@args) ;
+        if (($? >> 8) == 0 ) {
+             $VM = "Y" ;
+        }else{
+            $VM = "N" ;
+        }
     }
-}
-   
+}   
 
 
 
