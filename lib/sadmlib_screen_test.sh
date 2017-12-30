@@ -42,7 +42,6 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 #
 # Load SADMIN Libraries
 [ -f ${SADMIN}/lib/sadmlib_std.sh ]    && . ${SADMIN}/lib/sadmlib_std.sh
-[ -f ${SADMIN}/lib/sadmlib_server.sh ] && . ${SADMIN}/lib/sadmlib_server.sh
 [ -f ${SADMIN}/lib/sadmlib_screen.sh ] && . ${SADMIN}/lib/sadmlib_screen.sh
 #
 # These variables are defined in sadmin.cfg file - You can override them here on a per script basis
