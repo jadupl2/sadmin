@@ -24,7 +24,9 @@
 #############################################################################################
 # --------------------------------------------------------------------------------------------------
 #  2.1 Added Basic Logic for Aix - JAn 2017
-#  2.2 Added MOre Verbose to output log - JAn 2017
+#  2.2 Added More Verbose to output log - Jan 2017
+#  2017_12_30   JDuplessis
+#   V2.3    Added logic to prevent running on OSX since 'sar' is not available on it.
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -88,8 +90,14 @@ OUT_MAX_FILES=30                                                        # Number
 #                           S T A R T   O F   M A I N    P R O G R A M
 # ==================================================================================================
 #
-    sadm_start                                                          # Make sure Dir Struc. exist
-#
+    sadm_start                                                          # Init Env. Dir. & RC/Log
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # No sar on OSX
+        then sadm_writelog "Script not supported on MacOS - Command 'sar' not available"
+             sadm_stop 0                                                # Clean Stop 
+             exit 0                                                     # Exit with no error
+    fi
+
 # If Parameter (filename) was/wasn't specified.
 # --------------------------------------------------------------------------------------------------
 if [ "$1" != "" ]
@@ -175,27 +183,6 @@ if [ "$(sadm_get_osname)" = "AIX" ]
         #sar -n DEV -f $SAR_FILE  | tee -a $OUT_FILE
    else sadf -p $SAR_FILE -- -n DEV | tee -a $OUT_FILE
 fi
-
-
-# Clean Stat. Directory CLEANUP DONE BY HOUSEKEEPING CLIENT SCRIPT
-# --------------------------------------------------------------------------------------------------
-#sadm_writelog "CleanUp is $CLEANUP"
-#
-#if [ "$CLEANUP" = "true" ]
-#   then FILE_COUNT=`ls -lr $SADM_SAR_DIR/$OUT_PREFIX* | wc -l`
-#        sadm_writelog "Number of file in $SADM_SAR_DIR is $FILE_COUNT and we keep max $OUT_MAX_FILES files"
-#        if [ "$FILE_COUNT" -gt "$OUT_MAX_FILES" ]
-#            then TAIL_COUNT=`expr $FILE_COUNT - $OUT_MAX_FILES`
-#                 sadm_writelog "So we do a tail ${TAIL_COUNT}"
-#                 if [ "$TAIL_COUNT" -gt 0 ]
-#                   then ls -1r $SADM_SAR_DIR/$OUT_PREFIX* 2>/dev/null | tail -${TAIL_COUNT} | while read file
-#                        do
-#                        rm -f $file
-#                         done
-#                fi
-#            else sadm_writelog "No Cleanup to do" 
-#        fi
-#fi
 
 #---------------------------------------------------------------------------------------------------
     SADM_EXIT_CODE=0
