@@ -27,6 +27,8 @@
 #           - No automatic reboot on the SADMIN server while it is use to start update on client
 # Version 2.9 - April 2017
 #       Email log only when error for now on
+# 2017_12_30 - JDuplessis
+#       V2.10 Introduction of New Python Library  
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -82,7 +84,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.9"                             # Your Script Version 
+    st.ver  = "2.10"                            # Your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
@@ -119,7 +121,7 @@ def main_process(st) :
       SFILE = st.www_net_dir + '/subnet_' + net + '.txt'                 # Construct Subnet FileName
       st.writelog ("Opening %s" % SFILE)                              # Log File Name been created
       SH=open(SFILE,'w')                                                # Open Output Subnet File
-      for host in range(1,255):                                         # Define Range IP in Subnet
+      for host in range(1,254):                                         # Define Range IP in Subnet
          ip = net + '.' + str(host)                                     # Cronstruct IP Address
          rc = os.system("ping -c 1 " + ip + " > /dev/null 2>&1")        # Ping THe IP Address
          if ( rc == 0 ) :                                               # Ping Work
@@ -140,15 +142,15 @@ def main_process(st) :
       SH.close()                                                           # Close Subnet File
       
       # Copy the resutant subnet txt file into the SADM Web Data Directory
-      st.writelog ("Copy %s into %s" % (SFILE,sadm.www_net_dir))
-      rc = os.system("cp " + SFILE + " " + sadm.www_net_dir + " >/dev/null 2>&1")       
+      st.writelog ("Copy %s into %s" % (SFILE,st.www_net_dir))
+      rc = os.system("cp " + SFILE + " " + st.www_net_dir + " >/dev/null 2>&1")       
       if ( rc != 0 ) :                                                  
-         sadm.writelog ("ERROR : Could not copy %s into %s" % (SFILE,sadm.www_net_dir))
+         sadm.writelog ("ERROR : Could not copy %s into %s" % (SFILE,st.www_net_dir))
          return (1)
       st.writelog ("Change file owner and group to %s.%s" % (sadm.cfg_www_user, sadm.cfg_www_group))
       wuid = pwd.getpwnam(sadm.cfg_www_user).pw_uid                     # Get UID User of Wev User 
       wgid = grp.getgrnam(sadm.cfg_www_group).gr_gid                    # Get GID User of Web Group 
-      os.chown(sadm.www_net_dir + '/subnet_' + net + '.txt', wuid, wgid) # Change owner of Subnet 
+      os.chown(st.www_net_dir + '/subnet_' + net + '.txt', wuid, wgid) # Change owner of Subnet 
    return(0)
 
 
