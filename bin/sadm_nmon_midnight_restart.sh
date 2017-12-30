@@ -21,6 +21,10 @@
 #       ReTested in AIX - Nmon Now part of Aix (as of 6.1)
 # --------------------------------------------------------------------------------------------------
 # 2.0   Jan 2017 - Cosmetic Message change
+#
+# 2017_12_30 JDuplessis
+#   V2.1 Display Message when run on macOS - Script not supported - 'nmon' not available on OSX
+#
 # --------------------------------------------------------------------------------------------------
 #set +x
 #
@@ -99,8 +103,8 @@ pre_validation()
         then NMON=`which nmon`
              export NMON
              sadm_writelog "Yes it's at $NMON"
-        else sadm_writelog "Error : The command 'nmon' was not found"
-             sadm_writelog "I will not be able to restart nmon daemon, since it can't be found" 
+        else sadm_writelog "[ERROR] The command 'nmon' was not found"
+             sadm_writelog "        I will not be able to restart nmon daemon." 
              return 1
     fi
 
@@ -173,6 +177,12 @@ restart_nmon()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # No sar on OSX
+        then sadm_writelog "Script not supported on MacOS - Command 'nmon' not available"
+             sadm_stop 0                                                # Clean Stop 
+             exit 0                                                     # Exit with no error
+    fi
+    
     pre_validation                                                      # Is nmon executable present
     if [ $? -ne 0 ]                                                     # If not there
         then sadm_stop 1                                                # Upd. RC/Trim Log/Set RC
