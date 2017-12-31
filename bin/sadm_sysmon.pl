@@ -11,6 +11,8 @@
 #   V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
 # 2017_12_30 JDuplessis
 #   V2.8 Change name of template file from sysmon.std to template.smon
+# 2017_12_30 JDuplessis
+#   V2.9 Change Message Sent to user when host.cfg file not there and using template file
 #===================================================================================================
 #
 use English;
@@ -25,7 +27,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.8";                                        # Version Number
+my $VERSION_NUMBER      = "2.9";                                        # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -151,7 +153,7 @@ sub load_host_config_file {
 
     # CHECK IF HOSTNAME.CFG EXIST, IF NOT COPY SYSMON.STD TO HOSTNAME.CFG
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.cfg not exist
-        my $mail_message = "File $SYSMON_CFG_FILE not found, File created based on standard.cfg";    
+        my $mail_message = "File $SYSMON_CFG_FILE not found, File created based on template.smon";    
         my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADMIN_EMAIL");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
