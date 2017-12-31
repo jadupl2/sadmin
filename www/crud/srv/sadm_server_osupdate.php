@@ -26,6 +26,8 @@
 #       V1.8 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#   2017_12_31 - Jacques Duplessis
+#       V2.1 Update O/S Update Page now update the SADM_USER crontab 
 #
 # ==================================================================================================
 #
@@ -86,7 +88,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -127,7 +129,7 @@ function display_osschedule($con,$wrow,$mode) {
                         echo "\n<input type='radio' name='scr_update_auto' value='0'> Manual  ";
                     }else{
                         echo "\n<input type='radio' name='scr_update_auto' value='1'> Scheduled  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > Manual";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > <b>Manual (No Schedule)</b>";
                     }
                     break;
     }
@@ -399,16 +401,15 @@ function display_osschedule($con,$wrow,$mode) {
             $err_msg = "Server '" . $_POST['scr_name'] . "' updated";   # Advise user of success Msg
             if ($DEBUG) { 
                 $err_msg = $err_msg ."\nUpdate SQL Command = ". $sql ;  # Include SQL Stat. in Mess.
-                #sadm_alert ($err_msg) ;                                 # Msg. Error Box for User
+                sadm_alert ($err_msg) ;                                 # Msg. Error Box for User
             }
         }
         
         # CRONTAB SADMIN UPDATE ON LINUX
-        if ($DEBUG) { echo "scr_istype = " . $_POST['scr_ostype'] ;}
-        if ($_POST['scr_ostype'] == "linux") {
+        if ($DEBUG) { sadm_alert ("POST[server_os] = " . $_POST['server_os'])  ;}
+        if ($_POST['server_os'] == "linux") {
             if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
-            echo "GOING TO UPDATEZ CZRZONTAB";
-            update_crontab (SADM_UPDATE_SCRIPT . $_POST['scr_name'],$MODE,$pmonth,$pdom,$pdow, 
+            update_crontab (SADM_UPDATE_SCRIPT . $_POST['server_key'],$MODE,$pmonth,$pdom,$pdow, 
                 $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
         }
 
@@ -455,13 +456,14 @@ function display_osschedule($con,$wrow,$mode) {
     display_std_heading("NotHome","O/S Update Schedule","","",$SVER);   # Display Content Heading
     $title="Operating System Update Schedule for " . $wkey . " server";
     echo "<center><strong>" . $title . "</strong></center>";
-    
+
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_osschedule($con,$row,"Update");                             # Display Form Default Value
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "\n<input type='hidden' value='1' name='submitted' />";        # hidden use On Nxt Page Exe
-    echo "\n<input type='hidden' value='".$row['srv_name']."' name='server_key' />"; # save srvkey
+    echo "\n<input type='hidden' value='".$row['srv_name']  ."' name='server_key' />"; # save srvkey
+    echo "\n<input type='hidden' value='".$row['srv_ostype']."' name='server_os'  />"; # save O/S
     
     # Display Buttons (Update/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
