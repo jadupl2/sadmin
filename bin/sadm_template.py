@@ -184,7 +184,7 @@ def process_servers(wconn,wcur,st):
 #===================================================================================================
 #                                   Script Main Process Function
 #===================================================================================================
-def main_process(wconn,wcur):
+def main_process(wconn,wcur,st):
     pass 
     return (0)                                                       # Return Error Code To Caller
 
