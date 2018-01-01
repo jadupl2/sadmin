@@ -1,98 +1,46 @@
 # README #
-THIS VERSION IS IN PROGRESS - BETA 0.81.0 
+THIS VERSION IS IN PROGRESS - BETA 0.74
 
 * SADMIN is Designed to Help Linux/Aix System Administration
 * Version Beta 0.75.0 
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-### How do I get set up? ###
 
-* Simple to Setup 
-  Create a Filesystem (or Directory) to store the SADMIN tools.
-  Default (suggested) Directory (or filesystem) to extract the SADMIN Tools is /sadmin 
-    - If you do not extract under /sadmin, you need to define an environment variable named SADMIN
-      that contain the name of the directory you extract (Example export SADMIN=/MyDir).
-  
-* Configuration file is located in /sadmin/cfg - Edit this file after files extraction.
-* Dependencies are check when running sadm_check_dependencies.sh in /sadmin/bin
-* Database configuration
-* How to run tests
-* Deployment instructions
+Quick Start
+-----------
+Choose a directory (or a filesystem) you want to install SADMIN. Reserve around 2GB of disk space for the server and 256MB for each client.
 
-=========================================================================================================================================
-MAIN FUNCTION 
+Define an environment variable name "SADMIN" that contains the directory path, you just chosen. If youchosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file
 
-sadm_start                          Start and initialize sadm environment
-                                    If SADMIN root directory is not /sadmin, make sure the SADMIN Env. variable is set to proper directory.
-                                    Please call this function when your script is starting
-                                    What this function will do for us :
-                                     1) Make sure All SADM directories and sub-directories exist and they have proper permissions.
-                                     2) Make sure the log file exist with proper permission (/sadmin/log/holmes_sadm_lib_test.log)
-                                     3) Make sure the Return Code History Log exist and have the right permission
-                                     4) Create script PID file - If it exist and user want to run only 1 copy of script, then abort
-                                     5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)
-                                     6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)
-
-sadm_stop 0                         Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)
-                                    Please call this function just before your script end
-                                    What this function do.
-                                     1) If Exit Code is not zero, change it to 1.
-                                     2) Get Actual Time and Calculate the Execution Time.
-                                     3) Writing the Script Footer in the Log (Script Return code, Execution Time, ...)
-                                     4) Update the RCH File (Start/End/Elapse Time and the Result Code)
-                                     5) Trim The RCH File Based on User choice in sadmin.cfg
-                                     6) Write to Log the user mail alerting type choose by user (sadmin.cfg)
-                                     7) Trim the Log based on user selection in sadmin.cfg
-                                     8) Send Email to sysadmin (if user selected that option in sadmin.cfg)
-                                     9) Delete the PID File of the script (SADM_PID_FILE)
-                                    10) Delete the Uers 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)
-
-=========================================================================================================================================
-                                                                                                                   RETURN VALUE
-FUNCTION AVAILABLE TO USE                   DESCRIPTION                                                        PREFIX & SUFFIX BY 3 DOTS
-=========================================================================================================================================
-$(sadm_get_release)                         SADMIN Release Number (XX.XX)                                    : ...00.81...
-$(sadm_get_ostype)                          OS Type (Always in Uppercase) (LINUX,AIX,...)                    : ...LINUX...
-$(sadm_get_osversion)                       OS Version (Ex: 7.2, 6.5)                                        : ...7.2.1511...
-$(sadm_get_osmajorversion)                  OS Major Version (Ex 7, 6)                                       : ...7...
-$(sadm_get_osname)                          OS Distribution (Always in Uppercase) (Ex:REDHAT,CENTOS,UBUNTU)  : ...CENTOS...
-$(sadm_get_oscodename)                      OS Project Code Name                                             : ...Core...
-$(sadm_get_kernel_version)                  OS Running Kernel Version (Ex: 3.10.0-229.20.1.el7.x86_64)       : ...3.10.0-327...
-$(sadm_get_kernel_bitmode)                  OS Kernel Bit Mode is a 32 or 64 Bits                            : ...64...
-$(sadm_get_hostname)                        Host Name                                                        : ...holmes...
-$(sadm_get_host_ip)                         Host IP Address                                                  : ...192.168.1.12...
-$(sadm_get_domainname)                      Host Domain Name                                                 : ...maison.ca...
-$(sadm_get_epoch_time)                      Get Current Epoch Time                                           : ...1471011239...
-$(sadm_epoch_to_date 1471011239)            Convert epoch time to date (YYYY.MM.DD HH:MM:SS)                 : ...2016.08.12 10:13:59...
-$(sadm_date_to_epoch '2016.08.12 10:13:59') Convert Date to epoch time (YYYY.MM.DD HH:MM:SS)                 : ...1471011239...
-$(sadm_elapse_time '2016.01.30 10:00:44' '2016.01.30 10:00:03') Return Elapse Time between two timestamp     : ...00:00:41...
-sadm_toupper string                         Return the string it receive in uppercase                        : ...STRING...
-sadm_tolower STRING                         Return the string it receive in lowercase                        : ...string...
-sadm_is_root                                True if script is running as root, False if not.                 : ...true...
-
-$(sadm_server_ips)                          All Network Interfaces IP Address and Netmask use on server      : ...em1|192.168.1.12|255.255.255.0|98:90:96:b7:64:a2,em1:1|192.168.1.20|255.255.255.0|98:90:96:b7:64:a2,virbr0|192.168.122.1|255.255.255.0|52:54:00:97:f7:69...
-$(sadm_server_type)                         Host is Physical or Virtual (P/V)                                : ...P...
-$(sadm_server_model)                        Server model is (Ex: OptiPlex 755)                               : ...OptiPlex 7020...
-$(sadm_server_serial)                       Server serial number is (Ex: 4S7GYF1)                            : ...BJSV942...
-$(sadm_server_memory)                       Server total memory in MB  (Ex: 3790)                            : ...7732...
-$(sadm_server_hardware_bitmode)             Server CPU Hardware is a 32 or 64 bits capable                   : ...64...
-$(sadm_server_nb_cpu)                       Number of CPU on the server (Ex: 4)                              : ...4...
-$(sadm_server_nb_socket)                    Number of socket on the server (Ex: 2)                           : ...1...
-$(sadm_server_core_per_socket)              Number of Core per Socket (Ex: 4)                                : ...4...
-$(sadm_server_thread_per_core)              Number of Thread per Core                                        : ...1...
-$(sadm_server_cpu_speed)                    Server CPU Speed in MHz                                          : ...2435...
-$(sadm_server_disks)                        Server disks list (MB) (Ex: DISKNAME|SIZE,DISKNAME|SIZE,...)     : ...sda|512000...
-$(sadm_server_vg)                           Server vg(s) list (MB) (Ex: VGNAME|SIZE|USED|FREE,...)           : ...rootvg|476426|31232|445194...
+echo "SADMIN=/sadmin" >> /etc/environment
 
 
 
-### Contribution guidelines ###
 
+
+Contribution guidelines
+-----------------------
 * Writing tests
 * Code review
 * Other guidelines
 
-### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+Requirements
+------------
+* python >= 3.x
+
+
+Copyright and license
+---------------------
+Nmaptocsv is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+Nmaptocsv is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with nmaptocsv. 
+If not, see http://www.gnu.org/licenses/.
+
+Contact
+-------
+* Jacques Duplessis < jacques.duplessis@sadmin.ca >
