@@ -23,7 +23,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.7";                                        # Version Number
+my $VERSION_NUMBER      = "2.8";                                        # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -61,6 +61,7 @@ my $CMD_TAIL            = `which tail`       ;chomp($CMD_TAIL);         # Locati
 my $CMD_HEAD            = `which head`       ;chomp($CMD_HEAD);         # Location of head command
 my $CMD_UPTIME          = `which uptime`     ;chomp($CMD_UPTIME);       # Location of uptime command
 my $CMD_VMSTAT          = `which vmstat`     ;chomp($CMD_VMSTAT);       # Location of vmstat command
+my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Location of iostat command
 my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
 my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command 
@@ -816,7 +817,11 @@ sub check_load_average {
     open (DB_FILE, "$CMD_UPTIME |");
     $load_line = <DB_FILE> ;
     @ligne = split ' ',$load_line;
-    @dummy = split ',',$ligne[10];
+    if ( $OSNAME eq "darwin" ) {
+        @dummy = split ',',$ligne[7];
+    }else{
+        @dummy = split ',',$ligne[10];
+    }
     $load_average = int $dummy[0];
     if ($SYSMON_DEBUG >= 5) { 
         printf "Uptime line  is $load_line";  
@@ -849,17 +854,28 @@ sub check_cpu_usage {
     if ($SYSMON_DEBUG >= 5) { print "\n-----\nEntering check_cpu_usage"; }
 
     #----- Get CPU Usage
-    open (DB_FILE, "$CMD_VMSTAT 1 2 | $CMD_TAIL -1 |");
+    if ( $OSNAME eq "darwin" ) {
+        open (DB_FILE, "$CMD_IOSTAT 1 2 | $CMD_TAIL -1 |");
+    }else{
+        open (DB_FILE, "$CMD_VMSTAT 1 2 | $CMD_TAIL -1 |");
+    }
     $cpu_use = <DB_FILE> ;
-    printf "\nvmstat line is %s" , $cpu_use; 
+    #printf "\nvmstat line is %s" , $cpu_use; 
     @ligne = split ' ',$cpu_use;
     if ( $OSNAME eq "linux" ) {
+        printf "\nvmstat line is %s" , $cpu_use; 
         $cpu_user   = int $ligne[12];
         $cpu_system = int $ligne[13];
     }else{
+        #printf "\nvmstat line is %s" , $cpu_use; 
         $cpu_user   = int $ligne[13];
         $cpu_system = int $ligne[14];
     }
+    if ( $OSNAME eq "darwin" ) {
+        printf "\niostat line is %s" , $cpu_use; 
+        $cpu_user   = int $ligne[3];
+        $cpu_system = int $ligne[4];
+    }     
     $cpu_total  = $cpu_user + $cpu_system;
     close DB_FILE;
 
