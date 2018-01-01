@@ -1,8 +1,8 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_pssh_create_file.py
-#   Synopsis:   Create *.txt file use by pssh in $SADMIN_BASE/cfg
+#   Synopsis:   Create *.txt file use by pssh in $SADMIN/jac/cfg/pssh
 #===================================================================================================
 # Description
 #
@@ -20,6 +20,11 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 #===================================================================================================
+# CHANGE LOG
+# 2017_12_31 JDuplessis 
+#   V1.7 Adjust for using MySQL instead of PostGres - Review logic to use new SADM Library
+#
+#===================================================================================================
 try :
     import os, time, sys, pdb, datetime, datetime, glob, fnmatch, pymysql
 except ImportError as e:
@@ -29,43 +34,10 @@ except ImportError as e:
 
 
 #===================================================================================================
-# SADM Library Initialization
-#===================================================================================================
-sadm_base_dir           = os.environ.get('SADMIN','/sadmin')            # Set SADM Base Directory
-sadm_lib_dir            = os.path.join(sadm_base_dir,'lib')             # Set SADM Library Directory
-sys.path.append(sadm_lib_dir)                                           # Add Library Dir to PyPath
-import sadm_lib_std as sadm                                             # Import SADM Tools Library
-sadm.load_config_file()                                                 # Load cfg var from sadmin.cfg
-
-
-# SADM Variables use on a per script basis
-#===================================================================================================
-sadm.ver                = "1.5"                                         # Default Program Version
-sadm.multiple_exec      = "N"                                           # Default Run multiple copy
-sadm.debug              = 0                                             # Default Debug Level (0-9)
-sadm.exit_code          = 0                                             # Script Error Return Code
-sadm.log_append         = "N"                                           # Append to Existing Log ?
-sadm.log_type           = "B"                                           # 4Logger S=Scr L=Log B=Both
-
-# SADM Configuration file (sadmin.cfg) content loaded from configuration file (Can be overridden)
-sadm.cfg_mail_type      =  1                                            # 0=No 1=Err 2=Succes 3=All
-
-
-
-#===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
-#
-cnow               = datetime.datetime.now()                            # Get Current Time
-curdate            = cnow.strftime("%Y.%m.%d")                          # Format Current date
-curtime            = cnow.strftime("%H:%M:%S")                          # Format Current Time
-#
-pssh_aix           = sadm.cfg_dir + '/pssh/pssh_aix.txt'                # File List of aix servers  
-pssh_linux         = sadm.cfg_dir + '/pssh/pssh_linux.txt'              # File List of linux servers  
-pssh_servers       = sadm.cfg_dir + '/pssh/pssh_servers.txt'            # File List of ALL servers
-
 
 
 #===================================================================================================
@@ -96,7 +68,6 @@ def initSADM():
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
         sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
-        #import sadmlib_mysql as sadmdb
     except ImportError as e:
         print ("Import Error : %s " % e)
         sys.exit(1)
@@ -104,7 +75,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you need-------------------------------
-    st.ver  = "2.7"                             # This Script Version 
+    st.ver  = "1.7"                             # This Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
@@ -137,10 +108,11 @@ def initSADM():
 #===================================================================================================
 
 def process_servers(wconn,wcur,st):
-    "process_servers function "
-    st.writelog (" ")
-    st.writelog (" ")
-    st.writelog (sadm.dash)
+    """process_servers function(wconn,wcur,st) """
+
+    pssh_aix      = st.base_dir + '/jac/cfg/pssh/pssh_aix.txt'          # File List of aix servers  
+    pssh_linux    = st.base_dir + '/jac/cfg/pssh/pssh_linux.txt'        # File List of linux servers  
+    pssh_servers  = st.base_dir + '/jac/cfg/pssh/pssh_servers.txt'      # File List of ALL servers
 
     # Read All Actives Servers
     sql  = "SELECT srv_name,srv_ostype,srv_domain,srv_active "
@@ -154,7 +126,6 @@ def process_servers(wconn,wcur,st):
         print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
         return (1)
     
-
     # Open Aix Output file
     try:
         FH_AIX_FILE=open(pssh_aix,'w')                                  # Open Aix Server File
@@ -164,7 +135,6 @@ def process_servers(wconn,wcur,st):
         print ("Error Text   : {0}\r\n.format(e.strerror)")             # Print Error Message
         return 1                                                        # Return Error To Caller
         
-
     # Open Linux Output file
     try:
         FH_LINUX_FILE=open(pssh_linux,'w')                              # Open Linux Server File
@@ -182,26 +152,33 @@ def process_servers(wconn,wcur,st):
         print ("Error Number : {0}\r\n.format(e.errno)")                # Print Error Number    
         print ("Error Text   : {0}\r\n.format(e.strerror)")             # Print Error Message
         return 1                                                        # Return Error To Caller
-                    
-        
+    
     lineno = 1
     for row in rows:
-        st.writelog ("%02d %s" % (lineno, row))
         (wname,wos,wdomain,wactive) = row
-        st.writelog (sadm.dash)
+        st.writelog (('-' * 80))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-30s - type:%s" % (lineno,wname+"."+wdomain,wos))
+        st.writelog ("%02d %s" % (lineno, row))
         lineno += 1    
         if (wos == "aix")   : 
-            FH_AIX_FILE.write  ("%s:%d root\n" % (wname+"."+wdomain,sadm.cfg_ssh_port)) 
+            FH_AIX_FILE.write  ("%s:%d root\n" % (wname+"."+wdomain,st.cfg_ssh_port)) 
         if (wos == "linux") : 
-            FH_LINUX_FILE.write("%s:%d root\n" % (wname+"."+wdomain,sadm.cfg_ssh_port))  
-        FH_SERVERS_FILE.write("%s:%d root\n" % (wname+"."+wdomain,sadm.cfg_ssh_port))  
+            FH_LINUX_FILE.write("%s:%d root\n" % (wname+"."+wdomain,st.cfg_ssh_port))  
+        FH_SERVERS_FILE.write("%s:%d root\n" % (wname+"."+wdomain,st.cfg_ssh_port))  
 
     FH_AIX_FILE.close()  
     FH_LINUX_FILE.close()  
     FH_SERVERS_FILE.close()  
     return 0
    
+
+#===================================================================================================
+#                                   Script Main Process Function
+#===================================================================================================
+def main_process(wconn,wcur,st):
+    pass 
+    return (0)                                                       # Return Error Code To Caller
+
 
 
 #===================================================================================================
@@ -211,12 +188,13 @@ def process_servers(wconn,wcur,st):
 def main():
     st = initSADM()                                                     # Initialize SADM Tools
 
-    # Test if script is run by root (Optional Code)
-    #if os.geteuid() != 0:                                               # UID of user is not zero
-    #    st.writelog("This script must be run by the 'root' user")       # Advise User Message / Log
-    #    st.writelog("Process aborted")                                  # Process Aborted Msg
-    #    st.stop(1)                                                      # Close and Trim Log/Email
-    #    sys.exit(1)                                                     # Exit with Error Code
+    # Insure that this script can only be run by the user root (Optional Code)
+    if not os.getuid() == 0:                                            # UID of user is not zero
+       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
+       st.writelog ("Try sudo ./%s" % (st.pn))                          # Suggest to use 'sudo'
+       st.writelog ("Process aborted")                                  # Process Aborted Msg
+       st.stop (1)                                                      # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
@@ -224,10 +202,12 @@ def main():
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
-    else:                                                               # If Running on SADMIN Server
+        
+    if st.debug > 4: st.display_env()                                   # Display Env. Variables
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
-    if st.debug > 4: st.display_env()                                   # Display Env. Variables
+    #st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
