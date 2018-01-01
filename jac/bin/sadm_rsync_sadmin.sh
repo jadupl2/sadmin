@@ -23,12 +23,14 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Version 1.7
-# 2017_02_04  Jacques Duplessis - Don't rsync /sadmin/cfg entirely just sysmon.std file from now on
-# Version 1.8
-# 2017_06_03  Jacques Duplessis - Added the /sadmin/sys to rsync processing
+# 2017_02_04  Jacques Duplessis - 
+#   V1.8 Don't rsync /sadmin/cfg entirely just template.smon file for now    
+# 2017_06_03  Jacques Duplessis
+#   V1.9 Added the /sadmin/sys to rsync processing
 # 2017_09_23  Jacques Duplessis
 #   V2.0 All rewritten for performance/flexibility improvement and command line Switch for debug
+# 2017_12_30  Jacques Duplessis
+#   V2.1 Change name of sysmon.std to template.smon (System Monitor Template)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -81,8 +83,8 @@ rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_BASE_DIR}/jac/bin"
                    ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
 
 # Array of Files to rsync to SADM client
-rem_files_to_rsync=( "${SADM_CFG_DIR}/sysmon.std" "${SADM_CFG_DIR}/sadmin.cfg"
-                     "${SADM_CFG_DIR}/.release"   "${SADM_CFG_DIR}/.sadmin.cfg" ) 
+rem_files_to_rsync=( "${SADM_CFG_DIR}/template.smon" "${SADM_CFG_DIR}/sadmin.cfg"
+                     "${SADM_CFG_DIR}/.release"      "${SADM_CFG_DIR}/.sadmin.cfg" ) 
 
 
 

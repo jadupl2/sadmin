@@ -25,6 +25,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+#   2017_12_31 JDuplessis
+#       V2.1  Change Name of input subnet file
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -171,7 +173,8 @@ function print_ip_heading($iptype,$wsubnet) {
     
     # Verify if subnet file exist    
     list($network,$mask) = explode('/',$SUBNET);
-    $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $network . ".txt";
+    list($net1,$net2,$net3,$net4) = explode('.',$network);
+    $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $net1 . ".". $net2 . ".". $net3 . ".txt";
     if (! file_exists($subnet_file))  {
        echo "<br>The subnet file " . $subnet_file . " does not exist.\n";
        echo "<br>Correct the situation and retry request\n";

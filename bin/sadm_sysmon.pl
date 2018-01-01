@@ -9,6 +9,10 @@
 #===================================================================================================
 # 2017_12_30 JDuplessis
 #   V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
+# 2017_12_30 JDuplessis
+#   V2.8 Change name of template file from sysmon.std to template.smon
+# 2017_12_30 JDuplessis
+#   V2.9 Change Message Sent to user when host.cfg file not there and using template file
 #===================================================================================================
 #
 use English;
@@ -23,7 +27,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.8";                                        # Version Number
+my $VERSION_NUMBER      = "2.9";                                        # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -48,7 +52,7 @@ my $PSFILE2             = "$SADM_TMP_DIR/PSFILE2.$$";                   # Result
 my $SADM_TMP_FILE1      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp1";      # SYSMON Temp work file 1
 my $SADM_TMP_FILE2      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp2";      # SYSMON Temp work file 2
 my $SYSMON_CFG_FILE     = "$SADM_CFG_DIR/$HOSTNAME.smon";               # SYSMON Configuration file
-my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/sysmon.std";                   # SYSMON Config Std file
+my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/template.smon";                # SYSMON Config Std file
 my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Host Report File 
 my $SYSMON_LOCK_FILE    = "$SADM_BASE_DIR/sysmon.lock";                 # SYSMON Lock file
 
@@ -150,11 +154,11 @@ sub load_host_config_file {
 
     # CHECK IF HOSTNAME.CFG EXIST, IF NOT COPY SYSMON.STD TO HOSTNAME.CFG
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.cfg not exist
-        my $mail_message = "File $SYSMON_CFG_FILE not found, File created based on standard.cfg";    
+        my $mail_message = "File $SYSMON_CFG_FILE not found, File created based on template.smon";    
         my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADMIN_EMAIL");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
-        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp sysmon.std 2 hostsname.cfg
+        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon 
         $return_code = 0xffff & system @cmd ;                           # Perform Command cp
         @cmd = ("$CMD_CHMOD 664 $SYSMON_CFG_FILE");                     # Make hostname.cfg 664
         $return_code = 0xffff & system @cmd ;                           # Perform Command chmod
