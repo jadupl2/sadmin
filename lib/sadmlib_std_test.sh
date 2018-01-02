@@ -12,7 +12,8 @@
 # 2.3 Cosmetic changes - Jan 2017
 # 2.4 Allow to run multiple instance of the script - SADM_MULTIPLE_EXEC="Y"
 # 2.5 Adapt with New Library Version & Remove Screen test (Move to sadmlib_screen_test.sh)
-# 
+# 2018_01_02 JDuplessis
+#   V2.6 Display Path for command facter
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -31,7 +32,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -218,6 +219,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "\nPROGRAM USED & MISC. VARIABLES\n\n"
     printf "SADM_LSB_RELEASE     = $SADM_LSB_RELEASE\n"
     printf "SADM_DMIDECODE       = $SADM_DMIDECODE\n" 
+    printf "SADM_FACTER          = $SADM_FACTER\n" 
     printf "SADM_BC              = $SADM_BC\n" 
     printf "SADM_FDISK           = $SADM_FDISK\n" 
     printf "SADM_WHICH           = $SADM_WHICH\n" 
