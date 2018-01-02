@@ -13,9 +13,11 @@
 # 2.0 - Dec 2016 - Added lsdev to PVS_FILE in Aix 
 # 2.1 - Dec 2017 - Added filed SADM_UPDATE_DATE to sysinfo.txt file
 # 2.2 - Dec 2017 - Corrected Problem related to vgs returned info (< sign return now) 
-# 2018_01_03 jDuplessis
+# 2018_01_02 jDuplessis
 #   V2.3 Now put information in less files (disks, lvm and network file) 
 #        Rewritten for performance & Efficiency
+# 2018_01_03 jDuplessis
+#   V2.4 Added New system file output & added OSX COmmande for Network,System and Disk Info.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -30,7 +32,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.3'                             ; export SADM_VER            # Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -64,6 +66,7 @@ PRTCONF_FILE="${HPREFIX}_prtconf.txt"           ; export PRTCONF_FILE   # prtcon
 DISKS_FILE="${HPREFIX}_diskinfo.txt"            ; export DISKS_FILE     # disk Inofrmation File 
 LVM_FILE="${HPREFIX}_lvm.txt"                   ; export LVM_FILE       # lvm Information File 
 NET_FILE="${HPREFIX}_network.txt"               ; export NET_FILE       # Network Information File 
+SYSTEM_FILE="${HPREFIX}_system.txt"             ; export SYSTEM_FILE    # System Information File 
 #
 # Path to Command used in this Script
 LVS=""                                          ; export LVS            # LV Summary Cmd with Path
@@ -87,6 +90,15 @@ LSBLK=""                                        ; export LSBLK          # lsblk 
 LSVG=""                                         ; export LSVG           # Aix LSVG Command Path
 LSPV=""                                         ; export LSPV           # Aix LSPV Command Path
 PRTCONF=""                                      ; export PRTCONF        # Aix Print Config Cmd
+DISKUTIL=""                                     ; export DISKUTIL       # OSX Diskutil command
+NETWORKSETUP=""                                 ; export NETWORKSETUP   # OSX networksetup command
+HOSTINFO=""                                     ; export HOSTINFO       # OSX hostinfo command
+SWVERS=""                                       ; export SWVERS         # OSX sw_vers Command
+SYSTEMPROFILER=""                               ; export SYSTEMPROFILER # OSX system_profiler Cmd.
+IPCONFIG=""                                     ; export IPCONFIG       # OSX ipconfig Cmd.
+LSHW=""                                         ; export LSHW           # Linux List Hardware (lshw)
+NMCLI=""                                        ; export NMCLI          # Linux Network Manager CLI
+HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux HostNameCTL Command 
 #
 
 
@@ -125,7 +137,7 @@ command_available()
     if [ $Debug ]
         then if [ ! -z $SADM_CPATH ]
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
-                else SADM_MSG=`printf "%-10s %-15s : %-30s" "[WARNING]" "$SADM_PKG" "Not Found"`
+                else SADM_MSG=`printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found"`
              fi
              sadm_writelog "$SADM_MSG"
     fi
@@ -175,6 +187,15 @@ pre_validation()
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
                 command_available "sfdisk"      ; SFDISK=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "diskutil"    ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank !found
+                command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path 
+                command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path 
+                command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path 
+                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH  # Profiler Cmd Path 
+                command_available "ipconfig"    ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path 
+                command_available "lshw"        ; LSHW=$SADM_CPATH      # lshw Cmd Path 
+                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # lshw Cmd Path 
+                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH # hostnamectl command Path 
     fi
 
     # Aix and Linux Common Commands
@@ -266,6 +287,16 @@ create_linux_config_files()
              $SFDISK -uM -l | grep -iEv "^$|mapper" >> $DISKS_FILE 2>&1
              echo "#"   >> $DISKS_FILE
     fi
+    if [ $(sadm_get_ostype) = "DARWIN"   ]                              # If running in OSX
+        then if [ "$DISKUTIL" != "" ]
+                then echo "#"   >> $DISKS_FILE
+                     echo "#  $DISKUTIL list " >> $DISKS_FILE
+                     echo "#"   >> $DISKS_FILE
+                     $DISKUTIL list >> $DISKS_FILE 2>&1
+                     echo "#"   >> $DISKS_FILE
+             fi
+    fi
+
 
     # Collect LVM Information ----------------------------------------------------------------------
     write_file_header "Logical Volume" "$LVM_FILE"
@@ -338,13 +369,17 @@ create_linux_config_files()
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
     sadm_writelog "Creating $NET_FILE ..."
-    if [ "$NETSTAT" != "" ]
-        then echo "#"       >> $NET_FILE
-             echo "# $NETSTAT -rn Command" >> $NET_FILE
-             echo "#"       >> $NET_FILE
-             $NETSTAT -rn   >> $NET_FILE
-             echo "#"       >> $NET_FILE
-    fi
+    if [ "$NMCLI" != "" ]
+        then echo "#"   >> $NET_FILE
+             echo "#  $NMCLI -p -f general device show" >> $NET_FILE
+             echo "#"   >> $NET_FILE
+             $NMCLI -p -f general device show >> $NET_FILE 2>&1
+             echo "#"   >> $NET_FILE
+             echo "#  $NMCLI dev status" >> $NET_FILE
+             echo "#"   >> $NET_FILE
+             $NMCLI dev status >> $NET_FILE 2>&1
+             echo "#"   >> $NET_FILE
+    fi   
     if [ "$IP" != "" ]
         then echo "#" >> $NET_FILE
              echo "# $IP Command" >> $NET_FILE
@@ -359,7 +394,75 @@ create_linux_config_files()
              $IFCONFIG -a >> $NET_FILE
              echo "#" >> $NET_FILE
     fi
-    
+    if [ "$NETSTAT" != "" ]
+        then echo "#"       >> $NET_FILE
+             echo "# $NETSTAT -rn Command" >> $NET_FILE
+             echo "#"       >> $NET_FILE
+             $NETSTAT -rn   >> $NET_FILE
+             echo "#"       >> $NET_FILE
+    fi
+    if [ "$NETWORKSETUP" != "" ]
+        then echo "#"   >> $NET_FILE
+             echo "#  $NETWORKSETUP -listallhardwareports " >> $NET_FILE
+             echo "#"   >> $NET_FILE
+             $NETWORKSETUP -listallhardwareports >> $NET_FILE 2>&1
+             echo "#"   >> $NET_FILE
+    fi   
+    if [ "$IPCONFIG" != "" ]
+        then FirstTime=0 ; index=0
+             while [ $index -le 10 ]                                    # Process from en0 to en9
+                do
+                $IPCONFIG getpacket en${index} >/dev/null 2>&1          # Get Info about Interface 
+                if [ $? -eq 0 ]                                         # If Device in use
+                    then echo "#"   >> $NET_FILE
+                         echo "#  $IPCONFIG getpacket en${index} " >> $NET_FILE
+                         echo "#"   >> $NET_FILE
+                         $IPCONFIG getpacket en${index} >> $NET_FILE 2>&1
+                         echo "#"   >> $NET_FILE
+                fi
+                index=$((index + 1))
+                done
+    fi
+
+
+    # Collect System Information -------------------------------------------------------------------
+    write_file_header "System Information" "$SYSTEM_FILE"
+    sadm_writelog "Creating $SYSTEM_FILE ..."
+    if [ "$HOSTINFO" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "# $HOSTINFO Command" >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+             $HOSTINFO      >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
+    if [ "$SWVERS" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "# $SWVERS Command" >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+             $SWVERS        >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
+    if [ "$SYSTEMPROFILER" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "# $SYSTEMPROFILER SPSoftwareDataType Command" >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+             $SYSTEMPROFILER SPSoftwareDataType      >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
+    if [ "$HOSTNAMECTL" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "# $HOSTNAMECTL Command" >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+             $HOSTNAMECTL   >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
+    if [ "$LSHW" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "# $LSHW -short Command" >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+             $LSHW -short   >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
     if [ "$FACTER" != "" ]  ; then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"   ; fi
 }
 
@@ -488,9 +591,12 @@ create_summary_file()
         then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & Set RC
              exit 1
     fi
-    if [ $(sadm_get_ostype) = "LINUX" ] ;then create_linux_config_files ;fi
-    if [ $(sadm_get_ostype) = "AIX"   ] ;then create_aix_config_files   ;fi
-    create_summary_file
+
+    if [ $(sadm_get_ostype) = "AIX"   ]                                 # If running in AIX
+        then create_aix_config_files                                    # Collect Aix Info
+        else create_linux_config_files                                  # Collect Linux/OSX Info
+    fi
+    create_summary_file                                                 # Create Summary File for DB
 
 
 # Old file to remove (Section to be remove soon 3th January 2018)
