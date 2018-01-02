@@ -20,7 +20,8 @@
 #   V2.2 Revert Change Cause reading problem with apache 
 # 2017_12_26 - JDuplessis
 #   V2.2 Adapted to work on OSX and To Adapt to Python 3 
-#
+# 2018_01_03 - JDuplessis
+#   V2.3 Added Check for facter command , if present use it get get hardware info
 # 
 # ==================================================================================================
 try :
@@ -39,7 +40,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.2"                                             # This Library Version
+libver              = "2.3"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -185,6 +186,7 @@ class sadmtools():
         self.dmidecode          = ""                                    # Command dmidecode Path
         self.bc                 = ""                                    # Command bc (Do Some Math)
         self.fdisk              = ""                                    # fdisk (Read Disk Capacity)
+        self.facter             = ""                                    # facter info collector
         self.perl               = ""                                    # perl Path (for epoch time)
         self.uname              = ""                                    # uname command path
         self.mail               = ""                                    # mail command path
@@ -842,6 +844,9 @@ class sadmtools():
         # Get the Location of fdisk
         self.fdisk = self.check_command_availibility('fdisk')           # location of fdisk
         if self.fdisk == "" : requisites_status=False
+
+        self.facter = self.check_command_availibility('facter')         # location of facter
+        if self.facter == "" : requisites_status=False
                 
         # Get the location of mail command
         self.mail = self.check_command_availibility('mail')             # location of mail
@@ -1195,6 +1200,7 @@ class sadmtools():
         print("obj.lsb_release          Location of the executable    : %s" % (self.lsb_release))
         print("obj.dmidecode            Location of the executable    : %s" % (self.dmidecode))
         print("obj.fdisk                Location of the executable    : %s" % (self.fdisk))
+        print("obj.facter               Location of the executable    : %s" % (self.facter))
         print("obj.uname                Location of the executable    : %s" % (self.uname)) 
         print("obj.perl                 Location of the executable    : %s" % (self.perl)) 
         print("obj.ssh                  Location of the executable    : %s" % (self.ssh)) 
