@@ -2,17 +2,18 @@
 THIS VERSION IS IN PROGRESS - BETA 0.74
 
 * SADMIN is Designed to Help Linux/Aix System Administration
-* Version Beta 0.75.0 
+* Version 0.74
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 
 Quick Start
 -----------
-Choose a directory (or a filesystem) you want to install SADMIN. Reserve around 2GB of disk space for the server and 256MB for each client.
+Choose a directory (or a filesystem) where you want to install SADMIN. Make sure you have  around 2GB of disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MySQL Database).
 
-Define an environment variable name "SADMIN" that contains the directory path, you just chosen. If youchosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file
 
-echo "SADMIN=/sadmin" >> /etc/environment
+Define an environment variable name "SADMIN" that contains the directory path, you just chosen. If youchosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file.
+
+# echo "SADMIN=/sadmin" >> /etc/environment
 
 
 
