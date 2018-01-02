@@ -19,6 +19,8 @@
 # 1.7  Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
 # 2017-10-10 J.Duplessis
 #   V1.8 - Remove deletion of release file on sadm client in /sadmin/cfg
+# 2018-01-02 J.Duplessis
+#   V1.9 - Delete file not needed anymore
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -530,7 +532,14 @@ file_housekeeping()
                      sadm_stop 1                                        # Terminate Gracefully
              fi
     fi
+
+    # Delete files not used anymore
+    if [ -r "${SADM_CFG_DIR}/${SADM_HOSTNAME}.cfg" ] 
+        then rm -f "${SADM_CFG_DIR}/${SADM_HOSTNAME}.cfg" 
+    fi
+    if [ -r "${SADM_CFG_DIR}/sysmon.std" ] ; then rm -f "${SADM_CFG_DIR}/sysmon.std" ;fi 
     
+
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     
