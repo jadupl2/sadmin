@@ -31,6 +31,8 @@
 #   V2.10 SSH Command line construction added at the end of script
 # 2017_12_30 JDuplessis
 #   V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2018_01_03 JDuplessis
+#   V2.12 Added Check for facter command , if present use it get get hardware info
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -49,7 +51,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.11"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.12"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -114,6 +116,7 @@ SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path t
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
+SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
 #
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
@@ -431,6 +434,8 @@ sadm_check_requirements() {
     SADM_MAIL=$SADM_VAR1                                                # Save Command Path
     sadm_check_command_availibility "fdisk"                             # FDISK cmd available?
     SADM_FDISK=$SADM_VAR1                                               # Save Command Path
+    sadm_check_command_availibility "facter"                            # facter cmd available?
+    SADM_FACTER=$SADM_VAR1                                              # Save Command Path
 
     # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
     SADM_MYSQL=""                                                       # Default mysql Location
@@ -933,6 +938,13 @@ sadm_server_type() {
                     if [ $? -eq 0 ]                                     # If vmware was found
                         then sadm_server_type="V"                       # If VMware Server
                         else sadm_server_type="P"                       # Default Assume Physical
+                    fi
+                    if [ "$SADM_FACTER" != "" ]
+                       then W=`facter | grep is_virtual | awk '{ print $3 }'`
+                            if [ "$W" == "True" ] 
+                                then sadm_server_type="V" 
+                                else sadm_server_type="p" 
+                            fi
                     fi
                     ;;
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
