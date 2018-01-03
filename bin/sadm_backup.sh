@@ -26,6 +26,8 @@
 #       V2.1 Added /wsadmin in the backup
 #   2017_12_27  JDuplessis
 #       V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
+#   2017_01_02  JDuplessis
+#       V2.3 Small Corrections and added comments
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +46,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -85,7 +87,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 # YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
 BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin "
+BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin"
 BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
 #
@@ -129,8 +131,7 @@ create_backup()
                 # Construct Backup File Name (Dir+Date_Time_tgz)
                 BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
                 TIME_STAMP=`date "+%C%y_%m_%d_%H_%M_%S"`                # Date & Time
-                TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"               # Final TGZ Name
-                
+                TGZ_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"               # Final TGZ Backup File Name
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "Current directory is `pwd`"              # Print Current Dir.
                 sadm_writelog "tar -cvzf  ${ARCHIVE_DIR}/${TGZ_FILE} --exclude '*.iso' ." 
@@ -188,7 +189,7 @@ clean_backup_dir()
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
 
                 if [ "$FILE_COUNT" -ne 0 ]
-                   then sadm_writelog "Will delete $FILE_COUNT file(s) in ${WDIR} is"
+                   then sadm_writelog "Will delete $FILE_COUNT file(s) in ${WDIR}"
                         sadm_writelog "Here is a list of $BASE_NAME before the cleanup ..."
                         ls -t1 ${BASE_NAME}*.tgz | sort -r | nl | tee -a $SADM_LOG
                         sadm_writelog "File(s) Deleted are :"
@@ -219,19 +220,19 @@ clean_backup_dir()
 }
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 #                Mount the NFS Directory where all the backup files will be stored
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 mount_nfs()
 {
-    # Local Mount Point Verification
+    # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
         then mkdir ${LOCAL_MOUNT}                                       # Create if not exist
              sadm_write_log "Create local mount point $LOCAL_MOUNT"     # Advise user we create Dir.
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
     fi
     
-    # Mount the NFS Drive - Where the TGZ File will reside
+    # Mount the NFS Drive - Where the TGZ File will reside -----------------------------------------
     sadm_writelog "Mounting NFS Drive on $SADM_BACKUP_NFS_SERVER"       # Show NFS Server Name
     umount ${LOCAL_MOUNT} > /dev/null 2>&1                              # Make sure not mounted
     sadm_writelog "mount ${SADM_BACKUP_NFS_SERVER}:${SADM_BACKUP_NFS_MOUNT_POINT} ${LOCAL_MOUNT}" 
@@ -241,7 +242,7 @@ mount_nfs()
              return 1                                                   # End Function with error
     fi
     
-    # Make sure the Current Server Backup Directory exist on NFS Drive
+    # Make sure the Server Backup Directory exist on NFS Drive -------------------------------------
     if [ ! -d ${ARCHIVE_DIR} ]                                          # Check if Server Dir Exist
         then mkdir ${ARCHIVE_DIR}                                       # If NOt Creare it
              if [ $? -ne 0 ]                                            # If Error trying to mount
@@ -255,9 +256,9 @@ mount_nfs()
 }
 
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 #                                Unmount NFS Backup Directory
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 umount_nfs()
 {
     sadm_writelog "Unmounting NFS mount directory $LOCAL_MOUNT"         # Advise user we umount
@@ -269,11 +270,11 @@ umount_nfs()
     return 0
 }
 
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 #                              S T A R T   O F   M A I N    P R O G R A M
-# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 #
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    sadm_start                                                          # Init Env.Dir & RC/Log File
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
@@ -302,18 +303,16 @@ umount_nfs()
     fi
 
     mount_nfs                                                           # Mount NFS Archive Dir.
-    if [ $? -ne 0 ]                                                     # If Error While MOunt NFS
+    if [ $? -ne 0 ]                                                     # If Error While Mount NFS
         then umount_nfs                                                 # Try to umount it Make Sure
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
     create_backup                                                       # Create TGZ of Seleted Dir.
     BACKUP_ERROR=$?                                                     # Save the Total Error
     clean_backup_dir                                                    # Delete Old Backup
     CLEANING_ERROR=$?                                                   # Save the Total Error
     SADM_EXIT_CODE=$(($BACK_ERROR+$CLEANING_ERROR))                     # Total=Backup+Cleaning Err.
-
     umount_nfs                                                          # Umounting NFS Drive
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
