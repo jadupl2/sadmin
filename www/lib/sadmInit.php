@@ -20,12 +20,12 @@
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
 # SET SADMIN ROOT BASE DIRECTORY
-$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
-if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
-    define("SADM_BASE_DIR",$TMPVAR);                                    # Set SADMIN_BASE_DIR to Env
-}else{                                                                  # If SADMIN Not Defined        
-    define("SADM_BASE_DIR", "/sadmin");                                 # Default SADM Root Base Dir 
-}  
+// $TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
+// if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
+//     define("SADM_BASE_DIR",$TMPVAR);                                    # Set SADMIN_BASE_DIR to Env
+// }else{                                                                  # If SADMIN Not Defined        
+//     define("SADM_BASE_DIR", "/sadmin");                                 # Default SADM Root Base Dir 
+// }  
 
 define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
 $TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable

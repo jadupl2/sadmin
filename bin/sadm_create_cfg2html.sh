@@ -20,7 +20,6 @@
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
-
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 # You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
@@ -31,7 +30,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN dir
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.8'                             ; export SADM_VER            # Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -51,6 +50,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE     # Max Nb. Lines in RCH file
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send status
 #===================================================================================================
+
 
 
 

@@ -75,9 +75,9 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 
 
 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #                               Script environment variables
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
@@ -85,9 +85,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 
 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 help()
 {
     echo " "
@@ -98,9 +98,9 @@ help()
 }
 
 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #                                   Process All Actives Servers 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 process_servers()
 {
     sadm_writelog "Processing All Actives Server(s)"
@@ -111,19 +111,19 @@ process_servers()
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
-    CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL & Use Read Only User  
-    CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
+    CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "        # MySQL & Use Read Only User  
+    CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -Ne '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
         then sadm_writelog "$CMDLINE1 $CMDLINE2"                        # Debug = Write SQL CMD Line
     fi
 
     # Execute SQL Query to Create CSV Work File - $SADM_TMP_FILE1
-    $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
+    $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
     # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_writelog "No Active Server were found." 
-             return 1 
+        then sadm_writelog "No Active Server were found."               # Not ACtive Server MSG
+             return 1                                                   # Return Error to Caller
     fi 
     
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
@@ -221,9 +221,9 @@ process_servers()
 
 
 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 main_process()
 {
 
@@ -231,14 +231,13 @@ main_process()
 }
 
 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #                                       Script Start HERE
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script can run only on SADMIN system (${SADM_SERVER})"
+        then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
@@ -250,7 +249,7 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
+    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
     while getopts "hd:" opt ; do                                        # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
@@ -270,10 +269,11 @@ main_process()
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
     fi
 
+    # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
     # main_process                                                      # Main Process
-    # SADM_EXIT_CODE=$?                                                 # Save Process Exit Code
     # OR
     process_servers                                                     # Process Active Servers
+
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)
