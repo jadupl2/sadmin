@@ -27,6 +27,8 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2017_12_31 - Jacques Duplessis
 #       V2.1 Include Function to update User Crontab (permit tun run O/s Update Schedule)
+#   2018_01_04 - Jacques Duplessis
+#       V2.2 Remove display_file function & Page footer now have default value for parameter
 #
 # ==================================================================================================
 #
@@ -73,8 +75,8 @@ function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
 # ==================================================================================================
 #        Function called at every end of SADM web page (Close Database and end all std Div)
 # ==================================================================================================
-function std_page_footer($wcon) {
-    if (isset($wcon)) { mysqli_close($wcon); }                                   # Close Database Connection
+function std_page_footer($wcon="") {
+    if ($wcon != "") { mysqli_close($wcon); }                           # Close Database Connection
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
@@ -409,21 +411,21 @@ function accept_key($server_key) {
 // ================================================================================================
 //                   Display Content of file receive as parameter
 // ================================================================================================
-function display_file( $nom_du_fichier ) {
-    $url = htmlspecialchars($_SERVER['HTTP_REFERER']);
-    echo "<a href='$url'>Back</a>";
+// function display_file( $nom_du_fichier ) {
+//     $url = htmlspecialchars($_SERVER['HTTP_REFERER']);
+//     echo "<a href='$url'>Back</a>";
 
-    echo '<table style="background-color: #EFCFFE"  frame="border" border="0" width="700">';
-    echo '<tr><td><pre>';
-    ///$myFile = "testFile.txt";
-    //$fh = fopen($nom_du_fichier, 'r');
-    //$theData = fgets($fh);
-    //fclose($fh);
-    //echo $theData;
-    @readfile($nom_du_fichier);
-    echo '</pre></td></tr>';
-    echo '</table>';
-}
+//     echo '<table style="background-color: #EFCFFE"  frame="border" border="0" width="700">';
+//     echo '<tr><td><pre>';
+//     ///$myFile = "testFile.txt";
+//     //$fh = fopen($nom_du_fichier, 'r');
+//     //$theData = fgets($fh);
+//     //fclose($fh);
+//     //echo $theData;
+//     @readfile($nom_du_fichier);
+//     echo '</pre></td></tr>';
+//     echo '</table>';
+// }
 
 
 
