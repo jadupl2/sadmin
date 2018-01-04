@@ -24,7 +24,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#
+#   2018_01_04 JDuplessis
+#       V2.1 Add Button at bottom of page to display more System Information
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -39,7 +40,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -474,6 +475,85 @@ function display_right_side ($wrow) {
     echo ":" ;
     echo sprintf("%02d",$wrow['srv_update_minute']);
     echo "</div>";
+
+
+    # White Line 
+    echo "\n\n<div class='server_right_label'>&nbsp;</div>";
+    echo "\n<div class='server_right_data'>&nbsp;   </div>";
+
+
+    # Display Button to Display System Information
+    echo "\n\n<div class='server_right_label'>";
+    $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_system.txt";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
+        echo "' data-toggle='tooltip' title='View System Information'>";# Tool Tips
+        echo "<button type='button'>System</button></a>";               # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+
+    # Display Button to Display Network Information
+    $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_network.txt";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
+        echo "' data-toggle='tooltip' title='Network Information'>";    # Tool Tips
+        echo "<button type='button'>Network</button></a>";              # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+
+    # Display Button to Display System Summary Information
+    $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_sysinfo.txt";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
+        echo "' data-toggle='tooltip' title='System Summary Info'>";    # Tool Tips
+        echo "<button type='button'>Summary</button></a>";              # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+    echo "</div>";
+
+
+    # Display Button to Display CFG2HTML Information
+    echo "\n<div class='server_right_data'>";
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . ".html";
+    $url = "/dat/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . ".html";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $url ;                                     # Build URL 
+        echo "' data-toggle='tooltip' title='CFG2HTML Information'>";   # Tool Tips
+        echo "<button type='button'>Cfg2html</button></a>";             # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+
+    # Display Button to Display Disks Information
+    $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_diskinfo.txt";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
+        echo "' data-toggle='tooltip' title='Disk Information'>";       # Tool Tips
+        echo "<button type='button'>Disks</button></a>";                # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+
+    # Display Button to Display LVM Information
+    $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
+    $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_lvm.txt";
+    if (file_exists($fname)) {                                          # If FileName Received exist
+        echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
+        echo "' data-toggle='tooltip' title='LVM Information'>";        # Tool Tips
+        echo "<button type='button'>LVM</button></a>";                  # Display Button
+    }else{                                                              # FileName Recv. Not Exist
+        echo "No SysFile";                                              # Msg. No Button
+    }
+
+    echo "</div>";
+
 
 }
 
