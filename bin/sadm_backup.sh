@@ -302,13 +302,8 @@ umount_nfs()
     if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
     fi
-
-    mount_nfs                                                           # Mount NFS Archive Dir.
-    if [ $? -ne 0 ]                                                     # If Error While Mount NFS
-        then umount_nfs                                                 # Try to umount it Make Sure
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
+    mount_nfs                                                           # Mount NFS Dir.
+    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     create_backup                                                       # Create TGZ of Seleted Dir.
     BACKUP_ERROR=$?                                                     # Save the Total Error
     clean_backup_dir                                                    # Delete Old Backup
