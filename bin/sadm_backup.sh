@@ -40,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
 wlib="${SADMIN}/lib/sadmlib_std.sh"                                     # SADMIN Library Location
 if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
-#
+
 # These are Global variables used by SADMIN Libraries - Some influence the behavior of some function
 # These variables need to be defined prior to loading the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
@@ -54,10 +54,8 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# Load SADMIN Libraries
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]    && . ${SADMIN}/lib/sadmlib_std.sh
-#
+[ -f ${SADMIN}/lib/sadmlib_std.sh ] && . ${SADMIN}/lib/sadmlib_std.sh   # Load SADMIN Libraries
+
 # These variables are defined in sadmin.cfg file - You can override them here on a per script basis
 # --------------------------------------------------------------------------------------------------
 #SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG file
@@ -73,12 +71,13 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=O
 
 
 
+
 # --------------------------------------------------------------------------------------------------
 #                               Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
-# Value are now taken from sadmin.cfg file
+# Backup Parameters Values are now taken from sadmin.cfg file
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 #SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
 #SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
@@ -87,7 +86,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 # YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
 BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin"
+BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin "
 BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_DIR
 #
@@ -146,8 +145,10 @@ create_backup()
                          RC=0                                           # Make Sure Return Code is 0
                 fi
                 TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                       # Total = Cumulate RC Value
-                sadm_writelog "Total of Error is $TOTAL_ERROR"          # Print Current Total Error
-           else MESS="Skip $WDIR doesn't exist on $(sadm_get_hostname)" # Sel. Backup Dir not present
+                if [ "$TOTAL_ERROR" -ne 0 ]                             # If TotalError is not 0
+                    then sadm_writelog "Total of Error is $TOTAL_ERROR" # Print Current Total Error
+                fi
+           else MESS="Skip $WDIR doesn't exist on $(sadm_get_fqdn)"     # Sel. Backup Dir not present
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "$MESS"                                   # Advise User - Log Info
         fi
@@ -228,7 +229,7 @@ mount_nfs()
     # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
         then mkdir ${LOCAL_MOUNT}                                       # Create if not exist
-             sadm_write_log "Create local mount point $LOCAL_MOUNT"     # Advise user we create Dir.
+             sadm_writelog "Create local mount point $LOCAL_MOUNT"     # Advise user we create Dir.
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
     fi
     
