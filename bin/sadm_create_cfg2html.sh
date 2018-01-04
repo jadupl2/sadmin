@@ -12,7 +12,8 @@
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
 # 2.4 Install cfg2html from local copy is not present (Jan 2017)
 # 2.5 Added support for LinuxMint (April 2017)
-# 2.7 on Mac OS
+# 2018_01_03 JDuplessis
+#   2.8 Add message to user stating that script is not supported on MacOS
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -29,7 +30,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.7'                             ; export SADM_VER            # Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -62,7 +63,11 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 #                                Script Start HERE
 #===================================================================================================
     sadm_start                                                          # Init Env. Dir & RC/Log File
-
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
+       then sadm_writelog "This script is not supported on MacOS"       # Advise User
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
