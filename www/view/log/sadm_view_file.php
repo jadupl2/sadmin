@@ -22,7 +22,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#
+#   2018_01_04 JDuplessis
+#       V1.0 Initial Version 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
