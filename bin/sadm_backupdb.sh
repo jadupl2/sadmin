@@ -27,6 +27,7 @@
 #
 # 2018_01_04 JDuplessis
 #   V1.0 Initial Backup MySQL Database Script
+#   V1.1 Test Bug Corrections
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -43,7 +44,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.1'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -133,35 +134,35 @@ backup_setup()
     fi
 
     # Main Backup Directory
-    if [ ! -d "$DIR_BACKUP}" ]                                          # Main Backup Dir. Exist ?
+    if [ ! -d "${DIR_BACKUP}" ]                                         # Main Backup Dir. Exist ?
         then mkdir $DIR_BACKUP                                          # Create Directory
              chown ${SADM_USER}:${SADM_GROUP} $DIR_BACKUP               # Assign it SADM USer&Group
              chmod 775 $DIR_BACKUP                                      # Read/Write to SADM Usr/Grp
     fi
 
     # Daily Backup Directory
-    if [ ! -d "$DIR_DAY}" ]                                             # Daily Backup Dir. Exist ?
+    if [ ! -d "${DIR_DAY}" ]                                            # Daily Backup Dir. Exist ?
         then mkdir $DIR_DAY                                             # Create Directory
              chown ${SADM_USER}:${SADM_GROUP} $DIR_DAY                  # Assign it SADM USer&Group
              chmod 775 $DIR_DAY                                         # Read/Write to SADM Usr/Grp
     fi
 
     # Weekly Backup Directory
-    if [ ! -d "$DIR_WEEK}" ]                                             # Daily Backup Dir. Exist ?
+    if [ ! -d "${DIR_WEEK}" ]                                            # Daily Backup Dir. Exist ?
         then mkdir $DIR_WEEK                                             # Create Directory
              chown ${SADM_USER}:${SADM_GROUP} $DIR_WEEK                  # Assign it SADM USer&Group
              chmod 775 $DIR_WEEK                                         # Read/Write to SADM Usr/Grp
     fi
 
     # Monthly Backup Directory
-    if [ ! -d "$DIR_MTH}" ]                                             # Monthly Backup Dir. Exist?
+    if [ ! -d "${DIR_MTH}" ]                                            # Monthly Backup Dir. Exist?
         then mkdir $DIR_MTH                                             # Create Directory
              chown ${SADM_USER}:${SADM_GROUP} $DIR_MTH                  # Assign it SADM USer&Group
              chmod 775 $DIR_MTH                                         # Read/Write to SADM Usr/Grp
     fi
 
     # Yearly Backup Directory
-    if [ ! -d "$DIR_YEAR}" ]                                            # Yearly Backup Dir. Exist?
+    if [ ! -d "${DIR_YEAR}" ]                                           # Yearly Backup Dir. Exist?
         then mkdir $DIR_YEAR                                            # Create Directory
              chown ${SADM_USER}:${SADM_GROUP} $DIR_YEAR                 # Assign it SADM USer&Group
              chmod 775 $DIR_YEAR                                        # Read/Write to SADM Usr/Grp
@@ -175,7 +176,6 @@ backup_setup()
 backup_db()
 {
     CURRENT_DB=$1                                                       # Database Name to Backup
-    sadm_writelog "Starting Backup of Database $CURRENT_DB"             # Advise User were Starting
 
     # Build the Backup File Name
     BACKUP_SUFFIX=`date +"%Y_%m_%d_%H_%M_%S_%A"`                        # Backup File Name Suffix
@@ -196,20 +196,25 @@ backup_db()
     fi 
 
     # Make Sure Backup Destination Directory Exist
-    if [ ! -d "$BDIR}" ]                                                # Backup Dir. Exist?
+    if [ ! -d "${BDIR}" ]                                               # Backup Dir. Exist?
         then mkdir $BDIR                                                # Create Final Backup Dir.
              chown ${SADM_USER}:${SADM_GROUP} $BDIR                     # Assign it SADM USer&Group
              chmod 775 $BDIR                                            # Read/Write to SADM Usr/Grp
     fi
 
     BFILE="${BDIR}/${BACKUP_FILE}"                                      # Backup Filename Full Path 
-    sadm_writelog "The Backup FileName is $BFILE"                       # Advise Usr Backup Filename
+    sadm_writelog "The Backup Directory is ${BDIR}"                     # Show User Backup Directory
+    sadm_writelog "The Backup FileName is ${BACKUP_FILE}"               # Show User Backup Filename
+    touch $BFILE                                                        # Create empty backup file
+    chown ${SADM_USER}:${SADM_GROUP} $BFILE                             # Assign it SADM USer&Group
+    chmod 600 $BDIR                                                     # Read/Write 2 SADM Usr Only
 
     CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST"   # User,Passwd and Host Used
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
         then sadm_writelog "$MYSQLDUMP $CREDENTIAL $SADM_DBNAME "       # Debug = Write Command Used
     fi
-    $MYSQLDUMP $CREDENTIAL $SADM_DBNAME > $BFILE 2>&1
+    sadm_writelog "Starting Backup of Database $CURRENT_DB"             # Advise User were Starting
+    $MYSQLDUMP $CREDENTIAL $SADM_DBNAME > $BFILE 2>&1                   # Run the Database Backup
     if [ $? -ne 0 ]                                                     # If Can't be found 
         then sadm_writelog "[ERROR] The 'mysqldump' command failed"     # Advise User
              return 1                                                   # Return Error to Caller
