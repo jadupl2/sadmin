@@ -25,31 +25,35 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
+# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
 # --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
+if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
+#
+# These Global variables are used by SADMIN Libraries - They influence behavior of some functions
+# These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='2.4'                             ; export SADM_VER            # Script Version
+SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     
-
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
-#===================================================================================================
+[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
 #
+# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
+# But you can override them here on a per script basis
+# --------------------------------------------------------------------------------------------------
+# An email can be sent at the end of the script depending on the ending status 
+# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
+SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
+#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE    # Max Nb. Lines in LOG file
+#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE     # Max Nb. Lines in RCH file
+#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send status
+#===================================================================================================
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -57,7 +61,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #
 Debug=true                                      ; export Debug          # Debug increase Verbose
-#
+
 # Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
 HWD_FILE="${HPREFIX}_sysinfo.txt"               ; export HWD_FILE       # Hardware File Info
@@ -67,7 +71,7 @@ DISKS_FILE="${HPREFIX}_diskinfo.txt"            ; export DISKS_FILE     # disk I
 LVM_FILE="${HPREFIX}_lvm.txt"                   ; export LVM_FILE       # lvm Information File 
 NET_FILE="${HPREFIX}_network.txt"               ; export NET_FILE       # Network Information File 
 SYSTEM_FILE="${HPREFIX}_system.txt"             ; export SYSTEM_FILE    # System Information File 
-#
+
 # Path to Command used in this Script
 LVS=""                                          ; export LVS            # LV Summary Cmd with Path
 LVSCAN=""                                       ; export LVSCAN         # LV Scan Cmd with Path
