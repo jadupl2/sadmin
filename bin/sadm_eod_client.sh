@@ -24,6 +24,8 @@
 # 1.1 Jan 2017 - Cosmetic Log Output change
 # 2017_12_28 - JDuplessis
 #   v1.2 Adapted to MacOS to show Message non availibility of nmon on OSX. 
+# 2018_01_05 - JDuplessis
+#   v1.3 Add MySQL Database Backup in execution sequence
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -42,7 +44,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.3'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -116,6 +118,18 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=O
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
+    # Once a day perform a MySQL Backup
+    SCRIPT="sadm_backupdb"
+    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"
+    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
+    $SCMD >/dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+             sadm_writelog "Please check Log for further detail about the error :"
+             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
 
     # Once a day - Delete old rch and log files & chown+chmod on SADMIN client
     SCRIPT="sadm_housekeeping_client"
