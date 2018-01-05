@@ -1,11 +1,11 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
-#   Author      :  Your Name
-#   Title       :  sadm_XXXXXXXX.sh
-#   Synopsis    : .
-#   Version     :  1.0
-#   Date        :  14 July 2017
-#   Requires    :  sh and SADM Library
+#   Author      :   Your Name
+#   Title       :   sadm_XXXXXXXX.sh
+#   Synopsis    :   .
+#   Version     :   1.0
+#   Date        :   5 January 2018
+#   Requires    :   sh and SADMIN Library
 #   Description :
 #
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
@@ -21,21 +21,9 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# CHANGE LOG
+# CHANGELOG
 # 2017_07_07 JDuplessis 
-#   V1.7 Minor Code enhancement
-# 2017_07_31 JDuplessis 
-#   V1.8 Added Log Template to script
-# 2017_09_02 JDuplessis 
-#   V1.9 Add Command line switch 
-# 2017_09_02 JDuplessis
-#   V2.0 Rewritten Part of script for performance and flexibility
-# 2017_12_12 JDuplessis
-#   V2.1 Adapted to use MySQL instead of Postgres Database
-# 2017_12_23 JDuplessis
-#   V2.2 Changes for performance and flexibility
-# 2018_01_04 JDuplessis
-#   V2.3 Small Modification to Library insert section
+#   V1.0 Initial Version
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -45,13 +33,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 # You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
 # --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
+if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
+if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # These Global variables are used by SADMIN Libraries - They influence behavior of some functions
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -71,7 +60,6 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE     # Max Nb. Lines in RCH file
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send status
 #===================================================================================================
-
 
 
 
