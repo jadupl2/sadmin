@@ -28,6 +28,8 @@
 # 2018_01_04 JDuplessis
 #   V1.0 Initial Backup MySQL Database Script
 #   V1.1 Test Bug Corrections
+# 2018_01_06 JDuplessis
+#   V1.2 Added Cleanup Function to Purge files based on nb. of files user wants to keep
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +46,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -71,15 +73,9 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #===================================================================================================
 #                               Script environment variables
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-MYSQLDUMP=""                                ; export MYSQLDUMP          # Save mysqldump Full Path
-
-# Backup Directories
-DIR_BACKUP="${SADMIN}/dat/dbb"      ; export DIR_BACKUP                 # DataBase Backup Dir.
-DIR_DAY="${DIR_BACKUP}/daily"       ; export DIR_DAY                    # Dir. For Daily Backup                                 
-DIR_WEEK="${DIR_BACKUP}/weekly"     ; export DIR_WEEK                   # Dir. For Weekly Backup
-DIR_MTH="${DIR_BACKUP}/monthly"     ; export DIR_MTH                    # Dir. For Monthly Backup
-DIR_YEAR="${DIR_BACKUP}/yearly"     ; export DIR_YEAR                   # Dir. For Yearly Backup
+DEBUG_LEVEL=0                       ; export DEBUG_LEVEL                # 0=NoDebug Higher=+Verbose
+MYSQLDUMP=""                        ; export MYSQLDUMP                  # Save mysqldump Full Path
+DIR_BACKUP="${SADMIN}/dat/dbb"      ; export DIR_BACKUP                 # Root DataBase Backup Dir.
 
 # Backup File Name
 BACKUP_FILE=""                      ; export BACKUP_FILE                # Backup File Name
@@ -88,18 +84,22 @@ BACKUP_DB=""                        ; export BACKUP_DB                  # Backup
 
 # Daily Backup Info 
 BACKUP_DAILY_TO_KEEP=14             ; export BACKUP_DAILY_TO_KEEP       # Nb. Daily Backup to keep
+DIR_DAY="${DIR_BACKUP}/daily"       ; export DIR_DAY                    # Dir. For Daily Backup                                 
 
 # Weekly Backup Info
+DIR_WEEK="${DIR_BACKUP}/weekly"     ; export DIR_WEEK                   # Dir. For Weekly Backup
 BACKUP_CUR_DAY=`date +"%u"`         ; export BACKUP_CUR_DAY             # Current Day in Week 1=Mon
 BACKUP_WEEK_DAY=5                   ; export BACKUP_WEEK_DAY            # Day Week Backup 1=Mon7=Sun
 BACKUP_WEEK_TO_KEEP=14              ; export BACKUP_WEEK_TO_KEEP        # Nb. Weekly Backup to keep
 
 # Monthly Backup Info
+DIR_MTH="${DIR_BACKUP}/monthly"     ; export DIR_MTH                    # Dir. For Monthly Backup
 BACKUP_CUR_DATE=`date +"%d"`        ; export BACKUP_CUR_DATE            # Current Date Nb. of Month
 BACKUP_MONTH_DATE=1                 ; export BACKUP_MONTH_DATE          # Monthly Backup Date (1-28)
 BACKUP_MONTH_TO_KEEP=14             ; export BACKUP_MONTH_TO_KEEP       # Nb. Monthly Backup to keep
 
 # Yearly Backup Info
+DIR_YEAR="${DIR_BACKUP}/yearly"     ; export DIR_YEAR                   # Dir. For Yearly Backup
 BACKUP_CUR_MTH=`date +"%m"`         ; export BACKUP_CUR_MTH             # Current Month Number 
 BACKUP_YEAR_MTH=1                   ; export BACKUP_YEAR_MTH            # Yearly Backup Month (1-12)
 BACKUP_YEAR_DATE=2                  ; export BACKUP_YEAR_DATE           # Yearly Backup Date (1-28)
@@ -124,6 +124,8 @@ help()
 #===================================================================================================
 backup_setup()
 {
+    sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
+    
     which mysqldump >/dev/null 2>&1                                     # See if mysqldump available
     if [ $? -ne 0 ]                                                     # If Can't be found 
         then sadm_writelog "The 'mysqldump' command can't be found"     # Advise User
@@ -171,6 +173,25 @@ backup_setup()
 }
 
 #===================================================================================================
+#               Delete Backup File according to the number of backup user wants to keep
+#===================================================================================================
+backup_cleanup()
+{
+    BACKUP_DAILY_TO_KEEP=2             ; export BACKUP_DAILY_TO_KEEP       # Nb. Daily Backup to keep
+    DIR_DAY="${DIR_BACKUP}/weekly/sadmin"       ; export DIR_DAY                    # Dir. For Daily Backup                                 
+
+    ls -lt ${DIR_DAY}
+    NUMFILE=`ls -1t ${DIR_DAY} | wc -l` 
+    echo "Num of File = $NUMFILE"
+
+    NUM2DEL=`echo "$NUMFILE - $BACKUP_DAILY_TO_KEEP" | $SADM_BC`
+    echo "Num to Del = $NUM2DEL"
+
+    ls -lt ${DIR_DAY} | tail -${NUM2DEL}
+    return
+}
+    
+#===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
 #===================================================================================================
 backup_db()
@@ -207,7 +228,7 @@ backup_db()
     sadm_writelog "The Backup FileName is ${BACKUP_FILE}"               # Show User Backup Filename
     touch $BFILE                                                        # Create empty backup file
     chown ${SADM_USER}:${SADM_GROUP} $BFILE                             # Assign it SADM USer&Group
-    chmod 600 $BDIR                                                     # Read/Write 2 SADM Usr Only
+    chmod 600 $BFILE                                                    # Read/Write 2 SADM Usr Only
 
     CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST"   # User,Passwd and Host Used
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
@@ -229,15 +250,16 @@ backup_db()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
-    backup_setup                                                        # Everything ok before begin
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
-    backup_db "sadmin"                                                  # Everything ok before begin
+    backup_setup                                                        # Is Setup/Requirement ok ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
 
-    #ERROR_COUNT=$(($ERROR_COUNT+1))                                     # Consider Error -Incr Cntr
-    ERROR_COUNT=0
-    return $ERROR_COUNT                                                 # Return Error Count
+    #backup_db "sadmin"                                                  # Backup the Database
+    #if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
+    
+    backup_cleanup                                                      # Purge unwanted Backup file
+    if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
+    
+    return 0                                                            # Return to Caller 
 }
 
 
