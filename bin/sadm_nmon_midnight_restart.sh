@@ -24,6 +24,8 @@
 #
 # 2017_12_30 JDuplessis
 #   V2.1 Display Message when run on macOS - Script not supported - 'nmon' not available on OSX
+# 2018_01_06 JDuplessis
+#   V2.1a Minor Esthetics Changes
 #
 # --------------------------------------------------------------------------------------------------
 #set +x
@@ -45,7 +47,7 @@
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
+SADM_VER='2.1a'                            ; export SADM_VER            # This Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
@@ -176,7 +178,9 @@ restart_nmon()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # No sar on OSX
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # No nmon on OSX
         then sadm_writelog "Script not supported on MacOS - Command 'nmon' not available"
              sadm_stop 0                                                # Clean Stop 
              exit 0                                                     # Exit with no error
