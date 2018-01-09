@@ -32,6 +32,8 @@
 #   V1.2 Added Cleanup Function to Purge files based on nb. of files user wants to keep
 # 2018_01_07 JDuplessis
 #   V1.3 Added directory latest (always contain last backup) & Display Paramaters to users
+# 2018_01_0 JDuplessis
+#   V1.4 Global Restructure and variable naming
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +50,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -76,40 +78,35 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                       ; export DEBUG_LEVEL                # 0=NoDebug Higher=+Verbose
-WEEKDAY=("Dummy" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
-MTH_NAME=("Dummy" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
-        "October" "November" "December")
+CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
+CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
+CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 MYSQLDUMP=""                        ; export MYSQLDUMP                  # Save mysqldump Full Path
-DIR_BACKUP="${SADMIN}/dat/dbb"      ; export DIR_BACKUP                 # Root DataBase Backup Dir.
-DIR_LATEST="${DIR_BACKUP}/latest"   ; export DIR_LATEST                 # Latest Backup Directory
+BACKUP_ROOT_DIR="${SADMIN}/dat/dbb" ; export BACKUP_ROOT_DIR            # Root DataBase Backup Dir.
+BACKUP_FILENAME=""                  ; export BACKUP_FILENAME            # Backup File Name
+#
+WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
+        "October" "November" "December")
 
-# Backup File Name
-BACKUP_FILE=""                      ; export BACKUP_FILE                # Backup File Name
-BACKUP_SUFFIX=""                    ; export BACKUP_SUFFIX              # Backup File Name Suffix
-BACKUP_DB=""                        ; export BACKUP_DB                  # Backup Database Name
+# Backup Directories
+DAILY_DIR="${BACKUP_ROOT_DIR}/daily"     ; export DAILY_DIR             # Dir. For Daily Backup                                 
+WEEKLY_DIR="${BACKUP_ROOT_DIR}/weekly"   ; export WEEKLY_DIR            # Dir. For Weekly Backup
+MONTHLY_DIR="${BACKUP_ROOT_DIR}/monthly" ; export MONTHLY_DIR           # Dir. For Monthly Backup
+YEARLY_DIR="${BACKUP_ROOT_DIR}/yearly"   ; export YEARLY_DIR            # Dir. For Yearly Backup
+LATEST_DIR="${BACKUP_ROOT_DIR}/latest"   ; export LATEST_DIR            # Latest Backup Directory
 
-# Daily Backup Info 
-BACKUP_DAILY_TO_KEEP=14             ; export BACKUP_DAILY_TO_KEEP       # Nb. Daily Backup to keep
-DIR_DAY="${DIR_BACKUP}/daily"       ; export DIR_DAY                    # Dir. For Daily Backup                                 
+# Number of backup to keep per backup type
+DAILY_BACKUP_TO_KEEP=14             ; export DAILY_BACKUP_TO_KEEP       # Nb. Daily Backup to keep
+WEEKLY_BACKUP_TO_KEEP=5             ; export WEEKLY_BACKUP_TO_KEEP      # Nb. Weekly Backup to keep
+MONTHLY_BACKUP_TO_KEEP=14           ; export MONTHLY_BACKUP_TO_KEEP     # Nb. Monthly Backup to keep
+YEARLY_BACKUP_TO_KEEP=7             ; export YEARLY_BACKUP_TO_KEEP      # Nb. Yearly Backup to keep
 
-# Weekly Backup Info
-DIR_WEEK="${DIR_BACKUP}/weekly"     ; export DIR_WEEK                   # Dir. For Weekly Backup
-BACKUP_CUR_DAY=`date +"%u"`         ; export BACKUP_CUR_DAY             # Current Day in Week 1=Mon
-BACKUP_WEEK_DAY=5                   ; export BACKUP_WEEK_DAY            # Day Week Backup 1=Mon7=Sun
-BACKUP_WEEK_TO_KEEP=5               ; export BACKUP_WEEK_TO_KEEP        # Nb. Weekly Backup to keep
-
-# Monthly Backup Info 
-DIR_MTH="${DIR_BACKUP}/monthly"     ; export DIR_MTH                    # Dir. For Monthly Backup
-BACKUP_CUR_DATE=`date +"%d"`        ; export BACKUP_CUR_DATE            # Current Date Nb. of Month
-BACKUP_MONTH_DATE=1                 ; export BACKUP_MONTH_DATE          # Monthly Backup Date (1-28)
-BACKUP_MONTH_TO_KEEP=14             ; export BACKUP_MONTH_TO_KEEP       # Nb. Monthly Backup to keep
-
-# Yearly Backup Info
-DIR_YEAR="${DIR_BACKUP}/yearly"     ; export DIR_YEAR                   # Dir. For Yearly Backup
-BACKUP_CUR_MTH=`date +"%m"`         ; export BACKUP_CUR_MTH             # Current Month Number 
-BACKUP_YEAR_MTH=1                   ; export BACKUP_YEAR_MTH            # Yearly Backup Month (1-12)
-BACKUP_YEAR_DATE=2                  ; export BACKUP_YEAR_DATE           # Yearly Backup Date (1-28)
-BACKUP_YEAR_TO_KEEP=7               ; export BACKUP_YEAR_TO_KEEP        # Nb. Yearly Backup to keep
+# Trigger per backup type
+WEEKLY_BACKUP_DAY=5                 ; export WEEKLY_BACKUP_DAY          # Day Week Backup 1=Mon7=Sun
+MONTHLY_BACKUP_DATE=1               ; export MONTHLY_BACKUP_DATE        # Monthly Backup Date (1-28)
+YEARLY_BACKUP_MONTH=1               ; export YEARLY_BACKUP_MONTH        # Yearly Backup Month (1-12)
+YEARLY_BACKUP_DATE=2                ; export YEARLY_BACKUP_DATE         # Yearly Backup Date (1-28)
 
 
 #===================================================================================================
@@ -130,7 +127,6 @@ help()
 #===================================================================================================
 backup_setup()
 {
-    sadm_writelog " "                                                   # Insert Blank Line in Log
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
     sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
     
@@ -144,55 +140,55 @@ backup_setup()
     fi
 
     # Main Backup Directory
-    if [ ! -d "${DIR_BACKUP}" ]                                         # Main Backup Dir. Exist ?
-        then mkdir $DIR_BACKUP                                          # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_BACKUP               # Assign it SADM USer&Group
-             chmod 750 $DIR_BACKUP                                      # Read/Write to SADM Usr/Grp
+    if [ ! -d "${BACKUP_ROOT_DIR}" ]                                    # Main Backup Dir. Exist ?
+        then mkdir $BACKUP_ROOT_DIR                                     # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $BACKUP_ROOT_DIR          # Assign it SADM USer&Group
+             chmod 750 $BACKUP_ROOT_DIR                                 # Read/Write to SADM Usr/Grp
     fi
 
     # Daily Backup Directory
-    if [ ! -d "${DIR_DAY}" ]                                            # Daily Backup Dir. Exist ?
-        then mkdir $DIR_DAY                                             # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_DAY                  # Assign it SADM USer&Group
-             chmod 750 $DIR_DAY                                         # Read/Write to SADM Usr/Grp
+    if [ ! -d "${DAILY_DIR}" ]                                          # Daily Backup Dir. Exist ?
+        then mkdir $DAILY_DIR                                           # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR                # Assign it SADM USer&Group
+             chmod 750 $DAILY_DIR                                       # Read/Write to SADM Usr/Grp
     fi
 
     # Weekly Backup Directory
-    if [ ! -d "${DIR_WEEK}" ]                                            # Daily Backup Dir. Exist ?
-        then mkdir $DIR_WEEK                                             # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_WEEK                  # Assign it SADM USer&Group
-             chmod 750 $DIR_WEEK                                         # Read/Write to SADM Usr/Grp
+    if [ ! -d "${WEEKLY_DIR}" ]                                         # Daily Backup Dir. Exist ?
+        then mkdir $WEEKLY_DIR                                          # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR               # Assign it SADM USer&Group
+             chmod 750 $WEEKLY_DIR                                      # Read/Write to SADM Usr/Grp
     fi
 
     # Monthly Backup Directory
-    if [ ! -d "${DIR_MTH}" ]                                            # Monthly Backup Dir. Exist?
-        then mkdir $DIR_MTH                                             # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_MTH                  # Assign it SADM USer&Group
-             chmod 750 $DIR_MTH                                         # Read/Write to SADM Usr/Grp
+    if [ ! -d "${MONTHLY_DIR}" ]                                        # Monthly Backup Dir. Exist?
+        then mkdir $MONTHLY_DIR                                         # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR              # Assign it SADM USer&Group
+             chmod 750 $MONTHLY_DIR                                     # Read/Write to SADM Usr/Grp
     fi
 
     # Yearly Backup Directory
-    if [ ! -d "${DIR_YEAR}" ]                                           # Yearly Backup Dir. Exist?
-        then mkdir $DIR_YEAR                                            # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_YEAR                 # Assign it SADM USer&Group
-             chmod 750 $DIR_YEAR                                        # Read/Write to SADM Usr/Grp
+    if [ ! -d "${YEARLY_DIR}" ]                                         # Yearly Backup Dir. Exist?
+        then mkdir $YEARLY_DIR                                          # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR               # Assign it SADM USer&Group
+             chmod 750 $YEARLY_DIR                                      # Read/Write to SADM Usr/Grp
     fi
 
     # Latest Backup Directory
-    if [ ! -d "${DIR_LATEST}" ]                                           # Latest Backup Dir Exist?
-        then mkdir $DIR_LATEST                                            # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $DIR_LATEST                 # Give it SADM USer&Group
-             chmod 750 $DIR_LATEST                                        # R/W to SADM Usr/Grp
+    if [ ! -d "${LATEST_DIR}" ]                                         # Latest Backup Dir Exist?
+        then mkdir $LATEST_DIR                                          # Create Directory
+             chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR               # Give it SADM USer&Group
+             chmod 750 $LATEST_DIR                                      # R/W to SADM Usr/Grp
     fi
 
     sadm_writelog "You have chosen to : "
-    sadm_writelog " - Keep $BACKUP_DAILY_TO_KEEP daily backups"
-    sadm_writelog " - Keep $BACKUP_WEEK_TO_KEEP weekly backups"
-    sadm_writelog " - Keep $BACKUP_MONTH_TO_KEEP monthly backups"
-    sadm_writelog " - Keep $BACKUP_YEAR_TO_KEEP yearly backups"
-    sadm_writelog " - Do the weekly backup on ${WEEKDAY[$BACKUP_WEEK_DAY]}"
-    sadm_writelog " - Do the monthy backup on the $BACKUP_MONTH_DATE of every month"
-    sadm_writelog " - Do the yearly backup on the $BACKUP_YEAR_DATE of ${MTH_NAME[$BACKUP_YEAR_MTH]} every year"
+    sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
+    sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
+    sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
+    sadm_writelog " - Keep $YEARLY_BACKUP_TO_KEEP yearly backups"
+    sadm_writelog " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}"
+    sadm_writelog " - Do the monthy backup on the $MONTHLY_BACKUP_DATE of every month"
+    sadm_writelog " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year"
 }
 
 #===================================================================================================
@@ -221,7 +217,9 @@ backup_cleanup()
         if [ $DEBUG_LEVEL -gt 0 ] ; then ls -l ; fi                     # In Debug List Backup files
         NB_BACKUP=`ls -1 | wc -l | tr -d ' '`                           # Count Nb. Backup in Dir.
         let "NB_DELETE = $NB_BACKUP - $NB_KEEP"                         # Nb. Backup to Delete
-        if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "NB_DELETE = $NB_BACKUP - $NB_KEEP" ;fi
+        if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
+            then sadm_writelog "NB_DELETE = $NB_BACKUP - $NB_KEEP"      # Show Math Done to Get Nb
+        fi
         if [ "$NB_DELETE" -gt 0 ]                                       # At Least 1 Backup to del.?
             then sadm_writelog "      - $NB_DELETE Backup(s) out of $NB_BACKUP will be remove"  
                  if [ $DEBUG_LEVEL -gt 0 ] ; then ls -1t | tail -${NB_DELETE} ;fi 
@@ -244,39 +242,35 @@ backup_cleanup()
 backup_db()
 {
     CURRENT_DB=$1                                                       # Database Name to Backup
-
-    # Build the Backup File Name
-    BACKUP_SUFFIX=`date +"%Y_%m_%d_%H_%M_%S_%A"`                        # Backup File Name Suffix
-    BACKUP_FILE="${CURRENT_DB}_${BACKUP_SUFFIX}.sql"                    # Build Backup File Name 
+    BACKUP_FILENAME="${CURRENT_DB}_`date +"%Y_%m_%d_%H_%M_%S_%A"`.sql"  # Build Backup File Name 
 
     # Determine the Directory where the backup will be created
-    BDIR="${DIR_DAY}/$CURRENT_DB"                                       # Default goes in Daily Dir.
-    if [ "${BACKUP_CUR_DAY}" -eq "$BACKUP_WEEK_DAY" ]                   # It's the Weekly Backup Day
-        then BDIR="${DIR_WEEK}/$CURRENT_DB"                             # Will be Weekly Backup Dir. 
+    BACKUP_DIR="${DAILY_DIR}/$CURRENT_DB"                               # Default goes in Daily Dir.
+    if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
+        then BACKUP_DIR="${WEEKLY_DIR}/$CURRENT_DB"                     # Will be Weekly Backup Dir. 
     fi 
-    if [ "$BACKUP_CUR_DATE" -eq "$BACKUP_MONTH_DATE" ]                  # It's Monthly Backup Date ?
-        then BDIR="${DIR_MTH}/$CURRENT_DB"                              # Will be Monthly Backup Dir
+    if [ "$CUR_DATE_NUM" -eq "$MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
+        then BACKUP_DIR="${MONTHLY_DIR}/$CURRENT_DB"                    # Will be Monthly Backup Dir
     fi 
-    if [ "$BACKUP_CUR_DATE" -eq "$BACKUP_YEAR_DATE" ]                   # It's Year Backup Date ?
-        then if [ "$BACKUP_CUR_MTH" -eq "$BACKUP_YEAR_MTH" ]            # And It's Year Backup Mth ?
-                then BDIR="${DIR_YEAR}/$CURRENT_DB"                     # Will be Yearly Backup Dir
+    if [ "$CUR_DATE_NUM" -eq "$YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
+        then if [ "$CUR_MTH_NUM" -eq "$YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
+                then BACKUP_DIR="${YEARLY_DIR}/$CURRENT_DB"             # Will be Yearly Backup Dir
              fi
     fi 
 
     # Make Sure Backup Destination Directory Exist
-    if [ ! -d "${BDIR}" ]                                               # Backup Dir. Exist?
-        then mkdir $BDIR                                                # Create Final Backup Dir.
-             chown ${SADM_USER}:${SADM_GROUP} $BDIR                     # Assign it SADM USer&Group
-             chmod 770 $BDIR                                            # Read/Write to SADM Usr/Grp
+    if [ ! -d "${BACKUP_DIR}" ]                                         # Backup Dir. Exist?
+        then mkdir $BACKUP_DIR                                          # Create Final Backup Dir.
+             chown ${SADM_USER}:${SADM_GROUP} $BACKUP_DIR               # Assign it SADM USer&Group
+             chmod 770 $BACKUP_DIR                                      # Read/Write to SADM Usr/Grp
     fi
-
 
     sadm_writelog " "                                                   # Insert Blank Line in Log
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
     sadm_writelog "Starting Backup of Database $CURRENT_DB"             # Advise User were Starting
-    BFILE="${BDIR}/${BACKUP_FILE}"                                      # Backup Filename Full Path 
-    sadm_writelog "Backup Directory is ${BDIR}"                         # Show User Backup Directory
-    sadm_writelog "Backup FileName is ${BACKUP_FILE}"                   # Show User Backup Filename
+    BFILE="${BACKUP_DIR}/${BACKUP_FILENAME}"                            # Backup Filename Full Path 
+    sadm_writelog "Backup Directory is ${BACKUP_DIR}"                   # Show User Backup Directory
+    sadm_writelog "Backup FileName is ${BACKUP_FILENAME}"               # Show User Backup Filename
     touch $BFILE                                                        # Create empty backup file
     chown ${SADM_USER}:${SADM_GROUP} $BFILE                             # Assign it SADM USer&Group
     chmod 600 $BFILE                                                    # Read/Write 2 SADM Usr Only
@@ -292,10 +286,10 @@ backup_db()
         then sadm_writelog "[ERROR] The 'mysqldump' command failed"     # Advise User
              return 1                                                   # Return Error to Caller
         else sadm_writelog "[SUCCESS] Backup Succeeded"                 # Advise User
-             rm -f ${DIR_LATEST}/${CURRENT_DB}*                         # Remove Last DB Backup
-             cp ${BFILE} ${DIR_LATEST}                                  # Copy Backup to Latest Dir.
-             chmod 400 ${DIR_LATEST}/${BACKUP_FILE}                     # Make file only Readable 
-             chown ${SADM_USER}:${SADM_GROUP} ${DIR_LATEST}/${BACKUP_FILE}  # Give it SADM Usr & Grp
+             rm -f ${LATEST_DIR}/${CURRENT_DB}*                         # Remove Last DB Backup
+             cp ${BFILE} ${LATEST_DIR}                                  # Copy Backup to Latest Dir.
+             chmod 400 ${LATEST_DIR}/${BACKUP_FILENAME}                 # Make file only Readable 
+             chown ${SADM_USER}:${SADM_GROUP} ${LATEST_DIR}/${BACKUP_FILENAME}  # Give Usr Access
     fi
 }
 
@@ -312,13 +306,13 @@ main_process()
 
     sadm_writelog " "                                                   # Insert Blank Line in Log
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
-    backup_cleanup "$DIR_DAY"  "$BACKUP_DAILY_TO_KEEP"                  # Purge unwanted Backup file
+    backup_cleanup "$DAILY_DIR"   "$DAILY_BACKUP_TO_KEEP"               # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
-    backup_cleanup "$DIR_WEEK" "$BACKUP_WEEK_TO_KEEP"                   # Purge unwanted Backup file
+    backup_cleanup "$WEEKLY_DIR"  "$WEEKLY_BACKUP_TO_KEEP"              # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
-    backup_cleanup "$DIR_MTH"  "$BACKUP_MONTH_TO_KEEP"                  # Purge unwanted Backup file
+    backup_cleanup "$MONTHLY_DIR" "$MONTHLY_BACKUP_TO_KEEP"             # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
-    backup_cleanup "$DIR_YEAR"  "$BACKUP_YEAR_TO_KEEP"                  # Purge unwanted Backup file
+    backup_cleanup "$YEARLY_DIR"  "$YEARLY_BACKUP_TO_KEEP"              # Purge unwanted Backup file
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller   
     return 0                                                            # Return to Caller 
 }
@@ -362,9 +356,7 @@ main_process()
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
     fi
 
-    # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
     main_process                                                        # Main Process
-
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)
