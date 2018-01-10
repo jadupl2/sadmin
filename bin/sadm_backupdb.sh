@@ -32,11 +32,16 @@
 #   V1.2 Added Cleanup Function to Purge files based on nb. of files user wants to keep
 # 2018_01_07 JDuplessis
 #   V1.3 Added directory latest (always contain last backup) & Display Paramaters to users
-# 2018_01_0 JDuplessis
+# 2018_01_08 JDuplessis
 #   V1.4 Global Restructure and variable naming
+# 2018_01_10 JDuplessis
+#   V1.5 Now Default to backup ALL MySQL Databases present, except the one specified & can compress
+#        backup.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
+
 
 
 #===================================================================================================
@@ -50,7 +55,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.5'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -84,6 +89,15 @@ CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Curren
 MYSQLDUMP=""                        ; export MYSQLDUMP                  # Save mysqldump Full Path
 BACKUP_ROOT_DIR="${SADMIN}/dat/dbb" ; export BACKUP_ROOT_DIR            # Root DataBase Backup Dir.
 BACKUP_FILENAME=""                  ; export BACKUP_FILENAME            # Backup File Name
+BACKUP_NAME="all"                   ; export BACKUP_NAME                # DB Name to Backup or 'all'
+COMPRESS_BACKUP="N"                 ; export COMPRESS_BACKUP            # Default Backup no compress
+ERROR_COUNT=0                       ; export ERROR_COUNT                # Total Backup Error Counter
+
+# Database Name to exclude from backup, separate each name by the pipe symbol '|'.
+DBEXCLUDE="information_schema|performance_schema"  ; export DBEXCLUDE
+
+# MySQL Connections Credential
+CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" ; export CREDENTIAL # for MySQL
 #
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
@@ -181,7 +195,35 @@ backup_setup()
              chmod 750 $LATEST_DIR                                      # R/W to SADM Usr/Grp
     fi
 
+    # Produce a file that contains all databases name, excluding the specified in $DBEXCLUDE
+    $SADM_MYSQL $CREDENTIAL --batch --skip-column-names -e "show databases" > $SADM_TMP_FILE1
+    grep -vE "$DBEXCLUDE" $SADM_TMP_FILE1 > $SADM_TMP_FILE2             # Excl.chosen DB from Backup
+
+    # If Database Name (-n) was specified, check if exist in Database
+    if [ "$BACKUP_NAME" != 'all' ]                                      # If Backup one Database
+        then grep -i "$BACKUP_NAME" $SADM_TMP_FILE2 > /dev/null 2>&1    # Grep for DB Name in DBList
+             if [ $? -ne 0 ]                                            # If DB wasn't found 
+                then sadm_writelog "The Database $BACKUP_NAME doesn't exist in Database" 
+                     sadm_writelog "The valid Database name are : "     # SHow user List valid DB
+                     while read dbname                                  # Read DB List one by one
+                        do
+                        sadm_writelog "$dbname"                         # Display DB Name
+                        done <$SADM_TMP_FILE2
+                     return 1                                           # Return Error to Caller
+                else echo "$BACKUP_NAME" > $SADM_TMP_FILE2              # Put Name in List to Backup
+             fi
+    fi
+
     sadm_writelog "You have chosen to : "
+    if [ "$BACKUP_NAME" = 'all' ] 
+        then sadm_writelog " - Backup All Databases"
+             sadm_writelog "   - Except these databases ; $DBEXCLUDE" 
+        else sadm_writelog " - Backup the Database '$BACKUP_NAME'" 
+    fi
+    if [ "$COMPRESS_BACKUP" = 'Y' ] 
+        then sadm_writelog " - Compress the backup file" 
+        else sadm_writelog " - Not compress the backup file"
+    fi
     sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
     sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
     sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
@@ -270,12 +312,13 @@ backup_db()
     sadm_writelog "Starting Backup of Database $CURRENT_DB"             # Advise User were Starting
     BFILE="${BACKUP_DIR}/${BACKUP_FILENAME}"                            # Backup Filename Full Path 
     sadm_writelog "Backup Directory is ${BACKUP_DIR}"                   # Show User Backup Directory
-    sadm_writelog "Backup FileName is ${BACKUP_FILENAME}"               # Show User Backup Filename
+    if [ "$COMPRESS_BACKUP" = 'Y' ]                                     # If Compress option Chosen
+        then sadm_writelog "Backup FileName is ${BACKUP_FILENAME}.gz"   # Show Compress Backup Name
+        else sadm_writelog "Backup FileName is ${BACKUP_FILENAME}"      # Show User Backup Filename
+    fi
     touch $BFILE                                                        # Create empty backup file
     chown ${SADM_USER}:${SADM_GROUP} $BFILE                             # Assign it SADM USer&Group
-    chmod 600 $BFILE                                                    # Read/Write 2 SADM Usr Only
-
-    CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST"   # User,Passwd and Host Used
+    chmod 640 $BFILE                                                    # Read/Write 2 SADM Usr Only
     if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
         then sadm_writelog "$MYSQLDUMP $CREDENTIAL $SADM_DBNAME "       # Debug = Write Command Used
     fi
@@ -287,9 +330,16 @@ backup_db()
              return 1                                                   # Return Error to Caller
         else sadm_writelog "[SUCCESS] Backup Succeeded"                 # Advise User
              rm -f ${LATEST_DIR}/${CURRENT_DB}*                         # Remove Last DB Backup
-             cp ${BFILE} ${LATEST_DIR}                                  # Copy Backup to Latest Dir.
-             chmod 400 ${LATEST_DIR}/${BACKUP_FILENAME}                 # Make file only Readable 
-             chown ${SADM_USER}:${SADM_GROUP} ${LATEST_DIR}/${BACKUP_FILENAME}  # Give Usr Access
+             if [ "$COMPRESS_BACKUP" = 'Y' ]                            # If Compress option Chosen
+                then gzip $BFILE                                        # Compress File
+                     BFILE="${BFILE}.gz"                                # Add .gz to Backup Filename
+                     cp ${BFILE} ${LATEST_DIR}                          # Copy Backup to Latest Dir.
+                     chmod 440 ${LATEST_DIR}/${BACKUP_FILENAME}.gz      # Make file only Readable 
+                     chown ${SADM_USER}:${SADM_GROUP} ${LATEST_DIR}/${BACKUP_FILENAME}.gz
+                else cp ${BFILE} ${LATEST_DIR}                          # Copy Backup to Latest Dir.
+                     chmod 440 ${LATEST_DIR}/${BACKUP_FILENAME}         # Make file only Readable 
+                     chown ${SADM_USER}:${SADM_GROUP} ${LATEST_DIR}/${BACKUP_FILENAME} 
+             fi
     fi
 }
 
@@ -298,12 +348,27 @@ backup_db()
 #===================================================================================================
 main_process()
 {
-    backup_setup "sadmin"                                               # Is Setup/Requirement ok ?
+    # Make sure at least (-a or -n) we have a database backup to do.
+    if [ "$BACKUP_NAME"  = "" ]                                         # No Database Name Specified
+        then sadm_writelog "[ERROR] No Database Name Specified"
+             sadm_writelog "        Use '-a' to Backup all Databases" 
+             sadm_writelog "        Use '-n dbname' to specify Database to backup"
+             return 1
+    fi
+
+    # Make Sure Backup Directories exist, Option given are valid and show user options chosen ------
+    backup_setup                                                        # Is Setup/Requirement ok ?
     if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
 
-    backup_db "sadmin"                                                  # Backup the Database
-    if [ $? -ne 0 ] ; then return 1 ; fi                                # If Error Return to Caller
+    # Backup All Databases included in $SADM_TMP_FILE2 (created in backup_setup)--------------------
+    while read dbname                                                   # Read DB Name one by one
+        do
+        backup_db "$dbname"                                             # Backup the Database
+        if [ $? -ne 0 ] ; then ERROR_COUNT=$((ERROR_COUNT + 1)) ; fi    # Count Backup Error 
+        done <$SADM_TMP_FILE2                                           # End of DBNAme to Backup
+    if [ "$ERROR_COUNT" -ne 0 ] ; then return 1 ; fi                    # If Error Return to Caller
 
+    # Prune Backup Directories to respect the number of backup to keep, based on user choice -------
     sadm_writelog " "                                                   # Insert Blank Line in Log
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
     backup_cleanup "$DAILY_DIR"   "$DAILY_BACKUP_TO_KEEP"               # Purge unwanted Backup file
@@ -323,8 +388,8 @@ main_process()
 #===================================================================================================
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # DB Only on SADMIN Server
+        then sadm_writelog "Database backup only run on the SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
@@ -337,10 +402,16 @@ main_process()
     fi
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
-    while getopts "hd:" opt ; do                                        # Loop to process Switch
+    BACKUP_NAME="all"                                                   # DB to Backup Default=None
+    COMPRESS_BACKUP="N"                                                 # Gzip Backup OFF by Default
+    while getopts "hd:n:c" opt ; do                                     # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
+            n) BACKUP_NAME=$OPTARG                                      # Backup Name to Backup
+               ;;
+            c) COMPRESS_BACKUP="Y"                                      # Compress Backup is now ON
+               ;;
             h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell
