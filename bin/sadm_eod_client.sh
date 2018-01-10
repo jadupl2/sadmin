@@ -28,6 +28,8 @@
 #   v1.3 Add MySQL Database Backup in execution sequence
 # 2018_01_06 - JDuplessis
 #   v1.4 Create Function fork the multiple script run by this one
+# 2018_01_10 - JDuplessis
+#   v1.5 Database Backup - Compress Backup now
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -118,7 +120,7 @@ run_command()
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN Server
-        then run_command "sadm_backupdb"                                # Create MySQL DB Backup
+        then run_command "sadm_backupdb -c"                             # Create MySQL DB Backup
              if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi # Increase Error Cntr 
     fi
 
