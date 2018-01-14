@@ -8,6 +8,7 @@
 #   Requires    :   sh and SADMIN Library
 #   Description :
 #
+#   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
