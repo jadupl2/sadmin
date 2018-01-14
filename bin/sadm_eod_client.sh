@@ -28,6 +28,10 @@
 #   v1.3 Add MySQL Database Backup in execution sequence
 # 2018_01_06 - JDuplessis
 #   v1.4 Create Function fork the multiple script run by this one
+# 2018_01_10 - JDuplessis
+#   v1.5 Database Backup - Compress Backup now
+# 2018_01_10 - JDuplessis
+#   v1.6 Database Backup was not taken when compress (-c) was used.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +48,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.6'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -76,22 +80,26 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #===================================================================================================
 run_command()
 {
-    SCRIPT="$1"                                                         # Shell Script Name to Run
-    SCMD="${SADM_BIN_DIR}/${SCRIPT}.sh"                                 # Full Path of the script
+    SCRIPT=$1                                                           # Shell Script Name to Run
+    CMDLINE="$*"                                                        # Command with All Parameter
+    SCMD="${SADM_BIN_DIR}/${CMDLINE}"                                   # Full Path of the script
 
-    if [ ! -x "$SCMD" ]                                                 # If SCript do not exist
-        then sadm_writelog "[ERROR] $SCMD Don't exist or can't execute" # Signal Error in Log
+    if [ ! -x "${SADM_BIN_DIR}/${SCRIPT}" ]                               # If SCript do not exist
+        then sadm_writelog "[ERROR] ${SADM_BIN_DIR}/${SCRIPT} Don't exist or can't execute" 
+             sadm_writelog " " 
              return 1                                                   # Return Error to Callerr
     fi 
 
-    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."               # Show Command about to run
+    sadm_writelog "Running $SCMD ..."                                   # Show Command about to run
     $SCMD >/dev/null 2>&1                                               # Run the Script
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "[ERROR] $SCMD Terminate with Error"         # Signal Error in Log
+        then sadm_writelog "[ERROR] $SCRIPT Terminate with Error"       # Signal Error in Log
              sadm_writelog "Check Log for further detail about Error"   # Show user where to look
-             sadm_writelog "${SADM_LOG_DIR}/${SCRIPT}.log"              # Show Log Name    
+             sadm_writelog "${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SCRIPT}.log" # Show Log Name    
+             sadm_writelog " " 
              return 1                                                   # Return Error to Callerr
-        else sadm_writelog "[SUCCESS] Script $SCMD terminated"         # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Script $SCRIPT terminated"        # Advise user it's OK
+             sadm_writelog " " 
     fi
     return 0                                                            # Return Success to Caller
 }
@@ -111,27 +119,27 @@ run_command()
              exit 1                                                     # Exit To O/S
     fi
 
-    run_command "sadm_nmon_midnight_restart"                            # Midnight NMON Restart 
+    run_command "sadm_nmon_midnight_restart.sh"                         # Midnight NMON Restart 
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-    run_command "sadm_create_sar_perfdata"                              # Create Perf. File from SAR
+    run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN Server
-        then run_command "sadm_backupdb"                                # Create MySQL DB Backup
+        then run_command "sadm_backupdb.sh" " -c "                      # Create MySQL DB Backup
              if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi # Increase Error Cntr 
     fi
 
-    run_command "sadm_housekeeping_client"                              # Client HouseKeeping Script
+    run_command "sadm_housekeeping_client.sh"                           # Client HouseKeeping Script
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-    run_command "sadm_fs_save_info"                                     # Client Save LVM FS Info
+    run_command "sadm_fs_save_info.sh"                                  # Client Save LVM FS Info
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-    run_command "sadm_create_server_info"                               # Create Client Sysinfo file
+    run_command "sadm_create_server_info.sh"                            # Create Client Sysinfo file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-    run_command "sadm_create_cfg2html"                                  # Produce cfg2html html file
+    run_command "sadm_create_cfg2html.sh"                               # Produce cfg2html html file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File

@@ -20,16 +20,17 @@
 #
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
+# 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2017_07_07 JDuplessis 
-#   V1.0 Initial Version
+# 2017_07_07 JDuplessis V1.0 - Initial Version
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-#===================================================================================================
+#
+#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 # You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
 # --------------------------------------------------------------------------------------------------
@@ -60,6 +61,8 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
+#
+
 
 
 
@@ -214,8 +217,9 @@ process_servers()
 #===================================================================================================
 main_process()
 {
+    sadm_writelog "Main Process as started ..."
 
-    return 0                                                            # Return Default return code
+    return 0                                                            # Return No Error to Caller
 }
 
 

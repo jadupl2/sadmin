@@ -14,22 +14,20 @@
 #       V2.1 Switching from PostGres to MySQL
 #   2017_12_31 JDuplessis
 #       V2.2 Define New Variable loaded from sadmin.cfg 
+#   2018_01_10 JDuplessis
+#       V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
 # --------------------------------------------------------------------------------------------------
 #
 # Setting the HOSTNAME Variable
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
 # SET SADMIN ROOT BASE DIRECTORY
-// $TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
-// if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
-//     define("SADM_BASE_DIR",$TMPVAR);                                    # Set SADMIN_BASE_DIR to Env
-// }else{                                                                  # If SADMIN Not Defined        
-//     define("SADM_BASE_DIR", "/sadmin");                                 # Default SADM Root Base Dir 
-// }  
-
-define("SADM_BASE_DIR"     , "/sadmin");                                # Default SADM Root Base Dir
-$TMPVAR = getenv('SADMIN');                                             # Get Env. SADMIN Variable
-if (strlen($TMPVAR) != 0 ) { define("SADM_BASE_DIR",$TMPVAR); }         # Use Env. SADMIN Var Base
+$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
+if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
+     define("SADM_BASE_DIR",$TMPVAR);                                   # Set SADMIN_BASE_DIR to Env
+}else{                                                                  # If SADMIN Not Defined        
+     define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir 
+}  
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script Root binary Dir.
