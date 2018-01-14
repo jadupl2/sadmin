@@ -46,7 +46,7 @@ define("SADM_NET_DIR"      , SADM_DAT_DIR  . "/net");                   # Networ
 define("SADM_WWW_DIR"      , SADM_BASE_DIR . "/www");                   # Web Site Dir.
 
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-define("SADM_WWW_HTML_DIR" , SADM_WWW_DIR  . "/html");                  # Web server html Dir
+define("SADM_WWW_DOC_DIR"  , SADM_WWW_DIR  . "/doc");                   # Web server Doc Dir
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir

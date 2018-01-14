@@ -12,9 +12,7 @@
 
 # SADMIN Directories Exclude
 sam/
-sam/sam
 dat/
-cfg/pssh/*
 jac/*
 !jac/bin
 #log/
@@ -23,13 +21,10 @@ pgsql/
 notes/
 
 # Web Directories
-www/cgi-bin/
-www/html/
 www/dat/
+www/rrd/
 www/cfg/
-www/old/
 www/tmp/
-www/db/
 .vscode/
 
 # Specific files to exclude 

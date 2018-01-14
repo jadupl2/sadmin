@@ -74,7 +74,7 @@ SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM S
 SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
-SADM_WWW_HTML_DIR="$SADM_WWW_DIR/html"                      ; export SADM_WWW_HTML_DIR # www html Dir
+SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DOC_DIR  # www Doc Dir
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
@@ -1640,10 +1640,10 @@ sadm_start() {
     fi
     
     # If SADM Server Web Site HTML Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_HTML_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
-        then mkdir -p $SADM_WWW_HTML_DIR
-             chmod 0775 $SADM_WWW_HTML_DIR  
-             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_HTML_DIR
+    if [ ! -d "$SADM_WWW_DOC_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]    
+        then mkdir -p $SADM_WWW_DOC_DIR
+             chmod 0775 $SADM_WWW_DOC_DIR  
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
     fi
 
     # If SADM Server Web Site LIB Directory doesn't exist, create it.
