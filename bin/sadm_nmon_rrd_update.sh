@@ -15,7 +15,7 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -77,15 +77,13 @@ USAGE="Usage : ${SADM_PN} [nmon-file]"           ; export USAGE              # S
                                                                         # 9=Huge Output
 DASH=`printf %100s | tr " " "-"`            ; export DASH               # 80 dashes
 RC=0                                        ; export RC                 # Script Return Code
-OSNAME=`uname -s |tr '[:lower:]' '[:upper:]'`; export OSNAME             # Get OS Name (AIX or Linux)
+OSNAME=`uname -s |tr '[:lower:]' '[:upper:]'`; export OSNAME            # Get OS Name (AIX or Linux)
 CUR_DATE=`date +"%Y_%m_%d"`                 ; export CUR_DATE           # Current Date
 CUR_TIME=`date +"%H_%M_%S"`                 ; export CUR_TIME           # Current Time
 CUR_DATE=`date +"%Y-%m-%d"`                 ; export CUR_DATE           # Current Date ("2013-01-30")
 #   
 NMON_FILE_LIST="${SADM_WWW_TMP_DIR}/nmon_list.$$"    ; export NMON_FILE_LIST     # NMON File List
-NMON_FILE="${TMP_DIR}/nmon_file.$$"         ; export NMON_FILE          # Sorted nmon file 4 processing
-LOG="${RC_DIR}/${INST}.log"                 ; export LOG                # Script LOG
-RCLOG="${RC_DIR}/rc.${HOSTNAME}.${INST}.log"; export RCLOG              # xSCOM event log Result file
+NMON_FILE="${SADM_WWW_TMP_DIR}/nmon_file.$$"         ; export NMON_FILE          # Sorted nmon file 4 processing
 #
 # RRD Custom Variables
 RRD_DIR="Will be set later on"              ; export RRD_DIR            # RRD Directory Location
@@ -102,9 +100,6 @@ if [ $? -ne 0 ] ; then sadm_writelog "Script aborted : Command rrdtool not avail
 CUT=`which cut 2>/dev/null`                 ; export CUT                # Get Path to cut command
 if [ $? -ne 0 ] ; then sadm_writelog "Script aborted : Command cut not available" ; exit 1 ; fi
 #
-
-
-
 
 
 #===================================================================================================
@@ -200,16 +195,12 @@ read_nmon_info_and_setup_rrd()
 }
 
 
-
-
-
-
 #===================================================================================================
 #                              Display CPU Array in Memory
 #===================================================================================================
 display_cpu_array()
 {
-    echo "Number of element in CPU array is ${#ARRAY_CPU[*]}"
+    sadm_writelog "Number of element in CPU array is ${#ARRAY_CPU[*]}"
     for (( i = 1 ; i <= ${#ARRAY_CPU[@]} ; i++ ))
         do
         sadm_writelog "CPU Array Index [$i]: Value : ${ARRAY_CPU[$i]}"
@@ -305,16 +296,13 @@ build_epoch_array()
 
     grep "^ZZZZ" $NMON_FILE | sort > $TMP_FILE                          # Isolate ZZZZ Rec. in tmp file
     while read wline                                                    # Process all Temp file
-    do
-        ZCOUNT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`        # Get SnapShot Number
+        do
         ZCOUNT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`        # Get SnapShot Number
         ZTIME=`echo  $wline | awk -F, '{ print $3 }'`                   # Get Time of SnapShot
         ZDATE=`echo  $wline | awk -F, '{ print $4 }'`                   # Get Date of SnapShot
-
         ZHRS=`echo  $ZTIME  | awk -F: '{ print $1 }'`                   # Get Hrs from Time
         ZMIN=`echo  $ZTIME  | awk -F: '{ print $2 }'`                   # Get Min from Time
         ZSEC=`echo  $ZTIME  | awk -F: '{ print $3 }'`                   # Get Sec from Time
-        
         ZDD=`echo  $ZDATE  | awk -F- '{ print $1 }'`                    # Get Day from Date
         ZYY=`echo  $ZDATE  | awk -F- '{ print $3 }'`                    # Get Year from Date
 
@@ -348,9 +336,6 @@ build_epoch_array()
         ARRAY_TIME[$ZCOUNT]="${NMON_EPOCH},${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC}"
         done <  $TMP_FILE
     sadm_writelog "End of Processing ZZZZ Time Lines."
-        
-        
-
 }
 
 
@@ -1089,7 +1074,6 @@ main_process()
     if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
     fi
-
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
