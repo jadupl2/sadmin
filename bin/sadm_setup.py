@@ -2,7 +2,7 @@
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
 #   Date        :   2017-09-09
-#   Name        :   sadm_template_servers.py
+#   Name        :   sadm_setup.py
 #   Synopsis    :
 #   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
@@ -21,14 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_03_01 JDuplessis 
+# 2018_01_18 JDuplessis 
 #   V1.0 Initial Version
-# 2016_10_03 JDuplessis
-#   V1.1 Adjust Verification of root user and allow to only run on sadmin server
-# 2017_09_03 JDuplessis 
-#   V1.2 Minors changes
-# 2017_12_23 JDuplessis 
-#   V1.3 Adjust for using MySQL instead of PostGres - Review logic to use new SADM Library
 #
 #===================================================================================================
 try :
