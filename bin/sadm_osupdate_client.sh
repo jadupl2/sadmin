@@ -78,7 +78,16 @@ REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot
 # Default to no reboot after an update
 WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
 
-
+#echo "Starting full system update..."
+#echo "Checking sudo permissions..."
+#sudo ls >/dev/null
+#sudo apt update
+#sudo apt dist-upgrade -yy
+#sudo apt-get autoremove -yy
+#sudo apt-get autoclean
+#echo "--------------------"
+#echo "- Update Complete! -"
+#echo "--------------------"
 
 
 # --------------------------------------------------------------------------------------------------
