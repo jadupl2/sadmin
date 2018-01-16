@@ -25,7 +25,7 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_01_13 JDuplessis V1.0 - Initial Version
+# 2018_01_13 JDuplessis V1.0b - Initial Version
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -40,7 +40,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.0b'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -74,7 +74,6 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 USAGE="Usage : ${SADM_PN} [nmon-file]"           ; export USAGE              # Script Usage Message
 
-                                                                        # 9=Huge Output
 DASH=`printf %100s | tr " " "-"`            ; export DASH               # 80 dashes
 RC=0                                        ; export RC                 # Script Return Code
 OSNAME=`uname -s |tr '[:lower:]' '[:upper:]'`; export OSNAME            # Get OS Name (AIX or Linux)
@@ -107,8 +106,6 @@ if [ $? -ne 0 ] ; then sadm_writelog "Script aborted : Command cut not available
 #===================================================================================================
 read_nmon_info_and_setup_rrd()
 {
-    sadm_writelog "NMON FILE NAME= $NMON_FILE"                          # Display Name of NMON File        
-    
     # Get HostName from nmon file
     NMON_HOST=`grep "^AAA,host" $NMON_FILE | awk -F, '{ print $3 }'`    # Get HostName from nmon file
     
@@ -195,21 +192,6 @@ read_nmon_info_and_setup_rrd()
 }
 
 
-#===================================================================================================
-#                              Display CPU Array in Memory
-#===================================================================================================
-display_cpu_array()
-{
-    sadm_writelog "Number of element in CPU array is ${#ARRAY_CPU[*]}"
-    for (( i = 1 ; i <= ${#ARRAY_CPU[@]} ; i++ ))
-        do
-        sadm_writelog "CPU Array Index [$i]: Value : ${ARRAY_CPU[$i]}"
-        done        
-}
-
-
-
-
 
 
 #===================================================================================================
@@ -222,19 +204,25 @@ display_cpu_array()
 # 6769 CPU_ALL,T0002,40.3,2.5,2.1,55.2,,8
 #
 # ======== Linux nmon lines
-# 5588 CPU_ALL,CPU Total lxmq1001,User%,Sys%,Wait%,Idle%,Busy,CPUs
-# 5589 CPU_ALL,T0001,14.5,13.6,17.8,54.1,,16
-# 5590 CPU_ALL,T0002,13.1,5.4,4.4,77.1,,16
+# grep "^CPU_ALL" linux.nmon | sort
+#   CPU_ALL,CPU Total ubuntu1604,User%,Sys%,Wait%,Idle%,Busy,CPUs
+#   CPU_ALL,T0001,44.4,55.6,0.0,0.0,,1
+#   CPU_ALL,T0002,5.5,6.2,10.7,77.6,,1
+#   ...
+#   CPU_ALL,T0287,0.7,0.8,0.0,98.6,,1
+#   CPU_ALL,T0288,0.6,0.7,0.0,98.6,,1
+#
 #===================================================================================================
 build_cpu_array()
 {
-    sadm_writelog "Processing CPU usage information."
-    # Isolate CPU_ALL Records
-    grep "^CPU_ALL" $NMON_FILE | grep -iv "User%,Sys%,Wait%" | sort >$TMP_FILE 
-    
+    sadm_writelog " " 
+    grep "^CPU_ALL" $NMON_FILE | grep -iv "User%,Sys%,Wait%" | sort >$SADM_TMP_FILE1
+    NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of CPU_ALL Lines
+    sadm_writelog "Processing $NMON_HOST '^CPU_ALL' Lines ($NBLINES elements)."
+
     while read wline                                                    # Read All CPU_ALL Records
         do
-        NTIME=`echo $wline | cut -d, -f 2 | cut -c2-5`                  # Get SnapShot Number
+        SNAPSHOT=`echo $wline | cut -d, -f 2 | cut -c2-5`               # Get SnapShot Number
         NUSER=`echo $wline | awk -F, '{ print $3 }'`                    # Get User CPU % Rounded
         if [ "$NUSER" = "" ] ; then NUSER=0.0 ; fi                      # If Not Specified then 0.0
         NSYST=`echo $wline |  awk -F, '{ print $4 }'`                   # Get System CPU % Rounded
@@ -243,43 +231,36 @@ build_cpu_array()
         if [ "$NWAIT" = "" ] ; then NWAIT=0.0 ; fi                      # If Not Specified then 0.0
         NIDLE=`echo $wline |  awk -F, '{ print $6 }'`                   # Get Idle CPU % Rounded
         if [ "$NIDLE" = "" ] ; then NIDLE=0.0 ; fi                      # If Not Specified then 0.0
-        NTOTAL=`echo $NUSER + $NSYST + $NWAIT | bc -l `                 # Field Total CPU Usage
+        NTOTAL=`echo $NUSER + $NSYST + $NWAIT | $SADM_BC -l `           # Field Total CPU Usage
 
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
         ARRAY_CPU[$INDX]="${NUSER},${NSYST},${NWAIT},${NIDLE},${NTOTAL}" # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
-        if [ $DEBUG_LEVEL -ne 0 ]
-            then sadm_writelog "-----\nLINE   = $wline"
-                 if [ $DEBUG_LEVEL -gt 1 ]
-                    then    sadm_writelog "NTIME  = $NTIME"
-                            sadm_writelog "NUSER  = $NUSER"
-                            sadm_writelog "NSYST  = $NSYST"
-                            sadm_writelog "NWAIT  = $NWAIT"
-                            sadm_writelog "NIDLE  = $NIDLE"
-                            sadm_writelog "NTOTAL = $NTOTAL"
+        if [ $DEBUG_LEVEL -gt 3 ]
+            then sadm_writelog "CPU_ALL LINE = $wline"
+                 if [ $DEBUG_LEVEL -gt 5 ] 
+                    then SVAL="SNAPSHOT=$SNAPSHOT NUSER=$NUSER NSYST=$NSYST "
+                         SVAL="$SVAL NWAIT=$NWAIT NIDLE=$NIDLE NTOTAL=$NTOTAL"
+                         sadm_writelog "    - $SVAL"
                  fi
-                 sadm_writelog "INDEX = $INDX - ${ARRAY_CPU[${INDX}]}"        
-        fi    
-        done <  $TMP_FILE
+                 sadm_writelog "    - INDEX = $INDX - ${ARRAY_CPU[${INDX}]}"
+        fi
+        done <  $SADM_TMP_FILE1
+
+    # Array is now loaded - Debug at 1,3 or 3 Display Number of array Elements
+    if [ $DEBUG_LEVEL -gt 0 ] 
+        then sadm_writelog "${#ARRAY_CPU[*]} Elements in CPU array."
+    fi
+    
+    # Array is now loaded - Debug at 7,8 or 9 DIsplay Array content
+    if [ $DEBUG_LEVEL -gt 6 ] 
+        then for (( i = 1 ; i <= ${#ARRAY_CPU[@]} ; i++ ))
+                do
+                sadm_writelog "CPU Array Index [$i]: Value : ${ARRAY_CPU[$i]}"
+                done   
+    fi
     sadm_writelog "End of CPU usage information."
-
-}
-
-
-
-
-
-#===================================================================================================
-#                              Display Epoch Array in Memory
-#===================================================================================================
-display_epoch_array()
-{
-    echo "Number of element in SnapShot/Epoch array is ${#ARRAY_TIME[*]}"
-    for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))
-        do
-        sadm_writelog "SnapShot/Epoch Array Index [$i]: Value : ${ARRAY_TIME[$i]}"
-        done        
 }
 
 
@@ -289,52 +270,72 @@ display_epoch_array()
 
 #===================================================================================================
 #                      Build Epoch Array Based on ZZZZ Records in nmon file
+#
+# ======== Linux nmon lines
+#   $ grep "^ZZZZ" linux.nmon | sort
+#   ZZZZ,T0001,23:55:06,03-JAN-2018
+#   ZZZZ,T0002,00:00:06,04-JAN-2018
+#   ZZZZ,T0003,00:05:06,04-JAN-2018
+#   ...
+#   ZZZZ,T0286,23:40:07,04-JAN-2018
+#   ZZZZ,T0287,23:45:07,04-JAN-2018
+#   ZZZZ,T0288,23:50:07,04-JAN-2018
+#
 #===================================================================================================
 build_epoch_array()
 {
-    sadm_writelog "Processing ZZZZ Time Lines."
-
-    grep "^ZZZZ" $NMON_FILE | sort > $TMP_FILE                          # Isolate ZZZZ Rec. in tmp file
+    grep "^ZZZZ" $NMON_FILE | sort > $SADM_TMP_FILE1                    # Isolate ZZZZ Rec.>tmp file
+    NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of ZZZZ Lines
+    sadm_writelog " " 
+    sadm_writelog "Processing $NMON_HOST '^ZZZZ' Time Lines ($NBLINES elements)."  
     while read wline                                                    # Process all Temp file
         do
-        ZCOUNT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`        # Get SnapShot Number
-        ZTIME=`echo  $wline | awk -F, '{ print $3 }'`                   # Get Time of SnapShot
-        ZDATE=`echo  $wline | awk -F, '{ print $4 }'`                   # Get Date of SnapShot
-        ZHRS=`echo  $ZTIME  | awk -F: '{ print $1 }'`                   # Get Hrs from Time
-        ZMIN=`echo  $ZTIME  | awk -F: '{ print $2 }'`                   # Get Min from Time
-        ZSEC=`echo  $ZTIME  | awk -F: '{ print $3 }'`                   # Get Sec from Time
-        ZDD=`echo  $ZDATE  | awk -F- '{ print $1 }'`                    # Get Day from Date
-        ZYY=`echo  $ZDATE  | awk -F- '{ print $3 }'`                    # Get Year from Date
-
-        # Get Uppercase Month Name
-        ZMONTH=`echo $ZDATE |awk -F- '{ print $2 }'| tr '[:lower:]' '[:upper:]'` 
-        
-        # Convert Month Name into Number
-        case $ZMONTH in
-            JAN) ZMM=1 ;;
-            FEB) ZMM=2 ;;
-            MAR) ZMM=3 ;;
-            APR) ZMM=4 ;;
-            MAY) ZMM=5 ;;
-            JUN) ZMM=6 ;;
-            JUL) ZMM=7 ;;
-            AUG) ZMM=8 ;;
-            SEP) ZMM=9 ;;
-            OCT) ZMM=10 ;;
-            NOV) ZMM=11 ;;
-            DEC) ZMM=12 ;;
-        esac
-        
-        NMON_EPOCH=`$EPOCH "$ZYY $ZMM $ZDD $ZHRS $ZMIN $ZSEC"`          # Convert Date to epoch
-        if [ $DEBUG_LEVEL -ne 0 ]                                             # If Debug Activated
-            then  sadm_writelog "Processing ZZZ Line : $wline"
-                  sadm_writelog "Date ${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC} in Epoch is $NMON_EPOCH"
-        fi
-        ZCOUNT=`expr ${ZCOUNT} + 0`                                     # Make sure in numeric
+        ZCOUNT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`        # Get SnapShot Number 
+        ZTIME=` echo $wline | awk -F, '{ print $3 }'`                   # Get Time of the SnapShot
+        ZHRS=`  echo $ZTIME | awk -F: '{ print $1 }'`                   # Get Hrs from SnapShot Time
+        ZMIN=`  echo $ZTIME | awk -F: '{ print $2 }'`                   # Get Min from SnapShot Time
+        ZSEC=`  echo $ZTIME | awk -F: '{ print $3 }'`                   # Get Sec from SnapShot Time
+        ZDATE=` echo $wline | awk -F, '{ print $4 }'`                   # Get Date of the SnapShot
+        ZDD=`   echo $ZDATE | awk -F- '{ print $1 }'`                   # Get Day from SnapShot Date
+        ZYY=`   echo $ZDATE | awk -F- '{ print $3 }'`                   # Year from SnapShot Date
+        ZMONTH=`echo $ZDATE | awk -F- '{ print $2 }'| tr '[:lower:]' '[:upper:]'` # Upper Month Name
+        if [ "$ZMONTH" = "JAN" ] ; then ZMM=1  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "FEB" ] ; then ZMM=2  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "MAR" ] ; then ZMM=3  ;fi                      # Convert Mth Name to Number 
+        if [ "$ZMONTH" = "APR" ] ; then ZMM=4  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "MAY" ] ; then ZMM=5  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "JUN" ] ; then ZMM=6  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "JUL" ] ; then ZMM=7  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "AUG" ] ; then ZMM=8  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "SEP" ] ; then ZMM=9  ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "OCT" ] ; then ZMM=10 ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "NOV" ] ; then ZMM=11 ;fi                      # Convert Mth Name to Number
+        if [ "$ZMONTH" = "DEC" ] ; then ZMM=12 ;fi                      # Convert Mth Name to Number
+        XDATE="${ZYY}.${ZMM}.${ZDD} ${ZHRS}:${ZMIN}:${ZSEC}"            # Date/Time in proper format
+        NMON_EPOCH=$(sadm_date_to_epoch "$XDATE")                       # Snapshot Date to epoch
+        ZCOUNT=`expr ${ZCOUNT} + 0`                                     # Make sure is numeric
 
         # Store Epoch and Date/Time in Snapshot Array
         ARRAY_TIME[$ZCOUNT]="${NMON_EPOCH},${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC}"
-        done <  $TMP_FILE
+        if [ $DEBUG_LEVEL -gt 3 ]                                       # If Debug Activated
+            then sadm_writelog "Processing ZZZ Line : $wline"           # Show ZZZ Current Line
+                 A="ARRAY_TIME[$ZCOUNT]=${NMON_EPOCH},${ZDD}/${ZMM}/${ZYY} ${ZHRS}:${ZMIN}:${ZSEC}"
+                 sadm_writelog "   - ${A}"                              # Show Debug Info
+        fi
+        done <  $SADM_TMP_FILE1
+
+    # Array is now loaded - Debug at 7,8 or 9 DIsplay Array content
+    if [ $DEBUG_LEVEL -gt 6 ] 
+        then sadm_writelog " "
+             for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))             # Debug Display Epoch Array
+                do
+                sadm_writelog "SnapShot/Epoch Array Index [$i]: Value : ${ARRAY_TIME[$i]}"
+                done      
+    fi 
+    # Array is now loaded - Debug at 1,3 or 3 Display Number of array Elements
+    if [ $DEBUG_LEVEL -gt 0 ] 
+        then sadm_writelog "${#ARRAY_TIME[*]} Elements in SnapShot/Epoch array"
+    fi
     sadm_writelog "End of Processing ZZZZ Time Lines."
 }
 
@@ -350,37 +351,36 @@ build_epoch_array()
 # PROC,T0005,19.66,0.03,2754,60601,1905,254,8,9,0,0
 #
 # ======== Linux nmon lines
-# PROC,Processes lxmq1001,Runnable,Swap-in,pswitch,syscall,read,write,fork,exec,sem,msg
-# PROC,T0001,6.0,-1.0,0.0,-1.0,-1.0,-1.0,0.0,-1.0,-1.0,-1.0
-# PROC,T0002,7.0,-1.0,42170.9,-1.0,-1.0,-1.0,47.5,-1.0,-1.0,-1.0
+# PROC,Processes ubuntu1604,Runnable,Blocked,pswitch,syscall,read,write,fork,exec,sem,msg
+# PROC,T0001,2,0,0.0,-1.0,-1.0,-1.0,0.0,-1.0,-1.0,-1.0
+# PROC,T0002,1,0,692.3,-1.0,-1.0,-1.0,131.4,-1.0,-1.0,-1.0
+# ...
+# PROC,T0287,1,0,184.6,-1.0,-1.0,-1.0,16.9,-1.0,-1.0,-1.0
+# PROC,T0288,1,0,184.4,-1.0,-1.0,-1.0,16.9,-1.0,-1.0,-1.0
 #
 #===================================================================================================
 build_runqueue_array()
 {
-    sadm_writelog "Processing RunQueue information."
-    # Isolate PROC,T Records
-    grep "^PROC,T" $NMON_FILE | sort >$TMP_FILE 
-    
-    while read wline                                                    # Read All Records
-        do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-#        NRUNQ=`echo $wline | awk -F, '{ print int($3+0.5)}'`            # Get RunQueue Rounded
-        NRUNQ=`echo $wline | awk -F, '{ print $3 }'`            # Get RunQueue Rounded
-        if [ "$NRUNQ" = "" ] ; then NRUNQ=0.0 ; fi                      # If Not Specified then 0.0
+    sadm_writelog " " 
+    grep "^PROC,T" $NMON_FILE | sort >$SADM_TMP_FILE1
+    NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of CPU_ALL Lines
+    sadm_writelog "Processing $NMON_HOST '^PROC,T' Lines ($NBLINES elements)."
 
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+    while read wline                                                    # Read All Proc Records
+        do
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`      # Get SnapShot Number
+#        NRUNQ=`echo $wline | awk -F, '{ print int($3+0.5)}'`           # Get RunQueue Rounded
+        NRUNQ=`echo $wline | awk -F, '{ print $3 }'`                    # Get RunQueue Rounded
+        if [ "$NRUNQ" = "" ] ; then NRUNQ=0.0 ; fi                      # If Not Specified then 0.0
+        INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
         ARRAY_RUNQ[$INDX]="${NRUNQ}"                                    # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
-        if [ $DEBUG_LEVEL -ne 0 ]
-            then sadm_writelog "-----\nLINE   = $wline"
-                 if [ $DEBUG_LEVEL -gt 1 ]
-                    then    sadm_writelog "NTIME  = $NTIME"
-                            sadm_writelog "NRUNQ  = $NRUNQ"
-                 fi
-                 sadm_writelog "INDEX = $INDX - ${ARRAY_RUNQ[${INDX}]}"        
+        if [ $DEBUG_LEVEL -gt 3 ]
+            then sadm_writelog "PROC,T LINE = $wline"
+                 sadm_writelog "    - INDEX = $INDX - RUNQUEUE = ${ARRAY_RUNQ[${INDX}]}"
         fi    
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting RunQueue information."
 }
 
@@ -421,38 +421,24 @@ build_runqueue_array()
 #
 #
 # ======== Linux nmon lines
-# DISKREAD,Disk Read KB/s
-# lxmq1001,cciss/c0d0,cciss/c0d0p1,cciss/c0d0p2,dm-0,dm-2,dm-3,dm-4,dm-5,dm-6,dm-7,dm-8,dm
-# -9,dm-10,dm-11,dm-12,dm-13,dm-14,dm-15,sda,sda1,sdb,sdb1,sdc,sdc1,sdd,sdd1,sde,sdf,sdg,s
-# dg1,sdh,sdh1,sdi,sdi1,sdj,sdj1,sdk,sdl,dm-16,dm-17,dm-18,dm-19,dm-20,dm-21,dm-22,dm-23,d
-# m-24,dm-25,dm-26,dm-27,dm-28,dm-29,dm-30,dm-31,dm-32,dm-33,dm-34,dm-35,dm-36,dm-37,dm-38
-# ,dm-39,dm-40,dm-41,dm-42,dm-43,dm-44,dm-45,dm-46,dm-47,dm-48,dm-49,dm-50,dm-51,dm-52,dm-
-# 53,dm-54,dm-55,dm-56,dm-57,dm-58,dm-59,dm-60,dm-61,dm-62,dm-63,dm-64,dm-65,dm-66,dm-67,d
-# m-68,dm-69,dm-70,dm-71,dm-75,dm-76,dm-77,dm-78,dm-79,dm-80,dm-81,dm-82,dm-83,dm-84,dm-85
-# ,dm-86,dm-88,dm-89,dm-90,dm-91,dm-92,dm-93,dm-94,dm-95,dm-96,dm-97,dm-98,dm-99,dm-100,dm
-# -101,dm-102,dm-103,dm-104,dm-105,dm-106,dm-107,dm-108,dm-109,dm-110,dm-111,dm-112,dm-113
-# ,dm-114,dm-115,dm-116,sdm,sdm1,sdn,sdn1,sdo,sdo1,sdp,sdp1,dm-117,dm-118,dm-120,dm-121,dm
-# -123,dm-124,dm-125
-# DISKREAD,T0001,2862.6,0.0,2837.0,49.4,0.0,341.5,0.0,3.9,0.0,5.9,0.0,0.0,2.0,0.0,0.0,0.0,
-# 0.0,0.0,25.7,0.0,536.5,484.7,77.0,51.3,79.0,53.3,67.1,25.7,603.6,552.3,25.7,0.0,1138.1,1
-# 087.3,838.6,786.7,25.7,252.7,562.2,510.3,1162.3,854.4,41.5,211.2,828.7,484.7,1136.7,536.
-# 5,0.0,0.0,0.0,0.0,422.5,0.0,0.0,505.4,0.0,7.9,0.0,525.1,0.0,0.0,0.0,0.0,0.0,0.0,154.0,0.
-# 0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,98.7,0.0,854.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
-# ,0.0,0.0,144.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,5.9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0
-# .0,33.6,0.0,0.0,0.0,169.8,0.0,0.0,15.8,0.0,0.0,0.0,0.0,61.2,0.0,0.0,0.0,2.0,0.0,114.5,0.
-# 0,0.0,0.0,0.0,0.0,130.3,79.0,458.0,406.7,25.7,0.0,25.7,0.0,104.6,398.8,0.0,0.0,0.0,0.0,0
-#.0
+# DISKREAD,Disk Read KB/s ubuntu1604,loop0,loop1,sda,sda1,sda2,dm-0,dm-1,dm-2,dm-3,dm-4,dm-5,dm-6,dm-7
+# DISKREAD,T0001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+# DISKREAD,T0002,0.0,0.0,224.9,0.4,212.5,32.9,19.4,59.1,20.8,19.1,19.1,20.6,20.4
+# ...
+# DISKREAD,T0287,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+# DISKREAD,T0288,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+#
 #===================================================================================================
 build_disk_read_array()
 {
     sadm_writelog "Processing Disk Read information."
     # Isolate PROC,T Records
-    grep "^DISKREAD,T" $NMON_FILE | sort >$TMP_FILE                     # Isolate Disk Read Line
+    grep "^DISKREAD,T" $NMON_FILE | sort >$SADM_TMP_FILE1                     # Isolate Disk Read Line
 
     while read wline                                                    # Read All Records
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
         NCOUNT=`echo $wline | awk -F, '{ print NF }'`                   # Count No of fields on line
         if [ "$NCOUNT" = "" ] ; then NCOUNT=0.0 ; fi                    # If Not Specified then 0.0
         if [ $NCOUNT -eq 0  ] ; then break ; fi                         # If no comma ? = Nxt Line
@@ -463,23 +449,23 @@ build_disk_read_array()
         for i in $(seq 3 $NCOUNT)                                       # Process all fields on line
             do
             WFIELD=`echo $wline | $CUT -d, -f $i`                       # Get Field on line
-            WTOTAL=`echo $WTOTAL + $WFIELD | $BC -l `                   # Add Field to Line Total
+            WTOTAL=`echo $WTOTAL + $WFIELD | $SADM_BC -l `                   # Add Field to Line Total
             if [ $DEBUG_LEVEL -eq 9 ] ; then sadm_writelog "Added $WFIELD and Total is now $WTOTAL" ; fi
             done
         
         # Put Line total in the Disk Read Array - Convert Kb/s to Mb/s
-        ARRAY_DISKREAD[$INDX]=`echo "${WTOTAL} / 1024"| $BC -l`         # Put Stat. in Array
+        ARRAY_DISKREAD[$INDX]=`echo "${WTOTAL} / 1024"| $SADM_BC -l`         # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
         if [ $DEBUG_LEVEL -gt 4 ]
-            then sadm_writelog "-----\nLINE   = $wline"
+            then sadm_writelog "LINE   = $wline"
                  if [ $DEBUG_LEVEL -gt 1 ]
-                    then    sadm_writelog "NTIME  = $NTIME"
+                    then    sadm_writelog "SNAPSHOT  = $SNAPSHOT"
                             sadm_writelog "TOTAL_READ_KBS  = $WTOTAL"
                  fi
                  sadm_writelog "INDEX = $INDX - ${ARRAY_DISKREAD[${INDX}]}"        
         fi    
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting Disk Read information."
 }
 
@@ -542,12 +528,12 @@ build_disk_write_array()
 {
     sadm_writelog "Processing Disk write information."
     # Isolate PROC,T Records
-    grep "^DISKWRITE,T" $NMON_FILE | sort >$TMP_FILE 
+    grep "^DISKWRITE,T" $NMON_FILE | sort >$SADM_TMP_FILE1 
 
     while read wline                                                    # Read All Records
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
         NCOUNT=`echo $wline | awk -F, '{ print NF }'`                   # Count No of fields on line
         if [ "$NCOUNT" = "" ] ; then NCOUNT=0.0 ; fi                    # If Not Specified then 0.0
         if [ $NCOUNT -eq 0  ] ; then break ; fi                         # If no comma ? = Nxt Line
@@ -558,22 +544,22 @@ build_disk_write_array()
         for i in $(seq 3 $NCOUNT)                                       # Process all fields on line
             do
             WFIELD=`echo $wline | $CUT -d, -f $i`                       # Get Field on line
-            WTOTAL=`echo $WTOTAL + $WFIELD | $BC -l `                   # Add Field to Line Total
+            WTOTAL=`echo $WTOTAL + $WFIELD | $SADM_BC -l `                   # Add Field to Line Total
             if [ $DEBUG_LEVEL -eq 9 ] ; then sadm_writelog "Added $WFIELD and Total is now $WTOTAL" ; fi
             done
         
-        ARRAY_DISKWRITE[$INDX]=`echo "${WTOTAL} / 1024"| $BC -l`         # Put Stat. in Array
+        ARRAY_DISKWRITE[$INDX]=`echo "${WTOTAL} / 1024"| $SADM_BC -l`         # Put Stat. in Array
         
         # If Debug is Activated - Display Important Variables before exiting function
         if [ $DEBUG_LEVEL -gt 4 ]
             then sadm_writelog "-----\nLINE   = $wline"
                  if [ $DEBUG_LEVEL -gt 1 ]
-                    then    sadm_writelog "NTIME  = $NTIME"
+                    then    sadm_writelog "SNAPSHOT  = $SNAPSHOT"
                             sadm_writelog "TOTAL_READ_KBS  = $WTOTAL"
                  fi
                  sadm_writelog "INDEX = $INDX - ${ARRAY_DISKWRITE[${INDX}]}"        
         fi    
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting Disk Write information."
 }
 
@@ -656,8 +642,8 @@ build_net_array()
     grep "^NET,T" $NMON_FILE > $TMP2_FILE
     while read wline                         # Read Network Stat Lines
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
         if [ $IF0_READ_IDX  -ne 0 ] ;then IF0_READ_KBS=`echo $wline  | cut -d, -f$IF0_READ_IDX`  ;fi           # First Interface Read KB/s
         if [ $IF1_READ_IDX  -ne 0 ] ;then IF1_READ_KBS=`echo $wline  | cut -d, -f$IF1_READ_IDX`  ;fi          # 2nd Interface Read KB/s
         if [ $IF2_READ_IDX  -ne 0 ] ;then IF2_READ_KBS=`echo $wline  | cut -d, -f$IF2_READ_IDX`  ;fi          # Third Interface Read KB/s
@@ -705,20 +691,20 @@ build_net_array()
 build_memory_array()
 {
     sadm_writelog "Processing Memory information."
-    grep "^MEM,T" $NMON_FILE | sort >$TMP_FILE 
+    grep "^MEM,T" $NMON_FILE | sort >$SADM_TMP_FILE1 
     
     while read wline                                                    # Read All Records
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
 
         MEM_TOTAL=`echo $wline | awk -F, '{ print $7 }'`                # Real Total Memory in MB
         MEM_FREE=`echo $wline | awk -F, '{ print $5 }'`                 # Real Free Memory in MB
-        MEM_USE=`echo $MEM_TOTAL - $MEM_FREE | $BC -l `                  # Calculate Memory Use
+        MEM_USE=`echo $MEM_TOTAL - $MEM_FREE | $SADM_BC -l `                  # Calculate Memory Use
 
         VIR_TOTAL=`echo $wline | awk -F, '{ print $8 }'`                # Virtual Total Memory in MB
         VIR_FREE=`echo $wline | awk -F, '{ print $6 }'`                 # Virtual Free Memory in MB
-        VIR_USE=`echo $VIR_TOTAL - $VIR_FREE | $BC -l `                  # Calculate Virtual Mem Use
+        VIR_USE=`echo $VIR_TOTAL - $VIR_FREE | $SADM_BC -l `                  # Calculate Virtual Mem Use
 
 
         # Put Memory Statistics in Array
@@ -729,7 +715,7 @@ build_memory_array()
                  sadm_writelog "ARRAY_MEMORY[$INDX]=${MEM_TOTAL},${MEM_FREE},${MEM_USE},${VIR_TOTAL},${VIR_FREE},${VIR_USE}"
         fi
 
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting Memory information."
 }
 
@@ -752,12 +738,12 @@ build_memory_array()
 build_memnew_array()
 {
     sadm_writelog "Processing Memory New information."
-    grep "^MEMNEW,T" $NMON_FILE | sort >$TMP_FILE 
+    grep "^MEMNEW,T" $NMON_FILE | sort >$SADM_TMP_FILE1 
     
     while read wline                                                    # Read All Records
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
 
         M_PROCESS=`echo $wline | awk -F, '{ print $3 }'`           # Process %
         M_FSCACHE=`echo $wline | awk -F, '{ print $4 }'`           # FSCache %
@@ -774,7 +760,7 @@ build_memnew_array()
                  sadm_writelog "ARRAY_MEMNEW[$INDX]=${M_PROCESS},${M_FSCACHE},${M_SYSTEM},${M_FREE},${M_PINNED},${M_USER}"
         fi
 
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting Memory New information."
 }
 
@@ -811,15 +797,15 @@ build_paging_activity_array()
     
     # Search proper lines depending upon OS Processing
     if [ "$NMON_OS" == "AIX" ] 
-        then grep "^PAGE,T" $NMON_FILE | sort >$TMP_FILE
-        else grep "^VM,T"   $NMON_FILE | sort >$TMP_FILE
+        then grep "^PAGE,T" $NMON_FILE | sort >$SADM_TMP_FILE1
+        else grep "^VM,T"   $NMON_FILE | sort >$SADM_TMP_FILE1
     fi
         
     
     while read wline                                                    # Read All Records
         do
-        NTIME=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${NTIME} + 0`                                        # Empty field are Zero now
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
         if [ "$NMON_OS" == "AIX" ]
             then PAGE_IN=`echo $wline | awk -F, '{ print $6 }'`         # AIX pgin stat.
                  PAGE_OUT=`echo $wline | awk -F, '{ print $7 }'`        # AIX pgout stat.
@@ -832,13 +818,13 @@ build_paging_activity_array()
         if [ $DEBUG_LEVEL -gt 5 ]
             then sadm_writelog "-----\nLINE   = $wline"
                  if [ $DEBUG_LEVEL -gt 1 ]
-                    then    sadm_writelog "NTIME     = $NTIME"
+                    then    sadm_writelog "SNAPSHOT     = $SNAPSHOT"
                             sadm_writelog "PAGE_IN   = $PAGE_IN"
                             sadm_writelog "PAGE_OUT  = $PAGE_OUT"
                  fi
                  sadm_writelog "INDEX = $INDX - ${ARRAY_PAGING[${INDX}]}"        
         fi    
-        done <  $TMP_FILE
+        done <  $SADM_TMP_FILE1
     sadm_writelog "Finish collecting Paging Activity information."
 }
 
@@ -967,7 +953,10 @@ main_process()
 
     # Produce a list of all Yesterday nmon file (sorted)
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
-    find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort > $NMON_FILE_LIST
+    if [ "$CMD_FILE" != "" ] 
+        then echo "$CMD_FILE" > $NMON_FILE_LIST
+        else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort > $NMON_FILE_LIST
+    fi
 
     while read NMON_FILE                                                # Process nmon file 1 by 1
         do
@@ -990,7 +979,7 @@ main_process()
         fi
 
         # Get Nmon file Info & Setup RRD Dir & File
-        read_nmon_info_and_setup_rrd                                    # Create RRD Dir & File            
+        read_nmon_info_and_setup_rrd                                    # Create RRD Dir & File
         if [ $? -ne 0 ]                                                 # Not an nmon file
             then  sadm_writelog "Problem found with NMON file $NMON_FILE" # Advise user 
                   ERROR_COUNT=$(($ERROR_COUNT+1))                       # Increment Error Counter 
@@ -998,38 +987,30 @@ main_process()
         fi
 
         # Put Snapshot No & Epoch Time in ARRAY_TIME
-        build_epoch_array                                   
-        if [ $DEBUG_LEVEL -gt 5 ] ; then display_epoch_array ; fi       # Ext. Debug Display Epoch Array
-        
-        # Put CPU stat in ARRAY_CPU
-        build_cpu_array                                     
-        if [ $DEBUG_LEVEL -gt 5 ] ; then display_cpu_array ; fi         # Ext. Debug Display CPU Array
-        
-        # Put RunQueue stat in ARRAY_RUNQ
-        build_runqueue_array                                     
-        if [ $DEBUG_LEVEL -gt 5 ] ; then display_cpu_array ; fi         # Ext. Debug Display CPU Array
-
+        build_epoch_array                                               # Build Snapshot/Epoch Array
+        build_cpu_array                                                 # Put CPU stat in ARRAY_CPU
+        build_runqueue_array                                            # Put RunQueue in 
         build_disk_read_array                                           # Build Disk Read Stat Array
-        build_disk_write_array                                          # Build Disk Write Stat Array
-        build_memory_array                                              # Build Memory Stat Array
-        build_paging_activity_array                                     # Build Pagein/PageOut Array
-        build_net_array                                                 # Build Network Activity Array
-        if [ "$NMON_OS" == "AIX" ] ; then build_memnew_array ; fi       # Build MemNew Array if Aix
+        #build_disk_write_array                                          # Build Disk Write Stat Array
+        #build_memory_array                                              # Build Memory Stat Array
+        #build_paging_activity_array                                     # Build Pagein/PageOut Array
+        #build_net_array                                                 # Build Network Activity Array
+        #if [ "$NMON_OS" == "AIX" ] ; then build_memnew_array ; fi       # Build MemNew Array if Aix
         
         # Update the RRD file based on Array Content
-        rrd_update                                                      # Update the RRD Function
+        #rrd_update                                                      # Update the RRD Function
 
         # Make sure Archive Directory Exist For the Processing Host
-        low_nmon_os=`echo $NMON_OS  |tr '[:upper:]' '[:lower:]'`        # Make osname lowercase
-        if [ ! -d ${NMON_ARC}/${low_nmon_os}/${NMON_HOST} ]             # if server arc dir not exist
-            then mkdir -p  ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}      # Create it
-                 chmod 775 ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}      # Assign protection
-        fi
+        #low_nmon_os=`echo $NMON_OS  |tr '[:upper:]' '[:lower:]'`        # Make osname lowercase
+        #if [ ! -d ${NMON_ARC}/${low_nmon_os}/${NMON_HOST} ]             # if server arc dir not exist
+        #    then mkdir -p  ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}      # Create it
+        #         chmod 775 ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}      # Assign protection
+        #fi
 
         # Move Processed nmon file to Archive Directory
-        sadm_writelog "Moving $NMON_FILE to ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}" # Write Action to Log
-        mv $NMON_FILE ${NMON_ARC}/$low_nmon_os/${NMON_HOST}            # Move nmon file to Archive Dir.
-        sadm_writelog "${DASH}"                                            # Write Dash Line to Log
+        #sadm_writelog "Moving $NMON_FILE to ${NMON_ARC}/${low_nmon_os}/${NMON_HOST}" # Write Action to Log
+        #mv $NMON_FILE ${NMON_ARC}/$low_nmon_os/${NMON_HOST}            # Move nmon file to Archive Dir.
+        #sadm_writelog "${DASH}"                                            # Write Dash Line to Log
         
         done < $NMON_FILE_LIST
 }
@@ -1048,17 +1029,25 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    #if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-    #    then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-    #         sadm_writelog "Process aborted"                            # Abort advise message
-    #         sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-    #         exit 1                                                     # Exit To O/S
-    #fi
+    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
+        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
+             exit 1                                                     # Exit To O/S
+    fi
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
-    while getopts "hd:" opt ; do                                        # Loop to process Switch
+    CMD_FILE=""                                                         # Cmd Line FileName Specify
+    while getopts "hd:f:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            f) CMD_FILE=$OPTARG                                         # Get nmon Filename Specify
+               if [ ! -r "$CMD_FILE" ]                                  # If file not readable
+                    then sadm_writelog "Nmon File $CMD_FILE not found"  # Show User Error 
+                         sadm_stop 0
+                         exit 0
+               fi
                ;;                                                       # No stop after each page
             h) help_usage                                               # Display Help Usage
                sadm_stop 0                                              # Close the shop
