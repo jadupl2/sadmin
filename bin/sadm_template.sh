@@ -121,7 +121,7 @@ process_servers()
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
     while read wline                                                    # Then Read Line by Line
         do
-        xcount=`expr $xcount + 1`                                       # Server Counter
+        let xcount++                                                    # Server Counter
         server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
         server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
         server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
@@ -149,7 +149,7 @@ process_servers()
             then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
                  sadm_writelog "$SMSG"                                  # Advise user
                  echo "$SMSG" >> $SADM_ELOG                             # Log Err. to Email Log
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
+                 let ERROR_COUNT++                                      # Increase Error Counter
                  if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
                     then sadm_writelog "Total error(s) : $ERROR_COUNT"  # Show Total Error Count
                  fi
@@ -181,7 +181,7 @@ process_servers()
             then RETRY=0                                                # Set Retry counter to zero
                  while [ $RETRY -lt 3 ]                                 # Retry 3 times ?
                     do
-                    let RETRY=RETRY+1                                   # Increase Retry counter
+                    let RETRY++                                         # Increase Retry counter
                     $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1    # SSH to Server for date
                     RC=$?                                               # Save Error Number
                     if [ $RC -ne 0 ] &&  [ $RETRY -gt 3 ] ;then break ;fi # Error More than 3 Times
@@ -196,7 +196,7 @@ process_servers()
                  echo "$SMSG" >> $SADM_ELOG                             # Log Err. to Email Log
                  echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
                  echo "----------" >> $SADM_ELOG
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Consider Error -Incr Cntr
+                 let ERROR_COUNT++                                      # Consider Error -Incr Cntr
                  continue                                               # Continue with next system
         fi
         sadm_writelog "[ OK ] SSH to $fqdn_server work"                 # Good SSH Work

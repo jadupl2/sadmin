@@ -29,6 +29,8 @@
 #   V1.2 Minors changes
 # 2017_12_23 JDuplessis 
 #   V1.3 Adjust for using MySQL instead of PostGres - Review logic to use new SADM Library
+# 2018_01_20 JDuplessis 
+#   V1.4 Minor Adjustments
 #
 #===================================================================================================
 try :
@@ -51,61 +53,32 @@ cur                 = ""                                                # Databa
 #===================================================================================================
 #
 def initSADM():
-    """
-    Start the SADM Tools 
-      - Make sure All SADM Directories exist, 
-      - Open log in append mode if attribute log_append="Y", otherwise a new Log file is started.
-      - Write Log Header
-      - Record the start Date/Time and Status Code 2(Running) to RCH file
-      - Check if Script is already running (pid_file) 
-        - Advise user & Quit if Attribute multiple_exec="N"
-    """
-
-    # Making Sure SADMIN Environment Variable is Define and 'sadmlib_std.py' can be found & imported
+    # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
     if not "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-        print (('=' * 65))
-        print ("SADMIN Environment Variable is not define")
+        print ("SADMIN Environment Variable isn't define")              # SADMIN Var MUST be defined
         print ("It indicate the directory where you installed the SADMIN Tools")
-        print ("Put this line in your ~/.bash_profile")
-        print ("export SADMIN=/INSTALL_DIR")
-        print (('=' * 65))
-        sys.exit(1)
+        print ("Add this line at the end of /etc/environment file.")    # Show Where to Add Env. Var
+        print ("# echo 'SADMIN=/[dir-where-you-install-sadmin]'")       # Show What to Add.
+        sys.exit(1)                                                     # Exit to O/S with Error 1
     try :
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
         sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
-        #import sadmlib_mysql as sadmdb
-    except ImportError as e:
-        print ("Import Error : %s " % e)
-        sys.exit(1)
-
-    st = sadm.sadmtools()                                               # Create Sadm Tools Instance
+    except ImportError as e:                                            # Catch import Error
+        print ("Import Error : %s " % e)                                # Advise user about error
+        sys.exit(1)                                                     # Exit to O/S with Error 1
     
-    # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.7"                             # Your Script Version 
+    # Create SADMIN Instance & setup instance Variables specific to your program
+    st = sadm.sadmtools()                       # Create Sadm Tools Instance (Setup Dir.)
+    st.ver  = "1.4"                             # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
-    st.log_append = True                        # True=Append to Existing Log  False=Start a new log
-    st.debug = 5                                # Debug Level (0-9)
-    
-    # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True to Append Existing Log, False=Start a new log
+    st.debug = 0                                # Debug Level and Verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr = ""                      # Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
-
-    # False = On MySQL Error, return MySQL Error Code & Display MySQL  Error Message
-    # True  = On MySQL Error, return MySQL Error Code & Do NOT Display Error Message
-    st.dbsilent = False                         # True or False
-
-    # Start the SADM Tools 
-    #   - Make sure All SADM Directories exist, 
-    #   - Open log in append mode if st_log_append="Y" else create a new Log file.
-    #   - Write Log Header
-    #   - Write Start Date/Time and Status Code 2(Running) to RCH file
-    #   - Check if Script is already running (pid_file) 
-    #       - Advise user & Quit if st-multiple_exec="N"
-    st.start()                                  # Make SADM Sertup is OK - Initialize SADM Env.
-
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     return(st)                                  # Return Instance Object to caller
 
 
