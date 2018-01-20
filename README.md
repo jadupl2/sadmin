@@ -12,7 +12,7 @@ Quick Start
 Choose a directory (or a filesystem) where you want to install SADMIN. Make sure you have  around 2GB of free disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MySQL Database). 
 
 ### Define the SADMIN environment variable
-Define an environment variable name "SADMIN" that contains the directory path, where you decided to install the product. As an example, if you chosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file.
+Define an environment variable name "SADMIN" that contains the directory path, where you decided to install the product. As an example, if you chosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file. This step is needed on both the SADMIN server and client.
 
 ####    # echo "SADMIN=/opt/sadmin" >> /etc/environment
 
@@ -21,7 +21,8 @@ To make this change to be effective you need to logout and log back in.
 
 ### Running the Setup script
 Next, run the setup program by typing the command below. This program will ask you some questions and will feed the configuration file ($SADMIN/cfg/sadmin.cfg). This file is used by
-every script you will run and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can be run more than once, so don't worry if you made a mistake, just run it again.
+every script you will run and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can be run more than once, so don't worry if you made a mistake, just run it again. This step needs to be done only on the SADMIN server.
+
 
 ####    # $SADMIN/bin/sadm_setup.py
 
