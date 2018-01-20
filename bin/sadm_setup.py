@@ -23,6 +23,7 @@
 # CHANGE LOG
 # 2018_01_18 JDuplessis 
 #   V1.0 Initial Version
+#   V1.0b WIP Version
 #
 #===================================================================================================
 try :
@@ -46,134 +47,33 @@ sadm_base_dir       = ""                                                # SADMI 
 #===================================================================================================
 #
 def initSADM():
-    """
-    Start the SADM Tools 
-      - Make sure All SADM Directories exist, 
-      - Open log in append mode if attribute log_append="Y", otherwise a new Log file is started.
-      - Write Log Header
-      - Record the start Date/Time and Status Code 2(Running) to RCH file
-      - Check if Script is already running (pid_file) 
-        - Advise user & Quit if Attribute multiple_exec="N"
-    """
-
-    # Making Sure SADMIN Environment Variable is Define and 'sadmlib_std.py' can be found & imported
+    # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
     if not "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-        print (('=' * 65))
-        print ("SADMIN Environment Variable is not define")
+        print ("SADMIN Environment Variable isn't define")              # SADMIN Var MUST be defined
         print ("It indicate the directory where you installed the SADMIN Tools")
-        print ("Put this line in your ~/.bash_profile")
-        print ("export SADMIN=/INSTALL_DIR")
-        print (('=' * 65))
-        sys.exit(1)
+        print ("Add this line at the end of /etc/environment file.")    # Show Where to Add Env. Var
+        print ("# echo 'SADMIN=/[dir-where-you-install-sadmin]'")       # Show What to Add.
+        sys.exit(1)                                                     # Exit to O/S with Error 1
     try :
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
         sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
-        #import sadmlib_mysql as sadmdb
-    except ImportError as e:
-        print ("Import Error : %s " % e)
-        sys.exit(1)
-
-    st = sadm.sadmtools()                                               # Create Sadm Tools Instance
+    except ImportError as e:                                            # Catch import Error
+        print ("Import Error : %s " % e)                                # Advise user about error
+        sys.exit(1)                                                     # Exit to O/S with Error 1
     
-    # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.7"                             # Your Script Version 
+    # Create SADMIN Instance & setup instance Variables specific to your program
+    st = sadm.sadmtools()                       # Create Sadm Tools Instance (Setup Dir.)
+    st.ver  = "1.0b"                            # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
-    st.log_append = True                        # True=Append to Existing Log  False=Start a new log
-    st.debug = 5                                # Debug Level (0-9)
-    
-    # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True to Append Existing Log, False=Start a new log
+    st.debug = 0                                # Debug Level and Verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr = ""                      # Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
-
-    # False = On MySQL Error, return MySQL Error Code & Display MySQL  Error Message
-    # True  = On MySQL Error, return MySQL Error Code & Do NOT Display Error Message
-    st.dbsilent = False                         # True or False
-
-    # Start the SADM Tools 
-    #   - Make sure All SADM Directories exist, 
-    #   - Open log in append mode if st_log_append="Y" else create a new Log file.
-    #   - Write Log Header
-    #   - Write Start Date/Time and Status Code 2(Running) to RCH file
-    #   - Check if Script is already running (pid_file) 
-    #       - Advise user & Quit if st-multiple_exec="N"
-    st.start()                                  # Make SADM Sertup is OK - Initialize SADM Env.
-
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     return(st)                                  # Return Instance Object to caller
-
-
-
-#===================================================================================================
-#                                Process All Actives Servers 
-#===================================================================================================
-def process_servers(wconn,wcur,st):
-    st.writelog ("Processing All Actives Server(s)")
-
-    # Construct SQL to Read All Actives Servers
-    sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname, "
-    sql += " srv_ostype, srv_sporadic, srv_monitor, srv_osversion "
-    sql += " FROM server WHERE srv_active = %s " % ('True')
-    sql += " order by srv_name;"
-    try :
-        wcur.execute(sql)
-        rows = wcur.fetchall()
-    except(pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as error:
-        self.enum, self.emsg = error.args                               # Get Error No. & Message
-        print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
-        return (1)
-    
-    # Process each Actives Servers
-    lineno = 1                                                          # Server Counter Start at 1
-    total_error = 0                                                     # Total Error Start at 0
-    for row in rows:                                                    # Process each server row
-        wname       = row[0]                                            # Extract Server Name
-        wdesc       = row[1]                                            # Extract Server Desc.
-        wdomain     = row[2]                                            # Extract Server Domain Name
-        wos         = row[3]                                            # Extract Server O/S Name
-        wostype     = row[4]                                            # Extract Server O/S Type
-        wsporadic   = row[5]                                            # Extract Server Sporadic ?
-        wmonitor    = row[6]                                            # Extract Server Monitored ?
-        wosversion  = row[7]                                            # Extract Server O/S Version
-        wfqdn   = "%s.%s" % (wname,wdomain)                             # Construct Fully Qualify DN
-        st.writelog("")                                                 # Insert Blank Line
-        st.writelog (('-' * 40))                                        # Insert Dash Line
-        st.writelog ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
-
-        # If Debug is activated - Display Monitoring & Sporadic Status of Server.
-        if st.debug > 0 :                                               # If Debug Activated
-            if wmonitor :                                               # Monitor Collumn is at True
-                st.writelog ("Monitoring is ON for %s" % (wfqdn))       # Show That Monitoring is ON
-            else :
-                st.writelog ("Monitoring is OFF for %s" % (wfqdn))      # Show That Monitoring OFF
-            if wsporadic :                                              # If a Sporadic Server
-                st.writelog ("Sporadic system is ON for %s" % (wfqdn))  # Show Sporadic is ON
-            else :
-                st.writelog ("Sporadic system is OFF for %s" % (wfqdn)) # Show Sporadic is OFF
-
-        # Test if Server Name can be resolved - If not Signal Error & continue with next system.
-        try:
-            hostip = socket.gethostbyname(wfqdn)                        # Resolve Server Name ?
-        except socket.gaierror:
-            st.writelog ("[ ERROR ] Can't process %s, hostname can't be resolved" % (wfqdn))
-            ERROR_COUNT += 1                                            # Increase Error Counter
-            if (ERROR_COUNT != 0 ):                                     # If Error count not at zero
-                st.writelog ("Total error(s) : %s" % (ERROR_COUNT))     # Show Total Error Count
-            continue
-
-        wcommand = "%s %s %s" % (st.ssh_cmd,wfqdn,"date")               # SSH to Server for date
-        st.writelog ("Command is %s" % (wcommand))
-        ccode, cstdout, cstderr = st.oscommand("%s" % (wcommand))      # Execute O/S CMD 
-        st.writelog ("stdout is %s" % (cstdout))
-        st.writelog ("stderr is %s" % (cstderr))
-        if (ccode == 0):
-            st.writelog ("ssh worked")
-        else:
-            st.writelog ("ssh error")
-        lineno += 1                                                     # Increase Server Counter
-
-    return 0
 
 
 #===================================================================================================
@@ -185,10 +85,10 @@ def main():
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
         sadm_base_dir = os.environ.get('SADMIN')                        # Set SADMIN Base Directory
     else:
-        sadm_base_dir = raw_input("Directory where your install SADMIN ")
+        sadm_base_dir = input("Directory where your install SADMIN ")
 
     if not os.path.exists(sadm_base_dir) :                              # Check if SADM Dir. Exist
-        print ("Directory ". sadm_base_dir . " doesn't exist.")         # Advise User
+        print ("Directory %s doesn't exist." % (sadm_base_dir))         # Advise User
         sys.exit(1)                                                     # Exit with Error Code
         
     st = initSADM()                                                     # Initialize SADM Tools
