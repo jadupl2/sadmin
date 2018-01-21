@@ -26,6 +26,8 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 # 2018_01_13 JDuplessis V1.0b - Initial Version
+# 2018_01_20 JDuplessis V1.0c - Work in Progress
+# 2018_01_21 JDuplessis V1.0d - Work in Progress
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -40,7 +42,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0c'                             ; export SADM_VER           # Your Script Version
+SADM_VER='1.0d'                            ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -81,8 +83,8 @@ CUR_DATE=`date +"%Y_%m_%d"`                 ; export CUR_DATE           # Curren
 CUR_TIME=`date +"%H_%M_%S"`                 ; export CUR_TIME           # Current Time
 CUR_DATE=`date +"%Y-%m-%d"`                 ; export CUR_DATE           # Current Date ("2013-01-30")
 #   
-NMON_FILE_LIST="${SADM_WWW_TMP_DIR}/nmon_list.$$"    ; export NMON_FILE_LIST     # NMON File List
-NMON_FILE="${SADM_WWW_TMP_DIR}/nmon_file.$$"         ; export NMON_FILE          # Sorted nmon file 4 processing
+NMON_FILE_LIST="${SADM_TMP_DIR}/nmonls.$$"  ; export NMON_FILE_LIST     # NMON File List
+NMON_FILE="${SADM_TMP_DIR}/nmon_file.$$"    ; export NMON_FILE          # Sorted nmon file 4 processing
 NMON_OS=""                                  ; export NMON_HOST          # OSName of the nmon file
 #
 # RRD Custom Variables
@@ -565,7 +567,7 @@ build_net_array()
 {
     sadm_writelog " " 
     sadm_writelog "Processing Network Activity Information."
-    grep "^NET," $NMON_FILE | sort >$SADM_TMP_FILE1                     # Extract NET from nmon file
+    grep "^NET,T" $NMON_FILE | sort >$SADM_TMP_FILE1                    # Extract NET from nmon file
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of NET Lines
     sadm_writelog "Processing $NMON_OS - $NMON_HOST '^NET,' Lines ($NBLINES elements)."
 
@@ -573,7 +575,7 @@ build_net_array()
     HDLINE=`grep "^NET," $NMON_FILE | head -1`                          # Get Network Header Line 
     NBFLD=`echo $HDLINE | awk -F, '{ print NF }'`                       # Get Nb Field on Heading
     if [ "$NMON_OS" == "LINUX" ] ; then let NBFLD="$NBFLD - 1" ; fi     # extra , at end of line ??
-    if [ $DEBUG_LEVEL -gt 4 ] 
+    if [ $DEBUG_LEVEL -gt 6 ] 
         then sadm_writelog "Nb.Fields= $NBFLD Heading Line= $HDLINE"    # Show Net Heading Line 
     fi
     let NBDEV="($NBFLD - 4) / 2"                                        # Remove Heading + lo device
@@ -589,9 +591,10 @@ build_net_array()
         typename=$(echo $HDLINE | cut -d, -f ${indx} | cut -d'-' -f 2)  # Get read or write string
         colname=`  echo $HDLINE | cut -d, -f ${indx}`                   # Extract Column Name
         if [ "$devname" != "lo" ] && [ "$devname" != "lo0" ]            # Don't need loop interface
-            then echo "colnum= ${indx} Dev= $devname typename= $typename colname= $colname" 
+            then if [ $DEBUG_LEVEL -gt 6 ] 
+                    then echo "colnum= ${indx} Dev= $devname typename= $typename colname= $colname" 
+                 fi
                  echo "${devname},${typename},${indx}" >> $SADM_TMP_FILE2
-
         fi
         ((indx++))
         done 
@@ -599,143 +602,77 @@ build_net_array()
     # Finally we have a file with all netdevice (Format dev,[read|write],column where start is
     # Example : eth0,read,4
     #           eth0,write,10
-    #
     cat $SADM_TMP_FILE2 | sort | uniq > $SADM_TMP_FILE3                         # Sort file, No Dup
     if [ $DEBUG_LEVEL -gt 4 ] 
         then sadm_writelog "Network Devices in nmon file and column where stat are"
              cat $SADM_TMP_FILE3
     fi
-    cat $SADM_TMP_FILE3 | awk -F, '{ print $1 }' | sort | uniq | head -4 >$SADM_TMP_FILE1 # Only Dev
+    cat $SADM_TMP_FILE3 | awk -F, '{ print $1 }' | sort | uniq | head -4 >$SADM_TMP_FILE2 # Only Dev
     if [ $DEBUG_LEVEL -gt 4 ] 
         then sadm_writelog "Choose the first 4 devices"
-             cat $SADM_TMP_FILE1
+             cat $SADM_TMP_FILE2
     fi    
 
     # Set Interface Name, Read Column and Write Column where stat are 
-    if1name=""  ; if1rc=0   ; if1wc=0                                           # Net Dev 1 Default
-    if2name=""  ; if2rc=0   ; if2wc=0                                           # Net Dev 2 Default
-    if3name=""  ; if3rc=0   ; if3wc=0                                           # Net Dev 3 Default
-    if4name=""  ; if4rc=0   ; if4wc=0                                           # Net Dev 4 Default
-    COUNTER=1                                                                   # Interface Counter
+    if1name=""  ; if1rc=0   ; if1wc=0                                           # if1 Name,Read,Write
+    if2name=""  ; if2rc=0   ; if2wc=0                                           # if2 Name,Read,Write
+    if3name=""  ; if3rc=0   ; if3wc=0                                           # if3 Name,Read,Write
+    if4name=""  ; if4rc=0   ; if4wc=0                                           # if4 Name,Read,Write
 
-    # Read Choosen the 4 Interfaces choosen and save column ready to read nmon file
+    # Read Choosen 4 Interfaces and save column ready to read nmon file
+    COUNTER=1                                                                   # Interface Counter
     while read -r wif                                                           # Read Net Dev File
         do 
         if [ $COUNTER -eq 1 ]
             then if1name=$wif                                                   # Interface 1 Name
-                 if1rc=`grep "^${wif},read"  $SADM_TMP_FILE3 | awk '{print $3}' # If1 Read Stat Col
-                 if1wc=`grep "^${wif},write" $SADM_TMP_FILE3 | awk '{print $3}' # if1 Write Stat col
+                 if1rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If1 Read Stat Col
+                 if1wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if1 Write Stat col
         fi
         if [ $COUNTER -eq 2 ]
             then if2name=$wif                                                   # Interface 2 Name
-                 if2rc=`grep "^${wif},read"  $SADM_TMP_FILE3 | awk '{print $3}' # If2 Read Stat Col
-                 if2wc=`grep "^${wif},write" $SADM_TMP_FILE3 | awk '{print $3}' # if2 Write Stat col
+                 if2rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If2 Read Stat Col
+                 if2wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if2 Write Stat col
         fi
         if [ $COUNTER -eq 3 ]
             then if3name=$wif                                                   # Interface 3 Name
-                 if3rc=`grep "^${wif},read"  $SADM_TMP_FILE3 | awk '{print $3}' # If3 Read Stat Col
-                 if3wc=`grep "^${wif},write" $SADM_TMP_FILE3 | awk '{print $3}' # if3 Write Stat col
+                 if3rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If3 Read Stat Col
+                 if3wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if3 Write Stat col
         fi
         if [ $COUNTER -eq 4 ]
             then if4name=$wif                                                   # Interface 3 Name
-                 if4rc=`grep "^${wif},read"  $SADM_TMP_FILE3 | awk '{print $3}' # If3 Read Stat Col
-                 if4wc=`grep "^${wif},write" $SADM_TMP_FILE3 | awk '{print $3}' # if3 Write Stat col
+                 if4rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If3 Read Stat Col
+                 if4wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if3 Write Stat col
         fi
         let COUNTER=COUNTER+1 
-        done
-    
-# aix file
-# en0,read,3
-# en0,write,7
-# en1,read,4
-# en1,write,8
-# en2,read,5
-# en2,write,9
-#
-# Linux file
-# eth0,read,4
-# eth0,write,10
-# eth1,read,5
-# eth1,write,11
-# eth2,read,6
-# eth2,write,12
-# eth3,read,7
-# sit0,read,8
+        done < $SADM_TMP_FILE2
+        if [ $DEBUG_LEVEL -gt 4 ]
+            then sadm_writelog "if1rc=$if1rc if2rc=$if2rc if3rc=$if3rc if4rc=$if4rc"
+                 sadm_writelog "if1wc=$if1wc if2wc=$if2wc if3wc=$if3wc if4wc=$if4wc"
+        fi  
 
 
-    return
-
-
-    # We Monitor a Maximum of 3 Interfaces per host (Excluding lo interface)
-    # Make sure index 3 Indexes are at zero, if no interface are found
-    # ----------------------------------------------------------------------------------------------
-    IF0_READ_IDX=0  ; IF1_READ_IDX=0    ; IF2_READ_IDX=0
-    IF0_WRITE_IDX=0 ; IF1_WRITE_IDX=0   ; IF2_WRITE_IDX=0
-
-    
-    # Aix -   Get Nb of the field for en0-read,en0-write,en1-read,en1-write,en2-read,en2-write
-    # Linux - Get Nb of the field for eth0-read,eth0-write,eth1-read,eth1-write,eth2-read,eth2-write
-    # ----------------------------------------------------------------------------------------------
-    grep "^NET,Network" $NMON_FILE > $TMP2_FILE                         
-    while read wline                   # Read Network Stat Lines
+    # # NET,T0002,79.9,313.2,13.2,0.0,0.0,0.0,79.9,1607.3,2790.8,0.0,0.0,0.0,                        
+    while read wline                                                    # Read Network Stat Lines
         do
-        for i in $(seq 1 $NUM_FIELD)
-            do
-            if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "($i) Network Header Line is : $wline" ;fi
-            WFIELD=`echo $wline | cut -d, -f $i`
-            if [ "$NMON_OS" == "AIX" ] 
-               then if [ "$WFIELD" == "en0-read-KB/s"  ]  ; then IF0_READ_IDX=$i  ; fi 
-                    if [ "$WFIELD" == "en1-read-KB/s"  ]  ; then IF1_READ_IDX=$i  ; fi 
-                    if [ "$WFIELD" == "en2-read-KB/s"  ]  ; then IF2_READ_IDX=$i  ; fi 
-                    if [ "$WFIELD" == "en0-write-KB/s" ]  ; then IF0_WRITE_IDX=$i ; fi 
-                    if [ "$WFIELD" == "en1-write-KB/s" ]  ; then IF1_WRITE_IDX=$i ; fi 
-                    if [ "$WFIELD" == "en2-write-KB/s" ]  ; then IF2_WRITE_IDX=$i ; fi 
-               else if [ "$WFIELD" == "eth0-read-KB/s" ]  ; then IF0_READ_IDX=$i  ; fi
-                    if [ "$WFIELD" == "eth1-read-KB/s" ]  ; then IF1_READ_IDX=$i  ; fi
-                    if [ "$WFIELD" == "eth2-read-KB/s" ]  ; then IF2_READ_IDX=$i  ; fi
-                    if [ "$WFIELD" == "eth0-write-KB/s" ] ; then IF0_WRITE_IDX=$i ; fi
-                    if [ "$WFIELD" == "eth1-write-KB/s" ] ; then IF1_WRITE_IDX=$i ; fi
-                    if [ "$WFIELD" == "eth2-write-KB/s" ] ; then IF2_WRITE_IDX=$i ; fi
-            fi
-            done
-        done < $TMP2_FILE
-        
-    # If Debug is Activated - Display Important Variables before exiting function
-    if [ $DEBUG_LEVEL -gt 5 ]
-        then sadm_writelog "IF0_READ_IDX  is $IF0_READ_IDX"        
-             sadm_writelog "IF1_READ_IDX  is $IF1_READ_IDX"        
-             sadm_writelog "IF2_READ_IDX  is $IF2_READ_IDX"        
-             sadm_writelog "IF0_WRITE_IDX is $IF0_WRITE_IDX"        
-             sadm_writelog "IF1_WRITE_IDX is $IF1_WRITE_IDX"        
-             sadm_writelog "IF2_WRITE_IDX is $IF2_WRITE_IDX"        
-    fi
-        
-    # Extract the interfaces read and write KB/s from the nmon file and put them in ARRAY_NET
-    # ----------------------------------------------------------------------------------------------
-    grep "^NET,T" $NMON_FILE > $TMP2_FILE
-    while read wline                         # Read Network Stat Lines
-        do
-        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`         # Get SnapShot Number
-        INDX=`expr ${SNAPSHOT} + 0`                                        # Empty field are Zero now
-        if [ $IF0_READ_IDX  -ne 0 ] ;then IF0_READ_KBS=`echo $wline  | cut -d, -f$IF0_READ_IDX`  ;fi           # First Interface Read KB/s
-        if [ $IF1_READ_IDX  -ne 0 ] ;then IF1_READ_KBS=`echo $wline  | cut -d, -f$IF1_READ_IDX`  ;fi          # 2nd Interface Read KB/s
-        if [ $IF2_READ_IDX  -ne 0 ] ;then IF2_READ_KBS=`echo $wline  | cut -d, -f$IF2_READ_IDX`  ;fi          # Third Interface Read KB/s
-        if [ $IF0_WRITE_IDX -ne 0 ] ;then IF0_WRITE_KBS=`echo $wline | cut -d, -f$IF0_WRITE_IDX` ;fi          # First Interface Write KB/s
-        if [ $IF1_WRITE_IDX -ne 0 ] ;then IF1_WRITE_KBS=`echo $wline | cut -d, -f$IF1_WRITE_IDX` ;fi          # 2nd Interface Write KB/s
-        if [ $IF2_WRITE_IDX -ne 0 ] ;then IF2_WRITE_KBS=`echo $wline | cut -d, -f$IF2_WRITE_IDX` ;fi          # Third Interface Write KB/s
-        
+        SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`      # Get SnapShot Number
+        INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
+        if [ "$if1rc" -ne 0 ] ; then if1r=$(echo $wline | cut -d, -f ${if1rc}) ; fi  # Get Read Stat Col for if1
+        if [ "$if2rc" -ne 0 ] ; then if2r=$(echo $wline | cut -d, -f ${if2rc}) ; fi  # Get Read Stat Col for if2
+        if [ "$if3rc" -ne 0 ] ; then if3r=$(echo $wline | cut -d, -f ${if3rc}) ; fi  # Get Read Stat Col for if3
+        if [ "$if4rc" -ne 0 ] ; then if4r=$(echo $wline | cut -d, -f ${if4rc}) ; fi  # Get Read Stat Col for if4
+        if [ "$if1wc" -ne 0 ] ; then if1w=$(echo $wline | cut -d, -f ${if1wc}) ; fi  # Get Write Stat Col for if1
+        if [ "$if2wc" -ne 0 ] ; then if2w=$(echo $wline | cut -d, -f ${if2wc}) ; fi  # Get Write Stat Col for if2
+        if [ "$if3wc" -ne 0 ] ; then if3w=$(echo $wline | cut -d, -f ${if3wc}) ; fi  # Get Write Stat Col for if3
+        if [ "$if4wc" -ne 0 ] ; then if4w=$(echo $wline | cut -d, -f ${if4wc}) ; fi  # Get Write Stat Col for if4
+        ARRAY_NET[$INDX]="$if1r,$if2r,$if3r,$if4r,$if1w,$if2w,$if3w,$if4w"
+
         # If Debug is Activated - Display Important Variables before exiting function
-        if [ $DEBUG_LEVEL -gt 5 ]
-            then sadm_writelog "Network Stat. Line is : $wline"
-                 sadm_writelog "IF0-READ-KBS   : $IF0_READ_KBS"        
-                 sadm_writelog "IF1-READ-KBS   : $IF1_READ_KBS"        
-                 sadm_writelog "IF2-READ-KBS   : $IF2_READ_KBS"        
-                 sadm_writelog "IF0-WRITE-KBS  : $IF0_WRITE_KBS"        
-                 sadm_writelog "IF1-WRITE-KBS  : $IF1_WRITE_KBS"        
-                 sadm_writelog "IF2-WRITE-KBS  : $IF2_WRITE_KBS"        
+        if [ $DEBUG_LEVEL -gt 4 ]
+            then sadm_writelog "NET Line = $wline"
+                 sadm_writelog "ARRAY_NET[$INDX]=$if1r,$if2r,$if3r,$if4r,$if1w,$if2w,$if3w,$if4w"
         fi    
-        ARRAY_NET[$INDX]="$IF0_READ_KBS,$IF1_READ_KBS,$IF2_READ_KBS,$IF0_WRITE_KBS,$IF1_WRITE_KBS,$IF2_WRITE_KBS"
-        done < $TMP2_FILE
+
+        done < $SADM_TMP_FILE1
     sadm_writelog "Finishing Network Activity Information."
 }
 
@@ -829,9 +766,8 @@ build_memory_array()
 # ======== Aix nmon lines
 # MEMNEW,Memory New server_aix,Process%,FScache%,System%,Free%,Pinned%,User%
 # MEMNEW,T0001,50.5,34.6,6.9,8.0,7.0,81.6
-# MEMNEW,T0287,41.2,27.0,13.0,18.9,11.7,64.3
 # MEMNEW,T0288,41.4,27.6,13.0,18.1,11.7,65.1
-
+#
 # ======== Linux nmon lines
 # NOT EXIST ON LINUX
 #===================================================================================================
@@ -895,9 +831,6 @@ build_memnew_array()
 # ======== Aix nmon lines
 # PAGE,Paging server_aix,faults,pgin,pgout,pgsin,pgsout,reclaims,scans,cycles
 # PAGE,T0001,13956.7,24.0,749.8,12.4,0.3,0.0,0.0,0.0
-# PAGE,T0002,3866.7,0.5,185.5,0.1,0.2,0.0,0.0,0.0
-# ...
-# PAGE,T0287,4801.4,65.3,164.7,0.1,0.2,0.0,0.0,0.0
 # PAGE,T0288,3502.2,174.2,73.5,0.1,0.0,0.0,0.0,0.0
 #
 # ======== Linux nmon lines
@@ -909,8 +842,6 @@ build_memnew_array()
 # pgscan_direct_high,pgscan_direct_normal,pgscan_direct_dma
 # VM,T0001,40,0,0,862,7632,-1,0,0,0,0,50274,6,0,60655,0,0,0,0,0,0,0,0,0,0,542,0,0,0,0,0,0,0,0,0,0,0,0
 # VM,T0002,36,0,0,791,7267,-1,67484,10126,0,0,3136449,4513,75,3851039,0,0,0,0,0,0,0,126,0,0,33684,0,0,0,0,0,0,0,0,0,0,0,0
-# ...
-# VM,T0287,0,0,0,791,7372,-1,0,612,0,0,399377,104,0,474251,0,0,0,0,0,0,0,0,0,0,4279,0,0,0,0,0,0,0,0,0,0,0,0
 # VM,T0288,14,0,0,791,7473,-1,0,640,0,0,393429,171,0,471837,0,0,0,0,0,0,0,0,0,0,4254,0,0,0,0,0,0,0,0,0,0,0,0
 #
 #===================================================================================================
@@ -1190,5 +1121,6 @@ main_process()
     fi
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
