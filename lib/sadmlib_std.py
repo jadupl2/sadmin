@@ -22,6 +22,8 @@
 #   V2.2 Adapted to work on OSX and To Adapt to Python 3 
 # 2018_01_03 - JDuplessis
 #   V2.3 Added Check for facter command , if present use it get get hardware info
+# 2018_01_03 - JDuplessis
+#   V2.4 Add New arc Directory in $SADMIN/www for archiving
 # 
 # ==================================================================================================
 try :
@@ -40,7 +42,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.3"                                             # This Library Version
+libver              = "2.4"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -114,6 +116,7 @@ class sadmtools():
         self.www_dat_dir        = os.path.join(self.www_dir,'dat')      # SADM Web Site Data Dir
         self.www_cfg_dir        = os.path.join(self.www_dir,'cfg')      # SADM Web Site CFG Dir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
+        self.www_arc_dir        = os.path.join(self.www_dir,'arc')      # SADM Web Site Archive Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_net_dir        = self.www_dat_dir + '/' + self.hostname + '/net' # Web Data Net.Dir
         self.www_rch_dir        = self.www_dat_dir + '/' + self.hostname + '/rch' # Web Data RCH Dir
@@ -928,6 +931,7 @@ class sadmtools():
             if not os.path.exists(www_doc_dir)  : os.mkdir(www_doc_dir,0o0775)  # Create SADM HTML Dir.
             if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,0o0775)  # Create Web  DAT  Dir.
             if not os.path.exists(www_lib_dir)  : os.mkdir(www_lib_dir,0o0775)  # Create Web  DAT  Dir.
+            if not os.path.exists(www_arc_dir)  : os.mkdir(www_arc_dir,0o0775)  # Create Web  DAT  Dir.
             wuid = pwd.getpwnam(cfg_www_user).pw_uid                    # Get UID User of Wev User 
             wgid = grp.getgrnam(cfg_www_group).gr_gid                   # Get GID User of Web Group 
             os.chown(www_dir, wuid, wgid)                               # Change owner of log file
@@ -935,6 +939,7 @@ class sadmtools():
             os.chown(www_doc_dir, wuid, wgid)                           # Change owner of rch file
             os.chown(www_dat_dir, wuid, wgid)                           # Change owner of dat file
             os.chown(www_lib_dir, wuid, wgid)                           # Change owner of lib file
+            os.chown(www_arc_dir, wuid, wgid)                           # Change owner of lib file
     
         
         # Write SADM Header to Script Log
@@ -1176,6 +1181,7 @@ class sadmtools():
         print("obj.www_dir              Web Root Dir. (On Server Only): %s" % (self.www_dir))
         print("obj.www_dat_dir          Web Systems Info Dir  (Server): %s" % (self.www_dat_dir))
         print("obj.www_lib_dir          Web Systems Lib Dir   (Server): %s" % (self.www_lib_dir))
+        print("obj.www_arc_dir          Web Systems Arch. Dir (Server): %s" % (self.www_arc_dir))
         print("obj.www_cfg_dir          Web Systems Config Dir(Server): %s" % (self.www_cfg_dir))
         print("obj.www_net_dir          Web Systems Net Data  (Server): %s" % (self.www_net_dir))
         print("obj.www_doc_dir          Web Documentation Dir.(Server): %s" % (self.www_doc_dir))
