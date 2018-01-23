@@ -32,6 +32,8 @@
 #   v1.5 Database Backup - Compress Backup now
 # 2018_01_10 - JDuplessis
 #   v1.6 Database Backup was not taken when compress (-c) was used.
+# 2018_01_23 - JDuplessis
+#   v1.7 Added the script to read all nmon files and create/update the proper RRD.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +50,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.6'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -123,6 +125,9 @@ run_command()
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
+    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+
+    run_command "sadm_nmon_rrd_update.sh"                               # Read All nmon & Update RRD
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN Server
