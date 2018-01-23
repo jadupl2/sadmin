@@ -35,6 +35,8 @@
 #   V2.12 Added Check for facter command , if present use it get get hardware info
 # 2018_01_05 JDuplessis
 #   V2.13 Remove Warning when command can't be found for compatibility
+# 2018_01_23 JDuplessis
+#   V2.14 Add arc directory in $SADMIN/www for archiving purpose
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -53,7 +55,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.13"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.14"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -78,6 +80,7 @@ SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DO
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
+SADM_WWW_ARC_DIR="$SADM_WWW_DIR/arc"                        ; export SADM_WWW_ARC_DIR  # www arc Dir
 SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
 SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IMG_DIR  # www Img Dir
 SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR  # web rch dir
@@ -130,7 +133,7 @@ SADM_USER="sadmin"                          ; export SADM_USER          # sadmin
 SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
 SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner 
 SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmin/www group
-SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
+SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG
 SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
 SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
 SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
@@ -1653,6 +1656,12 @@ sadm_start() {
              chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
     fi
 
+    # If SADM Server Web Archive Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_ARC_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+        then mkdir -p $SADM_WWW_ARC_DIR
+             chmod 0775 $SADM_WWW_SRC_DIR  
+             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
+    fi
 
     # If SADM Server Web Site Images Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
