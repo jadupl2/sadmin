@@ -17,3 +17,6 @@
     <link rel="stylesheet" 	            type="text/css"     href="/css/jquery.dataTables.min.css"/>
     <link rel="stylesheet"              type="text/css"     href="/css/sadmin_v2.css"/>
 
+    <script language="JavaScript"       src="/js/calendar_eu.js"></script>
+    <link rel="stylesheet"              href="/css/calendar.css">
+    
