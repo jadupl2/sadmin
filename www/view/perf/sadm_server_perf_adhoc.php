@@ -1,18 +1,56 @@
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/connection.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/includes/header.php')  ; ?>
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/functions.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/unix/server_menu.php')  ; ?>
-
 <?php
+# ================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadm_server_perf_adhoc.php
+#   Version  :  1.0
+#   Date     :  23 January 2018
+#   Requires :  php
+#   Synopsis :  Present Options to Generate Performance Graphics for Server(s)#   
+#
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   2018_01_23 JDuplessis
+#       V 1.0 Initial Version
+#
+# ==================================================================================================
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
+
+
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG = False ;                                                        # Debug Activated True/False
+$SVER  = "1.0" ;                                                        # Current version number
+$CREATE_BUTTON = False ;                                                # Yes Display Create Button
+
+
+
 // ================================================================================================
 //                       Transform date (DD/MM/YYY) into MYSQL format
 // ================================================================================================
-function create_standard_graphic( $WHOST_NAME,$WHOST_DESC,$WTYPE,$WSDATE,$WEDATE,$WSTIME,$WETIME,$WOS)
+function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WSDATE,$WEDATE,$WSTIME,$WETIME,$WOS)
 {
     $WEBDIR     = $_SERVER['DOCUMENT_ROOT'];
     $RRD_DIR   = "$WEBDIR/rrd/perf" ;
     $RRDTOOL    = "/usr/bin/rrdtool";
-    $PNGDIR     = "$WEBDIR/images/perf" ;  
+    $PNGDIR     = SADM_WWW_TMP_DIR ;  
     $TODAY      = date("d.m.Y");
     $RRD_FILE   = "$RRD_DIR/${WHOST_NAME}/$WHOST_NAME.rrd";
     $WINTERVAL  = "adhoc" ;
@@ -234,16 +272,16 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 	$GFILENAME = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_adhoc.png"; 
 	$GTITLE    = strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC";
     $FONTCOLOR = "White"; 
-    echo "<table width=750 align=center border=1 cellspacing=0>\n";
-	
-    echo "<tr>\n" ;
-    echo "   <td width=750 align=center bgcolor='153450'><font color=$FONTCOLOR>$GTITLE</font></bold></td>\n";
-    echo "</tr>\n";
-    
-    echo "  <tr>\n";
-    echo "  <td><img src=$GFILENAME></td>\n";
-    echo "  </tr>\n" ;
-    echo "</table><br><br>";
+
+    echo "\n<table width=750 align=center border=1 cellspacing=0>";
+	echo "\n<tr>" ;
+    echo "\n<td width=750 align=center bgcolor='153450'>";
+    echo "  <font color=$FONTCOLOR>$GTITLE</font></bold></td>";
+    echo "\n</tr>";
+    echo "\n<tr>";
+    echo "\n<td><img src=$GFILENAME></td>";
+    echo "\n</tr>" ;
+    echo "\n</table><br><br>";
     return ;
 }
 	
@@ -261,10 +299,20 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 //	$ETIME = $_POST['etime'];  				echo "etime   $ETIME  <br>";
 
 	if (isset($_POST['server_name']) ) { 
-	    $SERVER_NAME = $_POST['server_name'];
-		$row = mysql_fetch_array ( mysql_query("SELECT * FROM `servers` WHERE `server_name` = '$SERVER_NAME' "));
-		$SERVER_DESC   = $row['server_desc'];
-		$SERVER_OS     = $row['server_os'];
+        $SERVER_NAME = $_POST['server_name'];
+        $sql = "SELECT * FROM `server` WHERE `srv_name` = '$SERVER_NAME'";
+        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
+            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+            $err_msg1 = "Server (" . $SERVER_NAME . ") not found.\n";   # Row was not found Msg.
+            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
+            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
+            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
+            exit;                                                       # Exit - Should not occurs
+        }
+        $row = mysqli_fetch_assoc($result);                             # Gather Result from Query
+		$SERVER_DESC   = $row['srv_desc'];
+		$SERVER_OS     = $row['srv_ostype'];
 	}else{
 	    echo "The server name was not received !";
 		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
@@ -303,7 +351,7 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 	    exit ;
 	}
 
-	echo "<center><strong><H1>Performance Graph for $SERVER_OS server $SERVER_NAME - $SERVER_DESC</strong></H1></center><br>";
+	echo "<center><strong><H2>Performance Graph for $SERVER_OS server $SERVER_NAME - $SERVER_DESC</strong></H2></center><br>";
 
 	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'cpu',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
     display_graph ($SERVER_NAME, $SERVER_DESC, "cpu");
@@ -338,5 +386,7 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 		create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'network_eth2',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
 		display_graph ($SERVER_NAME, $SERVER_DESC, "network_eth2");
 	}
+
+    echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
-<?php require      ($_SERVER['DOCUMENT_ROOT'].'/includes/footer.php')  ; ?>
