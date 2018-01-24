@@ -30,6 +30,7 @@
 # 2018_01_21 JDuplessis V1.0d - Work in Progress
 # 2018_01_22 JDuplessis V1.0e - Work in Progress
 # 2018_01_23 JDuplessis V1.0f - First woking Version
+# 2018_01_24 JDuplessis V1.1  - Add Sub and Total for Error and Success After RRD Update
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +45,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0f'                            ; export SADM_VER           # Your Script Version
+SADM_VER='1.1'                             ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -64,7 +65,7 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 # --------------------------------------------------------------------------------------------------
 # An email can be sent at the end of the script depending on the ending status 
 # 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
+SADM_MAIL_TYPE=3                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
 SADM_MAX_LOGLINE=29000                     ; export SADM_MAX_LOGLINE    # Max Nb. Lines in LOG 
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
@@ -915,11 +916,12 @@ build_paging_activity_array()
 #===================================================================================================
 rrd_update()
 {
-    ERROR_COUNT=0 ; SUCCESS=0                                           # Reset Error Success Count
+    TOTAL_ERROR=0 ; TOTAL_SUCCESS=0                                     # Reset Total Error Success
     sadm_writelog " "                                                   # Space line
     sadm_writelog "Updating RRD Database."                              # Starting RRD Update
     for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))                      # Process time Array Size
         do
+        ERROR_COUNT=0 ; SUCCESS=0                                       # Reset Error Success Count
         if [ $DEBUG_LEVEL -gt 1 ]                                       # Debug Activated
             then sadm_writelog "ARRAY_TIME  [$i]: ${ARRAY_TIME[$i]}"    # Show Time of Snapshot
         fi
@@ -1021,14 +1023,16 @@ rrd_update()
             else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >> $SADM_LOG 2>&1
         fi
         if [ $? -ne 0 ] 
-            then ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increment Error Counter 
-            else SUCCESS_COUNT=$(($SUCCESS_COUNT+1))                    # Increment Success Counter 
+            then ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increment Host Error 
+                 TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
+            else SUCCESS_COUNT=$(($SUCCESS_COUNT+1))                    # Increment Host Counter 
+                 TOTAL_SUCCESS=$(($TOTAL_SUCCESS+1))                    # Increment Total Counter 
         fi
         done
     
-    if [ $ERROR_COUNT -ne 0 ] 
-        then sadm_writelog "[ERROR] $ERROR_COUNT Errors $SUCCESS_COUNT Succeeded updating RRD ${RRD_FILE}"
-        else sadm_writelog "[OK]  Success updating the RRD Database ($SUCCESS_COUNT)" 
+    if [ $TOTAL_ERROR -ne 0 ] 
+        then sadm_writelog "[ERROR] $NMON_HOST $TOTAL_ERROR Errors $TOTAL_SUCCESS Succeeded updating RRD ${RRD_FILE}"
+        else sadm_writelog "[OK] $NMON_HOST Success updating the RRD Database ($TOTAL_SUCCESS)" 
     fi
 
     # Clear all Arrays before beginning next SnapShot
