@@ -28,24 +28,8 @@
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
-
-# DataTable Initialisation Function
-?>
-<script>
-    $(document).ready(function() {
-        $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "bJQueryUI" : true,
-            "paging"    : true,
-            "ordering"  : true,
-            "info"      : true
-        } );
-    } );
-</script>
-<?php
-
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
 
 
 #===================================================================================================
@@ -53,7 +37,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "1.0" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
@@ -68,7 +52,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 # ==================================================================================================
 
 ?>
-<form action='/unix/server_perf_adhoc_all.php' method='POST'>
+<form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>
 <?php print "<strong>Option for a group of servers</strong> <br><br>Display "; ?>
 <select name='wtype'>
   <option value="cpu">CPU usage</option>
@@ -111,19 +95,27 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 <!-- ===============================================================================================
 				Second Option - Display AdHoc Graph for selected time period 
 ================================================================================================= -->
-<form name=gph_adoc action='/unix/server_perf_adhoc.php' method='POST'>
+<form name=gph_adoc action='/view/perf/sadm_server_perf_adhoc.php' method='POST'>
 
 
 <!-- Accept the server name ==================================================================== -->
 <?php
-  echo "<strong>Option for one server</strong> <BR><BR>";
-  echo "Display graphics for server ";
-  echo "<select name='server_name'>\n";
-  $SQL = "SELECT * FROM `servers` where server_active='1' order by server_name";
-  $result = mysql_query("$SQL" ) or trigger_error(mysql_error()); 
-  while ($row = mysql_fetch_array($result)){
-    echo "<option value=$row[server_name]>$row[server_name]</option>\n";
-  }
+    echo "<strong>Option for one server</strong> <BR><BR>";
+    echo "Display graphics for server ";
+    echo "<select name='server_name'>\n";
+    $sql = "SELECT * FROM `server` where srv_active='1' order by srv_name";
+    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
+        exit;                                                           # Exit - Should not occurs
+    }
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+        echo "<option value=$row[srv_name]>$row[srv_name]</option>\n";
+    }
   echo "</select>\n";
   echo " from date ";
 ?>
@@ -265,10 +257,6 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 
 <?php 
 
-    echo "\n<tbody>\n";                                                 # Start of Table Body
-    #display_script_array($con,$SELECTION,$script_array);                # Go Display Script Array
-    echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
-
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
