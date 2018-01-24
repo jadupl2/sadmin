@@ -33,6 +33,7 @@
     echo "\n    <li><a href='/view/sys/sadm_view_sysmon.php'>Monitor</a></li>";
     echo "\n    <li><a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a></li>";
     echo "\n    <li><a href='/view/sys/sadm_subnet.php?net=192.168.1&option=all'>Network</a></li>";
+    echo "\n    <li><a href='/view/perf/sadm_server_perf_menu.php'>Performance</a></li>";
     echo "\n</ul>";
     echo "\n</div>                                  <!-- End Of sadmTopMenu -->\n\n";
 
