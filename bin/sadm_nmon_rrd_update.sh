@@ -31,6 +31,8 @@
 # 2018_01_22 JDuplessis V1.0e - Work in Progress
 # 2018_01_23 JDuplessis V1.0f - First woking Version
 # 2018_01_24 JDuplessis V1.1  - Add Sub and Total for Error and Success After RRD Update
+# 2018_01_25 JDuplessis 
+#   V1.2 - Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -45,7 +47,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.1'                             ; export SADM_VER           # Your Script Version
+SADM_VER='1.2'                             ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -1014,15 +1016,22 @@ rrd_update()
         field_value6="${A_VIR_FREE}:${A_VIR_USED}:${A_VIR_TOTAL}:"
         field_value7="${A_MPROCESS}:${A_MFSCACHE}:${A_MSYSTEM}:${A_MFREE}:${A_MPINNED}:${A_MUSER}"
         field_value="${field_value1}${field_value2}${field_value3}${field_value4}${field_value5}${field_value6}${field_value7}"
-                        
+
+        RRD_LAST_EPOCH=`${RRDTOOL} last ${RRD_FILE}`                    # Get RRD Last Epoch Update
         if [ $DEBUG_LEVEL -gt 0 ] 
             then sadm_writelog "$RRDUPDATE ${RRD_FILE} -t ${A_EPOCH}:${field_name} ${field_value}"
         fi
-        if [ "${A_EPOCH}" = "" ]
+        if [ "${A_EPOCH}" = "" ]                                        # If Epoch is Blank ?
             then sadm_writelog "Epoch time invalid (${A_EPOCH}) can't run rrdupdate"
-            else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >> $SADM_LOG 2>&1
+                 RC=$?
+            else if [ ${A_EPOCH} -le $RRD_LAST_EPOCH ]                  #epoch<=last epoch Upd. done
+                    then sadm_writelog "Epoch Time in less than last update epoch in RRD"
+                         RC=1
+                    else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
+                         RC=$?
+                 fi
         fi
-        if [ $? -ne 0 ] 
+        if [ $RC -ne 0 ] 
             then ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increment Host Error 
                  TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
             else SUCCESS_COUNT=$(($SUCCESS_COUNT+1))                    # Increment Host Counter 
