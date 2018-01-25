@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_sod_server.sh
+#   Title    :  sadm_server_start_of_day.sh
 #   Synopsis :  Start Of Day script, run daily in the morning, so it is finish when you arrive
 #               at work.
 #               It run multiple script that rsync stat. and info file from client to this server
@@ -23,8 +23,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# V1.6 Cosmetics and Refresh changes 
-# V1.7 Added execution of MySQL Database Python Update
+#   V1.6 Cosmetics and Refresh changes 
+#   V1.7 Added execution of MySQL Database Python Update
+# 2018_01_25 JDuplessis
+#   V1.8 Added execution of the update of Performance RRD based on nmon content of each server
+#        Change name from sadm_sod_server.sh to sadm_server_start_of_day.sh
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +43,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -118,6 +121,16 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
 
+    # With all the nmon collect from the server farm update respective host rrd performace database
+    SCMD="${SADM_BIN_DIR}/sadm_nmon_rrd_update.sh"
+    sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
+    $SCMD >/dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # If Error was encounter
+        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+             SADM_EXIT_CODE=1                                           # Script Global Error to 1
+        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+    fi
+
     # Scan the Subnet Selected - Inventory IP Address Avail.
     SCMD="${SADM_BIN_DIR}/sadm_subnet_lookup.py"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
@@ -127,16 +140,6 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
         else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
     fi
-
-    # Send email to SysAdmin Daily Reporting Summary of Script Activity
-    #SCMD="${SADM_BIN_DIR}/sadm_rch_scr_summary.sh -m"
-    #sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
-    #$SCMD >/dev/null 2>&1
-    #if [ $? -ne 0 ]                                                     # If Error was encounter
-    #    then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
-    #         SADM_EXIT_CODE=1                                           # Script Global Error to 1
-    #    else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
-    #fi
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
