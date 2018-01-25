@@ -36,6 +36,8 @@
 #   v1.7 Added the script to read all nmon files and create/update the proper RRD.
 # 2018_01_24 - JDuplessis
 #   v1.8 Pgm Restructure and add check to run rrd_update only on sadm server.
+# 2018_01_25 - JDuplessis
+#   v1.9 Remove rrd_update and move it to sadm_sod_server.sh (start of day script)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -52,7 +54,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.8'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.9'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -117,31 +119,25 @@ main_process()
     sadm_writelog "Main Process as started ..."
     SADM_EXIT_CODE=0                                                    # Reset Error counter
 
-    # Just before Midnight we kill nmon daemon and we restart it for another 24Hrs
-    run_command "sadm_nmon_midnight_restart.sh"                         # Midnight NMON Restart 
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
-
-    run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
-
-    # With all the nmon collect from the server farm update respective host rrd performace database
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN Server
-        then run_command "sadm_nmon_rrd_update.sh"                      # Read All nmon & Update RRD
-             if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi # Incr. Error Counter
-    fi
-
     # Once a day we Backup the MySQL Database - Run only on the SADMIN Server
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only run on SADMIN Server
         then run_command "sadm_backupdb.sh" " -c "                      # Create MySQL DB Backup
              if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi # Increase Error Cntr 
     fi
-
+    
     # On Every Client (including SADMIN Server) we prune some files & check file owner & Permission
     run_command "sadm_housekeeping_client.sh"                           # Client HouseKeeping Script
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
+    # Just before Midnight we kill nmon daemon and we restart it for another 24Hrs
+    run_command "sadm_nmon_midnight_restart.sh"                         # Midnight NMON Restart 
+    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
     run_command "sadm_fs_save_info.sh"                                  # Client Save LVM FS Info
+    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+
+    run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)
@@ -151,6 +147,8 @@ main_process()
     # Create HTML file containing System Info.(files,hardware,software) $SADMIN/dat/dr/hostname.html
     run_command "sadm_create_cfg2html.sh"                               # Produce cfg2html html file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+
+
 
     return $SADM_EXIT_CODE                                              # Return No Error to Caller
 }
