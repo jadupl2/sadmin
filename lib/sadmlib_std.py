@@ -24,6 +24,8 @@
 #   V2.3 Added Check for facter command , if present use it get get hardware info
 # 2018_01_03 - JDuplessis
 #   V2.4 Add New arc Directory in $SADMIN/www for archiving
+# 2018_01_25 JDuplessis
+#   V2.5 Add SADM_RRDTOOL to sadmin.cfg for php page using it
 # 
 # ==================================================================================================
 try :
@@ -42,7 +44,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.4"                                             # This Library Version
+libver              = "2.5"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -165,6 +167,7 @@ class sadmtools():
         self.cfg_ro_dbuser              = ""                            # MySQL Read Only User
         self.cfg_ro_dbpwd               = ""                            # MySQL Read Only Pwd
         self.cfg_ssh_port               = 22                            # SSH Port used in Farm
+        self.cfg_rrdtool                = ""                            # RRDTool location
         self.cfg_backup_nfs_server      = ""                            # Backup NFS Server
         self.cfg_backup_nfs_mount_point = ""                            # Backup Mount Point
         self.cfg_backup_nfs_to_keep     = 3                             # Nb of NFS backup to Keep
@@ -322,6 +325,7 @@ class sadmtools():
             if "SADM_GROUP"                  in CFG_NAME:  self.cfg_group          = CFG_VALUE
             if "SADM_WWW_USER"               in CFG_NAME:  self.cfg_www_user       = CFG_VALUE
             if "SADM_WWW_GROUP"              in CFG_NAME:  self.cfg_www_group      = CFG_VALUE
+            if "SADM_RRDTOOL"                in CFG_NAME:  self.cfg_rrdtool        = CFG_VALUE
             if "SADM_SSH_PORT"               in CFG_NAME:  self.cfg_ssh_port       = int(CFG_VALUE)
             if "SADM_MAX_LOGLINE"            in CFG_NAME:  self.cfg_max_logline    = int(CFG_VALUE)
             if "SADM_MAX_RCHLINE"            in CFG_NAME:  self.cfg_max_rchline    = int(CFG_VALUE)
@@ -1239,6 +1243,7 @@ class sadmtools():
         print("obj.cfg_rw_dbpwd         SADMIN MySQL Read/Write Pwd   : %s" % (self.cfg_rw_dbpwd))
         print("obj.cfg_ro_dbuser        SADMIN MySQL Read Only User   : %s" % (self.cfg_ro_dbuser))
         print("obj.cfg_ro_dbpwd         SADMIN MySQL Read Only Pwd    : %s" % (self.cfg_ro_dbpwd))
+        print("obj.cfg_rrdtool          rrdtool location              : %s" % (self.cfg_rrdtool))
         print("obj.cfg_ssh_port         SSH Port (Default 22)         : %s" % (str(self.cfg_ssh_port)))
         print("obj.cfg_network1         Network 1 Scan for Info       : %s" % (self.cfg_network1))
         print("obj.cfg_network2         Network 2 Scan for Info       : %s" % (self.cfg_network2))
