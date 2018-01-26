@@ -33,6 +33,7 @@
 # 2018_01_24 JDuplessis V1.1  - Add Sub and Total for Error and Success After RRD Update
 # 2018_01_25 JDuplessis 
 #   V1.2 - Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
+#   V1.2a - Added removal on work temp. file at the end
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -47,7 +48,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.2'                             ; export SADM_VER           # Your Script Version
+SADM_VER='1.2a'                            ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -1110,6 +1111,9 @@ main_process()
         build_memnew_array                                              # Aix nmon Build MemNew
         rrd_update                                                      # Update RRD from arrays 
         done < $NMON_FILE_LIST
+
+        # Remove Temporary file
+        if [ -r $NMON_FILE_LIST ] ; then rm -f $NMON_FILE_LIST ; fi
 }
 
  
@@ -1190,5 +1194,6 @@ main_process()
 
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
