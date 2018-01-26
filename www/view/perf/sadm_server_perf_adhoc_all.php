@@ -1,9 +1,44 @@
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/connection.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/includes/header.php')  ; ?>
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/functions.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/unix/server_menu.php')  ; ?>
-
 <?php
+# ================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadm_server_perf_adhoc_all.php
+#   Version  :  1.0
+#   Date     :  25 January 2018
+#   Requires :  php
+#   Synopsis :  Present Options to Generate Performance Graphics for Server(s)#   
+#
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   2018_01_25 JDuplessis
+#       V 1.0 Initial Version
+#
+# ==================================================================================================
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
+
+
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG = False ;                                                        # Debug Activated True/False
+$SVER  = "1.0" ;                                                        # Current version number
+
 // ================================================================================================
 //                       Create 2 Years Graph for the server received in parameter
 // ================================================================================================
@@ -236,7 +271,7 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC, $WTYPE, $WPERIOD, $WCOUNT)
     $IMGDIR     = "/images/perf" ;
     $GFILENAME = $_SERVER['DOCUMENT_ROOT'] . "${IMGDIR}/${WHOST_NAME}_${WTYPE}_${WPERIOD}.png";
 //    if (file_exists($GFILENAME)) {
-       echo "   <td><a href=/unix/server_performance.php?host=$WHOST_NAME><img src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_${WPERIOD}_all.png alt=\"Click here to view performance graph for $WHOST_NAME\"></a></td>\n";
+       echo "   <td><a href=/view/perf/sadm_server_perf.php?host=$WHOST_NAME><img src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_${WPERIOD}_all.png alt=\"Click here to view performance graph for $WHOST_NAME\"></a></td>\n";
 //    } else {
 //       echo "   <td align=center height=125 width=250>No Graph for ${WHOST_NAME}</td>\n";
 //    }
@@ -315,32 +350,42 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC, $WTYPE, $WPERIOD, $WCOUNT)
 	
 	if (isset($_POST['wservers']) ) { 
 		$WSERVERS = $_POST['wservers'];
+        $sql="SELECT * FROM server " ;
 	    switch ($WSERVERS) {
 		case "all_linux"  :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Linux' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
-		case "all_aix" :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Aix' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
+            $sql .= "where srv_ostype='linux' and srv_active=1 order by srv_name";
+            break;
+        case "all_aix" :
+            $sql .= "where srv_ostype='aix' and srv_active=1 order by srv_name";
+	        break;
 		case "all_servers"  :
-	            $result = mysql_query("SELECT * FROM `servers` where (server_os='Linux' or server_os='Aix') and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
+	        $sql .= "where (srv_ostype='linux' or srv_ostype='aix') and srv_active=1 order by srv_name";
+	        break;
 		case "all_linux_prod" :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Linux' and server_type='Prod' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
-		case "all_linux_dev"  :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Linux' and server_type='Dev' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
+        $sql .= "where srv_ostype=='linux' and srv_cat='Prod' and server_active=1 order by server_name";
+        break;
+        case "all_linux_dev"  :
+            $sql .= "where srv_ostype=='linux' and srv_cat='Dev' and server_active=1 order by server_name";
+	        break;
 		case "all_aix_prod" :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Aix' and server_type='Prod' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
-		case "all_aix_dev"  :
-	            $result = mysql_query("SELECT * FROM `servers` where server_os='Aix' and server_type='Dev' and server_active=1 and server_graphic=1 order by server_name" ) or trigger_error(mysql_error()); 
-	            break;
-		default:
+            $sql .= "where srv_ostype=='aix' and srv_cat='Prod' and server_active=1 order by server_name";
+            break;
+        case "all_aix_dev"  :
+            $sql .= "where srv_ostype=='aix' and srv_cat='Prod' and server_active=1 order by server_name";
+            break;
+        default:
 		    echo "The WOS received is invalid ($WOS)" ;
 		    exit ;
-	    }
+        }
+        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
+            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+            $err_msg1 = "Sql Failed \n";                                # Row was not found Msg.
+            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
+            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
+            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
+            exit;                                                       # Exit - Should not occurs
+        }
 	}else{
 		echo "The WOS received is invalid ($WOS)" ;
 		exit ;
@@ -351,16 +396,19 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC, $WTYPE, $WPERIOD, $WCOUNT)
 
     echo "<table width=750 align=center border=2 cellspacing=1>\n";
     echo "  <tr>\n" ;
-    while ($row = mysql_fetch_array($result)){
+    while ($row = mysqli_fetch_assoc($result)) {                             # Gather Result from Query
           $COUNT+=1;
-          $HOSTNAME = $row['server_name'] ;
-		  $HOSTDESC = $row['server_desc'] ;
-		  $HOSTOS   = $row['server_os'];
+          $HOSTNAME = $row['srv_name'] ;
+		  $HOSTDESC = $row['srv_desc'] ;
+		  $HOSTOS   = $row['srv_ostype'];
           create_standard_graphic ($HOSTNAME, $HOSTDESC, $WTYPE, $WPERIOD, $HOSTOS);
           display_graph ($HOSTNAME, $HOSTDESC, $WTYPE , $WPERIOD, $COUNT, $HOSTOS);
     }
     echo "  </tr>\n" ; 
     echo "</table><br><br>";
 
+
+    echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
-<?php require      ($_SERVER['DOCUMENT_ROOT'].'/includes/footer.php')  ; ?>
+

@@ -1,26 +1,54 @@
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/connection.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/includes/header.php')  ; ?>
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/functions.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/unix/server_menu.php')  ; ?>
-<script type="text/javascript">
-<!-- hide
-function OLpreviewImage(src) {
-    return '<img src="' + src + '"/>';
-}
-// end hiding -->
-</script>
-
 <?php
-// ================================================================================================
-//                       Transform date (DD/MM/YYY) into MYSQL format
-// ================================================================================================
+# ================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadm_server_perf.php
+#   Version  :  1.0
+#   Date     :  25 January 2018
+#   Requires :  php
+#   Synopsis :  Present Performance Graphics for Server received 
+#
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   2018_01_25 JDuplessis
+#       V 1.0 Initial Version
+#
+# ==================================================================================================
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
+
+
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG  = False ;                                                       # Debug Activated True/False
+$SVER   = "1.0" ;                                                       # Current version number
+$IMGDIR = "/tmp/perf" ;
+
+# ================================================================================================
+#                       Transform date (DD/MM/YYY) into MYSQL format
+# ================================================================================================
 function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 {
-    $RRD_DIR   = "/sysinfo/www/rrd/perf" ;
-    $RRDTOOL    = "/usr/bin/rrdtool"; 
-    $WEBDIR     = "/sysinfo/www";
-    $PNGDIR     = "$WEBDIR/images/perf" ;  
-    $IMGDIR     = "/images/perf" ;  
+    $RRD_FILE   = SADM_WWW_RRD_DIR . "/${WHOST_NAME}/${WHOST_NAME}.rrd";
+    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;  
+
+
     $TODAY      = date("d.m.Y");
     $YESTERDAY  = mktime(0, 0, 0, date("m") , date("d")-1,   date("Y"));
     $YESTERDAY  = date ("d.m.Y",$YESTERDAY);
@@ -36,30 +64,28 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
     $LAST2YEAR  = date ("d.m.Y",$LAST2YEAR);
     $HRS_START  = "00:00" ;
     $HRS_END    = "23:59" ;  
-    $RRD_FILE   = "$RRD_DIR/${WHOST_NAME}/$WHOST_NAME.rrd";
-
 
     switch ($WTYPE) {
         case "cpu":
             // Build command to execute and produce last 2 days of Graph
-            $START      = "$HRS_START $YESTERDAY2" ;
-            $END        = "$HRS_END $YESTERDAY";
-            $WINTERVAL  = "day" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
+            $START     = "$HRS_START $YESTERDAY2" ;
+            $END       = "$HRS_END $YESTERDAY";
+            $WINTERVAL = "day" ;
+            $GFILE     = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
+            $GTITLE    = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
+            $CMD1      = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD2      = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
-				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
-				$CMD4       = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
+				$CMD3  = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
+				$CMD4  = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
+	            $CMD   = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
 			}else{
-	            $CMD3       = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4       = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5       = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6       = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7       = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
+	            $CMD3  = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
+	            $CMD4  = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
+	            $CMD5  = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
+	            $CMD6  = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
+	            $CMD7  = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
+	            $CMD   = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
 
@@ -69,7 +95,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
@@ -91,7 +117,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
@@ -113,7 +139,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
@@ -140,7 +166,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -165,7 +191,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -186,7 +212,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -207,7 +233,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -233,9 +259,9 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Memory Usage Pct\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -259,7 +285,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 125 --width 250  --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -283,7 +309,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -307,7 +333,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
@@ -336,7 +362,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 250 --width 950";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
@@ -355,7 +381,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
@@ -374,7 +400,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
@@ -393,7 +419,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
@@ -418,7 +444,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 250 --width 950";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
@@ -437,7 +463,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
@@ -456,7 +482,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
@@ -475,7 +501,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
@@ -500,7 +526,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 250 --width 950";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
@@ -519,7 +545,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
@@ -537,7 +563,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
@@ -555,7 +581,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
@@ -575,7 +601,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
 			if ( $WOS == "Linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
@@ -600,7 +626,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
 			if ( $WOS == "Linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
@@ -621,7 +647,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
 			if ( $WOS == "Linux" ) {
                 $CMD2       = "--vertical-label \"in PCT\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
@@ -642,7 +668,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
 			if ( $WOS == "Linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
@@ -668,7 +694,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
@@ -687,7 +713,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
@@ -706,7 +732,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
@@ -725,7 +751,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
@@ -749,7 +775,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
@@ -768,7 +794,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
@@ -787,7 +813,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
@@ -806,7 +832,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
@@ -828,7 +854,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "day" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
@@ -847,7 +873,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "week" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
@@ -866,7 +892,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "month" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
@@ -885,7 +911,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $WINTERVAL  = "year" ;
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1       = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
@@ -907,7 +933,6 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 // ================================================================================================
 function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 {
-    $IMGDIR     = "/images/perf" ;
     $FONTCOLOR = "White"; 
     echo "<table width=750 align=center border=1 cellspacing=0>\n";
 
@@ -930,55 +955,73 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
 }
 	
  
-if (isset($_GET['host']) ) { 
-    $HOSTNAME = $_GET['host'];
-    $row = mysql_fetch_array ( mysql_query("SELECT * FROM `servers` WHERE `server_name` = '$HOSTNAME' "));
-    $HOSTDESC   = $row['server_desc'];
-	$HOST_OS     = $row['server_os'];
 
-    echo "<center><strong><H1>Performance Graph - server $HOSTNAME - $HOSTDESC</strong></H1></center><br>";
+# ==================================================================================================
+#*                                      PROGRAM START HERE
+# ==================================================================================================
+#
+    if (isset($_GET['host']) ) { 
+        $HOSTNAME = $_GET['host'];
+        $sql = "SELECT * FROM `server` WHERE `srv_name` = '$HOSTNAME' ";
+        if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.   
+        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
+            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
+            $err_msg1 = "Server (" . $HOSTNAME . ") not found.\n";      # Row was not found Msg.
+            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
+            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
+            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
+            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
+            exit;                                                       # Exit - Should not occurs
+        }else{                                                          # If row was found
+            $row = mysqli_fetch_assoc($result);                         # Read the Associated row
+        }
+        $HOSTDESC = $row['srv_desc'];                                   # Get Host Description
+        $HOST_OS  = $row['srv_ostype'];                                 # Get O/S Type linux/aix
+
+        echo "<center><strong><H2>";
+        echo "Performance Graph - server $HOSTNAME - $HOSTDESC";
+        echo "</strong></H1></center><br>";
     
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "cpu", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "cpu");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "runqueue", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "runqueue");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "diskio", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "diskio");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "memory");
-
-	if ($HOST_OS == "Aix") {
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory_usage", $HOST_OS);
-        display_graph ($HOSTNAME, $HOSTDESC, "memory_usage");
-	}
-	
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_activity", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "paging_activity");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_space_usage", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "paging_space_usage");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth0", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "network_eth0");
-
-    create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth1", $HOST_OS);
-    display_graph ($HOSTNAME, $HOSTDESC, "network_eth1");
-
-	if ($HOST_OS == "Aix") {
-		create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth2", $HOST_OS);
-        display_graph ($HOSTNAME, $HOSTDESC, "network_eth2");
-	}
-}
-	if ($HOST_OS == "Aix") {
-       echo "<center><A HREF='/data/nmon/archive/aix/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
-    }else{
-       echo "<center><A HREF='/data/nmon/archive/linux/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
-
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "cpu", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "cpu");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "runqueue", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "runqueue");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "diskio", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "diskio");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "memory");
+        if ($HOST_OS == "aix") {
+            create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory_usage", $HOST_OS);
+            display_graph ($HOSTNAME, $HOSTDESC, "memory_usage");
+        }
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_activity", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "paging_activity");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_space_usage", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "paging_space_usage");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth0", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "network_eth0");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth1", $HOST_OS);
+        display_graph ($HOSTNAME, $HOSTDESC, "network_eth1");
+        if ($HOST_OS == "Aix") {
+            create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth2", $HOST_OS);
+            display_graph ($HOSTNAME, $HOSTDESC, "network_eth2");
+        }
+    }else{                                                              # If No Key Rcv or Blank
+        $err_msg = "No Server Name Received - Please Advise" ;          # Construct Error Msg.
+        sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
+        ?>
+        <script>location.replace("/view/perf/sadm_server_perf_menu.php");</script>
+        <?php                                                           # Back 2 List Page
+        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
+        exit ; 
     }
 
-    
+    if ($HOST_OS == "aix") {
+        echo "<center><A HREF='/data/nmon/archive/aix/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
+    }else{
+       echo "<center><A HREF='/data/nmon/archive/linux/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
+    }
+    echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
-<?php require      ($_SERVER['DOCUMENT_ROOT'].'/includes/footer.php')  ; ?>
+
