@@ -37,6 +37,8 @@
 #   V2.13 Remove Warning when command can't be found for compatibility
 # 2018_01_23 JDuplessis
 #   V2.14 Add arc directory in $SADMIN/www for archiving purpose
+# 2018_01_25 JDuplessis
+#   V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -55,7 +57,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.14"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.15"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -120,7 +122,6 @@ SADM_NMON=""                                ; export SADM_NMON          # Path t
 SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
 SADM_ETHTOOL=""                             ; export SADM_ETHTOOL       # Path to ethtool Command
 SADM_SSH=""                                 ; export SADM_SSH           # Path to ssh Exec.
-SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
@@ -156,6 +157,8 @@ SADM_NETWORK4=""                            ; export SADM_NETWORK4      # Networ
 SADM_NETWORK5=""                            ; export SADM_NETWORK5      # Network 5 to Scan 
 DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL Passwd File
 SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
+SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
+SADM_RRDTOOL=""                             ; export SADM_RRDTOOL       # RRDTool Location
 SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER
 SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT
 SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP   
@@ -1458,6 +1461,9 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_RRDTOOL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_RRDTOOL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
         #
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -1528,6 +1534,7 @@ sadm_load_config_file() {
                  sadm_writelog "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
                  sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
                  sadm_writelog "  - SADM_SSH_PORT=$SADM_SSH_PORT"           # SADMIN SSH TCP Port
+                 sadm_writelog "  - SADM_RRDTOOL=$SADM_RRDTOOL"             # RRDTOOL Location
                  sadm_writelog "  - SADM_USER=$SADM_USER"                   # sadmin user account
                  sadm_writelog "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
                  sadm_writelog "  - SADM_WWW_USER=$SADM_WWW_USER"           # sadmin user account
