@@ -33,6 +33,8 @@
 #   V2.1 Adapted to use MySQL instead of Postgres Database
 # 2017_12_23 JDuplessis
 #   V2.3 Changes for performance and flexibility
+# 2018_01_25 JDuplessis
+#   V2.4 Added Variable SADM_RRDTOOL to sadmin.cfg display
 #===================================================================================================
 try :
     import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
@@ -85,7 +87,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.3"                             # Your Script Version 
+    st.ver  = "2.4"                             # Your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'L'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
