@@ -14,6 +14,8 @@
 # 2.5 Adapt with New Library Version & Remove Screen test (Move to sadmlib_screen_test.sh)
 # 2018_01_02 JDuplessis
 #   V2.6 Display Path for command facter
+# 2018_01_25 JDuplessis
+#   V2.7 Added Variable SADM_RRDTOOL to sadmin.cfg display
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -32,7 +34,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.6'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.7'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -243,6 +245,7 @@ Debug=true                                      ; export Debug          # Debug 
     printf "SADM_USER                   = $SADM_USER\n"
     printf "SADM_GROUP                  = $SADM_GROUP\n"
     printf "SADM_SSH_PORT               = $SADM_SSH_PORT\n"
+    printf "SADM_RRDTOOL                = $SADM_RRDTOOL\n"
     printf "SADM_WWW_USER               = $SADM_WWW_USER\n" 
     printf "SADM_WWW_GROUP              = $SADM_GROUP\n" 
     printf "SADM_MAX_LOGLINE            = $SADM_MAX_LOGLINE\n" 
