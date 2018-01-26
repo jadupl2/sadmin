@@ -16,6 +16,8 @@
 #       V2.2 Define New Variable loaded from sadmin.cfg 
 #   2018_01_10 JDuplessis
 #       V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
+#   2018_01_25 JDuplessis
+#       V2.4 Add RRD Tools Variable 
 # --------------------------------------------------------------------------------------------------
 #
 # Setting the HOSTNAME Variable
@@ -50,6 +52,7 @@ define("SADM_WWW_DOC_DIR"  , SADM_WWW_DIR  . "/doc");                   # Web se
 define("SADM_WWW_CFG_DIR"  , SADM_WWW_DIR  . "/cfg");                   # Web Server CFG Dir
 define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Server Data Dir
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
+define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
 define("SADM_WWW_RCH_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/rch");    # Web rch dir
 define("SADM_WWW_SAR_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/sar");    # Web sar dir
@@ -111,6 +114,7 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_NETWORK4")      { define("SADM_NETWORK4"      , trim($fvalue));}
           if (trim($fname) == "SADM_NETWORK5")      { define("SADM_NETWORK5"      , trim($fvalue));}
           if (trim($fname) == "SADM_SSH_PORT")      { define("SADM_SSH_PORT"      , trim($fvalue));}
+          if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_SERVER")      { define("SADM_BACKUP_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_MOUNT_POINT") { define("SADM_BACKUP_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_TO_KEEP")     { define("SADM_BACKUP_NFS_TO_KEEP"     , trim($fvalue));}
