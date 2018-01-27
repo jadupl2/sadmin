@@ -54,7 +54,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.9a'                            ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -129,14 +129,11 @@ main_process()
     run_command "sadm_housekeeping_client.sh"                           # Client HouseKeeping Script
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-    # Just before Midnight we kill nmon daemon and we restart it for another 24Hrs
-    run_command "sadm_nmon_midnight_restart.sh"                         # Midnight NMON Restart 
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
-
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
     run_command "sadm_fs_save_info.sh"                                  # Client Save LVM FS Info
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
+    # Collect System Activity report and store it in $SADMIN/dat/sar 
     run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
@@ -148,10 +145,10 @@ main_process()
     run_command "sadm_create_cfg2html.sh"                               # Produce cfg2html html file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
-
-
     return $SADM_EXIT_CODE                                              # Return No Error to Caller
 }
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
@@ -169,6 +166,5 @@ main_process()
 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)  
