@@ -22,7 +22,10 @@
 #               Add Section to put command to execute on specified Systems
 # Version 2.8 - July 2017
 #               Message display when starting Cosmetic Change 
-# 2017_08_03 JDuplessis - V2.9 Bug Fix - Missing Quote
+# 2017_08_03 JDuplessis 
+#   V2.9 Bug Fix - Missing Quote
+# 2018_01_27 JDuplessis 
+#   V3.0 Start 'nmon' as standard startup procedure 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
@@ -86,6 +89,9 @@ main_process()
 
     sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
     ntpdate -u $NTP_SERVER >> $SADM_LOG 2>&1
+
+    sadm_writelog "  Start 'nmon' System Monitor"
+    ${SADM_BIN_DIR}/sadm_nmon_watcher.sh >> $SADM_LOG 2>&1
 
     # Special Operation for some particular System
     sadm_writelog " "
