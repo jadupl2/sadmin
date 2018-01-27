@@ -21,6 +21,9 @@
 # 2017_12_29 J.Duplessis 
 #       V2.0 Add Warning message stating that nmon not available on MacOS
 # --------------------------------------------------------------------------------------------------
+# 2017_01_27 J.Duplessis 
+#       V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comments
+# --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
@@ -38,7 +41,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -83,37 +86,42 @@ TOT_SNAPSHOT=`expr $TOT_SNAPSHOT - 1 `			                    # Sub. 1 SnapShot j
 
     
 # --------------------------------------------------------------------------------------------------
-#     - Set command path used in the script (Some path are different on some RHEL Version)
-#     - Check if Input exist and is readable
+# Check availibility of 'nmon' and permmission and 
+# Deactivate nmon cron file 
+#   - If nmon is not running, for any reason SADMIN will restart it, with proper parameters to 
+#       run until 23:55 (sadm_nmon_watcher.sh) 
+#   - SADMIN will start a fresh daemon every night at midnight.
+#       (admin cron - sadmin_nmon_midnight_restart.sh)
 # --------------------------------------------------------------------------------------------------
-#
 pre_validation()
 {
-
-    # Verify if the nmon executable was found by SADM Library
-    if [ "$SADM_NMON" = "" ] 
-        then SADM_EXIT_CODE=1 
-             sadm_writelog "The nmon command was NOT found - Cannot start daemon"
-        else sadm_writelog "The nmon command was found at $SADM_NMON"
-             NMON=$SADM_NMON
-             SADM_EXIT_CODE=0
+    NMON=`which nmon >/dev/null 2>&1`                                   # Is nmon executable Avail.?
+    if [ $? -eq 0 ]                                                     # If it is, Save Full Path 
+        then NMON=`which nmon`                                          # Save 'nmon' location 
+             export NMON                                                # Make Avail. to SubProcess
+             sadm_writelog "[OK] Yes, 'nmon' is available ($NMON)"      # Show user result OK
+        else sadm_writelog "[ERROR] The command 'nmon' was not found"   # Show User Error
+             return 1                                                   # Return error to caller
+    fi
+    if [ ! -x $NMON ]                                                   # Is nmon executable ?
+       then sadm_writelog "'nmon' ($NMON) missing execution permission" # Advise User of error
+            return 1                                                    # Return Error to Caller
     fi
 
     # If nmon started by cron - Put crontab line in comment
     # What to make sure that only one nmon is running and is the one controlled by this script
-    if [ $(sadm_get_ostype) = "LINUX" ]
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux O/S
         then nmon_cron='/etc/cron.d/nmon-script'                        # Name of the nmon cron file
              if [ -r "$nmon_cron" ]                                     # nmon cron file exist ?
-                then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1` # Get 1st Char Of nmon line
+                then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1` # 1st Char nmon line
                      if [ "$commented" = "0" ]                          # Cron Line not in commented
                         then sed -i -e 's/^/#/' $nmon_cron              # Then Put line in comment
-                             sadm_writelog "$nmon_cron file was put in comment" # Leave trace of this
-                        else sadm_writelog "$nmon_cron file is in comment - OK" # Leave trace of this
+                             sadm_writelog "$nmon_cron file was put in comment" # Advise user 
+                        else sadm_writelog "$nmon_cron file is in comment - OK" # Advise user 
                      fi
              fi
     fi
-    
-    return $SADM_EXIT_CODE
+    return 0
 }
 
 
@@ -123,16 +131,18 @@ pre_validation()
 #
 check_nmon()
 {
-    if [ $(sadm_get_ostype) = "AIX" ]
-        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1
-             if [ $? -eq 0 ]
-                then TOPAS_NMON=`${SADM_WHICH} topas_nmon`
-                     WSEARCH="${SADM_NMON}|${TOPAS_NMON}"
-                else WSEARCH=$SADM_NMON
+
+    # On Aix we might be running 'nmon' (older aix) or 'topas_nmon' (latest Aix)
+    if [ $(sadm_get_ostype) = "AIX" ]                                   # If Server is running Aix
+        then ${SADM_WHICH} topas_nmon >/dev/null 2>&1                   # Lastest Aix use topas_nmon
+             if [ $? -eq 0 ]                                            # topas_nmon on system ?
+                then TOPAS_NMON=`${SADM_WHICH} topas_nmon`              # Save Path to topas_nmon
+                     WSEARCH="${SADM_NMON}|${TOPAS_NMON}"               # Will search for both nmon
+                else WSEARCH=$SADM_NMON                                 # Will search for nmon only
+                     TOPAS_NMON=""                                      # topas_nmon path not found
              fi
-        else WSEARCH=$SADM_NMON
+        else WSEARCH=$SADM_NMON                                         # Linux search for nmon only
     fi
-    
     
     # Kill any nmon running without the option -s300 (Our switch) - Want only one nmon running
     # This will eliminate the nmon running from the crontab with rpm installation
@@ -148,11 +158,11 @@ check_nmon()
     fi
              
  
-    # Display Current Running Number of nmon process
+    # Search Process Status (ps) and display number of nmon process running currently
+    sadm_writelog " "                                                   # Blank line in log
     nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running"
+    sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
     ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
-
 
     # nmon_count = 0 = Not running - Then we start it 
     # nmon_count = 1 = Running - Then OK
@@ -190,14 +200,21 @@ check_nmon()
                      SADM_EXIT_CODE=1 
                 else SADM_EXIT_CODE=0
             fi
-            sadm_writelog " "
-            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-            sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
-            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl 
             ;;
     esac
 
-    # Display Process Info after starting nmon
+    # Search Process Status (ps) and display number of nmon process running currently
+    sadm_writelog " "                                                   # Blank line in log
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
+    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
+
+    # Display Last two nmon files created
+    sadm_writelog " "                                                   # Blank line in log
+    sadm_writelog "Last two nmon files created"                         # SHow what were doing
+    ls -ltr $SADM_NMON_DIR | tail -2 |  while read wline ; do sadm_writelog "$wline"; done
+    sadm_writelog " "                                                   # Blank line in log
+
     return $SADM_EXIT_CODE
 }
 
