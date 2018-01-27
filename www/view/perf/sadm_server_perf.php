@@ -23,6 +23,7 @@
 # ChangeLog
 #   2018_01_25 JDuplessis
 #       V 1.0 Initial Version
+#       V 1.1 WIP Initial Version
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -36,18 +37,18 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG  = False ;                                                       # Debug Activated True/False
-$SVER   = "1.0" ;                                                       # Current version number
+$DEBUG  = True ;                                                       # Debug Activated True/False
+$SVER   = "1.1" ;                                                       # Current version number
 $IMGDIR = "/tmp/perf" ;
 
+
 # ================================================================================================
-#                       Transform date (DD/MM/YYY) into MYSQL format
+#                  Generate the Performance Graphic from the rrd of hostname received 
 # ================================================================================================
 function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 {
     $RRD_FILE   = SADM_WWW_RRD_DIR . "/${WHOST_NAME}/${WHOST_NAME}.rrd";
     $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;  
-
 
     $TODAY      = date("d.m.Y");
     $YESTERDAY  = mktime(0, 0, 0, date("m") , date("d")-1,   date("Y"));
@@ -65,13 +66,25 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
     $HRS_START  = "00:00" ;
     $HRS_END    = "23:59" ;  
 
+    if ($DEBUG) { 
+       echo "TODAY      = $TODAY     ";
+       echo "YESTERDAY  = $YESTERDAY ";
+       echo "YESTERDAY2 = $YESTERDAY2";
+       echo "LASTWEEK   = $LASTWEEK  ";
+       echo "LASTMONTH  = $LASTMONTH ";
+       echo "LASTYEAR   = $LASTYEAR  ";
+       echo "LAST2YEAR  = $LAST2YEAR ";
+       echo "HRS_START  = $HRS_START ";
+       echo "HRS_END    = $HRS_END   ";
+    }
+
+
     switch ($WTYPE) {
         case "cpu":
             // Build command to execute and produce last 2 days of Graph
             $START     = "$HRS_START $YESTERDAY2" ;
             $END       = "$HRS_END $YESTERDAY";
-            $WINTERVAL = "day" ;
-            $GFILE     = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
+            $GFILE     = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_day.png";
             $GTITLE    = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1      = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2      = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
@@ -85,8 +98,9 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 	            $CMD5  = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
 	            $CMD6  = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
 	            $CMD7  = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD   = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
-			}
+	            $CMD   = "$CMD1"." $CMD2 "." $CMD3"." $CMD4"." $CMD5"." $CMD6"." $CMD7";
+            }
+            if ($DEBUG) { echo "CMD:" . $CMD ; }
             $outline    = exec ("$CMD", $array_out, $retval);
 
             // Build command to execute and produce last 7 days
@@ -925,32 +939,45 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $outline    = exec ("$CMD", $array_out, $retval);
             break;
     }
+    return ;
 }
 
 
-// ================================================================================================
-//                       Display Graphic Page 
-// ================================================================================================
-function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
+# ==================================================================================================
+#                          Display Performance Graphic Page just Generated 
+# ==================================================================================================
+function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
 {
     $FONTCOLOR = "White"; 
-    echo "<table width=750 align=center border=1 cellspacing=0>\n";
-
-    echo "  <tr>\n" ;
-    //echo "   <td width=750 align=center colspan=3 bgcolor='aqua'>" . strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC</td>\n";
-    echo "   <td width=750 align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>" . strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC</font></bold></td>\n";
-
-    echo "  </tr>\n";
     
-    echo "  <tr align=left>\n";
-    echo "   <td colspan=3 ><img src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_day.png></td>\n";
-    echo "  </tr>\n" ; 
-    echo "  <tr align=center>\n";
-    echo "   <td><A HREF='/unix/server_perf_week.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE'><img  src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_week.png alt=\"Click to see larger view of last week   \"></a></td>\n";
-    echo "   <td><A HREF='/unix/server_perf_month.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE'><img src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_month.png alt=\"Click to see a detailed view of last month  \"></a></td>\n";
-    echo "   <td><A HREF='/unix/server_perf_2year.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE'><img src=${IMGDIR}/${WHOST_NAME}_${WTYPE}_year.png  alt=\"Click to view last 2 years\"></a></td>\n";
-    echo "  </tr>\n" ; 
-    echo "</table><br><br>";
+    $IMG_DAY   = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_day.png";
+    $IMG_WEEK  = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_week.png";
+    $IMG_MTH   = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_month.png";
+    $IMG_YEAR  = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_year.png";
+    $URL_WEEK  = "/view/perf/sadm_server_perf_week.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
+    $URL_MTH   = "/view/perf/sadm_server_perf_month.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
+    $URL_YEAR  = "/view/perf/sadm_server_perf_2year.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
+    $ALT_WEEK  = "Click to see larger view of last week";
+    $ALT_MTH   = "Click to see a detailed view of last month";
+    $ALT_YEAR  = "Click to view last 2 years";
+
+    echo "\n<table width=750 align=center border=1 cellspacing=0>\n";
+    echo "\n<tr>" ;
+    echo "\n<td width=750 align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>";
+    echo  strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC</font></bold></td>";
+    echo "\n</tr>";
+    
+    echo "\n<tr align=left>";
+    echo "\n<td colspan=3 ><img src=${IMG_DAY}></td>";
+    echo "\n</tr>" ; 
+
+    echo "\n<tr align=center>";
+    echo "\n<td><A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
+    echo "\n<td><A HREF='${URL_MTH}'> <img src=${IMG_MTH}  alt=\"${ALT_MTH} \"></a></td>";
+    echo "\n<td><A HREF='${URL_YEAR}'><img src=${IMG_YEAR} alt=\"${ALT_YEAR}\"></a></td>";
+    echo "\n</tr>" ;
+
+    echo "\n</table><br><br>";
     return ;
 }
 	
