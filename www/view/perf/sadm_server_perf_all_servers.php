@@ -1,9 +1,46 @@
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/connection.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/includes/header.php')  ; ?>
-<?php require_once ($_SERVER['DOCUMENT_ROOT'].'/includes/functions.php'); ?>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/unix/server_menu.php')  ; ?>
-        
 <?php
+# ================================================================================================
+#   Author   :  Jacques Duplessis
+#   Title    :  sadm_server_perf.php
+#   Version  :  1.0
+#   Date     :  25 January 2018
+#   Requires :  php
+#   Synopsis :  Present Performance Graphics for Server received 
+#
+#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#
+#   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
+#   of the GNU General Public License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+#   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#   See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+# ==================================================================================================
+# ChangeLog
+#   2018_01_25 JDuplessis
+#       V 1.0 Initial Version
+#       V 1.1 WIP Initial Version
+#
+# ==================================================================================================
+# REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
+
+
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG  = True ;                                                       # Debug Activated True/False
+$SVER   = "1.1" ;                                                       # Current version number
+$IMGDIR = "/tmp/perf" ;
+
 
 // ================================================================================================
 //                       Create 2 Years Graph for the server received in parameter
@@ -230,5 +267,6 @@ if (isset($_GET['wtype']) ) {
     echo "  </tr>\n" ; 
     echo "</table><br><br>";
 } 
+    echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
+    std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
-<?php require      ($_SERVER['DOCUMENT_ROOT'].'/includes/footer.php')  ; ?>

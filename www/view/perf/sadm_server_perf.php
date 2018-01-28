@@ -39,7 +39,6 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #
 $DEBUG  = True ;                                                       # Debug Activated True/False
 $SVER   = "1.1" ;                                                       # Current version number
-$IMGDIR = "/tmp/perf" ;
 
 
 # ================================================================================================
@@ -49,7 +48,9 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 {
     $RRD_FILE   = SADM_WWW_RRD_DIR . "/${WHOST_NAME}/${WHOST_NAME}.rrd";
     $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;  
+    $IMGDIR = "/tmp/perf" ;
 
+    echo "\nENTERING CREATE STANDARD_GRAPHIC\n";
     $TODAY      = date("d.m.Y");
     $YESTERDAY  = mktime(0, 0, 0, date("m") , date("d")-1,   date("Y"));
     $YESTERDAY  = date ("d.m.Y",$YESTERDAY);
@@ -66,17 +67,21 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
     $HRS_START  = "00:00" ;
     $HRS_END    = "23:59" ;  
 
-    if ($DEBUG) { 
-       echo "TODAY      = $TODAY     ";
-       echo "YESTERDAY  = $YESTERDAY ";
-       echo "YESTERDAY2 = $YESTERDAY2";
-       echo "LASTWEEK   = $LASTWEEK  ";
-       echo "LASTMONTH  = $LASTMONTH ";
-       echo "LASTYEAR   = $LASTYEAR  ";
-       echo "LAST2YEAR  = $LAST2YEAR ";
-       echo "HRS_START  = $HRS_START ";
-       echo "HRS_END    = $HRS_END   ";
-    }
+    #if ($DEBUG) { 
+        echo "\n<br>RRD_FILE   = $RRD_FILE";
+        echo "\n<br>PNGDIR     = $PNGDIR";
+        echo "\n<br>IMGDIR     = $IMGDIR";
+        echo "\n<br>TODAY      = $TODAY     ";
+        echo "\n<br>YESTERDAY  = $YESTERDAY ";
+        echo "\n<br>YESTERDAY2 = $YESTERDAY2";
+        echo "\n<br>LASTWEEK   = $LASTWEEK  ";
+        echo "\n<br>LASTMONTH  = $LASTMONTH ";
+        echo "\n<br>LASTYEAR   = $LASTYEAR  ";
+        echo "\n<br>LAST2YEAR  = $LAST2YEAR ";
+        echo "\n<br>HRS_START  = $HRS_START ";
+        echo "\n<br>HRS_END    = $HRS_END   ";
+        #exit ("end of debug");
+    #}
 
 
     switch ($WTYPE) {
@@ -86,7 +91,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
             $END       = "$HRS_END $YESTERDAY";
             $GFILE     = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_day.png";
             $GTITLE    = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1      = "$SADM_RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
+            $CMD1      = SADM_RRDTOOL . " graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2      = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 			if ( $WOS == "Linux" ) {
 				$CMD3  = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
@@ -100,7 +105,9 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 	            $CMD7  = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
 	            $CMD   = "$CMD1"." $CMD2 "." $CMD3"." $CMD4"." $CMD5"." $CMD6"." $CMD7";
             }
-            if ($DEBUG) { echo "CMD:" . $CMD ; }
+            #if ($DEBUG) { 
+                echo "\n<br>CMD:" . $CMD ; 
+            #}
             $outline    = exec ("$CMD", $array_out, $retval);
 
             // Build command to execute and produce last 7 days
@@ -949,27 +956,26 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS )
 function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
 {
     $FONTCOLOR = "White"; 
-    
-    $IMG_DAY   = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_day.png";
-    $IMG_WEEK  = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_week.png";
-    $IMG_MTH   = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_month.png";
-    $IMG_YEAR  = SADM_WWW_TMP_DIR . "/${WHOST_NAME}_${WTYPE}_year.png";
+    $IMGDIR = "/tmp/perf" ;
+
+    $IMG_DAY   = "${IMGDIR}/${WHOST_NAME}_${WTYPE}_day.png";
+    $IMG_WEEK  = "${IMGDIR}/${WHOST_NAME}_${WTYPE}_week.png";
+    $IMG_MTH   = "${IMGDIR}/${WHOST_NAME}_${WTYPE}_month.png";
+    $IMG_YEAR  = "${IMGDIR}/${WHOST_NAME}_${WTYPE}_year.png";
     $URL_WEEK  = "/view/perf/sadm_server_perf_week.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
     $URL_MTH   = "/view/perf/sadm_server_perf_month.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
     $URL_YEAR  = "/view/perf/sadm_server_perf_2year.php?host=$WHOST_NAME&$WHOST_DESC&$WTYPE";
-    $ALT_WEEK  = "Click to see larger view of last week";
-    $ALT_MTH   = "Click to see a detailed view of last month";
-    $ALT_YEAR  = "Click to view last 2 years";
+    $ALT_WEEK  = "Larger view of last week";
+    $ALT_MTH   = "Detailed view of last month";
+    $ALT_YEAR  = "View last 2 years";
 
-    echo "\n<table width=750 align=center border=1 cellspacing=0>\n";
-    echo "\n<tr>" ;
-    echo "\n<td width=750 align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>";
+    echo "\n\n<table width=750 align=center border=1 cellspacing=0>\n";
+    echo "<tr>" ;
+    echo "<td width=750 align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>";
     echo  strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC</font></bold></td>";
-    echo "\n</tr>";
+    echo "</tr>";
     
-    echo "\n<tr align=left>";
-    echo "\n<td colspan=3 ><img src=${IMG_DAY}></td>";
-    echo "\n</tr>" ; 
+    echo "\n<tr align=left><td colspan=3 ><img src=${IMG_DAY}></td></tr>" ; 
 
     echo "\n<tr align=center>";
     echo "\n<td><A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
@@ -1043,11 +1049,13 @@ function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
         exit ; 
     }
 
+    # Link pour fichier nmon
     if ($HOST_OS == "aix") {
         echo "<center><A HREF='/data/nmon/archive/aix/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
     }else{
        echo "<center><A HREF='/data/nmon/archive/linux/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
     }
+
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
