@@ -1,0 +1,65 @@
+#----------------------------------------------------------------------------------------------------------------------------------------
+# UPDATED FOR VERSION 2.1
+# SADM SYSMON Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.cfg
+# This file is read and updated by SADM SYSMON every time it run.
+# New Filesystem line will be added automatically to this file when Detected.
+#----------------------------------------------------------------------------------------------------------------------------------------
+# This file contains all the verifications made on the node and the actual value for each test
+# Comments lines must always begin with a "#".
+# Tabs and space can be used between field.
+#----------------------------------------------------------------------------------------------------------------------------------------
+#
+# Script to run if error condition occurs-----------------------------------------------------------------------------------------------
+# Email Aliases to advise when error occur----------------------------------------------------------------------------                 |  
+# Aliases to qpage if error condition occurs------------------------------------------------------                   |                 |
+# Last Time that the error Occured - Used in conjunction with 6th field ---------------          |                   |                 |
+# Last Date that the error Occured - Used in conjunction with 6th field ---------     |          |                   |                 |
+# Line is active ? Line to be tested ? (Y/N)-------------------------------     |     |          |                   |                 |
+# Test to be done on Saturday (Y/N)-------------------------------------- |     |     |          |                   |                 |
+# Test to be done on Friday (Y/N)-------------------------------------- | |     |     |          |                   |                 |
+# Test to be done on Thursday (Y/N)---------------------------------- | | |     |     |          |                   |                 |
+# Test to be done on Wednesday (Y/N)------------------------------- | | | |     |     |          |                   |                 |
+# Test to be done on Tuesday (Y/N)------------------------------- | | | | |     |     |          |                   |                 |
+# Test to be done on Monday (Y/N)------------------------------ | | | | | |     |     |          |                   |                 |
+# Test to be done on Sunday (Y/N)---------------------------- | | | | | | |     |     |          |                   |                 |
+# Hours that will stop to evaluate (0=not evaluate)------   | | | | | | | |     |     |          |                   |                 |
+# Hours that will start to evaluate (0=not evaluate)    |   | | | | | | | |     |     |          |                   |                 |
+# Error must occur over X minutes before trigger-  |    |   | | | | | | | |     |     |          |                   |                 |
+# Error Level (0=not evaluated)--------------   |  |    |   | | | | | | | |     |     |          |                   |                 |
+# Warning Level (0=not evaluated)--------   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
+# Evaluation Operator (=,!=,<,>,=>,=<)  |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
+# Last Value calculated by SYSMON|  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
+#                                |  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
+# IDENTIFIER                     V  V   V   V   V  V    V   V V V V V V V V     V     V          V                   V                 V
+#----------------------------------------------------------------------------------------------------------------------------------------
+#
+#---------- Run specific scripts, check return code and issue a warning or error based on threshold
+#script:name                      1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
+#
+#---------- Aix/Linux CPU Load, Server Load Average and Swap Space usage Monitoring
+load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
+#
+#
+#---------- Linux Service Monitoring
+service_crond|cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+#service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+#service_named                   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+service_chronyd|ntp|ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+service_ssh|sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+service_postfix|sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+service_syslog|rsyslog|syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+#
+#
+#---------- Issue a network ping to server and issue warning or error based on threshold
+#ping_www.google.com              0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+#ping_www.ibm.com                 0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+#
+#http_sadmin.maison.ca            1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+#http_sysinfo.maison.ca           1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+#http_www.linternux.com           1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+# 
+#---------- Filesystem Usage Monitoring - Can increase it by 10% if increasing script is specified (Last Parameter).
+#
+#SADMSTAT 2.5 holmes - Sat Feb  4 09:56:10 2017 - Execution Time 5.00 seconds
