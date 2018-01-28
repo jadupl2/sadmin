@@ -25,7 +25,7 @@
 # 2017_08_03 JDuplessis 
 #   V2.9 Bug Fix - Missing Quote
 # 2018_01_27 JDuplessis 
-#   V3.0 Start 'nmon' as standard startup procedure 
+#   V3.0a Start 'nmon' as standard startup procedure 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
@@ -41,7 +41,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='3.0'                             ; export SADM_VER            # Script Version
+SADM_VER='3.0a'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
