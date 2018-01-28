@@ -34,6 +34,8 @@
 # 2018_01_25 JDuplessis 
 #   V1.2 - Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
 #   V1.2a - Added removal on work temp. file at the end
+# 2018_01_28 JDuplessis 
+#   V1.3 - Add nmon file counter during process & bug fix
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +50,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.2a'                            ; export SADM_VER           # Your Script Version
+SADM_VER='1.3 '                            ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -1024,9 +1026,9 @@ rrd_update()
         fi
         if [ "${A_EPOCH}" = "" ]                                        # If Epoch is Blank ?
             then sadm_writelog "Epoch time invalid (${A_EPOCH}) can't run rrdupdate"
-                 RC=$?
+                 RC=1
             else if [ ${A_EPOCH} -le $RRD_LAST_EPOCH ]                  #epoch<=last epoch Upd. done
-                    then sadm_writelog "Epoch Time in less than last update epoch in RRD"
+                    then sadm_writelog "[WARNING] NMON Epoch Time (${A_EPOCH}) <= last epoch (${RRD_LAST_EPOCH}) in RRD"
                          RC=1
                     else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
                          RC=$?
@@ -1062,7 +1064,7 @@ rrd_update()
 main_process()
 {
     ERROR_COUNT=0                                                       # Set Error counter to zero
-
+    NMON_COUNT=0                                                        # Process NMON file counter 
     # Produce a list of all Yesterday nmon file (sorted) or use file passed with -f command line
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
     if [ "$CMD_FILE" != "" ] 
@@ -1072,9 +1074,10 @@ main_process()
 
     while read NMON_FILE                                                # Process nmon file 1 by 1
         do
+        NMON_COUNT=$(($NMON_COUNT+1))                                   # Increment Error Counter 
         sadm_writelog " " 
         sadm_writelog "`printf %10s |tr ' ' '-'`"                       # Write Dash Line to Log
-        sadm_writelog "Processing the file $NMON_FILE"                  # Show User File Processing
+        sadm_writelog "[${NMON_COUNT}] Processing the file $NMON_FILE"  # Show User File Processing
         
         # If Nmon file is not readable- Advise and skip 
         if  [ ! -r "$NMON_FILE" ]                                       # If file is not redeable
