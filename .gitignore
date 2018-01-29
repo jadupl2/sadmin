@@ -56,7 +56,8 @@ sys/*.log
 cfg/.dbpass
 cfg/*.txt
 cfg/*.cfg
-cfg/holmes.smon
+cfg/*.smon
+!cfg/template.smon
 
 # Python Related Exclude 
 __pycache__/
