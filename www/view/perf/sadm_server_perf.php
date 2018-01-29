@@ -53,7 +53,7 @@ $SVER   = "1.2" ;                                                       # Curren
 # ==================================================================================================
 function create_cpu_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
 {
-    unlink($WPNG);                                                      # Make sure png don't exist
+    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
     $GTITLE  = ucfirst(${WHOST_NAME}) . " - CPU - From $START to $END"; # Set GRaph Title
     $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
     $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
@@ -86,7 +86,7 @@ function create_cpu_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG
 # ==================================================================================================
 function create_runqueue_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
 {
-    unlink($WPNG);                                                      # Make sure png don't exist
+    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
     $GTITLE  = ucfirst(${WHOST_NAME}) . " - RunQueue - From $START to $END"; # Set GRaph Title
     $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
     $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
