@@ -24,6 +24,7 @@
 #   2018_01_25 JDuplessis
 #       V 1.0 Initial Version
 #       V 1.1 WIP Initial Version
+#       V 1.2 WIP Initial Version
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -37,37 +38,103 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG  = True ;                                                       # Debug Activated True/False
-$SVER   = "1.1" ;                                                       # Current version number
+$DEBUG  = False  ;                                                      # Debug Activated True/False
+$SVER   = "1.2" ;                                                       # Current version number
 
 
-# ================================================================================================
+
+
+# ==================================================================================================
 #                  Generate the Performance Graphic from the rrd of hostname received 
-# ================================================================================================
-function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDTOOL)
+# --------------------------------------------------------------------------------------------------
+#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
+#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
+#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
+# ==================================================================================================
+function create_cpu_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
 {
-    $RRD_FILE   = SADM_WWW_RRD_DIR . "/${WHOST_NAME}/${WHOST_NAME}.rrd";
-    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;  
-    $IMGDIR = "/tmp/perf" ;
+    unlink($WPNG);                                                      # Make sure png don't exist
+    $GTITLE  = ucfirst(${WHOST_NAME}) . " - CPU - From $START to $END"; # Set GRaph Title
+    $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
+    $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
+    $CMD    .= "--vertical-label \"percentage(%)\" ";                   # Set Vertical Legend
+    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
+       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
+    }else{
+       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
+    }
+    $CMD    .= "--upper-limit 100 --lower-limit 0 ";                    # Set Upper & Lower Limit
+    $CMD    .= " DEF:total=$WRRD:cpu_total:MAX DEF:user=$WRRD:cpu_user:MAX ";
+    $CMD    .= " DEF:sys=$WRRD:cpu_sys:MAX     DEF:wait=$WRRD:cpu_wait:MAX ";
+    $CMD    .= " CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
+    $CMD    .= " AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
+    $CMD    .= " AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
+    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
+    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
+    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
+}
 
-    echo "\nENTERING CREATE STANDARD_GRAPHIC\n";
-    $TODAY      = date("d.m.Y");
-    $YESTERDAY  = mktime(0, 0, 0, date("m") , date("d")-1,   date("Y"));
-    $YESTERDAY  = date ("d.m.Y",$YESTERDAY);
-    $YESTERDAY2 = mktime(0, 0, 0, date("m") , date("d")-2,   date("Y"));
-    $YESTERDAY2 = date ("d.m.Y",$YESTERDAY2);
-    $LASTWEEK   = mktime(0, 0, 0, date("m") , date("d")-7,   date("Y"));
-    $LASTWEEK   = date ("d.m.Y",$LASTWEEK);
-    $LASTMONTH  = mktime(0, 0, 0, date("m") , date("d")-31,  date("Y"));
-    $LASTMONTH  = date ("d.m.Y",$LASTMONTH);
-    $LASTYEAR   = mktime(0, 0, 0, date("m") , date("d")-365, date("Y"));
-    $LASTYEAR   = date ("d.m.Y",$LASTYEAR);
-    $LAST2YEAR  = mktime(0, 0, 0, date("m") , date("d")-730, date("Y"));
-    $LAST2YEAR  = date ("d.m.Y",$LAST2YEAR);
-    $HRS_START  = "00:00" ;
-    $HRS_END    = "23:59" ;  
 
-    #if ($DEBUG) { 
+
+
+# ==================================================================================================
+#                  Generate the Performance Graphic from the rrd of hostname received 
+# --------------------------------------------------------------------------------------------------
+#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
+#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
+#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
+# ==================================================================================================
+function create_runqueue_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
+{
+    unlink($WPNG);                                                      # Make sure png don't exist
+    $GTITLE  = ucfirst(${WHOST_NAME}) . " - RunQueue - From $START to $END"; # Set GRaph Title
+    $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
+    $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
+    $CMD    .= "--vertical-label \"Load\"";                             # Set Vertical Legend
+    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
+       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
+    }else{
+       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
+    }
+    $CMD .= " DEF:runque=$WRRD:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
+    $CMD .= " DEF:runq=$WRRD:proc_runq:MAX LINE2:runq#000000:";
+    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
+    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
+    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
+}
+
+
+
+# ==================================================================================================
+#                  Generate the Performance Graphic from the rrd of hostname received 
+# --------------------------------------------------------------------------------------------------
+# HOSTNAME  = Name of Host,                 WHOST_DESC  = Host Desciption from MySql Database 
+# WTYPE     = cpu,runqueue,diskio,memory,paging_activity,paging_space_usage,network_eth[a,b,c]
+# WOS       = linux,aix (lowercase allways) RRDTOOL     = Path to rrdtool       DEBUG = True,False
+# ==================================================================================================
+function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$DEBUG)
+{
+    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST_NAME}/${WHOST_NAME}.rrd"; # Where Host RRD Is
+    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Where png file generated
+    $IMGDIR     = "/tmp/perf" ;                                         # png Dir. for Web Server
+    $TODAY      = date("d.m.Y");                                        # Today Date DD.MM.YYY
+    $YESTERDAY  = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y")); # Return Yesterday EpochTime 
+    $YESTERDAY  = date ("d.m.Y",$YESTERDAY);                            # Yesterday Date DD.MM.YYY
+    $YESTERDAY2 = mktime(0, 0, 0, date("m"), date("d")-2,   date("Y")); # Today -2 Days in EpochTime 
+    $YESTERDAY2 = date ("d.m.Y",$YESTERDAY2);                           # Today -2 Days in DD.MM.YY
+    $LASTWEEK   = mktime(0, 0, 0, date("m"), date("d")-7,   date("Y")); # Today -7 Days in EpochTime
+    $LASTWEEK   = date ("d.m.Y",$LASTWEEK);                             # Today -7 Days in DD.MM.YY
+    $LASTMONTH  = mktime(0, 0, 0, date("m"), date("d")-31,  date("Y")); # Today -31 Days EpochTime
+    $LASTMONTH  = date ("d.m.Y",$LASTMONTH);                            # Today -31 Days DD.MM.YY
+    $LASTYEAR   = mktime(0, 0, 0, date("m"), date("d")-365, date("Y")); # Today -365 Days EpochTime
+    $LASTYEAR   = date ("d.m.Y",$LASTYEAR);                             # Today -365 Days DD.MM.YY
+    $LAST2YEAR  = mktime(0, 0, 0, date("m"), date("d")-730, date("Y")); # Today -730 Days EpochTime
+    $LAST2YEAR  = date ("d.m.Y",$LAST2YEAR);                            # Today -730 Days DD.MM.YY
+    $HRS_START  = "00:00" ;                                             # Graph Default Startup Time
+    $HRS_END    = "23:59" ;                                             # Graph Default End Time
+
+    # Print Variables above for debugging purpose.
+    if ($DEBUG) { 
         echo "\n<br>RRDTOOL    = $RRDTOOL";
         echo "\n<br>RRD_FILE   = $RRD_FILE";
         echo "\n<br>PNGDIR     = $PNGDIR";
@@ -81,107 +148,72 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
         echo "\n<br>LAST2YEAR  = $LAST2YEAR ";
         echo "\n<br>HRS_START  = $HRS_START ";
         echo "\n<br>HRS_END    = $HRS_END   ";
-        #exit ("end of debug");
-    #}
-
+    }
 
     switch ($WTYPE) {
-        case "cpu":
-            // Build command to execute and produce last 2 days of Graph
-            $START     = "$HRS_START $YESTERDAY2" ;
-            $END       = "$HRS_END $YESTERDAY";
-            $GFILE     = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_day.png";
-            $GTITLE    = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1      = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2      = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-				$CMD3  = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
-				$CMD4  = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
-	            $CMD   = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
-			}else{
-	            $CMD3  = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4  = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5  = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6  = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7  = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD   = "$CMD1"." $CMD2 "." $CMD3"." $CMD4"." $CMD5"." $CMD6"." $CMD7";
-            }
-            #if ($DEBUG) { 
-                echo "\n<br>CMD:" . $CMD ; 
-            #}
-            $outline    = exec ("$CMD", $array_out, $retval);
+        case "cpu":                                                     # Generate CPU Graphic
+            # Generate Big CPU Graphic for the last 2 Days -----------------------------------------
+            $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
+            $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_cpu_day.png";           # Name of png to generate
+            $GTITLE  = ucfirst(${WHOST_NAME})." - CPU - From $START to $END" ;  # Set Graph Title 
+            create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-            // Build command to execute and produce last 7 days
-            $START      = "$HRS_START $LASTWEEK" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "week" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
-				$CMD4       = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
-			}else{
-	            $CMD3       = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4       = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5       = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6       = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7       = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
+            # Generate Small CPU Graphic for the last 7 Days ---------------------------------------
+            $START  = "$HRS_START $LASTWEEK" ;                          # Start 7 days ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_week.png";           # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 7 Days" ;   # Set Graph Title 
+            create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
-            // Build command to execute and produce last 4 weeks
-            $START      = "$HRS_START $LASTMONTH" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "month" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
-				$CMD4       = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
-			}else{
-	            $CMD3       = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4       = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5       = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6       = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7       = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
+            # Generate Small CPU Graphic for the last 31 Days --------------------------------------
+            $START  = "$HRS_START $LASTMONTH" ;                         # Start 31 days ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_month.png";          # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 4 weeks" ;  # Set Graph Title 
+            create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
 
-            // Build command to execute and produce last 365 Days
-            $START      = "$HRS_START $LASTYEAR" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "year" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#000000:\"% CPU time busy\"";
-				$CMD4       = "DEF:user2=$RRD_FILE:cpu_busy:MAX AREA:user2#336699:\"\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4";
-			}else{
-	            $CMD3       = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4       = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5       = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6       = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7       = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-            //    echo "<br>outline = $outline";
-            //    echo "<br>array_out = $array_out";
-            //    echo "<br>retval = $retval" ;
+            # Generate Small CPU Graphic for the last 365 Days -------------------------------------
+            $START  = "$HRS_START $LASTYEAR" ;                          # Start 365 day ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_cpu_year.png";           # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - CPU - Last 365 Days" ; # Set Graph Title 
+            create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
             break;
 
-           
+        case "runqueue":
+            # Generate Big RunQueue Graphic for the last 2 Days -----------------------------------------
+            $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
+            $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_day.png";           # Name of png to generate
+            $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - From $START to $END" ;  # Set Graph Title 
+            create_runqueue_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
+
+            # Generate Small CPU Graphic for the last 7 Days ---------------------------------------
+            $START  = "$HRS_START $LASTWEEK" ;                          # Start 7 days ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_runqueue_week.png";           # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - RunQueue - Last 7 Days" ;   # Set Graph Title 
+            create_runqueue_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
+
+            # Generate Small CPU Graphic for the last 31 Days --------------------------------------
+            $START  = "$HRS_START $LASTMONTH" ;                         # Start 31 days ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_runqueue_month.png";          # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - RunQueue - Last 4 weeks" ;  # Set Graph Title 
+            create_runqueue_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
+
+            # Generate Small CPU Graphic for the last 365 Days -------------------------------------
+            $START  = "$HRS_START $LASTYEAR" ;                          # Start 365 day ago at 00:00
+            $END    = "$HRS_END   $YESTERDAY";                          # End Yesterday at 23:00
+            $GFILE  = "${PNGDIR}/${WHOST_NAME}_runqueue_year.png";           # Name of png to generate
+            $GTITLE = ucfirst(${WHOST_NAME})." - RunQueue - Last 365 Days" ; # Set Graph Title 
+            create_runqueue_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);  
+            break;
+
+            
+
+
         case "memory":
             $START      = "$HRS_START $YESTERDAY2" ;
             $END        = "$HRS_END $YESTERDAY";
@@ -190,7 +222,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
    	            $CMD4       = "CDEF:memtotal=memused,memfree,+ ";
 	            $CMD5       = "AREA:memused#294052:\"Memory Use\" ";
@@ -215,7 +247,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
    	            $CMD4       = "CDEF:memtotal=memused,memfree,+ ";
 	            $CMD5       = "AREA:memused#294052:\"Memory Use\" ";
@@ -236,7 +268,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
    	            $CMD4       = "CDEF:memtotal=memused,memfree,+ ";
 	            $CMD5       = "AREA:memused#294052:\"Memory Use\" ";
@@ -257,7 +289,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"in MB\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
    	            $CMD4       = "CDEF:memtotal=memused,memfree,+ ";
 	            $CMD5       = "AREA:memused#294052:\"Memory Use\" ";
@@ -285,7 +317,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Memory Usage Pct\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
 	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
@@ -309,7 +341,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Load\" --height 125 --width 250  --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
 	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
@@ -333,7 +365,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
 	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
@@ -357,7 +389,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"percentage(%)\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
 	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
@@ -376,88 +408,6 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
 			break ;
 
 
-
-        case "runqueue":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$HRS_START $YESTERDAY2" ;
-            $END        = "$HRS_END $YESTERDAY";
-            $WINTERVAL  = "day" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Load\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runque2=$RRD_FILE:proc_rque:MAX LINE2:runque2#000000:";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3"  .  " $CMD4" ;
-			}else{
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runq=$RRD_FILE:proc_runq:MAX LINE2:runq#000000:";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-
-            // Build command to execute and produce last 7 days
-            $START      = "$HRS_START $LASTWEEK" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "week" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runque2=$RRD_FILE:proc_rque:MAX LINE2:runque2#000000:";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3"  .  " $CMD4" ;
-			}else{
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runq=$RRD_FILE:proc_runq:MAX LINE2:runq#000000:";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-
-            // Build command to execute and produce last 4 weeks
-            $START      = "$HRS_START $LASTMONTH" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "month" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runque2=$RRD_FILE:proc_rque:MAX LINE2:runque2#000000:";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3"  .  " $CMD4" ;
-			}else{
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runq=$RRD_FILE:proc_runq:MAX LINE2:runq#000000:";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-
-            // Build command to execute and produce last 365 Days
-            $START      = "$HRS_START $LASTYEAR" ;
-            $END        = "$HRS_END   $YESTERDAY";
-            $WINTERVAL  = "year" ;
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Load\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runque2=$RRD_FILE:proc_rque:MAX LINE2:runque2#000000:";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3"  .  " $CMD4" ;
-			}else{
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runq=$RRD_FILE:proc_runq:MAX LINE2:runq#000000:";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-            //    echo "<br>outline = $outline";
-            //    echo "<br>array_out = $array_out";
-            //    echo "<br>retval = $retval" ;
-            break;
-
            
         case "diskio":
             // Build command to execute and produce last 2 days of Graph
@@ -468,7 +418,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
 	            $CMD4       = "LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
@@ -487,7 +437,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
 	            $CMD4       = "LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
@@ -506,7 +456,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
 	            $CMD4       = "LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
@@ -525,7 +475,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"MB/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
 	            $CMD4       = "LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
@@ -550,7 +500,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
 	            //$CMD3       = "DEF:pgsec=$RRD_FILE:pg_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
@@ -569,7 +519,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
 			}else{
@@ -587,7 +537,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
 			}else{
@@ -605,7 +555,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"Pages/Second\" --height 125 --width 250";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
 	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
 			}else{
@@ -624,7 +574,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
                 $CMD4       = "AREA:swapused#CC9A57:\"% Swap Space Used\" ";
@@ -649,7 +599,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
                 $CMD4       = "AREA:swapused#CC9A57:\"% Swap Space Used\" ";
@@ -670,7 +620,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
                 $CMD2       = "--vertical-label \"in PCT\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
                 $CMD4       = "AREA:swapused#CC9A57:\"% Swap Space Used\" ";
@@ -691,7 +641,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-			if ( $WOS == "Linux" ) {
+			if ( $WOS == "linux" ) {
                 $CMD2       = "--vertical-label \"in Pct\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
 	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX ";
                 $CMD4       = "AREA:swapused#CC9A57:\"% Swap Space Used\" ";
@@ -709,7 +659,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             //    echo "<br>retval = $retval" ;
             break;
 
-        case "network_eth0":
+        case "network_etha":
             // Build command to execute and produce last 2 days of Graph
             $START      = "$HRS_START $YESTERDAY2" ;
             $END        = "$HRS_END $YESTERDAY";
@@ -718,13 +668,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_kbytesin:MAX  DEF:kbout=$RRD_FILE:etha_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth0_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:etha_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -737,13 +687,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_kbytesin:MAX  DEF:kbout=$RRD_FILE:etha_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth0_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:etha_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -756,13 +706,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_kbytesin:MAX  DEF:kbout=$RRD_FILE:etha_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth0_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:etha_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -775,13 +725,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_kbytesin:MAX  DEF:kbout=$RRD_FILE:etha_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth0_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:etha_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:etha_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -790,7 +740,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             //    echo "<br>retval = $retval" ;
             break;
 
-        case "network_eth1":
+        case "network_ethb":
             // Build command to execute and produce last 2 days of Graph
             $START      = "$HRS_START $YESTERDAY2" ;
             $END        = "$HRS_END $YESTERDAY";
@@ -799,13 +749,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethb_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth1_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethb_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -818,13 +768,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethb_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth1_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethb_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -837,13 +787,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethb_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth1_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethb_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -856,20 +806,20 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethb_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth1_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethb_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethb_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
             break;
 
 
-        case "network_eth2":
+        case "network_ethc":
             // Build command to execute and produce last 2 days of Graph
             $START      = "$HRS_START $YESTERDAY2" ;
             $END        = "$HRS_END $YESTERDAY";
@@ -878,13 +828,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." - From $START to $END" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethc_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth2_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethc_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -897,13 +847,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 7 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethc_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth2_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethc_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -916,13 +866,13 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 4 weeks" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethc_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth2_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethc_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
@@ -935,20 +885,20 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
             $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) ." Last 365 days" ;
             $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
             $CMD2       = "--vertical-label \"KB/s\" --height 125 --width 250 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth2_kbytesout:MAX ";
+			if ( $WOS == "linux" ) {
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_kbytesin:MAX  DEF:kbout=$RRD_FILE:ethc_kbytesout:MAX ";
 	            $CMD4       = "LINE2:kbin#192823:\"KB Received\" LINE2:kbout#DD1E2F:\"KB Transmitted\"";
 				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth2_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
+	            $CMD3       = "DEF:kbin=$RRD_FILE:ethc_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
+	            $CMD4       = "DEF:kbout=$RRD_FILE:ethc_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
 	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
 			}
             $outline    = exec ("$CMD", $array_out, $retval);
             break;
-    }
-    return ;
 }
+        return ;
+    }
 
 
 # ==================================================================================================
@@ -956,7 +906,7 @@ function create_standard_graphic( $WHOST_NAME, $WHOST_DESC , $WTYPE, $WOS ,$RRDT
 # ==================================================================================================
 function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
 {
-    $FONTCOLOR = "White"; 
+    $FONTCOLOR = "Green"; 
     $IMGDIR = "/tmp/perf" ;
 
     $IMG_DAY   = "${IMGDIR}/${WHOST_NAME}_${WTYPE}_day.png";
@@ -970,14 +920,17 @@ function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
     $ALT_MTH   = "Detailed view of last month";
     $ALT_YEAR  = "View last 2 years";
 
-    echo "\n\n<table width=750 align=center border=1 cellspacing=0>\n";
+    # Table definition for the 4 graph (Yesterday, Last 7 Days, Last 4 weeks, Last 365 Days)
+    echo "\n\n<table style='width:80%' align=center border=0 cellspacing=0>\n";
+
+    # Display Title of the Graph
     echo "<tr>" ;
-    echo "<td width=750 align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>";
-    echo  strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC</font></bold></td>";
+    #echo "<td style='width:80%' align=center colspan=3 bgcolor='153450'><font color=$FONTCOLOR>";
+    echo "<td style='width:80%' align=center colspan=3><strong><font color=$FONTCOLOR>";
+    echo  ucfirst($WTYPE) . " Usage</font></strong></td>";
     echo "</tr>";
     
-    echo "\n<tr align=left><td colspan=3 ><img src=${IMG_DAY}></td></tr>" ; 
-
+    echo "\n<tr><td colspan=3 ><img src=${IMG_DAY}></td></tr>" ; 
     echo "\n<tr align=center>";
     echo "\n<td><A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
     echo "\n<td><A HREF='${URL_MTH}'> <img src=${IMG_MTH}  alt=\"${ALT_MTH} \"></a></td>";
@@ -1013,31 +966,34 @@ function display_graph ($WHOST_NAME,$WHOST_DESC,$WTYPE)
         $HOST_OS  = $row['srv_ostype'];                                 # Get O/S Type linux/aix
 
         echo "<center><strong><H2>";
-        echo "Performance Graph - server $HOSTNAME - $HOSTDESC";
-        echo "</strong></H1></center><br>";
+        echo "Performance Graph for Server $HOSTNAME";
+        echo "</strong></H2></center><br>";
     
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "cpu", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME,$HOSTDESC,"cpu",$HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "cpu");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "runqueue", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "runqueue", $HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "runqueue");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "diskio", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "diskio", $HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "diskio");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory", $HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "memory");
         if ($HOST_OS == "aix") {
-            create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory_usage", $HOST_OS,SADM_RRDTOOL);
+            create_standard_graphic ($HOSTNAME, $HOSTDESC, "memory_usage", $HOST_OS,SADM_RRDTOOL,$DEBUG);
             display_graph ($HOSTNAME, $HOSTDESC, "memory_usage");
         }
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_activity", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_activity", $HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "paging_activity");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_space_usage", $HOST_OS,SADM_RRDTOOL);
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "paging_space_usage", $HOST_OS,SADM_RRDTOOL,$DEBUG);
         display_graph ($HOSTNAME, $HOSTDESC, "paging_space_usage");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth0", $HOST_OS,SADM_RRDTOOL);
-        display_graph ($HOSTNAME, $HOSTDESC, "network_eth0");
-        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth1", $HOST_OS,SADM_RRDTOOL);
-        display_graph ($HOSTNAME, $HOSTDESC, "network_eth1");
-        if ($HOST_OS == "Aix") {
-            create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth2", $HOST_OS,SADM_RRDTOOL);
+
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_etha", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+        display_graph ($HOSTNAME, $HOSTDESC, "network_etha");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_ethb", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+        display_graph ($HOSTNAME, $HOSTDESC, "network_ethb");
+        create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_ethc", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+        display_graph ($HOSTNAME, $HOSTDESC, "network_ethc");
+        if ($HOST_OS == "aix") {
+            create_standard_graphic ($HOSTNAME, $HOSTDESC, "network_eth2", $HOST_OS,SADM_RRDTOOL,$DEBUG);
             display_graph ($HOSTNAME, $HOSTDESC, "network_eth2");
         }
     }else{                                                              # If No Key Rcv or Blank
