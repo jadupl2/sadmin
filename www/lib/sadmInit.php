@@ -69,6 +69,7 @@ define("SADM_CRON_FILE"    , SADM_WWW_CFG_DIR . "/.crontab.txt");       # SADM C
 define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE2", SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE3", SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
+define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File Network Interface lst
 
 #
 define("SADM_UPDATE_SCRIPT", "sadm_osupdate_server.sh -s ");            # O/S Update Script Name
