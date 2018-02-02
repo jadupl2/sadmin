@@ -1,8 +1,13 @@
-# V2.0 - SADMIN Service
-#        Added Require Network.target 
+# --------------------------------------------------------------------------------------------------
+# SADMIN Service Definition V2.1 (Updated January 2018)
+# If you modify this file, Run these commands to make your change effective
+#   Enter   'systemctl disable sadmin.service' 
+#           'systemctl enable  sadmin.service'
+#           'systemctl restart sadmin.service' 
+# --------------------------------------------------------------------------------------------------
 #
 [Unit]
-Description=Control SysADMin Tools service
+Description=Control SADMIN Tools service
 Requires=network.target
 DefaultDependencies=no
 Before=shutdown.target reboot.target
@@ -11,10 +16,9 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/sadmin/sys/sadm_startup.sh
-ExecStop=/sadmin/sys/sadm_shutdown.sh
+ExecStart=/bin/bash -a -c 'source /etc/profile.d/sadmin.sh && exec $SADMIN/sys/sadm_startup.sh'
+ExecStop=/bin/bash  -a -c 'source /etc/profile.d/sadmin.sh && exec $SADMIN/sys/sadm_shutdown.sh'
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
-
