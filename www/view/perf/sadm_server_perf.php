@@ -27,11 +27,16 @@
 #       V 1.2 WIP Initial Version
 #   2018_01_30 JDuplessis
 #       V 1.3 First Working Version
+#   2018_01_31 JDuplessis
+#       V 1.4 Restructure & Enhance Look & Create Library to used by others pages
+#   2018_02_02 JDuplessis
+#       V 1.5 Added message when cannot produce graph because no data in rrd available
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmlib_graph.php');      # Load sadmin Graph Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
 
@@ -41,241 +46,9 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG  = False  ;                                                      # Debug Activated True/False
-$SVER   = "1.3" ;                                                       # Current version number
+$SVER   = "1.5" ;                                                       # Current version number
 
 
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_cpu_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
-    $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
-    $CMD    .= "--vertical-label \"percentage(%)\" ";                   # Set Vertical Legend
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= "--upper-limit 100 --lower-limit 0 ";                       # Set Upper & Lower Limit
-    $CMD .= " DEF:total=$WRRD:cpu_total:MAX DEF:user=$WRRD:cpu_user:MAX ";
-    $CMD .= " DEF:sys=$WRRD:cpu_sys:MAX DEF:wait=$WRRD:cpu_wait:MAX ";
-    $CMD .= " CDEF:csys=user,sys,+ CDEF:cwait=user,sys,wait,+,+  ";
-    $CMD .= " AREA:cwait#99CC96:\"% Wait\" AREA:csys#CC3333:\"% Sys\" ";
-    $CMD .= " AREA:user#336699:\"% User\" LINE2:total#000000:\"% total\" ";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_runq_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
-    $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
-    $CMD    .= "--vertical-label \"Load\"";                             # Set Vertical Legend
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= " DEF:runque=$WRRD:proc_runq:MAX AREA:runque#CC9A57:";
-    $CMD .= "\"Number of tasks waiting for CPU resources\"";
-    $CMD .= " DEF:runq=$WRRD:proc_runq:MAX LINE2:runq#000000:";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_mem_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD     = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";      # rrdtool gph filename 
-    $CMD    .= " --title \"$WTITLE\" ";                                 # Insert Title in Command
-    $CMD    .= "--vertical-label \"in MB\"";                            # Set Vertical Legend
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= "--upper-limit 100 --lower-limit 0";                       # Set Upper & Lower Limit
-    $CMD .= " DEF:memused=$WRRD:mem_used:MAX DEF:memfree=$WRRD:mem_free:MAX";
-    $CMD .= " CDEF:memtotal=memused,memfree,+ ";
-    $CMD .= " AREA:memused#294052:\"Memory Use\" ";
-    $CMD .= " LINE2:memtotal#000000:\"Total Memory\" ";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_disk_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD  = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";         # rrdtool gph filename 
-    $CMD .= " --title \"$WTITLE\" ";                                    # Insert Title in Command
-    $CMD .= "--vertical-label \"MB/Second\"";                           # Set Vertical Legend
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    #$CMD .= " DEF:read=$WRRD:disk_kbread_sec:MAX DEF:write=$WRRD:disk_kbwrtn_sec:MAX ";
-    #$CMD .= " LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
-    $CMD .= " DEF:read=$WRRD:disk_kbread_sec:MAX  AREA:read#DC143C:\"Disk Read per second\" ";
-    $CMD .= " DEF:write=$WRRD:disk_kbwrtn_sec:MAX AREA:write#0000FF:\"Disk Write per second\" ";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_paging_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD  = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";         # rrdtool gph filename 
-    $CMD .= " --title \"$WTITLE\" ";                                    # Insert Title in Command
-    $CMD .= "--vertical-label \"Pages/Second\"";                        # Set Vertical Legend
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= " DEF:page_in=$WRRD:page_in:MAX   AREA:page_in#D50A09:\"Pages In \"";
-    $CMD .= " DEF:page_out=$WRRD:page_out:MAX AREA:page_out#0000FF:\"Pages Out \"";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_swap_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD  = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";         # rrdtool gph filename 
-    $CMD .= " --title \"$WTITLE\" ";                                    # Insert Title in Command
-    $CMD .= " --vertical-label \"in MB\"";                              # Set Vertical Legend
-    #$CMD .= " --upper-limit 100 --lower-limit 0 ";                      # Set Upper/Lower Baseline
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= " DEF:page_used=$WRRD:page_used:MAX   AREA:page_used#83AFE5:\"Virtual Memory Use\" ";
-    $CMD .= " DEF:page_total=$WRRD:page_total:MAX LINE2:page_total#000000:\"Total Virtual Memory\"";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-#   $WDEV       = Interface A(1st), B(2nd), C(3th), D(4th) 
-# ==================================================================================================
-function create_net_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG,$WDEV)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD  = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";         # rrdtool gph filename 
-    $CMD .= " --title \"$WTITLE\" ";                                    # Insert Title in Command
-    $CMD .= " --vertical-label \"KB/s\"";                               # Set Vertical Legend
-    $CMD .= " --upper-limit 100 --lower-limit 0 ";                      # Set Upper/Lower Baseline
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= " DEF:kbin=$WRRD:eth${WDEV}_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-    $CMD .= " DEF:kbout=$WRRD:eth${WDEV}_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
-
-
-# ==================================================================================================
-#                  Generate the Performance Graphic from the rrd of hostname received 
-# --------------------------------------------------------------------------------------------------
-#   WHOST_NAME  = Name of Host          RRDTOOL = Path to rrdtool   WRRD   = Name of RRD      
-#   WSTART      = "HH:MM DD.MM.YY"      WEND    = HH:MM DD.MM.YY    WTITLE = Graph Title
-#   WPNG        = Path PNG to create    WSIZE   = B/S (Big/Small)   DEBUG  = True/False
-# ==================================================================================================
-function create_memdist_graph($WHOST_NAME,$RRDTOOL,$WRRD,$WSTART,$WEND,$WTITLE,$WPNG,$WSIZE,$DEBUG)
-{
-    if (file_exists($WPNG)) { unlink($WPNG); }                          # Make sure png don't exist
-    $CMD  = "$RRDTOOL graph $WPNG -s \"$WSTART\" -e \"$WEND\"";         # rrdtool gph filename 
-    $CMD .= " --title \"$WTITLE\" ";                                    # Insert Title in Command
-    $CMD .= " --vertical-label \"Memory Usage Pct\"" ;                  # Set Vertical Legend
-    $CMD .= " --upper-limit 100 --lower-limit 0 ";                      # Set Upper/Lower Baseline
-    if (strtoupper($WSIZE) == "B") {                                    # If Want Big Graph
-       $CMD .= " --height 250 --width 950 ";                            # Set to Big Graphic Size
-    }else{
-       $CMD .= " --height 125 --width 250 ";                            # Set to Small Graphic Size
-    }
-    $CMD .= " DEF:mem_new_proc=$WRRD:mem_new_proc:MAX ";      
-    $CMD .= " DEF:mem_new_fscache=$WRRD:mem_new_fscache:MAX ";
-    $CMD .= " DEF:mem_new_system=$WRRD:mem_new_system:MAX ";
-    $CMD .= " CDEF:totproc=mem_new_proc,mem_new_system,+  ";
-    $CMD .= " CDEF:wcache=mem_new_proc,mem_new_fscache,mem_new_system,+,+  ";
-    $CMD .= " AREA:wcache#DFC184:\"FS Cache %\" ";
-    $CMD .= " AREA:totproc#2A75A9:\"Process %\" ";
-    $CMD .= " AREA:mem_new_system#7EB5D6:\"System %\" ";
-    if ($DEBUG) { echo "\n<br>CMD:" . $CMD ; }                          # Show RRDTool Command used
-    $outline    = exec ("$CMD", $array_out, $retval);                   # Run rrdtool Generate Graph
-    if ($DEBUG) { echo "\n<br>Return Value is $retval" ; }              # Show Return Code of CMD
-}
 
 
 
@@ -330,7 +103,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big CPU Graphic for the last 2 Days -----------------------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_cpu_day.png";           # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_cpu_last2days.png";     # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - CPU - From $START to $END" ;  # Set Graph Title 
             create_cpu_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
@@ -361,7 +134,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big RunQueue Graphic for the last 2 Days ------------------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_day.png";      # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_runqueue_last2days.png";# Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - RunQueue - ";         # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_runq_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -396,7 +169,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Memory Graphic for the last 2 Days ------------------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_day.png";        # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_memory_last2days.png";  # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - Memory - ";           # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_mem_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -431,7 +204,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Disks I/O Graphic for the last 2 Days -----------------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_day.png";        # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_diskio_last2days.png";  # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - Disks I/O - ";        # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_disk_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -466,7 +239,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Paging Activity Graphic for the last 2 Days -----------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_day.png";        # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_paging_last2days.png";  # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - Paging Act. - ";      # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_paging_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -501,7 +274,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Swap Space Usage Graphic for the last 2 Days ----------------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_day.png";          # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_swap_last2days.png";    # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - Swap Space - ";       # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_swap_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -536,7 +309,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big First Network Interface Usage Graphic for the last 2 Days ---------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_day.png";          # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_neta_last2days.png";    # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - 1st Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"a");
@@ -571,7 +344,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Second Network Interface Usage Graphic for the last 2 Days ---------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_day.png";          # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netb_last2days.png";    # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - 2nd Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"b");
@@ -606,7 +379,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Third Network Interface Usage Graphic for the last 2 Days ---------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_day.png";          # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netc_last2days.png";    # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - 3th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"c");
@@ -641,7 +414,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Fourth Network Interface Usage Graphic for the last 2 Days ---------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_day.png";          # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_netd_last2days.png";    # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - 4th Network Dev - ";  # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_net_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"d");
@@ -676,7 +449,7 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
             # Generate Big Memory Distribution Usage Graphic for the last 2 Days --------------------
             $START   = "$HRS_START $YESTERDAY2" ;                       # Start 2 days ago at 00:00
             $END     = "$HRS_END $YESTERDAY";                           # End Yesterday at 23:00
-            $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_day.png";       # Name of png to generate
+            $GFILE   = "${PNGDIR}/${WHOST_NAME}_memdist_last2days.png"; # Name of png to generate
             $GTITLE  = ucfirst(${WHOST_NAME})." - Mem Distribution - "; # Set Graph Title Part I
             $GTITLE .= "From $START to $END" ;                          # Set Graph Title Part II
             create_memdist_graph($WHOST_NAME,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
@@ -717,50 +490,62 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
 function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
 {
     $IMGDIR = "/tmp/perf" ;                                             # Dir. where created PNG are
+    $OSDIR  = SADM_WWW_DIR . "$IMGDIR";
 
-    # Path to PNG Graph Image
-    $IMG_DAY   = "${IMGDIR}/${WHOST}_${WTYPE}_day.png";                 # Last 2 Days PNG Path 
+    # Web Server Path to PNG Graph Image
+    $IMG_DAY   = "${IMGDIR}/${WHOST}_${WTYPE}_last2days.png";           # Last 2 Days PNG Path 
     $IMG_WEEK  = "${IMGDIR}/${WHOST}_${WTYPE}_week.png";                # Last 7 Days PNG Path
     $IMG_MTH   = "${IMGDIR}/${WHOST}_${WTYPE}_month.png";               # Last 31 Days PNG Path
     $IMG_YEAR  = "${IMGDIR}/${WHOST}_${WTYPE}_year.png";                # Last 365 Days PNG Path
 
+    # O/S Path to PNG Graph Image
+    $IMG_OSDAY  = "${OSDIR}/${WHOST}_${WTYPE}_last2days.png";           # Last 2 Days PNG O/S Path 
+    $IMG_OSWEEK = "${OSDIR}/${WHOST}_${WTYPE}_week.png";                # Last 7 Days PNG O/S Path
+    $IMG_OSMTH  = "${OSDIR}/${WHOST}_${WTYPE}_month.png";               # Last 31 Days PNG O/S Path
+    $IMG_OSYEAR = "${OSDIR}/${WHOST}_${WTYPE}_year.png";                # Last 365 Days PNG O/S Path
+
     # Web Page URL if User click on one of the PNG Graph
     $URL1      = "/view/perf/sadm_server_perf_";                        # Common URL Start Part 
-    $URL_DAY   = $URL1 . "day.php?host=$WHOST&$WDESC&$WTYPE";           # URL For Daily Display
-    $URL_WEEK  = $URL1 . "week.php?host=$WHOST&$WDESC&$WTYPE";          # URL for Week Display
-    $URL_MTH   = $URL1 . "month.php?host=$WHOST&$WDESC&$WTYPE";         # URL for Month Display
-    $URL_YEAR  = $URL1 . "2year.php?host=$WHOST&$WDESC&$WTYPE";         # URL for Year Display
+    $URL_DAY   = $URL1 . "yesterday.php?host=$WHOST&$WTYPE";            # URL For Daily Display
+    $URL_WEEK  = $URL1 . "week.php?host=$WHOST&$WTYPE";                 # URL for Week Display
+    $URL_MTH   = $URL1 . "month.php?host=$WHOST&$WTYPE";                # URL for Month Display
+    $URL_YEAR  = $URL1 . "2year.php?host=$WHOST&$WTYPE";                # URL for Year Display
 
     # When cursor move over the graph, Message below will be displyed
-    $ALT_DAY   = "View Today Graph Only";                               # Day Message when on Graph
+    $ALT_DAY   = "View Yesterday Graph Only";                           # Day Message when on Graph
     $ALT_WEEK  = "Larger view of last week";                            # Week Message when on Graph
     $ALT_MTH   = "Larger view of last month";                           # Mth Message when on Graph
     $ALT_YEAR  = "Larger View last years";                              # Year Message when on Graph
 
-
+    # Read the netdev.txt file to get the interface Name of each of possible 4 Network Interfaces
     $netdev="" ; $netdev2=""; $netdev3=""; $netdev4="";                 # Clear Net interface name 
     $netcount  = 0;                                                     # Network  Interface Counter
-    $NETDEV = SADM_WWW_RRD_DIR . "/${WHOST}/" . SADM_WWW_NETDEV ;         # Server Path to netdev.txt
-    $handle = fopen($NETDEV, "r");                                      # Open netdev.txt of server
-    if ($handle) {                                                      # If Successfully Open
-        while (($line = fgets($handle)) !== false) {                    # If Still Line to read
-            $netcount++;                                              # Increase Line Number
-            if ($netcount == 1) { $netdev1 = $line ; }
-            if ($netcount == 2) { $netdev2 = $line ; }
-            if ($netcount == 3) { $netdev3 = $line ; }
-            if ($netcount == 4) { $netdev4 = $line ; }
-        }
+    $NETDEV = SADM_WWW_RRD_DIR . "/${WHOST}/" . SADM_WWW_NETDEV ;       # Server Path to netdev.txt
+    if (file_exists($NETDEV)) {                                         # If Network Dev file exist
+        $handle = fopen($NETDEV, "r");                                  # Open netdev.txt of server
+        if ($handle) {                                                  # If Successfully Open
+            while (($line = fgets($handle)) !== false) {                # If Still Line to read
+                $netcount++;                                            # Increase Line Number
+                if ($netcount == 1) { $netdev1 = $line ; }              # Get Name of Net interface1
+                if ($netcount == 2) { $netdev2 = $line ; }              # Get Name of Net interface2
+                if ($netcount == 3) { $netdev3 = $line ; }              # Get Name of Net interface3
+                if ($netcount == 4) { $netdev4 = $line ; }              # Get Name of Net interface4
+            }
+            fclose($handle);                                            # Close Network DevName file
+        }    
+    }else{
+        $netdev1 = "1st" ;                                              # Set Name of Net interface1
+        $netdev2 = "2nd" ;                                              # Set Name of Net interface2
+        $netdev3 = "3rd" ;                                              # Set Name of Net interface3
+        $netdev4 = "4th" ;                                              # Set Name of Net interface4
     }
-    fclose($handle);
+
+    # Under Debug, Show Name of device file, Name of each Network Interface and Number of interfaces
     if ($DEBUG) { 
         echo "\n<br>Netdev filename is $NETDEV";
-        echo "\n<br>Netdev1 is $netdev1";
-        echo "\n<br>Netdev2 is $netdev2";
-        echo "\n<br>Netdev3 is $netdev3";
-        echo "\n<br>Netdev4 is $netdev4";
+        echo "\n<br>dev1= $netdev1 \n<br>dev2= $netdev2 \n<br>dev3= $netdev3 \n<br>dev4= $netdev4";
         echo "\n<br>NetCount is $netcount";
     }
-    $FONTCOLOR = "Green";                                               # Heading Color
 
     # Set Performance Graph Title based on the WTYPE received
     switch ($WTYPE) {
@@ -788,34 +573,75 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
         case "neta":                                            
             $WTITLE = "1st Network Interface" ;                         # Set Default Graph Title
             if ($netdev1 != "") $WTITLE = "Network Interface $netdev1"; # Include DevDev Name 
-        break;
+            break;
         case "netb":                                            
             $WTITLE = "2nd Network Interface";                          # Set Graph Title
+            if ($netdev2 != "") $WTITLE = "Network Interface $netdev2"; # Include DevDev Name 
             break;
         case "netc":                                            
             $WTITLE = "3rd Network Interface";                          # Set Graph Title
+            if ($netdev3 != "") $WTITLE = "Network Interface $netdev3"; # Include DevDev Name 
             break;
         case "netd":                                            
             $WTITLE = "4th Network Interface";                          # Set Graph Title
+            if ($netdev4 != "") $WTITLE = "Network Interface $netdev4"; # Include DevDev Name 
             break;
         default :                                                       # Default - if no good type
             $WTITLE = "Invalid Graph Type Requested ($WTYPE)";          # Invalid WTYPE Received
     }
-        
+
+    # If No Network Interface, return to caller, no need to display empty graph
+    if (($WTYPE == "neta") and ($netdev1 == "")) { return ; }           # No Net Interface 1 = Done 
+    if (($WTYPE == "netb") and ($netdev2 == "")) { return ; }           # No Net Interface 2 = Done 
+    if (($WTYPE == "netc") and ($netdev3 == "")) { return ; }           # No Net Interface 3 = Done 
+    if (($WTYPE == "netd") and ($netdev4 == "")) { return ; }           # No Net Interface 4 = Done
+
     # Display Title of the Graph
+    $FONTCOLOR = "Green";                                               # Heading Color
     echo "<center><h2>${WTITLE}</strong></center>";                     # Display Graph Title
 
     # Table definition for the 4 graph (Yesterday, Last 7 Days, Last 4 weeks, Last 365 Days)
     echo "\n\n<table style='width:80%' align=center border=0 cellspacing=0>\n";
 
-    # Display Big Graph for last 2 days & small for last 7,31,365 Days
+    # Display Big Graph for last 2 days 
     echo "\n<tr>";
-    echo "\n<td colspan=3><A HREF='${URL_DAY}'> <img src=${IMG_DAY}  alt=\"${ALT_DAY}\"></a></td>";
+    echo "\n<td colspan=3>";
+    if (file_exists($IMG_OSDAY)) {
+        echo "<A HREF='${URL_DAY}'> <img src=${IMG_DAY} alt=\"${ALT_DAY}\"></a>";
+    }else{
+        echo "<center>No $WTITLE data for last 2 days </center>";
+    }
+    echo "</td>";
     echo "\n</tr>" ;
-    echo "\n<tr>";
-    echo "\n<td><A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
-    echo "\n<td><A HREF='${URL_MTH}'> <img src=${IMG_MTH}  alt=\"${ALT_MTH} \"></a></td>";
-    echo "\n<td><A HREF='${URL_YEAR}'><img src=${IMG_YEAR} alt=\"${ALT_YEAR}\"></a></td>";
+
+    # Display Small Graph for last week
+    echo "\n\n<tr>";
+    echo "\n<td>";
+    if (file_exists($IMG_OSWEEK)) {
+        echo "<A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
+    }else{
+        echo "<center>No $WTITLE for last week</center>";
+    }
+    echo "</td>";
+
+    # Display Small Graph for last month
+    echo "\n<td>";
+    if (file_exists($IMG_OSMTH)) {
+        echo "<A HREF='${URL_MTH}'><img src=${IMG_MTH} alt=\"${ALT_MTH}\"></a></td>";
+    }else{
+        echo "<center>No $WTITLE for last month</center>";
+    }
+    echo "</td>";
+
+    # Display Small Graph for last month
+    echo "\n<td>";
+    if (file_exists($IMG_OSYEAR)) {
+        echo "<A HREF='${URL_YEAR}'><img src=${IMG_YEAR} alt=\"${ALT_YEAR}\"></a></td>";
+    }else{
+        echo "<center>No $WTITLE for last year</center>";
+    }
+    echo "</td>";
+
     echo "\n</tr>" ;
     echo "\n</table><br><br>";
     return ;
@@ -847,7 +673,7 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
         $HOST_DOMAIN  = $row['srv_domain'];                             # Get Server Domain
 
         echo "<center><strong><H2>";
-        echo "Performance graph for server '$HOSTNAME'";
+        echo "Summary performance graph for server '$HOSTNAME'";
         echo "</strong></H2></center><br>";
     
         create_standard_graphic ($HOSTNAME,$HOSTDESC,"cpu"          ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
@@ -871,13 +697,6 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
         <?php                                                           # Back 2 List Page
         #echo "<script>location.replace('" . URL_MAIN . "');</script>";
         exit ; 
-    }
-
-    # Link pour fichier nmon
-    if ($HOST_OS == "aix") {
-        echo "<center><A HREF='/data/nmon/archive/aix/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
-    }else{
-       echo "<center><A HREF='/data/nmon/archive/linux/$HOSTNAME'>Fichier NMON de ce serveur</a></center>\n";
     }
 
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div

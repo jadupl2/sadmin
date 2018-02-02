@@ -52,40 +52,58 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 # ==================================================================================================
 
 ?>
-<form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>
-<?php print "<strong>Option for a group of servers</strong> <br><br>Display "; ?>
-<select name='wtype'>
-  <option value="cpu">CPU usage</option>
-  <option value="runqueue">Run Queue</option>
-  <option value="diskio">Disk I/O</option>
-  <option value="memory">Memory usage</option>
-  <option value="paging_activity">Paging Activity</option>
-  <option value="paging_space_usage">Paging space usage</option>
-  <option value="network_eth0">Network first interface</option>
-  <option value="network_eth1">Network second interface</option>
-  <option value="network_eth2">Network third interface</option>
-</select>
-<?php print " of "; ?>
-<select  name='wperiod'>
-  <option value="day">Yesterday</option>
-  <option value="week">Last 7 days</option>
-  <option value="month">Last 30 days</option>
-  <option value="year">Last 365 days</option>
-</select>
-<?php echo "  for "; ?>
-<select name='wservers'>
-  <option value="all_servers">All servers</option>
-  <option value="all_linux">All Linux servers</option>
-  <option value="all_aix">All Aix servers</option>
-  <option value="all_linux_prod">All Linux Production servers</option>
-  <option value="all_aix_prod">All Aix Production servers</option>
-  <option value="all_linux_dev">All Linux Development servers</option>
-  <option value="all_aix_dev">All Aix Development servers</option>
-</select>
+    <form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>
+    <?php print "<strong>Option for a group of servers</strong> <br><br>"; ?>
+
+    <?php print "Display "; ?>
+    <select name='wtype'>
+        <option value="cpu">CPU usage</option>
+        <option value="runqueue">Run Queue</option>
+        <option value="memory">Memory usage</option>
+        <option value="diskio">Disk I/O</option>
+        <option value="page_inout">Paging Activity</option>
+        <option value="swap_space">Swap Space usage</option>
+        <option value="neta">Network 1st interface</option>
+        <option value="netb">Network 2nd interface</option>
+        <option value="netc">Network 3rd interface</option>
+        <option value="netd">Network 4th interface</option>
+        <option value="Memdist">Aix Memory Distribution</option>
+    </select>
+    
+    <?php print " of "; ?>
+    <select  name='wperiod'>
+        <option value="yesterday">Yesterday</option>
+        <option value="last2days">Last 2 Days</option>
+        <option value="week">Last 7 days</option>
+        <option value="month">Last 31 days</option>
+        <option value="year">Last 365 days</option>
+        <option value="last2years">Last 2 years</option>
+    </select>
+
+    <?php echo "  for "; ?>
+    <select name='wservers'>
+        <option value="all_servers">All servers</option>
+        <option value="all_linux">All Linux servers</option>
+        <option value="all_aix">All Aix servers</option>
+    </select>
+
+    <?php echo "  having category "; ?>
+    <select name='wcat'>
+        <option value="all_cat">Any Category</option>
 <?php
-  echo "<input type='submit' value='Generate graph' />";
-  echo "<br><br>";
+        $sql = "SELECT * FROM server_category ";                            # Construct SQL Statement
+        if ($result = mysqli_query($con,$sql)) {                            # If Results to Display
+            while ($row = mysqli_fetch_assoc($result)) {                    # Gather Result from Query
+                echo "<option value=" . $row['cat_code'] . ">" ;
+                echo $row['cat_code'] ." - ". $row['cat_desc'] ."</option>"; 
+            }
+        }
+        echo "\n</select>";  
+
+    echo "<input type='submit' value='Generate graph' />";
+    echo "<br><br>";
 ?>
+
 </form>
 <hr><br>
 
@@ -100,6 +118,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 
 <!-- Accept the server name ==================================================================== -->
 <?php
+    # Accept the server name from list of server ---------------------------------------------------
     echo "<strong>Option for one server</strong> <BR><BR>";
     echo "Display graphics for server ";
     echo "<select name='server_name'>\n";
@@ -196,6 +215,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 <!-- Accept the ending time ================================================================== -->
     <?php echo " and " ; ?>
     <select name=etime >
+        <option value="23:30">23:59</option>
         <option value="00:00">00:00</option>
         <option value="00:30">00:30</option>
         <option value="01:00">01:00</option>
@@ -243,7 +263,6 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
         <option value="22:00">22:00</option>
         <option value="22:30">22:30</option>
         <option value="23:00">23:00</option>
-        <option value="23:30">23:30</option>
     </select>
 
 
