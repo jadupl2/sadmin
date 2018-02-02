@@ -30,13 +30,15 @@
 #   V2.1    Modifications for using MySQL and logic Enhancements
 # 2018_01_08 J.Duplessis
 #   V2.2    Update SADM Library insertion section & Minor correction
+# 2018_02_02 J.Duplessis
+#   V2.3    Added Operation Separator in log 
 ######################################################################################&&&&&&&#######
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
-
-#===================================================================================================
+#
+#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
 # If You want to use the SADMIN Libraries, you need to add this section at the top of your script
 # You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
 # --------------------------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -67,6 +69,7 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
+#
 
 
 # --------------------------------------------------------------------------------------------------
@@ -170,7 +173,7 @@ process_servers()
         # CREATE LOCAL RECEIVING DIR
         # Making sure the $SADMIN/dat/$server_name exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
-        sadm_writelog " " 
+        sadm_writelog " " ; sadm_writelog "---------- Making Sure Client Directory exist on Server"
         sadm_writelog "Make sure the directory ${SADM_WWW_DAT_DIR}/${server_name} Exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
             then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
@@ -184,7 +187,7 @@ process_servers()
         # Transfer $SADMIN/dat/dr (Disaster Recovery) from Remote to $SADMIN/www/dat/$server/dr Dir.
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/dr"                    # Local Receiving Dir.
-        sadm_writelog " " 
+        sadm_writelog " " ; sadm_writelog "---------- Disaster Recovery Directory"
         sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
@@ -206,7 +209,7 @@ process_servers()
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server_name/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
-        sadm_writelog " " 
+        sadm_writelog " " ; sadm_writelog "---------- nmon Data Directory"
         sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
@@ -228,7 +231,7 @@ process_servers()
         # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server_name/sar 
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/sar"                     # Local Receiving Dir.
-        sadm_writelog " " 
+        sadm_writelog " " ; sadm_writelog "---------- System Activity Report (sar) Directory"
         sadm_writelog "Make sure the directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
