@@ -24,6 +24,8 @@
 #   Version 2.0 - November 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+#   2018_02_01 J.Duplessis
+#       V2.1 Correct Bug - Not showing last line of RCH when it was a running state (dot Date/Time)
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -53,8 +55,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
-$CREATE_BUTTON = False ;                                                # Yes Display Create Button
+$SVER  = "2.1" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -102,29 +103,30 @@ function setup_table() {
 //  The RCH File Name (WNAME)
 // =================================================================================================
 function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
-    $count=0; $ddate = 0 ; 
-    $fh = fopen($WFILE, "r") or exit("Unable to open file" . $WFILE);
-    while(!feof($fh)) {
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$ccode) = explode(" ",fgets($fh));
+    $count=0; $ddate = 0 ;                                              # Reset Counter & Var.
+
+    $fh = fopen($WFILE, "r") or exit("Unable to open file" . $WFILE);   # Open RCH  Requested file
+    while (($wline = fgets($fh)) !== false) {                           # If Still Line to read
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapse,$cname,$ccode) = explode(" ",$wline);
         if ($cserver == $WHOST) {
             $count+=1;
             echo "\n<tr>";
             $BGCOLOR = "lavender";
             if ($count % 2 == 0) { $BGCOLOR="#FFF8C6" ; }else{ $BGCOLOR="#FAAFBE" ;}
-            echo "\n<td>" . $count   . "</td>";
-            echo "\n<td>" . $cdate1  . "</td>";
-            echo "\n<td>" . $ctime1  . "</td>";
-            echo "\n<td>" . $cdate2  . "</td>";
-            echo "\n<td>" . $ctime2  . "</td>";
-            echo "\n<td>" . $celapse . "</td>";
+            echo "\n<td class='dt-center'>" . $count   . "</td>";
+            echo "\n<td class='dt-center'>" . $cdate1  . "</td>";
+            echo "\n<td class='dt-center'>" . $ctime1  . "</td>";
+            echo "\n<td class='dt-center'>" . $cdate2  . "</td>";
+            echo "\n<td class='dt-center'>" . $ctime2  . "</td>";
+            echo "\n<td class='dt-center'>" . $celapse . "</td>";
             switch ($ccode) {
-                case 0:     echo "\n<td>Success</td>";
+                case 0:     echo "\n<td class='dt-center'>Success</td>";
                             break;
-                case 1:     echo "\n<td>Failed</td>";
+                case 1:     echo "\n<td class='dt-center'>Failed</td>";
                             break;
-                case 2:     echo "\n<td>Running</td>";
+                case 2:     echo "\n<td class='dt-center'>Running</td>";
                             break;
-                default:    echo "\n<td>" . $ccode . "</td>";
+                default:    echo "\n<td class='dt-center'>" . $ccode . "</td>";
                             break;
             }                    
             echo "\n</tr>\n";
@@ -194,7 +196,20 @@ function display_rch_file ($WHOST,$WDESC,$WFILE,$WNAME) {
     $tmpfile    = tempnam ('/tmp/', 'rchfiles-');                       # Create Tmp File Unsorted
     $csv_sorted = tempnam ('/tmp/', 'rchfiles_sorted_');                # Create Tmp file Sorted
 
-    $cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $csv_sorted";
+    # Eliminate line with dotted date & time and Create Sorted RCH file
+    $cmd="grep -v '\.\.\.\.' $RCHFILE | sort -t, -rk 1,1 -k 2,2n > $tmpfile";
+    if ($DEBUG) { echo "<br>CMD = $cmd"; }
+    $last_line = system($cmd, $retval);
+    if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
+
+    # Always want the last line of rch file (Maybe a line with dot (running) and we want that one)
+    $cmd="tail -1 $RCHFILE >> $tmpfile";
+    if ($DEBUG) { echo "<br>CMD = $cmd"; }
+    $last_line = system($cmd, $retval);
+    if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
+
+    # Sort Resulting file - Eliminate the last line inserted if it was already in the file
+    $cmd="cat $tmpfile | sort -t, -rk 1,1 -k 2,2n | uniq > $csv_sorted";
     if ($DEBUG) { echo "<br>CMD = $cmd"; }
     $last_line = system($cmd, $retval);
     if ($DEBUG) { echo "<br><pre>cmd=$cmd lastline=$last_line retval=$retval</pre>"; }
