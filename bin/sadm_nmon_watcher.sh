@@ -9,20 +9,17 @@
 # --------------------------------------------------------------------------------------------------
 # 1.7   Modification making sure that nmon is available on the server.
 #       If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon.
-# --------------------------------------------------------------------------------------------------
 # 1.8   Nov 2016
 #       Enhance checking for nmon existence and add some message for user.
 #       ReTested in AIX
-# --------------------------------------------------------------------------------------------------
 # 1.9   Dec 2016
 #       Change to run on Aix 7.x and minor corrections
-#
-# --------------------------------------------------------------------------------------------------
 # 2017_12_29 J.Duplessis 
 #       V2.0 Add Warning message stating that nmon not available on MacOS
-# --------------------------------------------------------------------------------------------------
 # 2017_01_27 J.Duplessis 
 #       V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comments
+# 2017_02_02 J.Duplessis 
+#       V2.2 Show number of nmon running only once, if nmon is alreadey running
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -41,7 +38,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -200,14 +197,13 @@ check_nmon()
                      SADM_EXIT_CODE=1 
                 else SADM_EXIT_CODE=0
             fi
+            # Search Process Status (ps) and display number of nmon process running currently
+            sadm_writelog " "                                                   # Blank line in log
+            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+            sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
+            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
             ;;
     esac
-
-    # Search Process Status (ps) and display number of nmon process running currently
-    sadm_writelog " "                                                   # Blank line in log
-    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
-    sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
-    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
 
     # Display Last two nmon files created
     sadm_writelog " "                                                   # Blank line in log
