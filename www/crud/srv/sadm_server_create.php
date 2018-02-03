@@ -26,6 +26,8 @@
 #       V1.9 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#   2018_02_03 - Jacques Duplessis
+#       V2.1 Added Server Graph Display Option
 #
 # ==================================================================================================
 #
@@ -43,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -61,7 +63,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         # Construct SQL to Insert row
         $sql = "INSERT INTO server ";                                   # Construct SQL Statement
         $sql = $sql . "(srv_name, srv_domain, srv_desc, srv_tag, srv_note, srv_active, ";
-        $sql = $sql . " srv_sporadic, srv_monitor, srv_cat, srv_group, srv_ostype, ";
+        $sql = $sql . " srv_sporadic, srv_monitor, srv_graph, srv_cat, srv_group, srv_ostype, ";
         $sql = $sql . " srv_date_creation) VALUES ('";
         $sql = $sql . $_POST['scr_name']        . "','" ;
         $sql = $sql . $_POST['scr_domain']      . "','" ;
@@ -71,6 +73,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . $_POST['scr_active']      . "','" ;
         $sql = $sql . $_POST['scr_sporadic']    . "','" ;
         $sql = $sql . $_POST['scr_monitor']     . "','" ;
+        $sql = $sql . $_POST['scr_graph']       . "','" ;
         $sql = $sql . $_POST['scr_cat']         . "','" ;
         $sql = $sql . $_POST['scr_group']       . "','" ;
         $sql = $sql . $_POST['scr_ostype']      . "','" ;
