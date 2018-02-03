@@ -24,6 +24,8 @@
 # ChangeLog
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+#   2018_02_02 - Jacques Duplessis
+#       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
 #
 # ==================================================================================================
  
@@ -33,7 +35,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -349,7 +351,41 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n</div>\n";                                                  # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
+    
+    # Display Performance Graph for this server
+    echo "\n<div class='double_label'>Show Performance Graph</div>";    # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    if ($smode == 'CREATE') { $wrow['srv_graph'] = True ; }             # Default Value = Active
+    if ($smode == 'DISPLAY') {                                          # Only Display / No Change
+       if ($wrow['src_monitor'] == 1) {                                 # If Display Perf Graph
+          echo "\n<input type='radio' name='scr_graph' value='1' ";     # 1=Show Graph in scr_graph
+          echo "onclick='javascript: return false;' checked> Yes";      # And select Show Graph Yes 
+          echo "\n<input type='radio' name='scr_graph' value='0' ";     # 0=No to scr_graph
+          echo "onclick='javascript: return false;'> No";               # Show No Unselected
+       }else{                                               
+          echo "\n<input type='radio' name='scr_graph' value='1' ";     # If not Show Perf Graph
+          echo "onclick='javascript: return false;'> Yes  ";            # 0=No Graph to scr_graph
+          echo "\n<input type='radio' name='scr_graph' value='0' ";     # 1=Yes Show in scr_graph
+          echo "onclick='javascript: return false;' checked >No";       # select No Option
+       }
+    }else{                                                              # In Create/Update Mode
+       if ($wrow['srv_graph'] == 1) {                                   # If Graph set to Yes
+          echo "\n<input type='radio' name='scr_graph' value='1' ";     # If Col is Yes Set to 1
+          echo " checked > Yes  ";                                      # Checked Field on screen
+          echo "\n<input type='radio' name='scr_graph' value='0'>";     # Don't Show set to 0
+          echo " No ";                                                  # Uncheck No
+       }else{                                                           # 
+          echo "\n<input type='radio' name='scr_graph' value='1'>";     # If server is Yes
+          echo " Yes";                                                  # Display Uncheck Yes
+          echo "\n<input type='radio' name='scr_graph' value='0' ";     # Check No on Form 
+          echo " checked > No";                                         # Checked Field on screen
+       }
+    }
+    echo "\n</div>\n";                                                  # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
     echo "\n<hr/>";
+
 
 
     # DISPLAY CREATION DATE 
