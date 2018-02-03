@@ -5,9 +5,10 @@
 #   Version  :  1.0
 #   Date     :  25 January 2018
 #   Requires :  php
-#   Synopsis :  Show CPU Performance Graphics of All Server(s) for Yesterday
+#   Synopsis :  Show Performance Graphics of ALL Server(s) of certain Catagory.
+#               Usefull to look at all servers on one page & spot problem on some server.
 #
-#   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
+#   Copyright (C) 2018 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -42,7 +43,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                        # Current version number
+$SVER  = "1.2a" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -55,9 +56,9 @@ $SVER  = "1.2" ;                                                        # Curren
 # ==================================================================================================
 function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
 {
-    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST}/${WHOST}.rrd"; # Where Host RRD Is
-    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Where png file generated
-    $IMGDIR     = "/tmp/perf" ;                                         # png Dir. for Web Server
+    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST}/${WHOST}.rrd";           # Build Name of RRD to use
+    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Where PNG file generated
+    $IMGDIR     = "/tmp/perf" ;                                         # PNG Dir. for Web Server
     $TODAY      = date("d.m.Y");                                        # Today Date DD.MM.YYY
     $YESTERDAY  = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y")); # Return Yesterday EpochTime 
     $YESTERDAY  = date ("d.m.Y",$YESTERDAY);                            # Yesterday Date DD.MM.YYY
@@ -75,48 +76,47 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
     $HRS_END    = "23:59" ;                                             # Graph Default End Time
 
     # Print Variables above for debugging purpose.
-    if ($DEBUG) { 
-        echo "\n<br>RRDTOOL    = $RRDTOOL";
-        echo "\n<br>PERIOD     = $WPERIOD";
-        echo "\n<br>RRD_FILE   = $RRD_FILE";
-        echo "\n<br>PNGDIR     = $PNGDIR";
-        echo "\n<br>IMGDIR     = $IMGDIR";
-        echo "\n<br>TODAY      = $TODAY     ";
-        echo "\n<br>YESTERDAY  = $YESTERDAY ";
-        echo "\n<br>YESTERDAY2 = $YESTERDAY2";
-        echo "\n<br>LASTWEEK   = $LASTWEEK  ";
-        echo "\n<br>LASTMONTH  = $LASTMONTH ";
-        echo "\n<br>LASTYEAR   = $LASTYEAR  ";
-        echo "\n<br>LAST2YEAR  = $LAST2YEAR ";
-        echo "\n<br>HRS_START  = $HRS_START ";
-        echo "\n<br>HRS_END    = $HRS_END   ";
+    if ($DEBUG) {                                                       # If Debug is Activated
+        echo "\n<br>RRDTOOL    = $RRDTOOL";                             # Full Path to rrdtool Bin.
+        echo "\n<br>PERIOD     = $WPERIOD";                             # Show the Period received
+        echo "\n<br>RRD_FILE   = $RRD_FILE";                            # Show RRD file we will use
+        echo "\n<br>PNGDIR     = $PNGDIR";                              # PNG Dir. for the O/S
+        echo "\n<br>IMGDIR     = $IMGDIR";                              # PNG Dir. for Web Server
+        echo "\n<br>TODAY      = $TODAY     ";                          # Today's Date
+        echo "\n<br>YESTERDAY  = $YESTERDAY ";                          # Yesterday Date
+        echo "\n<br>YESTERDAY2 = $YESTERDAY2";                          # Date before Yesterday
+        echo "\n<br>LASTWEEK   = $LASTWEEK  ";                          # Today Minus  7 Days Date
+        echo "\n<br>LASTMONTH  = $LASTMONTH ";                          # Today Minus 31 Days Date
+        echo "\n<br>LASTYEAR   = $LASTYEAR  ";                          # Today Minus 365 Days Date
+        echo "\n<br>LAST2YEAR  = $LAST2YEAR ";                          # Today Minus 730 Days Date
+        echo "\n<br>HRS_START  = $HRS_START ";                          # Start Hours of Graph
+        echo "\n<br>HRS_END    = $HRS_END   ";                          # End Hours of Graph
     }
 
     # Set Start Date and Time Based on the Period selected
-    if ($WPERIOD == "yesterday")  { $START = "$HRS_START $YESTERDAY"  ;} 
-    if ($WPERIOD == "last2days")  { $START = "$HRS_START $YESTERDAY2" ;} 
-    if ($WPERIOD == "week")       { $START = "$HRS_START $LASTWEEK"   ;} 
-    if ($WPERIOD == "month")      { $START = "$HRS_START $LASTMONTH"  ;} 
-    if ($WPERIOD == "year")       { $START = "$HRS_START $LASTYEAR"   ;} 
-    if ($WPERIOD == "last2years") { $START = "$HRS_START $LAST2YEAR"  ;}
+    if ($WPERIOD == "yesterday")  { $START = "$HRS_START $YESTERDAY" ;} # Start Yesterday Date/Time 
+    if ($WPERIOD == "last2days")  { $START = "$HRS_START $YESTERDAY2";} # Start 2days ago Date/Time
+    if ($WPERIOD == "week")       { $START = "$HRS_START $LASTWEEK"  ;} # Start 7days ago Date/Time
+    if ($WPERIOD == "month")      { $START = "$HRS_START $LASTMONTH" ;} # Start 31Days ago Date/Time
+    if ($WPERIOD == "year")       { $START = "$HRS_START $LASTYEAR"  ;} # Start 365Days ago
+    if ($WPERIOD == "last2years") { $START = "$HRS_START $LAST2YEAR" ;} # Start 730Days ago 
     
     # Set End Time and Date, PNG name and Graph Title
     $END   = "$HRS_END $YESTERDAY";                                     # End Yesterday at 23:00
-    $GFILE = "${PNGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";          # Name of png to generate
+    $GFILE = "${PNGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";          # Name of PNG to generate
 
     # Set the graph Title
-    if ($WPERIOD == "yesterday")  { $GTITLE2 = "$YESTERDAY"    ;} 
-    if ($WPERIOD == "last2days")  { $GTITLE2 = "Last 2 days"   ;} 
-    if ($WPERIOD == "week")       { $GTITLE2 = "Last 7 days"   ;} 
-    if ($WPERIOD == "month")      { $GTITLE2 = "Last 31 days"  ;} 
-    if ($WPERIOD == "year")       { $GTITLE2 = "Last 365 days" ;} 
-    if ($WPERIOD == "last2years") { $GTITLE2 = "Last 730 days" ;}
-
-    $GTITLE = ${WHOST} ." ${WTYPE} ${GTITLE2}";                         # Set Graph Title 
+    if ($WPERIOD == "yesterday")  { $GTITLE2 = "$YESTERDAY"    ;}       # Set Yesterday Title2
+    if ($WPERIOD == "last2days")  { $GTITLE2 = "Last 2 days"   ;}       # Set Last 2Days Title2
+    if ($WPERIOD == "week")       { $GTITLE2 = "Last 7 days"   ;}       # Set Last 7Days Title2
+    if ($WPERIOD == "month")      { $GTITLE2 = "Last 31 days"  ;}       # Set Last 31Days Title2
+    if ($WPERIOD == "year")       { $GTITLE2 = "Last 365 days" ;}       # Set Last 365Days Title2
+    if ($WPERIOD == "last2years") { $GTITLE2 = "Last 730 days" ;}       # Set Last 730Days Title2
+    $GTITLE = ${WHOST} ." ${WTYPE} ${GTITLE2}";                         # Set Graph Title + Title2
 
     # Generate the PNG graph based on the type of ressource selected
     switch ($WTYPE) {
-        case "cpu":                                                     # Generate CPU Graphic            
+        case "cpu":                                                     # Generate CPU Graphic  
             create_cpu_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
 
