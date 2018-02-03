@@ -518,7 +518,7 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
     $ALT_YEAR  = "Larger View last years";                              # Year Message when on Graph
 
     # Read the netdev.txt file to get the interface Name of each of possible 4 Network Interfaces
-    $netdev="" ; $netdev2=""; $netdev3=""; $netdev4="";                 # Clear Net interface name 
+    $netdev1="" ; $netdev2=""; $netdev3=""; $netdev4="";                # Clear Net interface name 
     $netcount  = 0;                                                     # Network  Interface Counter
     $NETDEV = SADM_WWW_RRD_DIR . "/${WHOST}/" . SADM_WWW_NETDEV ;       # Server Path to netdev.txt
     if (file_exists($NETDEV)) {                                         # If Network Dev file exist
