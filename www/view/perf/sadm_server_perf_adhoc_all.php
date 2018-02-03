@@ -25,6 +25,8 @@
 #       v1.0 Initial Version
 #   2018_02_02 JDuplessis
 #       v1.1 First Working version
+#   2018_02_03 JDuplessis
+#       v1.2 Change Titles and Bug Fixes
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -40,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                        # Current version number
+$SVER  = "1.2" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -90,21 +92,35 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
         echo "\n<br>HRS_END    = $HRS_END   ";
     }
 
+    # Set Start Date and Time Based on the Period selected
     if ($WPERIOD == "yesterday")  { $START = "$HRS_START $YESTERDAY"  ;} 
     if ($WPERIOD == "last2days")  { $START = "$HRS_START $YESTERDAY2" ;} 
     if ($WPERIOD == "week")       { $START = "$HRS_START $LASTWEEK"   ;} 
-    if ($WPERIOD == "month")      { $START = "$HRS_START $LASTMONTH"   ;} 
+    if ($WPERIOD == "month")      { $START = "$HRS_START $LASTMONTH"  ;} 
     if ($WPERIOD == "year")       { $START = "$HRS_START $LASTYEAR"   ;} 
-    if ($WPERIOD == "last2years") { $START = "$HRS_START $LAST2YEAR"  ;} 
+    if ($WPERIOD == "last2years") { $START = "$HRS_START $LAST2YEAR"  ;}
+    
+    # Set End Time and Date, PNG name and Graph Title
     $END   = "$HRS_END $YESTERDAY";                                     # End Yesterday at 23:00
     $GFILE = "${PNGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";          # Name of png to generate
-    $GTITLE = ucfirst(${WHOST})." ${WTYPE} ${WPERIOD}";                 # Set Graph Title 
+
+    # Set the graph Title
+    if ($WPERIOD == "yesterday")  { $GTITLE2 = "$YESTERDAY"    ;} 
+    if ($WPERIOD == "last2days")  { $GTITLE2 = "Last 2 days"   ;} 
+    if ($WPERIOD == "week")       { $GTITLE2 = "Last 7 days"   ;} 
+    if ($WPERIOD == "month")      { $GTITLE2 = "Last 31 days"  ;} 
+    if ($WPERIOD == "year")       { $GTITLE2 = "Last 365 days" ;} 
+    if ($WPERIOD == "last2years") { $GTITLE2 = "Last 730 days" ;}
+
+    $GTITLE = ${WHOST} ." ${WTYPE} ${GTITLE2}";                         # Set Graph Title 
+
+    # Generate the PNG graph based on the type of ressource selected
     switch ($WTYPE) {
         case "cpu":                                                     # Generate CPU Graphic            
             create_cpu_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
 
-        case "runqueue":
+            case "runqueue":
             create_runq_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
 
@@ -121,11 +137,12 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
             break;
            
         case "swap_space":
+            create_swap_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
            
         case "network_etha":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
-            break;
+        break;
 
         case "network_ethb":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
@@ -135,7 +152,7 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"c");
             break;
 
-            case "network_ethd":
+        case "network_ethd":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"d");
             break;
 
@@ -255,7 +272,8 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
             }else{                                                      # If not all categories
                 $sql .= "where srv_ostype='linux' and srv_cat='$WCAT'"; # Linux O/S & Cat. Selected
             }
-            $sql .= " and srv_active=1 order by srv_name";              # Active Srv/Order by name
+            $sql .= " and srv_active=1 and srv_graph=1 ";               # Active & Graph Perf=Yes
+            $sql .= " order by srv_name";                               # Active Srv/Order by name
             break;                                                      # Ok Select Stat. completed
 
         case "all_aix" :                                                # If all Aix Servers
@@ -264,14 +282,17 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
             }else{                                                      # If not all categories
                 $sql .= "where srv_ostype='aix' and srv_cat='$WCAT'";   # Aix O/S & Cat. Selected
             }
-            $sql .= " and srv_active=1 order by srv_name";              # Active Srv/Order by name
+            $sql .= " and srv_active=1 and srv_graph=1 ";               # Active & Graph Perf=Yes
+            $sql .= " order by srv_name";                               # Active Srv/Order by name
             break;                                                      # Ok Select Stat. completed   
 
         case "all_servers"  :
             if ($WCAT == "all_cat") {                                   # And All Categories
-                $sql .= "where srv_active=1 order by srv_name";         # Select Aix O/S
+                $sql .= "where srv_active=1 and srv_graph=1 ";          # Active & Graph Perf=Yes
+                $sql .= " order by srv_name";                           # Active Srv/Order by name
             }else{                                                      # If not all categories
-                $sql .= "where srv_active=1 and srv_cat='$WCAT'";       # Only Cat. Selected
+                $sql .= "where srv_active=1 and srv_graph=1 ";          # Active & Graph Perf=Yes
+                $sql .= " and srv_cat='$WCAT'";                         # Only Cat. Selected
                 $sql .= " order by srv_name";                           # Order by server name
             }
             break;                                                      # Ok Select Stat. completed   
