@@ -22,7 +22,9 @@
 # ==================================================================================================
 # ChangeLog
 #   2018_02_01 JDuplessis
-#       V 1.0 Initial Version
+#       v1.0 Initial Version
+#   2018_02_02 JDuplessis
+#       v1.1 First Working version
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -145,33 +147,33 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
 }
 
 # ================================================================================================
-#                     Display server graphic type selected for the period selected 
+#                     Display Server Graphic type selected for the period selected 
 # ================================================================================================
-function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG)
-{
-    $IMGDIR = "/tmp/perf" ;                                         # png Dir. for Web Server
-    $WEBFILE = "${IMGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";
-    $OSFILE  = SADM_WWW_DIR . "$WEBFILE";
-    $URL     = "/view/perf/sadm_server_perf.php";                        # Common URL Start Part 
+function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
+    $IMGDIR  = "/tmp/perf" ;                                            # PNG Dir. for Web Server
+    $WEBFILE = "${IMGDIR}/${WHOST}_${WTYPE}_${WPERIOD}_all.png";        # PNG File Path for Web Srv
+    $OSFILE  = SADM_WWW_DIR . "$WEBFILE";                               # PNG File Path for O/S
+    $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday PNG
 
-    echo "\n<td>";
-    if (file_exists($OSFILE)) {
-        echo "<a href=${URL}?host=$WHOST><img src=${WEBFILE}></a>";
-    }else{
-        echo "<center><a href=${URL}?host=$WHOST>";
-        echo "No data for $OSFILE  $WPERIOD - Server '${WHOST}'";
-        echo "</a></center>";
+    # Display PNG Based on Parameters received
+    echo "\n<td>";                                                      # Start Table Data Line
+    if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
+        echo "<a href=${URL}?host=$WHOST><img src=${WEBFILE}></a>";     # Show PNG with Link to Yest
+    }else{                                                              # If file not there
+        echo "<center><a href=${URL}?host=$WHOST>";                     # Center Msg to User
+        echo "No data for $WPERIOD - Server '${WHOST}'";                # Show Host & Period instead
+        echo "</a></center>";                                           # Finish File not found msg
     }
-    echo "</td>";
-    if ( ($WCOUNT % 3) == 0 ) { echo "</tr><tr>\n" ;  }
-    return ;
+    echo "</td>";                                                       # End Table Data Line
+    if ( ($WCOUNT % 3) == 0 ) { echo "</tr><tr>\n" ;  }                 # Change row, 3 PNG per line
+    return ;                                                            # Return to caller
 }
 	
 
  
-// ================================================================================================
-//                                    Main Program Start Here
-// ================================================================================================
+# ==================================================================================================
+#                                     Main Program Start Here
+# ==================================================================================================
 
     # Show Debugging Information
     if ($DEBUG) {                                                       # In Debug Show Param. Rcv
@@ -184,108 +186,117 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG)
     }
 
     # Validate the type of Graph Requested ---------------------------------------------------------
-    if (isset($_POST['wtype']) ) { 
-        $WTYPE = $_POST['wtype'];
-        switch ($WTYPE) {
-            case "cpu"        : break;
-            case "runqueue"   : break;
-            case "memory"     : break;
-            case "diskio"     : break;
-            case "memdist"    : break;
-            case "page_inout" : break;
-            case "swap_space" : break;
-            case "neta"       : break;
-            case "netb"       : break;
-            case "netc"       : break;
-            case "netd"       : break;
-            default:
-                echo "The WTYPE parameter received is invalid ($WTYPE)" ;
-                exit ;
+    if (isset($_POST['wtype']) ) {                                      # If received type of Graph
+        $WTYPE = $_POST['wtype'];                                       # Save type of Graph
+        switch ($WTYPE) {                                               # Start Type Validation
+            case "cpu"        : break;                                  # CPU Graph
+            case "runqueue"   : break;                                  # Run Queue Graph
+            case "memory"     : break;                                  # Memory Graph
+            case "diskio"     : break;                                  # Disk I/O Graph
+            case "memdist"    : break;                                  # Aix Memory Distribution
+            case "page_inout" : break;                                  # Paging - Page In, Page out
+            case "swap_space" : break;                                  # Swap Space Usage
+            case "neta"       : break;                                  # 1st Network Interface
+            case "netb"       : break;                                  # 2nd Network Interface
+            case "netc"       : break;                                  # 3rd Network Interface
+            case "netd"       : break;                                  # 4th Network Interface
+            default:                                                    # If not a valid Graph Type
+                echo "Graph type received is invalid ($WTYPE)";         # Inform User Msg
+                exit ;                                                  # End of the page 
         }
-    }else{
-        echo "The WTYPE parameter was not received ($WTYPE)" ;
-        exit ;
+    }else{                                                              # If no Graph Type Received
+        echo "The WTYPE parameter was not set" ;                        # Inform User Message
+        exit ;                                                          # End of page
     }
 
-    # Valid the Graph Period that is requested
-    if (isset($_POST['wperiod']) ) { 
-        $WPERIOD = $_POST['wperiod'];
-        switch ($WPERIOD) {
-            case "yesterday"  :
-                break;
-            case "last2days" :
-                break;
-            case "week" :
-                break;
-            case "month"  :
-                break;
-            case "year" :
-                break;
-            case "last2years" :
-                break;
-            default:
-                echo "The Period received is invalid ($WPERIOD)" ;
-                exit ;
+    # Valid the Graph Period that is requested -----------------------------------------------------
+    if (isset($_POST['wperiod']) ) {                                    # if the period is defined
+        $WPERIOD = $_POST['wperiod'];                                   # Save the graph Period
+        switch ($WPERIOD) {                                             # Validate the period
+            case "yesterday"    : break;                                # Graph for Yesterday
+            case "last2days"    : break;                                # Graph of last 2 days
+            case "week"         : break;                                # Graph for last 7 days
+            case "month"        : break;                                # Graph for last 31 days
+            case "year"         : break;                                # Graph for last 365 Days
+            case "last2years"   : break;                                # Graph for last 730 Days
+            default:                                                    # Graph selected not valid
+                echo "The Period received is invalid ($WPERIOD)" ;      # Advise User
+                exit ;                                                  # End of page
         }
-    }else{
-        echo "The Period received is invalid ($WPERIOD)" ;
-        exit ;
+    }else{                                                              # If no period was set
+        echo "The period parameter was not set" ;                       # Inform user message
+        exit ;                                                          # End of page
+    }
+
+    # Validate the server category that is requested -----------------------------------------------
+    if (isset($_POST['wcat']) ) {                                       # if the Category is defined
+        $WCAT = $_POST['wcat'];                                         # Save Category Option
+    }else{                                                              # No Category Option defined
+        echo "The Category parameter was not set" ;                     # Inform User message
+        exit ;                                                          # End of page
     }
 
 
-    # Valid the Graph Period that is requested
-    if (isset($_POST['wcat']) ) { 
-        $WCAT = $_POST['wcat'];
-    }else{
-        echo "The Category received is invalid ($WCAT)" ;
-        exit ;
+    # Validate if the server option was set --------------------------------------------------------
+    if (isset($_POST['wservers']) ) {                                   # if Server Opt is defined
+        $WSERVERS = $_POST['wservers'];                                 # Save Server Option
+    }else{                                                              # No Server Option defined
+        echo "The Server parameter was not set" ;                       # Inform User message
+        exit ;                                                          # End of page
     }
 
-    
-    # Validate the Server(s) Requested
-    if (isset($_POST['wservers']) ) { 
-        $WSERVERS = $_POST['wservers'];
-        $sql="SELECT * FROM server " ;
-	    switch ($WSERVERS) {
-		case "all_linux"  :
-            $sql .= "where srv_ostype='linux' and srv_active=1 order by srv_name";
-            break;
-        case "all_aix" :
-            $sql .= "where srv_ostype='aix' and srv_active=1 order by srv_name";
-	        break;
-		case "all_servers"  :
-	        $sql .= "where srv_active=1 order by srv_name";
-	        break;
-		case "all_linux_prod" :
-        $sql .= "where srv_ostype=='linux' and srv_cat='Prod' and server_active=1 order by server_name";
-        break;
-        case "all_linux_dev"  :
-            $sql .= "where srv_ostype=='linux' and srv_cat='Dev' and server_active=1 order by server_name";
-	        break;
-		case "all_aix_prod" :
-            $sql .= "where srv_ostype=='aix' and srv_cat='Prod' and server_active=1 order by server_name";
-            break;
-        case "all_aix_dev"  :
-            $sql .= "where srv_ostype=='aix' and srv_cat='Prod' and server_active=1 order by server_name";
-            break;
+    # Construct the select statement base on the parameters received -------------------------------
+    $sql="SELECT * FROM server " ;                                      # Begin construct Select St.
+    switch ($WSERVERS) {                                                # Based on Server option
+        
+        case "all_linux"  :                                             # If all Linux Servers
+            if ($WCAT == "all_cat") {                                   # And All Categories
+                $sql .= "where srv_ostype='linux'";                     # Select Linux O/S
+            }else{                                                      # If not all categories
+                $sql .= "where srv_ostype='linux' and srv_cat='$WCAT'"; # Linux O/S & Cat. Selected
+            }
+            $sql .= " and srv_active=1 order by srv_name";              # Active Srv/Order by name
+            break;                                                      # Ok Select Stat. completed
+
+        case "all_aix" :                                                # If all Aix Servers
+            if ($WCAT == "all_cat") {                                   # And All Categories
+                $sql .= "where srv_ostype='aix'";                       # Select Aix O/S
+            }else{                                                      # If not all categories
+                $sql .= "where srv_ostype='aix' and srv_cat='$WCAT'";   # Aix O/S & Cat. Selected
+            }
+            $sql .= " and srv_active=1 order by srv_name";              # Active Srv/Order by name
+            break;                                                      # Ok Select Stat. completed   
+
+        case "all_servers"  :
+            if ($WCAT == "all_cat") {                                   # And All Categories
+                $sql .= "where srv_active=1 order by srv_name";         # Select Aix O/S
+            }else{                                                      # If not all categories
+                $sql .= "where srv_active=1 and srv_cat='$WCAT'";       # Only Cat. Selected
+                $sql .= " order by srv_name";                           # Order by server name
+            }
+            break;                                                      # Ok Select Stat. completed   
+
         default:
-		    echo "The WOS received is invalid ($WOS)" ;
-		    exit ;
-        }
-        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
-            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
-            $err_msg1 = "Sql Failed \n";                                # Row was not found Msg.
-            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
-            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
-            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
-            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
-            exit;                                                       # Exit - Should not occurs
-        }
-	}else{
-		echo "The WOS received is invalid ($WOS)" ;
-		exit ;
-	}
+            $sql .= "where srv_active=1 and srv_name='$WSERVER' " ;     # Only Server selected
+            if ($WCAT == "all_cat") {                                   # And All Categories
+                $sql .= " order by srv_name";                           # Order by server name
+            }else{                                                      # If not all categories
+                $sql .= "and srv_cat='$WCAT'";                          # Only Cat. Selected
+                $sql .= " order by srv_name";                           # Order by server name
+            }
+            break;                                                      # Ok Select Stat. completed   
+    }
 
+    # Execute SQL
+    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_msg1 = "Sql Failed \n";                                    # Row was not found Msg.
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
+        exit;                                                            # Exit - Should not occurs
+    }
 
     # Display Standard Page Heading ----------------------------------------------------------------
     display_std_heading("NotHome","Graph Performance for all servers","","",$SVER); 
