@@ -89,7 +89,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 
     <?php echo "  having category "; ?>
     <select name='wcat'>
-        <option value="all_cat">Any Category</option>
+        <option value="all_cat">All Categories</option>
 <?php
         $sql = "SELECT * FROM server_category ";                            # Construct SQL Statement
         if ($result = mysqli_query($con,$sql)) {                            # If Results to Display
