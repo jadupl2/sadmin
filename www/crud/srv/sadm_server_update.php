@@ -26,7 +26,8 @@
 #       V1.8 Add lot of comments in code and enhance code performance 
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#
+#   2018_02_03 - Jacques Duplessis
+#       V2.1 Added Server Graph Display Option
 # ==================================================================================================
 #
 #
@@ -44,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -69,6 +70,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . "srv_active = '"          . sadm_clean_data($_POST['scr_active'])     ."', ";
         $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])   ."', ";
         $sql = $sql . "srv_monitor = '"         . sadm_clean_data($_POST['scr_monitor'])    ."', ";
+        $sql = $sql . "srv_graph = '"           . sadm_clean_data($_POST['scr_graph'])      ."', ";
         $sql = $sql . "srv_cat = '"             . sadm_clean_data($_POST['scr_cat'])        ."', ";
         $sql = $sql . "srv_group = '"           . sadm_clean_data($_POST['scr_group'])      ."', ";
         $sql = $sql . "srv_ostype = '"          . sadm_clean_data($_POST['scr_ostype'])     ."', ";
