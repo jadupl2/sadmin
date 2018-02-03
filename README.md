@@ -9,12 +9,20 @@ Jan 2018 - Version 0.74
 
 Quick Start
 -----------
-Choose a directory (or a filesystem) where you want to install SADMIN. Make sure you have  around 2GB of free disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MySQL Database). 
+Choose a directory (or a filesystem) where you want to install SADMIN. Make sure you have around 2GB of free disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MySQL Database).  For here on, we will assume that you have install SADM in '/opt/sadmin' directory.
 
 ### Define the SADMIN environment variable
-Define an environment variable name "SADMIN" that contains the directory path, where you decided to install the product. As an example, if you chosen to install SADMIN in the directory /opt/sadmin and add the line below to the /etc/environment file. This step is needed on both the SADMIN server and client.
+Define an environment variable name "SADMIN" that contains the directory path, where you decided to install the product. Edit the file 'bin/sadm_profile.sh' in your install directory and change the SADMIN variable. Then copy the file in /etc/profile.d, so it is executed when your login. This step is needed on both the SADMIN server and client.
 
-####    # echo "SADMIN=/opt/sadmin" >> /etc/environment
+    # cd /installdir 
+    # nano bin/sadm_profile.sh
+        Edit this line 
+            export SADMIN="/sadmin"
+        for 
+            export SADMIN="/opt/sadmin"
+
+    Copy the changed file to its final destination
+    # cp bin/sadm_profile.sh /etc/profile.d
 
 To make this change to be effective you need to logout and log back in.
 
