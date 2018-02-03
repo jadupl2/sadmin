@@ -5,7 +5,7 @@
 #   Version  :  1.0
 #   Date     :  23 January 2018
 #   Requires :  php
-#   Synopsis :  Present Options to Generate Performance Graphics for Server(s)#   
+#   Synopsis :  Generate Performance Graphics of one server for a range of date & time.  
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
@@ -25,6 +25,7 @@
 #       V 1.0 Initial Version
 #   2018_02_03 JDuplessis
 #       V 1.1 First Working Version
+#       V 1.2 Performance & Restructure 
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -40,107 +41,103 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                        # Current version number
+$SVER  = "1.2" ;                                                        # Current version number
 
 
 
 
-// ================================================================================================
-//                       Transform date (DD/MM/YYY) into MYSQL format
-// ================================================================================================
+# ==================================================================================================
+#         Generate and display all the performance graph type for date/time range received
+# ==================================================================================================
 function gen_png ($WHOST,$WOS,$WSDATE,$WSTIME,$WEDATE,$WETIME,$RRDTOOL,$DEBUG)
 {
-    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST}/${WHOST}.rrd"; # Where Host RRD Is
-    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Where png file generated
-    $IMGDIR     = "/tmp/perf" ;                                         # png Dir. for Web Server
-    $TODAY      = date("d.m.Y");                                        # Today Date DD.MM.YYY
-    $START      = "$WSTIME $WSDATE" ;
-    $END        = "$WETIME $WEDATE";
+    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST}/${WHOST}.rrd";           # Build Name of the RRD File
+    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Dir. where PNG is created
+    $IMGDIR     = "/tmp/perf" ;                                         # PNG Dir. for Web Server
+    $START      = "$WSTIME $WSDATE" ;                                   # Build Start Date & Time
+    $END        = "$WETIME $WEDATE";                                    # Build End Date & Time
 
     # Generate the PNG Performance Graph
-    $WTYPE  = "cpu";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "cpu";                                                    # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_cpu_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-    $WTYPE  = "runqueue";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "runqueue";                                               # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_runq_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-    $WTYPE  = "memory";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "memory";                                                 # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_mem_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-    $WTYPE  = "diskio";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "diskio";                                                 # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_disk_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);  
 
-    $WTYPE  = "page_inout";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "page_inout";                                             # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_paging_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-    $WTYPE  = "swap_space";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "swap_space";                                             # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_swap_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
    
-    $WTYPE  = "neta";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "neta";                                                   # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"a");
    
-    $WTYPE  = "netb";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "netb";                                                   # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"b");
    
-    $WTYPE  = "netc";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "netc";                                                   # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE WSTIME to $WEDATE $WETIME";
     create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"c");
    
-    $WTYPE  = "netd";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "netd";                                                   # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"d");
 
-    $WTYPE  = "memdist";
-    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $WTYPE  = "memdist";                                                # Graph Type
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";                  # Output PNG FileName
     $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
     create_memdist_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 }
 
 
-// ================================================================================================
-//                       Display Graphic Page 
-// ================================================================================================
+# ==================================================================================================
+#              Display Large Performance Graphic Page fo the host and type received 
+# ==================================================================================================
 function display_png ($WHOST,$WTYPE,$WTITLE)
 {
     $IMGDIR  = "/tmp/perf" ;                                            # PNG Dir. for Web Server
     $WEBFILE = "${IMGDIR}/${WHOST}_${WTYPE}_adhoc.png";                 # PNG File Path for Web Srv
-    $OSFILE  = SADM_WWW_DIR . "$WEBFILE";                               # PNG File Path for O/S
-    $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday PNG
-    $FONTCOLOR = "Green";                                               # Heading Color
-    echo "<center><h2>${WTITLE}</strong></center>";                     # Display Graph Title    
-    
-    # Display PNG Based on Parameters received
+    $OSFILE  = SADM_WWW_DIR . "$WEBFILE";                               # PNG File Path from O/S
+    $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday Perf
+    echo "\n<center>";                                                  # Center Title & Graph 
+    echo "\n<h2><strong>${WTITLE}</strong></h2>";                       # Display Graph Title    
+    echo "\n<a href=${URL}?host=$WHOST>";                               # Link 2 Yesterday Perf Page
     if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
-        echo "<center>";                                                # Center Graph
-        echo "<a href=${URL}?host=$WHOST><img src=${WEBFILE}></a>";     # Show PNG with Link to Yest
-        echo "</center>";                                               # Center Msg to User
-    }else{                                                              # If file not there
-        echo "<center><a href=${URL}?host=$WHOST>";                     # Center Msg to User
+        echo "<img src=${WEBFILE}>";                                    # Show PNG Graph
+    }else{                                                              # If PNG file not there
         echo "No data for $WPERIOD - Server '${WHOST}'";                # Show Host & Period instead
-        echo "</a></center>";                                           # Finish File not found msg
     }
-    echo "<br>";                                                        # Space line between graph
+    echo "</a>";                                                        # End of Link 
+    echo "\n</center>";                                                 # End of centering
+    echo "\n<br>";                                                      # Space line between graph
     return ;                                                            # Return to caller
 }
-	
+
  
 
  
@@ -159,10 +156,10 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
         echo "\n<br>";                                                  # Blank Line
     }
 
-    # Validate Server Name Received (if Any) and get Server description and O/S name
+    # Validate if Server Name Received (if Any) and get Server description and O/S name
     if (isset($_POST['server_name']) ) {                                # server_name POST Exist ?
         $SERVER_NAME = $_POST['server_name'];                           # Save the Server Name
-        $sql = "SELECT * FROM `server` WHERE `srv_name` = '$SERVER_NAME'";
+        $sql = "SELECT * FROM server WHERE srv_name = '$SERVER_NAME'";  # Build SQL Stat Read Server
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
             $err_msg1 = "Server (" . $SERVER_NAME . ") not found.\n";   # Row was not found Msg.
@@ -173,49 +170,49 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
             exit;                                                       # Exit - Should not occurs
         }
         $row = mysqli_fetch_assoc($result);                             # Gather Result from Query
-		$SERVER_DESC   = $row['srv_desc'];                              # Save Server Description
-		$SERVER_OS     = $row['srv_ostype'];                            # Save O/S Type aix/linux
-	}else{
-	    echo "The server name was not received !";                      # If Server Name not Set ?
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;                                                          # End of the Page
-	}
+        $SERVER_DESC   = $row['srv_desc'];                              # Save Server Description
+        $SERVER_OS     = $row['srv_ostype'];                            # Save O/S Type aix/linux
+    }else{                                                              # Server name not Set
+        echo "The server name was not set !";                           # If Server Name not Set ?
+        echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
+        exit ;                                                          # End of the Page
+    }
 
-    # Graph Start Date was received ?
-	if (isset($_POST['sdate']) ) {                                      # Start Date Exist ?
-	    $SDATE = str_replace ("-",".",$_POST['sdate']);                 # Replace - with . in date
-	}else{
-	    echo "The starting date was not received !";                    # Not Set ?, Inform User
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
-	    exit ;                                                          # End of Page
-	}
+    # Graph Start Date was Set ?
+    if (isset($_POST['sdate']) ) {                                      # Start Date Exist ?
+        $SDATE = str_replace ("-",".",$_POST['sdate']);                 # Replace - with . in date
+    }else{                                                              # No Start Date 
+        echo "The starting date was not received !";                    # Not Set ?, Inform User
+        echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
+        exit ;                                                          # End of Page
+    }
 
-    # Graph End Date was received ?
-	if (isset($_POST['edate']) ) {                                      # End Date Exist ?
-	    $EDATE = str_replace ("-",".",$_POST['edate']);                 # Replace - with . in date
-	}else{
-	    echo "The ending date was not received !";                      # Not Set ?, Inform User
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
-	    exit ;                                                          # End of Page
-	}
+    # Graph End Date was set ?
+    if (isset($_POST['edate']) ) {                                      # End Date Exist ?
+        $EDATE = str_replace ("-",".",$_POST['edate']);                 # Replace - with . in date
+    }else{                                                              # No End Date
+        echo "The ending date was not received !";                      # Not Set ?, Inform User
+        echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
+        exit ;                                                          # End of Page
+    }
 
-    # Graph Start Time received ? 
+    # Graph Start Time set ? 
     if (isset($_POST['stime']) ) {                                      # Start Time Exist ? 
-	    $STIME = str_replace ("-",".",$_POST['stime']);                 # Replace - with .. in Time
-	}else{                                                              # If Time was not received
-	    echo "The starting time was not received !";                    # Inform User
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
-	    exit ;                                                          # End of Page
-	}
+        $STIME = str_replace ("-",".",$_POST['stime']);                 # Replace - with .. in Time
+    }else{                                                              # If Time was not received
+        echo "The starting time was not received !";                    # Inform User
+        echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
+        exit ;                                                          # End of Page
+    }
 
     # Graph End Time received ? 
     if (isset($_POST['etime']) ) {                                      # Start Time Exist ? 
-	    $ETIME = str_replace ("-",".",$_POST['etime']);                 # Replace - with .. in Time
-	}else{                                                              # If Time was not received
-	    echo "The ending time was not received !";                      # Inform User
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
-	    exit ;                                                          # End of Page
-	}
+        $ETIME = str_replace ("-",".",$_POST['etime']);                 # Replace - with .. in Time
+    }else{                                                              # If Time was not received
+        echo "The ending time was not received !";                      # Inform User
+        echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
+        exit ;                                                          # End of Page
+    }
 
     # Show Debugging Information
     if ($DEBUG) {                                                       # In Debug Show Final Var.
@@ -256,10 +253,10 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
     # Display Standard Page Heading ----------------------------------------------------------------
     display_std_heading("NotHome","Adhoc Performance Graph for $SERVER_NAME","","",$SVER); 
 
-    # Display This page heading --------------------------------------------------------------------
-    echo "<center><H1>";
-    echo " Adhoc Performance Graph for " . $SERVER_NAME;
-    echo "</H1></center><br>";
+    # Display this page heading --------------------------------------------------------------------
+    echo "\n<center><H1>";                                              # Center Header 1 Heading
+    echo "Adhoc Performance Graph for " . $SERVER_NAME;                 # Display Page Heading
+    echo "</H1></center><br>";                                          # End of Center and Header 1
 
     # Generate and Display Graph for server --------------------------------------------------------
     gen_png ($SERVER_NAME,$SERVER_OS,$SDATE,$STIME,$EDATE,$ETIME,SADM_RRDTOOL,$DEBUG); # Gen PNG
@@ -273,25 +270,23 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
 
     $WTITLE = "1st Network Interface" ;                                 # Set Default Graph Title
     if ($netdev1 != "") { $WTITLE = "Network Interface $netdev1"; }     # Include DevDev Name 
-    display_png($SERVER_NAME,"neta",$WTITLE);                           # 1st Network Interface
-
-    $WTITLE = "2nd Network Interface" ;                                 # Set Default Graph Title
-    if ($netdev2 != "") { 
-        $WTITLE = "Network Interface $netdev2";                         # Include DevDev Name 
+    display_png($SERVER_NAME,"neta",$WTITLE);                           # Allways show 1st Interface
+    $WTITLE = "2nd Network Interface" ;                                 # Set Net2 Def. Graph Title
+    if ($netdev2 != "") {                                               # If we have 2nd Interface
+        $WTITLE = "Network Interface $netdev2";                         # Include 2nd Dev Name 
         display_png($SERVER_NAME,"netb",$WTITLE);                       # 2nd Network Interface
     }
-    $WTITLE = "3rd Network Interface" ;                                 # Set Default Graph Title
-    if ($netdev3 != "") {
-        $WTITLE = "Network Interface $netdev3";                         # Include DevDev Name 
+    $WTITLE = "3rd Network Interface" ;                                 # Set Net3 Def. Graph Title
+    if ($netdev3 != "") {                                               # If we have 3rd Interface
+        $WTITLE = "Network Interface $netdev3";                         # Include 3rd Dev Name 
         display_png($SERVER_NAME,"netc",$WTITLE);                       # 3rd Network Interface
     }
-    $WTITLE = "4th Network Interface" ;                                 # Set Default Graph Title
-    if ($netdev4 != "") {
-        $WTITLE = "Network Interface $netdev4";                         # Include DevDev Name 
+    $WTITLE = "4th Network Interface" ;                                 # Set Net4 Def. Graph Title
+    if ($netdev4 != "") {                                               # If we have 4th Interface
+        $WTITLE = "Network Interface $netdev4";                         # Include 4th Dev Name 
         display_png($SERVER_NAME,"netd",$WTITLE);                       # 4th Network Interface
     }
     echo "\n<br><br>";                                                  # End of table
-
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
