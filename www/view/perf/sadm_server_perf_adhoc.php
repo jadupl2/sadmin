@@ -1,5 +1,5 @@
 <?php
-# ================================================================================================
+# ==================================================================================================
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_server_perf_adhoc.php
 #   Version  :  1.0
@@ -23,11 +23,14 @@
 # ChangeLog
 #   2018_01_23 JDuplessis
 #       V 1.0 Initial Version
+#   2018_02_03 JDuplessis
+#       V 1.1 First Working Version
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmlib_graph.php');      # Load sadmin Graph Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head>Heading & SideBar
 
@@ -37,269 +40,128 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.0" ;                                                        # Current version number
-$CREATE_BUTTON = False ;                                                # Yes Display Create Button
+$SVER  = "1.1" ;                                                        # Current version number
+
 
 
 
 // ================================================================================================
 //                       Transform date (DD/MM/YYY) into MYSQL format
 // ================================================================================================
-function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WSDATE,$WEDATE,$WSTIME,$WETIME,$WOS)
+function gen_png ($WHOST,$WOS,$WSDATE,$WSTIME,$WEDATE,$WETIME,$RRDTOOL,$DEBUG)
 {
-    $WEBDIR     = $_SERVER['DOCUMENT_ROOT'];
-    $RRD_DIR   = "$WEBDIR/rrd/perf" ;
-    $RRDTOOL    = "/usr/bin/rrdtool";
-    $PNGDIR     = SADM_WWW_TMP_DIR ;  
-    $TODAY      = date("d.m.Y");
-    $RRD_FILE   = "$RRD_DIR/${WHOST_NAME}/$WHOST_NAME.rrd";
-    $WINTERVAL  = "adhoc" ;
+    $RRD_FILE   = SADM_WWW_RRD_DIR ."/${WHOST}/${WHOST}.rrd"; # Where Host RRD Is
+    $PNGDIR     = SADM_WWW_TMP_DIR . "/perf" ;                          # Where png file generated
+    $IMGDIR     = "/tmp/perf" ;                                         # png Dir. for Web Server
+    $TODAY      = date("d.m.Y");                                        # Today Date DD.MM.YYY
+    $START      = "$WSTIME $WSDATE" ;
+    $END        = "$WETIME $WEDATE";
 
-    switch ($WTYPE) {
-        case "cpu":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-			$CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-				$CMD3       = "DEF:user=$RRD_FILE:cpu_busy:MAX LINE2:user#0000FF:\"% CPU time busy\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3";
-			}else{
-	            $CMD3       = "DEF:total=$RRD_FILE:cpu_total:MAX DEF:user=$RRD_FILE:cpu_user:MAX ";
-	            $CMD4       = "DEF:sys=$RRD_FILE:cpu_sys:MAX     DEF:wait=$RRD_FILE:cpu_wait:MAX ";
-	            $CMD5       = "CDEF:csys=user,sys,+              CDEF:cwait=user,sys,wait,+,+  ";
-	            $CMD6       = "AREA:cwait#99CC96:\"% Wait\"      AREA:csys#CC3333:\"% Sys\" ";
-	            $CMD7       = "AREA:user#336699:\"% User\"       LINE2:total#000000:\"% total\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . " $CMD4" . " $CMD5" . " $CMD6" . " $CMD7";
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    # Generate the PNG Performance Graph
+    $WTYPE  = "cpu";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_cpu_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-		
-        case "runqueue":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Load\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_rque:MAX LINE2:runque#0000FF:\"Number of tasks waiting for CPU resources\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
-			}else{
-	            $CMD3       = "DEF:runque=$RRD_FILE:proc_runq:MAX AREA:runque#CC9A57:\"Number of tasks waiting for CPU resources\"";
-				$CMD4       = "DEF:runq=$RRD_FILE:proc_runq:MAX LINE2:runq#000000:";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    $WTYPE  = "runqueue";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_runq_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-        case "memory":
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
-	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
-			}else{
-	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX   AREA:memused#294052:\"Memory Use\" ";
-	            $CMD4       = "DEF:memtotal=$RRD_FILE:mem_total:MAX LINE2:memtotal#000000:\"Total Memory\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    $WTYPE  = "memory";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_mem_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-        case "memory_usage":
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Memory Usage Pct\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 " ;
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:memused=$RRD_FILE:mem_used:MAX DEF:memfree=$RRD_FILE:mem_free:MAX ";
-	            $CMD4       = "LINE2:memused#000000:\"Memory used by Processes\" LINE2:memfree#FF0000:\"Free Memory\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" ;
-			}else{
-	            $CMD3       = "DEF:mem_new_proc=$RRD_FILE:mem_new_proc:MAX ";      
-	            $CMD4       = "DEF:mem_new_fscache=$RRD_FILE:mem_new_fscache:MAX ";
-				$CMD5       = "DEF:mem_new_system=$RRD_FILE:mem_new_system:MAX ";
-	            $CMD6       = "CDEF:totproc=mem_new_proc,mem_new_system,+  ";
-				$CMD7       = "CDEF:wcache=mem_new_proc,mem_new_fscache,mem_new_system,+,+  ";
-	            $CMD8       = "AREA:wcache#DFC184:\"FS Cache %\" ";
-				$CMD9       = "AREA:totproc#2A75A9:\"Process %\" ";
-	            $CMDA       = "AREA:mem_new_system#7EB5D6:\"System %\" ";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4" . "$CMD5" . "$CMD6" . "$CMD7" . "$CMD8" . "$CMD9". "$CMDA" ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
-		
-        case "diskio":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"MB/Second\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX ";
-	            $CMD4       = "LINE2:read#000000:\"DISKS Read MB/Sec\"  LINE2:write#0000FF:\"Disks Write MB/Sec\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
-			}else{
-	            $CMD3       = "DEF:read=$RRD_FILE:disk_kbread_sec:MAX  AREA:read#DC143C:\"Disk Read per second\" ";
-	            $CMD4       = "DEF:write=$RRD_FILE:disk_kbwrtn_sec:MAX AREA:write#0000FF:\"Disk Write per second\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" . $CMD4 ;
-			}
-			$outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    $WTYPE  = "diskio";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_disk_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);  
 
-        case "paging_activity":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"Pages/Second\" --height 250 --width 950";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:pgsec=$RRD_FILE:swap_in_out_sec:MAX LINE2:pgsec#000000:\"Swap pages IN + OUT per second\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
-			}else{
-	            $CMD3       = "DEF:page_in=$RRD_FILE:page_in:MAX   AREA:page_in#D50A09:\"Pages In \"";
-	            $CMD4       = "DEF:page_out=$RRD_FILE:page_out:MAX AREA:page_out#0000FF:\"Pages Out \"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-			$outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    $WTYPE  = "page_inout";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_paging_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 
-        case "paging_space_usage":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"percentage(%)\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:swapused=$RRD_FILE:swap_used_pct:MAX LINE2:swapused#000000:\"% Swap Space Used\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" ;
-			}else{
-	            $CMD3       = "DEF:page_used=$RRD_FILE:page_used:MAX   AREA:page_used#83AFE5:\"Virtual Memory Use\" ";
-	            $CMD4       = "DEF:page_total=$RRD_FILE:page_total:MAX LINE2:page_total#000000:\"Total Virtual Memory\" ";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3" .  " $CMD4" ;
-			}
-			$outline    = exec ("$CMD", $array_out, $retval);
-			break ;
+    $WTYPE  = "swap_space";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_swap_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
+   
+    $WTYPE  = "neta";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"a");
+   
+    $WTYPE  = "netb";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"b");
+   
+    $WTYPE  = "netc";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE WSTIME to $WEDATE $WETIME";
+    create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"c");
+   
+    $WTYPE  = "netd";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG,"d");
 
-        case "network_eth0":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth0_kbytesout:MAX ";
-	            $CMD4       = "LINE2:kbin#000000:\"KB Received\" LINE2:kbout#0000FF:\"KB Transmitted\"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth0_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth0_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}
-			$outline    = exec ("$CMD", $array_out, $retval);
-			break ;
-
-        case "network_eth1":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
-				$CMD4       = "LINE2:kbin#000000:\"KB Received\" LINE2:kbout#0000FF:\"KB Transmitted\"";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth1_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
-
-        case "network_eth2":
-            // Build command to execute and produce last 2 days of Graph
-            $START      = "$WSTIME $WSDATE" ;
-            $END        = "$WETIME $WEDATE";
-            $GFILE      = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_${WINTERVAL}.png";
-            $GTITLE     = "${WHOST_NAME} - " . strtoupper($WTYPE) . " performance between the $WSDATE at $WSTIME and the $WEDATE at $WETIME" ;
-            $CMD1       = "$RRDTOOL graph $GFILE -s \"$START\" -e \"$END\" --title \"$GTITLE\"";
-            $CMD2       = "--vertical-label \"KB/s\" --height 250 --width 950 --upper-limit 100 --lower-limit 0 ";
-			if ( $WOS == "Linux" ) {
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth1_kbytesin:MAX  DEF:kbout=$RRD_FILE:eth1_kbytesout:MAX ";
-				$CMD4       = "LINE2:kbin#000000:\"KB Received\" LINE2:kbout#0000FF:\"KB Transmitted\"";
-				$CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}else{
-	            $CMD3       = "DEF:kbin=$RRD_FILE:eth2_readkbs:MAX   AREA:kbin#1E8CD1:\"KB Received \"";
-	            $CMD4       = "DEF:kbout=$RRD_FILE:eth2_writekbs:MAX AREA:kbout#A4300B:\"KB Transmitted \"";
-	            $CMD        = "$CMD1" . " $CMD2 " .  " $CMD3 " . "$CMD4 " ;
-			}
-            $outline    = exec ("$CMD", $array_out, $retval);
-			break ;
-    }
+    $WTYPE  = "memdist";
+    $GFILE  = "${PNGDIR}/${WHOST}_${WTYPE}_adhoc.png";
+    $GTITLE = "${WHOST} - " . strtoupper($WTYPE) . " from $WSDATE $WSTIME to $WEDATE $WETIME";
+    create_memdist_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"B",$DEBUG);
 }
 
 
 // ================================================================================================
 //                       Display Graphic Page 
 // ================================================================================================
-function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
+function display_png ($WHOST,$WTYPE,$WTITLE)
 {
-    $PNGDIR    = "/images/perf" ;
-	$GFILENAME = "${PNGDIR}/${WHOST_NAME}_${WTYPE}_adhoc.png"; 
-	$GTITLE    = strtoupper($WTYPE) . " usage $WHOST_NAME - $WHOST_DESC";
-    $FONTCOLOR = "White"; 
-
-    echo "\n<table width=750 align=center border=1 cellspacing=0>";
-	echo "\n<tr>" ;
-    echo "\n<td width=750 align=center bgcolor='153450'>";
-    echo "  <font color=$FONTCOLOR>$GTITLE</font></bold></td>";
-    echo "\n</tr>";
-    echo "\n<tr>";
-    echo "\n<td><img src=$GFILENAME></td>";
-    echo "\n</tr>" ;
-    echo "\n</table><br><br>";
-    return ;
+    $IMGDIR  = "/tmp/perf" ;                                            # PNG Dir. for Web Server
+    $WEBFILE = "${IMGDIR}/${WHOST}_${WTYPE}_adhoc.png";                 # PNG File Path for Web Srv
+    $OSFILE  = SADM_WWW_DIR . "$WEBFILE";                               # PNG File Path for O/S
+    $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday PNG
+    $FONTCOLOR = "Green";                                               # Heading Color
+    echo "<center><h2>${WTITLE}</strong></center>";                     # Display Graph Title    
+    
+    # Display PNG Based on Parameters received
+    if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
+        echo "<center>";                                                # Center Graph
+        echo "<a href=${URL}?host=$WHOST><img src=${WEBFILE}></a>";     # Show PNG with Link to Yest
+        echo "</center>";                                               # Center Msg to User
+    }else{                                                              # If file not there
+        echo "<center><a href=${URL}?host=$WHOST>";                     # Center Msg to User
+        echo "No data for $WPERIOD - Server '${WHOST}'";                # Show Host & Period instead
+        echo "</a></center>";                                           # Finish File not found msg
+    }
+    echo "<br>";                                                        # Space line between graph
+    return ;                                                            # Return to caller
 }
 	
  
 
  
-// ================================================================================================
-//                                    Main Program Start Here
-// ================================================================================================
+# ==================================================================================================
+#                                     Main Program Start Here
+# ==================================================================================================
 
-//	$SERVER_NAME = $_POST['server_name'];  	echo "server_name   $SERVER_NAME <br>";
-//	$SDATE = $_POST['sdate'];  				echo "sdate   $SDATE  <br>";
-//	$EDATE = $_POST['edate'];  				echo "edate   $EDATE  <br>";
-//	$STIME = $_POST['stime'];  				echo "stime   $STIME  <br>";
-//	$ETIME = $_POST['etime'];  				echo "etime   $ETIME  <br>";
+    # Show Debugging Information
+    if ($DEBUG) {                                                       # In Debug Show Param. Rcv
+        echo "\n<br>Parameters Received";                               # Show What is display below
+        echo "\n<br>Server Name = " . $_POST['server_name'];            # Show Server Name received
+        echo "\n<br>Start Date  = " . $_POST['sdate'];                  # Show Graph Start Date
+        echo "\n<br>End Date    = " . $_POST['edate'];                  # Show Graph End Date
+        echo "\n<br>Start Time  = " . $_POST['stime'];                  # Show Graph Start Time
+        echo "\n<br>End Time    = " . $_POST['etime'];                  # Show Graph End Time 
+        echo "\n<br>";                                                  # Blank Line
+    }
 
-	if (isset($_POST['server_name']) ) { 
-        $SERVER_NAME = $_POST['server_name'];
+    # Validate Server Name Received (if Any) and get Server description and O/S name
+    if (isset($_POST['server_name']) ) {                                # server_name POST Exist ?
+        $SERVER_NAME = $_POST['server_name'];                           # Save the Server Name
         $sql = "SELECT * FROM `server` WHERE `srv_name` = '$SERVER_NAME'";
         if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
             $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
@@ -311,81 +173,124 @@ function display_graph ( $WHOST_NAME, $WHOST_DESC , $WTYPE)
             exit;                                                       # Exit - Should not occurs
         }
         $row = mysqli_fetch_assoc($result);                             # Gather Result from Query
-		$SERVER_DESC   = $row['srv_desc'];
-		$SERVER_OS     = $row['srv_ostype'];
+		$SERVER_DESC   = $row['srv_desc'];                              # Save Server Description
+		$SERVER_OS     = $row['srv_ostype'];                            # Save O/S Type aix/linux
 	}else{
-	    echo "The server name was not received !";
+	    echo "The server name was not received !";                      # If Server Name not Set ?
 		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;
+	    exit ;                                                          # End of the Page
 	}
 
-	if (isset($_POST['sdate']) ) { 
-	    $SDATE = str_replace ("-",".",$_POST['sdate']);
+    # Graph Start Date was received ?
+	if (isset($_POST['sdate']) ) {                                      # Start Date Exist ?
+	    $SDATE = str_replace ("-",".",$_POST['sdate']);                 # Replace - with . in date
 	}else{
-	    echo "The starting date was not received !";
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;
+	    echo "The starting date was not received !";                    # Not Set ?, Inform User
+		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
+	    exit ;                                                          # End of Page
 	}
 
-	if (isset($_POST['edate']) ) { 
-	    $EDATE = str_replace ("-",".",$_POST['edate']);
+    # Graph End Date was received ?
+	if (isset($_POST['edate']) ) {                                      # End Date Exist ?
+	    $EDATE = str_replace ("-",".",$_POST['edate']);                 # Replace - with . in date
 	}else{
-	    echo "The ending date was not received !";
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;
+	    echo "The ending date was not received !";                      # Not Set ?, Inform User
+		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
+	    exit ;                                                          # End of Page
 	}
 
-	if (isset($_POST['stime']) ) { 
-	    $STIME = str_replace ("-",".",$_POST['stime']);
-	}else{
-	    echo "The starting time was not received !";
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;
+    # Graph Start Time received ? 
+    if (isset($_POST['stime']) ) {                                      # Start Time Exist ? 
+	    $STIME = str_replace ("-",".",$_POST['stime']);                 # Replace - with .. in Time
+	}else{                                                              # If Time was not received
+	    echo "The starting time was not received !";                    # Inform User
+		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
+	    exit ;                                                          # End of Page
 	}
 
-	if (isset($_POST['etime']) ) { 
-	    $ETIME = str_replace ("-",".",$_POST['etime']);
-	}else{
-	    echo "The ending time was not received !";
-		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>";
-	    exit ;
+    # Graph End Time received ? 
+    if (isset($_POST['etime']) ) {                                      # Start Time Exist ? 
+	    $ETIME = str_replace ("-",".",$_POST['etime']);                 # Replace - with .. in Time
+	}else{                                                              # If Time was not received
+	    echo "The ending time was not received !";                      # Inform User
+		echo "<a href='javascript:history.go(-1)'>Go back to adjust request</a>"; # Show Back Link
+	    exit ;                                                          # End of Page
 	}
 
-	echo "<center><strong><H2>Performance Graph for $SERVER_OS server $SERVER_NAME - $SERVER_DESC</strong></H2></center><br>";
+    # Show Debugging Information
+    if ($DEBUG) {                                                       # In Debug Show Final Var.
+        echo "\n<br>Parameters Modified";                               # Show What is display below
+        echo "\n<br>Server Name = " . $SERVER_NAME;                     # Show Server Name 
+        echo "\n<br>Start Date  = " . $SDATE;                           # Show Graph Start Date
+        echo "\n<br>End Date    = " . $EDATE;                           # Show Graph End Date
+        echo "\n<br>Start Time  = " . $STIME;                           # Show Graph Start Time
+        echo "\n<br>End Time    = " . $ETIME;                           # Show Graph End Time 
+        echo "\n<br>";                                                  # Blank Line
+    }
 
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'cpu',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "cpu");
-	
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'runqueue',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "runqueue");
-	
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'diskio',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "diskio");
+    # Read Network Device Name file (netdev.txt) & get the interface Name of each possible 4 Devices
+    $netdev1="" ; $netdev2=""; $netdev3=""; $netdev4="";                # Clear Net interface name 
+    $netcount  = 0;                                                     # Network  Interface Counter
+    $NETDEV = SADM_WWW_RRD_DIR . "/${SERVER_NAME}/" . SADM_WWW_NETDEV ; # Server Path to netdev.txt
+    if (file_exists($NETDEV)) {                                         # If Network Dev file exist
+        $handle = fopen($NETDEV, "r");                                  # Open netdev.txt of server
+        if ($handle) {                                                  # If Successfully Open
+            while (($line = fgets($handle)) !== false) {                # If Still Line to read
+                $netcount++;                                            # Increase Line Number
+                if ($netcount == 1) { $netdev1 = $line ; }              # Get Name of Net interface1
+                if ($netcount == 2) { $netdev2 = $line ; }              # Get Name of Net interface2
+                if ($netcount == 3) { $netdev3 = $line ; }              # Get Name of Net interface3
+                if ($netcount == 4) { $netdev4 = $line ; }              # Get Name of Net interface4
+            }
+            fclose($handle);                                            # Close Network DevName file
+        }    
+    }
 
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'memory',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "memory");
+    # Under Debug, Show Name of device file, Name of each Network Interface and Number of interfaces
+    if ($DEBUG) { 
+        echo "\n<br>Netdev filename is $NETDEV";
+        echo "\n<br>dev1= $netdev1 \n<br>dev2= $netdev2 \n<br>dev3= $netdev3 \n<br>dev4= $netdev4";
+        echo "\n<br>NetCount is $netcount";
+    }
 
-	if ($SERVER_OS == "Aix") {
-		create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'memory_usage',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-	    display_graph ($SERVER_NAME, $SERVER_DESC, "memory_usage");
-	}
-	
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'paging_activity',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "paging_activity");
+    # Display Standard Page Heading ----------------------------------------------------------------
+    display_std_heading("NotHome","Adhoc Performance Graph for $SERVER_NAME","","",$SVER); 
 
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'paging_space_usage',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "paging_space_usage");
+    # Display This page heading --------------------------------------------------------------------
+    echo "<center><H1>";
+    echo " Adhoc Performance Graph for " . $SERVER_NAME;
+    echo "</H1></center><br>";
 
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'network_eth0',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "network_eth0");
+    # Generate and Display Graph for server --------------------------------------------------------
+    gen_png ($SERVER_NAME,$SERVER_OS,$SDATE,$STIME,$EDATE,$ETIME,SADM_RRDTOOL,$DEBUG); # Gen PNG
+    display_png($SERVER_NAME,"cpu","CPU usage");                        # CPU Graph
+    display_png($SERVER_NAME,"runqueue","Run Queue Usage");             # Run Queue Graph
+    display_png($SERVER_NAME,"memory","Memory usage"    );              # Memory Graph
+    display_png($SERVER_NAME,"diskio","Disk I/O"    );                  # Disk I/O Graph
+    if ($SERVER_OS == "aix") { display_png($SERVER_NAME,"memdist","Memory Distribution"); } # AixMem
+    display_png($SERVER_NAME,"page_inout","Page in/out");               # Paging - Page In, Page out
+    display_png($SERVER_NAME,"swap_space","Swap space usage");          # Swap Space Usage
 
-	create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'network_eth1',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-    display_graph ($SERVER_NAME, $SERVER_DESC, "network_eth1");
+    $WTITLE = "1st Network Interface" ;                                 # Set Default Graph Title
+    if ($netdev1 != "") { $WTITLE = "Network Interface $netdev1"; }     # Include DevDev Name 
+    display_png($SERVER_NAME,"neta",$WTITLE);                           # 1st Network Interface
 
-	if ($SERVER_OS == "Aix") {
-		create_standard_graphic( $SERVER_NAME,$SERVER_DESC,'network_eth2',$SDATE,$EDATE,$STIME,$ETIME,$SERVER_OS);
-		display_graph ($SERVER_NAME, $SERVER_DESC, "network_eth2");
-	}
+    $WTITLE = "2nd Network Interface" ;                                 # Set Default Graph Title
+    if ($netdev2 != "") { 
+        $WTITLE = "Network Interface $netdev2";                         # Include DevDev Name 
+        display_png($SERVER_NAME,"netb",$WTITLE);                       # 2nd Network Interface
+    }
+    $WTITLE = "3rd Network Interface" ;                                 # Set Default Graph Title
+    if ($netdev3 != "") {
+        $WTITLE = "Network Interface $netdev3";                         # Include DevDev Name 
+        display_png($SERVER_NAME,"netc",$WTITLE);                       # 3rd Network Interface
+    }
+    $WTITLE = "4th Network Interface" ;                                 # Set Default Graph Title
+    if ($netdev4 != "") {
+        $WTITLE = "Network Interface $netdev4";                         # Include DevDev Name 
+        display_png($SERVER_NAME,"netd",$WTITLE);                       # 4th Network Interface
+    }
+    echo "\n<br><br>";                                                  # End of table
 
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
