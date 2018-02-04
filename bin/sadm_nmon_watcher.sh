@@ -19,7 +19,9 @@
 # 2017_01_27 J.Duplessis 
 #       V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comments
 # 2017_02_02 J.Duplessis 
-#       V2.2 Show number of nmon running only once, if nmon is alreadey running
+#       V2.2 Show number of nmon running only once, if nmon is already running
+# 2017_02_04 J.Duplessis 
+#       V2.3 Snapshot will be taken every 2 minutes instead of 5.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -38,7 +40,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -72,13 +74,14 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=O
 # Calculate the number of Snap Shot Till 23:55 today
 # -------------------------------------------------------------------------------------
 CUR_DATE=`date +"%Y.%m.%d"`              ; export CUR_DATE          # Current Date
-NOW="$CUR_DATE 23:55:00"                 ; export NOW               # Build epoch cmd date format
+NOW="$CUR_DATE 23:59:58"                 ; export NOW               # Build epoch cmd date format
 EPOCH_NOW=$(sadm_get_epoch_time)         ; export EPOCH_NOW         # Get Current Epoch Time
-EPOCH_END=`sadm_date_to_epoch "${NOW}"`  ; export EPOCH_END         # Epoch Value of Today at 23:55
-TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`                       # Nb Sec. between now & 23:55
-TOT_MIN=`echo "${TOT_SEC}/60"| bc`                                  # Nb of Minutes till 23:55
-TOT_SNAPSHOT=`echo "${TOT_MIN}/5"| bc`                              # Nb. of 5 MIn till 23:55
-TOT_SNAPSHOT=`expr $TOT_SNAPSHOT - 1 `			                    # Sub. 1 SnapShot just to be sure
+EPOCH_END=`sadm_date_to_epoch "${NOW}"`  ; export EPOCH_END         # Epoch Value of Today at 23:58
+TOT_SEC=`echo "${EPOCH_END}-${EPOCH_NOW}"|bc`                       # Nb Sec. between now & 23:58
+TOT_MIN=`echo "${TOT_SEC}/60"| bc`                                  # Nb of Minutes till 23:58
+TOT_SNAPSHOT=`echo "${TOT_MIN}/5"| bc`                              # Nb. of 5 Min till 23:58
+TOT_SNAPSHOT=`echo "${TOT_MIN}/2"| bc`                              # Nb. of 2 Min till 23:58
+#TOT_SNAPSHOT=`expr $TOT_SNAPSHOT - 1 `                             # Sub. 1 SnapShot just to be sure
 
 
     
@@ -141,15 +144,15 @@ check_nmon()
         else WSEARCH=$SADM_NMON                                         # Linux search for nmon only
     fi
     
-    # Kill any nmon running without the option -s300 (Our switch) - Want only one nmon running
+    # Kill any nmon running without the option -s120 (Our switch) - Want only one nmon running
     # This will eliminate the nmon running from the crontab with rpm installation
-    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
     if [ $nmon_count -gt 1 ] 
-        then #NMON_PID=`ps -ef | grep nmon |grep -v grep |grep s300 |awk '{ print $2 }'`
+        then #NMON_PID=`ps -ef | grep nmon |grep -v grep |grep s120 |awk '{ print $2 }'`
              #sadm_writelog "Found another nmon process running at $NMON_PID"
-             sadm_writelog "Found another nmon process running with s300 parameter"
-             ps -ef | grep nmon |grep -v grep |grep s300 | tee -a $SADM_LOG 2>&1
-             ps -ef | grep nmon |grep -v grep |grep s300 | awk '{ print $2 }' | xargs kill -9
+             sadm_writelog "Found another nmon process running with s120 parameter"
+             ps -ef | grep nmon |grep -v grep |grep s120 | tee -a $SADM_LOG 2>&1
+             ps -ef | grep nmon |grep -v grep |grep s120 | awk '{ print $2 }' | xargs kill -9
              #kill -9 "$NMON_PID"
              sadm_writelog "We just kill them - Only one nmon process should be running"
     fi
@@ -157,9 +160,9 @@ check_nmon()
  
     # Search Process Status (ps) and display number of nmon process running currently
     sadm_writelog " "                                                   # Blank line in log
-    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+    nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
     sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
-    ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
+    ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl | tee -a $SADM_LOG
 
     # nmon_count = 0 = Not running - Then we start it 
     # nmon_count = 1 = Running - Then OK
@@ -170,14 +173,14 @@ check_nmon()
         0)  sadm_writelog "The nmon process is not running - Starting nmon daemon ..."
             sadm_writelog "We will start a fresh one that will terminate at 23:55"
             sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
-            $SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
+            sadm_writelog "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
+            $SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR  >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
                 then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
             fi
             sadm_writelog " "
-            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
             sadm_writelog "The number of nmon process running after restarting it is : $nmon_count"
             ps -ef | grep -E "$WSEARCH" | grep -v grep | nl
             ;;
@@ -185,13 +188,13 @@ check_nmon()
             SADM_EXIT_CODE=0
             ;;
         *)  sadm_writelog "There seems to be more than one nmon process running ??"
-            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl 
+            ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl 
             sadm_writelog "We will kill them both and start a fresh one that will terminate at 23:55"
-            ps -ef | grep -E "$WSEARCH" | grep -v grep |grep s300 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
+            ps -ef | grep -E "$WSEARCH" | grep -v grep |grep s120 |awk '{ print $2 }' |xargs kill -9 |tee -a $SADM_LOG 2>&1
             sadm_writelog "We will start a fresh one that will terminate at 23:55"
             sadm_writelog "We calculated that there will be ${TOT_SNAPSHOT} snapshots till 23:55"
-            sadm_writelog "$SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f "
-            $SADM_NMON -s300 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR -f >> $SADM_LOG 2>&1
+            sadm_writelog "$SADM_NMON -f -s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR "
+            $SADM_NMON -f s120 -c${TOT_SNAPSHOT} -t -m $SADM_NMON_DIR >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
                 then sadm_writelog "Error while starting - Not Started !" 
                      SADM_EXIT_CODE=1 
@@ -199,9 +202,9 @@ check_nmon()
             fi
             # Search Process Status (ps) and display number of nmon process running currently
             sadm_writelog " "                                                   # Blank line in log
-            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s300 |wc -l |tr -d ' '`
+            nmon_count=`ps -ef | grep -E "$WSEARCH" |grep -v grep |grep s120 |wc -l |tr -d ' '`
             sadm_writelog "There is $nmon_count nmon process actually running"  # Show Nb. nmon Running
-            ps -ef | grep -E "$WSEARCH" | grep 's300' | grep -v grep | nl | tee -a $SADM_LOG
+            ps -ef | grep -E "$WSEARCH" | grep 's120' | grep -v grep | nl | tee -a $SADM_LOG
             ;;
     esac
 
@@ -226,7 +229,18 @@ check_nmon()
              sadm_stop 0                                                # Close Everything Cleanly
              exit 0                                                     # Exit back to bash
     fi
-    
+
+    sadm_writelog "----------------------"
+    sadm_writelog "CURRENT EPOCH               = $EPOCH_NOW"
+    sadm_writelog "CURRENT DATE/TIME           = `date +"%Y.%m.%d %H:%M:%S"`"
+    sadm_writelog "END EPOCH                   = $EPOCH_END" 
+    sadm_writelog "END DATE/TIME               = $NOW"
+    sadm_writelog "SECONDS TILL 23:59:58       = $TOT_SEC" 
+    sadm_writelog "MINUTES TILL 23:59:58       = $TOT_MIN"
+    sadm_writelog "SECONDS BETWEEN SNAPSHOT    = 120"
+    sadm_writelog "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
+    sadm_writelog "----------------------"
+
     pre_validation                                                      # nmon Cmd present ?
     if [ $? -ne 0 ]                                                     # If not there
         then sadm_stop 1                                                # Upd. RC & Trim Log & Set RC
