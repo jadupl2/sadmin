@@ -31,7 +31,8 @@
 #       V 1.4 Restructure & Enhance Look & Create Library to used by others pages
 #   2018_02_02 JDuplessis
 #       V 1.5 Added message when cannot produce graph because no data in rrd available
-#
+#   2018_02_03 JDuplessis
+#       V1.6 Comments Added 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -46,7 +47,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG  = False  ;                                                      # Debug Activated True/False
-$SVER   = "1.5" ;                                                       # Current version number
+$SVER   = "1.6" ;                                                       # Current version number
 
 
 
@@ -82,20 +83,21 @@ function create_standard_graphic($WHOST_NAME,$WHOST_DESC,$WTYPE,$WOS,$RRDTOOL,$D
     $HRS_END    = "23:59" ;                                             # Graph Default End Time
 
     # Print Variables above for debugging purpose.
-    if ($DEBUG) { 
-        echo "\n<br>RRDTOOL    = $RRDTOOL";
-        echo "\n<br>RRD_FILE   = $RRD_FILE";
-        echo "\n<br>PNGDIR     = $PNGDIR";
-        echo "\n<br>IMGDIR     = $IMGDIR";
-        echo "\n<br>TODAY      = $TODAY     ";
-        echo "\n<br>YESTERDAY  = $YESTERDAY ";
-        echo "\n<br>YESTERDAY2 = $YESTERDAY2";
-        echo "\n<br>LASTWEEK   = $LASTWEEK  ";
-        echo "\n<br>LASTMONTH  = $LASTMONTH ";
-        echo "\n<br>LASTYEAR   = $LASTYEAR  ";
-        echo "\n<br>LAST2YEAR  = $LAST2YEAR ";
-        echo "\n<br>HRS_START  = $HRS_START ";
-        echo "\n<br>HRS_END    = $HRS_END   ";
+    if ($DEBUG) {                                                       # If Debug is Activated
+        echo "\n<br>RRDTOOL    = $RRDTOOL";                             # Full Path to rrdtool Bin.
+        echo "\n<br>PERIOD     = $WPERIOD";                             # Show the Period received
+        echo "\n<br>RRD_FILE   = $RRD_FILE";                            # Show RRD file we will use
+        echo "\n<br>PNGDIR     = $PNGDIR";                              # PNG Dir. for the O/S
+        echo "\n<br>IMGDIR     = $IMGDIR";                              # PNG Dir. for Web Server
+        echo "\n<br>TODAY      = $TODAY     ";                          # Today's Date
+        echo "\n<br>YESTERDAY  = $YESTERDAY ";                          # Yesterday Date
+        echo "\n<br>YESTERDAY2 = $YESTERDAY2";                          # Date before Yesterday
+        echo "\n<br>LASTWEEK   = $LASTWEEK  ";                          # Today Minus  7 Days Date
+        echo "\n<br>LASTMONTH  = $LASTMONTH ";                          # Today Minus 31 Days Date
+        echo "\n<br>LASTYEAR   = $LASTYEAR  ";                          # Today Minus 365 Days Date
+        echo "\n<br>LAST2YEAR  = $LAST2YEAR ";                          # Today Minus 730 Days Date
+        echo "\n<br>HRS_START  = $HRS_START ";                          # Start Hours of Graph
+        echo "\n<br>HRS_END    = $HRS_END   ";                          # End Hours of Graph
     }
 
     switch ($WTYPE) {
