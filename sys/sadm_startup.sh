@@ -30,6 +30,8 @@
 #   V3.1 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
 # 2018_02_02 JDuplessis 
 #   V3.2 Redirect output of starting nmon in the log (already log by sadm_nmon_watcher.sh).
+# 2018_02_04 JDuplessis 
+#   V3.3 Remove all pid when starting server - Make sure there is no leftover.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
@@ -45,7 +47,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='3.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='3.3'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -91,7 +93,7 @@ main_process()
     sadm_writelog " "
     
     sadm_writelog "Running Startup Standard Procedure"
-    sadm_writelog "  Removing old files in ${SADM_TMP_DIR}"
+    sadm_writelog "  Removing old files (log,pid) in ${SADM_TMP_DIR}"
     rm -f ${SADM_TMP_DIR}/* >> $SADM_LOG 2>&1
 
     sadm_writelog "  Removing SADM System Monitor Lock File ${SADM_BASE_DIR}/sysmon.lock"
