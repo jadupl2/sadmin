@@ -36,6 +36,8 @@
 #   V1.2a - Added removal on work temp. file at the end
 # 2018_01_28 JDuplessis 
 #   V1.3 - Add nmon file counter during process & bug fix
+# 2018_02_04 JDuplessis 
+#   V1.4 - List of all nmon files this script will process before update rrd begin.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -50,7 +52,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.3 '                            ; export SADM_VER           # Your Script Version
+SADM_VER='1.4 '                            ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -1072,6 +1074,17 @@ main_process()
         else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort > $NMON_FILE_LIST
     fi
 
+    # 
+    sadm_writelog "This is the list of nmon files we will process" 
+    sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name \"*_${YESTERDAY}_*.nmon\""
+    filecount=0
+    cat $NMON_FILE_LIST |  while read wline 
+        do 
+        filecount=$(($filecount+1))                                     # Increment File Counter 
+        snapshotcount=`grep "ZZZZ,T" $wline | wc -l`
+        sadm_writelog "$filecount $wline as $snapshotcount snapshots"   
+        done
+
     while read NMON_FILE                                                # Process nmon file 1 by 1
         do
         NMON_COUNT=$(($NMON_COUNT+1))                                   # Increment Error Counter 
@@ -1197,6 +1210,5 @@ main_process()
 
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
