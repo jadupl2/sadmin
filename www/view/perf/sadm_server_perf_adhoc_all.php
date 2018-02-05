@@ -320,11 +320,12 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Graph Performance for all servers","","",$SVER); 
+    $TITRE = ucfirst($WTYPE) . " Performance graph for all servers"; 
+    display_std_heading("NotHome","$TITRE","","",$SVER); 
 
     # Display This page heading --------------------------------------------------------------------
     echo "<center><H1>";
-    echo ucfirst($WTYPE) . " Performance Graph of " . str_replace("_"," ",$WSERVERS);
+    echo ucfirst($WTYPE) . " performance Graph of " . str_replace("_"," ",$WSERVERS);
     echo " for " . ucfirst($WPERIOD) ;
     echo "</H1></center><br>";
 

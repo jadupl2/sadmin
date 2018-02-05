@@ -507,11 +507,11 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
     $IMG_OSYEAR = "${OSDIR}/${WHOST}_${WTYPE}_year.png";                # Last 365 Days PNG O/S Path
 
     # Web Page URL if User click on one of the PNG Graph
-    $URL1      = "/view/perf/sadm_server_perf_";                        # Common URL Start Part 
-    $URL_DAY   = $URL1 . "yesterday.php?host=$WHOST&$WTYPE";            # URL For Daily Display
-    $URL_WEEK  = $URL1 . "week.php?host=$WHOST&$WTYPE";                 # URL for Week Display
-    $URL_MTH   = $URL1 . "month.php?host=$WHOST&$WTYPE";                # URL for Month Display
-    $URL_YEAR  = $URL1 . "2year.php?host=$WHOST&$WTYPE";                # URL for Year Display
+    $URL1      = "/view/perf/sadm_server_perf_period.php";              # Common URL Start Part 
+    $URL_DAY   = $URL1 . "?host=$WHOST&period=yesterday";               # URL For Daily Display
+    $URL_WEEK  = $URL1 . "?host=$WHOST&period=last7days";               # URL for Week Display
+    $URL_MTH   = $URL1 . "?host=$WHOST&period=last31days";              # URL for Month Display
+    $URL_YEAR  = $URL1 . "?host=$WHOST&period=last365days";             # URL for Year Display
 
     # When cursor move over the graph, Message below will be displyed
     $ALT_DAY   = "View Yesterday Graph Only";                           # Day Message when on Graph
@@ -673,7 +673,17 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
         $HOSTDESC     = $row['srv_desc'];                                   # Get Host Description
         $HOST_OS      = $row['srv_ostype'];                                 # Get O/S Type linux/aix
         $HOST_DOMAIN  = $row['srv_domain'];                             # Get Server Domain
+    }else{                                                              # If No Key Rcv or Blank
+        $err_msg = "No Server Name Received - Please Advise" ;          # Construct Error Msg.
+        sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
+        ?>
+        <script>location.replace("/view/perf/sadm_server_perf_menu.php");</script>
+        <?php                                                           # Back 2 List Page
+        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
+        exit ; 
+    }
 
+    
         echo "<center><strong><H2>";
         echo "Summary performance graph for server '$HOSTNAME'";
         echo "</strong></H2></center><br>";
@@ -691,15 +701,7 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
         if ($HOST_OS == "aix") {
             create_standard_graphic ($HOSTNAME,$HOSTDESC,"mem_distribution",$HOST_OS,SADM_RRDTOOL,$DEBUG);
         }
-    }else{                                                              # If No Key Rcv or Blank
-        $err_msg = "No Server Name Received - Please Advise" ;          # Construct Error Msg.
-        sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        ?>
-        <script>location.replace("/view/perf/sadm_server_perf_menu.php");</script>
-        <?php                                                           # Back 2 List Page
-        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
-        exit ; 
-    }
+
 
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
