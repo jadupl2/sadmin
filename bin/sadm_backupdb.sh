@@ -401,14 +401,16 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
+    # Switch for Help (-h), Debug Level (-d[1-9]), Compress Backup (-c), Database to Backup (-n)----
     BACKUP_NAME="all"                                                   # DB to Backup Default=None
     COMPRESS_BACKUP="N"                                                 # Gzip Backup OFF by Default
-    while getopts "hd:n:c" opt ; do                                     # Loop to process Switch
+    while getopts "had:n:c" opt ; do                                    # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
-            n) BACKUP_NAME=$OPTARG                                      # Backup Name to Backup
+            n) BACKUP_NAME=$OPTARG                                      # Database Name to Backup
+               ;;
+            a) BACKUP_NAME="all"                                        # Backup all database 
                ;;
             c) COMPRESS_BACKUP="Y"                                      # Compress Backup is now ON
                ;;
