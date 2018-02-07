@@ -33,6 +33,8 @@
 #       V 1.5 Added message when cannot produce graph because no data in rrd available
 #   2018_02_03 JDuplessis
 #       V1.6 Comments Added 
+#   2018_02_07 JDuplessis
+#       V1.7 Link tooltips added - Bug Fix
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -47,7 +49,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG  = False  ;                                                      # Debug Activated True/False
-$SVER   = "1.6" ;                                                       # Current version number
+$SVER   = "1.7" ;                                                       # Current version number
 
 
 
@@ -514,10 +516,10 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
     $URL_YEAR  = $URL1 . "?host=$WHOST&period=last365days";             # URL for Year Display
 
     # When cursor move over the graph, Message below will be displyed
-    $ALT_DAY   = "View Yesterday Graph Only";                           # Day Message when on Graph
-    $ALT_WEEK  = "Larger view of last week";                            # Week Message when on Graph
-    $ALT_MTH   = "Larger view of last month";                           # Mth Message when on Graph
-    $ALT_YEAR  = "Larger View last years";                              # Year Message when on Graph
+    $ALT_DAY   = "Click to view yesterday graph of $WHOST";             # Day Message when on Graph
+    $ALT_WEEK  = "Click for bigger graph view for last 7 days";         # Week Message when on Graph
+    $ALT_MTH   = "Click for bigger graph view for last 31 days";        # Mth Message when on Graph
+    $ALT_YEAR  = "Click for bigger graph view for last 365 days";       # Year Message when on Graph
 
     # Read the netdev.txt file to get the interface Name of each of possible 4 Network Interfaces
     $netdev1="" ; $netdev2=""; $netdev3=""; $netdev4="";                # Clear Net interface name 
@@ -551,45 +553,26 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
 
     # Set Performance Graph Title based on the WTYPE received
     switch ($WTYPE) {
-        case "cpu":                                                     
-            $WTITLE = "CPU usage";                                      # Set Graph Title
-            break;
-        case "runqueue":                                                 
-            $WTITLE = "Run Queue usage";                                # Set Graph Title
-            break;
-        case "memory":                                                   
-            $WTITLE = "Memory usage";                                   # Set Graph Title
-            break;
-        case "memdist":                                        
-            $WTITLE = "Memory Distribution";                            # Set Graph Title
-            break;
-        case "diskio":                                                  
-            $WTITLE = "Disks I/O (read/write)";                         # Set Graph Title
-            break;
-        case "paging":                                              
-            $WTITLE = "Pages in/out";                                   # Set Graph Title
-            break;
-        case "swap":                                              
-            $WTITLE = "Swap Space usage";                               # Set Graph Title
-            break;
-        case "neta":                                            
-            $WTITLE = "1st Network Interface" ;                         # Set Default Graph Title
-            if ($netdev1 != "") $WTITLE = "Network Interface $netdev1"; # Include DevDev Name 
-            break;
-        case "netb":                                            
-            $WTITLE = "2nd Network Interface";                          # Set Graph Title
-            if ($netdev2 != "") $WTITLE = "Network Interface $netdev2"; # Include DevDev Name 
-            break;
-        case "netc":                                            
-            $WTITLE = "3rd Network Interface";                          # Set Graph Title
-            if ($netdev3 != "") $WTITLE = "Network Interface $netdev3"; # Include DevDev Name 
-            break;
-        case "netd":                                            
-            $WTITLE = "4th Network Interface";                          # Set Graph Title
-            if ($netdev4 != "") $WTITLE = "Network Interface $netdev4"; # Include DevDev Name 
-            break;
-        default :                                                       # Default - if no good type
-            $WTITLE = "Invalid Graph Type Requested ($WTYPE)";          # Invalid WTYPE Received
+        case "cpu"      : $WTITLE = "CPU usage";                break;         
+        case "runqueue" : $WTITLE = "Run Queue usage";          break;
+        case "memory"   : $WTITLE = "Memory usage";             break;
+        case "memdist"  : $WTITLE = "Memory Distribution";      break;
+        case "diskio"   : $WTITLE = "Disks I/O (read/write)";   break;
+        case "paging"   : $WTITLE = "Pages in/out";             break;
+        case "swap"     : $WTITLE = "Swap Space usage";         break;
+        case "neta"     : $WTITLE = "1st Network Interface" ; 
+                          if ($netdev1 != "") $WTITLE = "Network Interface $netdev1";
+                          break;
+        case "netb"     : $WTITLE = "2nd Network Interface";                         
+                          if ($netdev2 != "") $WTITLE = "Network Interface $netdev2";
+                          break;
+        case "netc"     : $WTITLE = "3rd Network Interface";                         
+                          if ($netdev3 != "") $WTITLE = "Network Interface $netdev3";
+                          break;
+        case "netd"     : $WTITLE = "4th Network Interface";                         
+                          if ($netdev4 != "") $WTITLE = "Network Interface $netdev4";
+                          break;
+        default         : $WTITLE = "Invalid Graph Type Requested ($WTYPE)";        
     }
 
     # If No Network Interface, return to caller, no need to display empty graph
@@ -603,50 +586,58 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
     echo "<center><h2>${WTITLE}</strong></center>";                     # Display Graph Title
 
     # Table definition for the 4 graph (Yesterday, Last 7 Days, Last 4 weeks, Last 365 Days)
-    echo "\n\n<table style='width:80%' align=center border=0 cellspacing=0>\n";
+    echo "\n\n<table style='width:70%' align=center border=0 cellspacing=0>\n";
 
     # Display Big Graph for last 2 days 
-    echo "\n<tr>";
-    echo "\n<td colspan=3>";
-    if (file_exists($IMG_OSDAY)) {
-        echo "<A HREF='${URL_DAY}'> <img src=${IMG_DAY} alt=\"${ALT_DAY}\"></a>";
-    }else{
-        echo "<center>No $WTITLE data for last 2 days </center>";
+    echo "\n<tr>";                                                      # Start of Row
+    echo "\n<td colspan=3>";                                            # Big Graph Span 3 Columns
+    if (file_exists($IMG_OSDAY)) {                                      # If Graph Exist on Disk
+        echo "<A HREF='${URL_DAY}' ";                                   # Click on Graph URL
+        echo "data-toggle='tooltip' title=\"${ALT_DAY}\">";             # ToolTip to Yesterday Graph
+        echo "<img src=${IMG_DAY}></a>";                                # Display Last 2 Days Graph
+    }else{                                                              # If No PNG On Disk
+        echo "<center>No $WTITLE data for last 2 days </center>";       # Advise User PNG Missing
     }
-    echo "</td>";
-    echo "\n</tr>" ;
+    echo "</td>";                                                       # End of Column
+    echo "\n</tr>" ;                                                    # Enf of Row
 
-    # Display Small Graph for last week
-    echo "\n\n<tr>";
-    echo "\n<td>";
-    if (file_exists($IMG_OSWEEK)) {
-        echo "<A HREF='${URL_WEEK}'><img src=${IMG_WEEK} alt=\"${ALT_WEEK}\"></a></td>";
-    }else{
-        echo "<center>No $WTITLE for last week</center>";
+    # Display Small Graph for last 7 days
+    echo "\n\n<tr>";                                                    # Start of Row
+    echo "\n<td>";                                                      # Start of Column 1
+    if (file_exists($IMG_OSWEEK)) {                                     # If Graph Exist on Disk
+        echo "<A HREF='${URL_WEEK}' ";                                  # Click on Graph URL
+        echo "data-toggle='tooltip' title=\"${ALT_WEEK}\">";            # ToolTip to Last 7 Days Gph
+        echo "<img src=${IMG_WEEK}></a></td>";                          # Display Last 7 Days Graph
+    }else{                                                              # If No PNG on Disk
+        echo "<center>No $WTITLE for last week</center>";               # Advise User PNG Missing
     }
-    echo "</td>";
+    echo "</td>";                                                       # End of column 1
 
-    # Display Small Graph for last month
-    echo "\n<td>";
-    if (file_exists($IMG_OSMTH)) {
-        echo "<A HREF='${URL_MTH}'><img src=${IMG_MTH} alt=\"${ALT_MTH}\"></a></td>";
-    }else{
-        echo "<center>No $WTITLE for last month</center>";
+    # Display Small Graph for last 31 days
+    echo "\n<td>";                                                      # Start of Column 2
+    if (file_exists($IMG_OSMTH)) {                                      # If Graph exist on disk
+        echo "<A HREF='${URL_MTH}' ";                                   # Click on Graph URL 
+        echo "data-toggle='tooltip' title=\"${ALT_MTH}\">";             # ToolTip Last 31 Days Gph
+        echo "<img src=${IMG_MTH}></a></td>";                           # Display Last 31 Days Graph
+    }else{                                                              # If No PNG on Disk
+        echo "<center>No $WTITLE for last month</center>";              # Advise User PNG Missing
     }
-    echo "</td>";
+    echo "</td>";                                                       # End of Column 2
 
-    # Display Small Graph for last month
-    echo "\n<td>";
-    if (file_exists($IMG_OSYEAR)) {
-        echo "<A HREF='${URL_YEAR}'><img src=${IMG_YEAR} alt=\"${ALT_YEAR}\"></a></td>";
-    }else{
-        echo "<center>No $WTITLE for last year</center>";
+    # Display Small Graph for last 365 days
+    echo "\n<td>";                                                      # Start of column 3
+    if (file_exists($IMG_OSYEAR)) {                                     # If Graph exist on Disk
+        echo "<A HREF='${URL_YEAR}' ";                                  # Click on Graph URL
+        echo "data-toggle='tooltip' title=\"${ALT_MTH}\">";             # ToolTip Last 31 Days Gph
+        echo "<img src=${IMG_YEAR}></a></td>";                          # Display Last 365 Days Gph
+    }else{                                                              # If No PNG on disk
+        echo "<center>No $WTITLE for last 365 days</center>";           # Advise User PNG Missing
     }
-    echo "</td>";
+    echo "</td>";                                                       # End of column 3
 
-    echo "\n</tr>" ;
-    echo "\n</table><br><br>";
-    return ;
+    echo "\n</tr>" ;                                                    # End of Row
+    echo "\n</table><br><br>";                                          # End of Type Table
+    return ;                                                            # Return to caller
 }
 	
  
@@ -684,25 +675,27 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
     }
 
     
-        echo "<center><strong><H2>";
-        echo "Summary performance graph for server '$HOSTNAME'";
-        echo "</strong></H2></center><br>";
+    # Display Standard Page Heading ----------------------------------------------------------------
+    display_std_heading("NotHome","Server Summary Graph","","","v{$SVER}"); 
+
+    # Specific Page Heading for Server
+    echo "<center><strong><H2>";
+    echo "Summary performance graph for server '$HOSTNAME'";
+    echo "</strong></H2></center><br>";
     
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"cpu"          ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"runqueue"     ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"memory"       ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"diskio"       ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"page_inout"   ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"swap_space"   ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_etha", $HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethb", $HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethc", $HOST_OS,SADM_RRDTOOL,$DEBUG);
-        create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethd", $HOST_OS,SADM_RRDTOOL,$DEBUG);
-        if ($HOST_OS == "aix") {
-            create_standard_graphic ($HOSTNAME,$HOSTDESC,"mem_distribution",$HOST_OS,SADM_RRDTOOL,$DEBUG);
-        }
-
-
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"cpu"          ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"runqueue"     ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"memory"       ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"diskio"       ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"page_inout"   ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"swap_space"   ,$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_etha", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethb", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethc", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+    create_standard_graphic ($HOSTNAME,$HOSTDESC,"network_ethd", $HOST_OS,SADM_RRDTOOL,$DEBUG);
+    if ($HOST_OS == "aix") {
+        create_standard_graphic ($HOSTNAME,$HOSTDESC,"mem_distribution",$HOST_OS,SADM_RRDTOOL,$DEBUG);
+    }
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
 ?>
