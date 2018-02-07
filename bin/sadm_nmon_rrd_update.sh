@@ -38,6 +38,8 @@
 #   V1.3 - Add nmon file counter during process & bug fix
 # 2018_02_04 JDuplessis 
 #   V1.4 - List of all nmon files this script will process before update rrd begin.
+# 2018_02_07 JDuplessis 
+#   V1.5 - Remove some log entry not needed
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -155,7 +157,7 @@ read_nmon_info_and_setup_rrd()
     if [ ! -e  $RRD_FILE ]                                              # Create rrd if not exist
         then sadm_writelog "Creating RRD File for $NMON_HOST ($RRD_FILE)"
              $RRDTOOL create $RRD_FILE                       \
-                --start "00:00 01.01.2018" --step 300   \
+                --start "00:00 01.01.2018" --step 300  \
                 DS:cpu_user:GAUGE:900:0:100            \
                 DS:cpu_sys:GAUGE:900:0:100             \
                 DS:cpu_wait:GAUGE:900:0:100            \
@@ -224,7 +226,7 @@ read_nmon_info_and_setup_rrd()
 #===================================================================================================
 build_cpu_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
     grep "^CPU_ALL" $NMON_FILE | grep -iv "User%,Sys%,Wait%" | sort >$SADM_TMP_FILE1
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of CPU_ALL Lines
     sadm_writelog "Processing $NMON_HOST '^CPU_ALL' Lines ($NBLINES elements)."
@@ -269,7 +271,7 @@ build_cpu_array()
                 sadm_writelog "CPU Array Index [$i]: Value : ${ARRAY_CPU[$i]}"
                 done   
     fi
-    sadm_writelog "End of CPU usage information."
+    #sadm_writelog "End of CPU usage information."
 }
 
 
@@ -294,7 +296,7 @@ build_epoch_array()
 {
     grep "^ZZZZ" $NMON_FILE | sort > $SADM_TMP_FILE1                    # Isolate ZZZZ Rec.>tmp file
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of ZZZZ Lines
-    sadm_writelog " " 
+    #sadm_writelog " " 
     sadm_writelog "Processing $NMON_HOST '^ZZZZ' Time Lines ($NBLINES elements)."  
     while read wline                                                    # Process all Temp file
         do
@@ -344,7 +346,7 @@ build_epoch_array()
     if [ $DEBUG_LEVEL -gt 0 ] 
         then sadm_writelog "${#ARRAY_TIME[*]} Elements in SnapShot/Epoch array"
     fi
-    sadm_writelog "End of Processing ZZZZ Time Lines."
+    #sadm_writelog "End of Processing ZZZZ Time Lines."
 }
 
 
@@ -366,7 +368,7 @@ build_epoch_array()
 #===================================================================================================
 build_runqueue_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
     grep "^PROC,T" $NMON_FILE | sort >$SADM_TMP_FILE1
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of CPU_ALL Lines
     sadm_writelog "Processing $NMON_HOST '^PROC,T' Lines ($NBLINES elements)."
@@ -386,7 +388,7 @@ build_runqueue_array()
                  sadm_writelog "    - INDEX = $INDX - RUNQUEUE = ${ARRAY_RUNQ[${INDX}]}"
         fi    
         done <  $SADM_TMP_FILE1
-    sadm_writelog "End of RunQueue processing"
+    #sadm_writelog "End of RunQueue processing"
 }
 
 
@@ -435,7 +437,7 @@ build_runqueue_array()
 #===================================================================================================
 build_disk_read_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
     grep "^DISKREAD,T" $NMON_FILE | sort >$SADM_TMP_FILE1               # Isolate Disk Read Line
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. DISKREAD Lines
     sadm_writelog "Processing $NMON_HOST '^DISKREAD' Lines ($NBLINES elements)."
@@ -466,7 +468,7 @@ build_disk_read_array()
             then sadm_writelog "Snapshot $INDX Read at ${ARRAY_DISKREAD[${INDX}]} Mb/s"
         fi    
         done <  $SADM_TMP_FILE1
-    sadm_writelog "End of collecting Read information for the $NBDEV Devices "
+    #sadm_writelog "End of collecting Read information for the $NBDEV Devices "
 }
 
 
@@ -507,7 +509,7 @@ build_disk_read_array()
 #===================================================================================================
 build_disk_write_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
     grep "^DISKWRITE,T" $NMON_FILE | sort >$SADM_TMP_FILE1              # Isolate Disk Write Line
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. DISKWRITE Lines
     sadm_writelog "Processing $NMON_HOST '^DISKWRITE' Lines ($NBLINES elements)."
@@ -538,7 +540,7 @@ build_disk_write_array()
             then sadm_writelog "Snapshot $INDX Write at ${ARRAY_DISKWRITE[${INDX}]} Mb/s"
         fi    
         done <  $SADM_TMP_FILE1
-    sadm_writelog "End of collecting Write information for the $NBDEV Devices "
+    #sadm_writelog "End of collecting Write information for the $NBDEV Devices "
 }
 
 
@@ -570,7 +572,7 @@ build_net_array()
     # Get and Show number of Network Snapshot
     grep "^NET,T" $NMON_FILE | sort >$SADM_TMP_FILE1                    # Extract NET from nmon file
     NBLINES=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'`                # Calc. Nb. of NET Lines
-    sadm_writelog " " 
+    #sadm_writelog " " 
     sadm_writelog "Processing Network of $NMON_HOST ($NMON_OS) '^NET,' Lines ($NBLINES elements)."
 
     # Determine and show Number of Network Devices in NMON file (Minus the loop interface)
@@ -709,7 +711,7 @@ build_net_array()
                     done  
         fi
         done < $SADM_TMP_FILE1
-    sadm_writelog "Finishing Network Activity Information."
+    #sadm_writelog "Finishing Network Activity Information."
 }
 
 
@@ -734,7 +736,7 @@ build_net_array()
 #===================================================================================================
 build_memory_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
 
     if [ "$NMON_OS" == "AIX" ]                                          # If on AIX
         then grep "^MEM," $NMON_FILE | head -1 >$SADM_TMP_FILE2         # Aix Memory Header Line
@@ -783,7 +785,7 @@ build_memory_array()
         fi
 
         done <  $SADM_TMP_FILE1
-    sadm_writelog "End of collection Memory information - Hard ${MEM_TOTAL}MB, Virtual ${VIR_TOTAL}MB"
+    #sadm_writelog "End of collection Memory information - Hard ${MEM_TOTAL}MB, Virtual ${VIR_TOTAL}MB"
 }
 
 
@@ -809,7 +811,7 @@ build_memnew_array()
         then return 0                                                   # Return to Caller
     fi
     
-    sadm_writelog " " 
+    #sadm_writelog " " 
 
     # Get the header of fields we will extract (Want to be sure using the right column)
     grep "^MEMNEW," $NMON_FILE | head -1 >$SADM_TMP_FILE2               # Aix MemNew Header Line
@@ -848,7 +850,7 @@ build_memnew_array()
         fi
 
         done <  $SADM_TMP_FILE1
-    sadm_writelog "Finish collecting Memory New information."
+    #sadm_writelog "Finish collecting Memory New information."
 }
 
 
@@ -879,7 +881,7 @@ build_memnew_array()
 #===================================================================================================
 build_paging_activity_array()
 {
-    sadm_writelog " " 
+    #sadm_writelog " " 
     if [ "$NMON_OS" == "AIX" ]                                          # If an Aix nmon File
         then grep "^PAGE," $NMON_FILE | head -1 >$SADM_TMP_FILE2        # Aix Paging Header Line
              hd_pgin=` cat $SADM_TMP_FILE2 | awk -F, '{print $6}'`      # Aix Header for pgin
@@ -913,7 +915,7 @@ build_paging_activity_array()
                  sadm_writelog "$SNAPSHOT  ${hd_pgin} = $PAGE_IN  ${hd_pgout} = $PAGE_OUT"
         fi    
         done <  $SADM_TMP_FILE1
-    sadm_writelog "End of collecting Paging Activity information"
+    #sadm_writelog "End of collecting Paging Activity information"
 }
 
 
@@ -925,7 +927,7 @@ rrd_update()
 {
     TOTAL_ERROR=0 ; TOTAL_SUCCESS=0                                     # Reset Total Error Success
     sadm_writelog " "                                                   # Space line
-    sadm_writelog "Updating RRD Database."                              # Starting RRD Update
+    sadm_writelog "Updating RRD Database ${RRD_FILE}"                   # Starting RRD Update
     for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))                      # Process time Array Size
         do
         ERROR_COUNT=0 ; SUCCESS=0                                       # Reset Error Success Count
@@ -1052,7 +1054,7 @@ rrd_update()
     # Clear all Arrays before beginning next SnapShot
     unset ARRAY_TIME ARRAY_CPU      ARRAY_RUNQ      ARRAY_DISKREAD ARRAY_DISKWRITE  
     unset ARRAY_NET  ARRAY_MEMNEW   ARRAY_PAGING    ARRAY_MEMORY
-    sadm_writelog "End of RRD Update" 
+    #sadm_writelog "End of RRD Update" 
     return $ERROR_COUNT
 }
 
@@ -1082,7 +1084,7 @@ main_process()
         do 
         filecount=$(($filecount+1))                                     # Increment File Counter 
         snapshotcount=`grep "ZZZZ,T" $wline | wc -l`
-        sadm_writelog "$filecount $wline as $snapshotcount snapshots"   
+        sadm_writelog " ${filecount}) $wline as $snapshotcount snapshots"   
         done
 
     while read NMON_FILE                                                # Process nmon file 1 by 1
