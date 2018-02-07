@@ -20,22 +20,22 @@
     echo "\n    <div id='sadmEntete2R'>Release " . SADM_VERSION . "</div>";
     echo "\n</div>";
 
-    #echo "\n    <div style='clear: both;'> </div><br>";
+    echo "\n    <div style='clear: both;'> </div><br>";
 
 
     # ----------------------------------------------------------------------------------------------
     # HEADING MENU LINE 
     # ----------------------------------------------------------------------------------------------
-    echo "\n<div id='sadmTopMenu'>                  <!-- Start Of sadmTopMenu -->\n";
-    echo "\n<ul>"; 
-    echo "\n    <li><a href='/index.php'>Home Page</a></li>";
-    echo "\n    <li><a href='/view/sys/sadm_view_schedule.php'>O/S Update</a></li>";
-    echo "\n    <li><a href='/view/sys/sadm_view_sysmon.php'>Monitor</a></li>";
-    echo "\n    <li><a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a></li>";
-    echo "\n    <li><a href='/view/sys/sadm_subnet.php?net=192.168.1&option=all'>Network</a></li>";
-    echo "\n    <li><a href='/view/perf/sadm_server_perf_menu.php'>Performance</a></li>";
-    echo "\n</ul>";
-    echo "\n</div>                                  <!-- End Of sadmTopMenu -->\n\n";
+    #echo "\n<div id='sadmTopMenu'>                  <!-- Start Of sadmTopMenu -->\n";
+    #echo "\n<ul>"; 
+    #echo "\n    <li><a href='/index.php'>Home Page</a></li>";
+    #echo "\n    <li><a href='/view/sys/sadm_view_schedule.php'>O/S Update</a></li>";
+    #echo "\n    <li><a href='/view/sys/sadm_view_sysmon.php'>Monitor</a></li>";
+    #echo "\n    <li><a href='/view/rch/sadm_view_rch_summary.php?sel=all'>Scripts Status</a></li>";
+    #echo "\n    <li><a href='/view/sys/sadm_subnet.php?net=192.168.1&option=all'>Network</a></li>";
+    #echo "\n    <li><a href='/view/perf/sadm_server_perf_menu.php'>Performance</a></li>";
+    #echo "\n</ul>";
+    #echo "\n</div>                                  <!-- End Of sadmTopMenu -->\n\n";
 
     # ----------------------------------------------------------------------------------------------
     echo "\n</div>                                  <!-- End of Div sadmHeader -->\n\n";
