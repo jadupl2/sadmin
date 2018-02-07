@@ -23,9 +23,9 @@
 # ChangeLog
 #   2018_01_23 JDuplessis
 #       V 1.0 Initial Version
-#   2018_02_03 JDuplessis
-#       V 1.1 First Working Version
 #       V 1.2 Performance & Restructure 
+#   2018_02_06 JDuplessis
+#       V 1.3 Enhance look and feel of the page
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -41,7 +41,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                        # Current version number
+$SVER  = "1.3" ;                                                        # Current version number
 
 
 
@@ -126,7 +126,7 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
     $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday Perf
     echo "\n<center>";                                                  # Center Title & Graph 
     echo "\n<h2><strong>${WTITLE}</strong></h2>";                       # Display Graph Title    
-    echo "\n<a href=${URL}?host=$WHOST>";                               # Link 2 Yesterday Perf Page
+    echo "\n<a href=${URL}?host=$WHOST data-toggle='tooltip' title='View Yesterday Graph'>"; # Link 2 Yesterday Perf Page
     if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
         echo "<img src=${WEBFILE}>";                                    # Show PNG Graph
     }else{                                                              # If PNG file not there
@@ -251,11 +251,11 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Adhoc Performance Graph for $SERVER_NAME","","",$SVER); 
+    display_std_heading("NotHome","Adhoc performance graph","","","v{$SVER}"); 
 
     # Display this page heading --------------------------------------------------------------------
     echo "\n<center><H1>";                                              # Center Header 1 Heading
-    echo "Adhoc Performance Graph for " . $SERVER_NAME;                 # Display Page Heading
+    echo "Adhoc performance graph for '$SERVER_NAME'";                  # Display Page Heading
     echo "</H1></center><br>";                                          # End of Center and Header 1
 
     # Generate and Display Graph for server --------------------------------------------------------
