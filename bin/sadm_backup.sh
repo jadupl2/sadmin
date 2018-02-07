@@ -1,10 +1,10 @@
 #!/bin/sh
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
-#   Title:      Backup and Compress directories choosen in $BACKUP_DIR as tar files (tgz)
+#   Title:      Backup and Compress directories choosen in $BACKUP_LIST as tar files (tgz)
 #   Date:       28 August 2015
 #   Synopsis:   This script is used to create a tgz file of all directories speciied in the 
-#               variable $BACKUP_DIR to NFS $ARCHIVE_DIR .
+#               variable $BACKUP_LIST to NFS $ARCHIVE_DIR .
 #               Only the specified ($SADM_BACKUP_NFS_TO_KEEP) copies of each tgz files will be kept
 #               Can be Run Once a week or Once every couple of Day (As you choose)
 # --------------------------------------------------------------------------------------------------
@@ -72,7 +72,10 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 # --------------------------------------------------------------------------------------------------
 #                               Script environment variables
 # --------------------------------------------------------------------------------------------------
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                       ; export DEBUG_LEVEL                # 0=NoDebug Higher=+Verbose
+CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
+CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
+CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 
 # NFS Backup Parameters Values are taken from sadmin.cfg file
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
@@ -81,26 +84,26 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 # LIST OF DIRECTORIES THAT WILL BE BACKUP (IF THEY EXIST OF COURSE)
 # YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
-BACKUP_DIR="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
-BACKUP_DIR="$BACKUP_DIR /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
-BACKUP_DIR="$BACKUP_DIR /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin "
-BACKUP_DIR="$BACKUP_DIR /var/ftp /var/lib/mysql /var/spool/cron "
-export BACKUP_DIR
+BACKUP_LIST="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
+BACKUP_LIST="$BACKUP_LIST /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
+BACKUP_LIST="$BACKUP_LIST /etc /var/adsmlog /var/named /var/www /wsadmin /psadmin "
+BACKUP_LIST="$BACKUP_LIST /var/ftp /var/lib/mysql /var/spool/cron "
+export BACKUP_LIST
 #
-TOTAL_ERROR=0                                       ; export TOTAL_ERROR       # Total Rsync Error
-LOCAL_MOUNT="/mnt/backup"                           ; export LOCAL_MOUNT_POINT # Local NFS Mnt Point 
-ARCHIVE_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}"       ; export ARCHIVE_DIR       # Where Backup Stored
+TOTAL_ERROR=0               ; export TOTAL_ERROR                        # Total Rsync Error
+LOCAL_MOUNT="/mnt/backup"   ; export LOCAL_MOUNT_POINT                  # Local NFS Mnt Point 
+ARCHIVE_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}"  ; export ARCHIVE_DIR     # Where Backup Stored
 #
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
         "October" "November" "December")
 
 # Backup Directories
-DAILY_DIR="${BACKUP_ROOT_DIR}/daily"     ; export DAILY_DIR             # Dir. For Daily Backup                                 
-WEEKLY_DIR="${BACKUP_ROOT_DIR}/weekly"   ; export WEEKLY_DIR            # Dir. For Weekly Backup
-MONTHLY_DIR="${BACKUP_ROOT_DIR}/monthly" ; export MONTHLY_DIR           # Dir. For Monthly Backup
-YEARLY_DIR="${BACKUP_ROOT_DIR}/yearly"   ; export YEARLY_DIR            # Dir. For Yearly Backup
-LATEST_DIR="${BACKUP_ROOT_DIR}/latest"   ; export LATEST_DIR            # Latest Backup Directory
+DAILY_DIR="${LOCAL_MOUNT}/daily/${SADM_HOSTNAME}"     ; export DAILY_DIR   # Dir. For Daily Backup
+WEEKLY_DIR="${LOCAL_MOUNT}/weekly/${SADM_HOSTNAME}"   ; export WEEKLY_DIR  # Dir. For Weekly Backup
+MONTHLY_DIR="${LOCAL_MOUNT}/monthly/${SADM_HOSTNAME}" ; export MONTHLY_DIR # Dir. For Monthly Backup
+YEARLY_DIR="${LOCAL_MOUNT}/yearly/${SADM_HOSTNAME}"   ; export YEARLY_DIR  # Dir. For Yearly Backup
+LATEST_DIR="${LOCAL_MOUNT}/latest${SADM_HOSTNAME}"    ; export LATEST_DIR  # Latest Backup Directory
 
 # Number of backup to keep per backup type
 DAILY_BACKUP_TO_KEEP=14             ; export DAILY_BACKUP_TO_KEEP       # Nb. Daily Backup to keep
@@ -137,86 +140,99 @@ backup_setup()
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
     sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
     
-    which mysqldump >/dev/null 2>&1                                     # See if mysqldump available
-    if [ $? -ne 0 ]                                                     # If Can't be found 
-        then sadm_writelog "The 'mysqldump' command can't be found"     # Advise User
-             sadm_writelog "The Backup cannot be started"               # No Backup can be performed
-             return 1                                                   # Return Error to Caller
-        else                                                            # If mysqldump was found
-            MYSQLDUMP=`which mysqldump`                                 # Save mysqldump Full Path
-    fi
-
-    # Main Backup Directory
-    if [ ! -d "${BACKUP_ROOT_DIR}" ]                                    # Main Backup Dir. Exist ?
-        then mkdir $BACKUP_ROOT_DIR                                     # Create Directory
-             chown ${SADM_USER}:${SADM_GROUP} $BACKUP_ROOT_DIR          # Assign it SADM USer&Group
-             chmod 750 $BACKUP_ROOT_DIR                                 # Read/Write to SADM Usr/Grp
-    fi
-
     # Daily Backup Directory
     if [ ! -d "${DAILY_DIR}" ]                                          # Daily Backup Dir. Exist ?
-        then mkdir $DAILY_DIR                                           # Create Directory
+        then mkdir -p $DAILY_DIR                                           # Create Directory
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] mkdir $DAILY_DIR" ; return 1 ; fi
              chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR                # Assign it SADM USer&Group
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $DAILY_DIR" 
+                     return 1 
+             fi
              chmod 750 $DAILY_DIR                                       # Read/Write to SADM Usr/Grp
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 750 $DAILY_DIR" ; return 1 ;fi
     fi
 
     # Weekly Backup Directory
     if [ ! -d "${WEEKLY_DIR}" ]                                         # Daily Backup Dir. Exist ?
-        then mkdir $WEEKLY_DIR                                          # Create Directory
+        then mkdir -p $WEEKLY_DIR                                          # Create Directory
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] mkdir $WEEKLY_DIR" ; return 1 ; fi
              chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR               # Assign it SADM USer&Group
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $WEEKLY_DIR" 
+                     return 1 
+             fi
              chmod 750 $WEEKLY_DIR                                      # Read/Write to SADM Usr/Grp
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 750 $WEEKLY_DIR" ; return 1 ;fi
     fi
 
     # Monthly Backup Directory
     if [ ! -d "${MONTHLY_DIR}" ]                                        # Monthly Backup Dir. Exist?
-        then mkdir $MONTHLY_DIR                                         # Create Directory
+        then mkdir -p $MONTHLY_DIR                                         # Create Directory
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] mkdir $MONTHLY_DIR" ; return 1 ; fi
              chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR              # Assign it SADM USer&Group
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $MONTHLY_DIR" 
+                     return 1 
+             fi
              chmod 750 $MONTHLY_DIR                                     # Read/Write to SADM Usr/Grp
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 750 $MONTHLY_DIR" ; return 1 ;fi
     fi
 
     # Yearly Backup Directory
     if [ ! -d "${YEARLY_DIR}" ]                                         # Yearly Backup Dir. Exist?
-        then mkdir $YEARLY_DIR                                          # Create Directory
+        then mkdir -p $YEARLY_DIR                                          # Create Directory
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] mkdir $YEARLY_DIR" ; return 1 ; fi
              chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR               # Assign it SADM USer&Group
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $YEARLY_DIR" 
+                     return 1 
+             fi
              chmod 750 $YEARLY_DIR                                      # Read/Write to SADM Usr/Grp
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 750 $YEARLY_DIR" ; return 1 ;fi
     fi
 
     # Latest Backup Directory
     if [ ! -d "${LATEST_DIR}" ]                                         # Latest Backup Dir Exist?
-        then mkdir $LATEST_DIR                                          # Create Directory
+        then mkdir -p $LATEST_DIR                                          # Create Directory
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] mkdir $LATEST" ; return 1 ; fi
              chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR               # Give it SADM USer&Group
-             chmod 750 $LATEST_DIR                                      # R/W to SADM Usr/Grp
-    fi
-
-    # Produce a file that contains all databases name, excluding the specified in $DBEXCLUDE
-    $SADM_MYSQL $CREDENTIAL --batch --skip-column-names -e "show databases" > $SADM_TMP_FILE1
-    grep -vE "$DBEXCLUDE" $SADM_TMP_FILE1 > $SADM_TMP_FILE2             # Excl.chosen DB from Backup
-
-    # If Database Name (-n) was specified, check if exist in Database
-    if [ "$BACKUP_NAME" != 'all' ]                                      # If Backup one Database
-        then grep -i "$BACKUP_NAME" $SADM_TMP_FILE2 > /dev/null 2>&1    # Grep for DB Name in DBList
-             if [ $? -ne 0 ]                                            # If DB wasn't found 
-                then sadm_writelog "The Database $BACKUP_NAME doesn't exist in Database" 
-                     sadm_writelog "The valid Database name are : "     # SHow user List valid DB
-                     while read dbname                                  # Read DB List one by one
-                        do
-                        sadm_writelog "$dbname"                         # Display DB Name
-                        done <$SADM_TMP_FILE2
-                     return 1                                           # Return Error to Caller
-                else echo "$BACKUP_NAME" > $SADM_TMP_FILE2              # Put Name in List to Backup
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] chown ${SADM_USER}:${SADM_GROUP} $LATEST_DIR" 
+                     return 1 
              fi
+             chmod 750 $LATEST_DIR                                      # R/W to SADM Usr/Grp
+             if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 750 $LATEST_DIR" ; return 1 ;fi
     fi
 
+    # Determine the Directory where the backup will be created
+    ARCHIVE_DIR="${DAILY_DIR}"                                          # Default goes in Daily Dir.
+    if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
+        then ARCHIVE_DIR="${WEEKLY_DIR}"                                # Will be Weekly Backup Dir. 
+    fi 
+    if [ "$CUR_DATE_NUM" -eq "$MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
+        then ARCHIVE_DIR="${MONTHLY_DIR}"                               # Will be Monthly Backup Dir
+    fi 
+    if [ "$CUR_DATE_NUM" -eq "$YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
+        then if [ "$CUR_MTH_NUM" -eq "$YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
+                then ARCHIVE_DIR="${YEARLY_DIR}"                        # Will be Yearly Backup Dir
+             fi
+    fi 
+    
+    # Make Sure Backup Destination Directory Exist
+    if [ ! -d "${ARCHIVE_DIR}" ]                                         # Backup Dir. Exist?
+        then mkdir $ARCHIVE_DIR                                          # Create Final Backup Dir.
+             chown ${SADM_USER}:${SADM_GROUP} $ARCHIVE_DIR               # Assign it SADM USer&Group
+             chmod 770 $ARCHIVE_DIR                                      # Read/Write to SADM Usr/Grp
+    fi
+
+    # Show Backup Preferences
     sadm_writelog "You have chosen to : "
-    if [ "$BACKUP_NAME" = 'all' ] 
-        then sadm_writelog " - Backup All Databases"
-             sadm_writelog "   - Except these databases ; $DBEXCLUDE" 
-        else sadm_writelog " - Backup the Database '$BACKUP_NAME'" 
-    fi
-    if [ "$COMPRESS_BACKUP" = 'Y' ] 
+    if [ "$COMPRESS" = 'ON' ] 
         then sadm_writelog " - Compress the backup file" 
-        else sadm_writelog " - Not compress the backup file"
+        else sadm_writelog " - Not compress the backup"
     fi
+    sadm_writelog " - Backup Directory is ${ARCHIVE_DIR}"
     sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
     sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
     sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
@@ -224,11 +240,12 @@ backup_setup()
     sadm_writelog " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}"
     sadm_writelog " - Do the monthy backup on the $MONTHLY_BACKUP_DATE of every month"
     sadm_writelog " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year"
+    return 0
 }
 
 
 # --------------------------------------------------------------------------------------------------
-#        Create Backup Files Main Function - Loop for each file specified in $BACKUP_DIR
+#        Create Backup Files Main Function - Loop for each file specified in $BACKUP_LIST
 # --------------------------------------------------------------------------------------------------
 create_backup()
 {
@@ -239,8 +256,8 @@ create_backup()
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
-    # Do a Backup Of All Selected Directories - Defined in BACKUP_DIR Variables
-    for WDIR in $BACKUP_DIR                                             # Loop Dir. To Backup
+    # Do a Backup Of All Selected Directories - Defined in BACKUP_LIST Variables
+    for WDIR in $BACKUP_LIST                                             # Loop Dir. To Backup
         do
         if [ -d ${WDIR} ]                                               # Dir to Backup Exist ?
            then cd $WDIR                                                # Ok then CD into it
@@ -251,10 +268,10 @@ create_backup()
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "Current directory is `pwd`"              # Print Current Dir.
                 if [ "$COMPRESS" == "ON" ] 
-                    then BACK_FILE="${BASE_NAME}_${TIME_STAMP}.tgz"     # Final tgz Backup file name
+                    then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_writelog "tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' ." 
                          tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' . >/dev/null 2>&1 
-                    else BACK_FILE="${BASE_NAME}_${TIME_STAMP}.tar"     # Final tar Backup file name
+                    else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_writelog "tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' ." 
                          tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' . >/dev/null 2>&1 
                 fi
@@ -304,8 +321,8 @@ clean_backup_dir()
     sadm_writelog "Current directory is `pwd`"                          # Print Current Dir.
     sadm_writelog " "                                                   # Blank Line in Log
     
-    # Verify how many backup exist for each directory Selected  - Defined in BACKUP_DIR Variables
-    for WDIR in $BACKUP_DIR
+    # Verify how many backup exist for each directory Selected  - Defined in BACKUP_LIST Variables
+    for WDIR in $BACKUP_LIST
         do
         if [ -d ${WDIR} ]                                               # if Dir exist on Localhost
            then BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
@@ -430,6 +447,8 @@ umount_nfs()
              sadm_writelog "Backup compression is $COMPRESS"            # Show Status of compression
     fi
     mount_nfs                                                           # Mount NFS Dir.
+    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    backup_setup                                                        # Create Necessary Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     create_backup                                                       # Create TGZ of Seleted Dir.
     BACKUP_ERROR=$?                                                     # Save the Total Error
