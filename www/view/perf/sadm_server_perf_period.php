@@ -31,6 +31,8 @@
 #       V 1.1 First Working Version
 #       V 1.2 Performance & Restructure 
 #       V 1.3 Initial production version
+#   2018_02_07 JDuplessis
+#       V 1.4 Bug Fix & Add Link to various period on page
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -187,9 +189,40 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
     $WEBFILE = "${IMGDIR}/${WHOST}_${WTYPE}_${WPERIOD}.png";            # PNG File Path for Web Srv
     $OSFILE  = SADM_WWW_DIR . "$WEBFILE";                               # PNG File Path from O/S
     $URL     = "/view/perf/sadm_server_perf.php";                       # URL to View Yesterday Perf
+
+    # Web Page URL if User click on one of the PNG Graph
+    $URL1        = "/view/perf/sadm_server_perf_period.php";            # Common URL Start Part 
+    $URL_DAY     = $URL1 . "?host=$WHOST&period=yesterday";             # URL For Daily Display
+    $URL_2DAYS   = $URL1 . "?host=$WHOST&period=last2days";             # URL for Week Display
+    $URL_7DAYS   = $URL1 . "?host=$WHOST&period=last7days";             # URL for Week Display
+    $URL_31DAYS  = $URL1 . "?host=$WHOST&period=last31days";            # URL for Month Display
+    $URL_365DAYS = $URL1 . "?host=$WHOST&period=last365days";           # URL for Year Display
+    $URL_730DAYS = $URL1 . "?host=$WHOST&period=last730days";           # URL for 2 Years Display
+    
+    # When cursor move over the graph, Message below will be displayed
+    $ALT_DAY     = "Click to view yesterday graph of $WHOST";           # Day Message when on Graph
+    $ALT_2DAYS   = "Click for last 2 days Graph";                       # Week Message when on Graph
+    $ALT_7DAYS   = "Click for last 7 days Graph";                       # Week Message when on Graph
+    $ALT_31DAYS  = "Click for last 31 days Graph";                      # Mth Message when on Graph
+    $ALT_375DAYS = "Click for last 365 days Graph ";                    # Year Message when on Graph
+    $ALT_730DAYS = "Click for last 730 days Graph ";                    # Year Message when on Graph
+
     echo "\n<center>";                                                  # Center Title & Graph 
     echo "\n<h2><strong>${WTITLE}</strong></h2>";                       # Display Graph Title    
-    echo "\nYesterday / Last 2 days / Last 7 Days / Last 31 days / last 365 days /last 730 days <br>";
+    echo "\n<a href='${URL_DAY}' data-toggle='tooltip' title='${ALT_DAY}'>Yesterday</a>";
+    echo str_repeat('&nbsp;', 2);                                       # 2 Spaces between Title
+    echo "\n<a href='${URL_2DAYS}' data-toggle='tooltip' title='${ALT_2DAYS}'>Last 2 Days</a>";
+    echo str_repeat('&nbsp;', 2);                                       # 2 Spaces between Title
+    echo "\n<a href='${URL_7DAYS}' data-toggle='tooltip' title='${ALT_7DAYS}'>Last 7 Days</a>";
+    echo str_repeat('&nbsp;', 2);                                       # 2 Spaces between Title
+    echo "\n<a href='${URL_31DAYS}' data-toggle='tooltip' title='${ALT_31DAYS}'>Last 31 Days</a>";
+    echo str_repeat('&nbsp;', 2);                                       # 2 Spaces between Title
+    echo "\n<a href='${URL_365DAYS}' data-toggle='tooltip' title='${ALT_365DAYS}'>Last 365 Days</a>";
+    echo str_repeat('&nbsp;', 2);                                       # 2 Spaces between Title
+    echo "\n<a href='${URL_730DAYS}' data-toggle='tooltip' title='${ALT_730DAYS}'>Last 730 Days</a>";
+    echo "<br>";
+    echo "<br>";
+
     echo "\n<a href=${URL}?host=$WHOST>";                               # Link 2 Yesterday Perf Page
     if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
         echo "<img src=${WEBFILE}>";                                    # Show PNG Graph
@@ -204,7 +237,6 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
 
  
 
- 
 # ==================================================================================================
 #                                     Main Program Start Here
 # ==================================================================================================
@@ -243,12 +275,12 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
     if (isset($_GET['period']) ) {                                      # period is Set ?
         $WPERIOD = $_GET['period'];                                     # period of graph
         switch ($WPERIOD) {
-            case "yesterday"   : $HPERIOD="Yesterday"  ;  break;        # Graph for yesterday
-            case "last2days"   : $HPERIOD="last 2 days";  break;        # Graph for last 2 days
-            case "last7days"   : $HPERIOD="last 7 days";  break;        # Graph for last 7 days
-            case "last31days"  : $HPERIOD="last 31 days"; break;        # Graph for last 31 days
-            case "last365days" : $HPERIOD="last year";    break;        # Graph for last 365 days
-            case "last730days" : $HPERIOD="last 2 years"; break;        # Graph for last 730 days
+            case "yesterday"   : $HPERIOD="Yesterday"  ;   break;       # Graph for yesterday
+            case "last2days"   : $HPERIOD="last 2 days";   break;       # Graph for last 2 days
+            case "last7days"   : $HPERIOD="last 7 days";   break;       # Graph for last 7 days
+            case "last31days"  : $HPERIOD="last 31 days";  break;       # Graph for last 31 days
+            case "last365days" : $HPERIOD="last 365 days"; break;       # Graph for last 365 days
+            case "last730days" : $HPERIOD="last 730 days"; break;       # Graph for last 730 days
             default:                                                    # If invalid period
                 echo "The WPERIOD received is invalid ($WPERIOD)" ;     # Advise users
                 exit ;                                                  # End of Page
@@ -262,7 +294,7 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
     # Read Network Device Name file (netdev.txt) & get the interface Name of each possible 4 Devices
     $netdev1="" ; $netdev2=""; $netdev3=""; $netdev4="";                # Clear Net interface name 
     $netcount  = 0;                                                     # Network  Interface Counter
-    $NETDEV = SADM_WWW_RRD_DIR . "/${WSERVER}/" . SADM_WWW_NETDEV ; # Server Path to netdev.txt
+    $NETDEV = SADM_WWW_RRD_DIR . "/${WSERVER}/" . SADM_WWW_NETDEV ;     # Server Path to netdev.txt
     if (file_exists($NETDEV)) {                                         # If Network Dev file exist
         $handle = fopen($NETDEV, "r");                                  # Open netdev.txt of server
         if ($handle) {                                                  # If Successfully Open
@@ -285,7 +317,7 @@ function display_png ($WHOST,$WTYPE,$WTITLE,$WPERIOD)
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Performance graph of '$WSERVER'","","","v{$SVER}"); 
+    display_std_heading("NotHome","Server performance graph","","","v{$SVER}"); 
 
     # Display this page heading --------------------------------------------------------------------
     echo "\n<center><H1>";                                              # Center Header 1 Heading
