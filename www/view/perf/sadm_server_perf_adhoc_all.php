@@ -28,6 +28,8 @@
 #       v1.1 First Working version
 #   2018_02_03 JDuplessis
 #       v1.2 Change Titles and Bug Fixes
+#   2018_02_07 JDuplessis
+#       v1.3 Graph Tootips Added - Network Graph Bug Fix - Titles Changed
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -43,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2a" ;                                                        # Current version number
+$SVER  = "1.3" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -77,7 +79,9 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
 
     # Print Variables above for debugging purpose.
     if ($DEBUG) {                                                       # If Debug is Activated
+        echo "\n<br>";                                                  # Blank Line separator
         echo "\n<br>RRDTOOL    = $RRDTOOL";                             # Full Path to rrdtool Bin.
+        echo "\n<br>WTYPE      = $WTYPE";                               # Graph type to produce
         echo "\n<br>PERIOD     = $WPERIOD";                             # Show the Period received
         echo "\n<br>RRD_FILE   = $RRD_FILE";                            # Show RRD file we will use
         echo "\n<br>PNGDIR     = $PNGDIR";                              # PNG Dir. for the O/S
@@ -140,23 +144,23 @@ function gen_png($WHOST,$WHOST_DESC,$WTYPE,$WPERIOD,$WOS,$RRDTOOL,$DEBUG)
             create_swap_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
            
-        case "network_etha":
+        case "neta":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"a");
         break;
 
-        case "network_ethb":
+        case "netb":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"b");
             break;
 
-        case "network_ethc":
+        case "netc":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"c");
             break;
 
-        case "network_ethd":
+        case "netd":
             create_net_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG,"d");
             break;
 
-        case "mem_distribution":
+        case "memdist":
             create_memdist_graph($WHOST,$RRDTOOL,$RRD_FILE,$START,$END,$GTITLE,$GFILE,"S",$DEBUG);
             break;
     }
@@ -175,7 +179,9 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     # Display PNG Based on Parameters received
     echo "\n<td>";                                                      # Start Table Data Line
     if (file_exists($OSFILE)) {                                         # If PNG file exist on O/S
-        echo "<a href=${URL}?host=$WHOST><img src=${WEBFILE}></a>";     # Show PNG with Link to Yest
+        echo "<a href=${URL}?host=$WHOST ";                             # Link to View Server Graph
+        echo "data-toggle='tooltip' title='Click to View Graph for $WHOST'>"; # Tooltip for User
+        echo "<img src=${WEBFILE}></a>";                                # Show PNG 
     }else{                                                              # If file not there
         echo "<center><a href=${URL}?host=$WHOST>";                     # Center Msg to User
         echo "No data for $WPERIOD - Server '${WHOST}'";                # Show Host & Period instead
@@ -206,17 +212,17 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     if (isset($_POST['wtype']) ) {                                      # If received type of Graph
         $WTYPE = $_POST['wtype'];                                       # Save type of Graph
         switch ($WTYPE) {                                               # Start Type Validation
-            case "cpu"        : break;                                  # CPU Graph
-            case "runqueue"   : break;                                  # Run Queue Graph
-            case "memory"     : break;                                  # Memory Graph
-            case "diskio"     : break;                                  # Disk I/O Graph
-            case "memdist"    : break;                                  # Aix Memory Distribution
-            case "page_inout" : break;                                  # Paging - Page In, Page out
-            case "swap_space" : break;                                  # Swap Space Usage
-            case "neta"       : break;                                  # 1st Network Interface
-            case "netb"       : break;                                  # 2nd Network Interface
-            case "netc"       : break;                                  # 3rd Network Interface
-            case "netd"       : break;                                  # 4th Network Interface
+            case "cpu"        : $WTITLE="CPU"                   ;break; # CPU Graph
+            case "runqueue"   : $WTITLE="Run Queue"             ;break; # Run Queue Graph
+            case "memory"     : $WTITLE="Memory"                ;break; # Memory Graph
+            case "diskio"     : $WTITLE="Disk I/O"              ;break; # Disk I/O Graph
+            case "memdist"    : $WTITLE="Memory Distribution"   ;break; # Aix Memory Distribution
+            case "page_inout" : $WTITLE="Page in/out"           ;break; # Paging - Page In, Page out
+            case "swap_space" : $WTITLE="Swap Space"            ;break; # Swap Space Usage
+            case "neta"       : $WTITLE="1st Network Interface" ;break; # 1st Network Interface
+            case "netb"       : $WTITLE="2nd Network Interface" ;break; # 2nd Network Interface
+            case "netc"       : $WTITLE="3rd Network Interface" ;break; # 3rd Network Interface
+            case "netd"       : $WTITLE="4th Network Interface" ;break; # 4th Network Interface
             default:                                                    # If not a valid Graph Type
                 echo "Graph type received is invalid ($WTYPE)";         # Inform User Msg
                 exit ;                                                  # End of the page 
@@ -320,17 +326,17 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    $TITRE = ucfirst($WTYPE) . " Performance graph for all servers"; 
-    display_std_heading("NotHome","$TITRE","","",$SVER); 
+    $TITRE = "Graph for all servers v${SVER} - $WTITLE"; 
+    display_std_heading("NotHome","$TITRE","","",""); 
 
     # Display This page heading --------------------------------------------------------------------
     echo "<center><H1>";
-    echo ucfirst($WTYPE) . " performance Graph of " . str_replace("_"," ",$WSERVERS);
+    echo $WTITLE . " performance graph of " . str_replace("_"," ",$WSERVERS);
     echo " for " . ucfirst($WPERIOD) ;
     echo "</H1></center><br>";
 
     # Generate and Display Graph for all servers selected from the SQL Query -----------------------
-    echo "\n<table style='width:80%' align=center border=1 cellspacing=1>";
+    echo "\n<table style='width:70%' align=center border=0 cellspacing=0>";
     echo "\n<tr>" ;                                                     # Initial Table Row
     $COUNT=0;                                                           # Graph per line count
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
