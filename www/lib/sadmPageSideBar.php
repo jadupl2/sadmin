@@ -26,6 +26,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+#   2018_02_07  JDuplessis
+#       V2.1 Added Performance Link in SideBar
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -39,7 +41,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -48,6 +50,7 @@ $URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Mainte
 $URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
 $URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return Code History View
 $URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
+$URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Performance Graph Menu URL
 
 
 // ================================================================================================
@@ -309,11 +312,13 @@ function SideBar_OS_Summary() {
     
 
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
-    echo "\n<div class='SideBarTitle'>Server Status</div>";             # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_OSUPDATE . "'>O/S Update</a></div>";        # URL To View O/S Upd. Page
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_MONITOR . "'>System Monitor</a></div>";     # URL to System Monitor Page
+    echo "<a href='" . $URL_MONITOR . "'>Servers Alerts</a></div>";     # URL to System Monitor Page
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_PERF    . "'>Performance Graph</a></div>";  # URL to System Monitor Page
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
