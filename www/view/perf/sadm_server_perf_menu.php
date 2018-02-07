@@ -23,6 +23,8 @@
 # ChangeLog
 #   2018_01_23 JDuplessis
 #       V 1.0 Initial Version
+#   2018_02_06 JDuplessis
+#       V 1.1 Add Default Start/End Date for Adhoc graph 
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -37,7 +39,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.0" ;                                                        # Current version number
+$SVER  = "1.1" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
@@ -50,7 +52,6 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 # ==================================================================================================
 #				First Option - Display Same graph for all group of server selected
 # ==================================================================================================
-
 ?>
     <form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>
     <?php print "<strong>Option for a group of servers</strong> <br><br>"; ?>
@@ -67,7 +68,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
         <option value="netb">Network 2nd interface</option>
         <option value="netc">Network 3rd interface</option>
         <option value="netd">Network 4th interface</option>
-        <option value="Memdist">Aix Memory Distribution</option>
+        <option value="memdist">Aix Memory Distribution</option>
     </select>
     
     <?php print " of "; ?>
@@ -122,7 +123,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
     echo "<strong>Option for one server</strong> <BR><BR>";
     echo "Display graphics for server ";
     echo "<select name='server_name'>\n";
-    $sql = "SELECT * FROM `server` where srv_active='1' order by srv_name";
+    $sql = "SELECT * FROM `server` where srv_active='1' and srv_graph='1' order by srv_name";
     if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
         $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
         $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
@@ -137,10 +138,13 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
     }
   echo "</select>\n";
   echo " from date ";
-?>
 
-<!-- Accept the starting date ================================================================== -->
-    <input type="text" name="sdate" size="10" />
+
+# Accept the starting date =========================================================================
+    $YESTERDAY2 = mktime(0, 0, 0, date("m"), date("d")-2,   date("Y")); # Today -2 Days in EpochTime 
+    $YESTERDAY2 = date ("d-m-Y",$YESTERDAY2);                           # Today -2 Days in DD.MM.YY
+    echo "<input type='text' name='sdate' value='$YESTERDAY2' size='11' />";
+?>
     <script language="JavaScript">
     	new tcal ({ 
     		'formname': 'gph_adoc',
@@ -150,8 +154,12 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 
 
 <!-- Accept the ending date ==================================================================== -->
-    <?php echo " to " ; ?>
-    <input type="text" name="edate" size="10" />
+<?php 
+    echo " to " ; 
+    $YESTERDAY  = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y")); # Return Yesterday EpochTime 
+    $YESTERDAY  = date ("d-m-Y",$YESTERDAY);                            # Yesterday Date DD.MM.YYY    
+    echo "<input type='text' name='edate' value='$YESTERDAY' size='11' />";
+?>
     <script language="JavaScript">
         new tcal ({ 
             'formname': 'gph_adoc',
