@@ -39,6 +39,10 @@
 #   V2.14 Add arc directory in $SADMIN/www for archiving purpose
 # 2018_01_25 JDuplessis
 #   V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_07 JDuplessis
+#   V2.16 Bug Fix when determining if server is a virtual or physical
+# 2018_02_08 JDuplessis
+#   V2.17 Correct 'if' statement compatibility problem with 'dash' shell
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -57,7 +61,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.15"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.17"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -860,38 +864,38 @@ sadm_server_ips() {
                         SADM_IP=`echo $sadm_wip |awk -F/ '{ print $1 }'` # Get IP Address 
                         SADM_MASK_NUM=`echo $sadm_wip |awk -F/ '{ print $2 }' |awk '{ print $1 }'`
                         SADM_IF=`echo $sadm_wip | awk '{ print $2 }'`   # Get Interface Name
-                        if [ "$SADM_MASK_NUM" == "1"  ] ; then SADM_MASK="128.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "2"  ] ; then SADM_MASK="192.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "3"  ] ; then SADM_MASK="224.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "4"  ] ; then SADM_MASK="240.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "5"  ] ; then SADM_MASK="248.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "6"  ] ; then SADM_MASK="252.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "7"  ] ; then SADM_MASK="254.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "8"  ] ; then SADM_MASK="255.0.0.0"        ; fi
-                        if [ "$SADM_MASK_NUM" == "9"  ] ; then SADM_MASK="255.128.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "10" ] ; then SADM_MASK="255.192.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "11" ] ; then SADM_MASK="255.224.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "12" ] ; then SADM_MASK="255.240.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "13" ] ; then SADM_MASK="255.248.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "14" ] ; then SADM_MASK="255.252.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "15" ] ; then SADM_MASK="255.254.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "16" ] ; then SADM_MASK="255.255.0.0"      ; fi
-                        if [ "$SADM_MASK_NUM" == "17" ] ; then SADM_MASK="255.255.128.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "18" ] ; then SADM_MASK="255.255.192.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "19" ] ; then SADM_MASK="255.255.224.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "20" ] ; then SADM_MASK="255.255.240.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "21" ] ; then SADM_MASK="255.255.248.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "22" ] ; then SADM_MASK="255.255.252.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "23" ] ; then SADM_MASK="255.255.254.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "24" ] ; then SADM_MASK="255.255.255.0"    ; fi
-                        if [ "$SADM_MASK_NUM" == "25" ] ; then SADM_MASK="255.255.255.128"  ; fi
-                        if [ "$SADM_MASK_NUM" == "26" ] ; then SADM_MASK="255.255.255.192"  ; fi
-                        if [ "$SADM_MASK_NUM" == "27" ] ; then SADM_MASK="255.255.255.224"  ; fi
-                        if [ "$SADM_MASK_NUM" == "28" ] ; then SADM_MASK="255.255.255.240"  ; fi
-                        if [ "$SADM_MASK_NUM" == "29" ] ; then SADM_MASK="255.255.255.248"  ; fi
-                        if [ "$SADM_MASK_NUM" == "30" ] ; then SADM_MASK="255.255.255.252"  ; fi
-                        if [ "$SADM_MASK_NUM" == "31" ] ; then SADM_MASK="255.255.255.254"  ; fi
-                        if [ "$SADM_MASK_NUM" == "32" ] ; then SADM_MASK="255.255.255.255"  ; fi
+                        if [ "$SADM_MASK_NUM" = "1"  ] ; then SADM_MASK="128.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "2"  ] ; then SADM_MASK="192.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "3"  ] ; then SADM_MASK="224.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "4"  ] ; then SADM_MASK="240.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "5"  ] ; then SADM_MASK="248.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "6"  ] ; then SADM_MASK="252.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "7"  ] ; then SADM_MASK="254.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "8"  ] ; then SADM_MASK="255.0.0.0"        ; fi
+                        if [ "$SADM_MASK_NUM" = "9"  ] ; then SADM_MASK="255.128.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "10" ] ; then SADM_MASK="255.192.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "11" ] ; then SADM_MASK="255.224.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "12" ] ; then SADM_MASK="255.240.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "13" ] ; then SADM_MASK="255.248.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "14" ] ; then SADM_MASK="255.252.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "15" ] ; then SADM_MASK="255.254.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "16" ] ; then SADM_MASK="255.255.0.0"      ; fi
+                        if [ "$SADM_MASK_NUM" = "17" ] ; then SADM_MASK="255.255.128.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "18" ] ; then SADM_MASK="255.255.192.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "19" ] ; then SADM_MASK="255.255.224.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "20" ] ; then SADM_MASK="255.255.240.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "21" ] ; then SADM_MASK="255.255.248.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "22" ] ; then SADM_MASK="255.255.252.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "23" ] ; then SADM_MASK="255.255.254.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "24" ] ; then SADM_MASK="255.255.255.0"    ; fi
+                        if [ "$SADM_MASK_NUM" = "25" ] ; then SADM_MASK="255.255.255.128"  ; fi
+                        if [ "$SADM_MASK_NUM" = "26" ] ; then SADM_MASK="255.255.255.192"  ; fi
+                        if [ "$SADM_MASK_NUM" = "27" ] ; then SADM_MASK="255.255.255.224"  ; fi
+                        if [ "$SADM_MASK_NUM" = "28" ] ; then SADM_MASK="255.255.255.240"  ; fi
+                        if [ "$SADM_MASK_NUM" = "29" ] ; then SADM_MASK="255.255.255.248"  ; fi
+                        if [ "$SADM_MASK_NUM" = "30" ] ; then SADM_MASK="255.255.255.252"  ; fi
+                        if [ "$SADM_MASK_NUM" = "31" ] ; then SADM_MASK="255.255.255.254"  ; fi
+                        if [ "$SADM_MASK_NUM" = "32" ] ; then SADM_MASK="255.255.255.255"  ; fi
                         SADM_MAC=`ip addr show ${SADM_IF} | grep 'link' |head -1 | awk '{ print $2 }'` 
                         sadm_servers_ips="${sadm_servers_ips}${SADM_IF}|${SADM_IP}|${SADM_MASK}|${SADM_MAC}" 
                         index=`expr $index + 1`                         # Increment Index by 1
@@ -943,18 +947,21 @@ sadm_server_ips() {
 # --------------------------------------------------------------------------------------------------
 sadm_server_type() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    $SADM_DMIDECODE | grep -i vmware >/dev/null 2>&1    # Search vmware in dmidecode
-                    if [ $? -eq 0 ]                                     # If vmware was found
-                        then sadm_server_type="V"                       # If VMware Server
-                        else sadm_server_type="P"                       # Default Assume Physical
-                    fi
-                    if [ "$SADM_FACTER" != "" ]
-                       then W=`facter | grep is_virtual | awk '{ print $3 }'`
-                            if [ "$W" == "True" ] 
-                                then sadm_server_type="V" 
-                                else sadm_server_type="p" 
+        "LINUX")    if [ "$SADM_FACTER" != "" ]                         # If facter is installed
+                       then W=`facter |grep is_virtual |awk '{ print $3 }'`   # Get VM True or False
+                            if [ "$W" = "false" ] 
+                                then sadm_server_type="P" 
+                                else sadm_server_type="V" 
                             fi
+                            break
                     fi
+                    if [ "$SADM_DMIDECODE" != "" ]
+                        then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1    # Search vmware in dmidecode
+                             if [ $? -eq 0 ]                                     # If vmware was found
+                                 then sadm_server_type="V"                       # If VMware Server
+                                 else sadm_server_type="P"                       # Default Assume Physical
+                             fi
+                    fi 
                     ;;
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
                     ;;        
