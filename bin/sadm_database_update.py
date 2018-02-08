@@ -34,6 +34,8 @@
 #
 # 2017_12_07 -  Jacques Duplessis
 #       V2.7 -  Correct Problem dealing with srv_date_update on newly added server.
+# 2018_02_08 -  Jacques Duplessis
+#       V2.8 -  Bug Fix with test for physical/virtual server
 #
 #
 #===================================================================================================
@@ -93,7 +95,7 @@ def initSADM():
     st = sadm.sadmtools()                                               # Create Sadm Tools Instance
     
     # Variables are specific to this program, change them if you need-------------------------------
-    st.ver  = "2.7"                             # This Script Version 
+    st.ver  = "2.8"                             # This Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
     st.log_append = True                        # True=Append to Existing Log  False=Start a new log
@@ -284,7 +286,7 @@ def process_servers(wconn,wcur,st):
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
-                    if CFG_VALUE == 'P':
+                    if CFG_VALUE.upper()  == 'P':
                         wdict['srv_vm'] = 0
                     else:
                         wdict['srv_vm'] = 1
