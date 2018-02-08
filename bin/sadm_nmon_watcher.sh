@@ -22,6 +22,8 @@
 #       V2.2 Show number of nmon running only once, if nmon is already running
 # 2017_02_04 J.Duplessis 
 #       V2.3 Snapshot will be taken every 2 minutes instead of 5.
+# 2017_02_08 J.Duplessis 
+#       V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -40,7 +42,7 @@ if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -223,7 +225,7 @@ check_nmon()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
-    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # nmon not available on OSX
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # nmon not available on OSX
         then sadm_writelog "The command nmon is not available on MacOS" # Advise user that won't run
              sadm_writelog "Script can't continue"                      # Process can't continue
              sadm_stop 0                                                # Close Everything Cleanly
