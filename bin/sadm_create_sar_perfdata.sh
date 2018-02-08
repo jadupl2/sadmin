@@ -27,6 +27,8 @@
 #  2.2 Added More Verbose to output log - Jan 2017
 #  2017_12_30   JDuplessis
 #   V2.3    Added logic to prevent running on OSX since 'sar' is not available on it.
+#  2018_02_08   JDuplessis
+#   V2.4    Fix Compatibility problem with 'dash' shell (if statement)
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -41,7 +43,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -97,7 +99,7 @@ OUT_MAX_FILES=30                                                        # Number
 #
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-    if [ "$(sadm_get_ostype)" == "DARWIN" ]                             # No sar on OSX
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # No sar on OSX
         then sadm_writelog "Script not supported on MacOS - Command 'sar' not available"
              sadm_stop 0                                                # Clean Stop 
              exit 0                                                     # Exit with no error
