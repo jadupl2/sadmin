@@ -42,6 +42,8 @@
 #       V3.2 Adapt program to use MySQL instead of PostGres 
 # December 2017 - Jacques Duplessis
 #       V3.3 Correct Problem connecting to Database
+# 2018_02_08
+#   V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -59,7 +61,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='3.3'                             ; export SADM_VER            # Script Version
+SADM_VER='3.4'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -191,7 +193,7 @@ process_servers()
             ping -c2 $fqdn_server >> /dev/null 2>&1
             if [ $? -ne 0 ]
                 then    sadm_writelog "Error trying to ping host $fqdn_server"
-                        if [ "$server_sporadic" == "1" ]
+                        if [ "$server_sporadic" = "1" ]
                             then    sadm_writelog "[WARNING] This host is sporadically online"
                                     sadm_writelog "Will continue with next server"
                                     WARNING_COUNT=$(($WARNING_COUNT+1))
@@ -208,15 +210,15 @@ process_servers()
 
 
             # If Server is network reachable, but the O/S Update field is OFF in DB Skip Update
-            if [ "$server_update_auto" == "0" ] && [ "$ONE_SERVER" == "" ] 
+            if [ "$server_update_auto" = "0" ] && [ "$ONE_SERVER" = "" ] 
                 then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
                      sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
-                     if [ "$SADM_MAIL_TYPE" == "3" ]
+                     if [ "$SADM_MAIL_TYPE" = "3" ]
                          then wsubject="SADM: WARNING O/S Update - Server $server_name (O/S Update OFF)" 
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
                 else WREBOOT=" N"                                       # Default is no reboot
-                     if [ "$server_update_reboot" == "1" ]            # If Requested in Database
+                     if [ "$server_update_reboot" = "1" ]            # If Requested in Database
                         then WREBOOT="Y"                                # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
