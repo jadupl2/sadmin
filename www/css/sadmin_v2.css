@@ -1,6 +1,13 @@
 /* ---------------------------------------------------------------------------------------------- */
+/* Change Log
+    2018_02_08 JDuplessis
+        V 2.1 Added Bottom Button on Server Update Page
+--------------------------------------------------------------------------------------------------*/
+
+/* ---------------------------------------------------------------------------------------------- */
 /*                      WRAPPER CSS FOR THE WHOLE SADMIN PAGE (EVERY PAGE)                        */
 /* ---------------------------------------------------------------------------------------------- */
+
 /* Body and HTML SADMIN Standard Page CSS */
 body,html{
     min-height      :   100vh;
@@ -418,7 +425,7 @@ div.server_data {
     margin-left     :   15px;
     margin-right    :   auto;
     width           :   95%;
-    height          :   600px; 
+    height          :   650px; 
     border          :   1px solid #000000;
     text-align      :   left;
     padding         :   1%;
@@ -467,6 +474,8 @@ div.server_left_data {
     margin-bottom   : 4px;
     margin-left     : 40%;
     color           : black;
+    background-color:   #f5f4f0;
+    border:1px solid black;
     width           : 60%;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/
@@ -478,9 +487,25 @@ div.server_right_data {
     margin-left     : 40%;
     padding-left    : 5px;
     color           : black;
+    background-color:   #f5f4f0;
+    border:1px solid black;
     width           : 60%;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/
 }
 
+div.bottom_buttons {
+    clear           :   both; 
+    /* font-family     :   Geneva, sans-serif;
+    background-color:   #fff5c3;
+    color           :    black;
+    margin-left     :   auto;
+    margin-right    :   auto; */
+    width           :   95%;
+    /* height          :   auto;  
+    border          :   1px solid #000000;
+    padding         :   1%; */
+    /* font-size    :   12px; */
+    /* margin       :   1px; */
+}
 
