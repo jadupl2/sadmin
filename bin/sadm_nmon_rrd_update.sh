@@ -40,6 +40,8 @@
 #   V1.4 - List of all nmon files this script will process before update rrd begin.
 # 2018_02_07 JDuplessis 
 #   V1.5 - Remove some log entry not needed
+# 2018_02_08 JDuplessis 
+#   V1.6 - Fix Compatibility Problem with 'dash' shell (if statement)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -578,8 +580,8 @@ build_net_array()
     # Determine and show Number of Network Devices in NMON file (Minus the loop interface)
     HDLINE=`grep "^NET," $NMON_FILE | head -1`                          # Get Network Header Line 
     NBFLD=`echo $HDLINE | awk -F, '{ print NF }'`                       # Get Nb Field on Heading
-    if  [ ${HDLINE: -1} == "," ] ; then let NBFLD="$NBFLD - 1" ; fi     # extra , at end of line ??
-    #if [ "$NMON_OS" == "LINUX" ] ; then let NBFLD="$NBFLD - 1" ; fi     # extra , at end of line ??
+    if  [ ${HDLINE: -1} = "," ] ; then let NBFLD="$NBFLD - 1" ; fi      # extra , at end of line ??
+    #if [ "$NMON_OS" = "LINUX" ] ; then let NBFLD="$NBFLD - 1" ; fi     # extra , at end of line ??
     if [ $DEBUG_LEVEL -gt 6 ] 
         then sadm_writelog "Nb.Fields= $NBFLD Heading Line= $HDLINE"    # Show Net Heading Line 
     fi
@@ -636,29 +638,29 @@ build_net_array()
             then if1name=$wif                                           # Interface 1 Name
                  if1rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If1 Read Col
                  if1wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if1 Write Col
-                 if [ "$if1rc" == "" ] ; then if1rc=0 ; fi              # Read Column Not ok in nmon
-                 if [ "$if1wc" == "" ] ; then if1wc=0 ; fi              # Write Column Not ok in nmon
+                 if [ "$if1rc" = "" ] ; then if1rc=0 ; fi               # Read Column Not ok in nmon
+                 if [ "$if1wc" = "" ] ; then if1wc=0 ; fi               # Write Column Not ok in nmon
         fi
         if [ $COUNTER -eq 2 ]                                           # For second Interface
             then if2name=$wif                                           # Set Interface 2 Name
                  if2rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If2 Read Col
                  if2wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if2 Write Col
-                 if [ "$if2rc" == "" ] ; then if2rc=0 ; fi              # Read Column Not ok in nmon
-                 if [ "$if2wc" == "" ] ; then if2wc=0 ; fi              # Write Column Not ok in nmon
+                 if [ "$if2rc" = "" ] ; then if2rc=0 ; fi               # Read Column Not ok in nmon
+                 if [ "$if2wc" = "" ] ; then if2wc=0 ; fi               # Write Column Not ok in nmon
         fi
         if [ $COUNTER -eq 3 ]                                           # For third Interface
             then if3name=$wif                                           # Set Interface 3 Name
                  if3rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If3 Read Col
                  if3wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if3 Write Col
-                 if [ "$if3rc" == "" ] ; then if3rc=0 ; fi              # Read Column Not ok in nmon
-                 if [ "$if3wc" == "" ] ; then if3wc=0 ; fi              # Write Column Not ok in nmon
+                 if [ "$if3rc" = "" ] ; then if3rc=0 ; fi               # Read Column Not ok in nmon
+                 if [ "$if3wc" = "" ] ; then if3wc=0 ; fi               # Write Column Not ok in nmon
         fi
         if [ $COUNTER -eq 4 ]                                           # For the fouth Interface
             then if4name=$wif                                           # Set Interface 3 Name
                  if4rc=`grep "^${wif},read"  $SADM_TMP_FILE3 |awk -F, '{print $3}'` # If3 Read Col
                  if4wc=`grep "^${wif},write" $SADM_TMP_FILE3 |awk -F, '{print $3}'` # if3 Write Col
-                 if [ "$if4rc" == "" ] ; then if4rc=0 ; fi              # Read Column Not ok in nmon
-                 if [ "$if4wc" == "" ] ; then if4wc=0 ; fi              # Write Column Not ok in nmon
+                 if [ "$if4rc" = "" ] ; then if4rc=0 ; fi               # Read Column Not ok in nmon
+                 if [ "$if4wc" = "" ] ; then if4wc=0 ; fi               # Write Column Not ok in nmon
         fi
         let COUNTER=COUNTER+1 
         done < $SADM_TMP_FILE2
@@ -738,7 +740,7 @@ build_memory_array()
 {
     #sadm_writelog " " 
 
-    if [ "$NMON_OS" == "AIX" ]                                          # If on AIX
+    if [ "$NMON_OS" = "AIX" ]                                           # If on AIX
         then grep "^MEM," $NMON_FILE | head -1 >$SADM_TMP_FILE2         # Aix Memory Header Line
              hd_mem_total=` cat $SADM_TMP_FILE2 |awk -F, '{print $7}'`  # Aix Header for Mem Total
              hd_mem_free=`  cat $SADM_TMP_FILE2 |awk -F, '{print $5}'`  # Aix Header for Mem Free
@@ -758,7 +760,7 @@ build_memory_array()
         do
         SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`      # Get SnapShot Number
         INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
-        if [ "$NMON_OS" == "AIX" ]                                      # If on AIX
+        if [ "$NMON_OS" = "AIX" ]                                       # If on AIX
             then MEM_TOTAL=`echo $wline | awk -F, '{ print $7 }'`       # AIX Total Memory in MB
                  MEM_FREE=` echo $wline | awk -F, '{ print $5 }'`       # AIX Free Memory in MB
             else MEM_TOTAL=`echo $wline | awk -F, '{ print $3 }'`       # Real Memory in MB
@@ -766,7 +768,7 @@ build_memory_array()
         fi            
         MEM_USE=`echo $MEM_TOTAL - $MEM_FREE | $SADM_BC -l `            # Calculate Memory Use
 
-        if [ "$NMON_OS" == "AIX" ]                                      # If on AIX
+        if [ "$NMON_OS" =  "AIX" ]                                      # If on AIX
             then VIR_TOTAL=`echo $wline | awk -F, '{ print $8 }'`       # Aix Virt. Total Mem in MB
                  VIR_FREE=` echo $wline | awk -F, '{ print $6 }'`       # Aix Virt. Free Mem in MB
             else VIR_TOTAL=`echo $wline | awk -F, '{ print $6 }'`       # Linux swap Total in MB
@@ -882,7 +884,7 @@ build_memnew_array()
 build_paging_activity_array()
 {
     #sadm_writelog " " 
-    if [ "$NMON_OS" == "AIX" ]                                          # If an Aix nmon File
+    if [ "$NMON_OS" = "AIX" ]                                           # If an Aix nmon File
         then grep "^PAGE," $NMON_FILE | head -1 >$SADM_TMP_FILE2        # Aix Paging Header Line
              hd_pgin=` cat $SADM_TMP_FILE2 | awk -F, '{print $6}'`      # Aix Header for pgin
              hd_pgout=`cat $SADM_TMP_FILE2 | awk -F, '{print $7}'`      # Aix Header for pgout
@@ -901,7 +903,7 @@ build_paging_activity_array()
         do
         SNAPSHOT=`echo $wline | awk -F, '{ print $2 }'| cut -c2-5`      # Get SnapShot Number
         INDX=`expr ${SNAPSHOT} + 0`                                     # Empty field are Zero now
-        if [ "$NMON_OS" == "AIX" ]                                      # Dealing with Aix nmon file
+        if [ "$NMON_OS" = "AIX" ]                                       # Dealing with Aix nmon file
             then PAGE_IN=` echo $wline | awk -F, '{ print $6 }'`        # AIX pgin stat.
                  PAGE_OUT=`echo $wline | awk -F, '{ print $7 }'`        # AIX pgout stat.
             else PAGE_IN=` echo $wline | awk -F, '{ print $9 }'`        # LINUX pgin stat.
@@ -926,7 +928,7 @@ build_paging_activity_array()
 rrd_update()
 {
     TOTAL_ERROR=0 ; TOTAL_SUCCESS=0                                     # Reset Total Error Success
-    sadm_writelog " "                                                   # Space line
+    #sadm_writelog " "                                                   # Space line
     sadm_writelog "Updating RRD Database ${RRD_FILE}"                   # Starting RRD Update
     for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))                      # Process time Array Size
         do
@@ -1083,8 +1085,8 @@ main_process()
     cat $NMON_FILE_LIST |  while read wline 
         do 
         filecount=$(($filecount+1))                                     # Increment File Counter 
-        snapshotcount=`grep "ZZZZ,T" $wline | wc -l`
-        sadm_writelog " ${filecount}) $wline as $snapshotcount snapshots"   
+        snapshotcount=`grep "ZZZZ,T" $wline | wc -l`					# Cnt SnapSHot in nmon file
+        sadm_writelog " ${filecount})  There is $snapshotcount snapshots in $wline"   
         done
 
     while read NMON_FILE                                                # Process nmon file 1 by 1
@@ -1181,7 +1183,7 @@ main_process()
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$`
-               if [ "$num" == "" ] 
+               if [ "$num" = "" ] 
                   then sadm_writelog "Debug Level not specified" 
                        help_usage                                       # Display Help Usage
                        sadm_stop 0
