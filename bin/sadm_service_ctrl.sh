@@ -39,6 +39,8 @@
 # 2017_08_03 JDuplessis - v1.10 Added a Stop Service beore the start (eliminate problem)
 # 2018_01_12 JDuplessis
 #   v1.11   Add Synopsis - Update SADM Tools section
+# 2018_02_08 JDuplessis
+#   v1.12   Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -53,7 +55,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.11'                            ; export SADM_VER            # Your Script Version
+SADM_VER='1.12'                            ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -264,7 +266,7 @@ service_start()
         esac                                                            # End of case
     done  
 
-    if [ "$P_DISABLE" == "OFF" ] && [ "$P_ENABLE" == "OFF" ]             # Set Switch Default Value
+    if [ "$P_DISABLE" = "OFF" ] && [ "$P_ENABLE" = "OFF" ]              # Set Switch Default Value
        then help
             sadm_stop 0                                                 # Close the shop
             exit 0                                                      # Back to shell 
