@@ -21,7 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# 1.6   
+# 2018_02_08 JDuplessis
+#   V1.8 Fix Compatibility problem with 'sadh' shell (If statement)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -37,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -100,7 +101,7 @@ help_usage()
 perform_backup()
 {
     
-   if [ "$ONE_SERVER" == " " ]                                          # More than 1 Server to do
+   if [ "$ONE_SERVER" = " " ]                                           # More than 1 Server to do
       then  DOW=`date '+%u'`                                            # Day of Week (0=Sun,6=Sat)
             # Match Current Day Number with Number in Database (0=Nobackup 1=Monday and 7 Sunday)
             if [ $DOW -eq 0 ] ; then DOWSTR="We will do backup scheduled for Sunday"    ;DB_DOW=7;fi
@@ -117,7 +118,7 @@ perform_backup()
     # Perform SQL to Select Server to Backup Today
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active "
     SQL="${SQL} from sadm.server "
-    if [ "$ONE_SERVER" == " " ]
+    if [ "$ONE_SERVER" = " " ]
        then SQL="${SQL}where srv_ostype = 'linux' and srv_active = True and "
             SQL="${SQL}srv_backup = ${DB_DOW}"
        else SQL="${SQL}where srv_ostype = 'linux' and srv_active = True and " 
@@ -133,7 +134,7 @@ perform_backup()
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
 
     # Display Execution repartition in time if more than one server
-    if [ "$ONE_SERVER" == " " ]
+    if [ "$ONE_SERVER" = " " ]
         then # Display Number of server(s) to Backup with Rear
              NB_SERVER=`wc -l $SADM_TMP_FILE1 | awk '{ print $1 }' | tr -d ' ' `
              sadm_writelog "We have $NB_SERVER server(s) to backup in $MAX_HOURS hours."
@@ -163,11 +164,11 @@ perform_backup()
                       
               # Display Server Monitoring and Sporadic Options are ON or OFF in Debug Mode
               if [ $DEBUG_LEVEL -gt 0 ]                                 # If Debug Activated
-                 then if [ "$server_monitor" == "t" ]                   # Monitor Flag is at True
+                 then if [ "$server_monitor" = "t" ]                    # Monitor Flag is at True
                             then sadm_writelog "Monitoring is ON for $fqdn_server"
                             else sadm_writelog "Monitoring is OFF for $fqdn_server"
                       fi
-                      if [ "$server_sporadic" == "t" ]                  # Sporadic Flag is at True
+                      if [ "$server_sporadic"  = "t" ]                  # Sporadic Flag is at True
                             then sadm_writelog "Sporadic server is ON for $fqdn_server"
                             else sadm_writelog "Sporadic server is OFF for $fqdn_server"
                       fi
@@ -270,7 +271,7 @@ perform_backup()
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
-             if [ "$ONE_SERVER" == " " ]
+             if [ "$ONE_SERVER"  = " " ]
                 then sadm_writelog "Nb. of hours given to do all today backup is ${MAX_HOURS}"
                 else sadm_writelog "One Server to backup (${ONE_SERVER})"
              fi
