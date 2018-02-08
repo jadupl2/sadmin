@@ -26,6 +26,8 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_01_04 JDuplessis
 #       V2.1 Add Button at bottom of page to display more System Information
+#   2018_02_08 JDuplessis
+#       V2.2 Rework page design and button at bottom of page
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -40,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -62,8 +64,8 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 function display_server_data ($wrow) {
     global $URL_UPDATE, $URL_MENU;
 
-    # Server Data DIV
-    echo "\n\n<div class='server_data'>             <!-- Start of Data Scr DIV -->";
+    # Server Data Info DIV
+    echo "\n\n<div class='server_data'>             <!-- Start of Server Data DIV -->";
 
     # DATA LEFT SIDE DIV
     echo "\n\n<div class='server_leftside'>         <!-- Start Data LeftSide  -->";
@@ -75,13 +77,14 @@ function display_server_data ($wrow) {
     display_right_side ($wrow);
     echo "\n\n</div>                                <!-- End of RightSide Data -->";
 
-    echo "\n</div>                                  <!-- End of Data Scr DIV -->";
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    echo "\n</div>                                  <!-- End of Server Data DIV -->";
 
-    # Update Button
-    echo "\n<center><br>";
-    echo "\n<a href=" . $URL_MENU . "?sel=" . $wrow['srv_name'] .">";
-    echo "\n<button type='button'>Update</button></a>";
-    echo "\n</center>\n<br>                         <!-- Blank Line Before Footer -->";
+    # DISPLAY BOTTOM BUTTONS bottom_buttons
+    echo "\n\n<div class='bottom_buttons'>          <!-- Start of Bottom Buttons DIV -->";
+    display_bottom_buttons ($wrow);  
+    echo "\n</div>                                  <!-- End of Bottom Buttons DIV -->";
+
 }
 
 
@@ -476,14 +479,20 @@ function display_right_side ($wrow) {
     echo sprintf("%02d",$wrow['srv_update_minute']);
     echo "</div>";
 
-
     # White Line 
     echo "\n\n<div class='server_right_label'>&nbsp;</div>";
     echo "\n<div class='server_right_data'>&nbsp;   </div>";
+}
 
+
+
+# ==================================================================================================
+#                             DISPLAY RIGHT SIDE OF SERVER DATA 
+#                           wrow  = Array containing table row keys/values
+# ==================================================================================================
+function display_bottom_buttons ($wrow) {
 
     # Display Button to Display System Information
-    echo "\n\n<div class='server_right_label'>";
     $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_system.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
@@ -515,11 +524,9 @@ function display_right_side ($wrow) {
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
-    echo "</div>";
 
 
     # Display Button to Display CFG2HTML Information
-    echo "\n<div class='server_right_data'>";
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . ".html";
     $url = "/dat/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . ".html";
     if (file_exists($fname)) {                                          # If FileName Received exist
@@ -552,12 +559,11 @@ function display_right_side ($wrow) {
         echo "No SysFile";                                              # Msg. No Button
     }
 
-    echo "</div>";
-
-
+    # Display the Update Button
+    echo "\n<a href=" . $URL_MENU . "?sel=" . $wrow['srv_name'] .">";
+    echo "\n<button type='button'>Update</button></a>";
+    echo "\n\n<br>                                          ";
 }
-
-
 
 
 
