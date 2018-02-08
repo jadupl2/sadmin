@@ -17,7 +17,7 @@
 #   V2.3 Now put information in less files (disks, lvm and network file) 
 #        Rewritten for performance & Efficiency
 # 2018_01_03 JDuplessis
-#   V2.4 Added New system file output & added OSX COmmande for Network,System and Disk Info.
+#   V2.4 Added New system file output & added OSX Commands for Network,System and Disk Info.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
