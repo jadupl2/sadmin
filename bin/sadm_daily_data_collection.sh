@@ -32,6 +32,8 @@
 #   V2.2    Update SADM Library insertion section & Minor correction
 # 2018_02_02 J.Duplessis
 #   V2.3    Added Operation Separator in log 
+# 2018_02_08 J.Duplessis
+#   V2.4    Fix compatibility problem with 'dash' shell
 ######################################################################################&&&&&&&#######
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -46,7 +48,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -127,11 +129,11 @@ process_servers()
         sadm_writelog "Processing ($xcount) $fqdn_server"               # Show Current System 
         
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-            then if [ "$server_monitor" == "1" ]                        # Monitor Flag is at True
+            then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
                     then sadm_writelog "Monitoring is ON for $fqdn_server"
                     else sadm_writelog "Monitoring is OFF for $fqdn_server"
                  fi
-                 if [ "$server_sporadic" == "1" ]                       # Sporadic Flag is at True
+                 if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
                     then sadm_writelog "Sporadic system is ON for $fqdn_server"
                     else sadm_writelog "Sporadic system is OFF for $fqdn_server"
                  fi
