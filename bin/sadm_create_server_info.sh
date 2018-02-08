@@ -16,7 +16,7 @@
 # 2018_01_02 jDuplessis
 #   V2.3 Now put information in less files (disks, lvm and network file) 
 #        Rewritten for performance & Efficiency
-# 2018_01_03 jDuplessis
+# 2018_01_03 JDuplessis
 #   V2.4 Added New system file output & added OSX COmmande for Network,System and Disk Info.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -31,7 +31,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
