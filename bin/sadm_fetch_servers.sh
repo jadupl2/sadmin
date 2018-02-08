@@ -21,7 +21,8 @@
 #   2017_08_29 JDuplessis - V2.4 Bug Fix - Corrected problem when retrying rsync when failed
 #   2017_08_30 JDuplessis - V2.5 If SSH test to server fail, try a second time (Prevent false Error)
 #   2017_12_17 JDuplessis - V2.6 Modify to use MySQL instead of PostGres
-#   2018_01_09 JDuplessis - V2.7 Update New SADM Include for Library & Bug Corrections for Aix
+#   2018_02_08 JDuplessis 
+#       V2.8 Fix compatibility problem with 'dash' shell
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -50,7 +51,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.7'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.8'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -187,11 +188,11 @@ process_servers()
 
         # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-           then if [ "$server_monitor" == "1" ]                         # Monitor Flag is at True
+           then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
                       then sadm_writelog "Monitoring is ON for $fqdn_server"
                       else sadm_writelog "Monitoring is OFF for $fqdn_server"
                 fi
-                if [ "$server_sporadic" == "1" ]                        # Sporadic Flag is at True
+                if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
                       then sadm_writelog "Sporadic server is ON for $fqdn_server"
                       else sadm_writelog "Sporadic server is OFF for $fqdn_server"
                 fi
@@ -214,13 +215,13 @@ process_servers()
         RC=$?                                                           # Save Error Number
 
         # IF SSH TO SERVER FAILED & IT'S A SPORADIC SERVER = WARNING & NEXT SERVER
-        if [ $RC -ne 0 ] &&  [ "$server_sporadic" == "1" ]              # SSH don't work & Sporadic
+        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]              # SSH don't work & Sporadic
            then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
                 continue                                                # Go process next server
         fi
 
         # IF SSH TO SERVER FAILED & MONITORING THIS SERVER IS OFF = WARNING & NEXT SERVER
-        if [ $RC -ne 0 ] &&  [ "$server_monitor" == "0" ]               # SSH don't work/Monitor OFF
+        if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]               # SSH don't work/Monitor OFF
            then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
                 continue                                                # Go process next server
         fi
