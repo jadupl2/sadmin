@@ -621,7 +621,11 @@ build_net_array()
     # Create work file ($SADM_TMP_FILE2) with only the first four (max) network devices we will use
     cat $SADM_TMP_FILE3 | awk -F, '{ print $1 }' | sort | uniq | head -4 >$SADM_TMP_FILE2 # Only Dev
     sadm_writelog "Chosen Network Devices (Up to 4)"                    # Show user what follow
-    cat $SADM_TMP_FILE2 | while read wline ; do sadm_writelog "$wline"; done
+    dcount=0;                                                           # Network Device Counter
+    cat $SADM_TMP_FILE2 | while read wline                              # Show resulting netdev file
+        do dcount=$((count+1))                                          # Increment Device Counter
+           sadm_writelog "  $dcount) $wline"                            # Show DevCount & DevName
+        done
     cp $SADM_TMP_FILE2 ${RRD_DIR}/netdev.txt
 
     # Set Default Values for Interface Name, Read Column and Write Column where stat are 
@@ -1075,11 +1079,9 @@ main_process()
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
     if [ "$CMD_FILE" != "" ] 
         then echo "$CMD_FILE" > $NMON_FILE_LIST
-        else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort > $NMON_FILE_LIST
-    fi
-
+        else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort >
     # 
-    sadm_writelog "This is the list of nmon files we will process" 
+    sadm_writelog "List of nmon files we are about to process :" 
     sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name \"*_${YESTERDAY}_*.nmon\""
     filecount=0
     cat $NMON_FILE_LIST |  while read wline 
@@ -1094,7 +1096,7 @@ main_process()
         NMON_COUNT=$(($NMON_COUNT+1))                                   # Increment Error Counter 
         sadm_writelog " " 
         sadm_writelog "`printf %10s |tr ' ' '-'`"                       # Write Dash Line to Log
-        sadm_writelog "[${NMON_COUNT}] Processing the file $NMON_FILE"  # Show User File Processing
+        sadm_writelog "[${NMON_COUNT}] Processing $NMON_FILE"           # Show User File Processing
         
         # If Nmon file is not readable- Advise and skip 
         if  [ ! -r "$NMON_FILE" ]                                       # If file is not redeable

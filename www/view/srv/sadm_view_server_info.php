@@ -63,7 +63,15 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 # ==================================================================================================
 function display_server_data ($wrow) {
     global $URL_UPDATE, $URL_MENU;
-
+    
+    # DISPLAY TOP BUTTONS 
+    echo "\n\n<div class='server_top_buttons'> <!-- Start of Bottom Buttons DIV -->";
+    echo "\n<center>";
+    display_top_buttons ($wrow);  
+    echo "\n</center>";
+    echo "\n</div>                                    <!-- End of Bottom Buttons DIV -->";
+    echo "\n<br>";
+    
     # Server Data Info DIV
     echo "\n\n<div class='server_data'>             <!-- Start of Server Data DIV -->";
 
@@ -80,10 +88,7 @@ function display_server_data ($wrow) {
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     echo "\n</div>                                  <!-- End of Server Data DIV -->";
 
-    # DISPLAY BOTTOM BUTTONS bottom_buttons
-    echo "\n\n<div class='bottom_buttons'>          <!-- Start of Bottom Buttons DIV -->";
-    display_bottom_buttons ($wrow);  
-    echo "\n</div>                                  <!-- End of Bottom Buttons DIV -->";
+
 
 }
 
@@ -183,6 +188,12 @@ function display_left_side ($wrow) {
     if ($wrow['srv_sporadic'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
 
+    # Include Server in Performance Graph
+    echo "\n\n<div class='server_left_label'>Show Performance Graph</div>";
+    echo "\n<div class='server_left_data'>";
+    if ($wrow['srv_graph'] == True) { echo "Yes" ; }else{ echo "No" ; }
+    echo "</div>";
+
     # Server Model
     echo "\n\n<div class='server_left_label'>Server Model</div>";
     echo "\n<div class='server_left_data'>";
@@ -222,7 +233,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Last Update Date 
-    echo "\n\n<div class='server_left_label'>Last Update Date</div>";
+    echo "\n\n<div class='server_left_label'>Last Auto Update Date</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_date_update'])) { 
         echo "&nbsp" ; 
@@ -244,13 +255,13 @@ function display_left_side ($wrow) {
     # Last O/S Update Status
     echo "\n\n<div class='server_left_label'>Last O/S Update Status</div>";
     echo "\n<div class='server_left_data'>";
-    if (empty($wrow['srv_date_osupdate'])) { 
+    if (empty($wrow['srv_update_status'])) { 
         echo "&nbsp" ; 
     }else{ 
         $os_status = "Unknown";
-        if ($wrow['srv_date_osupdate'] =="R") { $os_status = "Running" ; } 
-        if ($wrow['srv_date_osupdate'] =="F") { $os_status = "Failed"  ; } 
-        if ($wrow['srv_date_osupdate'] =="S") { $os_status = "Success" ; } 
+        if ($wrow['srv_update_status'] =="R") { $os_status = "Running" ; } 
+        if ($wrow['srv_update_status'] =="F") { $os_status = "Failed"  ; } 
+        if ($wrow['srv_update_status'] =="S") { $os_status = "Success" ; } 
         echo "$os_status";
     }
     echo "</div>";
@@ -283,21 +294,6 @@ function display_left_side ($wrow) {
     echo sprintf("%02d",$wrow['srv_backup_minute']) ;
     echo "</div>";
 
-    # Server Maintenance Mode
-    echo "\n\n<div class='server_left_label'>Maintenance Mode</div>";
-    echo "\n<div class='server_left_data'>";
-    if ($wrow['srv_maintenance'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
-    echo "</div>";
-
-    # Maintenance Mode Start and Stop TimeStamp
-    echo "\n\n<div class='server_left_label'>Maintenance Period Start</div>";
-    echo "\n<div class='server_left_data'>";
-    echo $wrow['srv_maint_date_start'] ;
-    echo "\n</div>";
-    echo "\n\n<div class='server_left_label'>Maintenance Period End</div>";
-    echo "\n<div class='server_left_data'>";
-    echo $wrow['srv_maint_date_end'] ;
-    echo "\n</div>";
 
 }
 
@@ -479,9 +475,21 @@ function display_right_side ($wrow) {
     echo sprintf("%02d",$wrow['srv_update_minute']);
     echo "</div>";
 
-    # White Line 
-    echo "\n\n<div class='server_right_label'>&nbsp;</div>";
-    echo "\n<div class='server_right_data'>&nbsp;   </div>";
+    # Server Maintenance Mode
+    echo "\n\n<div class='server_right_label'>Maintenance Mode</div>";
+    echo "\n<div class='server_right_data'>";
+    if ($wrow['srv_maintenance'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
+    echo "</div>";
+
+    # Maintenance Mode Start and Stop TimeStamp
+    echo "\n\n<div class='server_right_label'>Maintenance Period Start</div>";
+    echo "\n<div class='server_right_data'>";
+    echo $wrow['srv_maint_date_start'] ;
+    echo "\n</div>";
+    echo "\n\n<div class='server_right_label'>Maintenance Period End</div>";
+    echo "\n<div class='server_right_data'>";
+    echo $wrow['srv_maint_date_end'] ;
+    echo "\n</div>";    
 }
 
 
@@ -490,15 +498,16 @@ function display_right_side ($wrow) {
 #                             DISPLAY RIGHT SIDE OF SERVER DATA 
 #                           wrow  = Array containing table row keys/values
 # ==================================================================================================
-function display_bottom_buttons ($wrow) {
-
+function display_top_buttons ($wrow) {
+    global $URL_UPDATE, $URL_MENU;
+    
     # Display Button to Display System Information
     $wname = "/view/log/sadm_view_file.php";                            # URL that display File Recv
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_system.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='View System Information'>";# Tool Tips
-        echo "<button type='button'>System</button></a>";               # Display Button
+        echo "<button type='button'>System Information</button></a>";               # Display Button
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
@@ -509,7 +518,7 @@ function display_bottom_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='Network Information'>";    # Tool Tips
-        echo "<button type='button'>Network</button></a>";              # Display Button
+        echo "<button type='button'>Network Information</button></a>";              # Display Button
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
@@ -520,7 +529,7 @@ function display_bottom_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='System Summary Info'>";    # Tool Tips
-        echo "<button type='button'>Summary</button></a>";              # Display Button
+        echo "<button type='button'>Server Summary</button></a>";              # Display Button
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
@@ -532,7 +541,7 @@ function display_bottom_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $url ;                                     # Build URL 
         echo "' data-toggle='tooltip' title='CFG2HTML Information'>";   # Tool Tips
-        echo "<button type='button'>Cfg2html</button></a>";             # Display Button
+        echo "<button type='button'>Server cfg2html</button></a>";             # Display Button
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
@@ -543,7 +552,7 @@ function display_bottom_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='Disk Information'>";       # Tool Tips
-        echo "<button type='button'>Disks</button></a>";                # Display Button
+        echo "<button type='button'>Disk(s) Information</button></a>";                # Display Button
     }else{                                                              # FileName Recv. Not Exist
         echo "No SysFile";                                              # Msg. No Button
     }
@@ -560,8 +569,8 @@ function display_bottom_buttons ($wrow) {
     }
 
     # Display the Update Button
-    echo "\n<a href=" . $URL_MENU . "?sel=" . $wrow['srv_name'] .">";
-    echo "\n<button type='button'>Update</button></a>";
+    echo "\n<a href=" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] .">";
+    echo "\n<button type='button'>Update Server Static Information</button></a>";
     echo "\n\n<br>                                          ";
 }
 

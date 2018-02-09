@@ -425,12 +425,17 @@ div.server_data {
     margin-left     :   15px;
     margin-right    :   auto;
     width           :   95%;
-    height          :   650px; 
+    height          :   800px; 
     border          :   1px solid #000000;
     text-align      :   left;
-    padding         :   1%;
-    /* font-size    :   12px; */
+    padding         :   2%;
+    font-size       :   0.9em;
     /* margin       :   1px; */
+    border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
 }
 
 /* ===== Server Left side of Server Info Screen  ===== */
@@ -455,6 +460,7 @@ div.server_left_label {
     float           : left;
     width           : 45%;
     font-weight     : bold;
+    /*text-align: right;*/
     /*font-family: "Verdana";*/
     /* font: 13px arial, sans-serif; */
     /*background-color: yellow;*/
@@ -494,18 +500,26 @@ div.server_right_data {
     /*background-color: green;*/
 }
 
-div.bottom_buttons {
-    clear           :   both; 
-    /* font-family     :   Geneva, sans-serif;
+div.server_top_buttons {
+    clear           :   both;
+    font-family     :   Geneva, sans-serif;
     background-color:   #fff5c3;
     color           :    black;
-    margin-left     :   auto;
-    margin-right    :   auto; */
+    margin-left     :   15px;
+    margin-right    :   auto;
+    border          :   1px solid #000000;
+    padding         :   1%;
+    /* font-size    :   12px; */
+    /* margin       :   1px; */
     width           :   95%;
     /* height          :   auto;  
     border          :   1px solid #000000;
-    padding         :   1%; */
     /* font-size    :   12px; */
     /* margin       :   1px; */
+        border-width    :   1px;
+    border-style    :   solid;
+    border-color    :   #000000;
+    border-radius   :   10px;
+    line-height     :   1.7;    
 }
 
