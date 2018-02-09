@@ -26,8 +26,10 @@
 #       V2.1 Added /wsadmin in the backup
 #   2017_12_27  JDuplessis
 #       V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
-#   2017_01_02  JDuplessis
+#   2018_01_02  JDuplessis
 #       V2.3 Small Corrections and added comments
+#   2018_02_09  JDuplessis
+#       V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -42,7 +44,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -451,10 +453,10 @@ umount_nfs()
     backup_setup                                                        # Create Necessary Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     create_backup                                                       # Create TGZ of Seleted Dir.
-    BACKUP_ERROR=$?                                                     # Save the Total Error
-    clean_backup_dir                                                    # Delete Old Backup
-    CLEANING_ERROR=$?                                                   # Save the Total Error
-    SADM_EXIT_CODE=$(($BACK_ERROR+$CLEANING_ERROR))                     # Total=Backup+Cleaning Err.
+    if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    #clean_backup_dir                                                    # Delete Old Backup
+    #if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
+    SADM_EXIT_CODE=0                                                    # If Made so far not error
     umount_nfs                                                          # Umounting NFS Drive
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
