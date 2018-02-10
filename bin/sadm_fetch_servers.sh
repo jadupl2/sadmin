@@ -23,6 +23,8 @@
 #   2017_12_17 JDuplessis - V2.6 Modify to use MySQL instead of PostGres
 #   2018_02_08 JDuplessis 
 #       V2.8 Fix compatibility problem with 'dash' shell
+#   2018_02_10 JDuplessis 
+#       V2.9 Rsync on SADMIN server (locally) is not using ssh
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -51,7 +53,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.8'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -176,7 +178,7 @@ process_servers()
     xcount=0; ERROR_COUNT=0;
     while read wline                                                    # Data in File then read it
         do                                                              # Line by Line
-        count=`expr $xcount + 1`                                        # Incr Server Counter Var.
+        xcount=`expr $xcount + 1`                                       # Incr Server Counter Var.
         server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
         server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
         server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
@@ -211,71 +213,64 @@ process_servers()
         fi
 
         # TEST SSH TO SERVER
-        $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1                # SSH to Server for date
-        RC=$?                                                           # Save Error Number
-
-        # IF SSH TO SERVER FAILED & IT'S A SPORADIC SERVER = WARNING & NEXT SERVER
-        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]              # SSH don't work & Sporadic
-           then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
-                continue                                                # Go process next server
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH
+            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server for date
+                 RC=$?                                                  # Save Error Number
+                 if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]      # SSH don't work & Sporadic
+                    then sadm_writelog "[ WARNING ] Can't SSH to sporadic server $fqdn_server"
+                         continue                                       # Go process next server
+                 fi
+                 if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]       # SSH don't work/Monitor OFF
+                    then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
+                         continue                                       # Go process next server
+                 fi
+                RETRY=0                                                 # Set Retry counter to zero
+                while [ $RETRY -lt 3 ]                                  # Retry rsync 3 times
+                    do
+                    let RETRY=RETRY+1                                   # Incr Retry counter
+                    $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1    # SSH to Server for date
+                    RC=$?                                               # Save Error Number
+                    if [ $RC -ne 0 ]                                    # If Error doing ssh
+                        then if [ $RETRY -lt 3 ]                        # If less than 3 retry
+                                then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                                else sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                                     ERROR_COUNT=$(($ERROR_COUNT+1))    # Consider Error -Incr Cntr
+                                     sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                                     SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
+                                     sadm_writelog "$SMSG"              # Display Error Msg
+                                     echo "$SMSG" >> $SADM_ELOG         # Log Err. to Email Log
+                                     echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
+                                     echo "----------" >> $SADM_ELOG 
+                                     continue
+                             fi
+                        else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
+                             break
+                    fi
+                    done
         fi
-
-        # IF SSH TO SERVER FAILED & MONITORING THIS SERVER IS OFF = WARNING & NEXT SERVER
-        if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]               # SSH don't work/Monitor OFF
-           then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring SSH is OFF"
-                continue                                                # Go process next server
-        fi
-
-        # IF SSH TO SERVER FAILED & = ERROR & NEXT SERVER
-        RETRY=0                                                         # Set Retry counter to zero
-        while [ $RETRY -lt 3 ]                                          # Retry rsync 3 times
-          do
-          let RETRY=RETRY+1                                             # Incr Retry counter
-          $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1              # SSH to Server for date
-          RC=$?                                                         # Save Error Number
-          if [ $RC -ne 0 ]                                              # If Error doing ssh
-             then if [ $RETRY -lt 3 ]                                   # If less than 3 retry
-                    then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                    else sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                         break
-                  fi
-             else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
-                  break
-          fi
-          done
-
-
-        # If First SSH Test Failed try a second (Last Chance - Prevent False Error)
-        if [ $RC -ne 0 ]   
-           then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1        # SSH to Server for date
-                RC=$?                                                   # Save Error Number
-                if [ $RC -ne 0 ]                                        # If Error doing ssh
-                   then SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
-                        sadm_writelog "$SMSG"                           # Display Error Msg
-                        echo "$SMSG" >> $SADM_ELOG                      # Log Err. to Email Log
-                        echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
-                        echo "----------" >> $SADM_ELOG
-                        ERROR_COUNT=$(($ERROR_COUNT+1))                 # Consider Error -Incr Cntr
-                        sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                        continue                                        # Continue with next server
-                fi
-        fi
-        sadm_writelog "[ OK ] SSH to $fqdn_server worked" # Good SSH Work
-
 
         # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir.
-        rsync_function "${fqdn_server}:${SADM_RCH_DIR}/" "${WDIR}/"
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+            then rsync_function "${fqdn_server}:${SADM_RCH_DIR}/" "${WDIR}/"
+            else rsync_function "${SADM_RCH_DIR}/" "${WDIR}/"           # Local Rsync if on Master
+        fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
         # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
-        rsync_function "${fqdn_server}:${SADM_LOG_DIR}/" "${WDIR}/"
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+            then rsync_function "${fqdn_server}:${SADM_LOG_DIR}/" "${WDIR}/"
+            else rsync_function "${SADM_LOG_DIR}/" "${WDIR}/"
+        fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
         # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
         WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
-        rsync_function "${fqdn_server}:${SADM_RPT_DIR}/" "${WDIR}/"
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+            then rsync_function "${fqdn_server}:${SADM_RPT_DIR}/" "${WDIR}/"
+            else rsync_function "${SADM_RPT_DIR}/" "${WDIR}/"
+        fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
 
         # IF ERROR OCCURED DISPLAY NUMBER OF ERROR
