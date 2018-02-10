@@ -42,6 +42,8 @@
 #   V1.5 - Remove some log entry not needed
 # 2018_02_08 JDuplessis 
 #   V1.6 - Fix Compatibility Problem with 'dash' shell (if statement)
+# 2018_02_08 JDuplessis 
+#   V1.7 - Fix Minor Problem with Netdev Counter
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +58,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.4 '                            ; export SADM_VER           # Your Script Version
+SADM_VER='1.7'                             ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -623,7 +625,7 @@ build_net_array()
     sadm_writelog "Chosen Network Devices (Up to 4)"                    # Show user what follow
     dcount=0;                                                           # Network Device Counter
     cat $SADM_TMP_FILE2 | while read wline                              # Show resulting netdev file
-        do dcount=$((count+1))                                          # Increment Device Counter
+        do dcount=$((dcount+1))                                         # Increment Device Counter
            sadm_writelog "  $dcount) $wline"                            # Show DevCount & DevName
         done
     cp $SADM_TMP_FILE2 ${RRD_DIR}/netdev.txt
@@ -1079,7 +1081,9 @@ main_process()
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
     if [ "$CMD_FILE" != "" ] 
         then echo "$CMD_FILE" > $NMON_FILE_LIST
-        else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort >
+        else find $SADM_WWW_DAT_DIR -type f -name "*_${YESTERDAY}_*.nmon" |sort > $NMON_FILE_LIST
+    fi
+            
     # 
     sadm_writelog "List of nmon files we are about to process :" 
     sadm_writelog "find $SADM_WWW_DAT_DIR -type f -name \"*_${YESTERDAY}_*.nmon\""
@@ -1087,7 +1091,7 @@ main_process()
     cat $NMON_FILE_LIST |  while read wline 
         do 
         filecount=$(($filecount+1))                                     # Increment File Counter 
-        snapshotcount=`grep "ZZZZ,T" $wline | wc -l`					# Cnt SnapSHot in nmon file
+        snapshotcount=`grep "ZZZZ,T" $wline | wc -l`                    # Cnt SnapSHot in nmon file
         sadm_writelog " ${filecount})  There is $snapshotcount snapshots in $wline"   
         done
 
