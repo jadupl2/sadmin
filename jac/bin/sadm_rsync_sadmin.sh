@@ -33,6 +33,8 @@
 #   V2.1 Change name of sysmon.std to template.smon (System Monitor Template)
 # 2018_01_20  Jacques Duplessis
 #   V2.2 Minor Adjustments
+# 2018_02_10  Jacques Duplessis
+#   V2.3 Change SQL Statement to remove SADMIN server from rsync process
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -48,7 +50,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -170,7 +172,7 @@ process_servers()
     # Select From Database Active Servers & output result in $SADM_TMP_FILE
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
     SQL="${SQL} from server"
-    SQL="${SQL} where srv_active = True"
+    SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
    
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
