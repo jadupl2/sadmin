@@ -34,6 +34,8 @@
 #   V2.3    Added Operation Separator in log 
 # 2018_02_08 J.Duplessis
 #   V2.4    Fix compatibility problem with 'dash' shell
+# 2018_02_11 J.Duplessis
+#   V2.5    Rsync locally for SADMN Server
 ######################################################################################&&&&&&&#######
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -48,7 +50,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -176,7 +178,7 @@ process_servers()
         # Making sure the $SADMIN/dat/$server_name exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
         sadm_writelog " " ; sadm_writelog "---------- Making Sure Client Directory exist on Server"
-        sadm_writelog "Make sure the directory ${SADM_WWW_DAT_DIR}/${server_name} Exist"
+        sadm_writelog "Make sure local directory ${SADM_WWW_DAT_DIR}/${server_name} Exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
             then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server_name}"
@@ -190,19 +192,23 @@ process_servers()
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/dr"                    # Local Receiving Dir.
         sadm_writelog " " ; sadm_writelog "---------- Disaster Recovery Directory"
-        sadm_writelog "Make sure the directory $WDIR Exist"
+        sadm_writelog "Make sure local directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
             else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/"
-        rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+            then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${SADM_DR_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${SADM_DR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        fi
         RC=$?
         if [ $RC -ne 0 ]
            then sadm_writelog "[ERROR] $RC for $server_name"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_writelog "[OK] Rsync Success"
+           else sadm_writelog "[SUCCESS] Rsync ${server_name}:${SADM_DR_DIR}/ $WDIR/"
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
 
@@ -212,14 +218,18 @@ process_servers()
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
         sadm_writelog " " ; sadm_writelog "---------- nmon Data Directory"
-        sadm_writelog "Make sure the directory $WDIR Exist"
+        sadm_writelog "Make sure local directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
             else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/"
-        rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+            then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${SADM_NMON_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${SADM_NMON_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        fi
         RC=$?
         if [ $RC -ne 0 ]
            then sadm_writelog "[ERROR] $RC for $server_name"
@@ -234,14 +244,18 @@ process_servers()
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/sar"                     # Local Receiving Dir.
         sadm_writelog " " ; sadm_writelog "---------- System Activity Report (sar) Directory"
-        sadm_writelog "Make sure the directory $WDIR Exist"
+        sadm_writelog "Make sure local directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
             then sadm_writelog "Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
             else sadm_writelog "Perfect ${WDIR} directory already exist"
         fi
-        sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/"
-        rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        if [ "${server_name}" != "$SADM_HOSTNAME" ]
+            then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${SADM_SAR_DIR}/ $WDIR/"
+                 rsync -var --delete -e 'ssh -qp32' ${SADM_SAR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
+        fi
         RC=$?
         if [ $RC -ne 0 ]
            then sadm_writelog "[ERROR] $RC for $server_name"
