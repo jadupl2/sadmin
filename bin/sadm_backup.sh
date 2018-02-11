@@ -34,6 +34,7 @@
 #       V2.5 Fisrt Production Version 
 #   2018_02_10  JDuplessis
 #       V2.6 Switch to bash instead of sh (Problem with Dash and array)
+#       V2.7 Create Backup Link in the latest directory
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +49,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.6'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.7'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -120,8 +121,8 @@ LATEST_DIR="${LDIR}/${SADM_HOSTNAME}"   ; export LATEST_DIR             # Latest
 
 # Number of backup to keep per backup type
 DAILY_BACKUP_TO_KEEP=2                  ; export DAILY_BACKUP_TO_KEEP   # Nb. Daily Backup to keep
-WEEKLY_BACKUP_TO_KEEP=5                 ; export WEEKLY_BACKUP_TO_KEEP  # Nb. Weekly Backup to keep
-MONTHLY_BACKUP_TO_KEEP=4                ; export MONTHLY_BACKUP_TO_KEEP # Nb. Monthly Backup to keep
+WEEKLY_BACKUP_TO_KEEP=3                 ; export WEEKLY_BACKUP_TO_KEEP  # Nb. Weekly Backup to keep
+MONTHLY_BACKUP_TO_KEEP=3                ; export MONTHLY_BACKUP_TO_KEEP # Nb. Monthly Backup to keep
 YEARLY_BACKUP_TO_KEEP=2                 ; export YEARLY_BACKUP_TO_KEEP  # Nb. Yearly Backup to keep
 
 # Trigger per backup type (When to do a weekly, monthly and Yearly Backup)
@@ -294,6 +295,10 @@ backup_setup()
              if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] chmod 775 $LATEST_DIR" ; return 1 ;fi
     fi
 
+    # Remove previous backup link in the latest directory
+    sadm_writelog "Removing previous backup links in $LATEST_DIR"
+    rm -f $LATEST_DIR/20* > /dev/null 2>&1 
+
     # Determine the Directory where the backup will be created
     ARCHIVE_DIR="${DAILY_DIR}"                                          # Default goes in Daily Dir.
     if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
@@ -361,12 +366,13 @@ create_backup()
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_writelog "tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' ." 
                          tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' . >/dev/null 2>&1 
+                         RC=$?                                          # Save Return Code
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_writelog "tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' ." 
                          tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} --exclude '*.iso' . >/dev/null 2>&1 
+                         RC=$?                                          # Save Return Code
                 fi
-                RC=$?                                                   # Save Return Code
-                if [ $? -ne 0 ]                                         # If Error while Backup
+                if [ $RC -ne 0 ]                                         # If Error while Backup
                     then MESS="[ERROR] ${RC} while creating $BACK_FILE" # Advise Backup Error
                          sadm_writelog "$MESS"                          # Advise User - Log Info
                          RC=1                                           # Make Sure Return Code is 0
@@ -378,6 +384,8 @@ create_backup()
                 if [ "$TOTAL_ERROR" -ne 0 ]                             # If TotalError is not 0
                     then sadm_writelog "Total of Error is $TOTAL_ERROR" # Print Current Total Error
                 fi
+                sadm_writelog "Creating link in ${LATEST_DIR} for ${BACK_FILE}"
+                ln -s ${ARCHIVE_DIR}/${BACK_FILE} ${LATEST_DIR}/${BACK_FILE}                 
            else MESS="Skipping $WDIR - It doesn't exist on $(sadm_get_fqdn)" 
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "$MESS"                                   # Advise User - Log Info
