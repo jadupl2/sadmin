@@ -44,6 +44,8 @@
 #   V1.6 - Fix Compatibility Problem with 'dash' shell (if statement)
 # 2018_02_08 JDuplessis 
 #   V1.7 - Fix Minor Problem with Netdev Counter
+# 2018_02_11 JDuplessis 
+#   V1.8 - Small Message Change
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -58,7 +60,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.7'                             ; export SADM_VER           # Your Script Version
+SADM_VER='1.8'                             ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -1056,7 +1058,7 @@ rrd_update()
     
     if [ $TOTAL_ERROR -ne 0 ] 
         then sadm_writelog "[ERROR] $NMON_HOST $TOTAL_ERROR Errors $TOTAL_SUCCESS Succeeded updating RRD ${RRD_FILE}"
-        else sadm_writelog "[OK] $NMON_HOST Success updating the RRD Database ($TOTAL_SUCCESS)" 
+        else sadm_writelog "[SUCCESS] Updating $NMON_HOST RRD Database ($TOTAL_SUCCESS)" 
     fi
 
     # Clear all Arrays before beginning next SnapShot
