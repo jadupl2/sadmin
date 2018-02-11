@@ -30,6 +30,8 @@
 #        Change name from sadm_sod_server.sh to sadm_server_start_of_day.sh
 # 2018_02_04 JDuplessis
 #   V1.9 Add Mysql Backup & Change name from sadm_server_start_of_day.sh to sadm_server_sunrise.sh
+# 2018_02_11 JDuplessis
+#   V1.10 Change message when succeeded to run script
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -44,7 +46,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.10'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -103,9 +105,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
 
     # Collect from all servers Hardware info, Perf. Stat, ((nmon and sar)
@@ -113,9 +115,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
 
     # Daily DataBase Update with the Data Collected
@@ -123,9 +125,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
 
     # With all the nmon collect from the server farm update respective host rrd performace database
@@ -133,9 +135,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
 
     # Scan the Subnet Selected - Inventory IP Address Avail.
@@ -143,9 +145,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
 
     # Once a day we Backup the MySQL Database
@@ -153,9 +155,9 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
-        then sadm_writelog "Error encounter in $SCMD"                   # Signal Error in Log 
+        then sadm_writelog "[ERROR] Encounter in $SCMD"                 # Signal Error in Log 
              SADM_EXIT_CODE=1                                           # Script Global Error to 1
-        else sadm_writelog "Script $SCMD terminated with success"       # Advise user it's OK
+        else sadm_writelog "[SUCCESS] Running $SCMD"                    # Advise user it's OK
     fi
     
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
