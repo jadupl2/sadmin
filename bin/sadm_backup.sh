@@ -36,6 +36,8 @@
 #       V2.6 Switch to bash instead of sh (Problem with Dash and array)
 #       V2.7 Create Backup Link in the latest directory
 #       V2.8 Add Exclude File Variable
+#   2018_02_11  JDuplessis
+#       V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -50,7 +52,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.8'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -126,10 +128,10 @@ YEARLY_DIR="${YDIR}/${SADM_HOSTNAME}"   ; export YEARLY_DIR             # Dir. F
 LATEST_DIR="${LDIR}/${SADM_HOSTNAME}"   ; export LATEST_DIR             # Latest Backup Directory
 
 # Number of backup to keep per backup type
-DAILY_BACKUP_TO_KEEP=2                  ; export DAILY_BACKUP_TO_KEEP   # Nb. Daily Backup to keep
+DAILY_BACKUP_TO_KEEP=3                  ; export DAILY_BACKUP_TO_KEEP   # Nb. Daily Backup to keep
 WEEKLY_BACKUP_TO_KEEP=3                 ; export WEEKLY_BACKUP_TO_KEEP  # Nb. Weekly Backup to keep
-MONTHLY_BACKUP_TO_KEEP=3                ; export MONTHLY_BACKUP_TO_KEEP # Nb. Monthly Backup to keep
-YEARLY_BACKUP_TO_KEEP=2                 ; export YEARLY_BACKUP_TO_KEEP  # Nb. Yearly Backup to keep
+MONTHLY_BACKUP_TO_KEEP=2                ; export MONTHLY_BACKUP_TO_KEEP # Nb. Monthly Backup to keep
+YEARLY_BACKUP_TO_KEEP=1                 ; export YEARLY_BACKUP_TO_KEEP  # Nb. Yearly Backup to keep
 
 # Trigger per backup type (When to do a weekly, monthly and Yearly Backup)
 WEEKLY_BACKUP_DAY=5                     ; export WEEKLY_BACKUP_DAY      # Day Week Backup 1=Mon7=Sun
@@ -323,13 +325,19 @@ backup_setup()
              fi
     fi 
     
-    # Make Sure Backup Destination Directory Exist
-    if [ ! -d "${ARCHIVE_DIR}" ]                                         # Backup Dir. Exist?
-        then sadm_writelog "Making Today backup directory $ARCHIVE_DIR"  # Show user what were doing
-             mkdir $ARCHIVE_DIR                                          # Create Final Backup Dir.
-             chown ${SADM_USER}:${SADM_GROUP} $ARCHIVE_DIR               # Assign it SADM USer&Group
-             chmod 770 $ARCHIVE_DIR                                      # Read/Write to SADM Usr/Grp
+    # Make sure the Server Backup Directory exist on NFS Drive -------------------------------------
+    if [ ! -d ${ARCHIVE_DIR} ]                                          # Check if Server Dir Exist
+        then sadm_writelog "Making Today backup directory $ARCHIVE_DIR" # Show user what were doing
+             mkdir ${ARCHIVE_DIR}                                       # If Not Create it
+             if [ $? -ne 0 ]                                            # If Error trying to mount
+                then sadm_writelog "[ERROR] Creating Directory $ARCHIVE_DIR"
+                     sadm_writelog "        On the NFS Server ${SADM_BACKUP_NFS_SERVER}"
+                     return 1                                           # End Function with error
+             fi
+             chown ${SADM_USER}:${SADM_GROUP} $ARCHIVE_DIR              # Assign it SADM USer&Group
+             chmod 775 $ARCHIVE_DIR                                     # Assign Protection
     fi
+
 
     # Show Backup Preferences
     sadm_writelog " " 
@@ -475,7 +483,7 @@ mount_nfs()
     # Make sur the Local Mount Point Exist ---------------------------------------------------------
     if [ ! -d ${LOCAL_MOUNT} ]                                          # Mount Point doesn't exist
         then mkdir ${LOCAL_MOUNT}                                       # Create if not exist
-             sadm_writelog "Create local mount point $LOCAL_MOUNT"     # Advise user we create Dir.
+             sadm_writelog "Create local mount point $LOCAL_MOUNT"      # Advise user we create Dir.
              chmod 775 ${LOCAL_MOUNT}                                   # Change Protection
     fi
     
@@ -489,17 +497,7 @@ mount_nfs()
              return 1                                                   # End Function with error
         else sadm_writelog "[SUCCESS] NFS Mount Succeeded"              # NFS Mount Succeeded Msg
     fi
-    
-    # Make sure the Server Backup Directory exist on NFS Drive -------------------------------------
-    if [ ! -d ${ARCHIVE_DIR} ]                                          # Check if Server Dir Exist
-        then mkdir ${ARCHIVE_DIR}                                       # If NOt Creare it
-             if [ $? -ne 0 ]                                            # If Error trying to mount
-                then sadm_writelog "[ERROR] Creating Directory $ARCHIVE_DIR"
-                     sadm_writelog "        On the NFS Server ${SADM_BACKUP_NFS_SERVER}"
-                     return 1                                           # End Function with error
-             fi
-             chmod 775 $ARCHIVE_DIR                                     # Assign Protection
-    fi
+
     return 0 
 }
 
