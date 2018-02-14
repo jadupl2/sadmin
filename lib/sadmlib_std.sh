@@ -43,6 +43,8 @@
 #   V2.16 Bug Fix when determining if server is a virtual or physical
 # 2018_02_08 JDuplessis
 #   V2.17 Correct 'if' statement compatibility problem with 'dash' shell
+# 2018_02_14 JDuplessis
+#   V2.18 Add Documentation Directory
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -61,7 +63,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.17"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.18"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -72,6 +74,7 @@ SADM_LOG_DIR="$SADM_BASE_DIR/log"           ; export SADM_LOG_DIR       # Script
 SADM_CFG_DIR="$SADM_BASE_DIR/cfg"           ; export SADM_CFG_DIR       # Configuration Directory
 SADM_SYS_DIR="$SADM_BASE_DIR/sys"           ; export SADM_SYS_DIR       # System related scripts
 SADM_DAT_DIR="$SADM_BASE_DIR/dat"           ; export SADM_DAT_DIR       # Data directory
+SADM_DOC_DIR="$SADM_BASE_DIR/doc"           ; export SADM_DOC_DIR       # Documentation directory
 SADM_PKG_DIR="$SADM_BASE_DIR/pkg"           ; export SADM_PKG_DIR       # Package rpm,deb  directory
 SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where nmon file reside
 SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files 
@@ -1631,6 +1634,11 @@ sadm_start() {
     [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
     chmod 0775 $SADM_SYS_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
+
+    # If Documentation Directory doesn't exist, create it.
+    [ ! -d "$SADM_DOC_DIR" ] && mkdir -p $SADM_DOC_DIR
+    chmod 0775 $SADM_DOC_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
 
     # If Data Directory doesn't exist, create it.
     [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
