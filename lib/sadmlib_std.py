@@ -26,6 +26,8 @@
 #   V2.4 Add New arc Directory in $SADMIN/www for archiving
 # 2018_01_25 JDuplessis
 #   V2.5 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_14 JDuplessis
+#   V2.6 Add Documentation Directory
 # 
 # ==================================================================================================
 try :
@@ -44,7 +46,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.5"                                             # This Library Version
+libver              = "2.6"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -106,6 +108,7 @@ class sadmtools():
         self.cfg_dir            = os.path.join(self.base_dir,'cfg')     # SADM Config Directory
         self.sys_dir            = os.path.join(self.base_dir,'sys')     # SADM System Scripts Dir.
         self.dat_dir            = os.path.join(self.base_dir,'dat')     # SADM Data Directory
+        self.doc_dir            = os.path.join(self.base_dir,'doc')     # SADM Documentation Dir.
         self.nmon_dir           = os.path.join(self.dat_dir,'nmon')     # SADM nmon File Directory
         self.rch_dir            = os.path.join(self.dat_dir,'rch')      # SADM Result Code Dir.
         self.dr_dir             = os.path.join(self.dat_dir,'dr')       # SADM Disaster Recovery Dir
@@ -915,6 +918,7 @@ class sadmtools():
         if not os.path.exists(self.log_dir)  : os.mkdir(self.log_dir,0o0775)# Create SADM Log Dir.
         if not os.path.exists(self.lib_dir)  : os.mkdir(self.lib_dir,0o0775)# Create SADM Lib Dir.
         if not os.path.exists(self.sys_dir)  : os.mkdir(self.sys_dir,0o0775)# Create SADM Sys Dir.
+        if not os.path.exists(self.doc_dir)  : os.mkdir(self.doc_dir,0o0775)# Create SADM Sys Dir.
         if not os.path.exists(self.nmon_dir) : os.mkdir(self.nmon_dir,0o0775) # Create SADM nmon Dir.
         if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
         if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
@@ -1172,6 +1176,7 @@ class sadmtools():
         print("obj.bin_dir              SADMIN Shell & Python Scripts : %s" % (self.bin_dir))
         print("obj.log_dir              SADMIN Log Directory          : %s" % (self.log_dir))
         print("obj.pkg_dir              Software Pkg use in SADMIN    : %s" % (self.pkg_dir))
+        print("obj.doc_dir              Documentation Directory       : %s" % (self.doc_dir))
         print("obj.sys_dir              Host Scripts(Startup/Shutdown): %s" % (self.sys_dir))
         print("obj.dat_dir              Host system Info Data Dir.    : %s" % (self.dat_dir))
         print("obj.nmon_dir             Host nmon performance files   : %s" % (self.nmon_dir))
