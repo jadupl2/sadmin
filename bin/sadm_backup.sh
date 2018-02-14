@@ -38,7 +38,10 @@
 #       V2.8 Add Exclude File Variable
 #   2018_02_11  JDuplessis
 #       V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
-# --------------------------------------------------------------------------------------------------
+#   2018_02_14  JDuplessis
+#       V3.0 Removal of old backup according to policy are now working
+#
+#===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
@@ -52,7 +55,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='3.0'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -72,7 +75,7 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 # --------------------------------------------------------------------------------------------------
 # An email can be sent at the end of the script depending on the ending status 
 # 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
+SADM_MAIL_TYPE=3                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
 
@@ -103,7 +106,7 @@ export BACKUP_LIST
 #
 
 # List of Files to exclude from Backup
-EXCLUDE_LIST="*.iso "                           ; export EXCLUDE_LIST   # Files Excluded from Backup
+EXCLUDE_LIST="*.iso ./jacques/.thinclient_drives .cache/*" ; export EXCLUDE_LIST
 
 LOCAL_MOUNT="/mnt/backup"                       ; export LOCAL_MOUNT    # Local NFS Mount Point 
 ARCHIVE_DIR=""                                  ; export ARCHIVE_DIR    # Where Backup Stored
@@ -389,9 +392,8 @@ create_backup()
                     echo "$excl" >> /tmp/exclude                        # Buil the Exclude List
                     done
                 if [ $DEBUG_LEVEL -gt 0 ]                               # If Debug Show Exclude List 
-                    then sadm_writelog " " ; sadm_writelog "Content of exclude file" 
+                    then sadm_writelog "Content of exclude file" 
                          cat /tmp/exclude| while read ln ;do sadm_writelog "$ln" ;done
-                         sadm_writelog " "
                 fi
 
                 # Perform the Backup using tar command
@@ -413,6 +415,7 @@ create_backup()
                          sadm_writelog "$MESS"                          # Advise User - Log Info
                          RC=0                                           # Make Sure Return Code is 0
                 fi
+                sadm_writelog " "                                       # Blank Line in Log    
                 TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                       # Total = Cumulate RC Value
 
                 # Create link to backup in the server latest directory
@@ -421,11 +424,12 @@ create_backup()
                    then sadm_writelog "Current directory is `pwd`"      # Print Current Dir.
                         sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}" 
                 fi
-                ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}   
-
+                ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1 
+                if [ $? -ne 0 ]                                            # If Error trying to mount
+                    then sadm_writelog "[ERROR] Creating Link Backup in latest Directory"
+                fi
                 rm -f /tmp/exclude >/dev/null 2>&1                      # Remove socket tmp file
            else MESS="[SKIPPING] $WDIR doesn't exist on $(sadm_get_fqdn)" 
-                sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "$MESS"                                   # Advise User - Log Info
         fi
         done
@@ -458,17 +462,21 @@ clean_backup_dir()
     sadm_writelog "List of backup date in `pwd`"                        # List of Date in Backup Dir
     ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq | while read ln ;do sadm_writelog "$ln" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` 
+    day2del=$(($backup_count-$SADM_BACKUP_NFS_TO_KEEP))
 
-    sadm_writelog "We need to keep the last $SADM_BACKUP_NFS_TO_KEEP most recent backups"
-    sadm_writelog "We have now $backup_count backup(s)." 
+    sadm_writelog "We asked to keep the last $SADM_BACKUP_NFS_TO_KEEP most recent backups"
+    sadm_writelog "We now have $backup_count backup(s)." 
+ 
 
     if [ "$backup_count" -gt "$SADM_BACKUP_NFS_TO_KEEP" ] 
-        then sadm_writelog "So we will delete these backup date(s)"
-             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$SADM_BACKUP_NFS_TO_KEEP > $SADM_TMP_FILE3
+        then sadm_writelog "So we need to delete $day2del day(s) of backup." 
+             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
              cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "$ln" ;done
-             #cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "Deleting $ln" ;rm -f ${ln}* ;done
-             sadm_writelog "Here is the list of backup that reside in ${ARCHIVE_DIR}"
-             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq | while read ln ;do sadm_writelog "$ln" ;done        else sadm_writelog "No clean up needed"
+             cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "Deleting $ln" ;rm -f ${ln}* ;done
+             sadm_writelog " "
+             sadm_writelog "After applying backup policy, here are the backup left in ${ARCHIVE_DIR}"
+             ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
+        else sadm_writelog "No clean up needed"
     fi 
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller
