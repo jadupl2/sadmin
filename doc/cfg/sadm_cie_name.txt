@@ -1,0 +1,5 @@
+# sadmin.cfg SADM_CIE_NAME Documentation
+# Revise 2018_02_14
+Your company name 
+This name that will appears in the heading of the web
+site and on some report and email that SADMIN produce.
