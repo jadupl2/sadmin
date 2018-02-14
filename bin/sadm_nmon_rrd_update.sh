@@ -46,6 +46,8 @@
 #   V1.7 - Fix Minor Problem with Netdev Counter
 # 2018_02_11 JDuplessis 
 #   V1.8 - Small Message Change
+# 2018_02_12 JDuplessis 
+#   V1.9 - Add RRD Update Warning Total after each file processed.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -60,7 +62,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.8'                             ; export SADM_VER           # Your Script Version
+SADM_VER='1.9'                             ; export SADM_VER           # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -935,8 +937,7 @@ build_paging_activity_array()
 #===================================================================================================
 rrd_update()
 {
-    TOTAL_ERROR=0 ; TOTAL_SUCCESS=0                                     # Reset Total Error Success
-    #sadm_writelog " "                                                   # Space line
+    TOTAL_ERROR=0 ; TOTAL_SUCCESS=0 ; TOTAL_WARNING=0 ;                 # Set Total Err-Warn-Success
     sadm_writelog "Updating RRD Database ${RRD_FILE}"                   # Starting RRD Update
     for (( i = 1 ; i <= ${#ARRAY_TIME[@]} ; i++ ))                      # Process time Array Size
         do
@@ -1043,22 +1044,24 @@ rrd_update()
                  RC=1
             else if [ ${A_EPOCH} -le $RRD_LAST_EPOCH ]                  #epoch<=last epoch Upd. done
                     then sadm_writelog "[WARNING] NMON Epoch Time (${A_EPOCH}) <= last epoch (${RRD_LAST_EPOCH}) in RRD"
-                         RC=1
+                         TOTAL_WARNING=$(($TOTAL_WARNING+1))            # Increment Total Warning 
+                         RC=0
                     else $RRDUPDATE ${RRD_FILE} -t ${field_name} ${A_EPOCH}:${field_value} >>$SADM_LOG 2>&1
                          RC=$?
                  fi
         fi
         if [ $RC -ne 0 ] 
-            then ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increment Host Error 
-                 TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
-            else SUCCESS_COUNT=$(($SUCCESS_COUNT+1))                    # Increment Host Counter 
-                 TOTAL_SUCCESS=$(($TOTAL_SUCCESS+1))                    # Increment Total Counter 
+            then TOTAL_ERROR=$(($TOTAL_ERROR+1))                        # Increment Total Error  
+            else TOTAL_SUCCESS=$(($TOTAL_SUCCESS+1))                    # Increment Total Counter 
         fi
         done
     
-    if [ $TOTAL_ERROR -ne 0 ] 
-        then sadm_writelog "[ERROR] $NMON_HOST $TOTAL_ERROR Errors $TOTAL_SUCCESS Succeeded updating RRD ${RRD_FILE}"
-        else sadm_writelog "[SUCCESS] Updating $NMON_HOST RRD Database ($TOTAL_SUCCESS)" 
+    if [ $TOTAL_ERROR -ne 0 ] || [ $TOTAL_WARNING -ne 0 ]
+        then MSG="UPDATE SUMMARY FOR $NMON_HOST - TOTAL: "
+             MSG="$MSG $TOTAL_SUCCESS success, $TOTAL_ERROR error(s), "
+             MSG="$MSG $TOTAL_WARNING warning."
+             sadm_writelog "$MSG"
+        else sadm_writelog "[SUCCESS] Updating $NMON_HOST RRD Database ($TOTAL_SUCCESS)"
     fi
 
     # Clear all Arrays before beginning next SnapShot
