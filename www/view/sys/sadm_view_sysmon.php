@@ -26,6 +26,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+#   2018_02_12 JDuplessis
+#       v2.1 Added Some Debugging Information
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,7 +61,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -78,10 +80,10 @@ $alert_file = SADM_TMP_DIR . "/www_sysmon_file_" . getmypid() ;         # File B
 
 #===================================================================================================
 # This function create one file $alert_file that : 
-#   - Create an alert file with the content of all *.rpt in $SADMIN/www/dat 
-#   - Add to it the last line of all to the *.rch in $SADMIN/dat that finish 
+#   1- Create an alert file with the content of all *.rpt in $SADMIN/www/dat 
+#   2- Add to it the last line of all to the *.rch in $SADMIN/dat that finish 
 #       with a 1(Fail) or 2(running)
-#   - Then Load this alert File into an array (sysmon_array).
+#   3- Then Load this alert File into an array (sysmon_array).
 #===================================================================================================
 function load_sysmon_array() {
     global $DEBUG, $tmp_file1, $tmp_file2, $tmp_file3, $alert_file ;
@@ -90,19 +92,48 @@ function load_sysmon_array() {
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rpt' -exec cat {} \; > $alert_file";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
-    if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
+    if ($DEBUG) { 
+        echo "\n<br>Return code of command is : " . $RCODE ; 
+        echo "\n<br>Content of resulting file :";
+        $orig = file_get_contents($alert_file);
+        $a = htmlentities($orig);
+        echo '<code>';
+        echo '<pre>';
+        echo $a;
+        echo '</pre>';
+        echo '</code>';
+    }
 
     # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
     $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; > $tmp_file2";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
-    if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
+    if ($DEBUG) { 
+        echo "\n<br>Return code of command is : " . $RCODE ; 
+        echo "\n<br>Content of resulting file :";
+        $orig = file_get_contents($tmp_file2);
+        $a = htmlentities($orig);
+        echo '<code>';
+        echo '<pre>';
+        echo $a;
+        echo '</pre>';
+        echo '</code>';
+    }
 
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
     $CMD="awk 'match($8,/[1-2]/) { print }' $tmp_file2 > $tmp_file3" ;
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
-    if ($DEBUG) { echo "\n<br>Return code of command is : " . $RCODE ; }
+    if ($DEBUG) { 
+        echo "\n<br>Return code of command is : " . $RCODE ; 
+        $orig = file_get_contents($tmp_file3);
+        $a = htmlentities($orig);
+        echo '<code>';
+        echo '<pre>';
+        echo $a;
+        echo '</pre>';
+        echo '</code>';    
+    }
 
 
     # CONVERT THESE RCH KIND OF LINES
@@ -115,7 +146,13 @@ function load_sysmon_array() {
     $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
 
     foreach ($lines as $line_num => $line) {
-        if ($DEBUG) { echo "\n<br>RCH Before conversion - Ligne #{$line_num} : " . $line ; }
+        if ($DEBUG) { echo "\n<br>RCH Before and after conversion : ";
+        echo '<code>';
+        echo '<pre>';
+        echo $line;
+        echo '</pre>';
+        echo '</code>';                   
+        }
         list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);
         $rtime = substr(trim($wtime2),0,-3);
@@ -138,17 +175,26 @@ function load_sysmon_array() {
         $rmail      = "sadm";
         $rdesc      = "Script " . $wscript;
         $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${rpage};${rmail}\n";
-        if ($DEBUG) { echo "\n<br>RCH After conversion - Ligne #{$line_num} : " . $LINE ; }
+        if ($DEBUG) { 
+            echo '<code>';
+            echo '<pre>';
+            echo $LINE;
+            echo '</pre>';
+            echo '</code>';            
+        }
         fwrite($afile,$LINE);
     }
     fclose($afile);
 
     if ($DEBUG) {
-        echo "\n\n<br><br>Debug Information - Alert file Content";
-        $lines = file($alert_file);
-        foreach ($lines as $line_num => $line) {
-            echo "\n<br>Ligne #<b>{$line_num}</b> : " . $line . "\n";
-        }
+        echo "\n\n<br><br>Debug Information - Final Alert file Content";
+        $orig = file_get_contents($alert_file);
+        $a = htmlentities($orig);
+        echo '<code>';
+        echo '<pre>';
+        echo $a;
+        echo '</pre>';
+        echo '</code>';            
     }
 
     # Delete Work Files
@@ -159,15 +205,13 @@ function load_sysmon_array() {
 
 
 #===================================================================================================
-#                              Display SADMIN Main Page Header
+#                             Display Ssystem Monitor Status Heading
 #===================================================================================================
-function setup_table() {
+function sysmon_page_heading() {
 
     # TABLE CREATION
     echo "\n\n<div id='SimpleTable'>";                                      # Width Given to Table
-    #echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
     echo "\n<table id='sadmTable' class='display' cell-border compact  width='98%'>";
-    #echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
     
     # TABLE HEADING
     echo "\n<thead>";
@@ -196,7 +240,6 @@ function setup_table() {
     echo "\n<th class='dt-center'>Alert/Email Grp</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
-
 }
 
 
@@ -329,7 +372,7 @@ function display_data($con,$alert_file) {
 #
     display_std_heading("NotHome","System Monitor","","Page will refresh every minute",$SVER);
     load_sysmon_array();                                                # Load RPT and RCH File
-    setup_table();                                                      # Create Table & Heading
+    sysmon_page_heading();                                              # Show Heading
     display_data($con,$alert_file);                                     # Display SysMOn Array
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
