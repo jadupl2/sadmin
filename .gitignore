@@ -35,6 +35,7 @@
 *.lib
 *.sbr
 *.org
+*.tmp
 
 # SADMIN Directories Exclude
 dat/
