@@ -65,7 +65,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     echo "\n<table>";                                # Define Table
     echo "\n<tr>" ;                                                     # Begin Heading Row
     $TITRE="Content of log " . basename($WNAME);                        # Build the Table Heading
-    echo "\n<th colspan=2 >" . $TITRE . "</th>";                         # Print 1st Row Heading
+    echo "\n<td colspan=2><H2>" . $TITRE . "</H2></td>";               # Print 1st Row Heading
     echo "\n</tr>";                                                     # Enf of Row Heading
     
     $count=0; $ddate = 0 ; 
@@ -118,7 +118,6 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     $LOG_FILENAME = $_GET['filename'];                                  # Get Content of filename
     if ($DEBUG)  { echo "<br>FILENAME Received is $LOG_FILENAME "; }    # In Debug Display FileName
 
-
     # Verify that the LOG directory for the host exist, if not advise user and abort. --------------
     $WDIR = SADM_WWW_DAT_DIR . "/" . $HOSTNAME . "/log";                # Build Log DIR Name
     if ($DEBUG)  { echo "<br>Directory of the log file is $WDIR"; }     # In Debug print Log Dir.
@@ -138,7 +137,7 @@ function display_log_file ($WHOST,$WDESC,$WNAME)
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
-    display_std_heading("NotHome","Log Viewer ","","",$SVER);           # Display Content Heading
+    display_std_heading("NotHome","SADM Log Viewer ","","","v${SVER}"); # Display Content Heading
     display_log_file ($HOSTNAME, $HOSTDESC, $LOGFILE);                  # Go Display File Content
     std_page_footer($con)                                               # Close MySQL & HTML Footer
     ?>
