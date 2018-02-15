@@ -131,12 +131,11 @@ def define_sadmin_var(ver):
         print ("Error renaming /etc/environment")                       # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
     print ("\n----------")
-    print ("SADMIN Environment variable is set and valid")
-    print ("SADMIN=%s" % (sadm_base_dir))
+    print ("SADMIN Environment variable is set to %s and it's valid" % (sadm_base_dir))
     print ("\n----------")
     print ("Good, the line below is in /etc/environment")
-    print ("This will make sure it is set upon reboot")
     print (eline)                                                       # SADMIN Line in /etc/env...
+    print ("This will make sure it is set upon reboot")
     return(0)                                                           # Return to Caller No Error
 
 #===================================================================================================
@@ -145,8 +144,9 @@ def define_sadmin_var(ver):
 #===================================================================================================
 #
 def update_sadmin_cfg(st,sname,svalue):
-    print ("In update_sadmin_cfg - sname = %s - svalue = %s\n" % (sname,svalue))
-    print ("cfg_file = %s" % (st.cfg_file))
+    if (st.debug > 0) :
+        print ("In update_sadmin_cfg - sname = %s - svalue = %s\n" % (sname,svalue))
+        print ("cfg_file = %s" % (st.cfg_file))
 
     fi = open(st.cfg_file,'r')                                          # Current sadmin.cfg File
     fo = open(st.tmp_file1,'w')                                         # Will become new sadmin.cfg
@@ -174,19 +174,76 @@ def update_sadmin_cfg(st,sname,svalue):
 
 
 #===================================================================================================
+#             Accept field receive as parameter and update the $SADMIN/cfg/sadmin.cfg file
+#   1)Instance of SADMIN Tools   2)Parameter name in sadmin.cfg   3)Default Value   
+#   4)Prompt text                5)Type of input ([I]nteger [A]lphanumeric)
+#===================================================================================================
+#
+def accept_field(st,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
+    if (stype.upper() != "A" and stype.upper() != "I") :                # Accept Alpha or Integer
+        print ("The type of input received is invalid (%s)" % (stype))  # If Not A or I - Advise Usr
+        print ("Question skipped")                                      # Question is Skipped
+        return 1                                                        # Return Error to caller
+
+    print ("\n----------\n[%s]" % (sname))                              # Dash & Name of Field
+    docname = "%s/cfg/%s.txt" % (st.doc_dir,sname.lower())              # Set Documentation FileName
+
+    # Open documentation file for field in sadmin.cfg and display content
+    try :                                                               # Try to Open Doc File
+        doc = open(docname,'r')                                         # Open Documentation file
+    except FileNotFoundError:                                           # If Open File Failed
+        print ("Doc file %s not found, question skipped." % (docname))  # Advise User, Question Skip
+        return 1                                                        # Return Error to caller
+    for line in doc:                                                    # Read Doc. file until EOF
+        if line.startswith("#"):                                        # Line Start #
+           continue                                                     # Skip Line that start with#
+        print ("%s" % (line),end='')                                    # Print Documentation Line
+    doc.close                                                           # Close Document File
+    print (" ")                                                         # Print blank Line
+
+    # Accept the Value from the user    
+    wdata = None                                                        # Where response is store
+    if (stype.upper() == "A"):                                          # If Alphanumeric Input
+        while (wdata == ""):                                            # Input until something 
+            wdata = input("%s : " % (sprompt))                          # Accept user response
+    if (stype.upper() == "I"):                                          # If Numeric Input
+        wdata = 0                                                       # Where response is store
+        while True:                                                     # Loop until Valid response
+            try:
+                wdata = int(input("%s : " % (sprompt)))                 # Accept an Integer
+            except (ValueError, TypeError) as error:                    # If Value is not an Integer
+                print("Not an integer!")                                # Advise User Message
+                continue                                                # Continue at start of loop
+            else:                                                       # If a Numeric Value Entered
+                if (wdata > smax) or (wdata < smin):                    # Must be between min & max
+                    print ("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
+                    continue                                            # Continue at start of loop
+                else:                                                   # Input Respect the range
+                    break                                               # Break out of the loop
+
+    # Go Update Field in sadmin.cfg
+    update_sadmin_cfg(st,sname,"%s" % (wdata))                          # Update Value in sadmin.cfg
+
+
+#===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
 def main_process(st):
 
-    # Enter your Company name
-    print ("\n----------")
-    sadm_cie_name=""
-    while (sadm_cie_name == ""):
-        sadm_cie_name = input("Enter your company ou site name : ")
-    update_sadmin_cfg(st,"SADM_CIE_NAME","%s" % (sadm_cie_name))
+    #accept_field(st,"SADM_CLIENT", sadm_client,"Is the current system an SADMIN [C]lient or a [S]Server")   
+    #accept_field(st,"SADM_CIE_NAME", st.cfg_cie_name,"Enter your company name")   
+    #accept_field(st,"SADM_MAIL_ADDR",st.cfg_mail_addr,"Enter System Administrator Email")
+    accept_field(st,"SADM_MAIL_TYPE",st.cfg_mail_type,"Enter default email type","I",0,3)
+    accept_field(st,"SADM_SERVER",st.cfg_server,"Enter SADMIN (FQDN) server name","A")
+    accept_field(st,"SADM_MAX_LOGLINE",st.cfg_max_logline,"Enter maximum number of lines in a log file","I",1,10000)
+    accept_field(st,"SADM_MAX_RCHLINE",st.cfg_max_rchline,"Enter maximum number of lines in a rch file","I",1,300)
+    accept_field(st,"SADM_SSH_PORT",st.cfg_ssh_port,"Enter the SSH port number used to connect to client","I",1,65536)
+    accept_field(st,"SADM_DOMAIN",st.cfg_domain,"Enter the default domain name","A")
+    accept_field(st,"SADM_NETWORK1",st.cfg_network1,"Enter the network IP and netmask","A")
     
     return(0)                                                           # Return to Caller No Error
+
 
 
 
