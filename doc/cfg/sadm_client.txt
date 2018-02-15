@@ -1,0 +1,4 @@
+# sadmin.cfg SADM_CLIENT Documentation
+# Revise 2018_02_14
+#----------------------------------------------------------------------------
+Indicate is this host is a SADMIN Client or a Server

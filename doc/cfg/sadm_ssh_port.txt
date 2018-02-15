@@ -1,0 +1,5 @@
+# sadmin.cfg SADM_SSH_PORT Documentation
+# Revise 2018_02_14
+#----------------------------------------------------------------------------
+Standard Port for SSH is 22 
+But if you use a different port put it here

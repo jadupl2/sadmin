@@ -1,0 +1,6 @@
+# sadmin.cfg SADM_SERVER Documentation
+# Revise 2018_02_14
+#----------------------------------------------------------------------------
+Enter the name of the SADMIN Server - (MUST be fully qualified name)
+This name MUST NOT be an alias in the DNS
+It MUST be the result of the 'hostname' command on the SADMIN server
