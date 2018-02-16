@@ -40,6 +40,8 @@
 #       V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
 #   2018_02_14  JDuplessis
 #       V3.0 Removal of old backup according to policy are now working
+#   2018_02_16  JDuplessis
+#       V3.1 Minor Esthetics corrections
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -55,7 +57,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='3.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='3.1'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -451,33 +453,31 @@ clean_backup_dir()
     sadm_writelog " "                                                   # Blank Line in Log
     sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 10 Equal Char.
     sadm_writelog "Applying chosen policy to ${ARCHIVE_DIR} directory"  # Msg to user
-    sadm_writelog "Keep only last $SADM_BACKUP_NFS_TO_KEEP copies of each backup in ${ARCHIVE_DIR}"
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
 
     # Enter Server Backup Directory
     # May need to delete some backup if more than $SADM_BACKUP_NFS_TO_KEEP copies
     cd ${ARCHIVE_DIR}                                                   # Change Dir. To Backup Dir.
-    #sadm_writelog "Current Backup directory is `pwd`"                   # Print Current Dir.
 
-    sadm_writelog "List of backup date in `pwd`"                        # List of Date in Backup Dir
-    ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq | while read ln ;do sadm_writelog "$ln" ;done
-    backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` 
-    day2del=$(($backup_count-$SADM_BACKUP_NFS_TO_KEEP))
+    # List Current backup days we have and Count Nb. how many we need to delete
+    sadm_writelog "List of backup currently on disk:"
+    ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
+    backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
+    day2del=$(($backup_count-$SADM_BACKUP_NFS_TO_KEEP))                 # Calc. Nb. Days to remove
+    sadm_writelog "Keep only last $SADM_BACKUP_NFS_TO_KEEP days of each backup in ${ARCHIVE_DIR}"
+    sadm_writelog "We now have $backup_count days of backup(s)."        # Show Nb. Backup Days
 
-    sadm_writelog "We asked to keep the last $SADM_BACKUP_NFS_TO_KEEP most recent backups"
-    sadm_writelog "We now have $backup_count backup(s)." 
- 
-
+    # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
     if [ "$backup_count" -gt "$SADM_BACKUP_NFS_TO_KEEP" ] 
         then sadm_writelog "So we need to delete $day2del day(s) of backup." 
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
-             cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "$ln" ;done
              cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "Deleting $ln" ;rm -f ${ln}* ;done
              sadm_writelog " "
-             sadm_writelog "After applying backup policy, here are the backup left in ${ARCHIVE_DIR}"
+             sadm_writelog "List of backup currently on disk:"
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
         else sadm_writelog "No clean up needed"
     fi 
+    
     cd $CUR_PWD                                                         # Restore Previous Cur Dir.
     return 0                                                            # Return to caller
 }
