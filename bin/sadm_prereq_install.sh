@@ -20,8 +20,10 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Enhancements/Corrections Version Log
-# 1.6   
+# Change Log
+#   v1.6  Enhancements/Corrections Version Log 
+# 2018_02_17 JDuplessis
+#   v1.7  Update & Bug Fixes
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -43,7 +45,7 @@ SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
+SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 [ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     
@@ -86,14 +88,14 @@ help()
 #                       THE PACKAGE TO INSTALL IS RECEIVED AS A PARAMETER
 # --------------------------------------------------------------------------------------------------
 #
-sadm_install_std_package() 
+install_package() 
 {
-    # Check if we received at least a parameter
-    if [ $# -ne 4 ]                                                     # Should have rcv 1 Param
-        then sadm_writelog "Nb. Parameter received by $FUNCNAME function is incorrect"
-             sadm_writelog "    1st=DRYRUN ON/OFF       2nd=CommandName "
-             sadm_writelog "    3rd=RPM_PackageName     4th=DEB_PackageName"
-             sadm_writelog "Please correct script - Script Aborted"     # Advise User to Correct
+    # Check if we received at least 4 parameters
+    if [ $# -ne 4 ]                                                     # Should have rcv 4 Param
+        then printf "\nNb. Parameter received by $FUNCNAME function is incorrect"
+             printf "\n    1st=DRYRUN ON/OFF       2nd=CommandName "
+             printf "\n    3rd=RPM_PackageName     4th=DEB_PackageName"
+             printf "\nPlease correct script - Script Aborted"     # Advise User to Correct
              sadm_stop 1                                                # Prepare exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -105,52 +107,40 @@ sadm_install_std_package()
     # Install the Package under RedHat/CentOS/Fedora
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
-        then sadm_writelog "Installing $P_COMMAND command included in package ${P_PACKAGE_RPM}"
-             sadm_writelog "Current O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
-             case "$(sadm_get_osmajorversion)" in
-                [3|4]) sadm_writelog "Running \"up2date --nox -i ${P_PACKAGE_RPM}\""
-                       if [ "$P_DRYRUN" = "OFF" ] 
-                            then up2date --nox -i ${P_PACKAGE_RPM} >>$SADM_LOG 2>&1
-                                 rc=$?
-                                 sadm_writelog "Return Code after installing ${P_PACKAGE_RPM}: $rc"
-                       fi
-                       break
-                       ;;
-              [5|6|7]) sadm_writelog "Running \"yum -y --enablerepo=epel install ${P_PACKAGE_RPM}\""
-                       if [ "$P_DRYRUN" = "OFF" ] 
-                            then yum -y --enablerepo=epel install ${P_PACKAGE_RPM} >>$SADM_LOG 2>&1 
-                                 rc=$?                                            # Save Exit Code
-                                 sadm_writelog "Return Code after installing ${P_PACKAGE_RPM}: $rc"
-                       fi
-                       break
-                       ;;
-             esac
+        then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_RPM}"
+             printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
+             printf "\nRunning \"yum -y --enablerepo=epel install ${P_PACKAGE_RPM}\""
+             if [ "$P_DRYRUN" = "OFF" ] 
+                then yum -y --enablerepo=epel install ${P_PACKAGE_RPM} >>$SADM_LOG 2>&1 
+                     rc=$?                                              # Save Exit Code
+                     printf "\nReturn Code after installing ${P_PACKAGE_RPM}: $rc"
+             fi
     fi
     
     # Install the Package under Debian/*Ubuntu/RaspberryPi 
     if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
        [ "$(sadm_get_osname)" = "DEBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
-        then sadm_writelog "Installing $P_COMMAND command included in package ${P_PACKAGE_DEB}"
-             sadm_writelog "Current O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
-             sadm_writelog "Synchronize package index files with their sources"
-             sadm_writelog "apt-get update"                             # Msg Get package list 
+        then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_DEB}"
+             printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
+             printf "\nSynchronize package index files with their sources"
+             printf "\napt-get update"                                  # Msg Get package list 
              if [ "$P_DRYRUN" = "OFF" ] 
                 then apt-get update > /dev/null 2>&1                    # Get Package List From Repo
                      rc=$?                                              # Save Exit Code
                      if [ "$rc" -ne 0 ]
-                        then sadm_writelog "We had problem running the \"apt-get update\" command" 
-                             sadm_writelog "We had a return code $rc" 
+                        then printf "\nWe had problem running the \"apt-get update\" command" 
+                             printf "\nWe had a return code $rc" 
                      fi
              fi
-             sadm_writelog "Installing Package ${P_PACKAGE_DEB}"
-             sadm_writelog "apt-get -y install ${P_PACKAGE_DEB}"
+             printf "\nInstalling Package ${P_PACKAGE_DEB}"
+             printf "\napt-get -y install ${P_PACKAGE_DEB}"
              if [ "$P_DRYRUN" = "OFF" ] 
                 then apt-get -y install ${P_PACKAGE_DEB}
                      rc=$?                                              # Save Exit Code
-                     sadm_writelog "Return Code after installing ${P_PACKAGE_DEB}: $rc" 
+                     printf "\nReturn Code after installing ${P_PACKAGE_DEB}: $rc" 
              fi
     fi         
-    sadm_writelog " "
+    printf "\n "
     return $rc                                                          # 0=Installed 1=Error
 }
 
@@ -161,11 +151,11 @@ sadm_install_std_package()
  # ----------------------------------------------------------------------------------------------
  sadm_install_cfg2html()
  {
-    sadm_writelog "Installing \"cfg2html\""
-    sadm_writelog "Current O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
+    printf "\nInstalling \"cfg2html\""
+    printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
 
     if [ "$(sadm_get_osname)" = "AIX" ]                         # If on AIX & Not Found
-       then sadm_writelog "cp $SADM_PKG_DIR/cfg2html/cfg2html /usr/bin/cfg2html"
+       then printf "\ncp $SADM_PKG_DIR/cfg2html/cfg2html /usr/bin/cfg2html"
             if [ "$P_DRYRUN" = "ON" ] ; then return 0 ; fi
             cp $SADM_PKG_DIR/cfg2html/cfg2html /usr/bin/cfg2html 
             return $?
@@ -173,7 +163,7 @@ sadm_install_std_package()
 
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]                    
-       then sadm_writelog "rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
+       then printf "\nrpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm"
             if [ "$P_DRYRUN" = "ON" ] ; then return 0 ; fi
             rpm -Uvh ${SADM_PKG_DIR}/cfg2html/cfg2html.rpm
             return $?
@@ -181,7 +171,7 @@ sadm_install_std_package()
 
     if [ "$(sadm_get_osname)" = "UBUNTU" ]   || [ "$(sadm_get_osname)" = "DEBIAN" ] || 
        [ "$(sadm_get_osname)" = "RASPBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ]                   
-       then sadm_writelog "dpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
+       then printf "\ndpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb"
             if [ "$P_DRYRUN" = "ON" ] ; then return 0 ; fi
             dpkg --install --force-confold ${SADM_PKG_DIR}/cfg2html/cfg2html.deb
             return $?
@@ -196,119 +186,115 @@ sadm_install_std_package()
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    if [ "$DRYRUN" = "ON" ] 
-        then sadm_writelog "RUNNING IN DRYRUN MODE - NOTHING WILL BE INSTALL"
-    fi 
-    sadm_writelog " " 
+    if [ "$DRYRUN" = "ON" ] ; then printf "\nRUNNING IN DRYRUN MODE - NOTHING WILL BE INSTALL" ;fi
 
     # Check if command which is installed - If not install it if not running in dryrun mode
     SCMD="which"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                    # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "which" "debianutils" # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "which" "debianutils"     # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
 
     # Check if command nmon is installed - If not install it if not running in dryrun mode
     SCMD="nmon"
-    sadm_writelog "Checking availability of command $SCMD" 
+    printf "\nChecking availability of command $SCMD" 
     if which $SCMD >/dev/null 2>&1                                    # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "nmon" "nmon" # Install related RPMorDEB 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "nmon" "nmon" # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
 
     # Check if command mail is installed - If not install it if not running in dryrun mode
     SCMD="mail"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                    # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "mailx" "mailutils" # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail.
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "mailx" "mailutils"       # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
 
     # Check if command ethtool is installed - If not install it if not running in dryrun mode
     SCMD="ethtool"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "ethtool" "ethtool" # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "ethtool" "ethtool"       # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
 
     # Check if command lscpu is installed - If not install it if not running in dryrun mode
     SCMD="lsb_release"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "redhat-lsb-core" "lsb_release"  # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "redhat-lsb-core" "lsb_release"  # Install related RPMorDEB 
     fi            
-    sadm_writelog " "
+    printf "\n "
     
     # Check if command lscpu is installed - If not install it if not running in dryrun mode
     SCMD="dmidecode"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "dmidecode" "dmidecode"  # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "dmidecode" "dmidecode"   # Install related RPMorDEB 
     fi            
-    sadm_writelog " "
+    printf "\n "
     
     # Check if command lscpu is installed - If not install it if not running in dryrun mode
     SCMD="fdisk"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "util-linux" "util-linux"  # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "util-linux" "util-linux" # Install related RPMorDEB 
     fi            
-    sadm_writelog " "
+    printf "\n "
     
     # Check if command lscpu is installed - If not install it if not running in dryrun mode
     SCMD="lscpu"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "util-linux" "util-linux"  # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "util-linux" "util-linux" # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
 
     # Check if command parted is installed - If not install it if not running in dryrun mode
     SCMD="bc"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "bc" "bc" # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "bc" "bc"                 # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
   
     # Check if command parted is installed - If not install it if not running in dryrun mode
     SCMD="parted"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "parted" "parted" # Install related RPMorDEB 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "parted" "parted"         # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
   
     # Check if command cfg2html is installed - If not install it if not running in dryrun mode
     SCMD="cfg2html"
-    sadm_writelog "Checking availability of command $SCMD" 
-    if which $SCMD >/dev/null 2>&1                                      # Try the command which 
-       then sadm_writelog "Command \"${SCMD}\" is available [OK]" 
+    printf "\nChecking availability of command $SCMD" 
+    if which $SCMD >/dev/null 2>&1                                      # Test if command is avail. 
+       then printf "\nCommand \"${SCMD}\" is available [OK]" 
        else sadm_install_cfg2html                                       # Install related RPMorDEB 
     fi            
-    sadm_writelog " " 
+    printf "\n " 
 
     # Test if perl module DateTime is installed - If not install it
     SCMD="DateTime"
-    sadm_writelog "Checking availability of Perl Module '${SCMD}'"
-    perl -e 'use DateTime' >/dev/null 2>&1
+    printf "\nChecking availability of Perl Module '${SCMD}'"
+    perl -e 'use DateTime' >/dev/null 2>&1                              # Test if command is avail.
     if [ $? -eq 0 ] 
-       then sadm_writelog "Perl Module '${SCMD}' is available [OK]" 
-       else sadm_install_std_package "$DRYRUN" "$SCMD" "perl-DateTime" "libdatetime-perl libwww-perl"
+       then printf "\nPerl Module '${SCMD}' is available [OK]" 
+       else install_package "$DRYRUN" "$SCMD" "perl-DateTime" "libdatetime-perl libwww-perl"
     fi
-    sadm_writelog " "
+    printf "\n "
   
     
     return 0                                                            # Return Default return code
@@ -321,42 +307,41 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 check_groups_and_users()
 {
-    
     # Check if 'sadmin' group exist - If not create it.
-    sadm_writelog "Checking if ${SADM_GROUP} group is created"
+    printf "\nChecking if ${SADM_GROUP} group is created"
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
-        then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
+        then printf "\nGroup ${SADM_GROUP} not present"                 # Advise user will create
              if [ "$DRYRUN" = "OFF" ]
                 then groupadd ${SADM_GROUP}                             # Create SADM_GROUP
                      if [ $? -ne 0 ]                                    # Error creating Group 
-                        then sadm_writelog "Error when creating group ${SADM_GROUP}"
-                             sadm_writelog "Process Aborted"            # Abort got be created
+                        then printf "\nError when creating group ${SADM_GROUP}"
+                             printf "\nProcess Aborted"                 # Abort got be created
                              sadm_stop 1                                # Terminate Gracefully
-                        else sadm_writelog "Group ${SADM_GROUP} Created"# Advise user will create
+                        else printf "\nGroup ${SADM_GROUP} Created"     # Advise user will create
                      fi
              fi
-        else sadm_writelog "Group ${SADM_GROUP} Already Created [OK]"   # Advise user will create 
+        else printf "\nGroup ${SADM_GROUP} already Created [OK]"        # Advise user will create 
     fi
-    sadm_writelog " "
+    printf "\n "
 
     # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
-    sadm_writelog "Checking if ${SADM_USER} user is created"
+    printf "\nChecking if ${SADM_USER} user is created"
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
-        then sadm_writelog "User $SADM_USER not present"                # Advise user will create
+        then printf "\nUser $SADM_USER not present"                     # Advise user will create
              if [ "$DRYRUN" = "OFF" ]
                 then useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
                      if [ $? -ne 0 ]                                    # Error creating user 
-                         then sadm_writelog "Error when creating user ${SADM_USER}"
-                              sadm_writelog "Process Aborted"           # Abort got be created
+                         then printf "\nError when creating user ${SADM_USER}"
+                              printf "\nProcess Aborted"                # Abort got be created
                               sadm_stop 1                               # Terminate Gracefully
-                         else sadm_writelog "The user ${SADM_USER} is created" # Advise user created
+                         else printf "\nUser ${SADM_USER} is created"   # Advise user created
                      fi
              fi
-        else sadm_writelog "User ${SADM_USER} Already Created [OK]"     # Advise user will create 
+        else printf "\nUser ${SADM_USER} already Created [OK]"          # Advise user will create 
     fi
-    sadm_writelog " "
+    printf "\n "
     return 0
 }
 
@@ -364,14 +349,17 @@ check_groups_and_users()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
+    SADM_LOG_TYPE="L"                                                   # Log to file Only,no screen
     sadm_start                                                          # Init Env Dir & RC/Log File
     if ! $(sadm_is_root)                                                # Is it root running script?
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
+        then printf "\nScript can only be run by the 'root' user"       # Advise User Message
+             printf "\nProcess aborted"                                 # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    
+
+    printf "\nSADMIN Requirements Verification - v${SADM_VER}\n"    
+    printf "============================================"
     # Optional Command line switches    
     DRYRUN="ON" ;                                                       # Set Switch Default Value
     while getopts "y" opt ; do                                          # Loop to process Switch
@@ -388,7 +376,7 @@ check_groups_and_users()
                ;;
         esac                                                            # End of case
     done  
-    check_groups_and_users                                              # Create sadmin User & Group
+    check_groups_and_users                                              # Check sadmin User & Group
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
