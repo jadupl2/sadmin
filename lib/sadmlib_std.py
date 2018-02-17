@@ -240,7 +240,7 @@ class sadmtools():
             print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
         return(self.conn,self.cursor)
-
+ 
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
     # return (0) if no error - return (1) if error encountered
