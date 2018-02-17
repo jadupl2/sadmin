@@ -30,14 +30,14 @@
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
-# try :
+try :
     import os, time, sys, pdb, socket, datetime, glob, fnmatch
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
 #
 # Python MySQL Module is a MUST before continuing the setup 
-# try :
+try :
     import pymysql
 except ImportError as e:
     print ("The Python Module to access MySQL is not installed : %s " % e)
@@ -275,21 +275,21 @@ def main_process(st):
 
 
     # Accept if current server is a the SADMIN [S]erver or a [C]lient
-    #print ("\n----------\n[%s]" % ("Client or Server"))                 # Dash & Name of Field
-    #wrep = "X"                                                         # Where answer will be store
-    #while ((wrep.upper() != "S") and (wrep.upper() != "C")):          # Accept Only S or C                                   # Input until something 
-    #    sprompt="Current host will be the SADMIN [S]erver or a [C]lient (S,C)"
-    #    wrep = input("%s : " % (sprompt))                              # Accept user response
-    #SERVER_TYPE=wrep.upper()                                           # Store answer in uppercase
+    print ("\n----------\n[%s]" % ("Client or Server"))                 # Dash & Name of Field
+    wrep = "X"                                                         # Where answer will be store
+    while ((wrep.upper() != "S") and (wrep.upper() != "C")):          # Accept Only S or C                                   # Input until something 
+        sprompt="Current host will be the SADMIN [S]erver or a [C]lient (S,C)"
+        wrep = input("%s : " % (sprompt))                              # Accept user response
+    SERVER_TYPE=wrep.upper()                                           # Store answer in uppercase
 
     # Accept the Company Name
-    #accept_field(st,"SADM_CIE_NAME",st.cfg_cie_name,"Enter your company name")   
+    accept_field(st,"SADM_CIE_NAME",st.cfg_cie_name,"Enter your company name")   
 
     # Accept SysAdmin Email address
-    #accept_field(st,"SADM_MAIL_ADDR",st.cfg_mail_addr,"Enter System Administrator Email")
+    accept_field(st,"SADM_MAIL_ADDR",st.cfg_mail_addr,"Enter System Administrator Email")
 
     # Accept the Email type to use at the end of each sript execution
-    #accept_field(st,"SADM_MAIL_TYPE",st.cfg_mail_type,"Enter default email type","I",0,3)
+    accept_field(st,"SADM_MAIL_TYPE",st.cfg_mail_type,"Enter default email type","I",0,3)
 
     # Accept the SADMIN FQDN Server name
     while True:
@@ -300,7 +300,7 @@ def main_process(st):
             print ("The name %s is not a valid server name" % (xserver))
             continue    
         xarray = socket.gethostbyaddr(xip)
-        yname = repr(xarray[0])
+        yname = repr(xarray[0]).replace("'","")
         print ("xserver = %s - xip = %s - yname = %s" % (xserver,xip,yname))
         if (yname != xserver) :
             print ("The server %s with ip %s is returning %s" % (xserver,xip,yname))
