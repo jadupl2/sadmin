@@ -1,0 +1,9 @@
+# sadmin.cfg SADM_GROUP Documentation
+# Revise 2018_02_17
+#----------------------------------------------------------------------------
+This is the SADMIN Tools main user group that have access to all SADMIN 
+directories. Every day the housekeeping script will make sure that all 
+files in the $SADMIN directories are own by this group. 
+If others users need to access or used scripts located in $SADMIN, 
+they must be part of this group.
+The SADMIN default user group is 'sadmin'.

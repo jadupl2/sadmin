@@ -276,11 +276,11 @@ def main_process(st):
 
     # Accept if current server is a the SADMIN [S]erver or a [C]lient
     print ("\n----------\n[%s]" % ("Client or Server"))                 # Dash & Name of Field
-    wrep = "X"                                                         # Where answer will be store
-    while ((wrep.upper() != "S") and (wrep.upper() != "C")):          # Accept Only S or C                                   # Input until something 
+    wrep = "X"                                                          # Where answer will be store
+    while ((wrep.upper() != "S") and (wrep.upper() != "C")):            # Accept Only S or C                                   # Input until something 
         sprompt="Current host will be the SADMIN [S]erver or a [C]lient (S,C)"
-        wrep = input("%s : " % (sprompt))                              # Accept user response
-    SERVER_TYPE=wrep.upper()                                           # Store answer in uppercase
+        wrep = input("%s : " % (sprompt))                               # Accept user response
+    SERVER_TYPE=wrep.upper()                                            # Store answer in uppercase
 
     # Accept the Company Name
     accept_field(st,"SADM_CIE_NAME",st.cfg_cie_name,"Enter your company name")   
@@ -320,6 +320,12 @@ def main_process(st):
 
     # Accept the Default Domain Name
     accept_field(st,"SADM_DOMAIN",st.cfg_domain,"Enter the default domain name","A")
+
+    # Accept the Default User Group
+    accept_field(st,"SADM_GROUP",st.cfg_group,"Enter the default user Group","A")
+
+    # Accept the Default User Name
+    accept_field(st,"SADM_USER",st.cfg_user,"Enter the default user name","A")
 
     # Accept the Network IP and Netmask your Network
     accept_field(st,"SADM_NETWORK1",st.cfg_network1,"Enter the network IP and netmask","A")

@@ -1,0 +1,7 @@
+# sadmin.cfg SADM_USER Documentation
+# Revise 2018_02_17
+#----------------------------------------------------------------------------
+This is the SADMIN Tools main user that have access to all SADMIN directories.
+Every day the housekeeping script will make sure that all files in the $SADMIN
+directories are own by this user.
+The SADMIN default user name is 'sadmin'.
