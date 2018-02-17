@@ -25,14 +25,33 @@
 #   V1.0 Initial Version
 #   V1.0b WIP Version#   
 # 2018_02_16 JDuplessis
-#   V1.0e WIP Version
+#   V1.0f WIP Version Now cover pyMySQL Python module installation & sadmin.cfg template
 #
 #===================================================================================================
-try :
+#
+# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
+# try :
     import os, time, sys, pdb, socket, datetime, glob, fnmatch
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
+#
+# Python MySQL Module is a MUST before continuing the setup 
+# try :
+    import pymysql
+except ImportError as e:
+    print ("The Python Module to access MySQL is not installed : %s " % e)
+    print ("We need to install it before continuying")
+    print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
+    print ("sudo apt-get install python3-pip")
+    print ("sudo pip3 install PyMySQL")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    print ("\nIf you are on Redhat, CentOS, Fedora family type the following command to install it:")
+    print ("sudo yum --enablerepo=epel install python34-pip")
+    print ("sudo pip3 install pymysql")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    sys.exit(1)
+#
 #pdb.set_trace()                                                        # Activate Python Debugging
 
 
@@ -68,7 +87,7 @@ def initSADM():
 
     # Create SADMIN Instance & setup instance Variables specific to your program
     st = sadm.sadmtools()                       # CREATE SADM TOOLS INSTANCE (Setup Dir.)
-    st.ver  = "1.0e"                            # Indicate your Script Version 
+    st.ver  = "1.0f"                            # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'L'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True to Append Existing Log, False=Start a new log
@@ -135,6 +154,20 @@ def validate_sadmin_var(ver):
     print ("Good, the line below is in /etc/environment") 
     print ("%s" % (eline),end='')                                       # SADMIN Line in /etc/env...
     print ("This will make sure it is set upon reboot")
+
+    # Make sure we have a sadmin.cfg in $SADMIN/cfg, if not cp .sadmin.cfg to sadmin.update_sadmin_cfg
+    cfgfile="%s/cfg/sadmin.cfg" % (sadm_base_dir)                       # Set Full Path to cfg File
+    cfgfileo="%s/cfg/.sadmin.cfg" % (sadm_base_dir)                     # Set Full Path to cfg File
+    if os.path.exists(cfgfile)==False:                                  # If sadmin.cfg Not Found
+        try:
+            copyfile(cfgfileo,cfgfile)                                  # Copy Template 2 sadmin.cfg
+        except IOError as e:
+            print("Unable to copy file. %s" % e)                        # Advise user before exiting
+            exit(1)                                                     # Exit to O/S With Error
+        except:
+            print("Unexpected error:", sys.exc_info())                  # Advise Usr Show Error Msg
+            exit(1)                                                     # Exit to O/S with Error
+        print ("Initial sadmin.cfg file in place.")                     # Advise User ok to proceed
     return(0)                                                           # Return to Caller No Error
 
 #===================================================================================================
