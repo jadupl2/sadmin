@@ -28,6 +28,8 @@
 #   V2.5 Add SADM_RRDTOOL to sadmin.cfg for php page using it
 # 2018_02_14 JDuplessis
 #   V2.6 Add Documentation Directory
+# 2018_02_17 JDuplessis
+#   V2.7 Revision of the command requirements and message when missing
 # 
 # ==================================================================================================
 try :
@@ -46,7 +48,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.6"                                             # This Library Version
+libver              = "2.7"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -200,6 +202,8 @@ class sadmtools():
         self.uname              = ""                                    # uname command path
         self.mail               = ""                                    # mail command path
         self.ssh                = ""                                    # ssh command path       
+        self.nmon               = ""                                    # nmon command path       
+        self.lscpu              = ""                                    # lscpu command path       
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
@@ -810,11 +814,13 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     #   THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
     # ----------------------------------------------------------------------------------------------
-    def check_command_availibility(self,cmd) :
+    def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
             print ("[WARNING] Command '%s' couldn't be found" % (cmd))  # Display Warning for User
-            print ("          If available, it should be install") 
+            print ("          If available, it should be install")      # Advise user should install
+            print ("You may want to run 'sadm_prereq_install.sh' to list any missing commands")
+            print ("After that you can run 'sadm_prereq_install.sh -y' to install them")
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
@@ -822,57 +828,74 @@ class sadmtools():
 
 
     # ----------------------------------------------------------------------------------------------
-    # FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
-    # IF REQUIRENMENT ARE NOT MET, THEN THE SCRIPT WILL ABORT INFORMING USER TO CORRECT SITUATION
+    # This function tries to locate every command that the SADMIN tools library or scripts may need.
+    # Theses commands are use to supply the user of SADMIN with the right information.
+    # If some of them are not present, some of the function may not report the proper information.
+    # It is recommended to install any missing command.
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global FH_LOG_FILE, lsb_release, dmidecode, bc, uname, fdisk, mail, ssh
+#        global FH_LOG_FILE,which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl,nmon,lscpu
+        global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl,nmon,lscpu
     
         requisites_status=True                                          # Assume Requirement all Met
     
         # Get the location of the which command
-        ccode,cstdout,cstderr = self.oscommand("which which")
-        if ccode is not 0 :
-            print("[ERROR] The command 'which' couldn't be found")
-            print("        This program is needed by the SADMIN tools")
-            print("        Please install it and re-run this script")
-            print("        Script Aborted")
-            sys.exit(1)
-        self.which = cstdout
-    
+        ccode,cstdout,cstderr = self.oscommand("which which")           # We will use which cmd
+        if ccode is not 0 :                                             # to determine if a command
+            print("[ERROR] The command 'which' couldn't be found")      # is available
+            print("        This command is needed by the SADMIN tools") # If which is not available
+            print("        Please install it and re-run this script")   # We will ask the user to
+            print("        Script Aborted")                             # install it & abort script
+            sys.exit(1)                                                 # Exit Script with error
+        self.which = cstdout                                            # If found, Save Path to it
+
         # Get the location of the lsb_release command
-        if (self.os_type == "LINUX"):
-            self.lsb_release = self.check_command_availibility('lsb_release')
-            if self.lsb_release == "" : requisites_status=False
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.lsb_release = self.locate_command('lsb_release')       # find command & save it
+            if self.lsb_release == "" : requisites_status=False         # if blank didn't find it
 
-        self.uname = self.check_command_availibility('uname')           # location of uname command
-        if self.uname == "" : requisites_status=False
+        # Get the location of the uname command
+        self.uname = self.locate_command('uname')                       # Locate uname command
+        if self.uname == "" : requisites_status=False                   # if blank didn't find it
 
-        self.bc = self.check_command_availibility('bc')                 # location of uname command
-        if self.bc == "" : requisites_status=False
+        self.bc = self.locate_command('bc')                             # Locate bc command
+        if self.bc == "" : requisites_status=False                      # if blank didn't find it
     
         # Get the Location of fdisk
-        self.fdisk = self.check_command_availibility('fdisk')           # location of fdisk
-        if self.fdisk == "" : requisites_status=False
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.fdisk = self.locate_command('fdisk')                   # Locate fdisk command
+            if self.fdisk == "" : requisites_status=False               # if blank didn't find it
 
-        self.facter = self.check_command_availibility('facter')         # location of facter
-        if self.facter == "" : requisites_status=False
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.facter = self.locate_command('facter')                 # Locate facter
+            if self.facter == "" : requisites_status=False              # if blank didn't find it
                 
         # Get the location of mail command
-        self.mail = self.check_command_availibility('mail')             # location of mail
-        if self.mail == "" : requisites_status=False
+        self.mail = self.locate_command('mail')                         # Locate mail command 
+        if self.mail == "" : requisites_status=False                    # if blank didn't find it
 
         # Get the location of ssh command
-        self.ssh = self.check_command_availibility('ssh')               # location of ssh
-        if self.ssh == "" : requisites_status=False
+        self.ssh = self.locate_command('ssh')                           # Locate the SSH command
+        if self.ssh == "" : requisites_status=False                     # if blank didn't find it
 
         # Get the location of dmidecode command
-        self.dmidecode =self.check_command_availibility('dmidecode')    # location of dmidecode
-        if self.dmidecode == "" : requisites_status=False
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.dmidecode =self.locate_command('dmidecode')            # Locate dmidecode command
+            if self.dmidecode == "" : requisites_status=False           # if blank didn't find it
 
         # Get the location of perl command
-        self.perl =self.check_command_availibility('perl')              # location of perl
-        if self.perl == "" : requisites_status=False
+        self.perl =self.locate_command('perl')                          # Locate the perl command
+        if self.perl == "" : requisites_status=False                    # if blank didn't find it
+
+        # Get the location of nmon command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.perl =self.locate_command('nmon')                      # Locate the nmon command
+            if self.perl == "" : requisites_status=False                # if blank didn't find it
+
+        # Get the location of lscpu command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.perl =self.locate_command('lscpu')                     # Locate the lscpu command
+            if self.perl == "" : requisites_status=False                # if blank didn't find it
 
         return requisites_status                                        # Requirement Met True/False
  
