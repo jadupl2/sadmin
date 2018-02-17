@@ -16,7 +16,7 @@
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
-
+#
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
@@ -31,14 +31,35 @@
 #   V1.3 Adjust for using MySQL instead of PostGres - Review logic to use new SADM Library
 # 2018_01_20 JDuplessis 
 #   V1.4 Minor Adjustments
+# 2018_02_17 JDuplessis 
+#   V1.5 Install instruction to install PyMySQL  
 #
 #===================================================================================================
-try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
+#
+# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
+# try :
+    import os, time, sys, pdb, socket, datetime, glob, fnmatch
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                                        # Activate Python Debugging
+#
+# Python MySQL Module is a MUST before continuing the setup 
+# try :
+    import pymysql
+except ImportError as e:
+    print ("The Python Module to access MySQL is not installed : %s " % e)
+    print ("We need to install it before continuying")
+    print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
+    print ("sudo apt-get install python3-pip")
+    print ("sudo pip3 install PyMySQL")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    print ("\nIf you are on Redhat, CentOS, Fedora family type the following command to install it:")
+    print ("sudo yum --enablerepo=epel install python34-pip")
+    print ("sudo pip3 install pymysql")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    sys.exit(1)
+#
+# #pdb.set_trace()                                                        # Activate Python Debugging
 
 
 #===================================================================================================
@@ -70,7 +91,7 @@ def initSADM():
     
     # Create SADMIN Instance & setup instance Variables specific to your program
     st = sadm.sadmtools()                       # Create Sadm Tools Instance (Setup Dir.)
-    st.ver  = "1.4"                             # Indicate your Script Version 
+    st.ver  = "1.5"                             # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True to Append Existing Log, False=Start a new log
