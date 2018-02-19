@@ -26,12 +26,14 @@
 #   V1.0b WIP Version#   
 # 2018_02_16 JDuplessis
 #   V1.0g WIP Version Now cover pyMySQL Python module installation & sadmin.cfg template
+# 2018_02_19 JDuplessis
+#   V1.0h WIP Version Dev Testing 
 #
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch
+    import os, time, sys, pdb, socket, datetime, glob, shutil, fnmatch
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -87,7 +89,7 @@ def initSADM():
 
     # Create SADMIN Instance & setup instance Variables specific to your program
     st = sadm.sadmtools()                       # CREATE SADM TOOLS INSTANCE (Setup Dir.)
-    st.ver  = "1.0g"                            # Indicate your Script Version 
+    st.ver  = "1.0h"                            # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'L'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True to Append Existing Log, False=Start a new log
@@ -98,12 +100,14 @@ def initSADM():
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     return(st)                                  # Return Instance Object to caller
 
+
+
 #===================================================================================================
 #        Specify and/or Validate that SADMIN Environment Variable is set in /etc/environent
 #===================================================================================================
 #
 def validate_sadmin_var(ver):
-    print ("\033[H\033[J")                                              # Clear the Screen
+    print(chr(27) + "[2J")                                              # Clear the Screen
     print ("SADMIN Setup V%s\n------------------" % (ver))              # Print Version Number
 
     # Is SADMIN Environment Variable Defined ? , If not ask user to specify it
@@ -113,7 +117,7 @@ def validate_sadmin_var(ver):
         sadm_base_dir = input("Enter directory path where your install SADMIN : ")
 
     # Does Directory specify exist ?
-    if not os.path.exists(sadm_base_dir) :                              # Check if SADM Dir. Exist
+    if not os.path.exists(sadm_base_dir) :                              # Check if SADMIN Dir. Exist
         print ("Directory %s doesn't exist." % (sadm_base_dir))         # Advise User
         sys.exit(1)                                                     # Exit with Error Code
 
@@ -149,18 +153,18 @@ def validate_sadmin_var(ver):
         print ("Error renaming /etc/environment")                       # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
     print ("\n----------")
-    print ("SADMIN Environment variable is set to %s and it's valid" % (sadm_base_dir))
-    print ("\n----------")
-    print ("Good, the line below is in /etc/environment") 
-    print ("%s" % (eline),end='')                                       # SADMIN Line in /etc/env...
-    print ("This will make sure it is set upon reboot")
+    print ("[OK] SADMIN Environment variable is set to %s" % (sadm_base_dir))
+    #print ("\n----------")
+    print ("      - The line below is in /etc/environment") 
+    print ("      - %s" % (eline),end='')                                       # SADMIN Line in /etc/env...
+    print ("      - This will make sure it is set upon reboot")
 
     # Make sure we have a sadmin.cfg in $SADMIN/cfg, if not cp .sadmin.cfg to sadmin.update_sadmin_cfg
     cfgfile="%s/cfg/sadmin.cfg" % (sadm_base_dir)                       # Set Full Path to cfg File
     cfgfileo="%s/cfg/.sadmin.cfg" % (sadm_base_dir)                     # Set Full Path to cfg File
     if os.path.exists(cfgfile)==False:                                  # If sadmin.cfg Not Found
         try:
-            copyfile(cfgfileo,cfgfile)                                  # Copy Template 2 sadmin.cfg
+            shutil.copyfile(cfgfileo,cfgfile)                                  # Copy Template 2 sadmin.cfg
         except IOError as e:
             print("Unable to copy file. %s" % e)                        # Advise user before exiting
             exit(1)                                                     # Exit to O/S With Error
@@ -301,7 +305,7 @@ def main_process(st):
             continue    
         xarray = socket.gethostbyaddr(xip)
         yname = repr(xarray[0]).replace("'","")
-        print ("xserver = %s - xip = %s - yname = %s" % (xserver,xip,yname))
+        #print ("xserver = %s - xip = %s - yname = %s" % (xserver,xip,yname))
         if (yname != xserver) :
             print ("The server %s with ip %s is returning %s" % (xserver,xip,yname))
             print ("The FQDN is wrong or the IP doesn't correspond")
@@ -329,14 +333,15 @@ def main_process(st):
             if line.startswith( "%s:" % (st.cfg_group) ):
                 found_grp = True                                                    # Fould Line
     if (found_grp == True):
-        print ("Good the group %s is an existing group" % (st.cfg_group))
+        print ("[OK] the group %s is an existing group" % (st.cfg_group))
     else:
         print ("Creating group %s" % (st.cfg_group))
-        if self.os_type == "LINUX" :                                    # Under Linux
-            ccode, cstdout, cstderr = self.oscommand("groupadd %s" % (st.cfg_group)) 
-        if self.os_type == "AIX" :                                      # Under AIX
-            ccode, cstdout, cstderr = self.oscommand("mkgroup %s" % (st.cfg_group))
-        print ("Return code is $d" % (ccode))
+        if st.os_type == "LINUX" :                                    # Under Linux
+            ccode, cstdout, cstderr = st.oscommand("groupadd %s" % (st.cfg_group)) 
+        if st.os_type == "AIX" :                                      # Under AIX
+            ccode, cstdout, cstderr = st.oscommand("mkgroup %s" % (st.cfg_group))
+        print ("Return code is %d" % (ccode))
+
 
     # Accept the Default User Name
     accept_field(st,"SADM_USER",st.cfg_user,"Enter the default user name","A")
@@ -346,20 +351,20 @@ def main_process(st):
             if line.startswith( "%s:" % (st.cfg_group) ):
                 found_usr = True                                                    # Fould Line
     if (found_usr == True):
-        print ("Good the user %s is an existing user" % (st.cfg_user))
+        print ("[OK] the user %s is an existing user" % (st.cfg_user))
     else:
         print ("Creating user %s" % (st.cfg_user))
-        if self.os_type == "LINUX" :                                    # Under Linux
+        if st.os_type == "LINUX" :                                    # Under Linux
             cmd = "useradd -g %s -s /bin/sh " % (st.cfg_group)
             cmd += " -d %s "    % (os.environ.get('SADMIN'))
             cmd += " -c'%s' %s" % ("SADMIN Tools User",st.cfg_user)
-            ccode, cstdout, cstderr = self.oscommand(cmd)
-        if self.os_type == "AIX" :                                      # Under AIX
+            ccode, cstdout, cstderr = st.oscommand(cmd)
+        if st.os_type == "AIX" :                                      # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/sh " % (st.cfg_group)
             cmd += " home='%s' " % (os.environ.get('SADMIN'))
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",st.cfg_user)
-            ccode, cstdout, cstderr = self.oscommand(cmd)           
-        print ("Return code is $d" % (ccode))
+            ccode, cstdout, cstderr = st.oscommand(cmd)           
+        print ("Return code is %d" % (ccode))
 
     # Accept the Network IP and Netmask your Network
     accept_field(st,"SADM_NETWORK1",st.cfg_network1,"Enter the network IP and netmask","A")
@@ -384,9 +389,15 @@ def main():
       sys.exit(1)                                                      # Exit with Error Code
         
     validate_sadmin_var(sver)                                           # Go Set SADMIN Env. Var.
+
+    print ("\n-----\nCreatig SADMIN Tools Instance\n")
     st = initSADM()                                                     # Initialize SADM Tools
     if st.debug > 4: st.display_env()                                   # Display Env. Variables
+
+    # Call Setup Main Function
     st.exit_code = main_process(st)                                     # Main Program Process 
+
+    # Shutdown SADMIN Tools
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
