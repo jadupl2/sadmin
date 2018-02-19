@@ -42,7 +42,11 @@
 #       V3.0 Removal of old backup according to policy are now working
 #   2018_02_16  JDuplessis
 #       V3.1 Minor Esthetics corrections
-#
+#   2018_02_18  JDuplessis
+#       V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
+#           This exit code means that some files were changed while being archived and so 
+#           the resulting archive does not contain the exact copy of the file set.
+#           
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +61,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='3.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='3.2'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -409,6 +413,7 @@ create_backup()
                          tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
                          RC=$?                                          # Save Return Code
                 fi
+                if [ $RC -eq 1 ] ; then RC=0 ; fi                       # Change while backup is OK      
                 if [ $RC -ne 0 ]                                        # If Error while Backup
                     then MESS="[ERROR] ${RC} while creating $BACK_FILE" # Advise Backup Error
                          sadm_writelog "$MESS"                          # Advise User - Log Info
