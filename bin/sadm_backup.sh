@@ -432,7 +432,7 @@ create_backup()
                         sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}" 
                 fi
                 ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1 
-                if [ $? -ne 0 ]                                            # If Error trying to mount
+                if [ $? -ne 0 ]                                         # If Error trying to mount
                     then sadm_writelog "[ERROR] Creating Link Backup in latest Directory"
                 fi
                 rm -f /tmp/exclude >/dev/null 2>&1                      # Remove socket tmp file
@@ -469,7 +469,7 @@ clean_backup_dir()
     ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
     day2del=$(($backup_count-$SADM_BACKUP_NFS_TO_KEEP))                 # Calc. Nb. Days to remove
-    sadm_writelog "Keep only last $SADM_BACKUP_NFS_TO_KEEP days of each backup in ${ARCHIVE_DIR}"
+    sadm_writelog "Keep only the last $SADM_BACKUP_NFS_TO_KEEP days of each backup."
     sadm_writelog "We now have $backup_count days of backup(s)."        # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
