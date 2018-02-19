@@ -25,7 +25,7 @@
 #   V1.0 Initial Version
 #   V1.0b WIP Version#   
 # 2018_02_16 JDuplessis
-#   V1.0f WIP Version Now cover pyMySQL Python module installation & sadmin.cfg template
+#   V1.0g WIP Version Now cover pyMySQL Python module installation & sadmin.cfg template
 #
 #===================================================================================================
 #
@@ -87,7 +87,7 @@ def initSADM():
 
     # Create SADMIN Instance & setup instance Variables specific to your program
     st = sadm.sadmtools()                       # CREATE SADM TOOLS INSTANCE (Setup Dir.)
-    st.ver  = "1.0f"                            # Indicate your Script Version 
+    st.ver  = "1.0g"                            # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'L'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True to Append Existing Log, False=Start a new log
@@ -282,50 +282,84 @@ def main_process(st):
         wrep = input("%s : " % (sprompt))                               # Accept user response
     SERVER_TYPE=wrep.upper()                                            # Store answer in uppercase
 
-    # Accept the Company Name
-    accept_field(st,"SADM_CIE_NAME",st.cfg_cie_name,"Enter your company name")   
+    # # Accept the Company Name
+    # accept_field(st,"SADM_CIE_NAME",st.cfg_cie_name,"Enter your company name")   
 
-    # Accept SysAdmin Email address
-    accept_field(st,"SADM_MAIL_ADDR",st.cfg_mail_addr,"Enter System Administrator Email")
+    # # Accept SysAdmin Email address
+    # accept_field(st,"SADM_MAIL_ADDR",st.cfg_mail_addr,"Enter System Administrator Email")
 
-    # Accept the Email type to use at the end of each sript execution
-    accept_field(st,"SADM_MAIL_TYPE",st.cfg_mail_type,"Enter default email type","I",0,3)
+    # # Accept the Email type to use at the end of each sript execution
+    # accept_field(st,"SADM_MAIL_TYPE",st.cfg_mail_type,"Enter default email type","I",0,3)
 
-    # Accept the SADMIN FQDN Server name
-    while True:
-        xserver=accept_field(st,"SADM_SERVER",st.cfg_server,"Enter SADMIN (FQDN) server name","A")
-        try :
-            xip = socket.gethostbyname(xserver)
-        except (socket.gaierror) as error : 
-            print ("The name %s is not a valid server name" % (xserver))
-            continue    
-        xarray = socket.gethostbyaddr(xip)
-        yname = repr(xarray[0]).replace("'","")
-        print ("xserver = %s - xip = %s - yname = %s" % (xserver,xip,yname))
-        if (yname != xserver) :
-            print ("The server %s with ip %s is returning %s" % (xserver,xip,yname))
-            print ("The FQDN is wrong or the IP doesn't correspond")
-            continue
-        else:
-            break
+    # # Accept the SADMIN FQDN Server name
+    # while True:
+    #     xserver=accept_field(st,"SADM_SERVER",st.cfg_server,"Enter SADMIN (FQDN) server name","A")
+    #     try :
+    #         xip = socket.gethostbyname(xserver)
+    #     except (socket.gaierror) as error : 
+    #         print ("The name %s is not a valid server name" % (xserver))
+    #         continue    
+    #     xarray = socket.gethostbyaddr(xip)
+    #     yname = repr(xarray[0]).replace("'","")
+    #     print ("xserver = %s - xip = %s - yname = %s" % (xserver,xip,yname))
+    #     if (yname != xserver) :
+    #         print ("The server %s with ip %s is returning %s" % (xserver,xip,yname))
+    #         print ("The FQDN is wrong or the IP doesn't correspond")
+    #         continue
+    #     else:
+    #         break
 
-    # Accept the maximum number of lines we want in every log produce
-    accept_field(st,"SADM_MAX_LOGLINE",st.cfg_max_logline,"Enter maximum number of lines in a log file","I",1,10000)
+    # # Accept the maximum number of lines we want in every log produce
+    # accept_field(st,"SADM_MAX_LOGLINE",st.cfg_max_logline,"Enter maximum number of lines in a log file","I",1,10000)
 
-    # Accept the maximum number of lines we want in every RCH file produce
-    accept_field(st,"SADM_MAX_RCHLINE",st.cfg_max_rchline,"Enter maximum number of lines in a rch file","I",1,300)
+    # # Accept the maximum number of lines we want in every RCH file produce
+    # accept_field(st,"SADM_MAX_RCHLINE",st.cfg_max_rchline,"Enter maximum number of lines in a rch file","I",1,300)
 
-    # Accept the default SSH port your use
-    accept_field(st,"SADM_SSH_PORT",st.cfg_ssh_port,"Enter the SSH port number used to connect to client","I",1,65536)
+    # # Accept the default SSH port your use
+    # accept_field(st,"SADM_SSH_PORT",st.cfg_ssh_port,"Enter the SSH port number used to connect to client","I",1,65536)
 
-    # Accept the Default Domain Name
-    accept_field(st,"SADM_DOMAIN",st.cfg_domain,"Enter the default domain name","A")
+    # # Accept the Default Domain Name
+    # accept_field(st,"SADM_DOMAIN",st.cfg_domain,"Enter the default domain name","A")
 
     # Accept the Default User Group
-    accept_field(st,"SADM_GROUP",st.cfg_group,"Enter the default user Group","A")
+    st.cfg_group=accept_field(st,"SADM_GROUP",st.cfg_group,"Enter the default user Group","A")
+    found_grp = False                                                       # Not Found by Default
+    with open('/etc/group') as f:
+        for line in f:
+            if line.startswith( "%s:" % (st.cfg_group) ):
+                found_grp = True                                                    # Fould Line
+    if (found_grp == True):
+        print ("Good the group %s is an existing group" % (st.cfg_group))
+    else:
+        print ("Creating group %s" % (st.cfg_group))
+        if self.os_type == "LINUX" :                                    # Under Linux
+            ccode, cstdout, cstderr = self.oscommand("groupadd %s" % (st.cfg_group)) 
+        if self.os_type == "AIX" :                                      # Under AIX
+            ccode, cstdout, cstderr = self.oscommand("mkgroup %s" % (st.cfg_group))
+        print ("Return code is $d" % (ccode))
 
     # Accept the Default User Name
     accept_field(st,"SADM_USER",st.cfg_user,"Enter the default user name","A")
+    found_usr = False                                                       # Not Found by Default
+    with open('/etc/passwd') as f:
+        for line in f:
+            if line.startswith( "%s:" % (st.cfg_group) ):
+                found_usr = True                                                    # Fould Line
+    if (found_usr == True):
+        print ("Good the user %s is an existing user" % (st.cfg_user))
+    else:
+        print ("Creating user %s" % (st.cfg_user))
+        if self.os_type == "LINUX" :                                    # Under Linux
+            cmd = "useradd -g %s -s /bin/sh " % (st.cfg_group)
+            cmd += "-d %s " % (os.environ.get('SADMIN')
+            cmd +=  -c'%s' %s" % ("SADMIN Tools User",st.cfg_user)
+            ccode, cstdout, cstderr = self.oscommand(cmd)) 
+        if self.os_type == "AIX" :                                      # Under AIX
+            cmd = "mkuser pgrp='%s' -s /bin/sh " % (st.cfg_group)
+            cmd += "home='%s' " % (os.environ.get('SADMIN')
+            cmd +=  gecos='%s' %s" % ("SADMIN Tools User",st.cfg_user)
+            ccode, cstdout, cstderr = self.oscommand(cmd))            
+        print ("Return code is $d" % (ccode))
 
     # Accept the Network IP and Netmask your Network
     accept_field(st,"SADM_NETWORK1",st.cfg_network1,"Enter the network IP and netmask","A")
