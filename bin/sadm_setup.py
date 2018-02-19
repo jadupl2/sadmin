@@ -351,14 +351,14 @@ def main_process(st):
         print ("Creating user %s" % (st.cfg_user))
         if self.os_type == "LINUX" :                                    # Under Linux
             cmd = "useradd -g %s -s /bin/sh " % (st.cfg_group)
-            cmd += "-d %s " % (os.environ.get('SADMIN')
-            cmd +=  -c'%s' %s" % ("SADMIN Tools User",st.cfg_user)
-            ccode, cstdout, cstderr = self.oscommand(cmd)) 
+            cmd += " -d %s "    % (os.environ.get('SADMIN'))
+            cmd += " -c'%s' %s" % ("SADMIN Tools User",st.cfg_user)
+            ccode, cstdout, cstderr = self.oscommand(cmd)
         if self.os_type == "AIX" :                                      # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/sh " % (st.cfg_group)
-            cmd += "home='%s' " % (os.environ.get('SADMIN')
-            cmd +=  gecos='%s' %s" % ("SADMIN Tools User",st.cfg_user)
-            ccode, cstdout, cstderr = self.oscommand(cmd))            
+            cmd += " home='%s' " % (os.environ.get('SADMIN'))
+            cmd += " gecos='%s' %s" % ("SADMIN Tools User",st.cfg_user)
+            ccode, cstdout, cstderr = self.oscommand(cmd)           
         print ("Return code is $d" % (ccode))
 
     # Accept the Network IP and Netmask your Network
