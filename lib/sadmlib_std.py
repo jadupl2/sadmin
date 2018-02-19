@@ -817,8 +817,8 @@ class sadmtools():
     def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
-            print ("[WARNING] Command '%s' couldn't be found" % (cmd))  # Display Warning for User
-            print ("          If available, it should be install")      # Advise user should install
+            print ("\n[WARNING] Command '%s' couldn't be found" % (cmd))# Display Warning for User
+            print ("If available, it should be install")                # Advise user should install
             print ("You may want to run 'sadm_prereq_install.sh' to list any missing commands")
             print ("After that you can run 'sadm_prereq_install.sh -y' to install them")
             cmd_path=""                                                 # Cmd Path Null when Not fnd
@@ -834,7 +834,6 @@ class sadmtools():
     # It is recommended to install any missing command.
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-#        global FH_LOG_FILE,which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl,nmon,lscpu
         global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl,nmon,lscpu
     
         requisites_status=True                                          # Assume Requirement all Met

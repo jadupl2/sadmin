@@ -24,6 +24,8 @@
 #   v1.6  Enhancements/Corrections Version Log 
 # 2018_02_17 JDuplessis
 #   v1.7  Update & Bug Fixes
+# 2018_02_19 JDuplessis
+#   v1.8  Update & Bug Fixes
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -40,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
+SADM_VER='1.8'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -95,7 +97,7 @@ install_package()
         then printf "\nNb. Parameter received by $FUNCNAME function is incorrect"
              printf "\n    1st=DRYRUN ON/OFF       2nd=CommandName "
              printf "\n    3rd=RPM_PackageName     4th=DEB_PackageName"
-             printf "\nPlease correct script - Script Aborted"     # Advise User to Correct
+             printf "\nPlease correct script - Script Aborted"          # Advise User to Correct
              sadm_stop 1                                                # Prepare exit gracefully
              exit 1                                                     # Terminate the script
     fi
@@ -103,45 +105,52 @@ install_package()
     P_COMMAND=$2                                                        # Command to Make Avail.
     P_PACKAGE_RPM=$3                                                    # RedHat/CentOS/Fedora Pkg
     P_PACKAGE_DEB=$4                                                    # Ubuntu/Debian/Raspian Deb
+    printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
     
     # Install the Package under RedHat/CentOS/Fedora
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
-        then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_RPM}"
-             printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
-             printf "\nRunning \"yum -y --enablerepo=epel install ${P_PACKAGE_RPM}\""
-             if [ "$P_DRYRUN" = "OFF" ] 
-                then yum -y --enablerepo=epel install ${P_PACKAGE_RPM} >>$SADM_LOG 2>&1 
-                     rc=$?                                              # Save Exit Code
-                     printf "\nReturn Code after installing ${P_PACKAGE_RPM}: $rc"
+        then if [ "$P_DRYRUN" = "OFF" ] 
+                then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_RPM}"
+                     yum -y --enablerepo=epel install ${P_PACKAGE_RPM} >>$SADM_LOG 2>&1 
+                     ERROR_COUNT=$?                                              # Save Exit Code
+                     printf "\nReturn Code after installing ${P_PACKAGE_RPM}: $ERROR_COUNT"
+                else 
+                     printf "\nWould run \"yum -y --enablerepo=epel install ${P_PACKAGE_RPM}\""
              fi
     fi
     
     # Install the Package under Debian/*Ubuntu/RaspberryPi 
     if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
        [ "$(sadm_get_osname)" = "DEBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ] 
-        then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_DEB}"
-             printf "\nCurrent O/S is $(sadm_get_osname) - Version $(sadm_get_osmajorversion)"
-             printf "\nSynchronize package index files with their sources"
-             printf "\napt-get update"                                  # Msg Get package list 
-             if [ "$P_DRYRUN" = "OFF" ] 
-                then apt-get update > /dev/null 2>&1                    # Get Package List From Repo
-                     rc=$?                                              # Save Exit Code
-                     if [ "$rc" -ne 0 ]
+        then if [ "$P_DRYRUN" = "OFF" ] 
+                then printf "\nInstalling $P_COMMAND command included in package ${P_PACKAGE_DEB}"
+                     printf "\nSynchronize package index files with their sources"
+                     printf "\napt-get update"                                  # Msg Get package list 
+                     apt-get update > /dev/null 2>&1                    # Get Package List From Repo
+                     rc1=$?                                              # Save Exit Code
+                     if [ "$rc1" -ne 0 ]
                         then printf "\nWe had problem running the \"apt-get update\" command" 
-                             printf "\nWe had a return code $rc" 
+                             printf "\nWe had a return code $rc1" 
                      fi
+                     printf "\nInstalling Package ${P_PACKAGE_DEB}"
+                     printf "\napt-get -y install ${P_PACKAGE_DEB}"
+                     apt-get -y install ${P_PACKAGE_DEB}
+                     rc2=$?                                              # Save Exit Code
+                     if [ "$rc2" -ne 0 ]
+                        then printf "\nProblem running 'apt-get install update ${P_PACKAGE_DEB}'" 
+                             printf "\nWe had a return code $rc2" 
+                     fi
+                     ERROR_COUNT=$(($rc1+$rc2))                         # Add Return Code Together
+                     printf "\nReturn Code after installing ${P_PACKAGE_DEB}: $ERROR_COUNT" 
              fi
-             printf "\nInstalling Package ${P_PACKAGE_DEB}"
-             printf "\napt-get -y install ${P_PACKAGE_DEB}"
-             if [ "$P_DRYRUN" = "OFF" ] 
-                then apt-get -y install ${P_PACKAGE_DEB}
-                     rc=$?                                              # Save Exit Code
-                     printf "\nReturn Code after installing ${P_PACKAGE_DEB}: $rc" 
-             fi
+        else printf "\nWould Installing Package ${P_PACKAGE_DEB}"
+             printf "\nWould run apt-get update"                                  # Msg Get package list 
+             printf "\nWould run apt-get -y install ${P_PACKAGE_DEB}"
     fi         
     printf "\n "
-    return $rc                                                          # 0=Installed 1=Error
+
+    return $ERROR_COUNT                                                          # 0=Installed 1=Error
 }
 
     
@@ -186,7 +195,7 @@ install_package()
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
-    if [ "$DRYRUN" = "ON" ] ; then printf "\nRUNNING IN DRYRUN MODE - NOTHING WILL BE INSTALL" ;fi
+    if [ "$DRYRUN" = "ON" ] ;then printf "\nRUNNING IN DRYRUN MODE - NOTHING WILL BE INSTALL\n" ;fi
 
     # Check if command which is installed - If not install it if not running in dryrun mode
     SCMD="which"
@@ -194,7 +203,8 @@ main_process()
     if which $SCMD >/dev/null 2>&1                                      # Try the command which 
        then printf "\nCommand \"${SCMD}\" is available [OK]" 
        else install_package "$DRYRUN" "$SCMD" "which" "debianutils"     # Install related RPMorDEB 
-    fi            
+    fi 
+    printf "\n "            
 
     # Check if command nmon is installed - If not install it if not running in dryrun mode
     SCMD="nmon"
