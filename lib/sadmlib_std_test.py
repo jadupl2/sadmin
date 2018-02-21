@@ -35,9 +35,11 @@
 #   V2.3 Changes for performance and flexibility
 # 2018_01_25 JDuplessis
 #   V2.4 Added Variable SADM_RRDTOOL to sadmin.cfg display
+# 2018_02_21 JDuplessis
+#   V2.5 Minor Changes 
 #===================================================================================================
 try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch
+    import os, time, sys, pdb, socket, datetime, glob, fnmatch,pymysql
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -77,10 +79,8 @@ def initSADM():
         sys.exit(1)
     try :
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
-        sys.path.insert(0,os.path.join(SADM,'lib'))
-        #sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
+        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
-        import sadmlib_mysql as sadb
     except ImportError as e:
         print ("Import Error : %s " % e)
         sys.exit(1)
@@ -140,10 +140,10 @@ def main():
         sys.exit(1)                                                     # Exit To O/S
 
     st.display_env()                                                    # Display Env. Variables
-    #if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-    (conn,cur) = sadb.dbconnect(st)                                      # Connect to SADMIN Database
-    #if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-    #    sadb.dbclose(st)                                                     # Close the Database
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
+        (conn,cur) = st.dbconnect()                                      # Connect to SADMIN Database
+    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
+        st.dbclose()                                                     # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
