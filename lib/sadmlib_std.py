@@ -30,6 +30,8 @@
 #   V2.6 Add Documentation Directory
 # 2018_02_17 JDuplessis
 #   V2.7 Revision of the command requirements and message when missing
+# 2018_02_21 JDuplessis
+#   V2.8 Minor Changes
 # 
 # ==================================================================================================
 try :
