@@ -33,6 +33,8 @@
 #   V1.4 Minor Adjustments
 # 2018_02_17 JDuplessis 
 #   V1.5 Install instruction to install PyMySQL  
+# 2018_02_21 JDuplessis 
+#   V1.6 No SSH needed on SADMIN Server(SSH Security/No root access)
 #
 #===================================================================================================
 #
@@ -84,16 +86,14 @@ def initSADM():
     try :
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
         sys.path.insert(0,os.path.join(SADM,'lib'))
-        #sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
-        import sadmlib_mysql as sadb                                    # Import SADM MySQL Library
     except ImportError as e:                                            # Catch import Error
         print ("Import Error : %s " % e)                                # Advise user about error
         sys.exit(1)                                                     # Exit to O/S with Error 1
     
     # Create SADMIN Instance & setup instance Variables specific to your program
     st = sadm.sadmtools()                       # Create Sadm Tools Instance (Setup Dir.)
-    st.ver  = "1.5"                             # Indicate your Script Version 
+    st.ver  = "1.6"                             # Indicate your Script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True to Append Existing Log, False=Start a new log
@@ -163,15 +163,20 @@ def process_servers(wconn,wcur,st):
                 st.writelog ("Total error(s) : %s" % (ERROR_COUNT))     # Show Total Error Count
             continue
 
-        wcommand = "%s %s %s" % (st.ssh_cmd,wfqdn,"date")               # SSH to Server for date
-        st.writelog ("Command is %s" % (wcommand))
-        ccode, cstdout, cstderr = st.oscommand("%s" % (wcommand))      # Execute O/S CMD 
-        st.writelog ("stdout is %s" % (cstdout))
-        st.writelog ("stderr is %s" % (cstderr))
-        if (ccode == 0):
-            st.writelog ("ssh worked")
+        if (wfqdn != st.cfg_server):
+            wcommand = "%s %s %s" % (st.ssh_cmd,wfqdn,"date")               # SSH to Server for date
+            st.writelog ("Command is %s" % (wcommand))
+            ccode, cstdout, cstderr = st.oscommand("%s" % (wcommand))      # Execute O/S CMD 
+            st.writelog ("stdout is %s" % (cstdout))
+            st.writelog ("stderr is %s" % (cstderr))
+            if (ccode == 0):
+                st.writelog ("ssh worked")
+            else:
+                st.writelog ("ssh error")
         else:
-            st.writelog ("ssh error")
+            st.writelog ("No need for SSH on SADMIN server %s" % (st.cfg_server))
+
+        
         lineno += 1                                                     # Increase Server Counter
 
     return 0
@@ -210,11 +215,11 @@ def main():
         
     if st.debug > 4: st.display_env()                                   # Display Env. Variables
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        (conn,cur) = sadb.dbconnect(st)                                     # Connect to SADMIN Database
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
     #st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        sadb.dbclose(st)                                                    # Close the Database
+        st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
