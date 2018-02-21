@@ -37,14 +37,14 @@
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
-# try :
+try :
     import os, time, sys, pdb, socket, datetime, glob, fnmatch
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
 #
 # Python MySQL Module is a MUST before continuing the setup 
-# try :
+try :
     import pymysql
 except ImportError as e:
     print ("The Python Module to access MySQL is not installed : %s " % e)
@@ -75,7 +75,7 @@ cur                 = ""                                                # Databa
 #
 def initSADM():
     # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
-    if not "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
+    if (os.getenv("SADMIN",default="X") == "X"):                                      # SADMIN Env. Var. Defined ?
         print ("SADMIN Environment Variable isn't define")              # SADMIN Var MUST be defined
         print ("It indicate the directory where you installed the SADMIN Tools")
         print ("Add this line at the end of /etc/environment file.")    # Show Where to Add Env. Var
@@ -83,8 +83,10 @@ def initSADM():
         sys.exit(1)                                                     # Exit to O/S with Error 1
     try :
         SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
-        sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
+        sys.path.insert(0,os.path.join(SADM,'lib'))
+        #sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
         import sadmlib_std as sadm                                      # Import SADM Python Library
+        import sadmlib_mysql as sadb                                    # Import SADM MySQL Library
     except ImportError as e:                                            # Catch import Error
         print ("Import Error : %s " % e)                                # Advise user about error
         sys.exit(1)                                                     # Exit to O/S with Error 1
@@ -208,11 +210,11 @@ def main():
         
     if st.debug > 4: st.display_env()                                   # Display Env. Variables
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+        (conn,cur) = sadb.dbconnect(st)                                     # Connect to SADMIN Database
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
     #st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        st.dbclose()                                                    # Close the Database
+        sadb.dbclose(st)                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
