@@ -33,10 +33,9 @@
 # 
 # ==================================================================================================
 try :
-    import errno, time, socket, subprocess, smtplib, pwd, grp
-    import glob, fnmatch, linecache
+    import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
     from subprocess import Popen, PIPE
-    import os, sys, pymysql, datetime, getpass, pymysql, shutil
+    import os, sys, datetime, getpass, shutil
     #import pdb                                                         # Python Debugger
     #pdb.set_trace()                                                    # Activate Python Debugging
 except ImportError as e:
@@ -210,61 +209,62 @@ class sadmtools():
 
         self.ssh_cmd = "%s -qnp %s " % (self.ssh,self.cfg_ssh_port)     # SSH Command we use
 
-    #-----------------------------------------------------------------------------------------------
-    # CLOSE THE DATABASE ---------------------------------------------------------------------------
-    # return (0) if no error - return (1) if error encountered
-    #-----------------------------------------------------------------------------------------------
-    def dbconnect(self):       
-        self.enum = 0                                                   # Reset Error Number
-        self.emsg = ""                                                  # Reset Error Message
-        conn_string  = "'%s', " % (self.cfg_dbhost)
-        conn_string += "'%s', " % (self.cfg_rw_dbuser)
-        conn_string += "'%s', " % (self.cfg_rw_dbpwd)
-        conn_string += "'%s'"   % (self.cfg_dbname)
-        if (self.debug > 3) :                                           # Debug Display Conn. Info
-            print ("Connect(%s)" % (conn_string))
-        try :
-            #self.conn = pymysql.connect(conn_string)
-            self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
-            
-        except pymysql.err.OperationalError as error :
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error connecting to Database '%s'" % (self.cfg_dbname))  
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
-            sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
-        # Define a cursor object using cursor() method
-        # ------------------------------------------------------------------------------------------
-        try :
-            self.cursor = self.conn.cursor()                            # Create Database cursor
-        #except AttributeError pymysql.InternalError as error:
-        except Exception as error:
-            self.enum, self.emsg = error.args                           # Get Error No. & Message
-            print ("Error creating cursor for %s" % (self.dbname))      # Inform User print DB Name 
-            print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
-            sys.exit(1)                                                 # Exit Pgm with Error Code 1
-        return(self.conn,self.cursor)
+    # #-----------------------------------------------------------------------------------------------
+    # # CONNECT TO THE DATABASE ----------------------------------------------------------------------
+    # # return (0) if no error - return (1) if error encountered
+    # #-----------------------------------------------------------------------------------------------
+    # def dbconnect(self):       
+    #     self.enum = 0                                                   # Reset Error Number
+    #     self.emsg = ""                                                  # Reset Error Message
+    #     conn_string  = "'%s', " % (self.cfg_dbhost)
+    #     conn_string += "'%s', " % (self.cfg_rw_dbuser)
+    #     conn_string += "'%s', " % (self.cfg_rw_dbpwd)
+    #     conn_string += "'%s'"   % (self.cfg_dbname)
+    #     if (self.debug > 3) :                                           # Debug Display Conn. Info
+    #         print ("Connect(%s)" % (conn_string))
+    #     try :
+    #         #self.conn = pymysql.connect(conn_string)
+    #         self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
+            
+    #     except pymysql.err.OperationalError as error :
+    #         self.enum, self.emsg = error.args                           # Get Error No. & Message
+    #         print ("Error connecting to Database '%s'" % (self.cfg_dbname))  
+    #         print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+    #         sys.exit(1)                                                 # Exit Pgm with Error Code 1
+
+    #     # Define a cursor object using cursor() method
+    #     # ------------------------------------------------------------------------------------------
+    #     try :
+    #         self.cursor = self.conn.cursor()                            # Create Database cursor
+    #     #except AttributeError pymysql.InternalError as error:
+    #     except Exception as error:
+    #         self.enum, self.emsg = error.args                           # Get Error No. & Message
+    #         print ("Error creating cursor for %s" % (self.dbname))      # Inform User print DB Name 
+    #         print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
+    #         sys.exit(1)                                                 # Exit Pgm with Error Code 1
+    #     return(self.conn,self.cursor)
  
-    #-----------------------------------------------------------------------------------------------
-    # CLOSE THE DATABASE ---------------------------------------------------------------------------
-    # return (0) if no error - return (1) if error encountered
-    #-----------------------------------------------------------------------------------------------
-    def dbclose(self):
-        self.enum = 0                                                   # Reset Error Number
-        self.emsg = ""                                                  # Reset Error Message
-        try:
-            if self.debug > 2 : print ("Closing Database %s" % (self.cfg_dbname)) 
-            self.conn.close()
-        except Exception as e: 
-            print ("type e = ",type(e))
-            print ("e.args = ",e.args)
-            print ("e = ",e)
-            self.enum, self.emsg = e.args                               # Get Error No. & Message
-            if  (not self.dbsilent):                                    # If not in Silent Mode
-                #print (">>>>>>>>>>>>>",e.message,e.args)               # Print Error No. & Message
-                print (">>>>>>>>>>>>>",e.args)                          # Print Error No. & Message
-                return (1)                                              # return (1) to Show Error
-        return (0)
+    # #-----------------------------------------------------------------------------------------------
+    # # CLOSE THE DATABASE ---------------------------------------------------------------------------
+    # # return (0) if no error - return (1) if error encountered
+    # #-----------------------------------------------------------------------------------------------
+    # def dbclose(self):
+    #     self.enum = 0                                                   # Reset Error Number
+    #     self.emsg = ""                                                  # Reset Error Message
+    #     try:
+    #         if self.debug > 2 : print ("Closing Database %s" % (self.cfg_dbname)) 
+    #         self.conn.close()
+    #     except Exception as e: 
+    #         print ("type e = ",type(e))
+    #         print ("e.args = ",e.args)
+    #         print ("e = ",e)
+    #         self.enum, self.emsg = e.args                               # Get Error No. & Message
+    #         if  (not self.dbsilent):                                    # If not in Silent Mode
+    #             #print (">>>>>>>>>>>>>",e.message,e.args)               # Print Error No. & Message
+    #             print (">>>>>>>>>>>>>",e.args)                          # Print Error No. & Message
+    #             return (1)                                              # return (1) to Show Error
+    #     return (0)
 
         
     # ----------------------------------------------------------------------------------------------
@@ -1124,8 +1124,12 @@ class sadmtools():
         self.trimfile (self.rch_file, self.cfg_max_rchline)             # Trim the Script RCH Log 
     
         # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-        uid = pwd.getpwnam(self.cfg_user).pw_uid                        # Get UID User in sadmin.cfg
-        gid = grp.getgrnam(self.cfg_group).gr_gid                       # Get GID User in sadmin.cfg
+        try :
+            uid = pwd.getpwnam(self.cfg_user).pw_uid                        # Get UID User in sadmin.cfg
+            gid = grp.getgrnam(self.cfg_group).gr_gid                       # Get GID User in sadmin.cfg
+        except KeyError as e: 
+            msg = "User %s doesn't exist or not define in sadmin.cfg" % (self.cfg_user) 
+            print (msg)
 
         # Make Sure Owner/Group of Log File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
         try : 
@@ -1290,7 +1294,7 @@ class sadmtools():
         print("obj.cfg_storix_nfs_server       Storix NFS Server             : %s" % (self.cfg_storix_nfs_server))
         print("obj.cfg_storix_nfs_mount_point  Storix NFS Mount Point        : %s" % (self.cfg_storix_nfs_mount_point))
         print("obj.cfg_storix_backup_to_keep   Storix NFS Backup to Keep     : %s" % (str(self.cfg_storix_backup_to_keep)))
-        print("obj.cfg_mksysb_nfs_serve        Aix mksysb NFS Backup Server  : %s" % (self.cfg_mksysb_nfs_server))
+        print("obj.cfg_mksysb_nfs_server       Aix mksysb NFS Backup Server  : %s" % (self.cfg_mksysb_nfs_server))
         print("obj.cfg_mksysb_nfs_mount_point  Aix mksysb NFS Mount Point    : %s" % (self.cfg_mksysb_nfs_mount_point))
         print("obj.cfg_mksysb_backup_to_keep   Aix mksysb NFS Backup to Keep : %s" % (str(self.cfg_mksysb_backup_to_keep)))
 
