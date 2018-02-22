@@ -31,15 +31,27 @@
 #       V2.10 Introduction of New Python Library  
 # 2017_12_31 - JDuplessis
 #       V2.11 Correct problem with copy r5esultant file into web Directory
+# 2018_02_21 - JDuplessis
+#       V2.12 Adjust to new calling sadmin lib method
 # --------------------------------------------------------------------------------------------------
 #
+# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
-    import getpass, subprocess, pwd, grp
-    from subprocess import Popen, PIPE   
+    import os,time,sys,pdb,socket,datetime,glob,pwd,grp,fnmatch     # Import Std Python3 Modules
+    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
+
+# try :
+#     import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
+#     import getpass, subprocess, pwd, grp
+#     from subprocess import Popen, PIPE   
+# except ImportError as e:
+#     print ("Import Error : %s " % e)
+#     sys.exit(1)
 #pdb.set_trace()                                                        # Activate Python Debugging
 
 
@@ -143,7 +155,7 @@ def main_process(st) :
           SH.write ("%s\n" % (WLINE))
        SH.close()                                                       # Close Subnet File
       
-       # Copy the resutant subnet txt file into the SADM Web Data Directory
+       # Copy the resultant subnet txt file into the SADM Web Data Directory
        st.writelog ("Copy %s into %s" % (SFILE,st.www_net_dir))
        rc = os.system("cp " + SFILE + " " + st.www_net_dir + " >/dev/null 2>&1")       
        if ( rc != 0 ) :                                                  
@@ -162,7 +174,20 @@ def main_process(st) :
 #===================================================================================================
 #
 def main():
-    st = initSADM()                                                     # Initialize SADM Tools
+    # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
+    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
+    st.ver  = "2.12"                            # Indicate this script Version 
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True=Append existing log  False=start a new log
+    st.debug = 0                                # Debug level and verbosity (0-9)
+    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.usedb = False                            # True=Use Database  False=DB Not needed for script
+    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available 
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
@@ -179,7 +204,6 @@ def main():
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
         
-    #if st.debug > 4: st.display_env()                                  # Display Env. Variables
     st.exit_code = main_process(st)                                     # Process Subnet
     st.stop(st.exit_code)                                               # Close SADM Environment
 
