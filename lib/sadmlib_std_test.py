@@ -38,12 +38,17 @@
 # 2018_02_21 JDuplessis
 #   V2.5 Minor Changes 
 #===================================================================================================
+#
+# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os, time, sys, pdb, socket, datetime, glob, fnmatch,pymysql
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
+    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                                        # Activate Python Debugging
+#pdb.set_trace()                                                    # Activate Python Debugging
 
 
 #===================================================================================================
@@ -53,74 +58,27 @@ conn                = ""                                                # Databa
 cur                 = ""                                                # Database Cursor
 #
 
-#===================================================================================================
-#                                 Initialize SADM Tools Function
-#===================================================================================================
-#
-def initSADM():
-    """
-    Start the SADM Tools 
-      - Make sure All SADM Directories exist, 
-      - Open log in append mode if attribute log_append="Y", otherwise a new Log file is started.
-      - Write Log Header
-      - Record the start Date/Time and Status Code 2(Running) to RCH file
-      - Check if Script is already running (pid_file) 
-        - Advise user & Quit if Attribute multiple_exec="N"
-    """
-
-    # Making Sure SADMIN Environment Variable is Define and 'sadmlib_std.py' can be found & imported
-    if "SADMIN" not in os.environ:                                      # SADMIN Env. Var. Defined ?
-        print (('=' * 65))
-        print ("SADMIN Environment Variable is not define")
-        print ("It indicate the directory where you installed the SADMIN Tools")
-        print ("Put this line in your ~/.bash_profile")
-        print ("export SADMIN=/INSTALL_DIR")
-        print (('=' * 65))
-        sys.exit(1)
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
-        sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add $SADMIN/lib to PyPath
-        import sadmlib_std as sadm                                      # Import SADM Python Library
-    except ImportError as e:
-        print ("Import Error : %s " % e)
-        sys.exit(1)
-
-    st = sadm.sadmtools()                                               # Create Sadm Tools Instance
-    
-    # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.4"                             # Your Script Version 
-    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'L'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
-    st.log_append = True                        # True=Append to Existing Log  False=Start a new log
-    st.debug = 0                                # Debug Level (0-9)
-    
-    # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr = ""                      # Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
-
-    # False = On MySQL Error, return MySQL Error Code & Display MySQL  Error Message
-    # True  = On MySQL Error, return MySQL Error Code & Do NOT Display Error Message
-    st.dbsilent = False                         # True or False
-
-    # Start the SADM Tools 
-    #   - Make sure All SADM Directories exist, 
-    #   - Open log in append mode if st_log_append="Y" else create a new Log file.
-    #   - Write Log Header
-    #   - Write Start Date/Time and Status Code 2(Running) to RCH file
-    #   - Check if Script is already running (pid_file) 
-    #       - Advise user & Quit if st-multiple_exec="N"
-    st.start()                                  # Make SADM Sertup is OK - Initialize SADM Env.
-
-    return(st)                                  # Return Instance Object to caller
-
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
 def main():
-    st = initSADM()                                                     # Initialize SADM Tools
+ 
+    # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
+    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
+    st.ver  = "2.5"                             # Indicate this script Version 
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True=Append existing log  False=start a new log
+    st.debug = 0                                # Debug level and verbosity (0-9)
+    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.usedb = True                             # True=Use Database  False=DB Not needed for script
+    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
 
     # Insure that this script can only be run by the user root (Optional Code)
     #if not os.getuid() == 0:                                            # UID of user is not zero
@@ -139,11 +97,14 @@ def main():
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
 
-    st.display_env()                                                    # Display Env. Variables
-    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        (conn,cur) = st.dbconnect()                                      # Connect to SADMIN Database
-    if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
-        st.dbclose()                                                     # Close the Database
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+        st.writelog ("Database connection succeeded")
+        st.exit_code = st.display_env()                                 # Display Env. Variables
+        st.writelog ("Closing Database connection")
+        st.dbclose()                                                    # Close the Database
+    else:                                                               # Script don't need Database
+        st.exit_code = st.display_env()                                 # Display Env. Variables
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
