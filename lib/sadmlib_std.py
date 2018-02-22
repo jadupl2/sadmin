@@ -37,19 +37,34 @@
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
     from subprocess import Popen, PIPE
-    import os, sys, datetime, getpass, shutil, pymysql
+    import os, sys, datetime, getpass, shutil
     #import pdb                                                         # Python Debugger
     #pdb.set_trace()                                                    # Activate Python Debugging
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
 
+# Python MySQL Module is a MUST before continuing
+try :
+    import pymysql
+except ImportError as e:
+    print ("The Python Module to access MySQL is not installed : %s " % e)
+    print ("We need to install it before continuying")
+    print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
+    print ("sudo apt-get install python3-pip")
+    print ("sudo pip3 install PyMySQL")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    print ("\nIf you are on Redhat, CentOS, Fedora family type the following command to install it:")
+    print ("sudo yum --enablerepo=epel install python34-pip")
+    print ("sudo pip3 install pymysql")
+    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
+    sys.exit(1)
 
 
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.7"                                             # This Library Version
+libver              = "2.8"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -75,16 +90,18 @@ class sadmtools():
         """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
         """
 
-        # Check if SADMIN Environment variable is defined (MUST be defined)
-        if "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-            self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
+        # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
+        if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env. Var. Defined ?
+            print ("SADMIN Environment Variable isn't define")          # SADMIN Var MUST be defined
+            print ("It indicate the directory where you installed the SADMIN Tools")
+            print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
+            print ("SADMIN='/[dir-where-you-install-sadmin]'")          # Show What to Add.
+            print ("Then logout and log back in and run this script again.")
+            sys.exit(1)                                                 # Exit to O/S with Error 1
         else:
-            print ("Please set environment variable SADMIN.")           # Advise user
-            print ("SADMIN indicate the directory name where you unzip the *.tgz file")
-            sys.exit(1)                                                 # Exit if not defined 
- 
+            self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
-        # Script Related Variables
+        # Set Default Values for Script Related Variables
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.multiple_exec      = "N"                                   # Default Run multiple copy
         self.log_append         = True                                  # Append to Existing Log ?
