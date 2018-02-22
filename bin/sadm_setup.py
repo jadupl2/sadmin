@@ -28,77 +28,32 @@
 #   V1.0g WIP Version Now cover pyMySQL Python module installation & sadmin.cfg template
 # 2018_02_19 JDuplessis
 #   V1.0h WIP Version Dev Testing 
+# 2018_02_22 JDuplessis
+#   V1.0i WIP Version Dev Testing 
 #
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os, time, sys, pdb, socket, datetime, glob, shutil, fnmatch
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
+    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#
-# Python MySQL Module is a MUST before continuing the setup 
-try :
-    import pymysql
-except ImportError as e:
-    print ("The Python Module to access MySQL is not installed : %s " % e)
-    print ("We need to install it before continuying")
-    print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
-    print ("sudo apt-get install python3-pip")
-    print ("sudo pip3 install PyMySQL")
-    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
-    print ("\nIf you are on Redhat, CentOS, Fedora family type the following command to install it:")
-    print ("sudo yum --enablerepo=epel install python34-pip")
-    print ("sudo pip3 install pymysql")
-    print ("After run sadm_setup.py again, to continue installation of SADMIN Tools")
-    sys.exit(1)
-#
-#pdb.set_trace()                                                        # Activate Python Debugging
+#pdb.set_trace()                                                    # Activate Python Debugging
 
 
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-conn                = ""                                                # Database Connector
-cur                 = ""                                                # Database Cursor
-sadm_base_dir       = ""                                                # SADMI Install Directory
-sver                = "1.0e"
+conn                = ""                                                # MySQL Database Connector
+cur                 = ""                                                # MySQL Database Cursor
+sadm_base_dir       = ""                                                # SADMIN Install Directory
+sver                = "1.0i"
 #
 
-#===================================================================================================
-#                                 Initialize SADM Tools Function
-#===================================================================================================
-#
-def initSADM():
-    # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
-    if not "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-        print ("SADMIN Environment Variable isn't define")              # SADMIN Var MUST be defined
-        print ("It indicate the directory where you installed the SADMIN Tools")
-        print ("Add this line at the end of /etc/environment file.")    # Show Where to Add Env. Var
-        print ("# echo 'SADMIN=/[dir-where-you-install-sadmin]'")       # Show What to Add.
-        sys.exit(1)                                                     # Exit to O/S with Error 1
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
-        sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
-        import sadmlib_std as sadm                                      # Import SADM Python Library
-    except ImportError as e:                                            # Catch import Error
-        print ("Import Error : %s " % e)                                # Advise user about error
-        sys.exit(1)                                                     # Exit to O/S with Error 1
-    
-
-    # Create SADMIN Instance & setup instance Variables specific to your program
-    st = sadm.sadmtools()                       # CREATE SADM TOOLS INSTANCE (Setup Dir.)
-    st.ver  = "1.0h"                            # Indicate your Script Version 
-    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'L'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
-    st.log_append = True                        # True to Append Existing Log, False=Start a new log
-    st.debug = 0                                # Debug Level and Verbosity (0-9)
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)                                  # Return Instance Object to caller
 
 
 
@@ -106,7 +61,7 @@ def initSADM():
 #        Specify and/or Validate that SADMIN Environment Variable is set in /etc/environent
 #===================================================================================================
 #
-def validate_sadmin_var(ver):
+def set_sadmin_env(ver):
     print(chr(27) + "[2J")                                              # Clear the Screen
     print ("SADMIN Setup V%s\n------------------" % (ver))              # Print Version Number
 
@@ -156,7 +111,7 @@ def validate_sadmin_var(ver):
     print ("[OK] SADMIN Environment variable is set to %s" % (sadm_base_dir))
     #print ("\n----------")
     print ("      - The line below is in /etc/environment") 
-    print ("      - %s" % (eline),end='')                                       # SADMIN Line in /etc/env...
+    print ("      - %s" % (eline),end='')                               # SADMIN Line in /etc/env...
     print ("      - This will make sure it is set upon reboot")
 
     # Make sure we have a sadmin.cfg in $SADMIN/cfg, if not cp .sadmin.cfg to sadmin.update_sadmin_cfg
@@ -164,7 +119,7 @@ def validate_sadmin_var(ver):
     cfgfileo="%s/cfg/.sadmin.cfg" % (sadm_base_dir)                     # Set Full Path to cfg File
     if os.path.exists(cfgfile)==False:                                  # If sadmin.cfg Not Found
         try:
-            shutil.copyfile(cfgfileo,cfgfile)                                  # Copy Template 2 sadmin.cfg
+            shutil.copyfile(cfgfileo,cfgfile)                           # Copy Template 2 sadmin.cfg
         except IOError as e:
             print("Unable to copy file. %s" % e)                        # Advise user before exiting
             exit(1)                                                     # Exit to O/S With Error
@@ -238,7 +193,7 @@ def accept_field(st,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         doc = open(docname,'r')                                         # Open Documentation file
     except FileNotFoundError:                                           # If Open File Failed
         print ("Doc file %s not found, question skipped." % (docname))  # Advise User, Question Skip
-        return (1)                                                        # Return Error to caller
+        return (1)                                                      # Return Error to caller
     for line in doc:                                                    # Read Doc. file until EOF
         if line.startswith("#"):                                        # Line Start #
            continue                                                     # Skip Line that start with#
@@ -382,22 +337,30 @@ def main():
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
-      print ("This script must be run by the 'root' user")             # Advise User Message / Log
-      print ("Try sudo ./%s" % (st.pn))                                # Suggest to use 'sudo'
-      print ("Process aborted")                                        # Process Aborted Msg
-      st.stop (1)                                                      # Close and Trim Log/Email
-      sys.exit(1)                                                      # Exit with Error Code
-        
-    validate_sadmin_var(sver)                                           # Go Set SADMIN Env. Var.
-
+       print ("This script must be run by the 'root' user")             # Advise User Message / Log
+       print ("Try sudo ./%s" % (st.pn))                                # Suggest to use 'sudo'
+       print ("Process aborted")                                        # Process Aborted Msg
+       st.stop (1)                                                      # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
+    set_sadmin_env(sver)                                                # Go Set SADMIN Env. Var.
     print ("\n-----\nCreatig SADMIN Tools Instance\n")
-    st = initSADM()                                                     # Initialize SADM Tools
-    if st.debug > 4: st.display_env()                                   # Display Env. Variables
 
-    # Call Setup Main Function
+    # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
+    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
+    st.ver  = "1.0i"                            # Indicate this script Version 
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True=Append existing log  False=start a new log
+    st.debug = 0                                # Debug level and verbosity (0-9)
+    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.usedb = True                             # True=Use Database  False=DB Not needed for script
+    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
+
     st.exit_code = main_process(st)                                     # Main Program Process 
-
-    # Shutdown SADMIN Tools
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
