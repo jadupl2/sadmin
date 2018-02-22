@@ -35,10 +35,10 @@
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch             # Import Std Python3 Modules
-    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
-    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-    import sadmlib_std as sadm                                      # Import SADMIN Python Library
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil       # Import Std Python3 Modules
+#    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+#    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+#    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -182,7 +182,7 @@ def update_sadmin_cfg(st,sname,svalue):
 def accept_field(st,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     if (stype.upper() != "A" and stype.upper() != "I") :                # Accept Alpha or Integer
         print ("The type of input received is invalid (%s)" % (stype))  # If Not A or I - Advise Usr
-        print ("Question skipped")                                      # Question is Skipped
+        print ("Expecting [I]nteger or [A]lphanumeric")                 # Question is Skipped
         return 1                                                        # Return Error to caller
 
     print ("\n----------\n[%s]" % (sname))                              # Dash & Name of Field
@@ -229,7 +229,7 @@ def accept_field(st,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(st):
+def main_process():
     #st.cfg_file = "/sadmin/jac/cfg/sadmin.cfg"  
 
 
@@ -343,25 +343,29 @@ def main():
        st.stop (1)                                                      # Close and Trim Log/Email
        sys.exit(1)                                                      # Exit with Error Code
     set_sadmin_env(sver)                                                # Go Set SADMIN Env. Var.
-    print ("\n-----\nCreatig SADMIN Tools Instance\n")
+
+    #print ("\n-----\nCreatig SADMIN Tools Instance\n")
+    #SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    #sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+    #import sadmlib_std as sadm                                      # Import SADMIN Python Library
 
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
-    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.0i"                            # Indicate this script Version 
-    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
-    st.log_append = True                        # True=Append existing log  False=start a new log
-    st.debug = 0                                # Debug level and verbosity (0-9)
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    st.usedb = True                             # True=Use Database  False=DB Not needed for script
-    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    #st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
+    #st.ver  = "1.0i"                            # Indicate this script Version 
+    #st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    #st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    #st.log_append = True                        # True=Append existing log  False=start a new log
+    #st.debug = 0                                # Debug level and verbosity (0-9)
+    #st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.usedb = True                             # True=Use Database  False=DB Not needed for script
+    #st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
     #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
+    #st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    #if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
 
-    st.exit_code = main_process(st)                                     # Main Program Process 
-    st.stop(st.exit_code)                                               # Close SADM Environment
+    main_process()                                     # Main Program Process 
+#    st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
