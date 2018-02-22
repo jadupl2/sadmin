@@ -95,6 +95,7 @@ class sadmtools():
         self.exit_code          = 0                                     # Set Default Return Code
         self.debug              = 0                                     # Debug Level (0-9)
         self.dbsilent           = False                                 # True or False Show ErrMsg
+        self.usedb              = False                                 # Use or Not MySQL DB
 
         # O/S Info
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
