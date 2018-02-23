@@ -408,7 +408,6 @@ def main():
         print ("main: Directory SADMIN is %s" % (sroot))                # Show SADMIN root Dir.
     main_process(sroot)                                                 # Main Program Process 
 
-    find sroot -exec chown 
     print ("\n\n----------------------------------------------------------------------------")
     print ("The SADMIN setup program is now terminated")
     print ("The configuration file has now the minimal it take to start using SADMIN ")
