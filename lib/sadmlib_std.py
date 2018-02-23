@@ -32,6 +32,8 @@
 #   V2.7 Revision of the command requirements and message when missing
 # 2018_02_21 JDuplessis
 #   V2.8 Minor Changes
+# 2018_02_22 JDuplessis
+#   V2.9 Add Field SADM_HOST_TYPE in sadmin.cfg 
 # 
 # ==================================================================================================
 try :
@@ -64,7 +66,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.8"                                             # This Library Version
+libver              = "2.9"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -168,6 +170,7 @@ class sadmtools():
         
         # SADM Configuration file (sadmin.cfg) content loaded from configuration file 
         self.cfg_mail_type              = 1                             # 0=No 1=Err 2=Succes 3=All
+        self.cfg_host_type              = ""                            # [C or S] Client or Server
         self.cfg_mail_addr              = ""                            # Default is in sadmin.cfg
         self.cfg_cie_name               = ""                            # Company Name
         self.cfg_user                   = ""                            # sadmin user account
@@ -346,6 +349,7 @@ class sadmtools():
             if "SADM_MAIL_ADDR"              in CFG_NAME:  self.cfg_mail_addr      = CFG_VALUE
             if "SADM_CIE_NAME"               in CFG_NAME:  self.cfg_cie_name       = CFG_VALUE
             if "SADM_MAIL_TYPE"              in CFG_NAME:  self.cfg_mail_type      = int(CFG_VALUE)
+            if "SADM_HOST_TYPE"              in CFG_NAME:  self.cfg_host_type      = CFG_VALUE
             if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
             if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
             if "SADM_USER"                   in CFG_NAME:  self.cfg_user           = CFG_VALUE
@@ -1274,6 +1278,7 @@ class sadmtools():
         print("obj.cfg_mail_addr        Send Mail Address             : %s" % (self.cfg_mail_addr))
         print("obj.cfg_cie_name         Your Company Name             : %s" % (self.cfg_cie_name))
         print("obj.cfg_mail_type        0=No 1=Error 2=Success 3=All  : %s" % (str(self.cfg_mail_type)))
+        print("obj.cfg_host_type        SADMIN [S]erver or [C]lient   : %s" % (self.cfg_host_type))
         print("obj.cfg_server           SADMIN Server FQDN Name       : %s" % (self.cfg_server))
         print("obj.cfg_domain           Your Default Domain           : %s" % (self.cfg_domain))
         print("obj.cfg_user             Super User Name (sudo)        : %s" % (self.cfg_user))

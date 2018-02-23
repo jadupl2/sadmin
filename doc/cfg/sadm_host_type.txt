@@ -1,0 +1,6 @@
+# sadmin.cfg SADM_HOST_TYPE Documentation
+# Revise 2018_02_22
+#----------------------------------------------------------------------------
+This is where you specify if this host is to become a SADMIN Client or Server.
+The questions that will follow depend on your answer.
+Please respond by entering an 'S' or a 'C'.
