@@ -383,7 +383,7 @@ def main_process(sroot):
 
     # Accept the Network IP and Netmask your Network
     wcfg_network1 = accept_field(sroot,"SADM_NETWORK1","192.168.1.0/24","Enter the network IP and netmask","A")
-    update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)        # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)              # Update Value in sadmin.cfg
     
     return(0)                                                           # Return to Caller No Error
 
@@ -403,11 +403,13 @@ def main():
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
-    sroot = set_sadmin_env(sver)                                        # Go Set SADMIN Env. Var.
+    # Ask user location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
+    set_sadmin_env(sver)                                                # Go Set SADMIN Env. Var.
     if (DEBUG):                                                         # If Debug is activated
         print ("main: Directory SADMIN is %s" % (sroot))                # Show SADMIN root Dir.
     main_process(sroot)                                                 # Main Program Process 
 
+    # Show User what to do next.
     print ("\n\n----------------------------------------------------------------------------")
     print ("The SADMIN setup program is now terminated")
     print ("The configuration file has now the minimal it take to start using SADMIN ")
