@@ -50,9 +50,25 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.0i"
-DEBUG               = True                                              # Debug Activated or Not
+DEBUG               = False                                             # Debug Activated or Not
 #
-SADMIN_ROOT         = ""                                                # SADMIN Root Directory
+sroot               = ""                                                # SADMIN Root Directory
+
+
+# ----------------------------------------------------------------------------------------------
+#                                     Text Color Attributes Class
+# ----------------------------------------------------------------------------------------------
+class color:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
 
 # ----------------------------------------------------------------------------------------------
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
@@ -211,9 +227,10 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         print ("Expecting [I]nteger or [A]lphanumeric")                 # Question is Skipped
         return 1                                                        # Return Error to caller
     if (DEBUG):
-        print ("accept_field: Directory SADMIN is %s" % (sroot))                # Show SADMIN root Dir.
+        print ("accept_field: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
         
-    print ("\n----------\n[%s]" % (sname))                              # Dash & Name of Field
+    print ("\n----------\n")                                            # Dash & Name of Field
+    print (color.BOLD + "[%s]" % (sname) + color.END)                   # Attr. Name in sadmin
 
     # Open and display documentation file content for field just received 
     docname = "%s/doc/cfg/%s.txt" % (sroot,sname.lower())               # Set Documentation FileName
@@ -248,45 +265,47 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
                     continue                                            # Continue at start of loop
                 else:                                                   # Input Respect the range
                     break                                               # Break out of the loop
-
-    # Go Update Field in sadmin.cfg
-    update_sadmin_cfg(sroot,sname,"%s" % (wdata))                          # Update Value in sadmin.cfg
     return wdata
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(SADMIN_ROOT):
+def main_process(sroot):
 
     ccode, cstdout, cstderr = oscommand("uname -s")
     wostype=cstdout.upper()
 
     #wcfg_file = "/sadmin/jac/cfg/sadmin.cfg"  
     if (DEBUG):                                                         # If Debug Activated
-        print ("main_process: Directory SADMIN is %s" % (SADMIN_ROOT)) # Show SADMIN root Dir.
+        print ("main_process: Directory SADMIN is %s" % (sroot)) # Show SADMIN root Dir.
         print ("ostype is: %s" % (wostype))
 
     # Accept if current server is a the SADMIN [S]erver or a [C]lient
-    print ("\n----------\n[%s]" % ("Client or Server"))                 # Dash & Name of Field
-    wrep = "X"                                                          # Where answer will be store
-    while ((wrep.upper() != "S") and (wrep.upper() != "C")):            # Accept Only S or C                 
-        sprompt="Current host will be the SADMIN [S]erver or a [C]lient (S,C)"
-        wrep = input("%s : " % (sprompt))                               # Accept user response
-    SERVER_TYPE=wrep.upper()                                            # Store answer in uppercase
+    sdefault = "C"                                                      # This is the default value
+    sname    = "SADM_HOST_TYPE"                                         # Var. Name in sadmin.cfg
+    sprompt  = "Current host will be the SADMIN [S]erver or a [C]lient (S,C)" # Prompt for Answer
+    wcfg_host_type = ""                                                 # Define Var. First
+    while ((wcfg_host_type.upper() != "S") and (wcfg_host_type.upper() != "C")): # Loop until S or C
+        wcfg_host_type = accept_field(sroot,sname,sdefault,sprompt)     # Go Accept Response 
+    update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type.upper())    # Update Value in sadmin.cfg
 
     # Accept the Company Name
-    wcfg_cie_name = accept_field(SADMIN_ROOT,"SADM_CIE_NAME","","Enter your company name")   
+    wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME","","Enter your company name")   
+    update_sadmin_cfg(sroot,"SADM_CIE_NAME",wcfg_cie_name)              # Update Value in sadmin.cfg
 
     # Accept SysAdmin Email address
-    wcfg_mail_addr = accept_field(SADMIN_ROOT,"SADM_MAIL_ADDR","","Enter System Administrator Email")
+    wcfg_mail_addr = accept_field(sroot,"SADM_MAIL_ADDR","","Enter System Administrator Email")
+    update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg
 
     # Accept the Email type to use at the end of each sript execution
-    wcfg_mail_type = accept_field(SADMIN_ROOT,"SADM_MAIL_TYPE",1,"Enter default email type","I",0,3)
+    wcfg_mail_type = accept_field(sroot,"SADM_MAIL_TYPE",1,"Enter default email type","I",0,3)
+    update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the SADMIN FQDN Server name
     while True:
-        wcfg_server = accept_field(SADMIN_ROOT,"SADM_SERVER","","Enter SADMIN (FQDN) server name","A")
+        wcfg_server = accept_field(sroot,"SADM_SERVER","","Enter SADMIN (FQDN) server name","A")
+        print ("Validating server name")
         try :
             xip = socket.gethostbyname(wcfg_server)
         except (socket.gaierror) as error : 
@@ -301,62 +320,70 @@ def main_process(SADMIN_ROOT):
             continue
         else:
             break
+    update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)            # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every log produce
-    wcfg_max_logline = accept_field(SADMIN_ROOT,"SADM_MAX_LOGLINE",1000,"Maximum number of lines in *.log file","I",1,10000)
+    wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",1000,"Maximum number of lines in *.log file","I",1,10000)
+    update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)  # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every RCH file produce
-    wcfg_max_rchline = accept_field(SADMIN_ROOT,"SADM_MAX_RCHLINE",100,"Maximum number of lines in *.rch file","I",1,300)
+    wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",100,"Maximum number of lines in *.rch file","I",1,300)
+    update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)  # Update Value in sadmin.cfg
 
     # Accept the default SSH port your use
-    wcfg_ssh_port = accept_field(SADMIN_ROOT,"SADM_SSH_PORT",22,"SSH port number used to connect to client","I",1,65536)
+    wcfg_ssh_port = accept_field(sroot,"SADM_SSH_PORT",22,"SSH port number used to connect to client","I",1,65536)
+    update_sadmin_cfg(sroot,"SADM_SSH_PORT",wcfg_ssh_port)        # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
-    wcfg_domain = accept_field(SADMIN_ROOT,"SADM_DOMAIN","","Default domain name","A")
+    wcfg_domain = accept_field(sroot,"SADM_DOMAIN","","Default domain name","A")
+    update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)            # Update Value in sadmin.cfg
 
     # Accept the Default User Group
-    wcfg_group=accept_field(SADMIN_ROOT,"SADM_GROUP","sadmin","Enter the default user Group","A")
-    found_grp = False                                                       # Not Found by Default
+    wcfg_group=accept_field(sroot,"SADM_GROUP","sadmin","Enter the default user Group","A")
+    found_grp = False                                                   # Not Found by Default
     with open('/etc/group') as f:
         for line in f:
             if line.startswith( "%s:" % (wcfg_group) ):
-                found_grp = True                                                    # Fould Line
+                found_grp = True                                        # Found Line
     if (found_grp == True):
         print ("[OK] the group %s is an existing group" % (wcfg_group))
     else:
         print ("Creating group %s" % (wcfg_group))
-        if wostype == "LINUX" :                                    # Under Linux
+        if wostype == "LINUX" :                                         # Under Linux
             ccode, cstdout, cstderr = oscommand("groupadd %s" % (wcfg_group)) 
-        if wostype == "AIX" :                                      # Under AIX
+        if wostype == "AIX" :                                           # Under AIX
             ccode, cstdout, cstderr = oscommand("mkgroup %s" % (wcfg_group))
         print ("Return code is %d" % (ccode))
+    update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
 
 
     # Accept the Default User Name
-    wcfg_user = accept_field(SADMIN_ROOT,"SADM_USER","sadmin","Enter the default user name","A")
-    found_usr = False                                                       # Not Found by Default
+    wcfg_user = accept_field(sroot,"SADM_USER","sadmin","Enter the default user name","A")
+    found_usr = False                                                   # Not Found by Default
     with open('/etc/passwd') as f:
         for line in f:
             if line.startswith( "%s:" % (wcfg_user) ):
-                found_usr = True                                                    # Fould Line
+                found_usr = True                                        # Found Line
     if (found_usr == True):
         print ("[OK] the user %s is an existing user" % (wcfg_user))
     else:
         print ("Creating user %s" % (wcfg_user))
-        if wostype == "LINUX" :                                    # Under Linux
+        if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/sh " % (wcfg_user)
             cmd += " -d %s "    % (os.environ.get('SADMIN'))
             cmd += " -c'%s' %s" % ("SADMIN Tools User",wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)
-        if wostype == "AIX" :                                      # Under AIX
+        if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_user)
             cmd += " home='%s' " % (os.environ.get('SADMIN'))
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)           
         print ("Return code is %d" % (ccode))
+    update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
 
     # Accept the Network IP and Netmask your Network
-    wcfg_network1 = accept_field(SADMIN_ROOT,"SADM_NETWORK1","192.168.1.0/24","Enter the network IP and netmask","A")
+    wcfg_network1 = accept_field(sroot,"SADM_NETWORK1","192.168.1.0/24","Enter the network IP and netmask","A")
+    update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)        # Update Value in sadmin.cfg
     
     return(0)                                                           # Return to Caller No Error
 
@@ -376,10 +403,21 @@ def main():
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
-    SADMIN_ROOT = set_sadmin_env(sver)                                  # Go Set SADMIN Env. Var.
+    sroot = set_sadmin_env(sver)                                        # Go Set SADMIN Env. Var.
     if (DEBUG):                                                         # If Debug is activated
-        print ("main: Directory SADMIN is %s" % (SADMIN_ROOT))                # Show SADMIN root Dir.
-    main_process(SADMIN_ROOT)                                           # Main Program Process 
+        print ("main: Directory SADMIN is %s" % (sroot))                # Show SADMIN root Dir.
+    main_process(sroot)                                                 # Main Program Process 
 
+    find sroot -exec chown 
+    print ("\n\n----------------------------------------------------------------------------")
+    print ("The SADMIN setup program is now terminated")
+    print ("The configuration file has now the minimal it take to start using SADMIN ")
+    print ("scripting tools.")
+    print ("If you need to change your answers, you can do it by editing this file.")
+    print ("The SADMIN configuration file name is %s. " % (sroot + "/cfg/sadmin.cfg"))
+    print ("\nNow, next step is to run the script that make sure all requirements are met.")
+    print ("Please type '%s' to start the script." % (sroot + "/bin/sadm_prereq_install.sh"))
+    print ("----------------------------------------------------------------------------\n")
+    
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
