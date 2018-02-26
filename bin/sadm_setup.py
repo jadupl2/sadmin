@@ -26,13 +26,15 @@
 #   V1.0b WIP Version#   
 # 2018_02_23 JDuplessis
 #   V1.1 First Beta Version 
+# 2018_02_26 JDuplessis
+#   V1.2 Second Beta Version 
 #
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,subprocess,glob,fnmatch,shutil # Import Std Python3 Modules
-    #from subprocess import Popen, PIPE
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil # Import Std Python3 Modules
+    from subprocess import Popen, PIPE
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -42,29 +44,76 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
+pn                  = os.path.basename(sys.argv[0])                     # Program name
+inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.1"
-DEBUG               = False                                             # Debug Activated or Not
+sver                = "1.2"
+DEBUG               = False                                              # Debug Activated or Not
 #
 sroot               = ""                                                # SADMIN Root Directory
+fhlog               = ""
+
+# Command require by SADMIN to be able to work correctly
+reqdict = {}                                                            # Requirement Package Dict.
+reqdict = { 
+    'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
+                    'deb':'lsb_release',                    'drepo':'base'},
+    'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
+                    'deb':'nmon',                           'drepo':'base'},
+    'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
+                    'deb':'ethtool',                        'drepo':'base'},
+    'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
+                    'deb':'net-tools',                      'drepo':'base'},
+    'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
+                    'deb':'lshw',                           'drepo':'base'},
+    'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
+                    'deb':'parted',                         'drepo':'base'},
+    'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
+                    'deb':'mailutils',                      'drepo':'base'},
+    'facter'     :{ 'rpm':'facter',                         'rrepo':'epel',  
+                    'deb':'facter',                         'drepo':'base'},
+    'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
+                    'deb':'bc',                             'drepo':'base'},
+    'fdisk'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
+                    'deb':'util-linux',                     'drepo':'base'},
+    'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
+                    'deb':'openssh-client',                 'drepo':'base'},
+    'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
+                    'deb':'dmidecode',                      'drepo':'base'},
+    'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
+                    'deb':'perl-base',                      'drepo':'base'},
+    'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
+                    'deb':'util-linux',                     'drepo':'base'},
+    'httpd'      :{ 'rpm':'httpd httpd-tools',              'rrepo':'base',
+                    'deb':'apache2 apache2-utils',          'drepo':'base'},
+    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
+                    'deb':'php php-mysql php-common',       'drepo':'base'},
+    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
+                    'deb':'mariadb-server mariadb-client',  'drepo':'base'}, 
+    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
+                    'deb':'cfg2html',                       'drepo':'base'},
+    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
+                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'}
+}
+
 
 
 # ----------------------------------------------------------------------------------------------
-#                                     Text Color Attributes Class
+#                                     Text Colors Attributes Class
 # ----------------------------------------------------------------------------------------------
 class color:
-   PURPLE = '\033[95m'
-   CYAN = '\033[96m'
-   DARKCYAN = '\033[36m'
-   BLUE = '\033[94m'
-   GREEN = '\033[92m'
-   YELLOW = '\033[93m'
-   RED = '\033[91m'
-   BOLD = '\033[1m'
-   UNDERLINE = '\033[4m'
-   END = '\033[0m'
+    PURPLE      = '\033[95m'
+    CYAN        = '\033[96m'
+    DARKCYAN    = '\033[36m'
+    BLUE        = '\033[94m'
+    GREEN       = '\033[92m'
+    YELLOW      = '\033[93m'
+    RED         = '\033[91m'
+    BOLD        = '\033[1m'
+    UNDERLINE   = '\033[4m'
+    END         = '\033[0m'
 
 #===================================================================================================
 #                Display Error Message in Red & Bold to catch user attention
@@ -79,13 +128,24 @@ def showerror(emsg):
 def showwarning(emsg):
     print ( color.YELLOW + color.BOLD + emsg + color.END)
 
+# ----------------------------------------------------------------------------------------------
+#                         Write Log to Log File, Screen or Both
+# ----------------------------------------------------------------------------------------------
+def writelog(sline):
+    global fhlog                                                        # Log file handler
+
+    now = datetime.datetime.now()
+    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
+    fhlog.write ("%s\n" % (logLine))
+    print ("%s" % logLine) 
+
 
 #===================================================================================================
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
 #===================================================================================================
 def oscommand(command) :
     if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
     out = p.stdout.read().strip().decode()
     err = p.stderr.read().strip().decode()
     returncode = p.wait()
@@ -99,17 +159,101 @@ def oscommand(command) :
     return (returncode,out,err)
 
 
-# ----------------------------------------------------------------------------------------------
-#   THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
-# ----------------------------------------------------------------------------------------------
-def locate_command(cmd) :
-    ccode,cstdout,cstderr = oscommand("%s %s" % (which,cmd))            # Try to Locate Command
+
+# --------------------------------------------------------------------------------------------------
+#       THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
+# --------------------------------------------------------------------------------------------------
+def locate_command(lcmd) :
+    COMMAND = "which %s" % (lcmd)                                       # Build the which command
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
     if ccode is not 0 :                                                 # Command was not Found
         cmd_path=""                                                     # Cmd Path Null when Not fnd
     else :                                                              # If command Path is Found
         cmd_path = cstdout                                              # Save command Path
     return (cmd_path)                                                   # Return Cmd Path
 
+
+
+# --------------------------------------------------------------------------------------------------
+#       This function verify if the Package Received in parameter is available on the server 
+# --------------------------------------------------------------------------------------------------
+def locate_package(lpackage,lpacktype) :
+    if (lostype == "AIX") : return                                      # Not yet implemented
+
+    if (lpacktype == "deb") : 
+        COMMAND = "dpkg-query -s %s  >/dev/null 2>&1" % (cmd)
+    else:
+        if (lpacktype == "rpm"):
+            COMMAND = "rpm -qi %s >/dev/null 2>&1" % (cmd)
+        else:
+            print ("Package type (%s) not supported" % (lpacktype))
+            cmd_path=''
+            return
+
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))       
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+
+    # If the package is installed
+    if ccode == 0 :                                                     # Command was Found
+        print ("Package %s installed" % (lcmd)) 
+        COMMAND = "which %s >/dev/null 2>&1"
+        if (DEBUG): print ("O/S command : %s " % (COMMAND))       
+        ccode,cstdout,cstderr = oscommand(COMMAND)                      # Try to Locate Command
+        cmd_path = ''
+        if (ccode != 0) :
+            cmd_path = cstdout                                          # Save command Path
+        return (cmd_path)
+
+    # If package is not install, ask user if want to install it.
+    if (lpacktype == "deb") : 
+        print ("install debian package")
+    else:
+        print ("install rpm packages")
+
+    return (cmd_path)                                                   # Return Cmd Path
+
+#===================================================================================================
+#                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
+#===================================================================================================
+#
+def satisfy_requirement(sroot,packtype):
+
+    if (DEBUG) : print ("Package type on this system is %s" % (packtype))
+    
+    # If apt-file not install, install that command
+    if ((packtype == "deb") and (locate_command('apt-file') == "")) :   # Is apt-file installed ?
+        writelog ("Installing apt-file ...")
+        oscommand("apt-get -y install apt-file >>%s 2>&1" % (logfile))
+        
+    if (DEBUG):                                                         # Under Debug Show Req Dict.
+        for cmd,pkginfo in reqdict.items():
+            print("\nTo use command '{0}' we need to install :" .format(cmd))
+            print('RPM Repo:{0} - Package: {1} ' .format(pkginfo['rrepo'], pkginfo['rpm']))
+            print('DEB Repo:{0} - Package: {1} ' .format(pkginfo['drepo'], pkginfo['deb']))
+
+    # Process Package dictionary and check if command are install - If not install it
+    for cmd,pkginfo in reqdict.items():
+        needed_cmd = cmd
+        if (packtype == "deb"):
+            needed_packages = pkginfo['deb'] 
+            needed_repo = pkginfo['drepo']
+        else:
+            needed_packages = pkginfo['rpm']
+            needed_repo = pkginfo['rrepo']
+        if (locate_command(needed_cmd) != ""):
+            print (color.YELLOW + color.BOLD + "[OK] " + color.END,end='')
+            print ("Command %s already installed" % (needed_cmd))
+            continue
+        print (color.YELLOW + color.BOLD + "[WARING] " + color.END,end='')
+        print ("'%s' is missing, " % (needed_cmd),end='')
+        print ("installation of '%s' package(s) " % (needed_packages),end='')
+        print ("from the %s repository needed" % (needed_repo))
+        if (packtype == "deb") :
+            icmd = "apt-get -y install %s" % (needed_packages)
+        if (packtype == "rpm") :
+            icmd = "yum install -y install %s" % (needed_packages)
+        print ("Command to execute %s" % (icmd))
 
 
 #===================================================================================================
@@ -163,8 +307,8 @@ def set_sadmin_env(ver):
         print ("Error renaming /etc/environment")                       # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
     print ("\n----------")
-    print ("[OK] SADMIN Environment variable is set to %s" % (sadm_base_dir))
-    #print ("\n----------")
+    MSG = "SADMIN Environment variable is set to %s" % (sadm_base_dir)
+    print (color.YELLOW + color.BOLD + "[OK] " + color.END + MSG)    
     print ("      - The line below is in /etc/environment") 
     print ("      - %s" % (eline),end='')                               # SADMIN Line in /etc/env...
     print ("      - This will make sure it is set upon reboot")
@@ -182,6 +326,7 @@ def set_sadmin_env(ver):
             print("Unexpected error:", sys.exc_info())                  # Advise Usr Show Error Msg
             exit(1)                                                     # Exit to O/S with Error
         print ("Initial sadmin.cfg file in place.")                     # Advise User ok to proceed
+    print ("----------")                                                # Dash Line
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 #===================================================================================================
@@ -190,7 +335,8 @@ def set_sadmin_env(ver):
 #===================================================================================================
 #
 def update_sadmin_cfg(sroot,sname,svalue):
-    """[Update the SADMIN configuration File.]
+    """
+    [Update the SADMIN configuration File.]
     Arguments:
     sroot  {[string]}   --  [SADMIN root install directory]
     sname  {[string]}   --  [Name of variable in sadmin.cfg to change value]
@@ -233,6 +379,7 @@ def update_sadmin_cfg(sroot,sname,svalue):
     except:
         print ("Error renaming %s to %s" % (wtmp_file,wcfg_file))       # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
+
 
 
 #===================================================================================================
@@ -457,45 +604,45 @@ def main_process(sroot):
 #===================================================================================================
 #
 def main():
-    #showerror ("Error Message")
-    #showwarning ("Error Message")
-
-    #dictcmd = {}
-    #dictcmd = {
-    #           'lscpu': {'rpm_package': 'lscpu.rpm', 'deb_package' : 'lscpu.deb'} ,
-    #           'rrdtool': {'rpm_package': 'rrdtool.rpm', 'deb_package' : 'rrdtool.deb'} 
-    #          }
-    #print ("For the command lscpu the rpm package is %s" % (dictcmd['lscpu']['rpm_package']))
-    #for cmd,pkgname in dictcmd.items():
-    #    print('To use Package {0} we need to install {1} or {2}'.format(cmd, pkgname['rpm_package'], pkgname['deb_package']))
-
-    #for key, value in dictcmd.items():
-    #    print("Key is %s and rpm is %s and deb is %s" (key,value, value))   
-    #sys.exit(1)
+    global fhlog
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo ./%s" % (st.pn))                                # Suggest to use 'sudo'
+       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
-    # Ask user location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
-    set_sadmin_env(sver)                                                # Go Set SADMIN Env. Var.
-    if (DEBUG):                                                         # If Debug is activated
-        print ("main: Directory SADMIN is %s" % (sroot))                # Show SADMIN root Dir.
+    # Ask for location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
+    sroot=set_sadmin_env(sver)                                          # Go Set SADMIN Env. Var.
+    if (DEBUG): print ("main: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
+
+    # Determine type of software package based on command present on system 
+    packtype=""                                                         # Set Initial Packaging Type
+    if (locate_command('rpm')   != "") : packtype="rpm"                 # Is rpm command on system ?
+    if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
+    if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
+    if (packtype == ""):                                                # If unknow/unsupported O/S
+        print ('Package type not supported - Command rpm,spkg or lslpp absent')
+        sys.exit(1)                                                     # Exit to O/S
+    if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
+    
+    # Open the log file
+    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
+    if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
+    try:                                                                # Try to Open/Create Log
+        fhlog=open(logfile,'w')                                         # Open Log File 
+    except IOError as e:                                                # If Can't Create Log
+        print ("Error creating log file %s" % (logfile))                # Print Log FileName
+        print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
+        print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
+        sys.exit(1)                                                     # Exit with Error
+
+    # Check if all commands, packages needed are installed, if not install them
+    satisfy_requirement(sroot,packtype)
+    sys.exit(1)
+        
     main_process(sroot)                                                 # Main Program Process 
 
-    # Show User what to do next.
-    print ("\n\n----------------------------------------------------------------------------")
-    print ("The SADMIN setup program is now terminated")
-    print ("The configuration file has now the minimal it take to start using SADMIN ")
-    print ("scripting tools.")
-    print ("If you need to change your answers, you can do it by editing this file.")
-    print ("The SADMIN configuration file name is %s. " % (sroot + "/cfg/sadmin.cfg"))
-    print ("\nNow, next step is to run the script that make sure all requirements are met.")
-    print ("Please type '%s' to start the script." % (sroot + "/bin/sadm_prereq_install.sh"))
-    print ("----------------------------------------------------------------------------\n")
-    
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
