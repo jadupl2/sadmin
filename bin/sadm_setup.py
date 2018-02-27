@@ -627,7 +627,11 @@ def main():
         sys.exit(1)                                                     # Exit to O/S
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     
-    # Open the log file
+    # Make log directory and Open the log file
+    try:                                                                # Catch mkdir error
+        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
+    except FileExistsError as e :                                       # If Dir. already exists                    
+        pass                                                            # It's ok if it exist
     logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
     if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
     try:                                                                # Try to Open/Create Log

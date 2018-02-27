@@ -41,7 +41,7 @@
 dat/
 jac/*
 !jac/bin
-log/
+log/*
 tmp/
 .vscode/
 
