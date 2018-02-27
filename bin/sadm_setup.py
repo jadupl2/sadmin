@@ -51,10 +51,12 @@ cur                 = ""                                                # MySQL 
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2a"
 DEBUG               = False                                             # Debug Activated or Not
-DRYRUN              = True                                              # Don't Install, Print Cmd
+DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
 fhlog               = ""                                                # Log File Handle
+logfile             = ""                                                # Log FileName
+
 
 # Text Colors Attributes Class
 class color:
@@ -99,18 +101,18 @@ reqdict = {
                     'deb':'dmidecode',                      'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-    'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
-                    'deb':'util-linux',                     'drepo':'base'},
     'httpd'      :{ 'rpm':'httpd httpd-tools',              'rrepo':'base',
                     'deb':'apache2 apache2-utils',          'drepo':'base'},
-    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
-                    'deb':'php php-mysql php-common',       'drepo':'base'},
-    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
-                    'deb':'mariadb-server mariadb-client',  'drepo':'base'}, 
-    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
-                    'deb':'cfg2html',                       'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
-                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'}
+#    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
+#                    'deb':'php php-mysql php-common',       'drepo':'base'},
+#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
+#                    'deb':'mariadb-server mariadb-client',  'drepo':'base'}, 
+#    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
+#                    'deb':'cfg2html',                       'drepo':'base'},
+#    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
+#                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
+    'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
+                    'deb':'util-linux',                     'drepo':'base'}
 }
 
 
@@ -227,7 +229,8 @@ def locate_package(lpackage,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(sroot,packtype):
+def satisfy_requirement(sroot,packtype,logfile):
+    global fhlog
 
     if (DEBUG) : print ("Package type on this system is %s" % (packtype))
     
@@ -240,7 +243,7 @@ def satisfy_requirement(sroot,packtype):
         if (DRYRUN):
             print ("Would run : %s" % (cmd))
         else:
-            oscommand("%s" & (cmd))
+            oscommand("%s" % (cmd))
         
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in reqdict.items():
@@ -259,13 +262,20 @@ def satisfy_requirement(sroot,packtype):
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
         # If command is already installed, continue with next command
+        req_total = 0                                                   # Reset Requirement Total
+        print ("Verify if command %s is installed" % (needed_cmd))
         if (locate_command(needed_cmd) != ""):                          # Check if command exist 
             printOk ("Command %s already installed" % (needed_cmd))     # Show User Check Result
+            req_total += 1                                              # Add 1 to Requirement Total
+        print ("Verify if package %s installed" % (needed_packages))
+        if locate_package(needed_packages,packtype) :
+            req_total += 1                                              # Add 1 to Requirement Total
+        if (req_total == 2):                                            # 
             continue
-        
+#################################
         # If command is not installed - Print What we are going to do
         if (DRYRUN):
-            printWarning ("'%s' is missing, " % (needed_cmd),end='')    # Show Missing Command 
+            printWarning ("'%s' is missing, " % (needed_cmd))           # Show Missing Command 
             print ("installation of '%s' package(s) " % (needed_packages),end='')
             print ("from the %s repository needed" % (needed_repo))
         
@@ -668,7 +678,7 @@ def main():
         sys.exit(1)                                                     # Exit with Error
 
     # Check if all commands, packages needed are installed, if not install them
-    satisfy_requirement(sroot,packtype)
+    satisfy_requirement(sroot,packtype,logfile)
     sys.exit(1)
         
     main_process(sroot)                                                 # Main Program Process 

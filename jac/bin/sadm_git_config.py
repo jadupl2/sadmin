@@ -121,7 +121,7 @@ def main():
     print (cmd)
     oscommand (cmd)
 
-    cmd = "git config --global user.email duplessis.jacques@gmail.com'
+    cmd = "git config --global user.email duplessis.jacques@gmail.com"
     print (cmd)
     oscommand (cmd)
 
