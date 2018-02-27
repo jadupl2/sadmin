@@ -33,7 +33,7 @@
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil # Import Std Python3 Modules
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil      # Import Std Python3 Modules
     from subprocess import Popen, PIPE
 except ImportError as e:
     print ("Import Error : %s " % e)
@@ -50,10 +50,25 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2"
-DEBUG               = False                                              # Debug Activated or Not
+DEBUG               = False                                             # Debug Activated or Not
+DRYRUN              = True                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
-fhlog               = ""
+fhlog               = ""                                                # Log File Handle
+
+# Text Colors Attributes Class
+class color:
+    PURPLE      = '\033[95m'
+    CYAN        = '\033[96m'
+    DARKCYAN    = '\033[36m'
+    BLUE        = '\033[94m'
+    GREEN       = '\033[92m'
+    YELLOW      = '\033[93m'
+    RED         = '\033[91m'
+    BOLD        = '\033[1m'
+    UNDERLINE   = '\033[4m'
+    END         = '\033[0m'
+
 
 # Command require by SADMIN to be able to work correctly
 reqdict = {}                                                            # Requirement Package Dict.
@@ -99,38 +114,34 @@ reqdict = {
 }
 
 
-
-# ----------------------------------------------------------------------------------------------
-#                                     Text Colors Attributes Class
-# ----------------------------------------------------------------------------------------------
-class color:
-    PURPLE      = '\033[95m'
-    CYAN        = '\033[96m'
-    DARKCYAN    = '\033[36m'
-    BLUE        = '\033[94m'
-    GREEN       = '\033[92m'
-    YELLOW      = '\033[93m'
-    RED         = '\033[91m'
-    BOLD        = '\033[1m'
-    UNDERLINE   = '\033[4m'
-    END         = '\033[0m'
+#===================================================================================================
+#                   Print [ERROR] in Red, followed by a the message received
+#===================================================================================================
+def printError(emsg):
+    print ( color.RED + color.BOLD + "[ERROR] " + emsg + color.END)
 
 #===================================================================================================
-#                Display Error Message in Red & Bold to catch user attention
+#                  Print [WARNING] in Red, followed by a the message received
 #===================================================================================================
-def showerror(emsg):
-    print ( color.RED + color.BOLD + emsg + color.END)
+def printWarning(emsg):
+    print ( color.YELLOW + color.BOLD + "[WARNING] " + emsg + color.END)
+
+#===================================================================================================
+#                   Print [OK] in Yellow, followed by a the message received
+#===================================================================================================
+def printOk(emsg):
+    print ( color.GREEN + color.BOLD + "[OK] " + emsg + color.END)
+
+#===================================================================================================
+#                           Print the message received in Bold
+#===================================================================================================
+def printBold(emsg):
+    print ( color.DARKCYAN + color.BOLD + emsg + color.END)
 
 
 #===================================================================================================
-#                Display Highlight Message in YELLOW & Bold to catch user attention
+#                           Write Log to Log File, Screen or Both
 #===================================================================================================
-def showwarning(emsg):
-    print ( color.YELLOW + color.BOLD + emsg + color.END)
-
-# ----------------------------------------------------------------------------------------------
-#                         Write Log to Log File, Screen or Both
-# ----------------------------------------------------------------------------------------------
 def writelog(sline):
     global fhlog                                                        # Log file handler
 
@@ -159,10 +170,9 @@ def oscommand(command) :
     return (returncode,out,err)
 
 
-
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #       THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 def locate_command(lcmd) :
     COMMAND = "which %s" % (lcmd)                                       # Build the which command
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
@@ -174,10 +184,9 @@ def locate_command(lcmd) :
     return (cmd_path)                                                   # Return Cmd Path
 
 
-
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 #       This function verify if the Package Received in parameter is available on the server 
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
 def locate_package(lpackage,lpacktype) :
     if (lostype == "AIX") : return                                      # Not yet implemented
 
@@ -213,6 +222,7 @@ def locate_package(lpackage,lpacktype) :
 
     return (cmd_path)                                                   # Return Cmd Path
 
+
 #===================================================================================================
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
@@ -221,10 +231,16 @@ def satisfy_requirement(sroot,packtype):
 
     if (DEBUG) : print ("Package type on this system is %s" % (packtype))
     
-    # If apt-file not install, install that command
-    if ((packtype == "deb") and (locate_command('apt-file') == "")) :   # Is apt-file installed ?
-        writelog ("Installing apt-file ...")
-        oscommand("apt-get -y install apt-file >>%s 2>&1" % (logfile))
+    # If Debian Package, refresh local repository
+    if (packtype == "deb"):                                             # Is Debian Package
+        print ("Refresh Local Repository")                              # Show what we are doing
+        cmd =  "apt-get -y -o Dpkg::Options::='--force-confdef' "
+        cmd += " -o Dpkg::Options::='--force-confold' upgrade "
+        cmd += " >> %s 2>&1" % (logfile)
+        if (DRYRUN):
+            print ("Would run : %s" % (cmd))
+        else:
+            oscommand("%s" & (cmd))
         
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in reqdict.items():
@@ -234,26 +250,35 @@ def satisfy_requirement(sroot,packtype):
 
     # Process Package dictionary and check if command are install - If not install it
     for cmd,pkginfo in reqdict.items():
-        needed_cmd = cmd
-        if (packtype == "deb"):
-            needed_packages = pkginfo['deb'] 
-            needed_repo = pkginfo['drepo']
-        else:
-            needed_packages = pkginfo['rpm']
-            needed_repo = pkginfo['rrepo']
-        if (locate_command(needed_cmd) != ""):
-            print (color.YELLOW + color.BOLD + "[OK] " + color.END,end='')
-            print ("Command %s already installed" % (needed_cmd))
+        needed_cmd = cmd                                                # File/Cmd Req. Check 
+        if (packtype == "deb"):                                         # If Current host use .deb
+            needed_packages = pkginfo['deb']                            # Save Packages to install
+            needed_repo = pkginfo['drepo']                              # Packages Repository to use
+        else:                                                           # If Current Host use .rpm
+            needed_packages = pkginfo['rpm']                            # Save Packages to install
+            needed_repo = pkginfo['rrepo']                              # Packages Repository to use
+
+        # If command is already installed, continue with next command
+        if (locate_command(needed_cmd) != ""):                          # Check if command exist 
+            printOk ("Command %s already installed" % (needed_cmd))     # Show User Check Result
             continue
-        print (color.YELLOW + color.BOLD + "[WARING] " + color.END,end='')
-        print ("'%s' is missing, " % (needed_cmd),end='')
-        print ("installation of '%s' package(s) " % (needed_packages),end='')
-        print ("from the %s repository needed" % (needed_repo))
-        if (packtype == "deb") :
-            icmd = "apt-get -y install %s" % (needed_packages)
-        if (packtype == "rpm") :
-            icmd = "yum install -y install %s" % (needed_packages)
-        print ("Command to execute %s" % (icmd))
+        
+        # If command is not installed - Print What we are going to do
+        if (DRYRUN):
+            printWarning ("'%s' is missing, " % (needed_cmd),end='')    # Show Missing Command 
+            print ("installation of '%s' package(s) " % (needed_packages),end='')
+            print ("from the %s repository needed" % (needed_repo))
+        
+        # Install Package Require
+        if (packtype == "deb") : 
+            icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
+        if (packtype == "rpm") : 
+            icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
+        if (DRYRUN):
+            print ("Command to execute %s" % (icmd))
+        else:
+            print ("Command to execute %s" % (icmd))
+            oscommand(icmd)
 
 
 #===================================================================================================
@@ -411,7 +436,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
             print ("%s" % (line),end='')                                # Print Documentation Line
         doc.close()                                                     # Close Document File
     except FileNotFoundError:                                           # If Open File Failed
-        showerror ("Doc file %s not found, question skipped" % (docname)) # Advise User, Question Skip
+        print ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
     print (" ")                                                         # Print blank Line
 
     # Accept Alphanumeric Value from the user    
@@ -430,11 +455,11 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
             try:
                 wdata = int(input("%s : " % (sprompt)))                 # Accept an Integer
             except (ValueError, TypeError) as error:                    # If Value is not an Integer
-                showerror ("Not an integer!")                           # Advise User Message
+                print ("Not an integer!")                               # Advise User Message
                 continue                                                # Continue at start of loop
             else:                                                       # If a Numeric Value Entered
                 if (wdata > smax) or (wdata < smin):                    # Must be between min & max
-                    showerror ("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
+                    print("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
                     continue                                            # Continue at start of loop
                 else:                                                   # Input Respect the range
                     break                                               # Break out of the loop
@@ -478,12 +503,12 @@ def main_process(sroot):
         wcfg_mail_addr = accept_field(sroot,"SADM_MAIL_ADDR",sdefault,sprompt)
         x = wcfg_mail_addr.split('@')                                   # Split Email Entered 
         if (len(x) != 2):                                               # If not 2 fields = Invalid
-            showerror ("Invalid email address - no '@' sign")           # Advise user no @ sign
+            printBold ("Invalid email address - no '@' sign")           # Advise user no @ sign
             continue                                                    # Go Back Re-Accept Email
         try :
             xip = socket.gethostbyname(x[1])                            # Try Get IP of Domain
         except (socket.gaierror) as error :                             # If Can't - domain invalid
-            showerror ("The domain %s is not valid" % (x[1]))           # Advise User
+            printBold ("The domain %s is not valid" % (x[1]))           # Advise User
             continue                                                    # Go Back re-accept email
         break                                                           # Ok Email seem valid enough
     update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg
@@ -503,13 +528,13 @@ def main_process(sroot):
         try :
             xip = socket.gethostbyname(wcfg_server)                     # Try to get IP of Server
         except (socket.gaierror) as error :                             # Unable to get Server IP
-            showerror ("Server Name %s isn't valid" % (wcfg_server))    # Advise user invalid Server
+            printBold ("Server Name %s isn't valid" % (wcfg_server))    # Advise user invalid Server
             continue                                                    # Go Re-Accept Server Name
         xarray = socket.gethostbyaddr(xip)                              # Use IP & Get HostName
         yname = repr(xarray[0]).replace("'","")                         # Remove the ' from answer
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
-            showerror ("The server %s with ip %s is returning %s" % (wcfg_server,xip,yname))
-            showerror ("FQDN is wrong or the IP doesn't correspond")    # Advise USer 
+            print ("The server %s with ip %s is returning %s" % (wcfg_server,xip,yname))
+            print ("FQDN is wrong or the IP doesn't correspond")        # Advise USer 
             continue                                                    # Return Re-Accept SADMIN
         else:
             break                                                       # Ok Name pass the test
@@ -543,7 +568,7 @@ def main_process(sroot):
             if line.startswith( "%s:" % (wcfg_group) ):                 # If Line start with Group:
                 found_grp = True                                        # Found Grp entered in file
     if (found_grp == True):                                             # Group were found in file
-        showwarning ("Group %s is an existing group" % (wcfg_group))    # Existing group Advise User 
+        print ("Group %s is an existing group" % (wcfg_group))          # Existing group Advise User 
     else:
         print ("Creating group %s" % (wcfg_group))                      # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
@@ -564,7 +589,7 @@ def main_process(sroot):
             if line.startswith( "%s:" % (wcfg_user) ):                  # Line Start with user name 
                 found_usr = True                                        # Found User in passwd file
     if (found_usr == True):                                             # User Name found in file
-        showwarning ("User %s is an existing user" % (wcfg_user))       # Existing user Advise user
+        printBold ("User %s is an existing user" % (wcfg_user))         # Existing user Advise user
     else:
         print ("Creating user %s" % (wcfg_user))                        # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
