@@ -27,7 +27,7 @@
 # 2018_02_23 JDuplessis
 #   V1.1 First Beta Version 
 # 2018_02_26 JDuplessis
-#   V1.2 Second Beta Version 
+#   V1.2a Second Beta Version 
 #
 #===================================================================================================
 #
@@ -49,7 +49,7 @@ inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm na
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.2"
+sver                = "1.2a"
 DEBUG               = False                                             # Debug Activated or Not
 DRYRUN              = True                                              # Don't Install, Print Cmd
 #
