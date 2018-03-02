@@ -26,8 +26,8 @@
 #   V1.0b WIP Version#   
 # 2018_02_23 JDuplessis
 #   V1.1 First Beta Version 
-# 2018_02_26 JDuplessis
-#   V1.2a Second Beta Version 
+# 2018_03_02 JDuplessis
+#   V1.2b Second Beta Version 
 #
 #===================================================================================================
 #
@@ -49,9 +49,9 @@ inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm na
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.2a"
-DEBUG               = False                                             # Debug Activated or Not
-DRYRUN              = False                                              # Don't Install, Print Cmd
+sver                = "1.2b"
+DEBUG               = False                                              # Debug Activated or Not
+DRYRUN              = True                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
 fhlog               = ""                                                # Log File Handle
@@ -189,40 +189,47 @@ def locate_command(lcmd) :
 #===================================================================================================
 #       This function verify if the Package Received in parameter is available on the server 
 #===================================================================================================
-def locate_package(lpackage,lpacktype) :
-    if (lostype == "AIX") : return                                      # Not yet implemented
+def locate_package(lpackages,lpacktype) :
 
-    if (lpacktype == "deb") : 
-        COMMAND = "dpkg-query -s %s  >/dev/null 2>&1" % (cmd)
-    else:
-        if (lpacktype == "rpm"):
-            COMMAND = "rpm -qi %s >/dev/null 2>&1" % (cmd)
+    if (DEBUG):
+        print ("Package name(s) received by locate_package : %s" % (lpackages,type(lpackages)))
+        print ("Package Type received in locate_package is %s" % (lpacktype))
+
+    if ((lpacktype != "deb") and (lpacktype != "rpm")):
+        writelog ("Package type invalid (%s)" % (lpacktype))
+        return (False)
+
+    found = True
+    for pack in lpackages.split(" "):
+        print ("Package name is %s " % (pack))
+        if (lpacktype == "deb") : 
+            COMMAND = "dpkg-query -W %s  >/dev/null 2>&1" % (pack)
+            if (DEBUG): print ("O/S command : %s " % (COMMAND))       
+            ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+            if (ccode != 0): 
+                found = False
         else:
-            print ("Package type (%s) not supported" % (lpacktype))
-            cmd_path=''
-            return
-
-    if (DEBUG): print ("O/S command : %s " % (COMMAND))       
-    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+            if (lpacktype == "rpm"):
+                COMMAND = "rpm -qi %s >/dev/null 2>&1" % (pack)
+                if (DEBUG): print ("O/S command : %s " % (COMMAND))       
+                ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+                if (ccode != 0): 
+                    found = False
+            else:
+                printError ("Package type (%s) not supported" % (lpacktype))
+                cmd_path=''
+                return (False)
 
     # If the package is installed
-    if ccode == 0 :                                                     # Command was Found
-        print ("Package %s installed" % (lcmd)) 
-        COMMAND = "which %s >/dev/null 2>&1"
-        if (DEBUG): print ("O/S command : %s " % (COMMAND))       
-        ccode,cstdout,cstderr = oscommand(COMMAND)                      # Try to Locate Command
-        cmd_path = ''
-        if (ccode != 0) :
-            cmd_path = cstdout                                          # Save command Path
-        return (cmd_path)
-
-    # If package is not install, ask user if want to install it.
-    if (lpacktype == "deb") : 
-        print ("install debian package")
-    else:
-        print ("install rpm packages")
-
-    return (cmd_path)                                                   # Return Cmd Path
+    if (found == True) :
+        printOk ("Package %s installed" % (lpackages)) 
+        return (True)
+    else :
+        if (lpacktype == "deb") : 
+            print ("Need to install debian package")
+        else:
+            print ("Need install rpm packages")
+        return (False)
 
 
 #===================================================================================================
@@ -261,25 +268,20 @@ def satisfy_requirement(sroot,packtype,logfile):
             needed_packages = pkginfo['rpm']                            # Save Packages to install
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
-        # If command is already installed, continue with next command
-        req_total = 0                                                   # Reset Requirement Total
-        print ("Verify if command %s is installed" % (needed_cmd))
-        if (locate_command(needed_cmd) != ""):                          # Check if command exist 
-            printOk ("Command %s already installed" % (needed_cmd))     # Show User Check Result
-            req_total += 1                                              # Add 1 to Requirement Total
+        # Verify if needed package is installed
+        print ("\n----------")
         print ("Verify if package %s installed" % (needed_packages))
         if locate_package(needed_packages,packtype) :
-            req_total += 1                                              # Add 1 to Requirement Total
-        if (req_total == 2):                                            # 
+            printOk ("Package(s) %s already installed" % (needed_packages)) # Show User Check Result
             continue
-#################################
-        # If command is not installed - Print What we are going to do
+
+        # If package(s) is not installed
         if (DRYRUN):
-            printWarning ("'%s' is missing, " % (needed_cmd))           # Show Missing Command 
-            print ("installation of '%s' package(s) " % (needed_packages),end='')
-            print ("from the %s repository needed" % (needed_repo))
+            printWarning ("'%s' is missing, " % (needed_packages))           # Show Missing Command 
+            print ("Need to install '%s' package(s) " % (needed_packages),end='')
+            print ("from the %s repository" % (needed_repo))
         
-        # Install Package Require
+        # Install Packages Required
         if (packtype == "deb") : 
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 

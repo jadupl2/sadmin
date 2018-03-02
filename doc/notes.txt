@@ -1,0 +1,13 @@
+
+cd /opt
+git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git
+
+
+for server ask for rrdtool location if not installed
+database creation if on server
+Mysql installed
+apache install and apache user and group
+build sql to create mysql database
+ask user (ro and rw) and password, host and port for db
+
+
