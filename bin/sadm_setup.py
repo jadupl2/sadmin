@@ -51,7 +51,7 @@ cur                 = ""                                                # MySQL 
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2b"
 DEBUG               = False                                              # Debug Activated or Not
-DRYRUN              = True                                              # Don't Install, Print Cmd
+DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
 fhlog               = ""                                                # Log File Handle
@@ -145,7 +145,7 @@ def printBold(emsg):
 #===================================================================================================
 def askyesno(emsg):
     while True:
-        wmsg = emsg + "(" color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
+        wmsg = emsg + "(" + color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
         wanswer = input(wmsg)
         if ((wanswer.upper == "Y") or (wanswer == "N")):
             break
@@ -212,7 +212,7 @@ def locate_package(lpackages,lpacktype) :
         print ("Package Type received in locate_package is %s" % (lpacktype))
 
     if ((lpacktype != "deb") and (lpacktype != "rpm")):
-        writelog ("Package type invalid (%s)" % (lpacktype))
+        printBold("Package type invalid (%s)" % (lpacktype))
         return (False)
 
     found = True
@@ -302,12 +302,15 @@ def satisfy_requirement(sroot,packtype,logfile):
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        writelog ("Package(s) '%s' not present" % (needed_packages))
+        print ("Package(s) '%s' not present" % (needed_packages))
         if (DRYRUN):
             print ("We would install %s with %s" % (needed_packages,icmd))
         else:
-            if (askyesno ("Proceed with installing package(s) %s" % (icmd)))
-                print ("Installing %s" % (oscommand(icmd)
+            rep = askyesno("Proceed with installing package(s) %s" % (needed_packages))
+            if (rep) :
+                print ("Installing %s" % (needed_packages))
+                ccode, cstdout, cstderr = oscommand(icmd)
+                print ("Status code of installation is %d" % (ccode))
             else:
                 print ("Skipping installation of %s" % (needed_packages))
 
@@ -599,7 +602,7 @@ def main_process(sroot):
             if line.startswith( "%s:" % (wcfg_group) ):                 # If Line start with Group:
                 found_grp = True                                        # Found Grp entered in file
     if (found_grp == True):                                             # Group were found in file
-        print ("Group %s is an existing group" % (wcfg_group))          # Existing group Advise User 
+        printBold ("Group %s is an existing group" % (wcfg_group))          # Existing group Advise User 
     else:
         print ("Creating group %s" % (wcfg_group))                      # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
@@ -699,12 +702,12 @@ def main():
         sys.exit(1)                                                     # Exit with Error
         
     main_process(sroot)                                                 # Main Program Process 
-    writelog ("The SADMIN configuration file is now done")
+    printBold ("\n\nThe SADMIN configuration file is now done")
 
     # Check if all commands, packages needed are installed, if not install them
-    writelog ("----------")    
-    writelog ("We will now verify if any package are missing to operate SADMIN")
-    writelog ("Before we install anything we will ask your confirmation")
+    print ("\n\n")
+    print ("We will now verify if any package are missing to operate SADMIN")
+    print ("Before we install anything we will ask your confirmation")
     input("Press enter to continue")
     satisfy_requirement(sroot,packtype,logfile)
     sys.exit(1)
