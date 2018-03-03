@@ -140,6 +140,22 @@ def printOk(emsg):
 def printBold(emsg):
     print ( color.DARKCYAN + color.BOLD + emsg + color.END)
 
+#===================================================================================================
+#           Print the message received & Ask for Yes (Return True) or No (Return False)
+#===================================================================================================
+def askyesno(emsg):
+    while True:
+        wmsg = emsg + "(" color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
+        wanswer = input(wmsg)
+        if ((wanswer.upper == "Y") or (wanswer == "N")):
+            break
+        else:
+            print ("Please respond by 'Y' or 'N'\n")
+    if (wanswer.upper == "Y") : 
+        return True
+    else:
+        return False
+        
 
 #===================================================================================================
 #                           Write Log to Log File, Screen or Both
@@ -278,7 +294,7 @@ def satisfy_requirement(sroot,packtype,logfile):
         # If package(s) is not installed
         if (DRYRUN):
             printWarning ("'%s' is missing, " % (needed_packages))           # Show Missing Command 
-            print ("Need to install '%s' package(s) " % (needed_packages),end='')
+            print ("We need to install '%s' package(s) " % (needed_packages),end='')
             print ("from the %s repository" % (needed_repo))
         
         # Install Packages Required
@@ -286,12 +302,14 @@ def satisfy_requirement(sroot,packtype,logfile):
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        writelog ("Package(s) not present, we need to install %s" % (needed_packages))
+        writelog ("Package(s) '%s' not present" % (needed_packages))
         if (DRYRUN):
-            print ("Command to execute %s" % (icmd))
+            print ("We would install %s with %s" % (needed_packages,icmd))
         else:
-            print ("Command to execute %s" % (icmd))
-            oscommand(icmd)
+            if (askyesno ("Proceed with installing package(s) %s" % (icmd)))
+                print ("Installing %s" % (oscommand(icmd)
+            else:
+                print ("Skipping installation of %s" % (needed_packages))
 
 
 #===================================================================================================
