@@ -201,7 +201,7 @@ def locate_package(lpackages,lpacktype) :
 
     found = True
     for pack in lpackages.split(" "):
-        print ("Package name is %s " % (pack))
+        #print ("Package name is %s " % (pack))
         if (lpacktype == "deb") : 
             COMMAND = "dpkg-query -W %s  >/dev/null 2>&1" % (pack)
             if (DEBUG): print ("O/S command : %s " % (COMMAND))       
@@ -225,10 +225,10 @@ def locate_package(lpackages,lpacktype) :
         printOk ("Package %s installed" % (lpackages)) 
         return (True)
     else :
-        if (lpacktype == "deb") : 
-            print ("Need to install debian package")
-        else:
-            print ("Need install rpm packages")
+        #if (lpacktype == "deb") : 
+        #    print ("Need to install debian package")
+        #else:
+        #    print ("Need install rpm packages")
         return (False)
 
 
@@ -272,7 +272,7 @@ def satisfy_requirement(sroot,packtype,logfile):
         print ("\n----------")
         print ("Verify if package %s installed" % (needed_packages))
         if locate_package(needed_packages,packtype) :
-            printOk ("Package(s) %s already installed" % (needed_packages)) # Show User Check Result
+            #printOk ("Package(s) %s already installed" % (needed_packages)) # Show User Check Result
             continue
 
         # If package(s) is not installed
@@ -286,6 +286,7 @@ def satisfy_requirement(sroot,packtype,logfile):
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
+        writelog ("Package(s) not present, we need to install %s" % (needed_packages))
         if (DRYRUN):
             print ("Command to execute %s" % (icmd))
         else:
@@ -501,7 +502,7 @@ def main_process(sroot):
 
     # Accept the Company Name
     sdefault = "Your Company Name"                                      # This is the default value
-    sprompt  = "Host will be a SADMIN [S]erver or a [C]lient (S,C)"     # Prompt for Answer
+    sprompt  = "Enter your Company name "                               # Prompt for Answer
     wcfg_cie_name = ""                                                  # Clear Cie Name
     while (wcfg_cie_name == ""):                                        # Until something entered
         wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME",sdefault,sprompt)# Accept Cie Name
@@ -678,12 +679,18 @@ def main():
         print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
         print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
         sys.exit(1)                                                     # Exit with Error
-
-    # Check if all commands, packages needed are installed, if not install them
-    satisfy_requirement(sroot,packtype,logfile)
-    sys.exit(1)
         
     main_process(sroot)                                                 # Main Program Process 
+    writelog ("The SADMIN configuration file is now done")
+
+    # Check if all commands, packages needed are installed, if not install them
+    writelog ("----------")    
+    writelog ("We will now verify if any package are missing to operate SADMIN")
+    writelog ("Before we install anything we will ask your confirmation")
+    input("Press enter to continue")
+    satisfy_requirement(sroot,packtype,logfile)
+    sys.exit(1)
+
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()

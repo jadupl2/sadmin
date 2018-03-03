@@ -1,0 +1,599 @@
+for server ask for rrdtool location if not installed
+database creation if on server
+Mysql installed
+apache install and apache user and group
+build sql to create mysql database
+ask user (ro and rw) and password, host and port for db
+
+----------
+Installation on Fedora 27
+[root@fedora27 selinux]# getenforce
+Permissive
+[root@fedora27 selinux]# 
+
+Disable selinux
+       Use Enforcing or 1 to put SELinux in enforcing mode.
+       Use Permissive or 0 to put SELinux in permissive mode.
+
+Disable SELinux Permanently
+To permanently disable SELinux, use your favorite text editor to open the file /etc/sysconfig/selinux as follows:
+
+# vi /etc/sysconfig/selinux
+Then change the directive SELinux=enforcing to SELinux=disabled as shown in the below image.
+SELINUX=disabled
+
+----------
+[root@fedora27 opt]# systemctl disable firewalld
+Unit /etc/systemd/system/firewalld.service is masked, ignoring.
+[root@fedora27 opt]# systemctl mask firewalld
+[root@fedora27 opt]# systemctl stop firewalld
+[root@fedora27 opt]# 
+
+----------
+
+[jacques@fedora27 ~]$ su - 
+[root@fedora27 ~]# cd /opt
+
+[root@fedora27 opt]# ls -l
+total 0
+
+[root@fedora27 opt]# df -h . 
+Filesystem               Size  Used Avail Use% Mounted on
+/dev/mapper/fedora-root   27G  6.4G   19G  26% /
+[root@fedora27 opt]# 
+
+[jacques@fedora27 ~]$ getenforce
+Disabled
+[jacques@fedora27 ~]$ 
+
+git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git ###### DID NOT WORK HANG - BELOW WORKED
+
+
+[root@fedora27 opt]# git clone http://gitserver.maison.ca:3000/jacques/sadmin.git 
+Cloning into 'sadmin'...
+remote: Counting objects: 6637, done.
+remote: Compressing objects: 100% (2656/2656), done.
+remote: Total 6637 (delta 4155), reused 6067 (delta 3769)
+Receiving objects: 100% (6637/6637), 38.44 MiB | 27.88 MiB/s, done.
+Resolving deltas: 100% (4155/4155), done.
+[root@fedora27 opt]# 
+
+[root@fedora27 opt]# ls -l
+total 4
+drwxr-xr-x 11 root root 4096 Mar  2 11:52 sadmin
+[root@fedora27 opt]# 
+
+[root@fedora27 opt]# ls -l sadmin
+total 72
+drwxr-xr-x  2 root root  4096 Mar  2 11:52 bin
+drwxr-xr-x  2 root root  4096 Mar  2 11:52 cfg
+drwxr-xr-x  3 root root  4096 Mar  2 11:52 doc
+drwxr-xr-x  3 root root  4096 Mar  2 11:52 jac
+drwxr-xr-x  2 root root  4096 Mar  2 11:52 lib
+-rw-r--r--  1 root root 35141 Mar  2 11:52 LICENSE
+drwxr-xr-x  9 root root  4096 Mar  2 11:52 pkg
+-rw-r--r--  1 root root  4067 Mar  2 11:52 README.md
+drwxr-xr-x  2 root root  4096 Mar  2 11:52 sys
+drwxr-xr-x 10 root root  4096 Mar  2 11:52 www
+[root@fedora27 opt]# 
+
+
+[root@fedora27 opt]# echo $SADMIN
+
+[root@fedora27 opt]# ls -l /etc/environment 
+-rw-r--r--. 1 root root 0 Sep  7 04:53 /etc/environment
+[root@fedora27 opt]# 
+
+CHECK FOR PYTHON3
+
+[root@fedora27 bin]# python3
+Python 3.6.4 (default, Feb  8 2018, 14:42:51) 
+[GCC 7.3.1 20180130 (Red Hat 7.3.1-2)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 
+[root@fedora27 bin]# 
+
+================================================================
+RUN SETUP SCRIPT
+
+[root@fedora27 bin]# 
+[root@fedora27 bin]# ./sadm_setup.py
+
+
+SADMIN Setup V1.2b
+------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+
+----------
+[OK] SADMIN Environment variable is set to /opt/sadmin
+      - The line below is in /etc/environment
+      - SADMIN=/opt/sadmin
+      - This will make sure it is set upon reboot
+Initial sadmin.cfg file in place.
+----------
+
+----------
+
+[SADM_HOST_TYPE]
+This is where you specify if this host is to become a SADMIN Client or Server.
+The questions that will follow depend on your answer.
+Please respond by entering an 'S' or a 'C'. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) C : c
+
+----------
+
+[SADM_CIE_NAME]
+This is where you specify your company name. 
+This name that will appears in the heading of the web
+interface and on some report and email that SADMIN produce. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) Your Company Name : The Batcave
+
+----------
+
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email. 
+For example, you can request that the log of a script be sent when an 
+error occured or every time is it run. (See SADM_MAIL_TYPE later on)
+Multiple email can be specify, a comma must seperate each of them. 
+Enter System Administrator Email  : duplessis.jacques@gmail.com
+
+----------
+
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
+at the top of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error.
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish. 
+Enter default email type : 1
+
+----------
+
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+This is the server where the MySQL Database and SADMIN web site will reside.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+ 
+Enter SADMIN (FQDN) server name Enter SADMIN (FQDN) server name : holmes.maison.ca
+Validating server name
+
+----------
+
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
+Log file are cumulative by default, but you can decide to overwrite the 
+script log if you want.
+The log are automatically trimmed to this number each time the script end.
+This help keeping our log to a reasonnable size.
+Recommended size is 1000 as a starting point.
+ 
+Maximum number of lines in LOG file : 999
+
+----------
+
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends, 
+it record the date/time and the ending status in what we call a RCH file 
+([R]eturn [C]ode [H]istory] file). 
+The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+The RCH file are created/updated each time a script is started and ended.
+The RCH file are automatically trimmed to this number each time the script end.
+SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
+can contain. 
+A value of 100 would keep an history of 50 days and is the default value.
+ 
+Maximum number of lines in RCH file : 99
+
+----------
+
+[SADM_DOMAIN]
+Enter the default Domain to use when adding a new server 
+Default domain name  : maison.ca
+
+----------
+
+[SADM_GROUP]
+This is the SADMIN Tools main user group that have access to all SADMIN 
+directories. Every day the housekeeping script will make sure that all 
+files in the $SADMIN directories are own by this group. 
+If others users need to access or used scripts located in $SADMIN, 
+they must be part of this group.
+The SADMIN default user group is 'sadmin'.
+ 
+Enter the default user Group sadmin : sadmin
+Creating group sadmin
+
+----------
+
+[SADM_USER]
+This is the SADMIN Tools main user that have access to all SADMIN directories.
+Every day the housekeeping script will make sure that all files in the $SADMIN
+directories are own by this user.
+The SADMIN default user name is 'sadmin'.
+ 
+Enter the default user name sadmin : sadmin
+Creating user sadmin
+
+----------
+Verify if package redhat-lsb-core installed
+Package name is redhat-lsb-core 
+Need install rpm packages
+[WARNING] 'redhat-lsb-core' is missing, 
+Need to install 'redhat-lsb-core' package(s) from the base repository
+Command to execute yum install -y install redhat-lsb-core >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package nmon installed
+Package name is nmon 
+Need install rpm packages
+[WARNING] 'nmon' is missing, 
+Need to install 'nmon' package(s) from the epel repository
+Command to execute yum install -y install nmon >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package ethtool installed
+Package name is ethtool 
+[OK] Package ethtool installed
+[OK] Package(s) ethtool already installed
+
+----------
+Verify if package net-tools installed
+Package name is net-tools 
+[OK] Package net-tools installed
+[OK] Package(s) net-tools already installed
+
+----------
+Verify if package lshw installed
+Package name is lshw 
+Need install rpm packages
+[WARNING] 'lshw' is missing, 
+Need to install 'lshw' package(s) from the base repository
+Command to execute yum install -y install lshw >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package parted installed
+Package name is parted 
+[OK] Package parted installed
+[OK] Package(s) parted already installed
+
+----------
+Verify if package mailx installed
+Package name is mailx 
+Need install rpm packages
+[WARNING] 'mailx' is missing, 
+Need to install 'mailx' package(s) from the base repository
+Command to execute yum install -y install mailx >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package facter installed
+Package name is facter 
+Need install rpm packages
+[WARNING] 'facter' is missing, 
+Need to install 'facter' package(s) from the epel repository
+Command to execute yum install -y install facter >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package bc installed
+Package name is bc 
+[OK] Package bc installed
+[OK] Package(s) bc already installed
+
+----------
+Verify if package util-linux installed
+Package name is util-linux 
+[OK] Package util-linux installed
+[OK] Package(s) util-linux already installed
+
+----------
+Verify if package openssh-clients installed
+Package name is openssh-clients 
+[OK] Package openssh-clients installed
+[OK] Package(s) openssh-clients already installed
+
+----------
+Verify if package dmidecode installed
+Package name is dmidecode 
+[OK] Package dmidecode installed
+[OK] Package(s) dmidecode already installed
+
+----------
+Verify if package perl installed
+Package name is perl 
+Need install rpm packages
+[WARNING] 'perl' is missing, 
+Need to install 'perl' package(s) from the base repository
+Command to execute yum install -y install perl >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package httpd httpd-tools installed
+Package name is httpd 
+Package name is httpd-tools 
+[OK] Package httpd httpd-tools installed
+[OK] Package(s) httpd httpd-tools already installed
+
+----------
+Verify if package util-linux installed
+Package name is util-linux 
+[OK] Package util-linux installed
+[OK] Package(s) util-linux already installed
+[root@fedora27 bin]# 
+
+N
+[root@fedora27 bin]# echo $SADMIN
+
+[root@fedora27 bin]# ls -l /etc/environment
+-rw-r--r-- 1 root root 20 Mar  2 11:55 /etc/environment
+[root@fedora27 bin]# cat /etc/environment
+SADMIN=/opt/sadmin
+
+[root@fedora27 bin]# 
+[root@fedora27 bin]# logout
+[jacques@fedora27 ~]$ su - 
+Password: 
+[root@fedora27 ~]# echo $SADMIN
+/opt/sadmin
+[root@fedora27 ~]# 
+
+
+======================= 2nd RUN - WITHOUT DRYRUN 
+
+SADMIN Setup V1.2b
+------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+
+----------
+[OK] SADMIN Environment variable is set to /opt/sadmin
+      - The line below is in /etc/environment
+      - SADMIN=/opt/sadmin
+      - This will make sure it is set upon reboot
+----------
+
+----------
+
+[SADM_HOST_TYPE]
+This is where you specify if this host is to become a SADMIN Client or Server.
+The questions that will follow depend on your answer.
+Please respond by entering an 'S' or a 'C'. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) C : c
+
+----------
+
+[SADM_CIE_NAME]
+This is where you specify your company name. 
+This name that will appears in the heading of the web
+interface and on some report and email that SADMIN produce. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) Your Company Name : The Batcave
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+----------
+
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email. 
+For example, you can request that the log of a script be sent when an 
+error occured or every time is it run. (See SADM_MAIL_TYPE later on)
+Multiple email can be specify, a comma must seperate each of them. 
+Enter System Administrator Email  : duplessis.jacques@gmail.com
+
+----------
+
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
+at the top of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error.
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish. 
+Enter default email type : 1
+
+----------
+
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+This is the server where the MySQL Database and SADMIN web site will reside.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+ 
+Enter SADMIN (FQDN) server name Enter SADMIN (FQDN) server name : holmes.maison.ca
+Validating server name
+
+----------
+
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
+Log file are cumulative by default, but you can decide to overwrite the 
+script log if you want.
+The log are automatically trimmed to this number each time the script end.
+This help keeping our log to a reasonnable size.
+Recommended size is 1000 as a starting point.
+ 
+Maximum number of lines in LOG file : 999
+
+----------
+
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends, 
+it record the date/time and the ending status in what we call a RCH file 
+([R]eturn [C]ode [H]istory] file). 
+The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+The RCH file are created/updated each time a script is started and ended.
+The RCH file are automatically trimmed to this number each time the script end.
+SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
+can contain. 
+A value of 100 would keep an history of 50 days and is the default value.
+ 
+Maximum number of lines in RCH file : 99
+
+----------
+
+[SADM_DOMAIN]
+Enter the default Domain to use when adding a new server 
+Default domain name  : maison.ca
+
+----------
+
+[SADM_GROUP]
+This is the SADMIN Tools main user group that have access to all SADMIN 
+directories. Every day the housekeeping script will make sure that all 
+files in the $SADMIN directories are own by this group. 
+If others users need to access or used scripts located in $SADMIN, 
+they must be part of this group.
+The SADMIN default user group is 'sadmin'.
+ 
+Enter the default user Group sadmin : sadmin
+Group sadmin is an existing group
+
+----------
+
+[SADM_USER]
+This is the SADMIN Tools main user that have access to all SADMIN directories.
+Every day the housekeeping script will make sure that all files in the $SADMIN
+directories are own by this user.
+The SADMIN default user name is 'sadmin'.
+ 
+Enter the default user name sadmin : sadmin
+User sadmin is an existing user
+
+
+here ask quetion before continuying with packages installation
+
+
+
+
+----------
+Verify if package redhat-lsb-core installed
+Package name is redhat-lsb-core 
+Need install rpm packages
+Command to execute yum install -y install redhat-lsb-core >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package nmon installed
+Package name is nmon 
+Need install rpm packages
+Command to execute yum install -y install nmon >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package ethtool installed
+Package name is ethtool 
+[OK] Package ethtool installed
+[OK] Package(s) ethtool already installed
+
+----------
+Verify if package net-tools installed
+Package name is net-tools 
+[OK] Package net-tools installed
+[OK] Package(s) net-tools already installed
+
+----------
+Verify if package lshw installed
+Package name is lshw 
+Need install rpm packages
+Command to execute yum install -y install lshw >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package parted installed
+Package name is parted 
+[OK] Package parted installed
+[OK] Package(s) parted already installed
+
+----------
+Verify if package mailx installed
+Package name is mailx 
+Need install rpm packages
+Command to execute yum install -y install mailx >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package facter installed
+Package name is facter 
+Need install rpm packages
+Command to execute yum install -y install facter >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package bc installed
+Package name is bc 
+[OK] Package bc installed
+[OK] Package(s) bc already installed
+
+----------
+Verify if package util-linux installed
+Package name is util-linux 
+[OK] Package util-linux installed
+[OK] Package(s) util-linux already installed
+
+----------
+Verify if package openssh-clients installed
+Package name is openssh-clients 
+[OK] Package openssh-clients installed
+[OK] Package(s) openssh-clients already installed
+
+----------
+Verify if package dmidecode installed
+Package name is dmidecode 
+[OK] Package dmidecode installed
+[OK] Package(s) dmidecode already installed
+
+----------
+Verify if package perl installed
+Package name is perl 
+Need install rpm packages
+Command to execute yum install -y install perl >>/opt/sadmin/log/sadm_setup.log 2>&1
+
+----------
+Verify if package httpd httpd-tools installed
+Package name is httpd 
+Package name is httpd-tools 
+[OK] Package httpd httpd-tools installed
+[OK] Package(s) httpd httpd-tools already installed
+
+----------
+Verify if package util-linux installed
+Package name is util-linux 
+[OK] Package util-linux installed
+[OK] Package(s) util-linux already installed
+[root@fedora27 bin]# 
+
+
+PUT ENDING MESSAGE
+
+LOG IS SUSPECT
+
+
+
+root@fedora27 bin]# cd ../log
+[root@fedora27 log]# ls -l
+total 4
+-rw-r--r--. 1 root root 846 Mar  2 12:34 sadm_setup.log
+[root@fedora27 log]# wc -l sadm_setup.log 
+18 sadm_setup.log
+[root@fedora27 log]# cat  sadm_setup.log
+Last metadata expiration check: 0:20:50 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+Last metadata expiration check: 0:20:52 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+Last metadata expiration check: 0:20:53 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+Last metadata expiration check: 0:20:54 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+Last metadata expiration check: 0:20:56 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+Last metadata expiration check: 0:20:57 ago on Fri 02 Mar 2018 12:13:39 PM EST.
+No match for argument: install
+Error: Unable to find a match
+[root@fedora27 log]# 
+
+
