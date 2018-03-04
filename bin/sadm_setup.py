@@ -145,13 +145,13 @@ def printBold(emsg):
 #===================================================================================================
 def askyesno(emsg):
     while True:
-        wmsg = emsg + "(" + color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
+        wmsg = emsg + " (" + color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
         wanswer = input(wmsg)
-        if ((wanswer.upper == "Y") or (wanswer == "N")):
+        if ((wanswer.upper() == "Y") or (wanswer.upper() == "N")):
             break
         else:
             print ("Please respond by 'Y' or 'N'\n")
-    if (wanswer.upper == "Y") : 
+    if (wanswer.upper() == "Y") : 
         return True
     else:
         return False
@@ -266,7 +266,8 @@ def satisfy_requirement(sroot,packtype,logfile):
         if (DRYRUN):
             print ("Would run : %s" % (cmd))
         else:
-            oscommand("%s" % (cmd))
+            ccode, cstdout, cstderr = oscommand(cmd)
+            print ("Status code of installation is %d" % (ccode))
         
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in reqdict.items():
@@ -286,7 +287,7 @@ def satisfy_requirement(sroot,packtype,logfile):
 
         # Verify if needed package is installed
         print ("\n----------")
-        print ("Verify if package %s installed" % (needed_packages))
+        #print ("Verify if package %s installed" % (needed_packages))
         if locate_package(needed_packages,packtype) :
             #printOk ("Package(s) %s already installed" % (needed_packages)) # Show User Check Result
             continue
@@ -477,7 +478,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     if (stype.upper() == "A"):                                          # If Alphanumeric Input
         wdata=""
         while (wdata == ""):                                            # Input until something 
-            wdata = input("%s %s : " % (sprompt,sdefault))              # Accept user response
+            wdata = input("%s : " % (sprompt))              # Accept user response
             wdata = wdata.strip()                                       # Del leading/trailing space
             if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
             return wdata                                                # Return Data to caller
@@ -557,7 +558,7 @@ def main_process(sroot):
     sdefault = ""                                                       # No Default value 
     sprompt  = "Enter SADMIN (FQDN) server name"                        # Prompt for Answer
     while True:                                                         # Accept until valid server
-        wcfg_server = accept_field(sroot,"SADM_SERVER",sprompt,sprompt) # Accept SADMIN Server Name
+        wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt) # Accept SADMIN Server Name
         print ("Validating server name")                                # Advise User Validating
         try :
             xip = socket.gethostbyname(wcfg_server)                     # Try to get IP of Server
@@ -706,7 +707,7 @@ def main():
 
     # Check if all commands, packages needed are installed, if not install them
     print ("\n\n")
-    print ("We will now verify if any package are missing to operate SADMIN")
+    print ("We will now verify if any package are missing to use SADMIN")
     print ("Before we install anything we will ask your confirmation")
     input("Press enter to continue")
     satisfy_requirement(sroot,packtype,logfile)
