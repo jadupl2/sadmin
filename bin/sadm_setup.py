@@ -257,17 +257,19 @@ def satisfy_requirement(sroot,packtype,logfile):
 
     if (DEBUG) : print ("Package type on this system is %s" % (packtype))
     
-    # If Debian Package, refresh local repository
+    # If Debian Package, Refresh The Local Repository 
     if (packtype == "deb"):                                             # Is Debian Package
-        print ("Refresh Local Repository")                              # Show what we are doing
-        cmd =  "apt-get -y -o Dpkg::Options::='--force-confdef' "
-        cmd += " -o Dpkg::Options::='--force-confold' upgrade "
-        cmd += " >> %s 2>&1" % (logfile)
+        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)
         if (DRYRUN):
-            print ("Would run : %s" % (cmd))
+            print ("DryRun - Would run : %s" % (cmd))
         else:
+            print ("Running apt-get update...",end='') 
             ccode, cstdout, cstderr = oscommand(cmd)
-            print ("Status code of installation is %d" % (ccode))
+            if (ccode == 0) : 
+                print (" Done ")
+            else:
+                printError ("Error Code is %d" % (ccode))
+
         
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in reqdict.items():
@@ -286,34 +288,29 @@ def satisfy_requirement(sroot,packtype,logfile):
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
         # Verify if needed package is installed
-        print ("\n----------")
-        #print ("Verify if package %s installed" % (needed_packages))
-        if locate_package(needed_packages,packtype) :
-            #printOk ("Package(s) %s already installed" % (needed_packages)) # Show User Check Result
-            continue
+        print ("Checking for %s ...",end='' % (needed_packages))        # Show What were looking for
+        if locate_package(needed_packages,packtype) :                   # If Package is installed
+            print (" Ok ")                                              # Show User Check Result
+            continue                                                    # Proceed with Next Package
 
-        # If package(s) is not installed
-        if (DRYRUN):
-            printWarning ("'%s' is missing, " % (needed_packages))           # Show Missing Command 
-            print ("We need to install '%s' package(s) " % (needed_packages),end='')
-            print ("from the %s repository" % (needed_repo))
-        
-        # Install Packages Required
+        # If running in Dry Run Mode and package(s) is not installed
+        if (DRYRUN):                                                    # If Running in DryRun Mode
+            printWarning ("'%s' is missing, " % (needed_packages))      # Show Missing Command 
+
+        # Install Missing Packages
         if (packtype == "deb") : 
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        print ("Package(s) '%s' not present" % (needed_packages))
         if (DRYRUN):
             print ("We would install %s with %s" % (needed_packages,icmd))
+            continue                                                    # Proceed with Next Package
+        print ("Installing %s ..." % (needed_packages))
+        ccode, cstdout, cstderr = oscommand(icmd)
+        if (ccode == 0) : 
+            print (" Done ")
         else:
-            rep = askyesno("Proceed with installing package(s) %s" % (needed_packages))
-            if (rep) :
-                print ("Installing %s" % (needed_packages))
-                ccode, cstdout, cstderr = oscommand(icmd)
-                print ("Status code of installation is %d" % (ccode))
-            else:
-                print ("Skipping installation of %s" % (needed_packages))
+            printError ("Error Code is %d" % (ccode))
 
 
 #===================================================================================================
