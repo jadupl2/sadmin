@@ -166,7 +166,7 @@ def writelog(sline):
     now = datetime.datetime.now()
     logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
     fhlog.write ("%s\n" % (logLine))
-    print ("%s" % logLine) 
+    #print ("%s" % logLine) 
 
 
 #===================================================================================================
@@ -238,7 +238,7 @@ def locate_package(lpackages,lpacktype) :
 
     # If the package is installed
     if (found == True) :
-        printOk ("Package %s installed" % (lpackages)) 
+        #printOk ("Package %s installed" % (lpackages)) 
         return (True)
     else :
         #if (lpacktype == "deb") : 
@@ -264,6 +264,7 @@ def satisfy_requirement(sroot,packtype,logfile):
             print ("DryRun - Would run : %s" % (cmd))
         else:
             print ("Running apt-get update...",end='') 
+            writelog ("Running apt-get update...") 
             ccode, cstdout, cstderr = oscommand(cmd)
             if (ccode == 0) : 
                 print (" Done ")
@@ -288,29 +289,33 @@ def satisfy_requirement(sroot,packtype,logfile):
             needed_repo = pkginfo['rrepo']                              # Packages Repository to use
 
         # Verify if needed package is installed
-        print ("Checking for %s ...",end='' % (needed_packages))        # Show What were looking for
+        pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
+        print (pline, end='') 									        # Show What were looking for
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             print (" Ok ")                                              # Show User Check Result
             continue                                                    # Proceed with Next Package
 
         # If running in Dry Run Mode and package(s) is not installed
         if (DRYRUN):                                                    # If Running in DryRun Mode
-            printWarning ("'%s' is missing, " % (needed_packages))      # Show Missing Command 
+            printWarning ("'%s' is missing ... " % (needed_packages))   # Show Missing Command 
 
         # Install Missing Packages
         if (packtype == "deb") : 
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
-            icmd = "yum install -y install %s >>%s 2>&1" % (needed_packages,logfile)
+            icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
         if (DRYRUN):
             print ("We would install %s with %s" % (needed_packages,icmd))
             continue                                                    # Proceed with Next Package
-        print ("Installing %s ..." % (needed_packages))
+        pline = "Installing %s ... " % (needed_packages)
+        print (pline, end='')
+        writelog (pline)
+        writelog (icmd)
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             print (" Done ")
         else:
-            printError ("Error Code is %d" % (ccode))
+            printError ("Error Code is %d - See log %s" % (ccode,logfile))
 
 
 #===================================================================================================
@@ -713,10 +718,10 @@ def main():
     printBold ("\n\nChecking SADMIN Packages requirment")
 
     # Check if all commands, packages needed are installed, if not install them
-    print ("\n\n")
-    print ("We will now verify if any package are missing to use SADMIN")
-    print ("Before we install anything we will ask your confirmation")
-    input("Press enter to continue")
+    #print ("\n\n")
+    #print ("We will now verify if any package are missing to use SADMIN")
+    #print ("Before we install anything we will ask your confirmation")
+    #input("Press enter to continue")
     satisfy_requirement(sroot,packtype,logfile)
     sys.exit(1)
 

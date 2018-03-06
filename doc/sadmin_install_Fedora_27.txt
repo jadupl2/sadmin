@@ -1,0 +1,193 @@
+Installation Fedora 27 - Lundi 5 Mars 2018
+
+[root@fedora27 opt]# getenforce
+Enforcing
+
+[root@fedora27 opt]# systemctl status firewalld
+● firewalld.service
+   Loaded: masked (/dev/null; masked)
+   Active: inactive (dead)
+[root@fedora27 opt]# 
+
+[root@fedora27 opt]# git clone  https://jadupl2@bitbucket.org/jadupl2/sadmin.git
+Cloning into 'sadmin'...
+Password for 'https://jadupl2@bitbucket.org': 
+remote: Counting objects: 6663, done.
+remote: Compressing objects: 100% (2854/2854), done.
+remote: Total 6663 (delta 4169), reused 5953 (delta 3596)
+Receiving objects: 100% (6663/6663), 38.50 MiB | 3.89 MiB/s, done.
+Resolving deltas: 100% (4169/4169), done.
+[root@fedora27 opt]# 
+
+[root@fedora27 opt]# ls -l 
+total 4
+drwxr-xr-x. 11 root root 4096 Mar  5 11:34 sadmin
+[root@fedora27 opt]# 
+
+[root@fedora27 opt]# cd sadmin
+
+[root@fedora27 sadmin]# ls
+bin  cfg  doc  jac  lib  LICENSE  pkg  README.md  sys  www
+[root@fedora27 sadmin]# 
+
+[root@fedora27 sadmin]# cd bin
+[root@fedora27 bin]# 
+[root@fedora27 bin]# ./sadm_setup.py 
+
+SADMIN Setup V1.2b
+------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+
+----------
+[OK] SADMIN Environment variable is set to /opt/sadmin
+      - The line below is in /etc/environment
+      - SADMIN=/opt/sadmin
+      - This will make sure it is set upon reboot
+Initial sadmin.cfg file in place.
+
+----------
+
+[SADM_HOST_TYPE]
+This is where you specify if this host is to become a SADMIN Client or Server.
+The questions that will follow depend on your answer.
+Please respond by entering an 'S' or a 'C'. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) : 
+
+----------
+
+[SADM_CIE_NAME]
+This is where you specify your company name. 
+This name that will appears in the heading of the web
+interface and on some report and email that SADMIN produce. 
+Enter your Company name  : The Batcave
+----------
+
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email. 
+For example, you can request that the log of a script be sent when an 
+error occured or every time is it run. (See SADM_MAIL_TYPE later on)
+Multiple email can be specify, a comma must seperate each of them. 
+Enter System Administrator Email : duplessis.jacques@gmail.com
+
+----------
+
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
+at the top of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error.
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish. 
+Enter default email type : 1
+
+----------
+
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+This is the server where the MySQL Database and SADMIN web site will reside.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+ 
+Enter SADMIN (FQDN) server name : holmes.maison.ca
+
+----------
+
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
+Log file are cumulative by default, but you can decide to overwrite the 
+script log if you want.
+The log are automatically trimmed to this number each time the script end.
+This help keeping our log to a reasonnable size.
+Recommended size is 1000 as a starting point.
+ 
+Maximum number of lines in LOG file : 999
+
+----------
+
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends, 
+it record the date/time and the ending status in what we call a RCH file 
+([R]eturn [C]ode [H]istory] file). 
+The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+The RCH file are created/updated each time a script is started and ended.
+The RCH file are automatically trimmed to this number each time the script end.
+SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
+can contain. 
+A value of 100 would keep an history of 50 days and is the default value.
+ 
+Maximum number of lines in RCH file : 99
+
+
+----------
+
+[SADM_DOMAIN]
+Enter the default Domain to use when adding a new server 
+Default domain name : maison.ca
+
+----------
+
+[SADM_GROUP]
+This is the SADMIN Tools main user group that have access to all SADMIN 
+directories. Every day the housekeeping script will make sure that all 
+files in the $SADMIN directories are own by this group. 
+If others users need to access or used scripts located in $SADMIN, 
+they must be part of this group.
+The SADMIN default user group is 'sadmin'.
+ 
+Enter the default user Group : sadmin
+Creating group sadmin
+
+----------
+
+[SADM_USER]
+This is the SADMIN Tools main user that have access to all SADMIN directories.
+Every day the housekeeping script will make sure that all files in the $SADMIN
+directories are own by this user.
+The SADMIN default user name is 'sadmin'.
+ 
+Enter the default user name : sadmin
+Creating user sadmin
+
+
+The SADMIN configuration file is now done
+Checking for redhat-lsb-core ... Installing redhat-lsb-core ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for nmon ... Installing nmon ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for ethtool ...  Ok 
+Checking for net-tools ...  Ok 
+Checking for lshw ... Installing lshw ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for parted ...  Ok 
+Checking for mailx ... Installing mailx ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for facter ... Installing facter ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for bc ...  Ok 
+Checking for util-linux ...  Ok 
+Checking for openssh-clients ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for perl ... Installing perl ... [ERROR] Error Code is 1 - See log /opt/sadmin/log/sadm_setup.log
+Checking for httpd httpd-tools ...  Ok 
+Checking for util-linux ...  Ok 
+[root@fedora27 bin]# 
+
+
+
+The SADMIN configuration file is now done
+Checking for redhat-lsb-core ... Installing redhat-lsb-core ...  Done 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for ethtool ...  Ok 
+Checking for net-tools ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for parted ...  Ok 
+Checking for mailx ...  Ok 
+Checking for facter ... Installing facter ...  Done 
+Checking for bc ...  Ok 
+Checking for util-linux ...  Ok 
+Checking for openssh-clients ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for perl ... Installing perl ...  Done 
+Checking for httpd httpd-tools ...  Ok 
+Checking for util-linux ...  Ok 
+[root@fedora27 bin]# 
