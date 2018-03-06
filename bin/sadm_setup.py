@@ -50,7 +50,7 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2b"
-DEBUG               = True                                               # Debug Activated or Not
+DEBUG               = False                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
@@ -78,7 +78,7 @@ class color:
 req_client = {}                                                            # Requirement Package Dict.
 req_client = { 
     'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
-                    'deb':'lsb_release',                    'drepo':'base'},
+                    'deb':'lsb-release',                    'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
                     'deb':'nmon',                           'drepo':'base'},
     'ethtool'    :{ 'rpm':'ethtool',                        'rrepo':'base',  
@@ -265,7 +265,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
-     if (stype == 'C'):
+    if (stype == 'C'):
         req_work = req_client                                           # Move CLient Dict in WDict.
         printBold ("\n\nChecking SADMIN Client Packages requirement")   # Show User what we do
     else:
@@ -352,8 +352,8 @@ def set_sadmin_env(ver):
     # Check if Directory specify contain the Shell SADMIN Library (Indicate Dir. is the good one)
     libname="%s/lib/sadmlib_std.sh" % (sadm_base_dir)                   # Set Full Path to Shell Lib
     if os.path.exists(libname)==False:                                  # If SADMIN Lib Not Found
-        print ("Directory %s isn't SADMIN directory" % (sadm_base_dir)) # Advise User Dir. Wrong
-        print ("It doesn't contains the file %s" % (libname))           # Show Why we Refused
+        printBold ("Directory %s isn't SADMIN directory" % (sadm_base_dir)) # Advise User Dir. Wrong
+        printBold ("It doesn't contains the file %s\n" % (libname))     # Show Why we Refused
         sys.exit(1)                                                     # Exit with Error Code
 
     # Ok now we can Set SADMIN Environnement Variable, for the moment
@@ -361,13 +361,13 @@ def set_sadmin_env(ver):
 
     # Now we need to make sure that 'SADMIN=' line is in /etc/environment (So it survive a reboot)
     try : 
-        fi = open('/etc/environment','r')                                   # Environment Input File
-    except FileNotFoundError as e :
-        print ("File /etc/environment does not exist")
-        print ("Find a way to make SADMIN environment variable survive a reboot")
-        fi = open('/etc/environment','w')                               # Create Environment File
-        fi.close()
-        fi = open('/etc/environment','r')                                   # Environment Input File
+        fi = open('/etc/environment','r')                               # Environment Input File
+    except FileNotFoundError as e :                                     # If Env file doesn't exist
+        printBold ("File /etc/environment does not exist")              # Advise user missing file
+        printBold ("Find alternative to make SADMIN environment variable survive a reboot")
+        fi = open('/etc/environment','w')                               # Open in Write Mode 
+        fi.close()                                                      # Just to create one
+        fi = open('/etc/environment','r')                               # Re-open in read mode
 
     fo = open('/etc/environment.new','w')                               # Environment Output File
     fileEmpty=True                                                      # Env. file assume empty
@@ -391,7 +391,7 @@ def set_sadmin_env(ver):
     print ("\n----------")
     MSG = "SADMIN Environment variable is set to %s" % (sadm_base_dir)
     print (color.YELLOW + color.BOLD + "[OK] " + color.END + MSG)    
-    print ("      - The line below is in /etc/environment") 
+    print ("      - The line below is in /etc/environment now") 
     print ("      - %s" % (eline),end='')                               # SADMIN Line in /etc/env...
     print ("      - This will make sure it is set upon reboot")
 
@@ -686,7 +686,7 @@ def setup_sadmin_config_file(sroot):
 #         DETERMINE THE LINUX INSTALLATION PACKAGE TYPE AND OPEN THE SCRIPT LOG FILE 
 #===================================================================================================
 #
-def getpacktype():
+def getpacktype(sroot):
 
     # Determine type of software package based on command present on system 
     packtype=""                                                         # Set Initial Packaging Type
@@ -737,7 +737,7 @@ def main():
     # Ask for location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
     sroot=set_sadmin_env(sver)                                          # Go Set SADMIN Env. Var.
     if (DEBUG): print ("main: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
-    (packtype,fhlog,logfile) = getpacktype()                            # Pack Type, Open Log
+    (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
     setup_sadmin_config_file(sroot)                                     # Setup & Update sadmin.cfg
@@ -747,14 +747,17 @@ def main():
 
     print ("\n\n------------------------------")
     print ("End of SADMIN Setup")
-    print ("\nTo create your own script using SADMIN, you may want to run and view the code of ")
+    print ("You can now use SADMIN\n")
+    print ("\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY")
+    print ("To create your own script using SADMIN, you may want to run and view the code of ")
     print ("$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point")
     print ("You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.")
     print ("They will present all functions available to your shell or Python script")
-    print ("\nThe web Interface is available at http://sadmin.maison.ca")
+    print ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM")
+    print ("The web Interface is available at http://sadmin.maison.ca")
     print ("\n\n------------------------------")
 
-    fh.close()                                                          # Close Script Log
+    fhlog.close()                                                       # Close Script Log
     sys.exit(1)                                                         # Exit to Operating System
 
 
