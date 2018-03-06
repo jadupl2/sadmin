@@ -343,7 +343,15 @@ def set_sadmin_env(ver):
     os.environ['SADMIN'] = sadm_base_dir                                # Setting SADMIN Env. Dir.
 
     # Now we need to make sure that 'SADMIN=' line is in /etc/environment (So it survive a reboot)
-    fi = open('/etc/environment','r')                                   # Environment Input File
+    try : 
+        fi = open('/etc/environment','r')                                   # Environment Input File
+    except FileNotFoundError as e :
+        print ("File /etc/environment does not exist")
+        print ("Find a way to make SADMIN environment variable survive a reboot")
+        fi = open('/etc/environment','w')                               # Create Environment File
+        fi.close()
+        fi = open('/etc/environment','r')                                   # Environment Input File
+
     fo = open('/etc/environment.new','w')                               # Environment Output File
     fileEmpty=True                                                      # Env. file assume empty
     eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in /etc/env...
@@ -680,14 +688,16 @@ def main():
     if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
     if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
     if (packtype == ""):                                                # If unknow/unsupported O/S
-        print ('Package type not supported - Command rpm,spkg or lslpp absent')
+        print ('None of these command is found (rpm, spkg or lslpp absent)')
+        print ('No supported package type is detected')
+        print ('Process aborted')
         sys.exit(1)                                                     # Exit to O/S
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     
     # Make log directory and Open the log file
     try:                                                                # Catch mkdir error
         os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
-    except FileExistsError as e :                                       # If Dir. already exists                    
+    except FileExistsError as e :                                       # If Dir. already exists 
         pass                                                            # It's ok if it exist
     logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
     if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
@@ -700,7 +710,7 @@ def main():
         sys.exit(1)                                                     # Exit with Error
         
     main_process(sroot)                                                 # Main Program Process 
-    printBold ("\n\nThe SADMIN configuration file is now done")
+    printBold ("\n\nChecking SADMIN Packages requirment")
 
     # Check if all commands, packages needed are installed, if not install them
     print ("\n\n")
