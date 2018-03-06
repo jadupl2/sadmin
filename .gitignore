@@ -50,6 +50,8 @@ www/arc/
 www/dat/
 www/rrd/
 www/tmp/
+www/cfg/.crontab.txt
+
 
 # Specific files to exclude 
 sysmon.lock
