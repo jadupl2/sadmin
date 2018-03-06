@@ -50,12 +50,14 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2b"
-DEBUG               = False                                              # Debug Activated or Not
+DEBUG               = True                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
+stype               = ""                                                # C=Client S=Server Install
 fhlog               = ""                                                # Log File Handle
 logfile             = ""                                                # Log FileName
+req_work            = {}                                                # Active Requirement Dict.
 
 
 # Text Colors Attributes Class
@@ -72,9 +74,9 @@ class color:
     END         = '\033[0m'
 
 
-# Command require by SADMIN to be able to work correctly
-reqdict = {}                                                            # Requirement Package Dict.
-reqdict = { 
+# Command and package require by SADMIN Client to work correctly
+req_client = {}                                                            # Requirement Package Dict.
+req_client = { 
     'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
                     'deb':'lsb_release',                    'drepo':'base'},
     'nmon'       :{ 'rpm':'nmon',                           'rrepo':'epel',  
@@ -101,20 +103,27 @@ reqdict = {
                     'deb':'dmidecode',                      'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-    'httpd'      :{ 'rpm':'httpd httpd-tools',              'rrepo':'base',
-                    'deb':'apache2 apache2-utils',          'drepo':'base'},
-#    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
-#                    'deb':'php php-mysql php-common',       'drepo':'base'},
-#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
-#                    'deb':'mariadb-server mariadb-client',  'drepo':'base'}, 
-#    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
-#                    'deb':'cfg2html',                       'drepo':'base'},
-#    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
-#                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
+    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
+                    'deb':'cfg2html',                       'drepo':'base'},
+    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
+                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'}
 }
 
+
+# Command and package require by SADMIN Server to work correctly
+req_server = {}                                                            # Requirement Package Dict.
+req_server = { 
+    'httpd'      :{ 'rpm':'httpd httpd-tools',              'rrepo':'base',
+                    'deb':'apache2 apache2-utils',          'drepo':'base'},
+    'rrdtool'    :{ 'rpm':'rrdtool',                        'rrepo':'base',
+                    'deb':'rrdtool',                        'drepo':'base'},
+    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
+                    'deb':'php php-mysql php-common',       'drepo':'base'},
+    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
+                    'deb':'mariadb-server mariadb-client',  'drepo':'base'}
+}
 
 #===================================================================================================
 #                   Print [ERROR] in Red, followed by a the message received
@@ -252,34 +261,41 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(sroot,packtype,logfile):
+def satisfy_requirement(stype,sroot,packtype,logfile):
     global fhlog
 
-    if (DEBUG) : print ("Package type on this system is %s" % (packtype))
-    
-    # If Debian Package, Refresh The Local Repository 
-    if (packtype == "deb"):                                             # Is Debian Package
-        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)
-        if (DRYRUN):
-            print ("DryRun - Would run : %s" % (cmd))
-        else:
-            print ("Running apt-get update...",end='') 
-            writelog ("Running apt-get update...") 
-            ccode, cstdout, cstderr = oscommand(cmd)
-            if (ccode == 0) : 
-                print (" Done ")
-            else:
-                printError ("Error Code is %d" % (ccode))
+    # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
+     if (stype == 'C'):
+        req_work = req_client                                           # Move CLient Dict in WDict.
+        printBold ("\n\nChecking SADMIN Client Packages requirement")   # Show User what we do
+    else:
+        req_work = req_server                                           # Move Server Dict in WDict.
+        printBold ("\n\nChecking SADMIN Server Packages requirement")   # Show User what we do
+    if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug Show System PackType
 
-        
+    # If Debian Package, Refresh The Local Repository 
+    if (packtype == "deb"):                                             # Is Debian Style Package
+        cmd =  "apt-get -y update >> %s 2>&1" % (logfile)               # Build Refresh Pack Cmd
+        if (DRYRUN):                                                    # If Running if DRY-RUN Mode
+            print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
+        else:                                                           # If running in normal mode
+            print ("Running apt-get update...",end='')                  # Show what we are running
+            writelog ("Running apt-get update...")                      # Write also to Log
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Run the apt-get command
+            if (ccode == 0) :                                           # If command went ok
+                print (" Done ")                                        # Print DOne
+            else:                                                       # If we had error 
+                printError ("Error Code is %d" % (ccode))               # Advise user of error
+
+    # Under Debug Mode, Display the working dictionnary we will be processing below
     if (DEBUG):                                                         # Under Debug Show Req Dict.
-        for cmd,pkginfo in reqdict.items():
-            print("\nTo use command '{0}' we need to install :" .format(cmd))
+        for cmd,pkginfo in req_work.items():                            # For all items in Work Dict
+            print("\nFor command '{0}' we need package :" .format(cmd)) # Show Command name
             print('RPM Repo:{0} - Package: {1} ' .format(pkginfo['rrepo'], pkginfo['rpm']))
             print('DEB Repo:{0} - Package: {1} ' .format(pkginfo['drepo'], pkginfo['deb']))
 
-    # Process Package dictionary and check if command are install - If not install it
-    for cmd,pkginfo in reqdict.items():
+    # Process Package requirement and check if package is installedm, if not install it
+    for cmd,pkginfo in req_work.items():                                # For all item in Work Dict.
         needed_cmd = cmd                                                # File/Cmd Req. Check 
         if (packtype == "deb"):                                         # If Current host use .deb
             needed_packages = pkginfo['deb']                            # Save Packages to install
@@ -294,10 +310,6 @@ def satisfy_requirement(sroot,packtype,logfile):
         if locate_package(needed_packages,packtype) :                   # If Package is installed
             print (" Ok ")                                              # Show User Check Result
             continue                                                    # Proceed with Next Package
-
-        # If running in Dry Run Mode and package(s) is not installed
-        if (DRYRUN):                                                    # If Running in DryRun Mode
-            printWarning ("'%s' is missing ... " % (needed_packages))   # Show Missing Command 
 
         # Install Missing Packages
         if (packtype == "deb") : 
@@ -512,14 +524,16 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 
 
 #===================================================================================================
-#                          M A I N     P R O C E S S     F U N C T I O N 
+#            Ask Important Info that need to be accurate in the $SADMIN/cfg/sadmin.cfg file
 #===================================================================================================
 #
-def main_process(sroot):
+def setup_sadmin_config_file(sroot):
+    global stype                                                        # C=Client S=Server Install
+
     ccode, cstdout, cstderr = oscommand("uname -s")                     # Get O/S Type
     wostype=cstdout.upper()                                             # OSTYPE = LINUX or AIX
     if (DEBUG):                                                         # If Debug Activated
-        print ("main_process: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
+        print ("setup_sadmin_config_file: Dir. SADMIN is %s" % (sroot)) # Show SADMIN root Dir.
         print ("ostype is: %s" % (wostype))                             # Print the O/S Type
 
     # Is the current server a SADMIN [S]erver or a [C]lient
@@ -531,6 +545,7 @@ def main_process(sroot):
         wcfg_host_type = accept_field(sroot,sname,sdefault,sprompt)     # Go Accept Response 
     wcfg_host_type = wcfg_host_type.upper()                             # Make Host Type Uppercase
     update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type)            # Update Value in sadmin.cfg
+    stype = wcfg_host_type
 
     # Accept the Company Name
     sdefault = "Your Company Name"                                      # This is the default value
@@ -667,6 +682,42 @@ def main_process(sroot):
     return(0)                                                           # Return to Caller No Error
 
 
+#===================================================================================================
+#         DETERMINE THE LINUX INSTALLATION PACKAGE TYPE AND OPEN THE SCRIPT LOG FILE 
+#===================================================================================================
+#
+def getpacktype():
+
+    # Determine type of software package based on command present on system 
+    packtype=""                                                         # Set Initial Packaging Type
+    if (locate_command('rpm')   != "") : packtype="rpm"                 # Is rpm command on system ?
+    if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
+    if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
+    if (packtype == ""):                                                # If unknow/unsupported O/S
+        print ('None of these command is found (rpm, spkg or lslpp absent)')
+        print ('No supported package type is detected')
+        print ('Process aborted')
+        sys.exit(1)                                                     # Exit to O/S
+    
+    # Making sure the log directory exist
+    try:                                                                # Catch mkdir error
+        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
+    except FileExistsError as e :                                       # If Dir. already exists 
+        pass                                                            # It's ok if it exist
+
+    # Open/Create the setup script log
+    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
+    if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
+    try:                                                                # Try to Open/Create Log
+        fhlog=open(logfile,'w')                                         # Open Log File 
+    except IOError as e:                                                # If Can't Create Log
+        print ("Error creating log file %s" % (logfile))                # Print Log FileName
+        print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
+        print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
+        sys.exit(1)                                                     # Exit with Error
+    
+    return (packtype,fhlog,logfile)                                     # Return Packtype & Log FH
+
 
 
 #===================================================================================================
@@ -686,44 +737,25 @@ def main():
     # Ask for location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
     sroot=set_sadmin_env(sver)                                          # Go Set SADMIN Env. Var.
     if (DEBUG): print ("main: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
-
-    # Determine type of software package based on command present on system 
-    packtype=""                                                         # Set Initial Packaging Type
-    if (locate_command('rpm')   != "") : packtype="rpm"                 # Is rpm command on system ?
-    if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
-    if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
-    if (packtype == ""):                                                # If unknow/unsupported O/S
-        print ('None of these command is found (rpm, spkg or lslpp absent)')
-        print ('No supported package type is detected')
-        print ('Process aborted')
-        sys.exit(1)                                                     # Exit to O/S
+    (packtype,fhlog,logfile) = getpacktype()                            # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
-    
-    # Make log directory and Open the log file
-    try:                                                                # Catch mkdir error
-        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
-    except FileExistsError as e :                                       # If Dir. already exists 
-        pass                                                            # It's ok if it exist
-    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
-    if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
-    try:                                                                # Try to Open/Create Log
-        fhlog=open(logfile,'w')                                         # Open Log File 
-    except IOError as e:                                                # If Can't Create Log
-        print ("Error creating log file %s" % (logfile))                # Print Log FileName
-        print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
-        print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
-        sys.exit(1)                                                     # Exit with Error
-        
-    main_process(sroot)                                                 # Main Program Process 
-    printBold ("\n\nChecking SADMIN Packages requirment")
+    if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
+    setup_sadmin_config_file(sroot)                                     # Setup & Update sadmin.cfg
+    satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
+    if (stype == 'S') :                                                 # If install SADMIN Server
+        satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
 
-    # Check if all commands, packages needed are installed, if not install them
-    #print ("\n\n")
-    #print ("We will now verify if any package are missing to use SADMIN")
-    #print ("Before we install anything we will ask your confirmation")
-    #input("Press enter to continue")
-    satisfy_requirement(sroot,packtype,logfile)
-    sys.exit(1)
+    print ("\n\n------------------------------")
+    print ("End of SADMIN Setup")
+    print ("\nTo create your own script using SADMIN, you may want to run and view the code of ")
+    print ("$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point")
+    print ("You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.")
+    print ("They will present all functions available to your shell or Python script")
+    print ("\nThe web Interface is available at http://sadmin.maison.ca")
+    print ("\n\n------------------------------")
+
+    fh.close()                                                          # Close Script Log
+    sys.exit(1)                                                         # Exit to Operating System
 
 
 # This idiom means the below code only runs when executed from command line
