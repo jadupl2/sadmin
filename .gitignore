@@ -49,7 +49,6 @@ tmp/
 www/arc/
 www/dat/
 www/rrd/
-www/cfg/
 www/tmp/
 
 # Specific files to exclude 

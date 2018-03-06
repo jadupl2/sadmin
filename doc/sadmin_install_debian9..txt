@@ -1,0 +1,70 @@
+Debian 9 Installation Notes
+2018_03_06
+
+https://jadupl2@bitbucket.org/jadupl2/sadmin.git
+
+
+root@mdebian9:/etc/apache2/sites-available# vi sadmin.conf 
+root@mdebian9:/etc/apache2/sites-available# ls -l ../sites-enabled/
+total 0
+lrwxrwxrwx 1 root root 35 Mar  6 10:38 000-default.conf -> ../sites-available/000-default.conf
+root@mdebian9:/etc/apache2/sites-available# a2ensite sadmin.conf
+Enabling site sadmin.
+To activate the new configuration, you need to run:
+  systemctl reload apache2
+root@mdebian9:/etc/apache2/sites-available# systemctl reload apache2
+Job for apache2.service failed because the control process exited with error code.
+See "systemctl status apache2.service" and "journalctl -xe" for details.
+root@mdebian9:/etc/apache2/sites-available# 
+
+
+
+Checking SADMIN Client Packages requirement
+Running apt-get update... Done 
+Checking for util-linux ...  Ok 
+Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /log/sadm_setup.log
+Checking for openssh-client ...  Ok 
+Checking for net-tools ... Installing net-tools ...  Done 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for util-linux ...  Ok 
+Checking for parted ...  Ok 
+Checking for lsb_release ... Installing lsb_release ... [ERROR] Error Code is 100 - See log /log/sadm_setup.log
+Checking for nmon ... Installing nmon ...  Done 
+Checking for facter ... Installing facter ...  Done 
+Checking for dmidecode ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for perl-base ...  Ok 
+Checking for ethtool ... Installing ethtool ...  Done 
+Checking for mailutils ... Installing mailutils ...  Done 
+Checking for bc ...  Ok 
+
+
+Checking SADMIN Server Packages requirement
+Running apt-get update... Done 
+Checking for php php-mysql php-common ... Installing php php-mysql php-common ...  Done 
+Checking for apache2 apache2-utils ...  Ok 
+Checking for rrdtool ... Installing rrdtool ...  Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+
+
+------------------------------
+End of SADMIN Setup
+
+To create your own script using SADMIN, you may want to run and view the code of 
+$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
+You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.
+They will present all functions available to your shell or Python script
+
+The web Interface is available at http://sadmin.maison.ca
+
+
+------------------------------
+Traceback (most recent call last):
+  File "./sadm_setup.py", line 762, in <module>
+    if __name__ == '__main__':  main()
+  File "./sadm_setup.py", line 757, in main
+    fh.close()                                                          # Close Script Log
+NameError: name 'fh' is not defined
+root@mdebian9:/opt/sadmin/bin# ^C
+root@mdebian9:/opt/sadmin/bin# 
+
