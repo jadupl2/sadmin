@@ -326,8 +326,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             print (" Done ")
+			writelog ("Installed successfully")
         else:
             printError ("Error Code is %d - See log %s" % (ccode,logfile))
+            writelog   ("Error Code is %d - See log %s" % (ccode,logfile))
 
 
 #===================================================================================================
