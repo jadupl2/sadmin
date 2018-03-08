@@ -333,6 +333,81 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 
 
 #===================================================================================================
+#                       Setup MySQL Package and Load the SADMIN Database
+#===================================================================================================
+#
+def setup_mysql(sroot,wpass):
+   
+    print ("Loading SADMIN Database")                                   # Load Initial Database 
+    cmd = "mysql -u root -p%s < %s/setup/mysql/sadmin.sql" % (wpass,sroot)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
+
+
+
+#===================================================================================================
+#                                   Setup Apache Web Server 
+#===================================================================================================
+#
+def setup_webserver(sroot,spacktype):
+
+ 
+    # Accept the WebServer (Apache) Process User Name
+    while True : 
+        if (spacktype == "deb") :
+            sdefault = "apache2"                                        # Set Default value deb
+        else:
+            sdefault = "apache"                                         # Set Default value for rpm
+        sprompt  = "Enter apache process owner user name"               # Prompt for Answer
+        wcfg_www_user = accept_field(sroot,"SADM_WWW_USER",sdefault,sprompt)
+        found_usr = False                                               # Not in user file Default
+        with open('/etc/passwd',mode='r') as f:                         # Open System user File
+            for line in f:                                              # For every line in passwd
+                if line.startswith( "%s:" % (wcfg_www_user) ):          # Line Start with user name 
+                    found_usr = True                                    # Found User in passwd file
+            if (found_usr != True):                                     # User Name found in file
+                printBold ("Invalid User name : %s " % (wcfg_www_user)) # Existing user Advise user
+            else:
+                update_sadmin_cfg(sroot,"SADM_WWW_USER",wcfg_www_user)  # Update Value in sadmin.cfg
+                break
+
+
+    # Accept the WebServer (Apache) Process Group Name
+    while True : 
+        if (spacktype == "deb") :
+            sdefault = "apache2"                                        # Set Default value deb
+        else:
+            sdefault = "apache"                                         # Set Default value for rpm
+        sprompt  = "Enter the 'apache' process group owner "            # Prompt for Answer
+        wcfg_www_group = accept_field(sroot,"SADM_WWW_GROUP",sdefault,sprompt)
+        found_grp = False                                               # Not in group file Default
+        with open('/etc/group',mode='r') as f:                          # Open the system group file
+            for line in f:                                              # For every line in Group
+                if line.startswith( "%s:" % (wcfg_www_group) ):         # If Line start with Group:
+                    found_grp = True                                    # Found Grp entered in file
+            if (found_usr != True):                                     # User Name found in file
+                printBold ("Invalid Group name : %s" % (wcfg_www_group)) # Existing user Advise user
+            else:
+                update_sadmin_cfg(sroot,"SADM_WWW_USER",wcfg_www_group)  # Update Value in sadmin.cfg
+                break
+
+    print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot) 
+    cmd = "chown -R %s/www %s.%s" % (sroot,wcfg_www_user,wcfg_www_group)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
+
+    print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot) 
+    cmd = "chmod -R %s/www 775" % (sroot)                               # chmod 775 on all www dir.
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code (chmod) is %d" % (ccode))                   # Show Command Result
+        
+
+
+
+#===================================================================================================
 #        Specify and/or Validate that SADMIN Environment Variable is set in /etc/environent
 #===================================================================================================
 #
@@ -746,6 +821,8 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
+        setup_mysql(sroot)                                              # Setup/Load MySQL Database
+        setup_webserver(sroot,packtype)                                 # Setup Web Server
 
     print ("\n\n------------------------------")
     print ("End of SADMIN Setup")
