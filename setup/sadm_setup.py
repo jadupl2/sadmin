@@ -326,7 +326,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             print (" Done ")
-			writelog ("Installed successfully")
+            writelog ("Installed successfully")
         else:
             printError ("Error Code is %d - See log %s" % (ccode,logfile))
             writelog   ("Error Code is %d - See log %s" % (ccode,logfile))
@@ -337,74 +337,142 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 #===================================================================================================
 #
 def setup_mysql(sroot,wpass):
-   
+    # Run mysql_secure_installation
+
+    # Accept sadmin (Read/Write) User Password
+    
+    # Accept squery (Read Only) User Password
+    
+
+    # Make a copy of initial Database SQL Load File
+    dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
+    dbinit_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
+    try:                                                                # In case old file exist
+        os.remove(dbinit_file)                                          # Remove it
+    except :                                                            # If Error on removal
+        pass                                                            # If don't exist it is ok
+    shutil.copyfile(dbtemplate,dbinit_file)                             # Copy Initial DB Start
+    except IOError as e:
+        print("Unable to copy DB Template - %s" % e)                    # Advise user before exiting
+        sys.exit(1)                                                     # Exit to O/S With Error
+    except:
+        print("Unexpected error:", sys.exc_info())                      # Advise Usr Show Error Msg
+        sys.exit(1)                                                     # Exit to O/S with Error
+    print ("Initial SADMIN Database is in place.")                      # Advise User ok to proceed
+
+    # Grant 'sadmin' and 'squery' user, access to SADMIN Database
+    # Add Grant Privileges to Database initial Load SQL         
+    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
+    mycmd = "flush privileges;"
+    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
+    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
+    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
+
+    # Load Initial Database
     print ("Loading SADMIN Database")                                   # Load Initial Database 
     cmd = "mysql -u root -p%s < %s/setup/mysql/sadmin.sql" % (wpass,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
 
-
-
+    
 #===================================================================================================
 #                                   Setup Apache Web Server 
 #===================================================================================================
 #
 def setup_webserver(sroot,spacktype):
 
- 
-    # Accept the WebServer (Apache) Process User Name
-    while True : 
-        if (spacktype == "deb") :
-            sdefault = "apache2"                                        # Set Default value deb
-        else:
-            sdefault = "apache"                                         # Set Default value for rpm
-        sprompt  = "Enter apache process owner user name"               # Prompt for Answer
-        wcfg_www_user = accept_field(sroot,"SADM_WWW_USER",sdefault,sprompt)
-        found_usr = False                                               # Not in user file Default
-        with open('/etc/passwd',mode='r') as f:                         # Open System user File
-            for line in f:                                              # For every line in passwd
-                if line.startswith( "%s:" % (wcfg_www_user) ):          # Line Start with user name 
-                    found_usr = True                                    # Found User in passwd file
-            if (found_usr != True):                                     # User Name found in file
-                printBold ("Invalid User name : %s " % (wcfg_www_user)) # Existing user Advise user
-            else:
-                update_sadmin_cfg(sroot,"SADM_WWW_USER",wcfg_www_user)  # Update Value in sadmin.cfg
-                break
+    if (spacktype == "deb") :
+        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_user = cstdout                                           # Get Apache Process Usr
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting apache2 user name is %d" % (ccode))                         
+        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_group = cstdout                                          # Get Group from StdOut
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting apache2 group name is %d" % (ccode))                         
+        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)               # Init. Sadmin Web Cfg
+        apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
+        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+            try:
+                shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
+            except IOError as e:
+                print("Unable to copy apache2 config file. %s" % e)     # Advise user before exiting
+                sys.exit(1)                                             # Exit to O/S With Error
+            except:
+                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                sys.exit(1)                                             # Exit to O/S with Error
+        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+        cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for Enabling SADMIN web Site is %d" % (ccode))                         
+        print("Return code for Enabling Web Site is %d" % (ccode))      # Show Return Code
 
+    # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
+    if (spacktype == "rpm") :
+        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ print $1 }' | sort | uniq"
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_user = cstdout                                           # Get Apache Process Usr
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting httpd user name is %d" % (ccode))                         
+        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_group = cstdout                                          # Get Group from StdOut
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting httpd group name is %d" % (ccode))                         
+        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
+        apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
+        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+            try:
+                shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
+            except IOError as e:
+                print("Unable to copy httpd config file. %s" % e)       # Advise user before exiting
+                sys.exit(1)                                             # Exit to O/S With Error
+            except:
+                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                sys.exit(1)                                             # Exit to O/S with Error
+        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+               
+    # Update the sadmin.cfg with Web Server User and Group
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_group)               # Update Value in sadmin.cfg
 
-    # Accept the WebServer (Apache) Process Group Name
-    while True : 
-        if (spacktype == "deb") :
-            sdefault = "apache2"                                        # Set Default value deb
-        else:
-            sdefault = "apache"                                         # Set Default value for rpm
-        sprompt  = "Enter the 'apache' process group owner "            # Prompt for Answer
-        wcfg_www_group = accept_field(sroot,"SADM_WWW_GROUP",sdefault,sprompt)
-        found_grp = False                                               # Not in group file Default
-        with open('/etc/group',mode='r') as f:                          # Open the system group file
-            for line in f:                                              # For every line in Group
-                if line.startswith( "%s:" % (wcfg_www_group) ):         # If Line start with Group:
-                    found_grp = True                                    # Found Grp entered in file
-            if (found_usr != True):                                     # User Name found in file
-                printBold ("Invalid Group name : %s" % (wcfg_www_group)) # Existing user Advise user
-            else:
-                update_sadmin_cfg(sroot,"SADM_WWW_USER",wcfg_www_group)  # Update Value in sadmin.cfg
-                break
-
-    print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot) 
-    cmd = "chown -R %s/www %s.%s" % (sroot,wcfg_www_user,wcfg_www_group)
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    # Setting Files and Directories Permissions for Web sites 
+    print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
+    cmd = "chown -R %s/www %s.%s" % (sroot,apache_user,apache_group)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
+    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
 
-    print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot) 
+    print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
     cmd = "chmod -R %s/www 775" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code (chmod) is %d" % (ccode))                   # Show Command Result
+    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
         
-
+    # Restart the HTTP Web Server
+    if (packtype == "deb" ) : 
+        cmd = "service apache2 restart" 
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+    if (packtype == "rpm" ) : 
+        cmd = "service httpd restart" 
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+ 
 
 
 #===================================================================================================
@@ -821,7 +889,7 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot)                                              # Setup/Load MySQL Database
+        setup_mysql(sroot,' ')                                          # Setup/Load MySQL Database
         setup_webserver(sroot,packtype)                                 # Setup Web Server
 
     print ("\n\n------------------------------")

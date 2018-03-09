@@ -18,53 +18,206 @@ See "systemctl status apache2.service" and "journalctl -xe" for details.
 root@mdebian9:/etc/apache2/sites-available# 
 
 
+========================================================================================
+
+SADMIN Setup V1.2b
+------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+
+----------
+[OK] SADMIN Environment variable is set to /opt/sadmin
+      - The line below is in /etc/environment now
+      - SADMIN=/opt/sadmin
+      - This will make sure it is set upon reboot
+Initial sadmin.cfg file in place.
+----------
+
+----------
+
+[SADM_HOST_TYPE]
+This is where you specify if this host is to become a SADMIN Client or Server.
+The questions that will follow depend on your answer.
+Please respond by entering an 'S' or a 'C'. 
+Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
+
+----------
+
+[SADM_CIE_NAME]
+This is where you specify your company name. 
+This name that will appears in the heading of the web
+interface and on some report and email that SADMIN produce. 
+Enter your Company name  : The Batcave
+
+----------
+
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email. 
+For example, you can request that the log of a script be sent when an 
+error occured or every time is it run. (See SADM_MAIL_TYPE later on)
+Multiple email can be specify, a comma must seperate each of them. 
+Enter System Administrator Email : duplessis.jacques@gmail.com
+
+----------
+
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
+at the top of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error.
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish. 
+Enter default email type : 1
+
+----------
+
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+This is the server where the MySQL Database and SADMIN web site will reside.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+ 
+Enter SADMIN (FQDN) server name : idebian9.maison.ca
+Validating server name
+
+----------
+
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
+Log file are cumulative by default, but you can decide to overwrite the 
+script log if you want.
+The log are automatically trimmed to this number each time the script end.
+This help keeping our log to a reasonnable size.
+Recommended size is 1000 as a starting point.
+ 
+Maximum number of lines in LOG file : 999
+
+----------
+
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends, 
+it record the date/time and the ending status in what we call a RCH file 
+([R]eturn [C]ode [H]istory] file). 
+The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+The RCH file are created/updated each time a script is started and ended.
+The RCH file are automatically trimmed to this number each time the script end.
+SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
+can contain. 
+A value of 100 would keep an history of 50 days and is the default value.
+ 
+Maximum number of lines in RCH file : 99
+
+----------
+
+[SADM_DOMAIN]
+Enter the default Domain to use when adding a new server 
+Default domain name : maison.ca
+
+----------
+
+[SADM_GROUP]
+This is the SADMIN Tools main user group that have access to all SADMIN 
+directories. Every day the housekeeping script will make sure that all 
+files in the $SADMIN directories are own by this group. 
+If others users need to access or used scripts located in $SADMIN, 
+they must be part of this group.
+The SADMIN default user group is 'sadmin'.
+ 
+Enter the default user Group : sadmin
+Creating group sadmin
+
+----------
+
+[SADM_USER]
+This is the SADMIN Tools main user that have access to all SADMIN directories.
+Every day the housekeeping script will make sure that all files in the $SADMIN
+directories are own by this user.
+The SADMIN default user name is 'sadmin'.
+ 
+Enter the default user name : sadmin
+Creating user sadmin
+
+----------
+
+[SADM_SSH_PORT]
+Standard Port for SSH is 22 
+But if you use a different port put it here 
+SSH port number used to connect to client : 32
+
+----------
+
+[SADM_NETWORK1]
+Every day SADMIN will check the IP utilisation on your network. The result 
+will be visible on a web page. You will be able to tell what IP are in use 
+(respond to ping) and what DNS name each IP has (if any). So this information
+will be able to tell what IP is free to use and the one that are in use.
+It will facilitate, the clean up of your DNS and IP usage.
+The network should be specify in this form, '192.168.1.0/24'. 
+Enter the network IP and netmask : 192.168.1.0/24
+
 
 Checking SADMIN Client Packages requirement
 Running apt-get update... Done 
-Checking for util-linux ...  Ok 
-Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /log/sadm_setup.log
 Checking for openssh-client ...  Ok 
-Checking for net-tools ... Installing net-tools ...  Done 
+Checking for bc ...  Ok 
+Checking for lsb-release ...  Ok 
+Checking for util-linux ...  Ok 
 Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
 Checking for util-linux ...  Ok 
-Checking for parted ...  Ok 
-Checking for lsb_release ... Installing lsb_release ... [ERROR] Error Code is 100 - See log /log/sadm_setup.log
 Checking for nmon ... Installing nmon ...  Done 
-Checking for facter ... Installing facter ...  Done 
-Checking for dmidecode ...  Ok 
-Checking for lshw ... Installing lshw ...  Done 
 Checking for perl-base ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for net-tools ... Installing net-tools ...  Done 
+Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
+Checking for facter ... Installing facter ...  Done 
 Checking for ethtool ... Installing ethtool ...  Done 
 Checking for mailutils ... Installing mailutils ...  Done 
-Checking for bc ...  Ok 
+Checking for parted ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
 
 
 Checking SADMIN Server Packages requirement
 Running apt-get update... Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+Checking for rrdtool ... Installing rrdtool ...  Done 
 Checking for php php-mysql php-common ... Installing php php-mysql php-common ...  Done 
 Checking for apache2 apache2-utils ...  Ok 
-Checking for rrdtool ... Installing rrdtool ...  Done 
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+
+----------
+
+[SADM_WWW_USER]
+Doc file /opt/sadmin/doc/cfg/sadm_www_user.txt not found, question skipped
+ 
+Enter apache process owner user name : www-data
+
+----------
+
+[SADM_WWW_GROUP]
+Doc file /opt/sadmin/doc/cfg/sadm_www_group.txt not found, question skipped
+ 
+Enter the 'apache' process group owner  : www-data
+Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www)
+Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
 
 
 ------------------------------
 End of SADMIN Setup
+You can now use SADMIN
 
+
+TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
 To create your own script using SADMIN, you may want to run and view the code of 
 $SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
 You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.
 They will present all functions available to your shell or Python script
 
+USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
 
 
 ------------------------------
-Traceback (most recent call last):
-  File "./sadm_setup.py", line 762, in <module>
-    if __name__ == '__main__':  main()
-  File "./sadm_setup.py", line 757, in main
-    fh.close()                                                          # Close Script Log
-NameError: name 'fh' is not defined
-root@mdebian9:/opt/sadmin/bin# ^C
-root@mdebian9:/opt/sadmin/bin# 
-
+root@idebian9:/opt/sadmin/setup# 
