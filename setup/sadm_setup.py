@@ -344,36 +344,39 @@ def setup_mysql(sroot,wpass):
     # Accept squery (Read Only) User Password
     
 
-    # Make a copy of initial Database SQL Load File
+    # Make a copy of Template Database SQL Load File
     dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
-    dbinit_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
+    dbload_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
     try:                                                                # In case old file exist
-        os.remove(dbinit_file)                                          # Remove it
+        os.remove(dbload_file)                                          # Remove it
     except :                                                            # If Error on removal
         pass                                                            # If don't exist it is ok
-    shutil.copyfile(dbtemplate,dbinit_file)                             # Copy Initial DB Start
+    shutil.copyfile(dbtemplate,dbload_file)                             # Copy Initial DB Start
     except IOError as e:
         print("Unable to copy DB Template - %s" % e)                    # Advise user before exiting
         sys.exit(1)                                                     # Exit to O/S With Error
     except:
         print("Unexpected error:", sys.exc_info())                      # Advise Usr Show Error Msg
         sys.exit(1)                                                     # Exit to O/S with Error
-    print ("Initial SADMIN Database is in place.")                      # Advise User ok to proceed
 
-    # Grant 'sadmin' and 'squery' user, access to SADMIN Database
-    # Add Grant Privileges to Database initial Load SQL         
-    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
-    mycmd = "flush privileges;"
-    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
-    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
-    mycmd = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadm_passwd)
+    # Add Grant Privileges to Database initial Load SQL
+    dbh = open(dbload_file,'a')                                         # Open File in append mode
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadmin_pwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (squery_pwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "flush privileges;"
+    dbh.write (line)                                                 # Write line to output file
+    dbh.close                                                            
 
     # Load Initial Database
     print ("Loading SADMIN Database")                                   # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s/setup/mysql/sadmin.sql" % (wpass,sroot)
+    cmd = "mysql -u root -p%s < %s/setup/mysql/%s" % (wpass,sroot,dbload_file)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
+
+    print ("Initial SADMIN Database is in place.")                      # Advise User ok to proceed
 
     
 #===================================================================================================
