@@ -336,13 +336,75 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 #                       Setup MySQL Package and Load the SADMIN Database
 #===================================================================================================
 #
-def setup_mysql(sroot,wpass):
-    # Run mysql_secure_installation
+def setup_mysql(sroot,wcfg_server,wpass):
 
-    # Accept sadmin (Read/Write) User Password
+    # Set to root password for MySQL Instance
+    # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
+    #  mysqladmin password "my_new_password"    
+    while True : 
+        sdefault = ""                                                       # No Default Password 
+        sprompt  = "Enter the Database 'root' user password : "             # Prompt for Answer
+        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)       # Accept Mysql root pwd
+        cmd = "mysqladmin -u root password %s" % (dbroot_pwd)               # Build Set Root Pwd
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Error code after setting root password : %d" % (ccode)) # Show AddGroup Cmd Error No
+        print ("Testing Access to Database ...")
+        cmd = "mysql -u root -p%s -e "show databases;" % (dbroot_pwd)
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Return code is %d - After trying to connect to Database" % (ccode))  # Show AddGroup Cmd Error No
+            print ("Standard out is %s" % (cstdout))
+            print ("Standard error is %s" % (cstderr))
+        if (ccode == 0):
+            break
+
+======================================
+    # Run mysql_secure_installation
+    print ("Securing MySQL Database ...")
     
-    # Accept squery (Read Only) User Password
-    
+    # Delete Anonymous user (use for test database)
+    cmd = "mysql -u root -p%s -e " % (dbroot_pwd)
+    cmd += " DELETE FROM mysql.user WHERE User='';"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+        print ("Standard out is %s" % (cstdout))
+        print ("Standard error is %s" % (cstderr))
+    if (ccode == 0):
+        break
+
+
+    # Ensure 'root' user can only be used locally
+    DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+
+    # Remove the Test Database
+    DROP DATABASE test;
+    DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+
+    # Flush Privileges Tables
+    # FLUSH PRIVILEGES;
+
+
+
+    # Accept 'sadmin' Database FQDN Hostname 
+    sdefault = ""                                                       # HostName Location of DB
+    sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
+    wcfg_dbhost = accept_field(sroot,"SADM_DBHOST",sdefault,sprompt)    # Accept sadmin DB Host Name
+    update_sadmin_cfg(sroot,"SADM_DBHOST",wcfg_dbhost)                  # Update Value in sadmin.cfg
+   
+    # Accept 'sadmin' (Read/Write) User Password
+    sdefault = "Nimdas1701!"                                            # Default Password 
+    sprompt  = "Enter 'sadmin' database user password : "               # Prompt for Answer
+    wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd)              # Update Value in sadmin.cfg
+   
+    # Accept 'squery' (Read Only) User Password
+    sdefault = "Query18!"                                               # Default Password 
+    sprompt  = "Enter 'squery' database user password : "               # Prompt for Answer
+    wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
+
 
     # Make a copy of Template Database SQL Load File
     dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
@@ -361,9 +423,13 @@ def setup_mysql(sroot,wpass):
 
     # Add Grant Privileges to Database initial Load SQL
     dbh = open(dbload_file,'a')                                         # Open File in append mode
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (sadmin_pwd)
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (squery_pwd)
+    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
     dbh.write (line)                                                 # Write line to output file
     line = "flush privileges;"
     dbh.write (line)                                                 # Write line to output file
@@ -827,7 +893,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
         update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
     
-    return(0)                                                           # Return to Caller No Error
+    return(wcfg_server)                                                           # Return to Caller No Error
 
 
 #===================================================================================================
@@ -888,11 +954,11 @@ def main():
     (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
-    setup_sadmin_config_file(sroot)                                     # Setup & Update sadmin.cfg
+    wcfg_server = setup_sadmin_config_file(sroot)                       # Setup & Update sadmin.cfg
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot,' ')                                          # Setup/Load MySQL Database
+        setup_mysql(sroot,wcfg_server,' ')                                          # Setup/Load MySQL Database
         setup_webserver(sroot,packtype)                                 # Setup Web Server
 
     print ("\n\n------------------------------")

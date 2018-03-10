@@ -1,0 +1,5 @@
+# sadmin.cfg SADM_DBHOST Documentation
+# Revise 2018_03_10
+#----------------------------------------------------------------------------
+Enter the hostname where the 'SADMIN' Database is located.
+You must specify the Fully Qualified Domain Name (Hostname with domain).
