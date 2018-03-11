@@ -338,60 +338,123 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 #
 def setup_mysql(sroot,wcfg_server,wpass):
 
-    # Set to root password for MySQL Instance
-    # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
-    #  mysqladmin password "my_new_password"    
+    # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
     while True : 
-        sdefault = ""                                                       # No Default Password 
-        sprompt  = "Enter the Database 'root' user password : "             # Prompt for Answer
-        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)       # Accept Mysql root pwd
-        cmd = "mysqladmin -u root password %s" % (dbroot_pwd)               # Build Set Root Pwd
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (DEBUG):                                                         # If Debug Activated
-            print ("Error code after setting root password : %d" % (ccode)) # Show AddGroup Cmd Error No
-        print ("Testing Access to Database ...")
-        cmd = "mysql -u root -p%s -e "show databases;" % (dbroot_pwd)
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (DEBUG):                                                         # If Debug Activated
-            print ("Return code is %d - After trying to connect to Database" % (ccode))  # Show AddGroup Cmd Error No
-            print ("Standard out is %s" % (cstdout))
-            print ("Standard error is %s" % (cstderr))
-        if (ccode == 0):
-            break
+        sdefault = ""                                                   # No Default Password 
+        sprompt  = "Enter MySQL Database 'root' user password : "       # Prompt for Answer
+        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)   # Accept Mysql root pwd
+
+        # Test if can connect to Database (May already exist)
+        print ("Testing Access to Database ...")                        # Advise User
+        cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code is %d - After trying %s" % (ccode,cmd)) # Print command return code
+            print ("Standard out is %s" % (cstdout))                    # Print command stdout
+            print ("Standard error is %s" % (cstderr))                  # Print command stderr
+        if (ccode == 0):                                                # No problem connecting
+            break                                                       # Continue with Next Step
+        else:                                                           # If Not able to connect
+            print("Will now assign 'root' MySQL user password")         # Advise User
+            # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
+            #  mysqladmin password "my_new_password"    
+            cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
+            if (ccode != 0):                                            # If Error Changing Password
+                print ("Error code %d setting root password" % (ccode)) # Show Error No
+                print ("%s %s" % (cstdout,cstderr))                     # Show error messages
+                continue                                                # Go and Retry
+            else:
+                print ("MySQL 'root' user password is not set")         # Advise user pwd was change
+            break                                                       # Continue with Next Step
 
 ======================================
-    # Run mysql_secure_installation
+
+    # Secure MySQL Installation by running the secure_mysql.sql script
     print ("Securing MySQL Database ...")
-    
-    # Delete Anonymous user (use for test database)
-    cmd = "mysql -u root -p%s -e " % (dbroot_pwd)
-    cmd += " DELETE FROM mysql.user WHERE User='';"
+    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.dql" % (dbroot_pwd,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-        print ("Standard out is %s" % (cstdout))
-        print ("Standard error is %s" % (cstderr))
-    if (ccode == 0):
-        break
+        print ("Standard out is %s" % (cstdout))                        # Print command stdout
+        print ("Standard error is %s" % (cstderr))                      # Print command stderr
+    if (ccode != 0):                                                    # If problem deleting user
+        print ("Problem securing the database ...")                     # Advise User
+    else:                                                               # If user deleted
+        print ("Database is now secured ... ")                          # Advise User
 
 
-    # Ensure 'root' user can only be used locally
-    DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+    
+#     # Delete Anonymous user (use for test database)
+#     print ("Delete MySQL Anonymous user ...")                           # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DELETE FROM mysql.user WHERE User='';"                     # Cmd to delete Anonymous
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error deleting anonymous user")                         # Advise User
+#     else:                                                               # If user deleted
+#         print ("Anonymous user deleted")                                # Advise User delete went ok
 
-    # Remove the Test Database
-    DROP DATABASE test;
-    DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
 
-    # Flush Privileges Tables
-    # FLUSH PRIVILEGES;
+#     # Ensure 'root' user can only be used locally
+#     print ("Ensure 'root' user can only be used locally ...")           # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Changing MySQL access to local user")             # Advise User
+#     else:                                                               # If user deleted
+#         print ("MySQL can now be only accessed locally")                # Advise User delete went ok
 
 
+#     # Remove the Test Database
+#     DROP DATABASE test;
+#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+#     print ("Deleting 'test' Database ...")                              # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Dropping 'test' Database")                        # Advise User
+#     else:                                                               # If user deleted
+#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
+
+#    # Remove the Test Database
+#     DROP DATABASE test;
+#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+#     print ("Deleting 'test' Database ...")                              # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Dropping 'test' Database")                        # Advise User
+#     else:                                                               # If user deleted
+#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
+
+#     # Flush Privileges Tables
+#     # FLUSH PRIVILEGES;
 
     # Accept 'sadmin' Database FQDN Hostname 
-    sdefault = ""                                                       # HostName Location of DB
-    sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
-    wcfg_dbhost = accept_field(sroot,"SADM_DBHOST",sdefault,sprompt)    # Accept sadmin DB Host Name
-    update_sadmin_cfg(sroot,"SADM_DBHOST",wcfg_dbhost)                  # Update Value in sadmin.cfg
+    #sdefault = ""                                                       # HostName Location of DB
+    #sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
+    #wcfg_dbhost = accept_field(sroot,"SADM_DBHOST",sdefault,sprompt)    # Accept sadmin DB Host Name
+    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                   # Update Value in sadmin.cfg
    
     # Accept 'sadmin' (Read/Write) User Password
     sdefault = "Nimdas1701!"                                            # Default Password 
