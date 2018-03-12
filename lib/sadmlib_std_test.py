@@ -73,7 +73,7 @@ def main():
     st.log_append = True                        # True=Append existing log  False=start a new log
     st.debug = 0                                # Debug level and verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    st.usedb = True                             # True=Use Database  False=DB Not needed for script
+    st.usedb = False                            # True=Use Database  False=DB Not needed for script
     st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
     #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg

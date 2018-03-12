@@ -57,7 +57,6 @@ www/cfg/.crontab.txt
 sysmon.lock
 sys/*.log
 cfg/.dbpass
-cfg/*.txt
 cfg/*.cfg
 cfg/*.smon
 !cfg/template.smon
