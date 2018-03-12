@@ -368,11 +368,10 @@ def setup_mysql(sroot,wcfg_server,wpass):
                 print ("MySQL 'root' user password is not set")         # Advise user pwd was change
             break                                                       # Continue with Next Step
 
-======================================
 
     # Secure MySQL Installation by running the secure_mysql.sql script
     print ("Securing MySQL Database ...")
-    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.dql" % (dbroot_pwd,sroot)
+    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
@@ -476,7 +475,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
         os.remove(dbload_file)                                          # Remove it
     except :                                                            # If Error on removal
         pass                                                            # If don't exist it is ok
-    shutil.copyfile(dbtemplate,dbload_file)                             # Copy Initial DB Start
+    try:
+        shutil.copyfile(dbtemplate,dbload_file)                             # Copy Initial DB Start
     except IOError as e:
         print("Unable to copy DB Template - %s" % e)                    # Advise user before exiting
         sys.exit(1)                                                     # Exit to O/S With Error
@@ -529,7 +529,7 @@ def setup_webserver(sroot,spacktype):
         print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)               # Init. Sadmin Web Cfg
         apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
-        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+        if os.path.exists(apache2_file)==False:                         # If Web cfg Not Found
             try:
                 shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
             except IOError as e:
@@ -1021,7 +1021,7 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot,wcfg_server,' ')                                          # Setup/Load MySQL Database
+        setup_mysql(sroot,wcfg_server,' ')                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype)                                 # Setup Web Server
 
     print ("\n\n------------------------------")

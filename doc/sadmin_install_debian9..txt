@@ -1,4 +1,106 @@
 Debian 9 Installation Notes
+
+12 Mars 2018
+
+Checking SADMIN Client Packages requirement
+Running apt-get update... Done 
+Checking for openssh-client ...  Ok 
+Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
+Checking for lsb-release ...  Ok 
+Checking for parted ...  Ok 
+Checking for ethtool ... Installing ethtool ...  Done 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for util-linux ...  Ok 
+Checking for util-linux ...  Ok 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for mailutils ... Installing mailutils ...  Done 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for dmidecode ...  Ok 
+Checking for bc ...  Ok 
+Checking for facter ... Installing facter ...  Done 
+Checking for net-tools ...  Ok 
+Checking for perl-base ...  Ok 
+
+
+Checking SADMIN Server Packages requirement
+Running apt-get update... Done 
+Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
+Checking for php php-mysql php-common ... Installing php php-mysql php-common ...  Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+Checking for rrdtool ... Installing rrdtool ...  Done 
+
+----------
+
+[SADM_ROOT]
+Doc file /opt/sadmin/doc/cfg/sadm_root.txt not found, question skipped
+ 
+Enter MySQL Database 'root' user password :  : Icu@9am!
+Testing Access to Database ...
+Securing MySQL Database ...
+Problem securing the database ...
+
+----------
+
+[SADM_RW_DBPWD]
+Enter the password for the read/write user "sadmin" in the 'sadmin' database.
+You can give this password to people who you want to give permission to update
+the sadmin database,
+ 
+Enter 'sadmin' database user password :  : Nimdas17!
+
+----------
+
+[SADM_RO_DBPWD]
+Enter the password for the read only user "squery" of the 'sadmin' database.
+You can give this password to people you want to access the sadmin database,
+but want them to modify any information in the Database.
+ 
+Enter 'squery' database user password :  : Query18!
+Loading SADMIN Database
+Initial SADMIN Database is in place.
+Apache process user name is www-data
+Apache user group name is www-data
+Traceback (most recent call last):
+  File "./sadm_setup.py", line 1044, in <module>
+    if __name__ == '__main__':  main()
+  File "./sadm_setup.py", line 1025, in main
+    setup_webserver(sroot,packtype)                                 # Setup Web Server
+  File "./sadm_setup.py", line 532, in setup_webserver
+    if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+NameError: name 'apache2file' is not defined
+root@mdebian9:/opt/sadmin/setup# 
+
+
+------------------------------
+End of SADMIN Setup
+You can now use SADMIN
+
+
+TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
+To create your own script using SADMIN, you may want to run and view the code of 
+$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
+You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.
+They will present all functions available to your shell or Python script
+
+USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
+The web Interface is available at http://sadmin.maison.ca
+
+
+------------------------------
+root@mdebian9:/opt/sadmin/setup# 
+
+
+
+
+
+
+
+
+
+
+
+
+
 2018_03_06
 
 https://jadupl2@bitbucket.org/jadupl2/sadmin.git
