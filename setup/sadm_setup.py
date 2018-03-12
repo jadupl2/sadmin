@@ -326,10 +326,285 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             print (" Done ")
-			writelog ("Installed successfully")
+            writelog ("Installed successfully")
         else:
             printError ("Error Code is %d - See log %s" % (ccode,logfile))
             writelog   ("Error Code is %d - See log %s" % (ccode,logfile))
+
+
+#===================================================================================================
+#                       Setup MySQL Package and Load the SADMIN Database
+#===================================================================================================
+#
+def setup_mysql(sroot,wcfg_server,wpass):
+
+    # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
+    while True : 
+        sdefault = ""                                                   # No Default Password 
+        sprompt  = "Enter MySQL Database 'root' user password : "       # Prompt for Answer
+        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)   # Accept Mysql root pwd
+
+        # Test if can connect to Database (May already exist)
+        print ("Testing Access to Database ...")                        # Advise User
+        cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code is %d - After trying %s" % (ccode,cmd)) # Print command return code
+            print ("Standard out is %s" % (cstdout))                    # Print command stdout
+            print ("Standard error is %s" % (cstderr))                  # Print command stderr
+        if (ccode == 0):                                                # No problem connecting
+            break                                                       # Continue with Next Step
+        else:                                                           # If Not able to connect
+            print("Will now assign 'root' MySQL user password")         # Advise User
+            # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
+            #  mysqladmin password "my_new_password"    
+            cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
+            if (ccode != 0):                                            # If Error Changing Password
+                print ("Error code %d setting root password" % (ccode)) # Show Error No
+                print ("%s %s" % (cstdout,cstderr))                     # Show error messages
+                continue                                                # Go and Retry
+            else:
+                print ("MySQL 'root' user password is not set")         # Advise user pwd was change
+            break                                                       # Continue with Next Step
+
+======================================
+
+    # Secure MySQL Installation by running the secure_mysql.sql script
+    print ("Securing MySQL Database ...")
+    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.dql" % (dbroot_pwd,sroot)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+        print ("Standard out is %s" % (cstdout))                        # Print command stdout
+        print ("Standard error is %s" % (cstderr))                      # Print command stderr
+    if (ccode != 0):                                                    # If problem deleting user
+        print ("Problem securing the database ...")                     # Advise User
+    else:                                                               # If user deleted
+        print ("Database is now secured ... ")                          # Advise User
+
+
+    
+#     # Delete Anonymous user (use for test database)
+#     print ("Delete MySQL Anonymous user ...")                           # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DELETE FROM mysql.user WHERE User='';"                     # Cmd to delete Anonymous
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error deleting anonymous user")                         # Advise User
+#     else:                                                               # If user deleted
+#         print ("Anonymous user deleted")                                # Advise User delete went ok
+
+
+#     # Ensure 'root' user can only be used locally
+#     print ("Ensure 'root' user can only be used locally ...")           # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Changing MySQL access to local user")             # Advise User
+#     else:                                                               # If user deleted
+#         print ("MySQL can now be only accessed locally")                # Advise User delete went ok
+
+
+#     # Remove the Test Database
+#     DROP DATABASE test;
+#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+#     print ("Deleting 'test' Database ...")                              # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Dropping 'test' Database")                        # Advise User
+#     else:                                                               # If user deleted
+#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
+
+#    # Remove the Test Database
+#     DROP DATABASE test;
+#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+#     print ("Deleting 'test' Database ...")                              # Advise User
+#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
+#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
+#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
+#     if (DEBUG):                                                         # If Debug Activated
+#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
+#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
+#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
+#     if (ccode != 0):                                                    # If problem deleting user
+#         print ("Error Dropping 'test' Database")                        # Advise User
+#     else:                                                               # If user deleted
+#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
+
+#     # Flush Privileges Tables
+#     # FLUSH PRIVILEGES;
+
+    # Accept 'sadmin' Database FQDN Hostname 
+    #sdefault = ""                                                       # HostName Location of DB
+    #sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
+    #wcfg_dbhost = accept_field(sroot,"SADM_DBHOST",sdefault,sprompt)    # Accept sadmin DB Host Name
+    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                   # Update Value in sadmin.cfg
+   
+    # Accept 'sadmin' (Read/Write) User Password
+    sdefault = "Nimdas1701!"                                            # Default Password 
+    sprompt  = "Enter 'sadmin' database user password : "               # Prompt for Answer
+    wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd)              # Update Value in sadmin.cfg
+   
+    # Accept 'squery' (Read Only) User Password
+    sdefault = "Query18!"                                               # Default Password 
+    sprompt  = "Enter 'squery' database user password : "               # Prompt for Answer
+    wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
+
+
+    # Make a copy of Template Database SQL Load File
+    dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
+    dbload_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
+    try:                                                                # In case old file exist
+        os.remove(dbload_file)                                          # Remove it
+    except :                                                            # If Error on removal
+        pass                                                            # If don't exist it is ok
+    shutil.copyfile(dbtemplate,dbload_file)                             # Copy Initial DB Start
+    except IOError as e:
+        print("Unable to copy DB Template - %s" % e)                    # Advise user before exiting
+        sys.exit(1)                                                     # Exit to O/S With Error
+    except:
+        print("Unexpected error:", sys.exc_info())                      # Advise Usr Show Error Msg
+        sys.exit(1)                                                     # Exit to O/S with Error
+
+    # Add Grant Privileges to Database initial Load SQL
+    dbh = open(dbload_file,'a')                                         # Open File in append mode
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                 # Write line to output file
+    line = "flush privileges;"
+    dbh.write (line)                                                 # Write line to output file
+    dbh.close                                                            
+
+    # Load Initial Database
+    print ("Loading SADMIN Database")                                   # Load Initial Database 
+    cmd = "mysql -u root -p%s < %s/setup/mysql/%s" % (wpass,sroot,dbload_file)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
+
+    print ("Initial SADMIN Database is in place.")                      # Advise User ok to proceed
+
+    
+#===================================================================================================
+#                                   Setup Apache Web Server 
+#===================================================================================================
+#
+def setup_webserver(sroot,spacktype):
+
+    if (spacktype == "deb") :
+        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_user = cstdout                                           # Get Apache Process Usr
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting apache2 user name is %d" % (ccode))                         
+        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_group = cstdout                                          # Get Group from StdOut
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting apache2 group name is %d" % (ccode))                         
+        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)               # Init. Sadmin Web Cfg
+        apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
+        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+            try:
+                shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
+            except IOError as e:
+                print("Unable to copy apache2 config file. %s" % e)     # Advise user before exiting
+                sys.exit(1)                                             # Exit to O/S With Error
+            except:
+                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                sys.exit(1)                                             # Exit to O/S with Error
+        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+        cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for Enabling SADMIN web Site is %d" % (ccode))                         
+        print("Return code for Enabling Web Site is %d" % (ccode))      # Show Return Code
+
+    # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
+    if (spacktype == "rpm") :
+        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ print $1 }' | sort | uniq"
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_user = cstdout                                           # Get Apache Process Usr
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting httpd user name is %d" % (ccode))                         
+        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
+        apache_group = cstdout                                          # Get Group from StdOut
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for getting httpd group name is %d" % (ccode))                         
+        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
+        apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
+        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+            try:
+                shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
+            except IOError as e:
+                print("Unable to copy httpd config file. %s" % e)       # Advise user before exiting
+                sys.exit(1)                                             # Exit to O/S With Error
+            except:
+                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                sys.exit(1)                                             # Exit to O/S with Error
+        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+               
+    # Update the sadmin.cfg with Web Server User and Group
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_group)               # Update Value in sadmin.cfg
+
+    # Setting Files and Directories Permissions for Web sites 
+    print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
+    cmd = "chown -R %s/www %s.%s" % (sroot,apache_user,apache_group)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
+    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
+
+    print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
+    cmd = "chmod -R %s/www 775" % (sroot)                               # chmod 775 on all www dir.
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (DEBUG):                                                         # If Debug Activated
+        print ("Return code (chmod) is %d" % (ccode))                   # Show Command Result
+    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
+        
+    # Restart the HTTP Web Server
+    if (packtype == "deb" ) : 
+        cmd = "service apache2 restart" 
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+    if (packtype == "rpm" ) : 
+        cmd = "service httpd restart" 
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (DEBUG):                                                         # If Debug Activated
+            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+ 
 
 
 #===================================================================================================
@@ -681,7 +956,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
         update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
     
-    return(0)                                                           # Return to Caller No Error
+    return(wcfg_server)                                                           # Return to Caller No Error
 
 
 #===================================================================================================
@@ -742,10 +1017,12 @@ def main():
     (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
-    setup_sadmin_config_file(sroot)                                     # Setup & Update sadmin.cfg
+    wcfg_server = setup_sadmin_config_file(sroot)                       # Setup & Update sadmin.cfg
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
+        setup_mysql(sroot,wcfg_server,' ')                                          # Setup/Load MySQL Database
+        setup_webserver(sroot,packtype)                                 # Setup Web Server
 
     print ("\n\n------------------------------")
     print ("End of SADMIN Setup")
