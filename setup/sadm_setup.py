@@ -28,7 +28,8 @@
 #   V1.1 First Beta Version 
 # 2018_03_02 JDuplessis
 #   V1.2b Second Beta Version 
-#
+# 2018_03_13 JDuplessis
+#   V1.3 Third Beta Version #
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -49,7 +50,7 @@ inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm na
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.2b"
+sver                = "1.3"
 DEBUG               = True                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
@@ -196,6 +197,21 @@ def oscommand(command) :
     #else :
     return (returncode,out,err)
 
+
+#===================================================================================================
+#                              MAKE SURE SADMIN LINE IS IN /etc/hosts FILE
+#===================================================================================================
+def update_host_file(wdomain) :
+    hf = open('/etc/hosts','a')                                         # Open /etc/hosts file
+    eline = "127.0.0.1      sadmin  sadmin.%s" % (wdomain)              # Line that should be hosts
+    found_line = False                                                  # Assume sadmin line not in
+    for line in hf:                                                     # Read Input file until EOF
+        if (eline == line):                                             # Line already there    
+            found_line = True                                           # Line is Found 
+    if not found_line:                                                  # If line was not found
+        hf.write (eline)                                                # Write SADMIN line to hosts
+    hf.close                                                            # Close /etc/hosts file
+    return()                                                            # Return Cmd Path
 
 #===================================================================================================
 #       THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
@@ -383,72 +399,6 @@ def setup_mysql(sroot,wcfg_server,wpass):
         print ("Database is now secured ... ")                          # Advise User
 
 
-    
-#     # Delete Anonymous user (use for test database)
-#     print ("Delete MySQL Anonymous user ...")                           # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DELETE FROM mysql.user WHERE User='';"                     # Cmd to delete Anonymous
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error deleting anonymous user")                         # Advise User
-#     else:                                                               # If user deleted
-#         print ("Anonymous user deleted")                                # Advise User delete went ok
-
-
-#     # Ensure 'root' user can only be used locally
-#     print ("Ensure 'root' user can only be used locally ...")           # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Changing MySQL access to local user")             # Advise User
-#     else:                                                               # If user deleted
-#         print ("MySQL can now be only accessed locally")                # Advise User delete went ok
-
-
-#     # Remove the Test Database
-#     DROP DATABASE test;
-#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-#     print ("Deleting 'test' Database ...")                              # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Dropping 'test' Database")                        # Advise User
-#     else:                                                               # If user deleted
-#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
-
-#    # Remove the Test Database
-#     DROP DATABASE test;
-#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-#     print ("Deleting 'test' Database ...")                              # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Dropping 'test' Database")                        # Advise User
-#     else:                                                               # If user deleted
-#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
-
-#     # Flush Privileges Tables
-#     # FLUSH PRIVILEGES;
-
     # Accept 'sadmin' Database FQDN Hostname 
     #sdefault = ""                                                       # HostName Location of DB
     #sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
@@ -508,9 +458,10 @@ def setup_mysql(sroot,wcfg_server,wpass):
 #                                   Setup Apache Web Server 
 #===================================================================================================
 #
-def setup_webserver(sroot,spacktype):
+def setup_webserver(sroot,spacktype,wdomain):
 
     print ("\nSet up SADMIN Web Site ...\n")
+    update_host_file(wdomain)                                           # Update /etc/hosts file
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -543,6 +494,12 @@ def setup_webserver(sroot,spacktype):
         if (DEBUG):                                                     # If Debug Activated
             print ("Return code for Enabling SADMIN web Site is %d" % (ccode))                         
         print("Return code for Enabling Web Site is %d" % (ccode))      # Show Return Code
+        cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code for Disabling Default Web Site is %d" % (ccode))                         
+        print("Return code for Disabling Default Web Site is %d" % (ccode))      # Show Return Code
+        
 
     # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
@@ -960,7 +917,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
         update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
     
-    return(wcfg_server)                                                           # Return to Caller No Error
+    return(wcfg_server,wcfg_domain)                                     # Return to Caller
 
 
 #===================================================================================================
@@ -1021,12 +978,12 @@ def main():
     (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
-    wcfg_server = setup_sadmin_config_file(sroot)                       # Setup & Update sadmin.cfg
+    (wcfg_server,wcfg_domain) = setup_sadmin_config_file(sroot)         # Setup & Update sadmin.cfg
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
         setup_mysql(sroot,wcfg_server,' ')                              # Setup/Load MySQL Database
-        setup_webserver(sroot,packtype)                                 # Setup Web Server
+        setup_webserver(sroot,packtype,wcfg_domain)                     # Setup Web Server
 
     print ("\n\n------------------------------")
     print ("End of SADMIN Setup")
