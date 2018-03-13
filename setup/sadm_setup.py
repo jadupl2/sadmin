@@ -50,7 +50,7 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.2b"
-DEBUG               = False                                               # Debug Activated or Not
+DEBUG               = True                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
@@ -217,7 +217,7 @@ def locate_command(lcmd) :
 def locate_package(lpackages,lpacktype) :
 
     if (DEBUG):
-        print ("Package name(s) received by locate_package : %s" % (lpackages,type(lpackages)))
+        print ("Package name(s) received by locate_package : %s" % (lpackages))
         print ("Package Type received in locate_package is %s" % (lpacktype))
 
     if ((lpacktype != "deb") and (lpacktype != "rpm")):
@@ -486,21 +486,17 @@ def setup_mysql(sroot,wcfg_server,wpass):
 
     # Add Grant Privileges to Database initial Load SQL
     dbh = open(dbload_file,'a')                                         # Open File in append mode
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
+    line = "grant all privileges on squery.* to sadmin@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
     dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "flush privileges;"
+    line = "flush privileges;\n"
     dbh.write (line)                                                 # Write line to output file
     dbh.close                                                            
 
     # Load Initial Database
     print ("Loading SADMIN Database")                                   # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s/setup/mysql/%s" % (wpass,sroot,dbload_file)
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,dbload_file)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
@@ -514,6 +510,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
 #
 def setup_webserver(sroot,spacktype):
 
+    print ("\nSet up SADMIN Web Site ...\n")
+
+    # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
         cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
@@ -578,27 +577,27 @@ def setup_webserver(sroot,spacktype):
 
     # Setting Files and Directories Permissions for Web sites 
     print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
-    cmd = "chown -R %s/www %s.%s" % (sroot,apache_user,apache_group)
+    cmd = "chown -R %s.%s %s/www" % (sroot,apache_user,apache_group)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
     print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
 
     print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
-    cmd = "chmod -R %s/www 775" % (sroot)                               # chmod 775 on all www dir.
+    cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code (chmod) is %d" % (ccode))                   # Show Command Result
     print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
         
     # Restart the HTTP Web Server
-    if (packtype == "deb" ) : 
+    if (spacktype == "deb" ) : 
         cmd = "service apache2 restart" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
         if (DEBUG):                                                         # If Debug Activated
             print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
         print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
-    if (packtype == "rpm" ) : 
+    if (spacktype == "rpm" ) : 
         cmd = "service httpd restart" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
         if (DEBUG):                                                         # If Debug Activated
@@ -942,6 +941,11 @@ def setup_sadmin_config_file(sroot):
         if (DEBUG):                                                     # If Debug Activated
             print ("Return code is %d" % (ccode))                       # Show AddGroup Cmd Error #
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
+    
+    # Change owner of all files in $SADMIN
+    cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
+    print ("Executing %s" % (cmd))
+    ccode, cstdout, cstderr = oscommand(cmd)                            # Change all SADMIN file to owner
 
     # Questions ask only if on the SADMIN Server
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server

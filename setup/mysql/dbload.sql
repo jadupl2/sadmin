@@ -214,4 +214,8 @@ ALTER TABLE `server_group`
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-grant all privileges on sadmin.* to sadmin@localhost identified by Nimdas17!;grant all privileges on squery.* to sadmin@localhost identified by Query18!;grant all privileges on sadmin.* to sadmin@localhost identified by Nimdas17!;grant all privileges on squery.* to sadmin@localhost identified by Query18!;flush privileges;
+grant all privileges on sadmin.* to sadmin@localhost identified by Nimdas17!;
+grant all privileges on squery.* to sadmin@localhost identified by Query18!;
+grant all privileges on sadmin.* to sadmin@localhost identified by Nimdas17!;
+grant all privileges on squery.* to sadmin@localhost identified by Query18!;
+flush privileges;
