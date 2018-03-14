@@ -42,7 +42,7 @@ dat/
 jac/*
 !jac/bin
 log/*
-tmp/
+tmp/*
 .vscode/
 
 # Web Directories

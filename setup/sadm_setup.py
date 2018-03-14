@@ -170,14 +170,11 @@ def askyesno(emsg):
 #===================================================================================================
 #                           Write Log to Log File, Screen or Both
 #===================================================================================================
-def writelog(sline):
+def writelog(sline,stype="normal"):
     global fhlog                                                        # Log file handler
-
-    now = datetime.datetime.now()
-    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
-    fhlog.write ("%s\n" % (logLine))
-    #print ("%s" % logLine) 
-
+    fhlog.write ("%s\n" % (sline))
+    if (stype == "normal") : print (sline) 
+    if (stype == "bold")   : print ( color.DARKCYAN + color.BOLD + emsg + color.END)
 
 #===================================================================================================
 #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
@@ -202,7 +199,12 @@ def oscommand(command) :
 #                              MAKE SURE SADMIN LINE IS IN /etc/hosts FILE
 #===================================================================================================
 def update_host_file(wdomain) :
-    hf = open('/etc/hosts','a')                                         # Open /etc/hosts file
+
+    try : 
+        hf = open('/etc/hosts','r+')                                         # Open /etc/hosts file
+    except :
+        writelog("Error Opening /etc/hosts file")
+        sys.exit(1)
     eline = "127.0.0.1      sadmin  sadmin.%s" % (wdomain)              # Line that should be hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
@@ -489,9 +491,9 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
                 print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
         print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
-        update_apache_config(apache2_file,"{WROOT}",sroot)              # Set WWW Root Document
-        update_apache_config(apache2_file,"{EMAIL}",semail)             # Set WWW Admin Email
-        update_apache_config(apache2_file,"{DOMAIN}",sdomain)           # Set WWW sadmin.{Domain}
+        update_apache_config(sroot,apache2_file,"{WROOT}",sroot)              # Set WWW Root Document
+        update_apache_config(sroot,apache2_file,"{EMAIL}",semail)             # Set WWW Admin Email
+        update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)           # Set WWW sadmin.{Domain}
 
 
         cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
@@ -539,7 +541,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setting Files and Directories Permissions for Web sites 
     print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
-    cmd = "chown -R %s.%s %s/www" % (sroot,apache_user,apache_group)
+    cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (DEBUG):                                                         # If Debug Activated
         print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
@@ -571,7 +573,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 #   1st parameter = Name of file,  2nd parameter = Name field to replace,  3rd Parameter = Value
 #===================================================================================================
 #
-def update_apache_config(sfile,sname,svalue):
+def update_apache_config(sroot,sfile,sname,svalue):
     """
     [Update the Apache configuration File.]
     Arguments:
@@ -580,8 +582,8 @@ def update_apache_config(sfile,sname,svalue):
     svalue {[string]}   --  [New value of the variable]
     """    
 
-    wtmp_file = "%s/cfg/sadmin.tmp" % (sroot)                           # Tmp Apache config file
-    wbak_file = "%s/cfg/sadmin.bak" % (sroot)                           # Backup Apache config file
+    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
+    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
     if (DEBUG) :
         print ("Update_apache_config - sfile=%s - sname=%s - svalue=%s\n" % (sfile,sname,svalue))
         print ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
