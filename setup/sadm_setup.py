@@ -971,11 +971,15 @@ def setup_sadmin_config_file(sroot):
         sprompt  = "SSH port number used to connect to client"          # Prompt for Answer
         wcfg_ssh_port = accept_field(sroot,"SADM_SSH_PORT",sdefault,sprompt,"I",1,65536)
         update_sadmin_cfg(sroot,"SADM_SSH_PORT",wcfg_ssh_port)          # Update Value in sadmin.cfg
-        # Accept the Network IP and Netmask your Network
-        sdefault = "192.168.1.0/24"                                     # Network Default value 
-        sprompt  = "Enter the network IP and netmask"                   # Prompt for Answer
-        wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
-        update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
+        # Accept the Network IP
+        sdefault = "192.168.1.0"                                        # Network Default value 
+        sprompt  = "Enter the network IP"                               # Prompt for Answer
+        wcfg_network1a = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
+        # Accept the Network Netmask
+        sdefault = "24"                                                 # Network Default value 
+        sprompt  = "Enter the Network Netmask [1-31]"                   # Prompt for Answer
+        wcfg_network1b = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt,"I",1,31) # Accept Net to Watch
+        update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
     return(wcfg_server,wcfg_domain,wcfg_mail_addr)                      # Return to Caller
 

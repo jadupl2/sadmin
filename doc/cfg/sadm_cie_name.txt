@@ -1,6 +1,6 @@
 # sadmin.cfg SADM_CIE_NAME Documentation
 # Revise 2018_02_14
 #----------------------------------------------------------------------------
-This is where you specify your company name. 
-This name that will appears in the heading of the web
-interface and on some report and email that SADMIN produce.
+Specify your company name. 
+This name that will appear in the heading of the web interface
+and on some report and email that SADMIN produce.

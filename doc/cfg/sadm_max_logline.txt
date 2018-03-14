@@ -7,5 +7,7 @@ The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
 Log file are cumulative by default, but you can decide to overwrite the 
 script log if you want.
 The log are automatically trimmed to this number each time the script end.
+
 This help keeping our log to a reasonnable size.
-Recommended size is 1000 as a starting point.
+Recommended size is 1000 lines as a starting point.
+

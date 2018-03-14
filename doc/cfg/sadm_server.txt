@@ -1,7 +1,8 @@
 # sadmin.cfg SADM_SERVER Documentation
 # Revise 2018_02_14
 #----------------------------------------------------------------------------
-Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
 This name can't be an alias in the DNS, it must be the real name of the server.
 This is the server where the MySQL Database and SADMIN web site will reside.
 It MUST be the result of the 'hostname' command on the SADMIN server.
+

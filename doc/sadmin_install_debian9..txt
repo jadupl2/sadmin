@@ -2,29 +2,12 @@ Debian 9 Installation Notes
 on iMac
 Solve python linting in image
 Root .bash_profile for color prompt
----
-
-
 -----
 
 14 Mars 2018
 
 Correct load db when running twice
 In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Query18!
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-Loading SADMIN Database
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/dbload.sql
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      : ERROR 1062 (23000) at line 89: Duplicate entry '10' for key 'PRIMARY' 
-In sadm_oscommand function returncode is  : 1
-Return code is 1
-Initial SADMIN Database is in place.
-
-
 
 SADMIN Setup V1.3
 ------------------
@@ -70,11 +53,6 @@ Please respond by entering an 'S' or a 'C'.
 Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
 In update_sadmin_cfg - sname = SADM_HOST_TYPE - svalue = S
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_CIE_NAME]
@@ -83,11 +61,6 @@ This name that will appears in the heading of the web
 interface and on some report and email that SADMIN produce. 
 Enter your Company name  : The Batcave
 In update_sadmin_cfg - sname = SADM_CIE_NAME - svalue = The Batcave
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -99,11 +72,6 @@ error occured or every time is it run. (See SADM_MAIL_TYPE later on)
 Multiple email can be specify, a comma must seperate each of them. 
 Enter System Administrator Email : batman@batcave.com
 In update_sadmin_cfg - sname = SADM_MAIL_ADDR - svalue = batman@batcave.com
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -118,11 +86,6 @@ at the top of your script.
 Enter default email type : 1
 In update_sadmin_cfg - sname = SADM_MAIL_TYPE - svalue = 1
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_SERVER]
@@ -134,11 +97,6 @@ It MUST be the result of the 'hostname' command on the SADMIN server.
 Enter SADMIN (FQDN) server name : idebian9.maison.ca
 Validating server name
 In update_sadmin_cfg - sname = SADM_SERVER - svalue = idebian9.maison.ca
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -154,11 +112,6 @@ Recommended size is 1000 as a starting point.
  
 Maximum number of lines in LOG file : 999
 In update_sadmin_cfg - sname = SADM_MAX_LOGLINE - svalue = 999
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -177,22 +130,12 @@ A value of 100 would keep an history of 50 days and is the default value.
 Maximum number of lines in RCH file : 99
 In update_sadmin_cfg - sname = SADM_MAX_RCHLINE - svalue = 99
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_DOMAIN]
 Enter the default Domain to use when adding a new server 
 Default domain name : maison.ca
 In update_sadmin_cfg - sname = SADM_DOMAIN - svalue = maison.ca
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -212,11 +155,6 @@ In sadm_oscommand function stderr is      :
 In sadm_oscommand function returncode is  : 0
 Return code is 0
 In update_sadmin_cfg - sname = SADM_GROUP - svalue = sadmin
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -253,11 +191,6 @@ But if you use a different port put it here
 SSH port number used to connect to client : 32
 In update_sadmin_cfg - sname = SADM_SSH_PORT - svalue = 32
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_NETWORK1]
@@ -271,11 +204,6 @@ Enter the network IP and netmask : 192.168.1.0/24
 In update_sadmin_cfg - sname = SADM_NETWORK1 - svalue = 192.168.1.0/24
 
 
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
-
 Checking SADMIN Client Packages requirement
 Package type on system is deb
 Running apt-get update...Running apt-get update...
@@ -284,66 +212,6 @@ In sadm_oscommand function stdout is      :
 In sadm_oscommand function stderr is      :  
 In sadm_oscommand function returncode is  : 0
  Done 
-
-For command 'datetime' we need package :
-RPM Repo:base - Package: perl-DateTime 
-DEB Repo:base - Package: libdatetime-perl libwww-perl 
-
-For command 'lshw' we need package :
-RPM Repo:base - Package: lshw 
-DEB Repo:base - Package: lshw 
-
-For command 'dmidecode' we need package :
-RPM Repo:base - Package: dmidecode 
-DEB Repo:base - Package: dmidecode 
-
-For command 'bc' we need package :
-RPM Repo:base - Package: bc 
-DEB Repo:base - Package: bc 
-
-For command 'facter' we need package :
-RPM Repo:epel - Package: facter 
-DEB Repo:base - Package: facter 
-
-For command 'ifconfig' we need package :
-RPM Repo:base - Package: net-tools 
-DEB Repo:base - Package: net-tools 
-
-For command 'lsb_release' we need package :
-RPM Repo:base - Package: redhat-lsb-core 
-DEB Repo:base - Package: lsb-release 
-
-For command 'perl' we need package :
-RPM Repo:base - Package: perl 
-DEB Repo:base - Package: perl-base 
-
-For command 'fdisk' we need package :
-RPM Repo:base - Package: util-linux 
-DEB Repo:base - Package: util-linux 
-
-For command 'mail' we need package :
-RPM Repo:base - Package: mailx 
-DEB Repo:base - Package: mailutils 
-
-For command 'lscpu' we need package :
-RPM Repo:base - Package: util-linux 
-DEB Repo:base - Package: util-linux 
-
-For command 'cfg2html' we need package :
-RPM Repo:local - Package: cfg2html 
-DEB Repo:base - Package: cfg2html 
-
-For command 'parted' we need package :
-RPM Repo:base - Package: parted 
-DEB Repo:base - Package: parted 
-
-For command 'nmon' we need package :
-RPM Repo:epel - Package: nmon 
-DEB Repo:base - Package: nmon 
-
-For command 'ssh' we need package :
-RPM Repo:base - Package: openssh-clients 
-DEB Repo:base - Package: openssh-client 
 
 For command 'ethtool' we need package :
 RPM Repo:base - Package: ethtool 
@@ -541,18 +409,6 @@ In sadm_oscommand function stderr is      :
 In sadm_oscommand function returncode is  : 0
  Done 
 
-For command 'php' we need package :
-RPM Repo:base - Package: php php-mysql php-common 
-DEB Repo:base - Package: php php-mysql php-common 
-
-For command 'mysql' we need package :
-RPM Repo:base - Package: mariadb-server MySQL-python 
-DEB Repo:base - Package: mariadb-server mariadb-client 
-
-For command 'rrdtool' we need package :
-RPM Repo:base - Package: rrdtool 
-DEB Repo:base - Package: rrdtool 
-
 For command 'httpd' we need package :
 RPM Repo:base - Package: httpd httpd-tools 
 DEB Repo:base - Package: apache2 apache2-utils 
@@ -661,11 +517,6 @@ Standard error is ERROR 1008 (HY000) at line 2: Can't drop database 'test'; data
 Problem securing the database ...
 In update_sadmin_cfg - sname = SADM_DBHOST - svalue = localhost
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_RW_DBPWD]
@@ -675,11 +526,6 @@ the sadmin database,
  
 Enter 'sadmin' database user password :  : Nimdas17!
 In update_sadmin_cfg - sname = SADM_RW_DBPWD - svalue = Nimdas17!
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -691,10 +537,6 @@ but want them to modify any information in the Database.
 Enter 'squery' database user password :  : Query18!
 In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Query18!
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 Loading SADMIN Database
 In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/dbload.sql
 In sadm_oscommand function stdout is      : 
@@ -798,11 +640,6 @@ Standard error is ERROR 1008 (HY000) at line 2: Can't drop database 'test'; data
 Problem securing the database ...
 In update_sadmin_cfg - sname = SADM_DBHOST - svalue = localhost
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-
 ----------
 
 [SADM_RW_DBPWD]
@@ -812,11 +649,6 @@ the sadmin database,
  
 Enter 'sadmin' database user password :  : Nimdas17!
 In update_sadmin_cfg - sname = SADM_RW_DBPWD - svalue = Nimdas17!
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 
 ----------
 
@@ -828,10 +660,6 @@ but want them to modify any information in the Database.
 Enter 'squery' database user password :  : Squery18!
 In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Squery18!
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 Loading SADMIN Database
 In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/dbload.sql
 In sadm_oscommand function stdout is      : 
@@ -891,16 +719,8 @@ Return code for Disabling Default Web Site is 0
 Return code for Disabling Default Web Site is 0
 In update_sadmin_cfg - sname = SADM_WWW_USER - svalue = www-data
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 In update_sadmin_cfg - sname = SADM_WWW_USER - svalue = www-data
 
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
 Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www)
 In sadm_oscommand function to run command : chown -R /opt/sadmin.www-data www-data/www
 In sadm_oscommand function stdout is      : 
@@ -927,7 +747,6 @@ Return code for Restarting Apache Web Server is 0
 End of SADMIN Setup
 You can now use SADMIN
 
-
 TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
 To create your own script using SADMIN, you may want to run and view the code of 
 $SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
@@ -936,332 +755,5 @@ They will present all functions available to your shell or Python script
 
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
-
-
-------------------------------
-root@idebian9:/opt/sadmin/setup# 
-
-
-12 Mars 2018
-
-Checking SADMIN Client Packages requirement
-Running apt-get update... Done 
-Checking for openssh-client ...  Ok 
-Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
-Checking for lsb-release ...  Ok 
-Checking for parted ...  Ok 
-Checking for ethtool ... Installing ethtool ...  Done 
-Checking for nmon ... Installing nmon ...  Done 
-Checking for util-linux ...  Ok 
-Checking for util-linux ...  Ok 
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
-Checking for mailutils ... Installing mailutils ...  Done 
-Checking for lshw ... Installing lshw ...  Done 
-Checking for dmidecode ...  Ok 
-Checking for bc ...  Ok 
-Checking for facter ... Installing facter ...  Done 
-Checking for net-tools ...  Ok 
-Checking for perl-base ...  Ok 
-
-
-Checking SADMIN Server Packages requirement
-Running apt-get update... Done 
-Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
-Checking for php php-mysql php-common ... Installing php php-mysql php-common ...  Done 
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
-Checking for rrdtool ... Installing rrdtool ...  Done 
-
-----------
-
-[SADM_ROOT]
-Doc file /opt/sadmin/doc/cfg/sadm_root.txt not found, question skipped
- 
-Enter MySQL Database 'root' user password :  : Icu@9am!
-Testing Access to Database ...
-Securing MySQL Database ...
-Problem securing the database ...
-
-----------
-
-[SADM_RW_DBPWD]
-Enter the password for the read/write user "sadmin" in the 'sadmin' database.
-You can give this password to people who you want to give permission to update
-the sadmin database,
- 
-Enter 'sadmin' database user password :  : Nimdas17!
-
-----------
-
-[SADM_RO_DBPWD]
-Enter the password for the read only user "squery" of the 'sadmin' database.
-You can give this password to people you want to access the sadmin database,
-but want them to modify any information in the Database.
- 
-Enter 'squery' database user password :  : Query18!
-Loading SADMIN Database
-Initial SADMIN Database is in place.
-Apache process user name is www-data
-Apache user group name is www-data
-Traceback (most recent call last):
-  File "./sadm_setup.py", line 1044, in <module>
-    if __name__ == '__main__':  main()
-  File "./sadm_setup.py", line 1025, in main
-    setup_webserver(sroot,packtype)                                 # Setup Web Server
-  File "./sadm_setup.py", line 532, in setup_webserver
-    if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
-NameError: name 'apache2file' is not defined
-root@mdebian9:/opt/sadmin/setup# 
-
-
-------------------------------
-End of SADMIN Setup
-You can now use SADMIN
-
-
-TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
-To create your own script using SADMIN, you may want to run and view the code of 
-$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
-You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.
-They will present all functions available to your shell or Python script
-
-USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
-The web Interface is available at http://sadmin.maison.ca
-
-
-------------------------------
-root@mdebian9:/opt/sadmin/setup# 
-
-
-
-
-
-
-
-
-
-
-
-
-
-2018_03_06
-
-https://jadupl2@bitbucket.org/jadupl2/sadmin.git
-
-
-root@mdebian9:/etc/apache2/sites-available# vi sadmin.conf 
-root@mdebian9:/etc/apache2/sites-available# ls -l ../sites-enabled/
-total 0
-lrwxrwxrwx 1 root root 35 Mar  6 10:38 000-default.conf -> ../sites-available/000-default.conf
-root@mdebian9:/etc/apache2/sites-available# a2ensite sadmin.conf
-Enabling site sadmin.
-To activate the new configuration, you need to run:
-  systemctl reload apache2
-root@mdebian9:/etc/apache2/sites-available# systemctl reload apache2
-Job for apache2.service failed because the control process exited with error code.
-See "systemctl status apache2.service" and "journalctl -xe" for details.
-root@mdebian9:/etc/apache2/sites-available# 
-
-
-========================================================================================
-
-SADMIN Setup V1.2b
-------------------
-Enter directory path where your install SADMIN : /opt/sadmin
-
-----------
-[OK] SADMIN Environment variable is set to /opt/sadmin
-      - The line below is in /etc/environment now
-      - SADMIN=/opt/sadmin
-      - This will make sure it is set upon reboot
-Initial sadmin.cfg file in place.
-----------
-
-----------
-
-[SADM_HOST_TYPE]
-This is where you specify if this host is to become a SADMIN Client or Server.
-The questions that will follow depend on your answer.
-Please respond by entering an 'S' or a 'C'. 
-Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
-
-----------
-
-[SADM_CIE_NAME]
-This is where you specify your company name. 
-This name that will appears in the heading of the web
-interface and on some report and email that SADMIN produce. 
-Enter your Company name  : The Batcave
-
-----------
-
-[SADM_MAIL_ADDR]
-This field specify the email address of the system administrator.
-It is used by SADMIN Tools to send various email. 
-For example, you can request that the log of a script be sent when an 
-error occured or every time is it run. (See SADM_MAIL_TYPE later on)
-Multiple email can be specify, a comma must seperate each of them. 
-Enter System Administrator Email : duplessis.jacques@gmail.com
-
-----------
-
-[SADM_MAIL_TYPE]
-Default option for sending email after a script is finish.
-Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
-at the top of your script.
-[0] = Never send email.
-[1] = Only send the log when script finish with error.
-[2] = Only send the log when script finish with success.
-[3] = Always send the script log when script finish. 
-Enter default email type : 1
-
-----------
-
-[SADM_SERVER]
-Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
-This name can't be an alias in the DNS, it must be the real name of the server.
-This is the server where the MySQL Database and SADMIN web site will reside.
-It MUST be the result of the 'hostname' command on the SADMIN server.
- 
-Enter SADMIN (FQDN) server name : idebian9.maison.ca
-Validating server name
-
-----------
-
-[SADM_MAX_LOGLINE]
-Every time a script (python or bash script) that use SADMIN Tools is run,
-it produce a log, in the dedicated directory ${SADMIN}/log.
-The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
-Log file are cumulative by default, but you can decide to overwrite the 
-script log if you want.
-The log are automatically trimmed to this number each time the script end.
-This help keeping our log to a reasonnable size.
-Recommended size is 1000 as a starting point.
- 
-Maximum number of lines in LOG file : 999
-
-----------
-
-[SADM_MAX_RCHLINE]
-When a (python or shell) script using the SADMIN tools start and ends, 
-it record the date/time and the ending status in what we call a RCH file 
-([R]eturn [C]ode [H]istory] file). 
-The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
-They are located in the directory ${SADM_BASE_DIR}/dat/rch.
-The RCH file are created/updated each time a script is started and ended.
-The RCH file are automatically trimmed to this number each time the script end.
-SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
-can contain. 
-A value of 100 would keep an history of 50 days and is the default value.
- 
-Maximum number of lines in RCH file : 99
-
-----------
-
-[SADM_DOMAIN]
-Enter the default Domain to use when adding a new server 
-Default domain name : maison.ca
-
-----------
-
-[SADM_GROUP]
-This is the SADMIN Tools main user group that have access to all SADMIN 
-directories. Every day the housekeeping script will make sure that all 
-files in the $SADMIN directories are own by this group. 
-If others users need to access or used scripts located in $SADMIN, 
-they must be part of this group.
-The SADMIN default user group is 'sadmin'.
- 
-Enter the default user Group : sadmin
-Creating group sadmin
-
-----------
-
-[SADM_USER]
-This is the SADMIN Tools main user that have access to all SADMIN directories.
-Every day the housekeeping script will make sure that all files in the $SADMIN
-directories are own by this user.
-The SADMIN default user name is 'sadmin'.
- 
-Enter the default user name : sadmin
-Creating user sadmin
-
-----------
-
-[SADM_SSH_PORT]
-Standard Port for SSH is 22 
-But if you use a different port put it here 
-SSH port number used to connect to client : 32
-
-----------
-
-[SADM_NETWORK1]
-Every day SADMIN will check the IP utilisation on your network. The result 
-will be visible on a web page. You will be able to tell what IP are in use 
-(respond to ping) and what DNS name each IP has (if any). So this information
-will be able to tell what IP is free to use and the one that are in use.
-It will facilitate, the clean up of your DNS and IP usage.
-The network should be specify in this form, '192.168.1.0/24'. 
-Enter the network IP and netmask : 192.168.1.0/24
-
-
-Checking SADMIN Client Packages requirement
-Running apt-get update... Done 
-Checking for openssh-client ...  Ok 
-Checking for bc ...  Ok 
-Checking for lsb-release ...  Ok 
-Checking for util-linux ...  Ok 
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
-Checking for util-linux ...  Ok 
-Checking for nmon ... Installing nmon ...  Done 
-Checking for perl-base ...  Ok 
-Checking for dmidecode ...  Ok 
-Checking for net-tools ... Installing net-tools ...  Done 
-Checking for cfg2html ... Installing cfg2html ... [ERROR] Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
-Checking for facter ... Installing facter ...  Done 
-Checking for ethtool ... Installing ethtool ...  Done 
-Checking for mailutils ... Installing mailutils ...  Done 
-Checking for parted ...  Ok 
-Checking for lshw ... Installing lshw ...  Done 
-
-
-Checking SADMIN Server Packages requirement
-Running apt-get update... Done 
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
-Checking for rrdtool ... Installing rrdtool ...  Done 
-Checking for php php-mysql php-common ... Installing php php-mysql php-common ...  Done 
-Checking for apache2 apache2-utils ...  Ok 
-
-----------
-
-[SADM_WWW_USER]
-Doc file /opt/sadmin/doc/cfg/sadm_www_user.txt not found, question skipped
- 
-Enter apache process owner user name : www-data
-
-----------
-
-[SADM_WWW_GROUP]
-Doc file /opt/sadmin/doc/cfg/sadm_www_group.txt not found, question skipped
- 
-Enter the 'apache' process group owner  : www-data
-Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www)
-Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
-
-
-------------------------------
-End of SADMIN Setup
-You can now use SADMIN
-
-
-TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
-To create your own script using SADMIN, you may want to run and view the code of 
-$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point
-You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.
-They will present all functions available to your shell or Python script
-
-USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
-The web Interface is available at http://sadmin.maison.ca
-
-
 ------------------------------
 root@idebian9:/opt/sadmin/setup# 
