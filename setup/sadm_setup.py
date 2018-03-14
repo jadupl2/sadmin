@@ -29,7 +29,7 @@
 # 2018_03_02 JDuplessis
 #   V1.2b Second Beta Version 
 # 2018_03_13 JDuplessis
-#   V1.3 Third Beta Version #
+#   V1.3 Third Beta Version 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -458,10 +458,10 @@ def setup_mysql(sroot,wcfg_server,wpass):
 #                                   Setup Apache Web Server 
 #===================================================================================================
 #
-def setup_webserver(sroot,spacktype,wdomain):
+def setup_webserver(sroot,spacktype,sdomain,semail):
 
     print ("\nSet up SADMIN Web Site ...\n")
-    update_host_file(wdomain)                                           # Update /etc/hosts file
+    update_host_file(sdomain)                                           # Update /etc/hosts file
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -489,6 +489,11 @@ def setup_webserver(sroot,spacktype,wdomain):
                 print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
         print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+        update_apache_config(apache2_file,"{WROOT}",sroot)              # Set WWW Root Document
+        update_apache_config(apache2_file,"{EMAIL}",semail)             # Set WWW Admin Email
+        update_apache_config(apache2_file,"{DOMAIN}",sdomain)           # Set WWW sadmin.{Domain}
+
+
         cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
         if (DEBUG):                                                     # If Debug Activated
@@ -561,6 +566,50 @@ def setup_webserver(sroot,spacktype,wdomain):
             print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
         print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
  
+#===================================================================================================
+#               Replacing Value in Apache Configuration file by users specified values
+#   1st parameter = Name of file,  2nd parameter = Name field to replace,  3rd Parameter = Value
+#===================================================================================================
+#
+def update_apache_config(sfile,sname,svalue):
+    """
+    [Update the Apache configuration File.]
+    Arguments:
+    sfile  {[string]}   --  [Name of Full Path Apache configuration file]
+    sname  {[string]}   --  [Name of variable to change value]
+    svalue {[string]}   --  [New value of the variable]
+    """    
+
+    wtmp_file = "%s/cfg/sadmin.tmp" % (sroot)                           # Tmp Apache config file
+    wbak_file = "%s/cfg/sadmin.bak" % (sroot)                           # Backup Apache config file
+    if (DEBUG) :
+        print ("Update_apache_config - sfile=%s - sname=%s - svalue=%s\n" % (sfile,sname,svalue))
+        print ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
+
+    fi = open(sfile,'r')                                                # Current Apache Input File
+    fo = open(wtmp_file,'w')                                            # New Apache Config File  
+
+    # Replace Line Starting with 'sname' with new 'svalue' 
+    for line in fi:                                                     # Read sadmin.cfg until EOF
+        sline = line.replace(sname,svalue)
+        fo.write (sline)                                                # Write line to output file
+    fi.close                                                            # File read now close it
+    fo.close                                                            # Close the output file
+
+    # Rename Apache Current file to .bak
+    try:                                                                # Will try rename env. file
+        os.rename(sfile,wbak_file)                                      # Rename Current to tmp
+    except:
+        print ("Error renaming %s to %s" % (sfile,wbak_file))           # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
+
+    # Rename tmp file to Apache Config file name
+    try:                                                                # Will try rename env. file
+        os.rename(wtmp_file,sfile)                                      # Rename tmp to sadmin.cfg
+    except:
+        print ("Error renaming %s to %s" % (wtmp_file,sfile))           # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
+
 
 
 #===================================================================================================
@@ -883,15 +932,24 @@ def setup_sadmin_config_file(sroot):
                 found_usr = True                                        # Found User in passwd file
     if (found_usr == True):                                             # User Name found in file
         printBold ("User %s is an existing user" % (wcfg_user))         # Existing user Advise user
+        printBold ("Add user %s to group %s" % (wcfg_user,wcfg_group))
+        if wostype == "LINUX" :                                         # Under Linux
+            cmd = "usermod -g %s %s" % (wcfg_group,wcfg_user)           # Add group to User Command 
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+        if wostype == "AIX" :                                           # Under AIX
+            cmd = "chuser pgrp='%s' %s" % (wcfg_group,wcfg_user)        # Build chuser command
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+        if (DEBUG):                                                     # If Debug Activated
+            print ("Return code is %d" % (ccode))                       # Show AddGroup Cmd Error #
     else:
         print ("Creating user %s" % (wcfg_user))                        # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
-            cmd = "useradd -g %s -s /bin/sh " % (wcfg_user)             # Build Add user Command 
+            cmd = "useradd -g %s -s /bin/sh " % (wcfg_group)            # Build Add user Command 
             cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
             cmd += " -c'%s' %s" % ("SADMIN Tools User",wcfg_user)       # Add comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
         if wostype == "AIX" :                                           # Under AIX
-            cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_user)          # Build mkuser command
+            cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_group)         # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
@@ -917,7 +975,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
         update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
     
-    return(wcfg_server,wcfg_domain)                                     # Return to Caller
+    return(wcfg_server,wcfg_domain,wcfg_mail_addr)                      # Return to Caller
 
 
 #===================================================================================================
@@ -978,12 +1036,12 @@ def main():
     (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
     if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
     if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
-    (wcfg_server,wcfg_domain) = setup_sadmin_config_file(sroot)         # Setup & Update sadmin.cfg
+    (wcfg_server,wcfg_domain,wcfg_mail_addr) = setup_sadmin_config_file(sroot) # Setup/Upd sadmin.cfg
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
         setup_mysql(sroot,wcfg_server,' ')                              # Setup/Load MySQL Database
-        setup_webserver(sroot,packtype,wcfg_domain)                     # Setup Web Server
+        setup_webserver(sroot,packtype,wcfg_domain,wcfg_mail_addr)      # Setup Web Server
 
     print ("\n\n------------------------------")
     print ("End of SADMIN Setup")
