@@ -7,5 +7,4 @@ Every day SADMIN will check the IP utilisation on your network.
       and what DNS name each IP has (if any).
     - It will facilitate, the clean up of your DNS and IP usage.
     - Network should be specify in this form, '192.168.1.0"
-    - Netmask should specify the number bits use (1-32)
-    
+    - Netmask should specify the number bits use (1-31)
