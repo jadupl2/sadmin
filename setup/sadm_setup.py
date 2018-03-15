@@ -51,7 +51,7 @@ conn                = ""                                                # MySQL 
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.3"
-DEBUG               = True                                               # Debug Activated or Not
+DEBUG               = False                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
@@ -211,7 +211,7 @@ def update_host_file(wdomain) :
         if (eline == line):                                             # Line already there    
             found_line = True                                           # Line is Found 
     if not found_line:                                                  # If line was not found
-        hf.write (eline)                                                # Write SADMIN line to hosts
+        hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
     hf.close                                                            # Close /etc/hosts file
     return()                                                            # Return Cmd Path
 
@@ -440,7 +440,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     dbh = open(dbload_file,'a')                                         # Open File in append mode
     line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
+    line = "grant all privileges on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
     dbh.write (line)                                                 # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                 # Write line to output file
@@ -960,6 +960,11 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
+    try :
+        os.mkdir ("%s/tmp" % (sroot))
+        os.mkdir ("%s/www/dat" % (sroot))
+    except :
+        pass
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     print ("Executing %s" % (cmd))
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change all SADMIN file to owner

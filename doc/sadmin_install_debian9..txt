@@ -9,58 +9,35 @@ Root .bash_profile for color prompt
 Correct load db when running twice
 In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Query18!
 
+
+
 SADMIN Setup V1.3
 ------------------
+Enter directory path where your install SADMIN : /opt/sadmin
 
 ----------
 [OK] SADMIN Environment variable is set to /opt/sadmin
       - The line below is in /etc/environment now
       - SADMIN=/opt/sadmin
       - This will make sure it is set upon reboot
+Initial sadmin.cfg file in place.
 ----------
-main: Directory SADMIN is /opt/sadmin
-O/S command : which rpm 
-In sadm_oscommand function to run command : which rpm
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-O/S command : which dpkg 
-In sadm_oscommand function to run command : which dpkg
-In sadm_oscommand function stdout is      : /usr/bin/dpkg
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : which lslpp 
-In sadm_oscommand function to run command : which lslpp
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Open the log file /opt/sadmin/log/sadm_setup.log
-Package type on system is deb
-Log file name is /opt/sadmin/log/sadm_setup.log
-In sadm_oscommand function to run command : uname -s
-In sadm_oscommand function stdout is      : Linux
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-setup_sadmin_config_file: Dir. SADMIN is /opt/sadmin
-ostype is: LINUX
 
 ----------
 
 [SADM_HOST_TYPE]
-This is where you specify if this host is to become a SADMIN Client or Server.
-The questions that will follow depend on your answer.
-Please respond by entering an 'S' or a 'C'. 
+Specify if this host is to become a SADMIN [C]lient or [S]erver.
+The questions that will follow depend on this answer.
+ 
 Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
-In update_sadmin_cfg - sname = SADM_HOST_TYPE - svalue = S
 
 ----------
 
 [SADM_CIE_NAME]
-This is where you specify your company name. 
-This name that will appears in the heading of the web
-interface and on some report and email that SADMIN produce. 
+Specify your company name. 
+This name that will appear in the heading of the web interface
+and on some report and email that SADMIN produce. 
 Enter your Company name  : The Batcave
-In update_sadmin_cfg - sname = SADM_CIE_NAME - svalue = The Batcave
 
 ----------
 
@@ -71,7 +48,6 @@ For example, you can request that the log of a script be sent when an
 error occured or every time is it run. (See SADM_MAIL_TYPE later on)
 Multiple email can be specify, a comma must seperate each of them. 
 Enter System Administrator Email : batman@batcave.com
-In update_sadmin_cfg - sname = SADM_MAIL_ADDR - svalue = batman@batcave.com
 
 ----------
 
@@ -79,24 +55,25 @@ In update_sadmin_cfg - sname = SADM_MAIL_ADDR - svalue = batman@batcave.com
 Default option for sending email after a script is finish.
 Can be overridden by changing SADM_MAIL_TYPE in the SADMIN definition section 
 at the top of your script.
+
 [0] = Never send email.
 [1] = Only send the log when script finish with error.
 [2] = Only send the log when script finish with success.
-[3] = Always send the script log when script finish. 
+[3] = Always send the script log when script finish.
+ 
 Enter default email type : 1
-In update_sadmin_cfg - sname = SADM_MAIL_TYPE - svalue = 1
 
 ----------
 
 [SADM_SERVER]
-Enter the name of the SADMIN Server - (MUST be fully qualified domain name)
+Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
 This name can't be an alias in the DNS, it must be the real name of the server.
 This is the server where the MySQL Database and SADMIN web site will reside.
 It MUST be the result of the 'hostname' command on the SADMIN server.
+
  
-Enter SADMIN (FQDN) server name : idebian9.maison.ca
+Enter SADMIN (FQDN) server name : mdebian9.maison.ca
 Validating server name
-In update_sadmin_cfg - sname = SADM_SERVER - svalue = idebian9.maison.ca
 
 ----------
 
@@ -107,384 +84,159 @@ The name of the Log file is "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].log".
 Log file are cumulative by default, but you can decide to overwrite the 
 script log if you want.
 The log are automatically trimmed to this number each time the script end.
+
 This help keeping our log to a reasonnable size.
-Recommended size is 1000 as a starting point.
+Recommended size is 1000 lines as a starting point.
+
  
 Maximum number of lines in LOG file : 999
-In update_sadmin_cfg - sname = SADM_MAX_LOGLINE - svalue = 999
 
 ----------
 
 [SADM_MAX_RCHLINE]
 When a (python or shell) script using the SADMIN tools start and ends, 
-it record the date/time and the ending status in what we call a RCH file 
-([R]eturn [C]ode [H]istory] file). 
-The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
-They are located in the directory ${SADM_BASE_DIR}/dat/rch.
-The RCH file are created/updated each time a script is started and ended.
-The RCH file are automatically trimmed to this number each time the script end.
-SADM_MAX_RCHLINE represent the maximum number of lines that each RCH file
-can contain. 
-A value of 100 would keep an history of 50 days and is the default value.
+it record the date/time and the ending status of your script in what we call
+a RCH file ([R]eturn [C]ode [H]istory] file). 
+
+     - The RCH file name are "[HOSTNAME]_sadm_[NAME_OF_SCRIPT].rch"
+     - They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+     - This number represent the maximum number of lines that each RCH file can contain.
+     
+Recommended value of 100 lines would keep an history of 50 days and is the default value.
+
  
 Maximum number of lines in RCH file : 99
-In update_sadmin_cfg - sname = SADM_MAX_RCHLINE - svalue = 99
 
 ----------
 
 [SADM_DOMAIN]
-Enter the default Domain to use when adding a new server 
+Enter the default Domain Name to use when you will be adding a new server.
+ 
 Default domain name : maison.ca
-In update_sadmin_cfg - sname = SADM_DOMAIN - svalue = maison.ca
 
 ----------
 
 [SADM_GROUP]
-This is the SADMIN Tools main user group that have access to all SADMIN 
-directories. Every day the housekeeping script will make sure that all 
-files in the $SADMIN directories are own by this group. 
-If others users need to access or used scripts located in $SADMIN, 
-they must be part of this group.
-The SADMIN default user group is 'sadmin'.
+This is the primary user group that have access to all SADMIN directories.
+    - All files in the $SADMIN directories are own by this group. 
+    - If others users need to access or used scripts located in $SADMIN, 
+      they must be part of this group.
+    - The SADMIN default user group is 'sadmin'.
+    
  
-Enter the default user Group : sadmin
-Creating group sadmin
-In sadm_oscommand function to run command : groupadd sadmin
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code is 0
-In update_sadmin_cfg - sname = SADM_GROUP - svalue = sadmin
+Enter the default user Group : sadin
+Creating group sadin
 
 ----------
 
 [SADM_USER]
-This is the SADMIN Tools main user that have access to all SADMIN directories.
-Every day the housekeeping script will make sure that all files in the $SADMIN
-directories are own by this user.
-The SADMIN default user name is 'sadmin'.
+This is the main user that have access to all SADMIN directories and files.
+    - This user will be assign to the user group you just specified.
+    - The SADMIN default user name is 'sadmin'.
+    
  
 Enter the default user name : sadmin
 Creating user sadmin
-In sadm_oscommand function to run command : useradd -g sadmin -s /bin/sh  -d /opt/sadmin  -c'SADMIN Tools User' sadmin
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code is 0
-In update_sadmin_cfg - sname = SADM_USER - svalue = sadmin
-
-
-wcfg_file=/opt/sadmin/cfg/sadmin.cfg
-wtmp_file=/opt/sadmin/cfg/sadmin.tmp
-wbak_file=/opt/sadmin/cfg/sadmin.bak
-Executing find /opt/sadmin -exec chown sadmin.sadmin {} \;
-In sadm_oscommand function to run command : find /opt/sadmin -exec chown sadmin.sadmin {} \;
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
+Executing find /opt/sadmin -exec chown sadmin.sadin {} \;
 
 ----------
 
 [SADM_SSH_PORT]
-Standard Port for SSH is 22 
-But if you use a different port put it here 
+TCP/IP Port used for SSH. 
+Default port is 22.
+
+ 
 SSH port number used to connect to client : 32
-In update_sadmin_cfg - sname = SADM_SSH_PORT - svalue = 32
 
 ----------
 
 [SADM_NETWORK1]
-Every day SADMIN will check the IP utilisation on your network. The result 
-will be visible on a web page. You will be able to tell what IP are in use 
-(respond to ping) and what DNS name each IP has (if any). So this information
-will be able to tell what IP is free to use and the one that are in use.
-It will facilitate, the clean up of your DNS and IP usage.
-The network should be specify in this form, '192.168.1.0/24'. 
-Enter the network IP and netmask : 192.168.1.0/24
-In update_sadmin_cfg - sname = SADM_NETWORK1 - svalue = 192.168.1.0/24
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on a web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Network should be specify in this form, '192.168.1.0"
+    - Netmask should specify the number bits use (1-31) 
+Enter the network IP : 192.168.1.0
+
+----------
+
+[SADM_NETWORK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on a web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Network should be specify in this form, '192.168.1.0"
+    - Netmask should specify the number bits use (1-31) 
+Enter the Network Netmask [1-31] : 24
 
 
 Checking SADMIN Client Packages requirement
-Package type on system is deb
 Running apt-get update...Running apt-get update...
-In sadm_oscommand function to run command : apt-get -y update >> /opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
  Done 
-
-For command 'ethtool' we need package :
-RPM Repo:base - Package: ethtool 
-DEB Repo:base - Package: ethtool 
-Checking for libdatetime-perl libwww-perl ... Package name(s) received by locate_package : libdatetime-perl libwww-perl
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W libdatetime-perl  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W libdatetime-perl  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-O/S command : dpkg-query -W libwww-perl  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W libwww-perl  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Installing libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... 
-apt-get -y install libdatetime-perl libwww-perl >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install libdatetime-perl libwww-perl >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
+Checking for nmon ... Installing nmon ... Installing nmon ... 
+apt-get -y install nmon >>/opt/sadmin/log/sadm_setup.log 2>&1
  Done 
 Installed successfully
-Checking for lshw ... Package name(s) received by locate_package : lshw
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W lshw  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W lshw  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing lshw ... Installing lshw ... 
-apt-get -y install lshw >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install lshw >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Done 
-Installed successfully
-Checking for dmidecode ... Package name(s) received by locate_package : dmidecode
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W dmidecode  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W dmidecode  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for bc ... Package name(s) received by locate_package : bc
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W bc  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W bc  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for facter ... Package name(s) received by locate_package : facter
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W facter  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W facter  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing facter ... Installing facter ... 
-apt-get -y install facter >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install facter >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Done 
-Installed successfully
-Checking for net-tools ... Package name(s) received by locate_package : net-tools
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W net-tools  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W net-tools  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for lsb-release ... Package name(s) received by locate_package : lsb-release
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W lsb-release  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W lsb-release  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for perl-base ... Package name(s) received by locate_package : perl-base
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W perl-base  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W perl-base  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for util-linux ... Package name(s) received by locate_package : util-linux
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W util-linux  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W util-linux  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for mailutils ... Package name(s) received by locate_package : mailutils
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W mailutils  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W mailutils  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing mailutils ... Installing mailutils ... 
+Checking for bc ...  Ok 
+Checking for lsb-release ...  Ok 
+Checking for mailutils ... Installing mailutils ... Installing mailutils ... 
 apt-get -y install mailutils >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install mailutils >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
  Done 
 Installed successfully
-Checking for util-linux ... Package name(s) received by locate_package : util-linux
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W util-linux  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W util-linux  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for cfg2html ... Package name(s) received by locate_package : cfg2html
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W cfg2html  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W cfg2html  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing cfg2html ... Installing cfg2html ... 
+Checking for lshw ... Installing lshw ... Installing lshw ... 
+apt-get -y install lshw >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for perl-base ...  Ok 
+Checking for ethtool ... Installing ethtool ... Installing ethtool ... 
+apt-get -y install ethtool >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... 
+apt-get -y install libdatetime-perl libwww-perl >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for parted ...  Ok 
+Checking for net-tools ... Installing net-tools ... Installing net-tools ... 
+apt-get -y install net-tools >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for openssh-client ...  Ok 
+Checking for util-linux ...  Ok 
+Checking for cfg2html ... Installing cfg2html ... Installing cfg2html ... 
 apt-get -y install cfg2html >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install cfg2html >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 100
 [ERROR] Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
 Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
-Checking for parted ... Package name(s) received by locate_package : parted
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W parted  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W parted  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for nmon ... Package name(s) received by locate_package : nmon
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W nmon  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W nmon  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing nmon ... Installing nmon ... 
-apt-get -y install nmon >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install nmon >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
+Checking for dmidecode ...  Ok 
+Checking for facter ... Installing facter ... Installing facter ... 
+apt-get -y install facter >>/opt/sadmin/log/sadm_setup.log 2>&1
  Done 
 Installed successfully
-Checking for openssh-client ... Package name(s) received by locate_package : openssh-client
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W openssh-client  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W openssh-client  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for ethtool ... Package name(s) received by locate_package : ethtool
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W ethtool  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W ethtool  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing ethtool ... Installing ethtool ... 
-apt-get -y install ethtool >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install ethtool >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Done 
-Installed successfully
+Checking for util-linux ...  Ok 
 
 
 Checking SADMIN Server Packages requirement
-Package type on system is deb
 Running apt-get update...Running apt-get update...
-In sadm_oscommand function to run command : apt-get -y update >> /opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
  Done 
-
-For command 'httpd' we need package :
-RPM Repo:base - Package: httpd httpd-tools 
-DEB Repo:base - Package: apache2 apache2-utils 
-Checking for php php-mysql php-common ... Package name(s) received by locate_package : php php-mysql php-common
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W php  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-O/S command : dpkg-query -W php-mysql  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php-mysql  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-O/S command : dpkg-query -W php-common  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php-common  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing php php-mysql php-common ... Installing php php-mysql php-common ... 
-apt-get -y install php php-mysql php-common >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install php php-mysql php-common >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Done 
-Installed successfully
-Checking for mariadb-server mariadb-client ... Package name(s) received by locate_package : mariadb-server mariadb-client
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W mariadb-server  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W mariadb-server  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-O/S command : dpkg-query -W mariadb-client  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W mariadb-client  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... 
-apt-get -y install mariadb-server mariadb-client >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install mariadb-server mariadb-client >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Done 
-Installed successfully
-Checking for rrdtool ... Package name(s) received by locate_package : rrdtool
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W rrdtool  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W rrdtool  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 1
-Installing rrdtool ... Installing rrdtool ... 
+Checking for rrdtool ... Installing rrdtool ... Installing rrdtool ... 
 apt-get -y install rrdtool >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function to run command : apt-get -y install rrdtool >>/opt/sadmin/log/sadm_setup.log 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
  Done 
 Installed successfully
-Checking for apache2 apache2-utils ... Package name(s) received by locate_package : apache2 apache2-utils
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W apache2  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W apache2  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : dpkg-query -W apache2-utils  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W apache2-utils  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
+Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ... Installing apache2 apache2-utils ... 
+apt-get -y install apache2 apache2-utils >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... 
+apt-get -y install mariadb-server mariadb-client >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
+Checking for php php-mysql php-common ... Installing php php-mysql php-common ... Installing php php-mysql php-common ... 
+apt-get -y install php php-mysql php-common >>/opt/sadmin/log/sadm_setup.log 2>&1
+ Done 
+Installed successfully
 
 ----------
 
@@ -493,29 +245,8 @@ In sadm_oscommand function returncode is  : 0
  
 Enter MySQL Database 'root' user password :  : Icu@9am!
 Testing Access to Database ...
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! -e 'show databases;'
-In sadm_oscommand function stdout is      : Database
-information_schema
-mysql
-performance_schema
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code is 0 - After trying mysql -u root -pIcu@9am! -e 'show databases;'
-Standard out is Database
-information_schema
-mysql
-performance_schema
-Standard error is 
 Securing MySQL Database ...
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/secure_mysql.sql
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      : ERROR 1008 (HY000) at line 2: Can't drop database 'test'; database doesn't exist 
-In sadm_oscommand function returncode is  : 1
-Return code is 1 - mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/secure_mysql.sql
-Standard out is 
-Standard error is ERROR 1008 (HY000) at line 2: Can't drop database 'test'; database doesn't exist
 Problem securing the database ...
-In update_sadmin_cfg - sname = SADM_DBHOST - svalue = localhost
 
 ----------
 
@@ -525,130 +256,6 @@ You can give this password to people who you want to give permission to update
 the sadmin database,
  
 Enter 'sadmin' database user password :  : Nimdas17!
-In update_sadmin_cfg - sname = SADM_RW_DBPWD - svalue = Nimdas17!
-
-----------
-
-[SADM_RO_DBPWD]
-Enter the password for the read only user "squery" of the 'sadmin' database.
-You can give this password to people you want to access the sadmin database,
-but want them to modify any information in the Database.
- 
-Enter 'squery' database user password :  : Query18!
-In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Query18!
-
-Loading SADMIN Database
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/dbload.sql
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code is 0
-Initial SADMIN Database is in place.
-
-Set up SADMIN Web Site ...
-
-For command 'httpd' we need package :
-RPM Repo:base - Package: httpd httpd-tools 
-DEB Repo:base - Package: apache2 apache2-utils 
-
-For command 'rrdtool' we need package :
-RPM Repo:base - Package: rrdtool 
-DEB Repo:base - Package: rrdtool 
-Checking for mariadb-server mariadb-client ... Package name(s) received by locate_package : mariadb-server mariadb-client
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W mariadb-server  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W mariadb-server  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : dpkg-query -W mariadb-client  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W mariadb-client  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for php php-mysql php-common ... Package name(s) received by locate_package : php php-mysql php-common
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W php  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : dpkg-query -W php-mysql  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php-mysql  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : dpkg-query -W php-common  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W php-common  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for apache2 apache2-utils ... Package name(s) received by locate_package : apache2 apache2-utils
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W apache2  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W apache2  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-O/S command : dpkg-query -W apache2-utils  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W apache2-utils  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-Checking for rrdtool ... Package name(s) received by locate_package : rrdtool
-Package Type received in locate_package is deb
-O/S command : dpkg-query -W rrdtool  >/dev/null 2>&1 
-In sadm_oscommand function to run command : dpkg-query -W rrdtool  >/dev/null 2>&1
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
- Ok 
-
-----------
-
-[SADM_ROOT]
- 
- 
-Enter MySQL Database 'root' user password :  : Icu@9am!
-Testing Access to Database ...
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! -e 'show databases;'
-In sadm_oscommand function stdout is      : Database
-information_schema
-mysql
-performance_schema
-sadmin
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code is 0 - After trying mysql -u root -pIcu@9am! -e 'show databases;'
-Standard out is Database
-information_schema
-mysql
-performance_schema
-sadmin
-Standard error is 
-Securing MySQL Database ...
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/secure_mysql.sql
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      : ERROR 1008 (HY000) at line 2: Can't drop database 'test'; database doesn't exist 
-In sadm_oscommand function returncode is  : 1
-Return code is 1 - mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/secure_mysql.sql
-Standard out is 
-Standard error is ERROR 1008 (HY000) at line 2: Can't drop database 'test'; database doesn't exist
-Problem securing the database ...
-In update_sadmin_cfg - sname = SADM_DBHOST - svalue = localhost
-
-----------
-
-[SADM_RW_DBPWD]
-Enter the password for the read/write user "sadmin" in the 'sadmin' database.
-You can give this password to people who you want to give permission to update
-the sadmin database,
- 
-Enter 'sadmin' database user password :  : Nimdas17!
-In update_sadmin_cfg - sname = SADM_RW_DBPWD - svalue = Nimdas17!
 
 ----------
 
@@ -658,94 +265,27 @@ You can give this password to people you want to access the sadmin database,
 but want them to modify any information in the Database.
  
 Enter 'squery' database user password :  : Squery18!
-In update_sadmin_cfg - sname = SADM_RO_DBPWD - svalue = Squery18!
-
 Loading SADMIN Database
-In sadm_oscommand function to run command : mysql -u root -pIcu@9am! < /opt/sadmin/setup/mysql/dbload.sql
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      : ERROR 1062 (23000) at line 89: Duplicate entry '10' for key 'PRIMARY' 
-In sadm_oscommand function returncode is  : 1
-Return code is 1
 Initial SADMIN Database is in place.
 
 Set up SADMIN Web Site ...
 
-In sadm_oscommand function to run command : ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq
-In sadm_oscommand function stdout is      : www-data
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code for getting apache2 user name is 0
 Apache process user name is www-data
-In sadm_oscommand function to run command : id -gn www-data
-In sadm_oscommand function stdout is      : www-data
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code for getting apache2 group name is 0
 Apache user group name is www-data
 Initial SADMIN Web site configuration file in place.
-Update_apache_config - sfile=/etc/apache2/sites-available/sadmin.conf - sname={WROOT} - svalue=/opt/sadmin
-
-
-sfile=/etc/apache2/sites-available/sadmin.conf
-wtmp_file=/opt/sadmin/tmp/apache.tmp
-wbak_file=/opt/sadmin/tmp/apache.bak
-Update_apache_config - sfile=/etc/apache2/sites-available/sadmin.conf - sname={EMAIL} - svalue=batman@batcave.com
-
-
-sfile=/etc/apache2/sites-available/sadmin.conf
-wtmp_file=/opt/sadmin/tmp/apache.tmp
-wbak_file=/opt/sadmin/tmp/apache.bak
-Update_apache_config - sfile=/etc/apache2/sites-available/sadmin.conf - sname={DOMAIN} - svalue=maison.ca
-
-
-sfile=/etc/apache2/sites-available/sadmin.conf
-wtmp_file=/opt/sadmin/tmp/apache.tmp
-wbak_file=/opt/sadmin/tmp/apache.bak
-In sadm_oscommand function to run command : a2ensite sadmin.conf
-In sadm_oscommand function stdout is      : Enabling site sadmin.
-To activate the new configuration, you need to run:
-  systemctl reload apache2
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code for Enabling SADMIN web Site is 0
 Return code for Enabling Web Site is 0
-In sadm_oscommand function to run command : a2dissite 000-default.conf
-In sadm_oscommand function stdout is      : Site 000-default disabled.
-To activate the new configuration, you need to run:
-  systemctl reload apache2
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
 Return code for Disabling Default Web Site is 0
-Return code for Disabling Default Web Site is 0
-In update_sadmin_cfg - sname = SADM_WWW_USER - svalue = www-data
-
-In update_sadmin_cfg - sname = SADM_WWW_USER - svalue = www-data
-
 Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www)
-In sadm_oscommand function to run command : chown -R /opt/sadmin.www-data www-data/www
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      : chown: invalid user: ‘/opt/sadmin.www-data’ 
-In sadm_oscommand function returncode is  : 1
-Return code (chown) is 1
-Return code (chown) is 1
-Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
-In sadm_oscommand function to run command : chmod -R 775 /opt/sadmin/www
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code (chmod) is 0
 Return code (chown) is 0
-In sadm_oscommand function to run command : service apache2 restart
-In sadm_oscommand function stdout is      : 
-In sadm_oscommand function stderr is      :  
-In sadm_oscommand function returncode is  : 0
-Return code for Restarting Apache Web Server is 0
+Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
+Return code (chown) is 0
 Return code for Restarting Apache Web Server is 0
 
 
 ------------------------------
 End of SADMIN Setup
 You can now use SADMIN
+
 
 TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
 To create your own script using SADMIN, you may want to run and view the code of 
@@ -755,5 +295,7 @@ They will present all functions available to your shell or Python script
 
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
+
+
 ------------------------------
-root@idebian9:/opt/sadmin/setup# 
+root@mdebian9:/opt/sadmin/setup# 
