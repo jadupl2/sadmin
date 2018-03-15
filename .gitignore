@@ -25,13 +25,13 @@
 *.tmp
 
 # Want the empties 'dat' and 'tmp' directories to be part of project (clone)
-dat/
+dat/*
 !dat/.gitkeep
-log/
+log/*
 !log/.gitkeep
 www/dat/*
 !www/dat/.gitkeep
-tmp/
+tmp/*
 !tmp/.gitkeep
 www/tmp/*
 !www/tmp/.gitkeep

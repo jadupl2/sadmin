@@ -960,11 +960,6 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
-    try :
-        os.mkdir ("%s/tmp" % (sroot))
-        os.mkdir ("%s/www/dat" % (sroot))
-    except :
-        pass
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     print ("Executing %s" % (cmd))
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change all SADMIN file to owner
