@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
 #   Date        :   2017-09-09
@@ -201,8 +201,8 @@ def writelog(sline,stype="normal"):
 
     # Display Line on Screen
     if (stype == "normal") : print (sline)                              
-    if (stype == "nonl")   : print (sline,end='')                              
-    if (stype == "bold")   : print ( color.DARKCYAN + color.BOLD + emsg + color.END)
+    if (stype == "nonl")   : print (sline, end='')                              
+    if (stype == "bold")   : print ( color.DARKCYAN + color.BOLD + sline + color.END)
 
 
 #===================================================================================================
@@ -467,9 +467,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
 
     # Add Grant Privileges to Database initial Load SQL
     dbh = open(dbload_file,'a')                                         # Open File in append mode
-    line = "grant all privileges    on sadmin.* to sadmin@'%' identified by '%s';\n" % (wcfg_rw_dbpwd)
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show_view on sadmin.* to squery@'%' identified by '%s';\n" % (wcfg_ro_dbpwd)
+    line = "grant select, show view on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
     dbh.write (line)                                                    # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
@@ -750,6 +750,7 @@ def create_sadmin_config_file(sroot):
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
     writelog ("Initial SADMIN configuration file (%s) is now in place" % (cfgfile)) # Advise User
+    writelog (' ')
     
 
 #===================================================================================================
@@ -821,7 +822,9 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         return 1                                                        # Return Error to caller
  
     # Print Field name we will input (name used in sadmin.cfg file)
-    writelog (sname,'bold')                                             # Bold Attr. Name in sadmin
+    writelog (" ")
+    writelog ("--------------------")
+    writelog ("[%s]" % (sname),'bold')                                  # Bold Attr. Name in sadmin
 
     # Display field documentation file  
     docname = "%s/doc/cfg/%s.txt" % (sroot,sname.lower())               # Set Documentation FileName
@@ -830,11 +833,11 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         for line in doc:                                                # Read Doc. file until EOF
             if ((line.startswith("#")) or (len(line) == 0)):            # Line Start with # or empty
                continue                                                 # Skip Line that start with#
-            writelog ("%s" % (line))                                    # Print Documentation Line
+            writelog ("%s" % (line.rstrip()))                                    # Print Documentation Line
         doc.close()                                                     # Close Document File
     except FileNotFoundError:                                           # If Open File Failed
         writelog ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
-    writelog (" ")                                                      # Print blank Line
+    #writelog ("--------------------")
 
     # Accept Alphanumeric Value from the user    
     if (stype.upper() == "A"):                                          # If Alphanumeric Input
@@ -854,7 +857,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
             except (ValueError, TypeError) as error:                    # If Value is not an Integer
                 writelog ("Not an integer!")                            # Advise User Message
                 continue                                                # Continue at start of loop
-            if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
+            if (wdata == 0) : wdata = sdefault                          # No Input = Default Value
             if (wdata > smax) or (wdata < smin):                        # Must be between min & max
                 writelog ("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
                 continue                                                # Continue at start of loop
@@ -1066,7 +1069,7 @@ def getpacktype(sroot):
 #
 def end_message(sroot,sdomain):
     writelog ("\n\n------------------------------")
-    writelog ("End of SADMIN Setup, you can now use SADMIN\n")
+    writelog ("End of SADMIN Setup, you can now use the SADMIN Tools\n")
     writelog ("\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
     writelog ("To create your own script using SADMIN, you may want to run and view the code of ")
     writelog ("%s/bin/sadm_template.sh and %s/bin/sadm_template.py as a starting point" % (sroot,sroot))
@@ -1086,7 +1089,7 @@ def main():
     global fhlog                                                        # Script Log File Handler
 
     os.system('clear')                                                  # Clear the screen
-    print ("SADMIN Setup V%s\n------------------" % (ver))              # Print Version Number
+    print ("SADMIN Setup V%s\n------------------" % (sver))             # Print Version Number
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
