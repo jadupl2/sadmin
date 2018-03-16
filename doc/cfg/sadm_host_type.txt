@@ -2,4 +2,3 @@
 # Revise 2018_02_22
 #----------------------------------------------------------------------------
 Specify if this host is to become a SADMIN [C]lient or [S]erver.
-The questions that will follow depend on this answer.

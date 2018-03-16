@@ -1,4 +1,4 @@
-# sadmin.cfg SADM_NETWORK1 Documentation
+# sadmin.cfg SADM_NETMASK1 Documentation
 # Revise 2018_03_15
 #----------------------------------------------------------------------------
 Every day SADMIN will check the IP utilisation on your network.
@@ -6,5 +6,5 @@ Every day SADMIN will check the IP utilisation on your network.
     - You will be able to tell what IP are in use or not (respond to ping),
       and what DNS name each IP has (if any).
     - It will facilitate, the clean up of your DNS and IP usage.
-    - Network should be specify in this form, '192.168.1.0"
+    - Netmask should specify the number bits use (1-30) (Default 24)
     
