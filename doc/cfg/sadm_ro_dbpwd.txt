@@ -1,6 +1,6 @@
 # sadmin.cfg SADM_RO_DBPWD Documentation
-# Revise 2018_03_10
+# Revise 2018_03_15
 #----------------------------------------------------------------------------
-Enter the password for the read only user "squery" of the 'sadmin' database.
-You can give this password to people you want to access the sadmin database,
-but want them to modify any information in the Database.
+Enter the password for the 'sadmin' database read only user "squery".
+Give this password to people you want to consult server information,
+but don't want them to modify any information in the Database.

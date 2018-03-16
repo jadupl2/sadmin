@@ -1,4 +1,4 @@
 # sadmin.cfg SADM_DOMAIN Documentation
 # Revise 2018_02_14
 #----------------------------------------------------------------------------
-Enter the default Domain to use when adding a new server
+Enter the default Domain Name to use when you will be adding a new server.

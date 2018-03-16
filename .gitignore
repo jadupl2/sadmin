@@ -11,45 +11,39 @@
 *.rar
 *.tar
 *.zip
-*.log
+
+# Project unwanted files extensions
 [Tt]humbs.db
 *.obj
 *.exe
 *.EXE
 *.pdb
-*.user
-*.aps
-*.pch
-*.vspscc
-*_i.c
-*_p.c
-*.ncb
-*.suo
-*.tlb
-*.tlh
 *.bak
 *.log
 *.cache
-*.ilk
-*.dll
-*.lib
-*.sbr
 *.org
 *.tmp
 
+# Want the empties 'dat' and 'tmp' directories to be part of project (clone)
+dat/*
+!dat/.gitkeep
+log/*
+!log/.gitkeep
+www/dat/*
+!www/dat/.gitkeep
+tmp/*
+!tmp/.gitkeep
+www/tmp/*
+!www/tmp/.gitkeep
+
 # SADMIN Directories Exclude
-dat/
 jac/*
 !jac/bin
-log/*
-tmp/
 .vscode/
 
 # Web Directories
 www/arc/
-www/dat/
 www/rrd/
-www/tmp/
 www/cfg/.crontab.txt
 
 

@@ -18,18 +18,35 @@
 #       V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
 #   2018_01_25 JDuplessis
 #       V2.4 Add RRD Tools Variable 
+#   2018_03_13 JDuplessis
+#       V2.5 Get Root directory of SADMIN from /etc/environment
 # --------------------------------------------------------------------------------------------------
 #
 # Setting the HOSTNAME Variable
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
+# GET THE SADMIN ENVIRONMENT VARIABLE CONTENT FROM /ETC/ENVIRONMENT
+define("SADM_ENV" , "/etc/environment") ;                               # Name of O/S Environment file
+$handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
+if ($handle) {                                                          # If Successfully Open
+    while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
+        if ( strpos(trim($line), '#') === 0  )                          # If 1st Non-WhiteSpace is #
+            continue;                                                   # Skip Line
+        list($fname,$fvalue) = explode ('=',$line);                     # Split Line by Name & Value
+        if (trim($fname) == "SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
+    }
+    fclose($handle);
+}else{
+    echo "Error opening the file " . SADM_ENV ;
+}
+
 # SET SADMIN ROOT BASE DIRECTORY
-$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
-if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
-     define("SADM_BASE_DIR",$TMPVAR);                                   # Set SADMIN_BASE_DIR to Env
-}else{                                                                  # If SADMIN Not Defined        
-     define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir 
-}  
+#$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
+#if (strlen($TMPVAR) != 0 ) {                                            # If Was Defined
+#     define("SADM_BASE_DIR",$TMPVAR);                                   # Set SADMIN_BASE_DIR to Env
+#}else{                                                                  # If SADMIN Not Defined        
+#     define("SADM_BASE_DIR", "/sadmin");                                # Default SADM Root Base Dir 
+#}  
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 define("SADM_BIN_DIR"      , SADM_BASE_DIR . "/bin");                   # Script Root binary Dir.

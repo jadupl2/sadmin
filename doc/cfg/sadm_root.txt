@@ -1,0 +1,6 @@
+# sadmin.cfg SADM_ROOT Documentation
+# Revise 2018_03_15
+#----------------------------------------------------------------------------
+Indicate the MySQL 'root' user.
+If the MySQL 'root' user is not set, it will be set to the one you will enter.
+If the MySQL 'root' user is set, we will use it to try to connect to the Database.

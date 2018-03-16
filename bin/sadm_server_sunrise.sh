@@ -151,7 +151,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     fi
 
     # Once a day we Backup the MySQL Database
-    SCMD="${SADM_BIN_DIR}/sadm_backupdb.sh"
+    SCMD="${SADM_BIN_DIR}/sadm_backupdb.sh -c"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter

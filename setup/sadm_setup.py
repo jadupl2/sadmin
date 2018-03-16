@@ -28,7 +28,8 @@
 #   V1.1 First Beta Version 
 # 2018_03_02 JDuplessis
 #   V1.2b Second Beta Version 
-#
+# 2018_03_13 JDuplessis
+#   V1.3 Third Beta Version 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -49,7 +50,7 @@ inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm na
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.2b"
+sver                = "1.3"
 DEBUG               = False                                               # Debug Activated or Not
 DRYRUN              = False                                              # Don't Install, Print Cmd
 #
@@ -165,17 +166,43 @@ def askyesno(emsg):
     else:
         return False
         
+#===================================================================================================
+#                       Open the Script Log File in $SADMIN/log Directory
+#===================================================================================================
+def open_logfile(sroot):
+    global fhlog                                                        # Need to share file Handle
+
+    # Make sure log Directory exist
+    try:                                                                # Catch mkdir error
+        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
+    except FileExistsError as e :                                       # If Dir. already exists 
+        pass                                                            # It's ok if it exist
+
+    # Open/Create the setup script log
+    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
+    if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
+    try:                                                                # Try to Open/Create Log
+        fhlog=open(logfile,'w')                                         # Open Log File 
+    except IOError as e:                                                # If Can't Create Log
+        print ("Error creating log file %s" % (logfile))                # Print Log FileName
+        print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
+        print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
+        sys.exit(1)                                                     # Exit with Error
+    return (fhlog,logfile)                                              # Return File Handle
+
 
 #===================================================================================================
 #                           Write Log to Log File, Screen or Both
 #===================================================================================================
-def writelog(sline):
-    global fhlog                                                        # Log file handler
+def writelog(sline,stype="normal"):
+    global fhlog                                                        # Need to share file handler
+    fhlog.write ("%s\n" % (sline))                                      # Write Line to Log
+    if (stype == "log") : return                                        # Nothing on screen  
 
-    now = datetime.datetime.now()
-    logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
-    fhlog.write ("%s\n" % (logLine))
-    #print ("%s" % logLine) 
+    # Display Line on Screen
+    if (stype == "normal") : print (sline)                              
+    if (stype == "nonl")   : print (sline,end='')                              
+    if (stype == "bold")   : print ( color.DARKCYAN + color.BOLD + emsg + color.END)
 
 
 #===================================================================================================
@@ -198,6 +225,27 @@ def oscommand(command) :
 
 
 #===================================================================================================
+#                              MAKE SURE SADMIN LINE IS IN /etc/hosts FILE
+#===================================================================================================
+def update_host_file(wdomain) :
+
+    writelog ('Updating /etc/hosts file')
+    try : 
+        hf = open('/etc/hosts','r+')                                         # Open /etc/hosts file
+    except :
+        writelog("Error Opening /etc/hosts file")
+        sys.exit(1)
+    eline = "127.0.0.1      sadmin  sadmin.%s" % (wdomain)              # Line that should be hosts
+    found_line = False                                                  # Assume sadmin line not in
+    for line in hf:                                                     # Read Input file until EOF
+        if (eline == line):                                             # Line already there    
+            found_line = True                                           # Line is Found 
+    if not found_line:                                                  # If line was not found
+        hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
+    hf.close                                                            # Close /etc/hosts file
+    return()                                                            # Return Cmd Path
+
+#===================================================================================================
 #       THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
 #===================================================================================================
 def locate_command(lcmd) :
@@ -217,11 +265,11 @@ def locate_command(lcmd) :
 def locate_package(lpackages,lpacktype) :
 
     if (DEBUG):
-        print ("Package name(s) received by locate_package : %s" % (lpackages,type(lpackages)))
-        print ("Package Type received in locate_package is %s" % (lpacktype))
+        writelog ("Package name(s) received by locate_package : %s" % (lpackages))
+        writelog ("Package Type received in locate_package is %s" % (lpacktype))
 
     if ((lpacktype != "deb") and (lpacktype != "rpm")):
-        printBold("Package type invalid (%s)" % (lpacktype))
+        writelog ("Package type invalid (%s)" % (lpacktype),'bold')
         return (False)
 
     found = True
@@ -267,11 +315,10 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
     if (stype == 'C'):
         req_work = req_client                                           # Move CLient Dict in WDict.
-        printBold ("\n\nChecking SADMIN Client Packages requirement")   # Show User what we do
+        printBold ("\n\nChecking SADMIN Client Package requirement")    # Show User what we do
     else:
         req_work = req_server                                           # Move Server Dict in WDict.
-        printBold ("\n\nChecking SADMIN Server Packages requirement")   # Show User what we do
-    if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug Show System PackType
+        printBold ("\n\nChecking SADMIN Server Package requirement")    # Show User what we do
 
     # If Debian Package, Refresh The Local Repository 
     if (packtype == "deb"):                                             # Is Debian Style Package
@@ -279,20 +326,19 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         if (DRYRUN):                                                    # If Running if DRY-RUN Mode
             print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
-            print ("Running apt-get update...",end='')                  # Show what we are running
-            writelog ("Running apt-get update...")                      # Write also to Log
+            writelog ("Running apt-get update...",'nonl')               # Show what we are running
             ccode, cstdout, cstderr = oscommand(cmd)                    # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
-                print (" Done ")                                        # Print DOne
+                writelog (" Done ")                                     # Print DOne
             else:                                                       # If we had error 
-                printError ("Error Code is %d" % (ccode))               # Advise user of error
+                writelog ("Error Code is %d" % (ccode))                 # Advise user of error
 
     # Under Debug Mode, Display the working dictionnary we will be processing below
     if (DEBUG):                                                         # Under Debug Show Req Dict.
         for cmd,pkginfo in req_work.items():                            # For all items in Work Dict
-            print("\nFor command '{0}' we need package :" .format(cmd)) # Show Command name
-            print('RPM Repo:{0} - Package: {1} ' .format(pkginfo['rrepo'], pkginfo['rpm']))
-            print('DEB Repo:{0} - Package: {1} ' .format(pkginfo['drepo'], pkginfo['deb']))
+            writelog("\nFor command '{0}' we need package :" .format(cmd)) # Show Command name
+            writelog('RPM Repo:{0} - Package: {1} ' .format(pkginfo['rrepo'], pkginfo['rpm']))
+            writelog('DEB Repo:{0} - Package: {1} ' .format(pkginfo['drepo'], pkginfo['deb']))
 
     # Process Package requirement and check if package is installedm, if not install it
     for cmd,pkginfo in req_work.items():                                # For all item in Work Dict.
@@ -306,9 +352,9 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 
         # Verify if needed package is installed
         pline = "Checking for %s ... " % (needed_packages)		        # Show What were looking for
-        print (pline, end='') 									        # Show What were looking for
+        writelog (pline,'nonl')                                         # Show What were looking for
         if locate_package(needed_packages,packtype) :                   # If Package is installed
-            print (" Ok ")                                              # Show User Check Result
+            writelog ("Ok")                                             # Show User Check Result
             continue                                                    # Proceed with Next Package
 
         # Install Missing Packages
@@ -317,19 +363,17 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         if (packtype == "rpm") : 
             icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
         if (DRYRUN):
-            print ("We would install %s with %s" % (needed_packages,icmd))
+            writelog ("We would install %s with %s" % (needed_packages,icmd))
             continue                                                    # Proceed with Next Package
         pline = "Installing %s ... " % (needed_packages)
-        print (pline, end='')
-        writelog (pline)
-        writelog (icmd)
+        writelog (pline,'nonl')
+        writelog (icmd,'log')
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
-            print (" Done ")
-            writelog ("Installed successfully")
+            writelog ("Done")
+            #writelog ("Installed successfully")
         else:
-            printError ("Error Code is %d - See log %s" % (ccode,logfile))
-            writelog   ("Error Code is %d - See log %s" % (ccode,logfile))
+            writelog   ("Error Code is %d - See log %s" % (ccode,logfile),'bold')
 
 
 #===================================================================================================
@@ -337,283 +381,299 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 #===================================================================================================
 #
 def setup_mysql(sroot,wcfg_server,wpass):
-
+    
+    writelog ('  ')
+    writelog ('----------')
+    writelog ("Setup SADMIN MySQL Database",'bold')
+    
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
     while True : 
         sdefault = ""                                                   # No Default Password 
-        sprompt  = "Enter MySQL Database 'root' user password : "       # Prompt for Answer
+        sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
         dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)   # Accept Mysql root pwd
 
         # Test if can connect to Database (May already exist)
-        print ("Testing Access to Database ...")                        # Advise User
+        writelog ("Testing Access to Database ...")                     # Advise User
         cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code is %d - After trying %s" % (ccode,cmd)) # Print command return code
-            print ("Standard out is %s" % (cstdout))                    # Print command stdout
-            print ("Standard error is %s" % (cstderr))                  # Print command stderr
+            writelog ("Return code is %d - After %s" % (ccode,cmd))     # Print command return code
+            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         if (ccode == 0):                                                # No problem connecting
+            writelog ("Database access succeeded")                      # Adivse User 
             break                                                       # Continue with Next Step
         else:                                                           # If Not able to connect
-            print("Will now assign 'root' MySQL user password")         # Advise User
+            writelog ("Problem connecting to MySQL using password")
+            writelog ("Will now set 'root' MySQL user password")        # Advise User
             # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
             #  mysqladmin password "my_new_password"    
             cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
             if (ccode != 0):                                            # If Error Changing Password
-                print ("Error code %d setting root password" % (ccode)) # Show Error No
-                print ("%s %s" % (cstdout,cstderr))                     # Show error messages
+                writelog ("Error code %d setting root password" % (ccode)) # Show Error No
+                writelog ("%s %s" % (cstdout,cstderr))                  # Show error messages
                 continue                                                # Go and Retry
             else:
-                print ("MySQL 'root' user password is not set")         # Advise user pwd was change
+                writelog ("Problem setting MySQL 'root' user password") # Advise user pwd was change
             break                                                       # Continue with Next Step
 
-======================================
 
     # Secure MySQL Installation by running the secure_mysql.sql script
-    print ("Securing MySQL Database ...")
-    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.dql" % (dbroot_pwd,sroot)
+    writelog (" ")
+    writelog ("Securing MySQL Database ...")
+    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
     if (DEBUG):                                                         # If Debug Activated
-        print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-        print ("Standard out is %s" % (cstdout))                        # Print command stdout
-        print ("Standard error is %s" % (cstderr))                      # Print command stderr
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     if (ccode != 0):                                                    # If problem deleting user
-        print ("Problem securing the database ...")                     # Advise User
+        writelog ("Problem securing the database ...")                  # Advise User
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
     else:                                                               # If user deleted
-        print ("Database is now secured ... ")                          # Advise User
+        writelog ("Database is now secured ... ")                       # Advise User
 
-
-    
-#     # Delete Anonymous user (use for test database)
-#     print ("Delete MySQL Anonymous user ...")                           # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DELETE FROM mysql.user WHERE User='';"                     # Cmd to delete Anonymous
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error deleting anonymous user")                         # Advise User
-#     else:                                                               # If user deleted
-#         print ("Anonymous user deleted")                                # Advise User delete went ok
-
-
-#     # Ensure 'root' user can only be used locally
-#     print ("Ensure 'root' user can only be used locally ...")           # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Changing MySQL access to local user")             # Advise User
-#     else:                                                               # If user deleted
-#         print ("MySQL can now be only accessed locally")                # Advise User delete went ok
-
-
-#     # Remove the Test Database
-#     DROP DATABASE test;
-#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-#     print ("Deleting 'test' Database ...")                              # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Dropping 'test' Database")                        # Advise User
-#     else:                                                               # If user deleted
-#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
-
-#    # Remove the Test Database
-#     DROP DATABASE test;
-#     DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-#     print ("Deleting 'test' Database ...")                              # Advise User
-#     cmd = "mysql -u root -p%s -e " % (dbroot_pwd)                       # Set MySQL Connect Command
-#     cmd += " DROP DATABASE test;"                                       # Drop test DB Command
-#     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Test DB
-#     if (DEBUG):                                                         # If Debug Activated
-#         print ("Return code is %d - %s" % (ccode,cmd))                  # Show Return Code No
-#         print ("Standard out is %s" % (cstdout))                        # Print command stdout
-#         print ("Standard error is %s" % (cstderr))                      # Print command stderr
-#     if (ccode != 0):                                                    # If problem deleting user
-#         print ("Error Dropping 'test' Database")                        # Advise User
-#     else:                                                               # If user deleted
-#         print ("Database 'test' have been deleted")                     # Advise User delete went ok
-
-#     # Flush Privileges Tables
-#     # FLUSH PRIVILEGES;
-
-    # Accept 'sadmin' Database FQDN Hostname 
-    #sdefault = ""                                                       # HostName Location of DB
-    #sprompt  = "Enter 'sadmin' database host name : "                   # Prompt for Answer
-    #wcfg_dbhost = accept_field(sroot,"SADM_DBHOST",sdefault,sprompt)    # Accept sadmin DB Host Name
+    # Accept 'sadmin' Database Host to localhost 
     update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                   # Update Value in sadmin.cfg
    
     # Accept 'sadmin' (Read/Write) User Password
-    sdefault = "Nimdas1701!"                                            # Default Password 
-    sprompt  = "Enter 'sadmin' database user password : "               # Prompt for Answer
+    sdefault = "Nimdas1701"                                             # Default Password 
+    sprompt  = "Enter Read/Write 'sadmin' database user password"       # Prompt for Answer
     wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
     update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd)              # Update Value in sadmin.cfg
    
     # Accept 'squery' (Read Only) User Password
-    sdefault = "Query18!"                                               # Default Password 
-    sprompt  = "Enter 'squery' database user password : "               # Prompt for Answer
+    sdefault = "Query18"                                                # Default Password 
+    sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
     wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
     update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
-
 
     # Make a copy of Template Database SQL Load File
     dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
     dbload_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
     try:                                                                # In case old file exist
-        os.remove(dbload_file)                                          # Remove it
+        os.remove(dbload_file)                                          # Remove old tmp file
     except :                                                            # If Error on removal
         pass                                                            # If don't exist it is ok
-    shutil.copyfile(dbtemplate,dbload_file)                             # Copy Initial DB Start
+    try:
+        shutil.copyfile(dbtemplate,dbload_file)                         # Copy Initial DB Start
     except IOError as e:
-        print("Unable to copy DB Template - %s" % e)                    # Advise user before exiting
+        writelog("Unable to copy DB Template - %s" % e)                 # Advise user before exiting
         sys.exit(1)                                                     # Exit to O/S With Error
     except:
-        print("Unexpected error:", sys.exc_info())                      # Advise Usr Show Error Msg
+        writelog("Unexpected error:", sys.exc_info())                   # Advise Usr Show Error Msg
         sys.exit(1)                                                     # Exit to O/S with Error
 
     # Add Grant Privileges to Database initial Load SQL
     dbh = open(dbload_file,'a')                                         # Open File in append mode
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by %s;" % (wcfg_rw_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "grant all privileges on squery.* to sadmin@localhost identified by %s;" % (wcfg_ro_dbpwd)
-    dbh.write (line)                                                 # Write line to output file
-    line = "flush privileges;"
-    dbh.write (line)                                                 # Write line to output file
+    line = "grant all privileges    on sadmin.* to sadmin@'%' identified by '%s';\n" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant select, show_view on sadmin.* to squery@'%' identified by '%s';\n" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "flush privileges;\n"
+    dbh.write (line)                                                    # Write line to output file
     dbh.close                                                            
 
     # Load Initial Database
-    print ("Loading SADMIN Database")                                   # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s/setup/mysql/%s" % (wpass,sroot,dbload_file)
+    writelog (' ')
+    writelog ("Loading SADMIN Database")                                # Load Initial Database 
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,dbload_file)          # SQL Command to Load DB
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (DEBUG):                                                         # If Debug Activated
-        print ("Return code is %d" % (ccode))                           # Show AddGroup Cmd Error No
-
-    print ("Initial SADMIN Database is in place.")                      # Advise User ok to proceed
+    if (ccode != 0):                                                    # If problem deleting user
+        writelog ("Problem loading the database ...")                   # Advise User
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
+    else:                                                               # If user deleted
+        writelog ("Initial SADMIN Database is in place.")               # Advise User ok to proceed
 
     
 #===================================================================================================
 #                                   Setup Apache Web Server 
 #===================================================================================================
 #
-def setup_webserver(sroot,spacktype):
+def setup_webserver(sroot,spacktype,sdomain,semail):
 
+    writelog ('  ')
+    writelog ('----------')
+    writelog ("Set up SADMIN Web Site",'bold')
+    update_host_file(sdomain)                                           # Update /etc/hosts file
+
+    # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
+        
+        # Get the apache2 process owner
         cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
         apache_user = cstdout                                           # Get Apache Process Usr
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code for getting apache2 user name is %d" % (ccode))                         
-        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+            writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
+        writelog ("Apache process user name is %s" % (apache_user))     # Show Apache Proc. User
+        
+        # Get the group of apache2 process owner 
         cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
         apache_group = cstdout                                          # Get Group from StdOut
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code for getting apache2 group name is %d" % (ccode))                         
-        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
-        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)               # Init. Sadmin Web Cfg
+            writelog ("Return code for getting apache2 group name is %d" % (ccode))                         
+        writelog ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+        
+        # Updating the apache2 configuration file 
+        sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
-        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+        if os.path.exists(apache2_file)==False:                         # If Web cfg Not Found
             try:
                 shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
             except IOError as e:
-                print("Unable to copy apache2 config file. %s" % e)     # Advise user before exiting
+                writelog("Unable to copy apache2 config file. %s" % e)  # Advise user before exiting
                 sys.exit(1)                                             # Exit to O/S With Error
             except:
-                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+        writelog ("Configuration of SADMIN Web site is now in place")   # Advise User ok to proceed
+        update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
+        update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
+        update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
+
+        # Enable SADMIN Configuration
         cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command                       
+        if (ccode == 0):
+            writelog( "SADMIN Web Site enable")
+        else:
+            writelog ("Problem enabling SADMIN Web Site")
+            writelog ("%s - %s" % (cstdout,cstderr))
+
+        # Disable Default apache2 configuration
+        cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
-        if (DEBUG):                                                     # If Debug Activated
-            print ("Return code for Enabling SADMIN web Site is %d" % (ccode))                         
-        print("Return code for Enabling Web Site is %d" % (ccode))      # Show Return Code
+        if (ccode == 0):
+            writelog( "Disable default apache configuration")
+        else:
+            writelog ("Problem disabling apache2 default configuration")
+            writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
-        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ print $1 }' | sort | uniq"
+        # Get the httpd process owner
+        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ writelog $1 }' | sort | uniq"
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
         apache_user = cstdout                                           # Get Apache Process Usr
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code for getting httpd user name is %d" % (ccode))                         
-        print ("Apache process user name is %s" % (apache_user))        # Show Apache Proc. User
+            writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
+        writelog ("Apache process user name is %s" % (apache_user))     # Show Apache Proc. User
+
+        # Get the group of httpd process owner 
         cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
         apache_group = cstdout                                          # Get Group from StdOut
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code for getting httpd group name is %d" % (ccode))                         
-        print ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
+            writelog ("Return code for getting httpd group name is %d" % (ccode))                         
+        writelog ("Apache user group name is %s" % (apache_group))      # Show Apache  Group
+
+        # Updating the apache2 configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
         if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
             try:
                 shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
             except IOError as e:
-                print("Unable to copy httpd config file. %s" % e)       # Advise user before exiting
+                writelog("Unable to copy httpd config file. %s" % e)    # Advise user before exiting
                 sys.exit(1)                                             # Exit to O/S With Error
             except:
-                print("Unexpected error:", sys.exc_info())              # Advise Usr Show Error Msg
+                writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        print ("Initial SADMIN Web site configuration file in place.")  # Advise User ok to proceed
+    writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
                
     # Update the sadmin.cfg with Web Server User and Group
+    writelog ("Updating Web User and Group in SADMIN configuration file")
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
-    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_group)               # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    print ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
-    cmd = "chown -R %s/www %s.%s" % (sroot,apache_user,apache_group)
+    writelog ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
+    cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
-    if (DEBUG):                                                         # If Debug Activated
-        print ("Return code (chown) is %d" % (ccode))                   # Show Command Result
-    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
+    if (ccode == 0):
+        writelog( "Web Site Owner and Group changed successfully")
+    else:
+        writelog ("Problem changing Web Site Owner and Group")
+        writelog ("%s - %s" % (cstdout,cstderr))        
 
-    print ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
-    cmd = "chmod -R %s/www 775" % (sroot)                               # chmod 775 on all www dir.
+    # Setting Access permission on web site
+    writelog ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
+    cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (DEBUG):                                                         # If Debug Activated
-        print ("Return code (chmod) is %d" % (ccode))                   # Show Command Result
-    print ("Return code (chown) is %d" % (ccode))                       # Show Command Result
+    if (ccode == 0):
+        writelog( "Web Site permission changed successfully")
+    else:
+        writelog ("Problem changing Web Site permission")
+        writelog ("%s - %s" % (cstdout,cstderr))        
         
     # Restart the HTTP Web Server
-    if (packtype == "deb" ) : 
+    if (spacktype == "deb" ) : 
         cmd = "service apache2 restart" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (DEBUG):                                                         # If Debug Activated
-            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
-        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
-    if (packtype == "rpm" ) : 
+    if (spacktype == "rpm" ) : 
         cmd = "service httpd restart" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (DEBUG):                                                         # If Debug Activated
-            print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
-        print ("Return code for Restarting Apache Web Server is %d" % (ccode))                         
+    if (ccode == 0):
+        writelog( "Web Server restarted successfully")
+    else:
+        writelog ("Problem restarting SADMIN Web Site")
+        writelog ("%s - %s" % (cstdout,cstderr))       
  
+
+#===================================================================================================
+#               Replacing Value in Apache Configuration file by users specified values
+#   1st parameter = Name of file,  2nd parameter = Name field to replace,  3rd Parameter = Value
+#===================================================================================================
+#
+def update_apache_config(sroot,sfile,sname,svalue):
+    """
+    [Update the Apache configuration File.]
+    Arguments:
+    sfile  {[string]}   --  [Name of Full Path Apache configuration file]
+    sname  {[string]}   --  [Name of variable to change value]
+    svalue {[string]}   --  [New value of the variable]
+    """    
+
+    wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
+    wbak_file = "%s/tmp/apache.bak" % (sroot)                           # Backup Apache config file
+    if (DEBUG) :
+        writelog ("Update_apache_config - sfile=%s - sname=%s - svalue=%s\n" % (sfile,sname,svalue))
+        writelog ("\nsfile=%s\nwtmp_file=%s\nwbak_file=%s" % (sfile,wtmp_file,wbak_file))
+
+    fi = open(sfile,'r')                                                # Current Apache Input File
+    fo = open(wtmp_file,'w')                                            # New Apache Config File  
+
+    # Replace Line Starting with 'sname' with new 'svalue' 
+    for line in fi:                                                     # Read sadmin.cfg until EOF
+        sline = line.replace(sname,svalue)
+        fo.write (sline)                                                # Write line to output file
+    fi.close                                                            # File read now close it
+    fo.close                                                            # Close the output file
+
+    # Rename Apache Current file to .bak
+    try:                                                                # Will try rename env. file
+        os.rename(sfile,wbak_file)                                      # Rename Current to tmp
+    except:
+        writelog ("Error renaming %s to %s" % (sfile,wbak_file))           # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
+
+    # Rename tmp file to Apache Config file name
+    try:                                                                # Will try rename env. file
+        os.rename(wtmp_file,sfile)                                      # Rename tmp to sadmin.cfg
+    except:
+        writelog ("Error renaming %s to %s" % (wtmp_file,sfile))           # Advise user of problem
+        sys.exit(1)                                                     # Exit to O/S with Error
+
 
 
 #===================================================================================================
-#        Specify and/or Validate that SADMIN Environment Variable is set in /etc/environent
+#        Set and/or Validate that SADMIN Environment Variable is set in /etc/environent file
 #===================================================================================================
 #
 def set_sadmin_env(ver):
-    print(chr(27) + "[2J")                                              # Clear the Screen
-    print ("SADMIN Setup V%s\n------------------" % (ver))              # Print Version Number
 
     # Is SADMIN Environment Variable Defined ? , If not ask user to specify it
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
@@ -629,7 +689,7 @@ def set_sadmin_env(ver):
     # Check if Directory specify contain the Shell SADMIN Library (Indicate Dir. is the good one)
     libname="%s/lib/sadmlib_std.sh" % (sadm_base_dir)                   # Set Full Path to Shell Lib
     if os.path.exists(libname)==False:                                  # If SADMIN Lib Not Found
-        printBold ("Directory %s isn't SADMIN directory" % (sadm_base_dir)) # Advise User Dir. Wrong
+        printBold ("The directory %s isn't the SADMIN directory" % (sadm_base_dir)) # Reject Msg
         printBold ("It doesn't contains the file %s\n" % (libname))     # Show Why we Refused
         sys.exit(1)                                                     # Exit with Error Code
 
@@ -665,28 +725,32 @@ def set_sadmin_env(ver):
     except:
         print ("Error renaming /etc/environment")                       # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
-    print ("\n----------")
-    MSG = "SADMIN Environment variable is set to %s" % (sadm_base_dir)
-    print (color.YELLOW + color.BOLD + "[OK] " + color.END + MSG)    
-    print ("      - The line below is in /etc/environment now") 
-    print ("      - %s" % (eline),end='')                               # SADMIN Line in /etc/env...
-    print ("      - This will make sure it is set upon reboot")
 
-    # Make sure we have a sadmin.cfg in $SADMIN/cfg, if not cp .sadmin.cfg to sadmin.update_sadmin_cfg
-    cfgfile="%s/cfg/sadmin.cfg" % (sadm_base_dir)                       # Set Full Path to cfg File
-    cfgfileo="%s/cfg/.sadmin.cfg" % (sadm_base_dir)                     # Set Full Path to cfg File
+    print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
+    print ("      - The line below is now in /etc/environment now") 
+    print ("      - %s" % (eline),end='')                               # SADMIN Line in /etc/env...
+    print ("      - This will make sure it is set upon reboot")         # Under Linux This will work
+    return sadm_base_dir                                                # Return SADMIN Root Dir
+
+
+#===================================================================================================
+#           Make sure $SADMIN/cfg/sadmin.cfg exist, if not cp .sadmin.cfg to sadmin.cfg
+#===================================================================================================
+#
+def create_sadmin_config_file(sroot):
+    cfgfile="%s/cfg/sadmin.cfg" % (sroot)                               # Set Full Path to cfg File
+    cfgfileo="%s/cfg/.sadmin.cfg" % (sroot)                             # Template for sadmin.cfg
     if os.path.exists(cfgfile)==False:                                  # If sadmin.cfg Not Found
         try:
             shutil.copyfile(cfgfileo,cfgfile)                           # Copy Template 2 sadmin.cfg
         except IOError as e:
-            print("Unable to copy file. %s" % e)                        # Advise user before exiting
-            exit(1)                                                     # Exit to O/S With Error
+            writelog("Unable to copy file. %s" % e)                     # Advise user before exiting
+            sys.exit(1)                                                 # Exit to O/S With Error
         except:
-            print("Unexpected error:", sys.exc_info())                  # Advise Usr Show Error Msg
-            exit(1)                                                     # Exit to O/S with Error
-        print ("Initial sadmin.cfg file in place.")                     # Advise User ok to proceed
-    print ("----------")                                                # Dash Line
-    return sadm_base_dir                                                # Return SADMIN Root Dir
+            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            sys.exit(1)                                                 # Exit to O/S with Error
+    writelog ("Initial SADMIN configuration file (%s) is now in place" % (cfgfile)) # Advise User
+    
 
 #===================================================================================================
 #                     Replacing Value in SADMIN configuration file (sadmin.cfg)
@@ -705,8 +769,8 @@ def update_sadmin_cfg(sroot,sname,svalue):
     wtmp_file = "%s/cfg/sadmin.tmp" % (sroot)                           # Tmp sadmin config file
     wbak_file = "%s/cfg/sadmin.bak" % (sroot)                           # Backup sadmin config file
     if (DEBUG) :
-        print ("In update_sadmin_cfg - sname = %s - svalue = %s\n" % (sname,svalue))
-        print ("\nwcfg_file=%s\nwtmp_file=%s\nwbak_file=%s" % (wcfg_file,wtmp_file,wbak_file))
+        writelog ("In update_sadmin_cfg - sname = %s - svalue = %s\n" % (sname,svalue))
+        writelog ("\nwcfg_file=%s\nwtmp_file=%s\nwbak_file=%s" % (wcfg_file,wtmp_file,wbak_file))
 
     fi = open(wcfg_file,'r')                                            # Current sadmin.cfg File
     fo = open(wtmp_file,'w')                                            # Will become new sadmin.cfg
@@ -729,14 +793,14 @@ def update_sadmin_cfg(sroot,sname,svalue):
     try:                                                                # Will try rename env. file
         os.rename(wcfg_file,wbak_file)                                  # Rename Current to tmp
     except:
-        print ("Error renaming %s to %s" % (wcfg_file,wbak_file))       # Advise user of problem
+        writelog ("Error renaming %s to %s" % (wcfg_file,wbak_file))    # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
 
     # Rename sadmin.tmp sadmin.cfg
     try:                                                                # Will try rename env. file
         os.rename(wtmp_file,wcfg_file)                                  # Rename tmp to sadmin.cfg
     except:
-        print ("Error renaming %s to %s" % (wtmp_file,wcfg_file))       # Advise user of problem
+        writelog ("Error renaming %s to %s" % (wtmp_file,wcfg_file))    # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
 
 
@@ -752,26 +816,25 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     
     # Validate the type of input received (A for alphanumeric and I for Integer)
     if (stype.upper() != "A" and stype.upper() != "I") :                # Accept Alpha or Integer
-        print ("The type of input received is invalid (%s)" % (stype))  # If Not A or I - Advise Usr
-        print ("Expecting [I]nteger or [A]lphanumeric")                 # Question is Skipped
+        writelog ("Type of input received is invalid (%s)" % (stype))   # If Not A or I - Advise Usr
+        writelog ("Expecting [I]nteger or [A]lphanumeric")              # Question is Skipped
         return 1                                                        # Return Error to caller
  
     # Print Field name we will input (name used in sadmin.cfg file)
-    print ("\n----------\n")                                            # Dash & Name of Field
-    print (color.BOLD + "[%s]" % (sname) + color.END)                   # Attr. Name in sadmin
+    writelog (sname,'bold')                                             # Bold Attr. Name in sadmin
 
     # Display field documentation file  
     docname = "%s/doc/cfg/%s.txt" % (sroot,sname.lower())               # Set Documentation FileName
     try :                                                               # Try to Open Doc File
         doc = open(docname,'r')                                         # Open Documentation file
         for line in doc:                                                # Read Doc. file until EOF
-            if line.startswith("#"):                                    # Does Line Start with #
+            if ((line.startswith("#")) or (len(line) == 0)):            # Line Start with # or empty
                continue                                                 # Skip Line that start with#
-            print ("%s" % (line),end='')                                # Print Documentation Line
+            writelog ("%s" % (line))                                    # Print Documentation Line
         doc.close()                                                     # Close Document File
     except FileNotFoundError:                                           # If Open File Failed
-        print ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
-    print (" ")                                                         # Print blank Line
+        writelog ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
+    writelog (" ")                                                      # Print blank Line
 
     # Accept Alphanumeric Value from the user    
     if (stype.upper() == "A"):                                          # If Alphanumeric Input
@@ -789,14 +852,14 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
             try:
                 wdata = int(input("%s : " % (sprompt)))                 # Accept an Integer
             except (ValueError, TypeError) as error:                    # If Value is not an Integer
-                print ("Not an integer!")                               # Advise User Message
+                writelog ("Not an integer!")                            # Advise User Message
                 continue                                                # Continue at start of loop
-            else:                                                       # If a Numeric Value Entered
-                if (wdata > smax) or (wdata < smin):                    # Must be between min & max
-                    print("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
-                    continue                                            # Continue at start of loop
-                else:                                                   # Input Respect the range
-                    break                                               # Break out of the loop
+            if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
+            if (wdata > smax) or (wdata < smin):                        # Must be between min & max
+                writelog ("Value must be between %d and %d" % (smin,smax)) # Input out of Range 
+                continue                                                # Continue at start of loop
+            break                                                       # Break out of the loop
+
     return wdata
 
 
@@ -807,11 +870,11 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
 def setup_sadmin_config_file(sroot):
     global stype                                                        # C=Client S=Server Install
 
+    # Get OS Type (Linux, Aix, Darwin, OpenBSD)
     ccode, cstdout, cstderr = oscommand("uname -s")                     # Get O/S Type
     wostype=cstdout.upper()                                             # OSTYPE = LINUX or AIX
     if (DEBUG):                                                         # If Debug Activated
-        print ("setup_sadmin_config_file: Dir. SADMIN is %s" % (sroot)) # Show SADMIN root Dir.
-        print ("ostype is: %s" % (wostype))                             # Print the O/S Type
+        writelog ("Current OStype is: %s" % (wostype))                     # Print the O/S Type
 
     # Is the current server a SADMIN [S]erver or a [C]lient
     sdefault = "C"                                                      # This is the default value
@@ -826,7 +889,7 @@ def setup_sadmin_config_file(sroot):
 
     # Accept the Company Name
     sdefault = "Your Company Name"                                      # This is the default value
-    sprompt  = "Enter your Company name "                               # Prompt for Answer
+    sprompt  = "Enter your Company Name "                               # Prompt for Answer
     wcfg_cie_name = ""                                                  # Clear Cie Name
     while (wcfg_cie_name == ""):                                        # Until something entered
         wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME",sdefault,sprompt)# Accept Cie Name
@@ -840,12 +903,12 @@ def setup_sadmin_config_file(sroot):
         wcfg_mail_addr = accept_field(sroot,"SADM_MAIL_ADDR",sdefault,sprompt)
         x = wcfg_mail_addr.split('@')                                   # Split Email Entered 
         if (len(x) != 2):                                               # If not 2 fields = Invalid
-            printBold ("Invalid email address - no '@' sign")           # Advise user no @ sign
+            writelog ("Invalid email address - no '@' sign",'bold')     # Advise user no @ sign
             continue                                                    # Go Back Re-Accept Email
         try :
             xip = socket.gethostbyname(x[1])                            # Try Get IP of Domain
         except (socket.gaierror) as error :                             # If Can't - domain invalid
-            printBold ("The domain %s is not valid" % (x[1]))           # Advise User
+            writelog ("The domain %s is not valid" % (x[1]),'bold')     # Advise User
             continue                                                    # Go Back re-accept email
         break                                                           # Ok Email seem valid enough
     update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg
@@ -860,18 +923,18 @@ def setup_sadmin_config_file(sroot):
     sdefault = ""                                                       # No Default value 
     sprompt  = "Enter SADMIN (FQDN) server name"                        # Prompt for Answer
     while True:                                                         # Accept until valid server
-        wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt) # Accept SADMIN Server Name
-        print ("Validating server name")                                # Advise User Validating
+        wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
+        writelog ("Validating server name ...")                         # Advise User Validating
         try :
             xip = socket.gethostbyname(wcfg_server)                     # Try to get IP of Server
         except (socket.gaierror) as error :                             # Unable to get Server IP
-            printBold ("Server Name %s isn't valid" % (wcfg_server))    # Advise user invalid Server
+            writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
             continue                                                    # Go Re-Accept Server Name
         xarray = socket.gethostbyaddr(xip)                              # Use IP & Get HostName
         yname = repr(xarray[0]).replace("'","")                         # Remove the ' from answer
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
-            print ("The server %s with ip %s is returning %s" % (wcfg_server,xip,yname))
-            print ("FQDN is wrong or the IP doesn't correspond")        # Advise USer 
+            writelog("The server %s with ip %s is returning %s" % (wcfg_server,xip,yname))
+            writelog("FQDN is wrong or the IP doesn't correspond")      # Advise USer 
             continue                                                    # Return Re-Accept SADMIN
         else:
             break                                                       # Ok Name pass the test
@@ -897,7 +960,7 @@ def setup_sadmin_config_file(sroot):
 
     # Accept the Default User Group
     sdefault = "sadmin"                                                 # Set Default value 
-    sprompt  = "Enter the default user Group"                           # Prompt for Answer
+    sprompt  = "Enter SADMIN User Group"                                # Prompt for Answer
     wcfg_group=accept_field(sroot,"SADM_GROUP",sdefault,sprompt)        # Accept Defaut SADMIN Group
     found_grp = False                                                   # Not in group file Default
     with open('/etc/group',mode='r') as f:                              # Open the system group file
@@ -905,15 +968,15 @@ def setup_sadmin_config_file(sroot):
             if line.startswith( "%s:" % (wcfg_group) ):                 # If Line start with Group:
                 found_grp = True                                        # Found Grp entered in file
     if (found_grp == True):                                             # Group were found in file
-        printBold ("Group %s is an existing group" % (wcfg_group))          # Existing group Advise User 
+        writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        print ("Creating group %s" % (wcfg_group))                      # Show creating the group
+        writelog ("Creating group %s" % (wcfg_group))                      # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
             ccode,cstdout,cstderr = oscommand("mkgroup %s" % (wcfg_group))    # Add Group on Aix
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code is %d" % (ccode))                       # Show AddGroup Cmd Error No
+            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
 
     # Accept the Default User Name
@@ -926,37 +989,57 @@ def setup_sadmin_config_file(sroot):
             if line.startswith( "%s:" % (wcfg_user) ):                  # Line Start with user name 
                 found_usr = True                                        # Found User in passwd file
     if (found_usr == True):                                             # User Name found in file
-        printBold ("User %s is an existing user" % (wcfg_user))         # Existing user Advise user
-    else:
-        print ("Creating user %s" % (wcfg_user))                        # Create user on system
+        writelog ("User %s is an existing user" % (wcfg_user),'bold')   # Existing user Advise user
+        writelog ("Add user %s to group %s" % (wcfg_user,wcfg_group),'bold')
         if wostype == "LINUX" :                                         # Under Linux
-            cmd = "useradd -g %s -s /bin/sh " % (wcfg_user)             # Build Add user Command 
+            cmd = "usermod -g %s %s" % (wcfg_group,wcfg_user)           # Add group to User Command 
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+        if wostype == "AIX" :                                           # Under AIX
+            cmd = "chuser pgrp='%s' %s" % (wcfg_group,wcfg_user)        # Build chuser command
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+        if (DEBUG):                                                     # If Debug Activated
+            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
+    else:
+        writelog ("Creating user %s" % (wcfg_user))                     # Create user on system
+        if wostype == "LINUX" :                                         # Under Linux
+            cmd = "useradd -g %s -s /bin/sh " % (wcfg_group)            # Build Add user Command 
             cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
             cmd += " -c'%s' %s" % ("SADMIN Tools User",wcfg_user)       # Add comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
         if wostype == "AIX" :                                           # Under AIX
-            cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_user)          # Build mkuser command
+            cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_group)         # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
         if (DEBUG):                                                     # If Debug Activated
-            print ("Return code is %d" % (ccode))                       # Show AddGroup Cmd Error #
+            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
+    
+    # Change owner of all files in $SADMIN
+    cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
+    writelog (" ")                                                      # White Line
+    writelog ("Change %s ownership : %s" % (sroot,cmd))                 # Show what we are doing
+    ccode, cstdout, cstderr = oscommand(cmd)                            # Change SADMIN Dir Owner 
+
 
     # Questions ask only if on the SADMIN Server
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
         # Accept the default SSH port your use
         sdefault = 22                                                   # SSH Port Default value 
-        sprompt  = "SSH port number used to connect to client"          # Prompt for Answer
+        sprompt  = "SSH port number to connect to client"               # Prompt for Answer
         wcfg_ssh_port = accept_field(sroot,"SADM_SSH_PORT",sdefault,sprompt,"I",1,65536)
         update_sadmin_cfg(sroot,"SADM_SSH_PORT",wcfg_ssh_port)          # Update Value in sadmin.cfg
-        # Accept the Network IP and Netmask your Network
-        sdefault = "192.168.1.0/24"                                     # Network Default value 
-        sprompt  = "Enter the network IP and netmask"                   # Prompt for Answer
-        wcfg_network1 = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
-        update_sadmin_cfg(sroot,"SADM_NETWORK1",wcfg_network1)          # Update Value in sadmin.cfg
+        # Accept the Network IP
+        sdefault = "192.168.1.0"                                        # Network Default value 
+        sprompt  = "Enter the network IP"                               # Prompt for Answer
+        wcfg_network1a = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
+        # Accept the Network Netmask
+        sdefault = "24"                                                 # Network Mask Default value 
+        sprompt  = "Enter the Network Netmask [1-30]"                   # Prompt for Answer
+        wcfg_network1b = accept_field(sroot,"SADM_NETMASK",sdefault,sprompt,"I",1,30) # NetMask
+        update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
-    return(wcfg_server)                                                           # Return to Caller No Error
+    return(wcfg_server,wcfg_domain,wcfg_mail_addr)                      # Return to Caller
 
 
 #===================================================================================================
@@ -971,29 +1054,27 @@ def getpacktype(sroot):
     if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
     if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
     if (packtype == ""):                                                # If unknow/unsupported O/S
-        print ('None of these command is found (rpm, spkg or lslpp absent)')
-        print ('No supported package type is detected')
-        print ('Process aborted')
-        sys.exit(1)                                                     # Exit to O/S
-    
-    # Making sure the log directory exist
-    try:                                                                # Catch mkdir error
-        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
-    except FileExistsError as e :                                       # If Dir. already exists 
-        pass                                                            # It's ok if it exist
+        writelog ('None of these commands are found (rpm, pkg or lslpp absent)')
+        writelog ('No supported package type is detected')
+        writelog ('Process aborted')
+        sys.exit(1)                                                     # Exit to O/S    
+    return (packtype)                                                   # Return Packtype 
 
-    # Open/Create the setup script log
-    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
-    if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
-    try:                                                                # Try to Open/Create Log
-        fhlog=open(logfile,'w')                                         # Open Log File 
-    except IOError as e:                                                # If Can't Create Log
-        print ("Error creating log file %s" % (logfile))                # Print Log FileName
-        print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
-        print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
-        sys.exit(1)                                                     # Exit with Error
-    
-    return (packtype,fhlog,logfile)                                     # Return Packtype & Log FH
+#===================================================================================================
+#                                  M A I N     P R O G R A M
+#===================================================================================================
+#
+def end_message(sroot,sdomain):
+    writelog ("\n\n------------------------------")
+    writelog ("End of SADMIN Setup, you can now use SADMIN\n")
+    writelog ("\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
+    writelog ("To create your own script using SADMIN, you may want to run and view the code of ")
+    writelog ("%s/bin/sadm_template.sh and %s/bin/sadm_template.py as a starting point" % (sroot,sroot))
+    writelog ("You may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
+    writelog ("They will present all functions available to your shell or Python script")
+    writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
+    writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
+    writelog ("\n\n------------------------------")
 
 
 
@@ -1002,7 +1083,10 @@ def getpacktype(sroot):
 #===================================================================================================
 #
 def main():
-    global fhlog
+    global fhlog                                                        # Script Log File Handler
+
+    os.system('clear')                                                  # Clear the screen
+    print ("SADMIN Setup V%s\n------------------" % (ver))              # Print Version Number
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
@@ -1011,31 +1095,21 @@ def main():
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
-    # Ask for location of SADMIN Tools Root Directory & Set Env.Variable SADMIN 
-    sroot=set_sadmin_env(sver)                                          # Go Set SADMIN Env. Var.
-    if (DEBUG): print ("main: Directory SADMIN is %s" % (sroot))        # Show SADMIN root Dir.
-    (packtype,fhlog,logfile) = getpacktype(sroot)                       # Pack Type, Open Log
-    if (DEBUG) : print ("Package type on system is %s" % (packtype))    # Debug, Show Packaging Type 
-    if (DEBUG) : print ("Log file name is %s" % (logfile))              # Debug, Show Log file
-    wcfg_server = setup_sadmin_config_file(sroot)                       # Setup & Update sadmin.cfg
+    sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
+    (fhlog,logfile) = open_logfile(sroot)                               # OpenLog Return File Handle
+    if (DEBUG) : writelog("Directory SADMIN now set to %s" % (sroot))   # Show SADMIN Root Dir.
+    create_sadmin_config_file(sroot)                                    # Create Initial sadmin.cfg
+    (packtype) = getpacktype(sroot)                                     # Pack Type (rpm,deb,lslpp)
+    if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
+    (userver,udomain,uemail) = setup_sadmin_config_file(sroot)          # Ask Config questions
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot,wcfg_server,' ')                                          # Setup/Load MySQL Database
-        setup_webserver(sroot,packtype)                                 # Setup Web Server
-
-    print ("\n\n------------------------------")
-    print ("End of SADMIN Setup")
-    print ("You can now use SADMIN\n")
-    print ("\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY")
-    print ("To create your own script using SADMIN, you may want to run and view the code of ")
-    print ("$SADMIN/bin/sadm_template.sh and $SADMIN/bin/sadm_template.py as a starting point")
-    print ("You may also want to run $SADMIN/lib/sadmlib_test.sh and $SADMIN/lib/sadmlib_test.py.")
-    print ("They will present all functions available to your shell or Python script")
-    print ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM")
-    print ("The web Interface is available at http://sadmin.maison.ca")
-    print ("\n\n------------------------------")
-
+        setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
+        setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
+    rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
+    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
+    end_message(sroot,udomain)                                          # Last Message to User
     fhlog.close()                                                       # Close Script Log
     sys.exit(1)                                                         # Exit to Operating System
 
