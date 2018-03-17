@@ -30,6 +30,8 @@
 #   V1.2b Second Beta Version 
 # 2018_03_13 JDuplessis
 #   V1.3 Third Beta Version 
+# 2018_03_17 JDuplessis
+#   V1.4 Setup Release Candidate 1
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -45,21 +47,21 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
+sver                = "1.4"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 sver                = "1.3"
-DEBUG               = False                                               # Debug Activated or Not
-DRYRUN              = False                                              # Don't Install, Print Cmd
+DEBUG               = False                                             # Debug Activated or Not
+DRYRUN              = False                                             # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
 stype               = ""                                                # C=Client S=Server Install
 fhlog               = ""                                                # Log File Handle
 logfile             = ""                                                # Log FileName
 req_work            = {}                                                # Active Requirement Dict.
-
 
 # Text Colors Attributes Class
 class color:
@@ -76,7 +78,7 @@ class color:
 
 
 # Command and package require by SADMIN Client to work correctly
-req_client = {}                                                            # Requirement Package Dict.
+req_client = {}                                                         # Require Packages Dict.
 req_client = { 
     'lsb_release':{ 'rpm':'redhat-lsb-core',                'rrepo':'base',  
                     'deb':'lsb-release',                    'drepo':'base'},
@@ -104,17 +106,16 @@ req_client = {
                     'deb':'dmidecode',                      'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
-                    'deb':'cfg2html',                       'drepo':'base'},
+#    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
+#                    'deb':'cfg2html',                       'drepo':'base'},
     'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
                     'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'}
 }
 
-
 # Command and package require by SADMIN Server to work correctly
-req_server = {}                                                            # Requirement Package Dict.
+req_server = {}                                                         # Require Packages Dict.
 req_server = { 
     'httpd'      :{ 'rpm':'httpd httpd-tools',              'rrepo':'base',
                     'deb':'apache2 apache2-utils',          'drepo':'base'},
@@ -229,9 +230,10 @@ def oscommand(command) :
 #===================================================================================================
 def update_host_file(wdomain) :
 
+    writelog('')
     writelog ('Updating /etc/hosts file')
     try : 
-        hf = open('/etc/hosts','r+')                                         # Open /etc/hosts file
+        hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
         writelog("Error Opening /etc/hosts file")
         sys.exit(1)
@@ -244,6 +246,195 @@ def update_host_file(wdomain) :
         hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
     hf.close                                                            # Close /etc/hosts file
     return()                                                            # Return Cmd Path
+
+
+#===================================================================================================
+#                            MAKE SURE SADMIN CLIENT CRONTAB FILE IS IN PLACE
+#===================================================================================================
+def update_client_crontab_file(logfile) :
+
+    writelog('')
+    writelog ('Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)')
+    ccron_file = '/etc/cron.d/sadm_client'                              # Client Crontab File
+
+    # Check if crontab directory exist - Procedure may not be supported on this O/S
+    if not os.path.exists("/etc/cron.d"):
+        writelog('Crontab Directory /etc/cron.d doesn't exist ?','bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        return(1)
+
+    # If SADMIN old crontab file exist, delete it and recreate it
+    try:                                                                # In case old file exist
+        os.remove(ccron_file)                                           # Remove old crontab file
+    except :                                                            # If not then it's OK
+        pass                                                            # If don't exist continue
+        
+    # Create the SADMIN Client Crontab file
+    try : 
+        hcron = open(ccron_file,'w')                                    # Open Crontab file
+    except :                                                            # If could not create output
+        writelog("Error Opening %s file" % (ccron_file),'bold')         # Advise Usr couldn't create
+        writelog("Could not create SADMIN crontab file")                # Crontab file not created
+        return(1)
+
+    # Populate SADMIN Client Crontab File
+    hcron.write ("# Please don't edit manually, SADMIN Tools generated file")
+    hcron.write ("# ")
+    hcron.write ("# Run Daily, late at night - Create Host Info Files, Check permission")
+    hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# Run every 11 minutes - Make sure performance nmon daemon is running")
+    hcron.write ("*/11 * * * * sadmin sudo ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# Daily backup of importants Files & Dir.")
+    hcron.write ("47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# Run SADM System Monitoring every 6 minutes")
+    hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >/dev/null/sysmon.log 2>&1")
+    hcron.write ("#")
+    hcron.close                                                         # Close SADMIN Crontab file
+
+    # Change Client Crontab file permission to 644
+    cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
+    if (ccode == 0):                                                    # If chmod went ok
+        writelog( "Client Crontab Permission changed successfully")     # Show success
+    else:                                                               # Did not went well
+        writelog ("Problem changing Client crontab file permission")    # Had error on chmod cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    # Change Client Crontab file Owner and Group
+    cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
+    if (ccode == 0):                                                    # If chown went ok
+        writelog( "Ownership of client crontab changed successfully")   # Show success to user
+    else:                                                               # Did not went well
+        writelog ("Problem changing ownership of client crontab file")  # Had an error on chown cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    return()                                                            # Return Cmd Path
+
+
+#===================================================================================================
+#                            MAKE SURE SADMIN SERVER CRONTAB FILE IS IN PLACE
+#===================================================================================================
+def update_server_crontab_file(logfile) :
+
+    writelog('')
+    writelog ('Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)')
+    ccron_file = '/etc/cron.d/sadm_server'                              # Server Crontab File
+
+    # Check if crontab directory exist - Procedure may not be supported on this O/S
+    if not os.path.exists("/etc/cron.d"):
+        writelog('Crontab Directory /etc/cron.d doesn't exist ?','bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        return(1)
+
+    # If SADMIN old crontab file exist, delete it and recreate it
+    try:                                                                # In case old file exist
+        os.remove(ccron_file)                                           # Remove old crontab file
+    except :                                                            # If not then it's OK
+        pass                                                            # If don't exist continue
+        
+    # Create the SADMIN Client Crontab file
+    try : 
+        hcron = open(ccron_file,'w')                                    # Open Crontab file
+    except :                                                            # If could not create output
+        writelog("Error Opening %s file" % (ccron_file),'bold')         # Advise Usr couldn't create
+        writelog("Could not create SADMIN crontab file")                # Crontab file not created
+        return(1)
+
+    # Populate SADMIN Server Crontab File
+    hcron.write ("# Please don't edit manually, SADMIN Tools generated file")
+    hcron.write ("# ")
+    hcron.write ("# Get all rch/log/rpt status files from all active client")
+    hcron.write ("*/4 * * * * ${SADMIN}/bin/sadm_fetch_servers.sh >/dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# Run Daily, Early in morning - Collect Performance,Host Info, Upd. DB")
+    hcron.write ("17 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# Morning report sent to Sysadmin by Email")
+    hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1")
+    hcron.write ("#")
+    hcron.write ("# O/S Update of all your servers - Optional")
+    hcron.write ("#04 07 * * 1 ${SADMIN}/bin/sadm_osupdate_server.sh >/dev/null  2>&1")
+    hcron.write ("#")
+    hcron.close                                                         # Close SADMIN Crontab file
+
+    # Change Server Crontab file permission to 644
+    cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
+    if (ccode == 0):                                                    # If chmod went ok
+        writelog( "Server Crontab Permission changed successfully")     # Show success
+    else:                                                               # Did not went well
+        writelog ("Problem changing Server crontab file permission")    # Had error on chmod cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    # Change Server Crontab file Owner and Group
+    cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
+    if (ccode == 0):                                                    # If chown went ok
+        writelog( "Ownership of Server crontab changed successfully")   # Show success to user
+    else:                                                               # Did not went well
+        writelog ("Problem changing ownership of Server crontab file")  # Had an error on chown cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    return()                                                            # Return Cmd Path
+
+
+#===================================================================================================
+#                            MAKE SURE SADMIN SUDO FILE IS IN PLACE
+#===================================================================================================
+def update_sudo_file(logfile) :
+
+    writelog('')
+    writelog ('Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
+    sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
+
+    # Check if sudoers directory exist - Procedure may not be supported on this O/S
+    if not os.path.exists("/etc/sudoers.d"):
+        writelog('SUDO Directory /etc/sudoers doesn't exist ?','bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        return
+
+    # If SADMIN sudo file exist, delete it and recreate it
+    try:                                                                # In case old file exist
+        os.remove(sudofile)                                             # Remove old sudo file
+    except :                                                            # If not then it's OK
+        pass                                                            # If don't exist continue
+        
+    # Create the SADMIN sudo file
+    try : 
+        hsudo = open(sudofile,'w')                                      # Open sudo file
+    except :                                                            # If could not create output
+        writelog("Error Opening %s file" % (sudofile),'bold')           # Advise Usr couldn't create
+        writelog("Could not adjust 'sudo' configuration")               # Sudo file not updated
+        sys.exit(1) 
+
+    hsudo.write ("Defaults    env_keep += ' SADMIN '\n")                # Keep Env. Var. SADMIN 
+    hsudo.write ("sadmin ALL=(ALL) NOPASSWD: ALL\n")                    # No Passwd for SADMIN
+    hsudo.close                                                         # Close SADMIN sudo  file
+
+    # Change sudo file permission to 440
+    cmd = "chmod 440 %s" % (sudofile)                                   # chmod 440 on sudofile
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on sudofile
+    if (ccode == 0):                                                    # If chmod went ok
+        writelog( "Permission on sudo file changed successfully")       # Show success to user
+    else:                                                               # Did not went well
+        writelog ("Problem changing sudo file permission")              # Had an error on sudo cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    # Change sudo file Owner and Group
+    cmd = "chown %s.%s %s" % ('root','root',sudofile)                   # chowner on sudofile
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on sudofile
+    if (ccode == 0):                                                    # If chown went ok
+        writelog( "Ownership of sudo file changed successfully")        # Show success to user
+    else:                                                               # Did not went well
+        writelog ("Problem changing ownership of sudo file")            # Had an error on chown cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    return()                                                            # Return Cmd Path
+
 
 #===================================================================================================
 #       THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
@@ -268,42 +459,31 @@ def locate_package(lpackages,lpacktype) :
         writelog ("Package name(s) received by locate_package : %s" % (lpackages))
         writelog ("Package Type received in locate_package is %s" % (lpacktype))
 
-    if ((lpacktype != "deb") and (lpacktype != "rpm")):
-        writelog ("Package type invalid (%s)" % (lpacktype),'bold')
-        return (False)
+    if ((lpacktype != "deb") and (lpacktype != "rpm")):                 # Only rpm & deb Supported 
+        writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
+        return (False)                                                  # Return False to caller
 
-    found = True
-    for pack in lpackages.split(" "):
-        #print ("Package name is %s " % (pack))
-        if (lpacktype == "deb") : 
-            COMMAND = "dpkg-query -W %s  >/dev/null 2>&1" % (pack)
-            if (DEBUG): print ("O/S command : %s " % (COMMAND))       
-            ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-            if (ccode != 0): 
+    found = True                                                        # Assume will found Package
+    for pack in lpackages.split(" "):                                   # Split Packages List
+        if (lpacktype == "deb") :                                       # If Debian Package Style
+            COMMAND = "dpkg-query -W %s  >/dev/null 2>&1" % (pack)      # Check if Package Installed
+            if (DEBUG): print ("O/S command : %s " % (COMMAND))         # Debug: Show Command used
+            ccode,cstdout,cstderr = oscommand(COMMAND)                  # Try to Locate Command
+            if (ccode != 0):                                            # If Package wasn't found
+                found = False                                           # Found Package now False
+        else:                                                           # If not an rpm pkg type
+            if (lpacktype == "rpm"):                                    # Is it a rpm style package?
+                COMMAND = "rpm -qi %s >/dev/null 2>&1" % (pack)         # Try to get info on package
+                if (DEBUG): print ("O/S command : %s " % (COMMAND))     # Debug: Show Command used
+                ccode,cstdout,cstderr = oscommand(COMMAND)              # Try to Locate Command
+                if (ccode != 0):                                        # If package wasn't found
+                    found = False                                       # Found Package is now false
+            else:                                                       # Not rpm or deb pkg style
+                writelog ("Package type (%s) not supported" % (lpacktype),'bold') # Advise User 
+                cmd_path=''                                             # Command path set blank
                 found = False
-        else:
-            if (lpacktype == "rpm"):
-                COMMAND = "rpm -qi %s >/dev/null 2>&1" % (pack)
-                if (DEBUG): print ("O/S command : %s " % (COMMAND))       
-                ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
-                if (ccode != 0): 
-                    found = False
-            else:
-                printError ("Package type (%s) not supported" % (lpacktype))
-                cmd_path=''
-                return (False)
-
-    # If the package is installed
-    if (found == True) :
-        #printOk ("Package %s installed" % (lpackages)) 
-        return (True)
-    else :
-        #if (lpacktype == "deb") : 
-        #    print ("Need to install debian package")
-        #else:
-        #    print ("Need install rpm packages")
-        return (False)
-
+    return(found)                                                       # Return True or False
+    
 
 #===================================================================================================
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
@@ -485,7 +665,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
     else:                                                               # If user deleted
         writelog ("Initial SADMIN Database is in place.")               # Advise User ok to proceed
-
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     
 #===================================================================================================
 #                                   Setup Apache Web Server 
@@ -1106,15 +1288,22 @@ def main():
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     (userver,udomain,uemail) = setup_sadmin_config_file(sroot)          # Ask Config questions
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
+    rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
+    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
+    update_sudo_file(logfile)                                           # Create the sudo file
+    update_client_crontab_file(logfile)                                 # Create Client Crontab File 
+
+    # SADMIN Server 
     if (stype == 'S') :                                                 # If install SADMIN Server
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
         setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
-    rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
-    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
+        update_server_crontab_file(logfile)                             # Create Server Crontab File 
+
+    # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
     fhlog.close()                                                       # Close Script Log
-    sys.exit(1)                                                         # Exit to Operating System
+    sys.exit(0)                                                         # Exit to Operating System
 
 
 # This idiom means the below code only runs when executed from command line
