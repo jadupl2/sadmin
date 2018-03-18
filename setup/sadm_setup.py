@@ -36,12 +36,12 @@
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil      # Import Std Python3 Modules
+    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
     from subprocess import Popen, PIPE
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-#pdb.set_trace()                                                    # Activate Python Debugging
+#pdb.set_trace()                                                        # Activate Python Debugging
 
 
 #===================================================================================================
@@ -88,6 +88,8 @@ req_client = {
                     'deb':'ethtool',                        'drepo':'base'},
     'ifconfig'   :{ 'rpm':'net-tools',                      'rrepo':'base',  
                     'deb':'net-tools',                      'drepo':'base'},
+    'sudo'       :{ 'rpm':'sudo',                           'rrepo':'base',  
+                    'deb':'sudo',                           'drepo':'base'},
     'lshw'       :{ 'rpm':'lshw',                           'rrepo':'base',  
                     'deb':'lshw',                           'drepo':'base'},
     'parted'     :{ 'rpm':'parted',                         'rrepo':'base',  
@@ -259,7 +261,7 @@ def update_client_crontab_file(logfile) :
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
     if not os.path.exists("/etc/cron.d"):
-        writelog('Crontab Directory /etc/cron.d doesn't exist ?','bold')
+        writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return(1)
 
@@ -326,7 +328,7 @@ def update_server_crontab_file(logfile) :
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
     if not os.path.exists("/etc/cron.d"):
-        writelog('Crontab Directory /etc/cron.d doesn't exist ?','bold')
+        writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return(1)
 
@@ -393,7 +395,7 @@ def update_sudo_file(logfile) :
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
     if not os.path.exists("/etc/sudoers.d"):
-        writelog('SUDO Directory /etc/sudoers doesn't exist ?','bold')
+        writelog("SUDO Directory /etc/sudoers doesn't exist ?",'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return
 
@@ -565,15 +567,23 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ('  ')
     writelog ('----------')
     writelog ("Setup SADMIN MySQL Database",'bold')
+
+    # Check if the initial Database Load SQL is present (sadmin.sql)
+    init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
+    if not os.path.isfile("%s") % (init_sql)):                          # Initial SQL don't exist
+        writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        
     
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
     while True : 
         sdefault = ""                                                   # No Default Password 
-        sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
-        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt)   # Accept Mysql root pwd
+        sprompt  = "Enter MySQL Database 'root' user password : "       # Prompt for Answer
+        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
+        #dbroot_pwd = getpass.getpass(prompt="Enter MySQL Database 'root' user password : ")
 
         # Test if can connect to Database (May already exist)
-        writelog ("Testing Access to Database ...")                     # Advise User
+        writelog ("Testing Access to Database ... ",'nonl')             # Advise User
         cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
         if (DEBUG):                                                     # If Debug Activated
@@ -591,7 +601,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
             cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
             ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
             if (ccode != 0):                                            # If Error Changing Password
-                writelog ("Error code %d setting root password" % (ccode)) # Show Error No
+                writelog ("Error %d setting root password" % (ccode))   # Show Error No
                 writelog ("%s %s" % (cstdout,cstderr))                  # Show error messages
                 continue                                                # Go and Retry
             else:
@@ -600,8 +610,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
 
 
     # Secure MySQL Installation by running the secure_mysql.sql script
-    writelog (" ")
-    writelog ("Securing MySQL Database ...")
+    writelog ("Securing MySQL Database ... ",'nonl')
     cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
     if (DEBUG):                                                         # If Debug Activated
@@ -615,60 +624,69 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Database is now secured ... ")                       # Advise User
 
     # Accept 'sadmin' Database Host to localhost 
-    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                   # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                  # Update Value in sadmin.cfg
    
     # Accept 'sadmin' (Read/Write) User Password
     sdefault = "Nimdas1701"                                             # Default Password 
     sprompt  = "Enter Read/Write 'sadmin' database user password"       # Prompt for Answer
-    wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Accept sadmin DB user pwd
     update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd)              # Update Value in sadmin.cfg
    
     # Accept 'squery' (Read Only) User Password
     sdefault = "Query18"                                                # Default Password 
     sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
-    wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt)# Accept sadmin DB user pwd
+    wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
     update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
 
-    # Make a copy of Template Database SQL Load File
-    dbtemplate  = "%s/setup/mysql/sadmin.sql" % (sroot)                 # Initial DB SQL File
-    dbload_file = "%s/setup/mysql/dbload.sql" % (sroot)                 # Modify Version of init
-    try:                                                                # In case old file exist
-        os.remove(dbload_file)                                          # Remove old tmp file
-    except :                                                            # If Error on removal
-        pass                                                            # If don't exist it is ok
-    try:
-        shutil.copyfile(dbtemplate,dbload_file)                         # Copy Initial DB Start
-    except IOError as e:
-        writelog("Unable to copy DB Template - %s" % e)                 # Advise user before exiting
-        sys.exit(1)                                                     # Exit to O/S With Error
-    except:
-        writelog("Unexpected error:", sys.exc_info())                   # Advise Usr Show Error Msg
-        sys.exit(1)                                                     # Exit to O/S with Error
-
-    # Add Grant Privileges to Database initial Load SQL
-    dbh = open(dbload_file,'a')                                         # Open File in append mode
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
-    dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show view on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
-    dbh.write (line)                                                    # Write line to output file
-    line = "flush privileges;\n"
-    dbh.write (line)                                                    # Write line to output file
-    dbh.close                                                            
-
     # Load Initial Database
-    writelog (' ')
+    writelog ('')
+    writelog ('--------------------')
     writelog ("Loading SADMIN Database")                                # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,dbload_file)          # SQL Command to Load DB
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem deleting user
         writelog ("Problem loading the database ...")                   # Advise User
-        writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user deleted
         writelog ("Initial SADMIN Database is in place.")               # Advise User ok to proceed
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     
+    
+    # Create SQL to create sadmin accounts
+    sadmin_users = "%s/setup/mysql/sadmin_users.sql" % (sroot)          # SQL File to create users
+    try:                                                                # In case old file exist
+        dbh = open(sadmin_users,'w')                                    # Open File in write mode
+    except IOError as e:                                                # Something went wrong 
+        writelog("Unable to Open %s" % e)                               # Advise user
+    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant select, show view on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "flush privileges;\n"
+    dbh.write (line)                                                    # Write line to output file
+    dbh.close                                                           # Close SQL Commands file
+
+    # Execute SQL just created to Grant users proper privileges to Database 
+    writelog (' ')
+    writelog ("Creating SADMIN MySQL user 'sadmin' and 'squery'")
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,sadmin_uers)          # SQL Cmd to Create DB Uers
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode != 0):                                                    # If problem creating user
+        writelog ("Problem creating users in database ...")             # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:                                                               # If user created
+        writelog ("Database users created ...")                         # Advise User ok to proceed
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+
+
 #===================================================================================================
 #                                   Setup Apache Web Server 
 #===================================================================================================
@@ -716,14 +734,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
 
-        # Enable SADMIN Configuration
-        cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command                       
-        if (ccode == 0):
-            writelog( "SADMIN Web Site enable")
-        else:
-            writelog ("Problem enabling SADMIN Web Site")
-            writelog ("%s - %s" % (cstdout,cstderr))
 
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
@@ -733,6 +743,15 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         else:
             writelog ("Problem disabling apache2 default configuration")
             writelog ("%s - %s" % (cstdout,cstderr))        
+
+        # Enable SADMIN Configuration
+        cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command                       
+        if (ccode == 0):
+            writelog( "SADMIN Web Site enable")
+        else:
+            writelog ("Problem enabling SADMIN Web Site")
+            writelog ("%s - %s" % (cstdout,cstderr))
 
     # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
@@ -767,26 +786,26 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
                
     # Update the sadmin.cfg with Web Server User and Group
-    writelog ("Updating Web User and Group in SADMIN configuration file")
+    writelog ("     - Record Web Process Owner in SADMIN configuration file")
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    writelog ("Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot)) 
+    writelog ("    - Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot),'nonl') 
     cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (ccode == 0):
-        writelog( "Web Site Owner and Group changed successfully")
+        writelog( " Done ")
     else:
         writelog ("Problem changing Web Site Owner and Group")
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Setting Access permission on web site
-    writelog ("Setting access permission on SADMIN WebSite files (%s/www)" % (sroot)) 
+    writelog ("     - Setting access permission on SADMIN WebSite files (%s/www) ... " % (sroot),'nonl') 
     cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
-        writelog( "Web Site permission changed successfully")
+        writelog( " Done ")
     else:
         writelog ("Problem changing Web Site permission")
         writelog ("%s - %s" % (cstdout,cstderr))        
@@ -814,9 +833,10 @@ def update_apache_config(sroot,sfile,sname,svalue):
     """
     [Update the Apache configuration File.]
     Arguments:
-    sfile  {[string]}   --  [Name of Full Path Apache configuration file]
-    sname  {[string]}   --  [Name of variable to change value]
-    svalue {[string]}   --  [New value of the variable]
+    sroot  {[string]}   --  [Root Dir. of SADMIN]
+    sfile  {[string]}   --  [Full Path Apache configuration file]
+    sname  {[string]}   --  [Variable nameto change value]
+    svalue {[string]}   --  [Variable New value]
     """    
 
     wtmp_file = "%s/tmp/apache.tmp" % (sroot)                           # Tmp Apache config file
@@ -848,7 +868,6 @@ def update_apache_config(sroot,sfile,sname,svalue):
     except:
         writelog ("Error renaming %s to %s" % (wtmp_file,sfile))           # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
-
 
 
 #===================================================================================================
@@ -987,20 +1006,39 @@ def update_sadmin_cfg(sroot,sname,svalue):
         sys.exit(1)                                                     # Exit to O/S with Error
 
 
-
 #===================================================================================================
-#             Accept field receive as parameter and update the $SADMIN/cfg/sadmin.cfg file
+#             Accept Integer, Alphanumeric and Password field based on parameter received.
 #   1) Root Directory of SADMIN    2) Parameter name in sadmin.cfg    3) Default Value    
-#   4) Prompt text                 5) Type of input ([I]nteger [A]lphanumeric) 
+#   4) Prompt text                 5) Type of input ([I]nteger [A]lphanumeric [P]assword) 
 #   6) smin & smax = Minimum and Maximum value for integer prompt
 #===================================================================================================
 #
 def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
-    
-    # Validate the type of input received (A for alphanumeric and I for Integer)
-    if (stype.upper() != "A" and stype.upper() != "I") :                # Accept Alpha or Integer
-        writelog ("Type of input received is invalid (%s)" % (stype))   # If Not A or I - Advise Usr
-        writelog ("Expecting [I]nteger or [A]lphanumeric")              # Question is Skipped
+    """
+    summary]
+        Accept Integer, Alphanumeric and Password field based on parameter received.
+        If present Text file ($SADMIN/doc/cfg/sname.lower().txt) is displayed before input.
+
+    Arguments:
+        sroot {[string]} -- [Root Directory of SADMIN]
+        sname {[string]} -- [Name of doc file to display and appear in Bracket before input]
+        sdefault {[any]} -- [Default Value]
+        sprompt {[type]} -- [Text to display before input (Question)]
+
+    Keyword Arguments:
+        stype {str} -- [Type of input ([I]nteger [A]lphanumeric [P]assword)] (default: {"A"})
+        smin {int} -- [Minimum Value for Integer input] (default: {0})
+        smax {int} -- [Maximum value for Integer input] (default: {3})
+
+    Returns:
+        [any] -- [Value entered by user (or default value)]
+    """
+
+
+    # Validate the type of input received (A for alphanumeric, I for Integer, P for Password)
+    if (stype.upper() != "A" and stype.upper() != "I" and stype.upper() != "P") :  # Alpha/Int/Pwd
+        writelog ("Type of input received is invalid (%s)" % (stype))   # If Not A,I,P - Advise Usr
+        writelog ("Expecting [I]nteger, [A]lphanumeric and [P]assword") # Question is Skipped
         return 1                                                        # Return Error to caller
  
     # Print Field name we will input (name used in sadmin.cfg file)
@@ -1021,11 +1059,20 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         writelog ("Doc file %s not found, question skipped" % (docname))   # Advise User, Question Skip
     #writelog ("--------------------")
 
+    # Accept a Password from the user    
+    if (stype.upper() == "P"):                                          # If Password Input
+        wdata=""
+        while (wdata == ""):                                            # Input until something 
+            wdata = getpass.getpass("%s : " % (sprompt))                # Accept Password
+            wdata = wdata.strip()                                       # Del leading/trailing space
+            if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
+            return wdata                                                # Return Data to caller
+
     # Accept Alphanumeric Value from the user    
     if (stype.upper() == "A"):                                          # If Alphanumeric Input
         wdata=""
         while (wdata == ""):                                            # Input until something 
-            wdata = input("%s : " % (sprompt))              # Accept user response
+            wdata = input("%s : " % (sprompt))                          # Accept user response
             wdata = wdata.strip()                                       # Del leading/trailing space
             if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
             return wdata                                                # Return Data to caller
@@ -1221,7 +1268,7 @@ def setup_sadmin_config_file(sroot):
         # Accept the Network Netmask
         sdefault = "24"                                                 # Network Mask Default value 
         sprompt  = "Enter the Network Netmask [1-30]"                   # Prompt for Answer
-        wcfg_network1b = accept_field(sroot,"SADM_NETMASK",sdefault,sprompt,"I",1,30) # NetMask
+        wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
     return(wcfg_server,wcfg_domain,wcfg_mail_addr)                      # Return to Caller
@@ -1245,6 +1292,7 @@ def getpacktype(sroot):
         sys.exit(1)                                                     # Exit to O/S    
     return (packtype)                                                   # Return Packtype 
 
+
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
@@ -1260,7 +1308,6 @@ def end_message(sroot,sdomain):
     writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
     writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
     writelog ("\n\n------------------------------")
-
 
 
 #===================================================================================================

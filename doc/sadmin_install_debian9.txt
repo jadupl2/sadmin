@@ -1,18 +1,18 @@
 Debian 9 Installation Notes
-Solve python linting in image
-Root .bash_profile for color prompt
-update vscode
-upload vscode config
-install python-pip
+Problem to Solve
+
+
+
 
 -----
-16 Mars 2018 
-
+17 Mars 2018 
 
 root@mdebian9:~# 
 root@mdebian9:~# cd /opt
+
 root@mdebian9:/opt# ls -l
 total 0
+
 root@mdebian9:/opt# git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git
 Cloning into 'sadmin'...
 Password for 'https://jadupl2@bitbucket.org': 
@@ -21,10 +21,13 @@ remote: Compressing objects: 100% (3049/3049), done.
 remote: Total 6881 (delta 4300), reused 5965 (delta 3607)
 Receiving objects: 100% (6881/6881), 38.90 MiB | 7.71 MiB/s, done.
 Resolving deltas: 100% (4300/4300), done.
+
 root@mdebian9:/opt# ls -l
 total 4
 drwxr-xr-x 15 root root 4096 Mar 16 13:21 sadmin
-root@mdebian9:/opt# cd sadmin
+
+root@mdebian9:/opt# cd SADMIN
+
 root@mdebian9:/opt/sadmin# ls -l
 total 88
 drwxr-xr-x  2 root root  4096 Mar 16 13:21 bin
@@ -41,10 +44,13 @@ drwxr-xr-x  4 root root  4096 Mar 16 13:21 setup
 drwxr-xr-x  2 root root  4096 Mar 16 13:21 sys
 drwxr-xr-x  2 root root  4096 Mar 16 13:21 tmp
 drwxr-xr-x 13 root root  4096 Mar 16 13:21 www
+
 root@mdebian9:/opt/sadmin# cd setup/
+
 root@mdebian9:/opt/sadmin/setup# ls
 apache2  mysql  sadm_setup.py
 root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py 
+
 
 SADMIN Setup V1.3
 ------------------
@@ -107,7 +113,7 @@ it produce a log, in the dedicated directory ${SADMIN}/log.
     - This help keeping our log to a reasonnable size.
 
 Default number is 1000 lines as a starting point.
-Maximum number of lines in LOG file : 99
+Maximum number of lines in LOG file : 999
  
 --------------------
 [SADM_MAX_RCHLINE]
@@ -138,7 +144,7 @@ This is the primary user group that have access to all SADMIN directories.
     - The SADMIN default user group is 'sadmin'.
 
 Enter SADMIN User Group : sadmin
-Group sadmin is an existing group
+Creating group sadmin
  
 --------------------
 [SADM_USER]
@@ -147,8 +153,7 @@ Main SADMIN user that have access to all SADMIN directories and files.
     - The SADMIN default user name is 'sadmin'.
 
 Enter the default user name : sadmin
-User sadmin is an existing user
-Add user sadmin to group sadmin
+Creating user sadmin
  
 Change /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
  
@@ -178,29 +183,36 @@ Enter the Network Netmask [1-30] : 24
 
 Checking SADMIN Client Package requirement
 Running apt-get update... Done 
-Checking for ethtool ... Ok
-Checking for cfg2html ... Installing cfg2html ... Error Code is 100 - See log /opt/sadmin/log/sadm_setup.log
-Checking for perl-base ... Ok
-Checking for nmon ... Ok
-Checking for util-linux ... Ok
-Checking for mailutils ... Ok
-Checking for libdatetime-perl libwww-perl ... Ok
-Checking for net-tools ... Ok
-Checking for lsb-release ... Ok
-Checking for bc ... Ok
-Checking for facter ... Ok
-Checking for dmidecode ... Ok
+Checking for facter ... Installing facter ... Done
+Checking for nmon ... Installing nmon ... Done
+Checking for ethtool ... Installing ethtool ... Done
 Checking for openssh-client ... Ok
-Checking for parted ... Ok
-Checking for lshw ... Ok
 Checking for util-linux ... Ok
+Checking for bc ... Ok
+Checking for lsb-release ... Ok
+Checking for util-linux ... Ok
+Checking for perl-base ... Ok
+Checking for net-tools ... Ok
+Checking for dmidecode ... Ok
+Checking for lshw ... Installing lshw ... Done
+Checking for mailutils ... Installing mailutils ... Done
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Done
+Checking for parted ... Ok
+
+Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
+SUDO Directory /etc/sudoers doesn't exist ?
+Send log (/opt/sadmin/log/sadm_setup.log) and submit problem to support@sadmin.ca
+
+Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
+Client Crontab Permission changed successfully
+Ownership of client crontab changed successfully
 
 
 Checking SADMIN Server Package requirement
 Running apt-get update... Done 
-Checking for rrdtool ... Ok
-Checking for mariadb-server mariadb-client ... Ok
-Checking for php php-mysql php-common ... Ok
+Checking for php php-mysql php-common ... Installing php php-mysql php-common ... Done
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Done
+Checking for rrdtool ... Installing rrdtool ... Done
 Checking for apache2 apache2-utils ... Ok
   
 ----------
@@ -211,7 +223,7 @@ Setup SADMIN MySQL Database
 Indicate the MySQL 'root' user.
 If the MySQL 'root' user is not set, it will be set to the one you will enter.
 If the MySQL 'root' user is set, we will use it to try to connect to the Database.
-Enter MySQL Database 'root' user password : Icu@9am 
+Enter MySQL Database 'root' user password : Icu@9am
 Testing Access to Database ...
 Database access succeeded
  
@@ -234,9 +246,13 @@ Enter 'squery' database user password : Squery18
  
 Loading SADMIN Database
 Initial SADMIN Database is in place.
+Return code is 0 - mysql -u root -pIcu@9am < /opt/sadmin/setup/mysql/dbload.sql
+Standard out is 
+Standard error is 
   
 ----------
 Set up SADMIN Web Site
+
 Updating /etc/hosts file
 Apache process user name is www-data
 Apache user group name is www-data
@@ -251,9 +267,13 @@ Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
 Web Site permission changed successfully
 Web Server restarted successfully
 
+Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
+Server Crontab Permission changed successfully
+Ownership of Server crontab changed successfully
+
 
 ------------------------------
-End of SADMIN Setup, you can now use SADMIN
+End of SADMIN Setup, you can now use the SADMIN Tools
 
 
 TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
@@ -266,7 +286,4 @@ They will present all functions available to your shell or Python script
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
 
-
-------------------------------
-root@mdebian9:/opt/sadmin/setup# 
 
