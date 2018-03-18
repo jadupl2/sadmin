@@ -233,7 +233,7 @@ def oscommand(command) :
 def update_host_file(wdomain) :
 
     writelog('')
-    writelog ('Updating /etc/hosts file')
+    writelog ("Adding 'sadmin' to /etc/hosts file")
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -242,7 +242,7 @@ def update_host_file(wdomain) :
     eline = "127.0.0.1      sadmin  sadmin.%s" % (wdomain)              # Line that should be hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
-        if (eline == line):                                             # Line already there    
+        if (eline.rstrip() == line.rstrip()):                           # Line already there    
             found_line = True                                           # Line is Found 
     if not found_line:                                                  # If line was not found
         hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
@@ -570,7 +570,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
 
     # Check if the initial Database Load SQL is present (sadmin.sql)
     init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
-    if not os.path.isfile("%s") % (init_sql)):                          # Initial SQL don't exist
+    if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
         writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         
@@ -578,7 +578,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
     while True : 
         sdefault = ""                                                   # No Default Password 
-        sprompt  = "Enter MySQL Database 'root' user password : "       # Prompt for Answer
+        sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
         dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
         #dbroot_pwd = getpass.getpass(prompt="Enter MySQL Database 'root' user password : ")
 
@@ -673,7 +673,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # Execute SQL just created to Grant users proper privileges to Database 
     writelog (' ')
     writelog ("Creating SADMIN MySQL user 'sadmin' and 'squery'")
-    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,sadmin_uers)          # SQL Cmd to Create DB Uers
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,sadmin_users)         # SQL Cmd to Create DB Uers
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Problem creating users in database ...")             # Advise User
@@ -707,7 +707,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         apache_user = cstdout                                           # Get Apache Process Usr
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
-        writelog ("Apache process user name is %s" % (apache_user))     # Show Apache Proc. User
+            writelog ("Apache process user name is %s" % (apache_user)) # Show Apache Proc. User
         
         # Get the group of apache2 process owner 
         cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
@@ -715,8 +715,9 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         apache_group = cstdout                                          # Get Group from StdOut
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code for getting apache2 group name is %d" % (ccode))                         
-        writelog ("Apache user group name is %s" % (apache_group))         # Show Apache  Group
-        
+            writelog ("Apache user group name is %s" % (apache_group))  # Show Apache  Group
+        writelog ("Owner and Group of apache2 process are %s.%s" % (apache_user,apache_group))
+
         # Updating the apache2 configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
@@ -729,7 +730,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
             except:
                 writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        writelog ("Configuration of SADMIN Web site is now in place")   # Advise User ok to proceed
         update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
@@ -752,6 +752,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         else:
             writelog ("Problem enabling SADMIN Web Site")
             writelog ("%s - %s" % (cstdout,cstderr))
+        apache2_config = "/etc/apache2/sites-enabled/sadmin.conf"
+        writelog ("Configuration of SADMIN Web site is now in place (%s)" % (apache2_config))
 
     # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
@@ -786,12 +788,12 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
                
     # Update the sadmin.cfg with Web Server User and Group
-    writelog ("     - Record Web Process Owner in SADMIN configuration file")
+    writelog ("  - Record Web Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    writelog ("    - Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot),'nonl') 
+    writelog ("  - Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot),'nonl') 
     cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (ccode == 0):
@@ -801,7 +803,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Setting Access permission on web site
-    writelog ("     - Setting access permission on SADMIN WebSite files (%s/www) ... " % (sroot),'nonl') 
+    writelog ("  - Setting access permission on SADMIN WebSite files (%s/www) ... " % (sroot),'nonl') 
     cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
@@ -1117,7 +1119,11 @@ def setup_sadmin_config_file(sroot):
         wcfg_host_type = accept_field(sroot,sname,sdefault,sprompt)     # Go Accept Response 
     wcfg_host_type = wcfg_host_type.upper()                             # Make Host Type Uppercase
     update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type)            # Update Value in sadmin.cfg
-    stype = wcfg_host_type
+    stype = wcfg_host_type                                              # Save Host Intallation type
+    if (stype == "S") :                                                 # If Server install selected
+        writelog("SADMIN Server installation selected",'bold')          # Show Server Install Sel.
+    else:
+        writelog("SADMIN Client installation selected",'bold')          # Show Client Install Sel.
 
     # Accept the Company Name
     sdefault = "Your Company Name"                                      # This is the default value
@@ -1300,13 +1306,18 @@ def getpacktype(sroot):
 def end_message(sroot,sdomain):
     writelog ("\n\n------------------------------")
     writelog ("End of SADMIN Setup, you can now use the SADMIN Tools\n")
-    writelog ("\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
+    writelog ("You need to logout and log back in, before using SADM Tools")
+    writelog ("or type the following command (The dot and the space are important)")
+    writelog (". /etc/environment")
+    writelog ("This will make sure SADMIN environment variable is define with the right content")
+    writelog ("\n\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
     writelog ("To create your own script using SADMIN, you may want to run and view the code of ")
     writelog ("%s/bin/sadm_template.sh and %s/bin/sadm_template.py as a starting point" % (sroot,sroot))
     writelog ("You may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
     writelog ("They will present all functions available to your shell or Python script")
     writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
     writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
+    
     writelog ("\n\n------------------------------")
 
 
