@@ -412,9 +412,8 @@ def update_sudo_file(logfile) :
         writelog("Error Opening %s file" % (sudofile),'bold')           # Advise Usr couldn't create
         writelog("Could not adjust 'sudo' configuration")               # Sudo file not updated
         sys.exit(1) 
-
-    hsudo.write ("Defaults    env_keep += ' SADMIN '\n")                # Keep Env. Var. SADMIN 
-    hsudo.write ("sadmin ALL=(ALL) NOPASSWD: ALL\n")                    # No Passwd for SADMIN
+    hsudo.write ('Defaults  env_keep += "SADMIN"')                      # Keep Env. Var. SADMIN 
+    hsudo.write ("\nsadmin ALL=(ALL) NOPASSWD: ALL\n")                  # No Passwd for SADMIN
     hsudo.close                                                         # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
@@ -583,6 +582,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
         #dbroot_pwd = getpass.getpass(prompt="Enter MySQL Database 'root' user password : ")
 
         # Test if can connect to Database (May already exist)
+        writelog ('  ')
+        writelog ('----------')
         writelog ("Testing Access to Database ... ",'nonl')             # Advise User
         cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
