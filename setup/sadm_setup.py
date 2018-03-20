@@ -47,13 +47,12 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.4"                                             # Setup Version Number
+sver                = "1.4e"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
+sadm_base_dir       = ""                                                # SADMIN Install Directory
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
-sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.3"
 DEBUG               = False                                             # Debug Activated or Not
 DRYRUN              = False                                             # Don't Install, Print Cmd
 #
@@ -106,6 +105,8 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
+    'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'epel',
+                    'deb':'python3-pip                      'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
@@ -382,6 +383,24 @@ def update_server_crontab_file(logfile) :
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
 
     return()                                                            # Return Cmd Path
+
+#===================================================================================================
+#                            Install pymysql module 
+#===================================================================================================
+def special_install() :
+
+    # Install pymysql python3 module using pip3
+    writelog ("Installting python3 PyMySQL module ... ",'nonl')         # Show what we are doing  
+    cmd = "pip3 install PyMySQL"                                        # Command to execute
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Command 
+    if (ccode == 0):                                                    # If install went ok
+        writelog( " Done ")                                             # Show success to user
+    else:                                                               # Did not went well
+        writelog ("Problem Installing PyMysql Python module")           # Had an error on cmd
+        writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
+
+    return()                                                            # Return Cmd Path
+
 
 
 #===================================================================================================
@@ -663,9 +682,14 @@ def setup_mysql(sroot,wcfg_server,wpass):
         dbh = open(sadmin_users,'w')                                    # Open File in write mode
     except IOError as e:                                                # Something went wrong 
         writelog("Unable to Open %s" % e)                               # Advise user
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
+    #
+    line = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show view on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
+    line = "grant all privileges on sadmin.* to 'sadmin@localhost;\n"
+    dbh.write (line)                                                    # Write line to output file
+    line = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant select, show view on sadmin.* to squery@localhost;\n"
     dbh.write (line)                                                    # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
@@ -1349,6 +1373,7 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
     update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
+    special_install()                                                   # pip3 PyMySQL Install
     update_sudo_file(logfile)                                           # Create the sudo file
     update_client_crontab_file(logfile)                                 # Create Client Crontab File 
 

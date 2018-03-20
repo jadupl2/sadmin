@@ -1,8 +1,22 @@
 Debian 9 Installation Notes
 Problem to Solve
 
+1- When asking question, show default in bracket next to question
+2- Missing pymysql module
 
 
+root@mdebian9:/opt/sadmin/bin# ./sadm_template.py
+The Python Module to access MySQL is not installed : No module named 'pymysql' 
+We need to install it before continuying
+
+If you are on Debian,Raspbian,Ubuntu family type the following command to install it:
+sudo apt-get install python3-pip
+sudo pip3 install PyMySQL
+After run sadm_setup.py again, to continue installation of SADMIN Tools
+
+If you are on Redhat, CentOS, Fedora family type the following command to install it:
+sudo yum --enablerepo=epel install python34-pip
+sudo pip3 install pymysql
 
 -----
 17 Mars 2018 
@@ -54,6 +68,7 @@ root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py
 
 SADMIN Setup V1.3
 ------------------
+------------------
 Enter directory path where your install SADMIN : /opt/sadmin
 SADMIN Environment variable is now set to /opt/sadmin
       - The line below is now in /etc/environment now
@@ -66,6 +81,7 @@ Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) is now in place
 [SADM_HOST_TYPE]
 Specify if this host is to become a SADMIN [C]lient or [S]erver.
 Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
+SADMIN Server installation selected
  
 --------------------
 [SADM_CIE_NAME]
@@ -176,32 +192,39 @@ Every day SADMIN will check the IP utilisation on your network.
 Enter the network IP : 192.168.1.0
  
 --------------------
-[SADM_NETMASK]
-Doc file /opt/sadmin/doc/cfg/sadm_netmask.txt not found, question skipped
+[SADM_NETMASK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on SADMIN network web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Netmask should specify the number bits use (1-30) (Default 24)
+
 Enter the Network Netmask [1-30] : 24
 
 
 Checking SADMIN Client Package requirement
 Running apt-get update... Done 
-Checking for facter ... Installing facter ... Done
-Checking for nmon ... Installing nmon ... Done
-Checking for ethtool ... Installing ethtool ... Done
-Checking for openssh-client ... Ok
-Checking for util-linux ... Ok
-Checking for bc ... Ok
-Checking for lsb-release ... Ok
-Checking for util-linux ... Ok
-Checking for perl-base ... Ok
-Checking for net-tools ... Ok
-Checking for dmidecode ... Ok
-Checking for lshw ... Installing lshw ... Done
-Checking for mailutils ... Installing mailutils ... Done
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Done
 Checking for parted ... Ok
+Checking for facter ... Installing facter ... Done
+Checking for perl-base ... Ok
+Checking for nmon ... Installing nmon ... Done
+Checking for lsb-release ... Ok
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Done
+Checking for lshw ... Installing lshw ... Done
+Checking for bc ... Ok
+Checking for dmidecode ... Ok
+Checking for util-linux ... Ok
+Checking for net-tools ... Ok
+Checking for sudo ... Installing sudo ... Done
+Checking for openssh-client ... Ok
+Checking for ethtool ... Installing ethtool ... Done
+Checking for mailutils ... Installing mailutils ... Done
+Checking for util-linux ... Ok
 
 Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
-SUDO Directory /etc/sudoers doesn't exist ?
-Send log (/opt/sadmin/log/sadm_setup.log) and submit problem to support@sadmin.ca
+Permission on sudo file changed successfully
+Ownership of sudo file changed successfully
 
 Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
 Client Crontab Permission changed successfully
@@ -210,61 +233,64 @@ Ownership of client crontab changed successfully
 
 Checking SADMIN Server Package requirement
 Running apt-get update... Done 
+Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ... Done
 Checking for php php-mysql php-common ... Installing php php-mysql php-common ... Done
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Done
 Checking for rrdtool ... Installing rrdtool ... Done
-Checking for apache2 apache2-utils ... Ok
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Done
   
 ----------
 Setup SADMIN MySQL Database
  
 --------------------
 [SADM_ROOT]
-Indicate the MySQL 'root' user.
-If the MySQL 'root' user is not set, it will be set to the one you will enter.
-If the MySQL 'root' user is set, we will use it to try to connect to the Database.
-Enter MySQL Database 'root' user password : Icu@9am
-Testing Access to Database ...
-Database access succeeded
- 
-Securing MySQL Database ...
-Database is now secured ... 
+This is MySQL Database 'root' user password.
+If the password isn't currently, it will be set to the one you will enter.
+If the password is currently set, we will test Database connection using it.
+Enter MySQL Database 'root' user password : 
+  
+----------
+Testing Access to Database ... Database access succeeded
+Securing MySQL Database ... Database is now secured ... 
  
 --------------------
 [SADM_RW_DBPWD]
-Enter the password for the SADMIN database read/write user "sadmin".
+Password read/write user "sadmin" on the SADMIN database.
 You can give this password to people who have permission to update
 server information in the database.
-Enter Read/Write 'sadmin' database user password : Nimdas17
+Enter Read/Write 'sadmin' database user password : 
  
 --------------------
 [SADM_RO_DBPWD]
-Enter the password for the 'sadmin' database read only user "squery".
+Password of the read only user "squery" on the 'sadmin' database
 Give this password to people you want to consult server information,
 but don't want them to modify any information in the Database.
-Enter 'squery' database user password : Squery18
- 
+Enter 'squery' database user password : 
+
+--------------------
 Loading SADMIN Database
 Initial SADMIN Database is in place.
-Return code is 0 - mysql -u root -pIcu@9am < /opt/sadmin/setup/mysql/dbload.sql
+Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin.sql
+Standard out is 
+Standard error is 
+ 
+Creating SADMIN MySQL user 'sadmin' and 'squery'
+Database users created ...
+Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin_users.sql
 Standard out is 
 Standard error is 
   
 ----------
 Set up SADMIN Web Site
 
-Updating /etc/hosts file
-Apache process user name is www-data
-Apache user group name is www-data
-Configuration of SADMIN Web site is now in place
-SADMIN Web Site enable
+Adding 'sadmin' to /etc/hosts file
+Owner and Group of apache2 process are www-data.www-data
 Disable default apache configuration
+SADMIN Web Site enable
+Configuration of SADMIN Web site is now in place (/etc/apache2/sites-enabled/sadmin.conf)
 Initial SADMIN Web site configuration file in place.
-Updating Web User and Group in SADMIN configuration file
-Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www)
-Web Site Owner and Group changed successfully
-Setting access permission on SADMIN WebSite files (/opt/sadmin/www)
-Web Site permission changed successfully
+  - Record Web Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
+  - Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www) Done 
+  - Setting access permission on SADMIN WebSite files (/opt/sadmin/www) ...  Done 
 Web Server restarted successfully
 
 Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
@@ -274,6 +300,11 @@ Ownership of Server crontab changed successfully
 
 ------------------------------
 End of SADMIN Setup, you can now use the SADMIN Tools
+
+You need to logout and log back in, before using SADM Tools
+or type the following command (The dot and the space are important)
+. /etc/environment
+This will make sure SADMIN environment variable is define with the right content
 
 
 TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
@@ -287,3 +318,86 @@ USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
 
 
+------------------------------
+root@mdebian9:/opt/sadmin/setup# 
+
+
+
+root@mdebian9:/opt/sadmin/setup/mysql# mysql < checkdb.sql
+Database
+information_schema
+mysql
+performance_schema
+sadmin
+Tables_in_sadmin
+server
+server_category
+server_group
+srv_name	srv_desc
+rhel3	Red Hat Enterprise V3
+aixb50	Aix 5.3 Dev. Server
+batman	Aix 7.1 NIM Server
+borg	Linux Virtual Box Server
+centos6	CentOS 6 Server
+centos7	CentOS 7 Server
+debian7	Debian V7 Server
+debian8	Debian 8 Server
+fedora25	Fedora 25 Test Server
+gandalf	CentOS V5 Server
+gotham	CentOS 5 Server
+gumby	Old Sysinfo RHEL 5 Server
+nomad	Old Sysinfo CentOS 6 Server
+puppet	Puppet Master and Foreman
+raspi0	Raspberry Zero W
+raspi1	Raspberry Pi V1 Modele B+
+raspi2	Raspberry Pi V1 Modele XX
+raspi4	Raspberry Pi 3 Model B Rev 1
+raspi3	Raspberry Pi V2 Modele B
+rhel4	Red Hat Enterprise V4
+ubuntu1404	Ubuntu 14.04 Server
+ubuntu1604	Ubuntu 16.04 Server
+holmes	DNS,DHCP,Git,Nagios,Wiki
+nano	Laptop Acer Aspire One
+yoda	Laptop Ubuntu 16.04
+User	Host	Password
+root	localhost	
+root@mdebian9:/opt/sadmin/setup/mysql# 
+root@mdebian9:/opt/sadmin/setup/mysql# mysql < checkdb.sql
+Database
+information_schema
+mysql
+performance_schema
+sadmin
+Tables_in_sadmin
+server
+server_category
+server_group
+srv_name	srv_desc
+rhel3	Red Hat Enterprise V3
+aixb50	Aix 5.3 Dev. Server
+batman	Aix 7.1 NIM Server
+borg	Linux Virtual Box Server
+centos6	CentOS 6 Server
+centos7	CentOS 7 Server
+debian7	Debian V7 Server
+debian8	Debian 8 Server
+fedora25	Fedora 25 Test Server
+gandalf	CentOS V5 Server
+gotham	CentOS 5 Server
+gumby	Old Sysinfo RHEL 5 Server
+nomad	Old Sysinfo CentOS 6 Server
+puppet	Puppet Master and Foreman
+raspi0	Raspberry Zero W
+raspi1	Raspberry Pi V1 Modele B+
+raspi2	Raspberry Pi V1 Modele XX
+raspi4	Raspberry Pi 3 Model B Rev 1
+raspi3	Raspberry Pi V2 Modele B
+rhel4	Red Hat Enterprise V4
+ubuntu1404	Ubuntu 14.04 Server
+ubuntu1604	Ubuntu 16.04 Server
+holmes	DNS,DHCP,Git,Nagios,Wiki
+nano	Laptop Acer Aspire One
+yoda	Laptop Ubuntu 16.04
+User	Host	Password
+root	localhost	
+root@mdebian9:/opt/sadmin/setup/mysql# 
