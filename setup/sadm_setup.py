@@ -106,7 +106,7 @@ req_client = {
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
     'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'epel',
-                    'deb':'python3-pip                      'drepo':'base'},
+                    'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
@@ -178,12 +178,12 @@ def open_logfile(sroot):
 
     # Make sure log Directory exist
     try:                                                                # Catch mkdir error
-        os.mkdir ("%s/log" % (sroot),mode=0o777)                        # Make ${SADMIN}/log dir.
+        os.mkdir ("%s/setup/log" % (sroot),mode=0o777)                  # Make ${SADMIN}/log dir.
     except FileExistsError as e :                                       # If Dir. already exists 
         pass                                                            # It's ok if it exist
 
     # Open/Create the setup script log
-    logfile = "%s/log/%s.log" % (sroot,'sadm_setup')                    # Set Log file name
+    logfile = "%s/setup/log/%s.log" % (sroot,'sadm_setup')              # Set Log file name
     if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
     try:                                                                # Try to Open/Create Log
         fhlog=open(logfile,'w')                                         # Open Log File 
@@ -387,10 +387,14 @@ def update_server_crontab_file(logfile) :
 #===================================================================================================
 #                            Install pymysql module 
 #===================================================================================================
-def special_install() :
+def special_install(lpacktype) :
+
+    if ((lpacktype != "deb") and (lpacktype != "rpm")):                 # Only rpm & deb Supported 
+        writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
+        return (False)                                                  # Return False to caller
 
     # Install pymysql python3 module using pip3
-    writelog ("Installting python3 PyMySQL module ... ",'nonl')         # Show what we are doing  
+    writelog ("Installing python3 PyMySQL module ... ",'nonl')          # Show what we are doing  
     cmd = "pip3 install PyMySQL"                                        # Command to execute
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Command 
     if (ccode == 0):                                                    # If install went ok
@@ -594,54 +598,53 @@ def setup_mysql(sroot,wcfg_server,wpass):
         
     
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
-    while True : 
-        sdefault = ""                                                   # No Default Password 
-        sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
-        dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
-        #dbroot_pwd = getpass.getpass(prompt="Enter MySQL Database 'root' user password : ")
+#    while True : 
+    sdefault = ""                                                   # No Default Password 
+    sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
+    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
 
-        # Test if can connect to Database (May already exist)
-        writelog ('  ')
-        writelog ('----------')
-        writelog ("Testing Access to Database ... ",'nonl')             # Advise User
-        cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code is %d - After %s" % (ccode,cmd))     # Print command return code
-            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
-        if (ccode == 0):                                                # No problem connecting
-            writelog ("Database access succeeded")                      # Adivse User 
-            break                                                       # Continue with Next Step
-        else:                                                           # If Not able to connect
-            writelog ("Problem connecting to MySQL using password")
-            writelog ("Will now set 'root' MySQL user password")        # Advise User
-            # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
-            #  mysqladmin password "my_new_password"    
-            cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
-            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
-            if (ccode != 0):                                            # If Error Changing Password
-                writelog ("Error %d setting root password" % (ccode))   # Show Error No
-                writelog ("%s %s" % (cstdout,cstderr))                  # Show error messages
-                continue                                                # Go and Retry
-            else:
-                writelog ("Problem setting MySQL 'root' user password") # Advise user pwd was change
-            break                                                       # Continue with Next Step
+        # # Test if can connect to Database (May already exist)
+        # writelog ('  ')
+        # writelog ('----------')
+        # writelog ("Testing Access to Database ... ",'nonl')             # Advise User
+        # cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
+        # ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
+        # if (DEBUG):                                                     # If Debug Activated
+        #     writelog ("Return code is %d - After %s" % (ccode,cmd))     # Print command return code
+        #     writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+        #     writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+        # if (ccode == 0):                                                # No problem connecting
+        #     writelog ("Database access succeeded")                      # Adivse User 
+        #     break                                                       # Continue with Next Step
+        # else:                                                           # If Not able to connect
+        #     writelog ("Problem connecting to MySQL using password")
+            # writelog ("Will now set 'root' MySQL user password")        # Advise User
+            # # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
+            # #  mysqladmin password "my_new_password"    
+            # cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
+            # ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
+            # if (ccode != 0):                                            # If Error Changing Password
+            #     writelog ("Error %d setting root password" % (ccode))   # Show Error No
+            #     writelog ("%s %s" % (cstdout,cstderr))                  # Show error messages
+            #     continue                                                # Go and Retry
+            # else:
+            #     writelog ("Problem setting MySQL 'root' user password") # Advise user pwd was change
+            # break                                                       # Continue with Next Step
 
 
-    # Secure MySQL Installation by running the secure_mysql.sql script
-    writelog ("Securing MySQL Database ... ",'nonl')
-    cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-    if (DEBUG):                                                         # If Debug Activated
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    if (ccode != 0):                                                    # If problem deleting user
-        writelog ("Problem securing the database ...")                  # Advise User
-        writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
-    else:                                                               # If user deleted
-        writelog ("Database is now secured ... ")                       # Advise User
+    # # Secure MySQL Installation by running the secure_mysql.sql script
+    # writelog ("Securing MySQL Database ... ",'nonl')
+    # cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
+    # ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
+    # if (DEBUG):                                                         # If Debug Activated
+    #     writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+    #     writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+    #     writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    # if (ccode != 0):                                                    # If problem deleting user
+    #     writelog ("Problem securing the database ...")                  # Advise User
+    #     writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
+    # else:                                                               # If user deleted
+    #     writelog ("Database is now secured ... ")                       # Advise User
 
     # Accept 'sadmin' Database Host to localhost 
     update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                  # Update Value in sadmin.cfg
@@ -683,13 +686,17 @@ def setup_mysql(sroot,wcfg_server,wpass):
     except IOError as e:                                                # Something went wrong 
         writelog("Unable to Open %s" % e)                               # Advise user
     #
+    line = "flush privileges;\n"
+    dbh.write (line)                                                    # Write line to output file
     line = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_rw_dbpwd)
     dbh.write (line)                                                    # Write line to output file
-    line = "grant all privileges on sadmin.* to 'sadmin@localhost;\n"
+    line = "grant all privileges on sadmin.* to 'sadmin'@'localhost';\n"
     dbh.write (line)                                                    # Write line to output file
     line = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_ro_dbpwd)
     dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show view on sadmin.* to squery@localhost;\n"
+    line = "grant select, show view on sadmin.* to 'squery'@'localhost';\n"
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';\n" % (dbroot_pwd)
     dbh.write (line)                                                    # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
@@ -1373,7 +1380,7 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
     update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
-    special_install()                                                   # pip3 PyMySQL Install
+    special_install(packtype)                                           # pip3 PyMySQL Install
     update_sudo_file(logfile)                                           # Create the sudo file
     update_client_crontab_file(logfile)                                 # Create Client Crontab File 
 

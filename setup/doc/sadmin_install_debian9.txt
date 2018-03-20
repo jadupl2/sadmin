@@ -2,24 +2,10 @@ Debian 9 Installation Notes
 Problem to Solve
 
 1- When asking question, show default in bracket next to question
-2- Missing pymysql module
 
-
-root@mdebian9:/opt/sadmin/bin# ./sadm_template.py
-The Python Module to access MySQL is not installed : No module named 'pymysql' 
-We need to install it before continuying
-
-If you are on Debian,Raspbian,Ubuntu family type the following command to install it:
-sudo apt-get install python3-pip
-sudo pip3 install PyMySQL
-After run sadm_setup.py again, to continue installation of SADMIN Tools
-
-If you are on Redhat, CentOS, Fedora family type the following command to install it:
-sudo yum --enablerepo=epel install python34-pip
-sudo pip3 install pymysql
 
 -----
-17 Mars 2018 
+20 Mars 2018 
 
 root@mdebian9:~# 
 root@mdebian9:~# cd /opt
@@ -65,9 +51,9 @@ root@mdebian9:/opt/sadmin/setup# ls
 apache2  mysql  sadm_setup.py
 root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py 
 
+root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py 
 
-SADMIN Setup V1.3
-------------------
+SADMIN Setup V1.4e
 ------------------
 Enter directory path where your install SADMIN : /opt/sadmin
 SADMIN Environment variable is now set to /opt/sadmin
@@ -205,22 +191,24 @@ Enter the Network Netmask [1-30] : 24
 
 Checking SADMIN Client Package requirement
 Running apt-get update... Done 
+Checking for openssh-client ... Ok
+Checking for util-linux ... Ok
+Checking for python3-pip ... Installing python3-pip ... Done
+Checking for util-linux ... Ok
+Checking for sudo ... Installing sudo ... Done
+Checking for mailutils ... Installing mailutils ... Done
 Checking for parted ... Ok
+Checking for dmidecode ... Ok
+Checking for net-tools ... Installing net-tools ... Done
 Checking for facter ... Installing facter ... Done
-Checking for perl-base ... Ok
-Checking for nmon ... Installing nmon ... Done
-Checking for lsb-release ... Ok
 Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Done
 Checking for lshw ... Installing lshw ... Done
 Checking for bc ... Ok
-Checking for dmidecode ... Ok
-Checking for util-linux ... Ok
-Checking for net-tools ... Ok
-Checking for sudo ... Installing sudo ... Done
-Checking for openssh-client ... Ok
+Checking for nmon ... Installing nmon ... Done
 Checking for ethtool ... Installing ethtool ... Done
-Checking for mailutils ... Installing mailutils ... Done
-Checking for util-linux ... Ok
+Checking for perl-base ... Ok
+Checking for lsb-release ... Ok
+Installting python3 PyMySQL module ...  Done 
 
 Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
 Permission on sudo file changed successfully
@@ -233,9 +221,9 @@ Ownership of client crontab changed successfully
 
 Checking SADMIN Server Package requirement
 Running apt-get update... Done 
-Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ... Done
 Checking for php php-mysql php-common ... Installing php php-mysql php-common ... Done
 Checking for rrdtool ... Installing rrdtool ... Done
+Checking for apache2 apache2-utils ... Ok
 Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Done
   
 ----------
@@ -322,82 +310,50 @@ The web Interface is available at http://sadmin.maison.ca
 root@mdebian9:/opt/sadmin/setup# 
 
 
+root@mdebian9:/opt/sadmin/setup/mysql# ls -l
+total 40
+-rw-r--r-- 1 sadmin sadmin   128 Mar 20 11:23 checkdb.sql
+-rw-r--r-- 1 sadmin sadmin 24755 Mar 20 11:23 sadmin.sql
+-rw-r--r-- 1 root   root     248 Mar 20 11:32 sadmin_users.sql
+-rw-r--r-- 1 sadmin sadmin   148 Mar 20 11:23 secure_mysql.sql
+root@mdebian9:/opt/sadmin/setup/mysql# mysql <checkdb.sql 
+Database
+information_schema
+mysql
+performance_schema
+sadmin
+Tables_in_sadmin
+server
+server_category
+server_group
+srv_name	srv_desc
+rhel3	Red Hat Enterprise V3
+aixb50	Aix 5.3 Dev. Server
+batman	Aix 7.1 NIM Server
+borg	Linux Virtual Box Server
+centos6	CentOS 6 Server
+centos7	CentOS 7 Server
+debian7	Debian V7 Server
+debian8	Debian 8 Server
+fedora25	Fedora 25 Test Server
+gandalf	CentOS V5 Server
+gotham	CentOS 5 Server
+gumby	Old Sysinfo RHEL 5 Server
+nomad	Old Sysinfo CentOS 6 Server
+puppet	Puppet Master and Foreman
+raspi0	Raspberry Zero W
+raspi1	Raspberry Pi V1 Modele B+
+raspi2	Raspberry Pi V1 Modele XX
+raspi4	Raspberry Pi 3 Model B Rev 1
+raspi3	Raspberry Pi V2 Modele B
+rhel4	Red Hat Enterprise V4
+ubuntu1404	Ubuntu 14.04 Server
+ubuntu1604	Ubuntu 16.04 Server
+holmes	DNS,DHCP,Git,Nagios,Wiki
+nano	Laptop Acer Aspire One
+yoda	Laptop Ubuntu 16.04
+User	Host	Password
+root	localhost	
 
-root@mdebian9:/opt/sadmin/setup/mysql# mysql < checkdb.sql
-Database
-information_schema
-mysql
-performance_schema
-sadmin
-Tables_in_sadmin
-server
-server_category
-server_group
-srv_name	srv_desc
-rhel3	Red Hat Enterprise V3
-aixb50	Aix 5.3 Dev. Server
-batman	Aix 7.1 NIM Server
-borg	Linux Virtual Box Server
-centos6	CentOS 6 Server
-centos7	CentOS 7 Server
-debian7	Debian V7 Server
-debian8	Debian 8 Server
-fedora25	Fedora 25 Test Server
-gandalf	CentOS V5 Server
-gotham	CentOS 5 Server
-gumby	Old Sysinfo RHEL 5 Server
-nomad	Old Sysinfo CentOS 6 Server
-puppet	Puppet Master and Foreman
-raspi0	Raspberry Zero W
-raspi1	Raspberry Pi V1 Modele B+
-raspi2	Raspberry Pi V1 Modele XX
-raspi4	Raspberry Pi 3 Model B Rev 1
-raspi3	Raspberry Pi V2 Modele B
-rhel4	Red Hat Enterprise V4
-ubuntu1404	Ubuntu 14.04 Server
-ubuntu1604	Ubuntu 16.04 Server
-holmes	DNS,DHCP,Git,Nagios,Wiki
-nano	Laptop Acer Aspire One
-yoda	Laptop Ubuntu 16.04
-User	Host	Password
-root	localhost	
-root@mdebian9:/opt/sadmin/setup/mysql# 
-root@mdebian9:/opt/sadmin/setup/mysql# mysql < checkdb.sql
-Database
-information_schema
-mysql
-performance_schema
-sadmin
-Tables_in_sadmin
-server
-server_category
-server_group
-srv_name	srv_desc
-rhel3	Red Hat Enterprise V3
-aixb50	Aix 5.3 Dev. Server
-batman	Aix 7.1 NIM Server
-borg	Linux Virtual Box Server
-centos6	CentOS 6 Server
-centos7	CentOS 7 Server
-debian7	Debian V7 Server
-debian8	Debian 8 Server
-fedora25	Fedora 25 Test Server
-gandalf	CentOS V5 Server
-gotham	CentOS 5 Server
-gumby	Old Sysinfo RHEL 5 Server
-nomad	Old Sysinfo CentOS 6 Server
-puppet	Puppet Master and Foreman
-raspi0	Raspberry Zero W
-raspi1	Raspberry Pi V1 Modele B+
-raspi2	Raspberry Pi V1 Modele XX
-raspi4	Raspberry Pi 3 Model B Rev 1
-raspi3	Raspberry Pi V2 Modele B
-rhel4	Red Hat Enterprise V4
-ubuntu1404	Ubuntu 14.04 Server
-ubuntu1604	Ubuntu 16.04 Server
-holmes	DNS,DHCP,Git,Nagios,Wiki
-nano	Laptop Acer Aspire One
-yoda	Laptop Ubuntu 16.04
-User	Host	Password
-root	localhost	
-root@mdebian9:/opt/sadmin/setup/mysql# 
+
+
