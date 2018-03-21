@@ -68,23 +68,36 @@ def main():
 
 
     # Create SQL to create sadmin accounts
-    sadmin_users = "%s/setup/mysql/sadmin_users.sql" % (sroot)          # SQL File to create users
+    sadmin_users = "/opt/sadmin/setup/mysql/useradd2.sql"
+    print (' ')
+    print ("Creating SADMIN MySQL user 'sadmin' and 'squery'")
+
     try:                                                                # In case old file exist
         dbh = open(sadmin_users,'w')                                    # Open File in write mode
     except IOError as e:                                                # Something went wrong 
-        print("Unable to Open %s" % e)                               # Advise user
-    line = "grant all privileges on sadmin.* to sadmin@localhost identified by '%s';\n" % (wcfg_rw_dbpwd)
+        writelog("Unable to Open %s" % e)                               # Advise user
+    #
+    line = "use mysql;\n"
     dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show view on sadmin.* to squery@localhost identified by '%s';\n" % (wcfg_ro_dbpwd)
+    line = "flush privileges;\n"
+    dbh.write (line)                                                    # Write line to output file
+    line = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_rw_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant all privileges on sadmin.* to 'sadmin'@'localhost';\n"
+    dbh.write (line)                                                    # Write line to output file
+    line = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_ro_dbpwd)
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant select, show view on sadmin.* to 'squery'@'localhost';\n"
+    dbh.write (line)                                                    # Write line to output file
+    line = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';\n" % (dbroot_pwd)
     dbh.write (line)                                                    # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
     dbh.close                                                           # Close SQL Commands file
 
-    # Execute SQL just created to Grant users proper privileges to Database 
-    print (' ')
-    print ("Creating SADMIN MySQL user 'sadmin' and 'squery'")
-    cmd = "mysql -u root -p%s -e  '%s'" % (dbroot_pwd,sadmin_users)         # SQL Cmd to Create DB Uers
+
+
+    cmd = "mysql -u root -p%s <'%s'" % ("jacques",sadmin_users)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         print ("Problem creating users in database ...")             # Advise User

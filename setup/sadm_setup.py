@@ -53,7 +53,7 @@ inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm na
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
-DEBUG               = False                                             # Debug Activated or Not
+DEBUG               = True                                              # Debug Activated or Not
 DRYRUN              = False                                             # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
@@ -589,62 +589,11 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ('  ')
     writelog ('----------')
     writelog ("Setup SADMIN MySQL Database",'bold')
-
-    # Check if the initial Database Load SQL is present (sadmin.sql)
-    init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
-    if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
-        writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
-        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
-        
     
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
-#    while True : 
     sdefault = ""                                                   # No Default Password 
     sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
     dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
-
-        # # Test if can connect to Database (May already exist)
-        # writelog ('  ')
-        # writelog ('----------')
-        # writelog ("Testing Access to Database ... ",'nonl')             # Advise User
-        # cmd = "mysql -u root -p%s -e 'show databases;'" % (dbroot_pwd)  # Try 'show databses'
-        # ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
-        # if (DEBUG):                                                     # If Debug Activated
-        #     writelog ("Return code is %d - After %s" % (ccode,cmd))     # Print command return code
-        #     writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
-        #     writelog ("Standard error is %s" % (cstderr))               # Print command stderr
-        # if (ccode == 0):                                                # No problem connecting
-        #     writelog ("Database access succeeded")                      # Adivse User 
-        #     break                                                       # Continue with Next Step
-        # else:                                                           # If Not able to connect
-        #     writelog ("Problem connecting to MySQL using password")
-            # writelog ("Will now set 'root' MySQL user password")        # Advise User
-            # # UPDATE mysql.user SET Password=PASSWORD('my_new_password') WHERE User='root';
-            # #  mysqladmin password "my_new_password"    
-            # cmd = "mysqladmin -u root password %s" % (dbroot_pwd)       # Build Set Root Pwd
-            # ccode,cstdout,cstderr = oscommand(cmd)                      # Execute password change
-            # if (ccode != 0):                                            # If Error Changing Password
-            #     writelog ("Error %d setting root password" % (ccode))   # Show Error No
-            #     writelog ("%s %s" % (cstdout,cstderr))                  # Show error messages
-            #     continue                                                # Go and Retry
-            # else:
-            #     writelog ("Problem setting MySQL 'root' user password") # Advise user pwd was change
-            # break                                                       # Continue with Next Step
-
-
-    # # Secure MySQL Installation by running the secure_mysql.sql script
-    # writelog ("Securing MySQL Database ... ",'nonl')
-    # cmd = "mysql -u root -p%s < %s/setup/mysql/secure_mysql.sql" % (dbroot_pwd,sroot)
-    # ccode,cstdout,cstderr = oscommand(cmd)                              # Del MySQL Del Anonymous
-    # if (DEBUG):                                                         # If Debug Activated
-    #     writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-    #     writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-    #     writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    # if (ccode != 0):                                                    # If problem deleting user
-    #     writelog ("Problem securing the database ...")                  # Advise User
-    #     writelog ("%s - %s" % (cstdout,cstderr))                        # Show Error Message 
-    # else:                                                               # If user deleted
-    #     writelog ("Database is now secured ... ")                       # Advise User
 
     # Accept 'sadmin' Database Host to localhost 
     update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                  # Update Value in sadmin.cfg
@@ -662,6 +611,13 @@ def setup_mysql(sroot,wcfg_server,wpass):
     update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
 
     # Load Initial Database
+
+    # Check if the initial Database Load SQL is present (sadmin.sql)
+    init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
+    if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
+        writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        return (1)
     writelog ('')
     writelog ('--------------------')
     writelog ("Loading SADMIN Database")                                # Load Initial Database 
@@ -686,6 +642,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
     except IOError as e:                                                # Something went wrong 
         writelog("Unable to Open %s" % e)                               # Advise user
     #
+    line = "use mysql;\n"
+    dbh.write (line)                                                    # Write line to output file
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
     line = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_rw_dbpwd)
@@ -701,6 +659,22 @@ def setup_mysql(sroot,wcfg_server,wpass):
     line = "flush privileges;\n"
     dbh.write (line)                                                    # Write line to output file
     dbh.close                                                           # Close SQL Commands file
+
+
+    cmd = "cat %s" % (sadmin_users)         # SQL Cmd to Create DB Uers
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode != 0):                                                    # If problem creating user
+        writelog ("Problem catting users in database ...")             # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:                                                               # If user created
+        writelog ("ok catting.")                         # Advise User ok to proceed
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+
+
 
     # Execute SQL just created to Grant users proper privileges to Database 
     writelog (' ')
@@ -727,7 +701,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     writelog ('  ')
     writelog ('----------')
-    writelog ("Set up SADMIN Web Site",'bold')
+    writelog ("Setup SADMIN Web Site",'bold')
     update_host_file(sdomain)                                           # Update /etc/hosts file
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
@@ -787,7 +761,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         apache2_config = "/etc/apache2/sites-enabled/sadmin.conf"
         writelog ("Configuration of SADMIN Web site is now in place (%s)" % (apache2_config))
 
-    # Set up Web configuration for RedHat, CentOS, Fedora (rpm)
+    # Setup Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
         # Get the httpd process owner
         cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ writelog $1 }' | sort | uniq"
