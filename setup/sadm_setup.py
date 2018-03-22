@@ -30,8 +30,8 @@
 #   V1.2b Second Beta Version 
 # 2018_03_13 JDuplessis
 #   V1.3 Third Beta Version 
-# 2018_03_17 JDuplessis
-#   V1.4 Setup Release Candidate 1
+# 2018_03_22 JDuplessis
+#   V1.5 Setup Release Candidate 2
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -47,13 +47,13 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.4e"                                            # Setup Version Number
+sver                = "1.5"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
 conn                = ""                                                # MySQL Database Connector
 cur                 = ""                                                # MySQL Database Cursor
-DEBUG               = True                                              # Debug Activated or Not
+DEBUG               = False                                             # Debug Activated or Not
 DRYRUN              = False                                             # Don't Install, Print Cmd
 #
 sroot               = ""                                                # SADMIN Root Directory
@@ -610,14 +610,14 @@ def setup_mysql(sroot,wcfg_server,wpass):
     wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
     update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
 
-    # Load Initial Database
-
     # Check if the initial Database Load SQL is present (sadmin.sql)
     init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
     if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
         writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return (1)
+
+    # Load Initial Database
     writelog ('')
     writelog ('--------------------')
     writelog ("Loading SADMIN Database")                                # Load Initial Database 
@@ -634,63 +634,46 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     
+    # Create 'sadmin' user and Grant permission 
+    writelog ("Creating 'sadmin' user ... ")
+    sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
+    sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
+    sql += " flush privileges;"
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode != 0):                                                    # If problem creating user
+        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:                                                               # If user created
+        writelog (" Done ")                                             # Advise User ok to proceed
     
-    # Create SQL to create sadmin accounts
-    sadmin_users = "%s/setup/mysql/sadmin_users.sql" % (sroot)          # SQL File to create users
-    try:                                                                # In case old file exist
-        dbh = open(sadmin_users,'w')                                    # Open File in write mode
-    except IOError as e:                                                # Something went wrong 
-        writelog("Unable to Open %s" % e)                               # Advise user
-    #
-    line = "use mysql;\n"
-    dbh.write (line)                                                    # Write line to output file
-    line = "flush privileges;\n"
-    dbh.write (line)                                                    # Write line to output file
-    line = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_rw_dbpwd)
-    dbh.write (line)                                                    # Write line to output file
-    line = "grant all privileges on sadmin.* to 'sadmin'@'localhost';\n"
-    dbh.write (line)                                                    # Write line to output file
-    line = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';\n" % (wcfg_ro_dbpwd)
-    dbh.write (line)                                                    # Write line to output file
-    line = "grant select, show view on sadmin.* to 'squery'@'localhost';\n"
-    dbh.write (line)                                                    # Write line to output file
-    line = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';\n" % (dbroot_pwd)
-    dbh.write (line)                                                    # Write line to output file
-    line = "flush privileges;\n"
-    dbh.write (line)                                                    # Write line to output file
-    dbh.close                                                           # Close SQL Commands file
-
-
-    cmd = "cat %s" % (sadmin_users)         # SQL Cmd to Create DB Uers
+    # Create 'squery' user and Grant permission 
+    writelog ("Creating 'squery' user ... ")
+    sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
+    sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
+    sql += " flush privileges;"
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
-        writelog ("Problem catting users in database ...")             # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user created
-        writelog ("ok catting.")                         # Advise User ok to proceed
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+        writelog (" Done ")                                             # Advise User ok to proceed
 
-
-
-    # Execute SQL just created to Grant users proper privileges to Database 
-    writelog (' ')
-    writelog ("Creating SADMIN MySQL user 'sadmin' and 'squery'")
-    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,sadmin_users)         # SQL Cmd to Create DB Uers
+    # Change root mysql password to the one user entered
+    sql = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';" % (dbroot_pwd)
+    sql += " flush privileges;"
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
-        writelog ("Problem creating users in database ...")             # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user created
-        writelog ("Database users created ...")                         # Advise User ok to proceed
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+        writelog (" Done ")                                             # Advise User ok to proceed
+
 
 
 #===================================================================================================

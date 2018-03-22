@@ -1,12 +1,7 @@
-select User, Host, Password  from mysql.user;
-DROP USER 'sadmin'@'localhost';
-DROP USER 'squery'@'localhost';
-select User, Host, Password  from mysql.user;
 flush privileges;
 CREATE USER 'sadmin'@'localhost' IDENTIFIED BY 'Nimdas17';
-grant all privileges on sadmin.* to 'sadmin'@'localhost';
 CREATE USER 'squery'@'localhost' IDENTIFIED BY 'Squery17';
+grant all privileges    on sadmin.* to 'sadmin'@'localhost';
 grant select, show view on sadmin.* to 'squery'@'localhost';
-grant all privileges on *.* to 'root'@'localhost' identified by 'jacques';
 flush privileges;
 select User, Host, Password  from mysql.user;
