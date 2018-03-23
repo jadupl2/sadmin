@@ -47,7 +47,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5"                                             # Setup Version Number
+sver                = "1.5a"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -105,7 +105,7 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-    'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'epel',
+    'pymsql'     :{ 'rpm':'python3-pip',                    'rrepo':'base',
                     'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
@@ -124,9 +124,9 @@ req_server = {
                     'deb':'apache2 apache2-utils',          'drepo':'base'},
     'rrdtool'    :{ 'rpm':'rrdtool',                        'rrepo':'base',
                     'deb':'rrdtool',                        'drepo':'base'},
-    'php'        :{ 'rpm':'php php-mysql php-common',       'rrepo':'base', 
-                    'deb':'php php-mysql php-common',       'drepo':'base'},
-    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
+    'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
+                    'deb':'php php-mysql php-common php-cli ',       'drepo':'base'},
+    'mysql'      :{ 'rpm':'mariadb-server mariadb MySQL-python',    'rrepo':'base',
                     'deb':'mariadb-server mariadb-client',  'drepo':'base'}
 }
 
@@ -531,7 +531,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
             print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
             writelog ("Running apt-get update...",'nonl')               # Show what we are running
-            ccode, cstdout, cstderr = oscommand(cmd)                    # Run the apt-get command
+            (ccode, cstdout, cstderr) = oscommand(cmd)                    # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
             else:                                                       # If we had error 
@@ -591,24 +591,24 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ("Setup SADMIN MySQL Database",'bold')
     
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
-    sdefault = ""                                                   # No Default Password 
-    sprompt  = "Enter MySQL Database 'root' user password"          # Prompt for Answer
-    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
+    sdefault = ""                                                       # No Default Password 
+    sprompt  = "Enter MySQL Database 'root' user password"              # Prompt for Answer
+    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P")   # Accept Mysql root pwd
 
     # Accept 'sadmin' Database Host to localhost 
-    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost")                  # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost",False)            # Update Value in sadmin.cfg
    
     # Accept 'sadmin' (Read/Write) User Password
     sdefault = "Nimdas1701"                                             # Default Password 
     sprompt  = "Enter Read/Write 'sadmin' database user password"       # Prompt for Answer
     wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Accept sadmin DB user pwd
-    update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd)              # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd,False)        # Update Value in sadmin.cfg
    
     # Accept 'squery' (Read Only) User Password
     sdefault = "Query18"                                                # Default Password 
     sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
     wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
-    update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd)              # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
 
     # Check if the initial Database Load SQL is present (sadmin.sql)
     init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
@@ -617,11 +617,30 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return (1)
 
+    # Stop the MariaDB Process & Start in Safe Mode
+    writelog (" ")
+    writelog ("Stopping MariaDB Server")
+    cmd = "systemctl stop mariadb"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    cmd = "service mariadb stop" 
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
+    if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
+    if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    time.sleep(2)
+ 
+    writelog ("Starting MariaDB Server in safe mode")
+    cmd = "mysqld_safe --user=mysql &"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    time.sleep(2)
+
     # Load Initial Database
     writelog ('')
     writelog ('--------------------')
     writelog ("Loading SADMIN Database")                                # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
+    #cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
+    cmd = "mysql -u root < %s" % (init_sql)                  # SQL Cmd to Load DB
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem deleting user
         writelog ("Problem loading the database ...")                   # Advise User
@@ -633,13 +652,15 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    time.sleep(2)
     
     # Create 'sadmin' user and Grant permission 
     writelog ("Creating 'sadmin' user ... ")
     sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
     sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
     sql += " flush privileges;"
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    cmd = "mysql -u root -e \"%s\"" % (sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
@@ -653,7 +674,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
     sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
     sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
     sql += " flush privileges;"
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    cmd = "mysql -u root -e \"%s\"" % (sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
@@ -661,11 +683,13 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user created
         writelog (" Done ")                                             # Advise User ok to proceed
+    time.sleep(2)
 
     # Change root mysql password to the one user entered
     sql = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';" % (dbroot_pwd)
     sql += " flush privileges;"
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    cmd = "mysql -u root -e \"%s\"" % (sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
@@ -673,7 +697,22 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user created
         writelog (" Done ")                                             # Advise User ok to proceed
+    time.sleep(2)
 
+    # Stop / Restart the MariaDB Process
+    writelog ("Stopping MariaDB Server")
+    cmd = "systemctl stop mariadb"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    cmd = "service mariadb stop" 
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
+    if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
+    if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    time.sleep(2)
+    writelog ("Starting MariaDB Server")
+    cmd = "systemctl restart mariadb"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
 
 
 #===================================================================================================
@@ -751,7 +790,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
         apache_user = cstdout                                           # Get Apache Process Usr
         if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
+            writelog ("Return code for getting httpd user name is %d" % (ccode))                         
         writelog ("Apache process user name is %s" % (apache_user))     # Show Apache Proc. User
 
         # Get the group of httpd process owner 
@@ -762,10 +801,10 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
             writelog ("Return code for getting httpd group name is %d" % (ccode))                         
         writelog ("Apache user group name is %s" % (apache_group))      # Show Apache  Group
 
-        # Updating the apache2 configuration file 
+        # Updating the httpd configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
-        if os.path.exists(apache2file)==False:                          # If Web cfg Not Found
+        if not os.path.exists(apache2_file):                            # If Web cfg Not Found
             try:
                 shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
             except IOError as e:
@@ -774,9 +813,13 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
             except:
                 writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-    writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
+        update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
+        update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
+        update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}     
+
                
     # Update the sadmin.cfg with Web Server User and Group
+    writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
     writelog ("  - Record Web Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
@@ -806,7 +849,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         cmd = "service apache2 restart" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (spacktype == "rpm" ) : 
-        cmd = "service httpd restart" 
+        cmd = "systemctl restart httpd" 
         ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
         writelog( "Web Server restarted successfully")
@@ -947,10 +990,10 @@ def create_sadmin_config_file(sroot):
 
 #===================================================================================================
 #                     Replacing Value in SADMIN configuration file (sadmin.cfg)
-#               1st parameter = Name of setting    2nd parameter = Value of the setting
-#===================================================================================================
+#  1st = Root Dir. of SADMIN, 2nd = Name of setting, 3rd = Value of the setting, 4th = Show Upd. line
+# ===================================================================================================
 #
-def update_sadmin_cfg(sroot,sname,svalue):
+def update_sadmin_cfg(sroot,sname,svalue,show=True):
     """
     [Update the SADMIN configuration File.]
     Arguments:
@@ -996,6 +1039,8 @@ def update_sadmin_cfg(sroot,sname,svalue):
         writelog ("Error renaming %s to %s" % (wtmp_file,wcfg_file))    # Advise user of problem
         sys.exit(1)                                                     # Exit to O/S with Error
 
+    if (show) : 
+        writelog ("[%s] set to '%s' in %s" % (sname,svalue,wcfg_file),'bold') # Bold Attr. Name in sadmin
 
 #===================================================================================================
 #             Accept Integer, Alphanumeric and Password field based on parameter received.
@@ -1063,7 +1108,10 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     if (stype.upper() == "A"):                                          # If Alphanumeric Input
         wdata=""
         while (wdata == ""):                                            # Input until something 
-            wdata = input("%s : " % (sprompt))                          # Accept user response
+            eprompt = sprompt                                           # Save Default Prompt Unmodified
+            if (len(sdefault) !=0):                                     # If Default Value received
+                eprompt = sprompt + " [" + color.BOLD + sdefault + color.END + "]" # Ins Def. Val. in prompt
+            wdata = input("%s : " % (eprompt))                          # Accept user response
             wdata = wdata.strip()                                       # Del leading/trailing space
             if (len(wdata) == 0) : wdata = sdefault                     # No Input = Default Value
             return wdata                                                # Return Data to caller
@@ -1072,10 +1120,17 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     if (stype.upper() == "I"):                                          # If Numeric Input
         wdata = 0                                                       # Where response is store
         while True:                                                     # Loop until Valid response
+            eprompt = sprompt + " [" + color.BOLD + str(sdefault) + color.END + "]" # Ins Def. in prompt
+#           wdata = int(input("%s : " % (eprompt)))                 # Accept an Integer
+            wdata = input("%s : " % (eprompt))                       # Accept an Integer
+            if (len(wdata) ==0): wdata = sdefault
             try:
-                wdata = int(input("%s : " % (sprompt)))                 # Accept an Integer
-            except (ValueError, TypeError) as error:                    # If Value is not an Integer
-                writelog ("Not an integer!")                            # Advise User Message
+                wdata = int(wdata)
+            except ValueError as e:                    # If Value is not an Integer
+                writelog ("Value Error - Not an integer (%s)" % (wdata))                            # Advise User Message
+                continue                                                # Continue at start of loop
+            except TypeError as e:                    # If Value is not an Integer
+                writelog ("Type Error - Not an integer (%s)" % (wdata))                            # Advise User Message
                 continue                                                # Continue at start of loop
             if (wdata == 0) : wdata = sdefault                          # No Input = Default Value
             if (wdata > smax) or (wdata < smin):                        # Must be between min & max
@@ -1102,21 +1157,17 @@ def setup_sadmin_config_file(sroot):
     # Is the current server a SADMIN [S]erver or a [C]lient
     sdefault = "C"                                                      # This is the default value
     sname    = "SADM_HOST_TYPE"                                         # Var. Name in sadmin.cfg
-    sprompt  = "Host will be a SADMIN [S]erver or a [C]lient (S,C)"     # Prompt for Answer
+    sprompt  = "Host will be a SADMIN [S]erver or a [C]lient"           # Prompt for Answer
     wcfg_host_type = ""                                                 # Define Var. First
     while ((wcfg_host_type.upper() != "S") and (wcfg_host_type.upper() != "C")): # Loop until S or C
         wcfg_host_type = accept_field(sroot,sname,sdefault,sprompt)     # Go Accept Response 
     wcfg_host_type = wcfg_host_type.upper()                             # Make Host Type Uppercase
     update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type)            # Update Value in sadmin.cfg
     stype = wcfg_host_type                                              # Save Host Intallation type
-    if (stype == "S") :                                                 # If Server install selected
-        writelog("SADMIN Server installation selected",'bold')          # Show Server Install Sel.
-    else:
-        writelog("SADMIN Client installation selected",'bold')          # Show Client Install Sel.
 
     # Accept the Company Name
-    sdefault = "Your Company Name"                                      # This is the default value
-    sprompt  = "Enter your Company Name "                               # Prompt for Answer
+    sdefault = ""                                                       # This is the default value
+    sprompt  = "Enter your Company Name"                                # Prompt for Answer
     wcfg_cie_name = ""                                                  # Clear Cie Name
     while (wcfg_cie_name == ""):                                        # Until something entered
         wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME",sdefault,sprompt)# Accept Cie Name
@@ -1145,6 +1196,12 @@ def setup_sadmin_config_file(sroot):
     sprompt  = "Enter default email type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_MAIL_TYPE",sdefault,sprompt,"I",0,3)
     update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
+
+    # Accept the Default Domain Name
+    sdefault = ""                                                       # No Default value 
+    sprompt  = "Default domain name"                                    # Prompt for Answer
+    wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
+    update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
 
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
@@ -1178,12 +1235,6 @@ def setup_sadmin_config_file(sroot):
     sprompt  = "Maximum number of lines in RCH file"                    # Prompt for Answer
     wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
     update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
-
-    # Accept the Default Domain Name
-    sdefault = ""                                                       # No Default value 
-    sprompt  = "Default domain name"                                    # Prompt for Answer
-    wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
-    update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
 
     # Accept the Default User Group
     sdefault = "sadmin"                                                 # Set Default value 
@@ -1336,7 +1387,7 @@ def main():
     (userver,udomain,uemail) = setup_sadmin_config_file(sroot)          # Ask Config questions
     satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
     rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
-    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path)                # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)          # Update Value in sadmin.cfg
     special_install(packtype)                                           # pip3 PyMySQL Install
     update_sudo_file(logfile)                                           # Create the sudo file
     update_client_crontab_file(logfile)                                 # Create Client Crontab File 

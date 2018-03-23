@@ -3,6 +3,3 @@
 #----------------------------------------------------------------------------
 This field specify the email address of the system administrator.
 It is used by SADMIN Tools to send various email. 
-For example, you can request that the log of a script be sent when an 
-error occured or every time is it run. (See SADM_MAIL_TYPE later on)
-Multiple email can be specify, a comma must seperate each of them.
