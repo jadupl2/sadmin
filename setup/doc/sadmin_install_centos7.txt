@@ -1,0 +1,71 @@
+
+----------------------------------------------------------------------------------------------------
+
+24 Mars 2018
+----------------------------------------------------------------------------------------------------
+Things to do 
+----------------------------------------------------------------------------------------------------
+Script to create to install python3 (epel)
+
+1- rpm -Uvh http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+## RHEL/CentOS 6 32-Bit ##
+# wget http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+# rpm -ivh epel-release-6-8.noarch.rpm
+## RHEL/CentOS 6 64-Bit ##
+# wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+# rpm -ivh epel-release-6-8.noarch.rpm
+yum remove epel-release-7-11.noarch
+
+2- yum-config-manager --disable repository…
+
+3- yum --enablerepo=epel install -y python34
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+
+su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm'
+
+Install a package from the EPEL repository
+# yum --enablerepo=epel install zabbix
+
+
+[EPEL] How to install Python 3.4 on CentOS 6 & 7
+sudo yum install -y epel-release
+sudo yum install -y python34
+
+# Install pip3
+sudo yum install -y python34-setuptools  # install easy_install-3.4
+sudo easy_install-3.4 pip
+
+# I guess you would like to install virtualenv or virtualenvwrapper
+sudo pip3 install virtualenv
+sudo pip3 install virtualenvwrapper
+
+If you want to use pyvenv, you can do the following to install pip3 in your virtualenv:
+
+pyvenv --without-pip my_env
+curl https://bootstrap.pypa.io/get-pip.py | my_env/bin/python
+But if you want to have it out-of-the-box, you can add this bash function (alias) in your .bashrc:
+    
+$@; for env in $@; do curl https://bootstrap.pypa.io/get-pip.py | "$env/bin/python"; done; }
+
+
+
+----------------------------------------------------------------------------------------------------
+
+root@tcentos7:~# cd /opt
+root@tcentos7:/opt# git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git
+Cloning into 'sadmin'...
+Password for 'https://jadupl2@bitbucket.org': 
+remote: Counting objects: 6971, done.
+remote: Compressing objects: 100% (3137/3137), done.
+remote: Total 6971 (delta 4359), reused 5965 (delta 3607)
+Receiving objects: 100% (6971/6971), 38.93 MiB | 8.02 MiB/s, done.
+Resolving deltas: 100% (4359/4359), done.
+root@tcentos7:/opt# 
+
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+
