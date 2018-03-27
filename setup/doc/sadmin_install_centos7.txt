@@ -65,7 +65,300 @@ Resolving deltas: 100% (4359/4359), done.
 root@tcentos7:/opt# 
 
 ----------------------------------------------------------------------------------------------------
+SADMIN Setup V1.5a
+------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+SADMIN Environment variable is now set to /opt/sadmin
+      - The line below is now in /etc/environment now
+      - SADMIN=/opt/sadmin
+      - This will make sure it is set upon reboot
+Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) is now in place
+ 
+ 
+--------------------
+[SADM_HOST_TYPE]
+Specify if this host is to become a SADMIN [C]lient or [S]erver.
+Host will be a SADMIN [S]erver or a [C]lient [C] : s
+[SADM_HOST_TYPE] set to 'S' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_CIE_NAME]
+This name that will appear in the heading of the web interface
+and on some report and email that SADMIN produce.
+Enter your Company Name : The Batcave
+[SADM_CIE_NAME] set to 'The Batcave' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email.
+Enter System Administrator Email : batman@batcave.com
+[SADM_MAIL_ADDR] set to 'batman@batcave.com' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error (Default)
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish.
+Enter default email type [1] : 
+[SADM_MAIL_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_DOMAIN]
+Enter the default Domain Name to use when you will be adding a new server.
+Default domain name : maison.ca
+[SADM_DOMAIN] set to 'maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+Enter SADMIN (FQDN) server name : tcentos7.maison.ca
+Validating server name ...
+[SADM_SERVER] set to 'tcentos7.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+
+    - The name of the Log file is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
+    - Log file are cumulative by default, but it can be overriden if you want.
+    - This number indicate the maximum of lines you want to keep in your log.
+    - This help keeping our log to a reasonnable size.
+
+Maximum number of lines in LOG file [1000] : 
+[SADM_MAX_LOGLINE] set to '1000' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends,
+it record the date/time and the ending status of your script in what we call
+a RCH file ([R]eturn [C]ode [H]istory] file).
+
+     - The RCH file name are "[HOSTNAME]_[NAME_OF_SCRIPT].rch"
+     - They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+     - This number represent the maximum number of lines that each RCH file can contain.
+
+A value of 100 lines is recommended.
+This will keep an history of 50 days and is the default value.
+Maximum number of lines in RCH file [100] : 
+[SADM_MAX_RCHLINE] set to '100' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_GROUP]
+This is the primary user group that have access to all SADMIN directories.
+    - All files in the $SADMIN directories are own by this group.
+    - If others users need to access or used scripts located in $SADMIN,
+      they must be part of this group.
+    - The SADMIN default user group is 'sadmin'.
+
+Enter SADMIN User Group [sadmin] : 
+Creating group sadmin
+[SADM_GROUP] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_USER]
+Main SADMIN user that have access to all SADMIN directories and files.
+    - This user will be assign to the SADMIN user group you just specified.
+    - The SADMIN default user name is 'sadmin'.
+
+Enter the default user name [sadmin] : 
+Creating user sadmin
+[SADM_USER] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
+ 
+Change /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
+ 
+--------------------
+[SADM_SSH_PORT]
+TCP/IP Port used for SSH.
+SSH port number to connect to client [22] : 
+[SADM_SSH_PORT] set to '22' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+[SADM_NETWORK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on SADMIN network web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Network should be specify in this form, '192.168.1.0"
+
+Enter the network IP [192.168.1.0] : 
+ 
+--------------------
+[SADM_NETMASK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on SADMIN network web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Netmask should specify the number bits use (1-30) (Default 24)
+
+Enter the Network Netmask [1-30] [24] : 
+[SADM_NETWORK1] set to '192.168.1.0/24' in /opt/sadmin/cfg/sadmin.cfg
+
+
+Checking SADMIN Client Package requirement
+Checking for net-tools ... Ok
+Checking for ethtool ... Ok
+Checking for mailx ... Ok
+Checking for sudo ... Ok
+Checking for dmidecode ... Ok
+Checking for nmon ... Installing nmon ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
+Checking for util-linux ... Ok
+Checking for perl-DateTime ... Installing perl-DateTime ... Done
+Checking for parted ... Ok
+Checking for facter ... Installing facter ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
+Checking for openssh-clients ... Ok
+Checking for lshw ... Installing lshw ... Done
+Checking for bc ... Ok
+Checking for python3-pip ... Installing python3-pip ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
+Checking for redhat-lsb-core ... Ok
+Checking for util-linux ... Ok
+Checking for perl ... Ok
+Installing python3 PyMySQL module ... Problem Installing PyMysql Python module
+ - /bin/sh: pip3: command not found
+
+Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
+Permission on sudo file changed successfully
+Ownership of sudo file changed successfully
+
+Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
+Client Crontab Permission changed successfully
+Ownership of client crontab changed successfully
+
+
+Checking SADMIN Server Package requirement
+Checking for httpd httpd-tools ... Installing httpd httpd-tools ... Done
+Checking for rrdtool ... Installing rrdtool ... Done
+Checking for php php-common php-cli php-mysqlnd php-mbstring ... Installing php php-common php-cli php-mysqlnd php-mbstring ... Done
+Checking for mariadb-server mariadb MySQL-python ... Installing mariadb-server mariadb MySQL-python ... Done
+  
+----------
+Setup SADMIN MySQL Database
+ 
+--------------------
+[SADM_ROOT]
+This is MySQL Database 'root' user password.
+If the password isn't currently, it will be set to the one you will enter.
+If the password is currently set, we will test Database connection using it.
+Enter MySQL Database 'root' user password : 
+ 
+--------------------
+[SADM_RW_DBPWD]
+Password read/write user "sadmin" on the SADMIN database.
+You can give this password to people who have permission to update
+server information in the database.
+Enter Read/Write 'sadmin' database user password : 
+ 
+--------------------
+[SADM_RO_DBPWD]
+Password of the read only user "squery" on the 'sadmin' database
+Give this password to people you want to consult server information,
+but don't want them to modify any information in the Database.
+Enter 'squery' database user password : 
+ 
+Stopping MariaDB Server
+Starting MariaDB Server in safe mode
+
+--------------------
+Loading SADMIN Database
+Problem loading the database ...
+Return code is 1 - mysql -u root < /opt/sadmin/setup/mysql/sadmin.sql
+Standard out is 
+Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+Creating 'sadmin' user ... 
+Error code returned is 1 
+mysql -u root -e "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY 'Nimdas17'; grant all privileges on sadmin.* to 'sadmin'@'localhost'; flush privileges;"
+Standard out is 
+Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+Creating 'squery' user ... 
+Error code returned is 1 
+mysql -u root -e "CREATE USER 'squery'@'localhost' IDENTIFIED BY 'Squery18'; grant select, show view on sadmin.* to 'squery'@'localhost'; flush privileges;"
+Standard out is 
+Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+Error code returned is 1 
+mysql -u root -e "grant all privileges on *.* to 'root'@'localhost' identified by 'jacques'; flush privileges;"
+Standard out is 
+Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+Stopping MariaDB Server
+Starting MariaDB Server
+  
+----------
+Setup SADMIN Web Site
+
+Adding 'sadmin' to /etc/hosts file
+Apache process user name is 
+Apache user group name is root
+Initial SADMIN Web site configuration file in place.
+  - Record Web Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
+[SADM_WWW_USER] set to '' in /opt/sadmin/cfg/sadmin.cfg
+[SADM_WWW_GROUP] set to 'root' in /opt/sadmin/cfg/sadmin.cfg
+  - Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www) Done 
+  - Setting access permission on SADMIN WebSite files (/opt/sadmin/www) ...  Done 
+Problem restarting SADMIN Web Site
+ - Job for httpd.service failed because the control process exited with error code. See "systemctl status httpd.service" and "journalctl -xe" for details.
+
+Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
+Server Crontab Permission changed successfully
+Ownership of Server crontab changed successfully
+
+
+------------------------------
+End of SADMIN Setup, you can now use the SADMIN Tools
+
+You need to logout and log back in, before using SADM Tools
+or type the following command (The dot and the space are important)
+. /etc/environment
+This will make sure SADMIN environment variable is define with the right content
+
+
+TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
+To create your own script using SADMIN, you may want to run and view the code of 
+/opt/sadmin/bin/sadm_template.sh and /opt/sadmin/bin/sadm_template.py as a starting point
+You may also want to run /opt/sadmin/lib/sadmlib_test.sh and /opt/sadmin/lib/sadmlib_test.py.
+They will present all functions available to your shell or Python script
+
+
+USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
+The web Interface is available at http://sadmin.maison.ca
+
+
+------------------------------
+root@tcentos7:/opt/sadmin/setup# 
+
+
 ----------------------------------------------------------------------------------------------------
+- Unit mariadb.service has begun starting up.
+Mar 27 11:59:09 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: Initializing MariaDB database
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: 180327 11:59:10 [Note] /usr/libexec/mysqld (mysqld 5.5.56-MariaDB) starting 
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: 180327 11:59:10 [Note] /usr/libexec/mysqld (mysqld 5.5.56-MariaDB) starting 
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: PLEASE REMEMBER TO SET A PASSWORD FOR THE MariaDB root USER !
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: To do so, start the server, then issue the following commands:
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: '/usr/bin/mysqladmin' -u root password 'new-password'
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: '/usr/bin/mysqladmin' -u root -h tcentos7.maison.ca password 'new-password'
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: Alternatively you can run:
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: '/usr/bin/mysql_secure_installation'
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: which will also give you the option of removing the test
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: databases and anonymous user created by default.  This is
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: strongly recommended for production servers.
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: See the MariaDB Knowledgebase at http://mariadb.com/kb or the
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: MySQL manual for more instructions.
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: Please report any problems at http://mariadb.org/jira
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: The latest information about MariaDB is available at http://mariadb.org/.
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: You can find additional information about the MySQL part at:
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: http://dev.mysql.com
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: Consider joining MariaDB's strong and vibrant community:
+Mar 27 11:59:10 tcentos7.maison.ca mariadb-prepare-db-dir[67534]: https://mariadb.org/get-involved/
+Mar 27 11:59:10 tcentos7.maison.ca mysqld_safe[67617]: 180327 11:59:10 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+Mar 27 11:59:10 tcentos7.maison.ca mysqld_safe[67617]: 180327 11:59:10 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+Mar 27 11:59:12 tcentos7.maison.ca systemd[1]: Started MariaDB database server.
+
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 

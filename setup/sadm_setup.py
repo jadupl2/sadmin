@@ -105,8 +105,8 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-    'pymsql'     :{ 'rpm':'python3-pip',                    'rrepo':'base',
-                    'deb':'python3-pip',                    'drepo':'base'},
+#    'pymsql'     :{ 'rpm':'python3-pip',                    'rrepo':'base',
+#                    'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
@@ -562,15 +562,19 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
             continue                                                    # Proceed with Next Package
 
         # Install Missing Packages
+        pline = "Installing %s ... " % (needed_packages)
+        writelog (pline,'nonl')        
         if (packtype == "deb") : 
             icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
-            icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
+            if (needed_repo == "epel"):
+                writelog (" from EPEL ... ",'nonl')
+                icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
+            else:
+                icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
         if (DRYRUN):
             writelog ("We would install %s with %s" % (needed_packages,icmd))
             continue                                                    # Proceed with Next Package
-        pline = "Installing %s ... " % (needed_packages)
-        writelog (pline,'nonl')
         writelog (icmd,'log')
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
@@ -617,22 +621,40 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return (1)
 
-    # Stop the MariaDB Process & Start in Safe Mode
-    writelog (" ")
-    writelog ("Stopping MariaDB Server")
-    cmd = "systemctl stop mariadb"
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    cmd = "service mariadb stop" 
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
-    if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
-    if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    time.sleep(2)
+    # # Stop the MariaDB Process & Start in Safe Mode
+    # writelog (" ")
+    # writelog ("Stopping MariaDB Server")
+    # cmd = "systemctl stop mariadb"
+    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    # cmd = "service mariadb stop" 
+    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    # if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
+    # if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
+    # if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
+    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    # time.sleep(2)
  
-    writelog ("Starting MariaDB Server in safe mode")
-    cmd = "mysqld_safe --user=mysql &"
+    # writelog ("Starting MariaDB Server in safe mode")
+    # cmd = "mysqld_safe --user=mysql &"
+    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    # time.sleep(2)
+
+    # Change MariaDB root password
+    cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)             # Cmd to change root pwd
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (ccode != 0):                                                    # If problem deleting user
+        writelog ("Problem changing MariaDB password ... ")             # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    time.sleep(2)
+    cmd = "mysqladmin -u root -h %s password '%s'" % (wcfg_server,dbroot_pwd) # Cmd to change root pwd
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (ccode != 0):                                                    # If problem deleting user
+        writelog ("Problem changing MariaDB password ... ")             # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(2)
 
     # Load Initial Database
@@ -725,6 +747,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ('----------')
     writelog ("Setup SADMIN Web Site",'bold')
     update_host_file(sdomain)                                           # Update /etc/hosts file
+    open("%s/log/sadmin_error.log"  % (sroot),a).close                  # Touch Apache SADMIN log
+    open("%s/log/sadmin_access.log" % (sroot),a).close                  # Touch Apache SADMIN log
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :

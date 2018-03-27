@@ -27,7 +27,7 @@
 # 2018_03_27 JDuplessis
 #   V1.1 Initial Version - Make sure python 3 is installed and then execute sadm_setup.py
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
+trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
 
 
@@ -40,8 +40,7 @@ SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Curren
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-BASEDIR=$(dirname "$0")                    ; export BASEDIR             # Dir of running script
-SCRIPT="${BASEDIR}/sadm_setup.py"          ; export SCRIPT              # Main Setup SCRIPT Next
+SCRIPT="$(dirname "$0")/sadm_setup.py"     ; export SCRIPT              # Main Setup SCRIPT Next
 
 
 # Only Supported on Linux
@@ -53,11 +52,17 @@ if [ "$SADM_OSTYPE" != LINUX ]
 fi
 
 # Make sure lsb_release is installed
-if ! which lsb_release >/dev/null 2>&1                                    # command is found ?
+which lsb_release > /dev/null 2>&1
+if [ $? -ne 0 ] 
     then echo "Installing lsb_release command ..."
-         dnf install lsb_release > /dev/null 2>&1
+         yum -y install redhat-lsb-core > /dev/null 2>&1
          apt-get update >/dev/null 2>&1
-         apt-get -t install lsb_release >/dev/null 2>&1
+         apt-get -y install lsb-release >/dev/null 2>&1
+         which lsb_release > /dev/null 2>&1
+         if [ $? -ne 0 ]
+            then echo "Please install lsb-release package, then run this script again."
+                 exit 1
+         fi
 fi
 
 # Get O/S Name (in Uppercave) and O/S Major Number 
@@ -66,7 +71,28 @@ if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; f
 if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
 SADM_OSVERSION=`lsb_release -sr | awk -F. '{ print $1 }'| tr -d ' '`    # Use lsb_release to Get Ver
 
+#===================================================================================================
+#                           Install EPEL Repository for Redhat / CentOS
+#===================================================================================================
+add_epel_repo()
+{
 
+    # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 6 ] 
+        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled) ..."
+             rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-6.noarch.rpm >/dev/null 2>&1
+    fi
+
+    # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 7 ] 
+        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled) ..."
+             rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-7.noarch.rpm >/dev/null 2>&1
+    fi
+
+    # Disable the EPEL Repository (Will Activate when needed)
+    yum-config-manager --disable epel
+
+}
 
 #===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
@@ -78,13 +104,21 @@ main_process()
     # Check if python3 is installed 
     while true : 
         do
-        if ! which python3  >/dev/null 2>&1                                    # command is found ?
+        which python3 >/dev/null 2>&1
+        if [ $? -ne 0 ] 
             then echo "Python 3 is not installed ..."
-                 echo "Installing python3 ..." 
-                 if which apt-get 
-                    then apt-get update >/dev/null 2>&1
-                         apt-get -t install lsb_release >/dev/null 2>&1
-                    else yum install lsb_release > /dev/null 2>&1fi
+                 which apt-get >/dev/null 2>&1
+                 if [ $? -eq 0 ] 
+                    then echo "Installing python3 ..." 
+                         apt-get update >/dev/null 2>&1
+                         apt-get -y install python3 >/dev/null 2>&1
+                    else add_epel_repo
+                         echo "Installing python3 ..." 
+                         which dnf >/dev/null 2>&1
+                         if [ $? -eq 0 ] 
+                            then dnf --enablerepo=epel -y install python34 python34-setuptools python34-pip > /dev/null 2>&1
+                            else yum --enablerepo=epel -y install python34 python34-setuptools python34-pip > /dev/null 2>&1
+                         fi
                  fi  
             else echo "Setup detected that python3 is installed ... Great !"
                  echo "Let's continue the setup ..."
@@ -109,9 +143,20 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-
-    # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    main_process                                                      # Main Process
+    main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
 
+su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm'
+
+Install a package from the EPEL repository
+# yum --enablerepo=epel install zabbix
+
+
+[EPEL] How to install Python 3.4 on CentOS 6 & 7
+sudo yum install -y epel-release
+sudo yum install -y python34
+
+# Install pip3
+sudo yum install -y python34-setuptools  # install easy_install-3.4
+sudo easy_install-3.4 pip
