@@ -521,6 +521,13 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         req_work = req_client                                           # Move CLient Dict in WDict.
         printBold ("\n\nChecking SADMIN Client Package requirement")    # Show User what we do
     else:
+        cmd = "setenforce 0" 
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (ccode == 0):
+            writelog( "SeLinux Set to premissive for installation")
+        else:
+            writelog ("Problem changing SeLinux")
+            writelog ("%s - %s" % (cstdout,cstderr))       
         req_work = req_server                                           # Move Server Dict in WDict.
         printBold ("\n\nChecking SADMIN Server Package requirement")    # Show User what we do
 
@@ -639,6 +646,16 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     # time.sleep(2)
 
+    writelog ("Starting MariaDB Server")
+    cmd = "systemctl restart mariadb"
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
+    if (ccode != 0):                                                    # If problem deleting user
+        writelog ("Problem Starting MariabDB ... ")             # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    time.sleep(2)
+
     # Change MariaDB root password
     cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)             # Cmd to change root pwd
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
@@ -747,8 +764,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ('----------')
     writelog ("Setup SADMIN Web Site",'bold')
     update_host_file(sdomain)                                           # Update /etc/hosts file
-    open("%s/log/sadmin_error.log"  % (sroot),a).close                  # Touch Apache SADMIN log
-    open("%s/log/sadmin_access.log" % (sroot),a).close                  # Touch Apache SADMIN log
+    open("%s/log/sadmin_error.log"  % (sroot),'a').close                  # Touch Apache SADMIN log
+    open("%s/log/sadmin_access.log" % (sroot),'a').close                  # Touch Apache SADMIN log
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :

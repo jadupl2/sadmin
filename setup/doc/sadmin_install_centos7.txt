@@ -6,6 +6,11 @@
 Things to do 
 ----------------------------------------------------------------------------------------------------
 Script to create to install python3 (epel)
+root@tcentos7:~# getenforce
+Enforcing
+root@tcentos7:~# man setenforce
+root@tcentos7:~# setenforce 0
+root@tcentos7:~# getenforce
 
 1- rpm -Uvh http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 ## RHEL/CentOS 6 32-Bit ##
@@ -20,6 +25,25 @@ yum remove epel-release-7-11.noarch
 
 3- yum --enablerepo=epel install -y python34
 ----------------------------------------------------------------------------------------------------
+getenforce(8)                       SELinux Command Line documentation                       getenforce(8)
+
+NAME
+       getenforce - get the current mode of SELinux
+
+SYNOPSIS
+       getenforce
+
+DESCRIPTION
+       getenforce reports whether SELinux is enforcing, permissive, or disabled.
+
+AUTHOR
+       Dan Walsh, <dwalsh@redhat.com>
+
+SEE ALSO
+       selinux(8), setenforce(8), selinuxenabled(8)
+
+dwalsh@redhat.com                              7 April 2004                                  getenforce(8)
+
 ----------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 

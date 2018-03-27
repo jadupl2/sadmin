@@ -90,7 +90,7 @@ add_epel_repo()
     fi
 
     # Disable the EPEL Repository (Will Activate when needed)
-    yum-config-manager --disable epel
+    yum-config-manager --disable epel >/dev/null 2>&1
 
 }
 
