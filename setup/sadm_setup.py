@@ -126,7 +126,7 @@ req_server = {
                     'deb':'rrdtool',                        'drepo':'base'},
     'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                     'deb':'php php-mysql php-common php-cli ',       'drepo':'base'},
-    'mysql'      :{ 'rpm':'mariadb-server mariadb MySQL-python',    'rrepo':'base',
+    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',    'rrepo':'base',
                     'deb':'mariadb-server mariadb-client',  'drepo':'base'}
 }
 
@@ -234,6 +234,7 @@ def oscommand(command) :
 def update_host_file(wdomain) :
 
     writelog('')
+    writelog('----------')
     writelog ("Adding 'sadmin' to /etc/hosts file")
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
@@ -257,6 +258,7 @@ def update_host_file(wdomain) :
 def update_client_crontab_file(logfile) :
 
     writelog('')
+    writelog('--------------------')
     writelog ('Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)')
     ccron_file = '/etc/cron.d/sadm_client'                              # Client Crontab File
 
@@ -324,6 +326,7 @@ def update_client_crontab_file(logfile) :
 def update_server_crontab_file(logfile) :
 
     writelog('')
+    writelog('--------------------')
     writelog ('Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)')
     ccron_file = '/etc/cron.d/sadm_server'                              # Server Crontab File
 
@@ -413,6 +416,7 @@ def special_install(lpacktype) :
 def update_sudo_file(logfile) :
 
     writelog('')
+    writelog('--------------------')
     writelog ('Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
     sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
 
@@ -517,19 +521,23 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
+    writelog (" ")
+    writelog ("--------------------")
     if (stype == 'C'):
         req_work = req_client                                           # Move CLient Dict in WDict.
-        printBold ("\n\nChecking SADMIN Client Package requirement")    # Show User what we do
+        writelog ("Checking SADMIN Client Package requirement",'bold')  # Show User what we do
     else:
         cmd = "setenforce 0" 
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Set SELinux to Permissive
         if (ccode == 0):
-            writelog( "SeLinux Set to premissive for installation")
-        else:
+            writelog( "SeLinux Set to permissive mode for installation")
+        else:e
+
             writelog ("Problem changing SeLinux")
             writelog ("%s - %s" % (cstdout,cstderr))       
         req_work = req_server                                           # Move Server Dict in WDict.
-        printBold ("\n\nChecking SADMIN Server Package requirement")    # Show User what we do
+        writelog ("Checking SADMIN Server Package requirement",'bold')  # Show User what we do
+    writelog (" ")
 
     # If Debian Package, Refresh The Local Repository 
     if (packtype == "deb"):                                             # Is Debian Style Package
@@ -598,7 +606,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
 def setup_mysql(sroot,wcfg_server,wpass):
     
     writelog ('  ')
-    writelog ('----------')
+    writelog ('--------------------')
     writelog ("Setup SADMIN MySQL Database",'bold')
     
     # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
@@ -646,11 +654,23 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     # time.sleep(2)
 
-    writelog ("Starting MariaDB Server")
+    # Starting and Enabling MariabDB Service
+    writelog (" ")
+    writelog ("--------------------")
     cmd = "systemctl restart mariadb"
+    writelog ("Starting MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
-    if (ccode != 0):                                                    # If problem deleting user
-        writelog ("Problem Starting MariabDB ... ")             # Advise User
+    if (ccode != 0):                                                    # Problem Starting DB
+        writelog ("Problem Starting MariabDB server... ")               # Advise User
+        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    time.sleep(2)
+    cmd = "systemctl enable mariadb"                                    # Enable MariaDB on boot
+    writelog ("Enabling MariaDB Service - %s" % (cmd))
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
+    if (ccode != 0):                                                    # Problem Enabling Service
+        writelog ("Problem with enabling MariabDB Service.")            # Advise User
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
@@ -659,7 +679,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # Change MariaDB root password
     cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)             # Cmd to change root pwd
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (ccode != 0):                                                    # If problem deleting user
+    if (ccode != 0):                                                    # If problem Changing Passwd
         writelog ("Problem changing MariaDB password ... ")             # Advise User
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
@@ -678,8 +698,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ('')
     writelog ('--------------------')
     writelog ("Loading SADMIN Database")                                # Load Initial Database 
-    #cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
-    cmd = "mysql -u root < %s" % (init_sql)                  # SQL Cmd to Load DB
+    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem deleting user
         writelog ("Problem loading the database ...")                   # Advise User
@@ -698,8 +717,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
     sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
     sql += " flush privileges;"
-    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    cmd = "mysql -u root -e \"%s\"" % (sql)
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
@@ -713,8 +731,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
     sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
     sql += " flush privileges;"
-    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    cmd = "mysql -u root -e \"%s\"" % (sql)
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
@@ -725,33 +742,37 @@ def setup_mysql(sroot,wcfg_server,wpass):
     time.sleep(2)
 
     # Change root mysql password to the one user entered
-    sql = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';" % (dbroot_pwd)
-    sql += " flush privileges;"
+    #sql = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';" % (dbroot_pwd)
+    #sql += " flush privileges;"
     #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    cmd = "mysql -u root -e \"%s\"" % (sql)
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    if (ccode != 0):                                                    # If problem creating user
-        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    else:                                                               # If user created
-        writelog (" Done ")                                             # Advise User ok to proceed
-    time.sleep(2)
+    #cmd = "mysql -u root -e \"%s\"" % (sql)
+    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    #if (ccode != 0):                                                    # If problem creating user
+    #    writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
+    #    writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+    #    writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    #else:                                                               # If user created
+    #    writelog (" Done ")                                             # Advise User ok to proceed
+    #time.sleep(2)
 
     # Stop / Restart the MariaDB Process
-    writelog ("Stopping MariaDB Server")
-    cmd = "systemctl stop mariadb"
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    cmd = "service mariadb stop" 
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
-    if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
-    if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    time.sleep(2)
+    #writelog ("Stopping MariaDB Server")
+    #cmd = "systemctl stop mariadb"
+    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    #cmd = "service mariadb stop" 
+    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    #if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
+    #if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
+    #if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
+    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    #time.sleep(2)
     writelog ("Starting MariaDB Server")
     cmd = "systemctl restart mariadb"
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (ccode != 0):                                                    # If problem creating user
+        writelog ("Problem Restarting MariaDB Service - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
 
 
 #===================================================================================================
@@ -761,15 +782,26 @@ def setup_mysql(sroot,wcfg_server,wpass):
 def setup_webserver(sroot,spacktype,sdomain,semail):
 
     writelog ('  ')
-    writelog ('----------')
+    writelog ('--------------------')
     writelog ("Setup SADMIN Web Site",'bold')
-    update_host_file(sdomain)                                           # Update /etc/hosts file
     open("%s/log/sadmin_error.log"  % (sroot),'a').close                  # Touch Apache SADMIN log
     open("%s/log/sadmin_access.log" % (sroot),'a').close                  # Touch Apache SADMIN log
 
+    # Set the name of Web Server Service depending on Linux O/S
+    sservice = "httpd"
+    if (spacktype == "deb" ) : sservice = "apache2" 
+    
+
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
-        
+        # Start Web Server
+        writelog ("Starting Web Server")
+        cmd = "systemctl restart apache2"
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (ccode != 0):                                                    # If problem creating user
+            writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
         # Get the apache2 process owner
         cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
@@ -777,7 +809,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
             writelog ("Apache process user name is %s" % (apache_user)) # Show Apache Proc. User
-        
         # Get the group of apache2 process owner 
         cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
@@ -786,7 +817,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
             writelog ("Return code for getting apache2 group name is %d" % (ccode))                         
             writelog ("Apache user group name is %s" % (apache_group))  # Show Apache  Group
         writelog ("Owner and Group of apache2 process are %s.%s" % (apache_user,apache_group))
-
         # Updating the apache2 configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
@@ -802,8 +832,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
-
-
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
@@ -812,7 +840,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         else:
             writelog ("Problem disabling apache2 default configuration")
             writelog ("%s - %s" % (cstdout,cstderr))        
-
         # Enable SADMIN Configuration
         cmd = "a2ensite sadmin.conf"                                    # Enable Web Site In Apache
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command                       
@@ -826,6 +853,14 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setup Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
+        # Start Web Server
+        writelog ("Making sure Web Server is started")
+        cmd = "systemctl restart httpd"
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (ccode != 0):                                                    # If problem creating user
+            writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
         # Get the httpd process owner
         cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ writelog $1 }' | sort | uniq"
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
@@ -860,13 +895,14 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
                
     # Update the sadmin.cfg with Web Server User and Group
+    writelog('')
     writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
     writelog ("  - Record Web Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    writelog ("  - Setting Owner/Group on SADMIN WebSite files (%s/www)" % (sroot),'nonl') 
+    writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www)" % (sroot),'nonl') 
     cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (ccode == 0):
@@ -876,7 +912,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Setting Access permission on web site
-    writelog ("  - Setting access permission on SADMIN WebSite files (%s/www) ... " % (sroot),'nonl') 
+    writelog ("  - Setting permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
     cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
@@ -885,18 +921,26 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Problem changing Web Site permission")
         writelog ("%s - %s" % (cstdout,cstderr))        
         
-    # Restart the HTTP Web Server
-    if (spacktype == "deb" ) : 
-        cmd = "service apache2 restart" 
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (spacktype == "rpm" ) : 
-        cmd = "systemctl restart httpd" 
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+
+    # Restarting Web Server with new configuration
+    writelog ("Web Server Restarting ... ",'nonl')
+    cmd = "systemctl restart %s" % (sservice) 
+    ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
-        writelog( "Web Server restarted successfully")
+        writelog( " Done ")
     else:
-        writelog ("Problem restarting SADMIN Web Site")
-        writelog ("%s - %s" % (cstdout,cstderr))       
+        writelog ("Problem Starting the Web Server",'bold')
+        writelog ("%s - %s" % (cstdout,cstderr))        
+
+    # Enable Web Server Service so it restart upon reboot
+    writelog ("Enabling Web Server Service ... ",'nonl')
+    cmd = "systemctl enable %s" % (sservice) 
+    ccode,cstdout,cstderr = oscommand(cmd)                          
+    if (ccode == 0):
+        writelog( " Done ")
+    else:
+        writelog ("Problem enabling Web Server Service",'bold')
+        writelog ("%s - %s" % (cstdout,cstderr))        
  
 
 #===================================================================================================
@@ -1435,6 +1479,7 @@ def main():
 
     # SADMIN Server 
     if (stype == 'S') :                                                 # If install SADMIN Server
+        update_host_file(udomain)                                       # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
         setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
