@@ -1,0 +1,300 @@
+jacques@mycroftw:~/Documents/Dev/sadmin$ scutil --get ComputerName
+MYCROFT
+jacques@mycroftw:~/Documents/Dev/sadmin$ scutil --get HostName
+HostName: not set
+jacques@mycroftw:~/Documents/Dev/sadmin$ scutil --get LocalHostName
+MYCROFT
+jacques@mycroftw:~/Documents/Dev/sadmin$ 
+
+Perform the following tasks to change the workstation hostname using the scutil command.
+Open a terminal.
+Type the following command to change the primary hostname of your Mac:
+This is your fully qualified hostname, for example myMac.domain.com
+sudo scutil --set HostName <new host name>
+Type the following command to change the Bonjour hostname of your Mac:
+This is the name usable on the local network, for example myMac.local.
+sudo scutil --set LocalHostName <new host name>
+Optional: If you also want to change the computer name, type the following command:
+This is the user-friendly computer name you see in Finder, for example myMac.
+sudo scutil --set ComputerName <new name>
+Flush the DNS cache by typing:
+dscacheutil -flushcache
+Restart your Mac.
+
+jacques@mycroftw:~/Documents/Dev/sadmin$ sudo scutil --set HostName mycroftw
+Password:
+jacques@mycroftw:~/Documents/Dev/sadmin$ scutil --get HostName
+mycroftw
+jacques@mycroftw:~/Documents/Dev/sadmin$ 
+
+
+
+
+
+jacques@mycroftw:~/Documents/Dev/sadmin/bin$ sudo !!
+sudo sadm_housekeeping_client.sh
+Password:
+2017.12.28 21:55:41 ================================================================================
+2017.12.28 21:55:41 Starting sadm_housekeeping_client.sh V1.8 - SADM Lib. V2.10
+2017.12.28 21:55:41 Server Name: mycroftw.maison.ca - Type: DARWIN
+2017.12.28 21:55:41 O/S: MACOSX 10.13.2 - Code Name: High Sierra
+2017.12.28 21:55:41 ==================================================
+2017.12.28 21:55:41  
+2017.12.28 21:55:41 User jacques not present
+2017.12.28 21:55:41 The user will now be created
+/Users/jacques/Documents/Dev/sadmin/bin/sadm_housekeeping_client.sh: line 527: useradd: command not found
+2017.12.28 21:55:41 Error when creating user jacques
+2017.12.28 21:55:41 Process Aborted
+2017.12.28 21:55:41  
+2017.12.28 21:55:41 ==================================================
+2017.12.28 21:55:41 Script return code is 1
+2017.12.28 21:55:41 Script execution time is 00:00:00
+2017.12.28 21:55:41 Trim History /Users/jacques/Documents/Dev/sadmin/dat/rch/mycroftw_sadm_housekeeping_client.rch to 125 lines
+2017.12.28 21:55:41 User requested mail only if script fail - Will send mail
+2017.12.28 21:55:41 Trim log /Users/jacques/Documents/Dev/sadmin/log/mycroftw_sadm_housekeeping_client.log to 1000 lines
+2017.12.28 21:55:41 Thu 28 Dec 2017 21:55:41 EST - End of sadm_housekeeping_client.sh
+2017.12.28 21:55:41 ================================================================================
+2017.12.28 21:55:41  
+2017.12.28 21:55:41  
+2017.12.28 21:55:41  
+2017.12.28 21:55:41  
+2017.12.28 21:55:41 CLIENT DIRECTORIES HOUSEKEEPING STARTING
+2017.12.28 21:55:41  
+2017.12.28 21:55:41 ----------
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin to 0775
+2017.12.28 21:55:41 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:41 Error occured on 'chown' operation for 
+drwxrwxr-x  17 jacques  staff  544 27 Dec 16:23 /Users/jacques/Documents/Dev/sadmin
+2017.12.28 21:55:41 Total Error Count at 2
+2017.12.28 21:55:41 chmod g-s /Users/jacques/Documents/Dev/sadmin
+2017.12.28 21:55:41 Total Error Count at 2
+2017.12.28 21:55:41 ----------
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin/bin to 0775
+2017.12.28 21:55:41 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/bin
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin/bin owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:41 Error occured on 'chown' operation for 
+drwxrwxr-x  45 jacques  staff  1440 27 Dec 16:44 /Users/jacques/Documents/Dev/sadmin/bin
+2017.12.28 21:55:41 Total Error Count at 4
+2017.12.28 21:55:41 ----------
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin/lib to 0775
+2017.12.28 21:55:41 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/lib
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin/lib owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:41 Error occured on 'chown' operation for 
+drwxrwxr-x  18 jacques  staff  576 27 Dec 16:44 /Users/jacques/Documents/Dev/sadmin/lib
+2017.12.28 21:55:41 Total Error Count at 6
+2017.12.28 21:55:41 ----------
+2017.12.28 21:55:41 Change /Users/jacques/Documents/Dev/sadmin/tmp to 1777
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/tmp
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/tmp owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxrwt  8 jacques  staff  256 28 Dec 21:55 /Users/jacques/Documents/Dev/sadmin/tmp
+2017.12.28 21:55:42 Total Error Count at 8
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/log to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/log
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/log owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  13 jacques  staff  416 28 Dec 21:55 /Users/jacques/Documents/Dev/sadmin/log
+2017.12.28 21:55:42 Total Error Count at 10
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/cfg to 0755
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/cfg
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/cfg owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxr-xr-x  10 jacques  staff  320 27 Dec 16:17 /Users/jacques/Documents/Dev/sadmin/cfg
+2017.12.28 21:55:42 Total Error Count at 12
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/sys to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/sys
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/sys owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  6 jacques  staff  192 26 Dec 15:16 /Users/jacques/Documents/Dev/sadmin/sys
+2017.12.28 21:55:42 Total Error Count at 14
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  8 jacques  staff  256 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/dat
+2017.12.28 21:55:42 Total Error Count at 16
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/pkg to 775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/pkg
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/pkg owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  8 jacques  staff  256  1 Dec 19:20 /Users/jacques/Documents/Dev/sadmin/pkg
+2017.12.28 21:55:42 Total Error Count at 18
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/nmon to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat/nmon
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/nmon owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  2 jacques  staff  64 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/dat/nmon
+2017.12.28 21:55:42 Total Error Count at 20
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/dr to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat/dr
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/dr owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  3 jacques  staff  96 28 Dec 21:46 /Users/jacques/Documents/Dev/sadmin/dat/dr
+2017.12.28 21:55:42 Total Error Count at 22
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/sar to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat/sar
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/sar owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  2 jacques  staff  64 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/dat/sar
+2017.12.28 21:55:42 Total Error Count at 24
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/rch to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat/rch
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/rch owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  13 jacques  staff  416 28 Dec 21:55 /Users/jacques/Documents/Dev/sadmin/dat/rch
+2017.12.28 21:55:42 Total Error Count at 26
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/net to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/dat/net
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/dat/net owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  2 jacques  staff  64 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/dat/net
+2017.12.28 21:55:42 Total Error Count at 28
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/jac to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/jac
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/jac owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  4 jacques  staff  128 13 Nov 21:08 /Users/jacques/Documents/Dev/sadmin/jac
+2017.12.28 21:55:42 Total Error Count at 30
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/jac/bin to 0775
+2017.12.28 21:55:42 Change chmod gou-s /Users/jacques/Documents/Dev/sadmin/jac/bin
+2017.12.28 21:55:42 Change /Users/jacques/Documents/Dev/sadmin/jac/bin owner to jacques.staff
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 Error occured on 'chown' operation for 
+drwxrwxr-x  40 jacques  staff  1280 27 Dec 16:44 /Users/jacques/Documents/Dev/sadmin/jac/bin
+2017.12.28 21:55:42 Total Error Count at 32
+2017.12.28 21:55:42  
+2017.12.28 21:55:42  
+2017.12.28 21:55:42 CLIENT FILES HOUSEKEEPING STARTING
+2017.12.28 21:55:42  
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 chmod 0644 /Users/jacques/Documents/Dev/sadmin/cfg/sadmin.cfg
+-rw-r--r--  1 jacques  staff  12349 19 Dec 18:58 /Users/jacques/Documents/Dev/sadmin/cfg/sadmin.cfg
+2017.12.28 21:55:42 chmod 0644 /Users/jacques/Documents/Dev/sadmin/cfg/.sadmin.cfg
+-rw-r--r--  1 jacques  staff  12916 17 Dec 12:28 /Users/jacques/Documents/Dev/sadmin/cfg/.sadmin.cfg
+chown: jacques.staff: illegal user name
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 find /Users/jacques/Documents/Dev/sadmin/dat -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:42 OK
+2017.12.28 21:55:42 Total Error Count at 32
+2017.12.28 21:55:42 find /Users/jacques/Documents/Dev/sadmin/dat -type f -exec chmod 664 {} \;
+2017.12.28 21:55:42 OK
+2017.12.28 21:55:42 Total Error Count at 32
+2017.12.28 21:55:42 ----------
+2017.12.28 21:55:42 find /Users/jacques/Documents/Dev/sadmin/log -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:42 OK
+2017.12.28 21:55:42 Total Error Count at 32
+2017.12.28 21:55:42 find /Users/jacques/Documents/Dev/sadmin/log -type f -exec chmod 664 {} \;
+2017.12.28 21:55:42 OK
+2017.12.28 21:55:42 Total Error Count at 32
+2017.12.28 21:55:43 ----------
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/jac -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/jac -type f -exec chmod 664 {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 ----------
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/sys -type f -exec chmod -R 774 {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/sys -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 ----------
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/bin -type f -exec chmod -R 770 {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/bin -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 ----------
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/lib -type f -exec chmod -R 770 {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/lib -type f -exec chown jacques.staff {} \;
+2017.12.28 21:55:43 OK
+2017.12.28 21:55:43 Total Error Count at 32
+2017.12.28 21:55:43 ----------
+2017.12.28 21:55:43 find /Users/jacques/Documents/Dev/sadmin/pkg -exec chmod -R 755 {} \;
+2017.12.28 21:55:44 OK
+2017.12.28 21:55:44 Total Error Count at 32
+2017.12.28 21:55:44 find /Users/jacques/Documents/Dev/sadmin/pkg -exec chown jacques.staff {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/tmp -type f -mtime +7 -exec rm -f {} \;
+-rw-rw-r--  1 jacques  staff  0 13 Dec 20:05 /Users/jacques/Documents/Dev/sadmin/tmp/sadm_template_E.log
+-rw-rw-r--  1 jacques  staff  0 19 Dec 20:24 /Users/jacques/Documents/Dev/sadmin/tmp/sadm_lib_test_E.log
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/tmp  -type f -mtime +7 -exec rm -f {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 Delete pid files once a day - To prevent cause script not to run
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/tmp  -type f -name '*.pid' -exec rm -f {} \;
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 Keep rch files for 60 days
+2017.12.28 21:55:46 Find any *.rch file older than 60 days in /Users/jacques/Documents/Dev/sadmin/dat/rch and delete them
+-rw-rw-r--  1 jacques  staff  130 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/dat/rch/macbook2_sadm.rch
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/dat/rch -type f -mtime +60 -name '*.rch' -exec rm -f {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 Keep log files for 60 days
+2017.12.28 21:55:46 Find any *.log file older than 60 days in /Users/jacques/Documents/Dev/sadmin/log and delete them
+-rw-rw-r--  1 jacques  staff  1276 26 Oct 17:09 /Users/jacques/Documents/Dev/sadmin/log/macbook2_sadm.log
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/log -type f -mtime +60 -name '*.log' -exec rm -f {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 Keep nmon files for 60 days
+2017.12.28 21:55:46 List of nmon file that will be deleted
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/dat/nmon -mtime +60 -type f -name *.nmon -exec ls -l {} \;
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/dat/nmon -mtime +60 -type f -name '*.nmon' -exec rm {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46 ----------
+2017.12.28 21:55:46 Keep sar files for 60 days
+2017.12.28 21:55:46 List of sar file that will be deleted
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/dat/sar -mtime +60 -type f -name *.sar -exec ls -l {} \;
+2017.12.28 21:55:46 find /Users/jacques/Documents/Dev/sadmin/dat/sar -mtime +60 -type f -name '*.sar' -exec rm {} \;
+2017.12.28 21:55:46 OK
+2017.12.28 21:55:46 Total Error Count at 32
+2017.12.28 21:55:46  
+2017.12.28 21:55:46 ==================================================
+2017.12.28 21:55:46 Script return code is 1
+2017.12.28 21:55:46 Script execution time is 00:00:05
+2017.12.28 21:55:46 Trim History /Users/jacques/Documents/Dev/sadmin/dat/rch/mycroftw_sadm_housekeeping_client.rch to 125 lines
+2017.12.28 21:55:46 User requested mail only if script fail - Will send mail
+2017.12.28 21:55:46 Trim log /Users/jacques/Documents/Dev/sadmin/log/mycroftw_sadm_housekeeping_client.log to 1000 lines
+2017.12.28 21:55:46 Thu 28 Dec 2017 21:55:46 EST - End of sadm_housekeeping_client.sh
+2017.12.28 21:55:46 ================================================================================
+2017.12.28 21:55:46  
+2017.12.28 21:55:46  
