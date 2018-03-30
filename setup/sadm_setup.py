@@ -531,12 +531,13 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         ccode,cstdout,cstderr = oscommand(cmd)                          # Set SELinux to Permissive
         if (ccode == 0):
             writelog( "SeLinux Set to permissive mode for installation")
-        else:e
-
+        else:
             writelog ("Problem changing SeLinux")
             writelog ("%s - %s" % (cstdout,cstderr))       
         req_work = req_server                                           # Move Server Dict in WDict.
-        writelog ("Checking SADMIN Server Package requirement",'bold')  # Show User what we do
+        writelog (" ")
+        writelog ("--------------------")
+        writelog ("Checking SADMIN Server Package requirement")  # Show User what we do
     writelog (" ")
 
     # If Debian Package, Refresh The Local Repository 
@@ -632,7 +633,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # Check if the initial Database Load SQL is present (sadmin.sql)
     init_sql = "%s/setup/mysql/sadmin.sql" % (sroot)                    # Initial DB LOad SQL File
     if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
-        writelog("Initial Load SADMIN SQL (%s) file is missing" % (init_sql),'bold')
+        writelog("Initial Load SADMIN SQL Data (%s) file is missing" % (init_sql),'bold')
         writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
         return (1)
 
@@ -680,16 +681,16 @@ def setup_mysql(sroot,wcfg_server,wpass):
     cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)             # Cmd to change root pwd
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem Changing Passwd
-        writelog ("Problem changing MariaDB password ... ")             # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Problem changing MariaDB password (mysqladmin)... ") # Advise User
+        writelog ("Return code is %d - %s" % (ccode))                   # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(2)
     cmd = "mysqladmin -u root -h %s password '%s'" % (wcfg_server,dbroot_pwd) # Cmd to change root pwd
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem deleting user
-        writelog ("Problem changing MariaDB password ... ")             # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+        writelog ("Problem changing MariaDB password (mysqladmin)... ") # Advise User
+        writelog ("Return code is %d - %s" % (ccode))                   # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(2)
@@ -791,32 +792,35 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     sservice = "httpd"
     if (spacktype == "deb" ) : sservice = "apache2" 
     
+    # Start Web Server
+    writelog ("Making sure Web Server is started")
+    cmd = "systemctl restart %s" % (sservice)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+    if (ccode != 0):                                                    # If problem creating user
+        writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd)) # Show Return Code No
+        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+
+    # Get the httpd process owner
+    cmd = "ps -ef | grep -Ev 'root|grep' | grep '%s' | awk '{ writelog $1 }' | sort | uniq" % (sservice)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
+    writelog ("PS RESULT Standard out is %s" % (cstdout))                     # Print command stdout
+    writelog ("PS RESULT Standard error is %s" % (cstderr))                   # Print command stderr
+    apache_user = cstdout                                               # Get Apache Process Usr
+    if (DEBUG):                                                         # If Debug Activated
+        writelog ("Return code for getting httpd user name is %d" % (ccode))
+    writelog ("Apache process user name is %s" % (apache_user))         # Show Apache Proc. User
+
+    # Get the group of httpd process owner 
+    cmd = "id -gn %s" % (apache_user)                                   # Get Apache User Group
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
+    apache_group = cstdout                                              # Get Group from StdOut
+    if (DEBUG):                                                         # If Debug Activated
+        writelog ("Return code for getting httpd group name is %d" % (ccode))                 
+    writelog ("Apache user group name is %s" % (apache_group))          # Show Apache  Group
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
-        # Start Web Server
-        writelog ("Starting Web Server")
-        cmd = "systemctl restart apache2"
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (ccode != 0):                                                    # If problem creating user
-            writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-        # Get the apache2 process owner
-        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'apache2' | awk '{ print $1 }' | sort | uniq"
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
-        apache_user = cstdout                                           # Get Apache Process Usr
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code for getting apache2 user name is %d" % (ccode))                         
-            writelog ("Apache process user name is %s" % (apache_user)) # Show Apache Proc. User
-        # Get the group of apache2 process owner 
-        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
-        apache_group = cstdout                                          # Get Group from StdOut
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code for getting apache2 group name is %d" % (ccode))                         
-            writelog ("Apache user group name is %s" % (apache_group))  # Show Apache  Group
-        writelog ("Owner and Group of apache2 process are %s.%s" % (apache_user,apache_group))
         # Updating the apache2 configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/apache2/sites-available/sadmin.conf"         # Apache Path to cfg File
@@ -853,30 +857,6 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setup Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
-        # Start Web Server
-        writelog ("Making sure Web Server is started")
-        cmd = "systemctl restart httpd"
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (ccode != 0):                                                    # If problem creating user
-            writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-        # Get the httpd process owner
-        cmd = "ps -ef | grep -Ev 'root|grep' | grep 'httpd' | awk '{ writelog $1 }' | sort | uniq"
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
-        apache_user = cstdout                                           # Get Apache Process Usr
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code for getting httpd user name is %d" % (ccode))                         
-        writelog ("Apache process user name is %s" % (apache_user))     # Show Apache Proc. User
-
-        # Get the group of httpd process owner 
-        cmd = "id -gn %s" % (apache_user)                               # Get Apache User Group
-        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute O/S Command
-        apache_group = cstdout                                          # Get Group from StdOut
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code for getting httpd group name is %d" % (ccode))                         
-        writelog ("Apache user group name is %s" % (apache_group))      # Show Apache  Group
-
         # Updating the httpd configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
         apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
@@ -898,8 +878,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog('')
     writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
     writelog ("  - Record Web Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
-    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user)                # Update Value in sadmin.cfg
-    update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group)              # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user,False)          # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group,False)        # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
     writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www)" % (sroot),'nonl') 
@@ -1429,8 +1409,8 @@ def getpacktype(sroot):
 #===================================================================================================
 #
 def end_message(sroot,sdomain):
-    writelog ("\n\n------------------------------")
-    writelog ("End of SADMIN Setup, you can now use the SADMIN Tools\n")
+    writelog ("\n\n--------------------------------------------------")
+    writelog ("END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS\n",'bold')
     writelog ("You need to logout and log back in, before using SADM Tools")
     writelog ("or type the following command (The dot and the space are important)")
     writelog (". /etc/environment")
@@ -1442,8 +1422,7 @@ def end_message(sroot,sdomain):
     writelog ("They will present all functions available to your shell or Python script")
     writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
     writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
-    
-    writelog ("\n\n------------------------------")
+    writelog ("\n\n--------------------------------------------------")
 
 
 #===================================================================================================

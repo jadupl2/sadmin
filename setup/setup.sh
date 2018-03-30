@@ -34,7 +34,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -42,9 +42,12 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SCRIPT="$(dirname "$0")/sadm_setup.py"     ; export SCRIPT              # Main Setup SCRIPT Next
 
+# Display OS Name and Version
+tput clear 
+echo "SADMIN Setup Version $SADM_VER"
+
 
 # Only Supported on Linux
-tput clear 
 SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                     # OS(AIX/LINUX/DARWIN/SUNOS)           
 if [ "$SADM_OSTYPE" != LINUX ] 
     then echo "SADMIN Tools only supported on Linux (Not on $SADM_OSNAME)"
@@ -95,13 +98,11 @@ add_epel_repo()
 }
 
 #===================================================================================================
-#                             S c r i p t    M a i n     P r o c e s s
+#                      Check if pythin 3 is installed, if not install it 
 #===================================================================================================
-main_process()
+check_python()
 {
-    echo "Main Process as started ($SADM_OSNAME Ver.$SADM_OSVERSION) ..."
-
-    # Check if python3 is installed 
+   # Check if python3 is installed 
     while true : 
         do
         which python3 >/dev/null 2>&1
@@ -135,28 +136,31 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-
+#
+    echo "System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."
+    
+    # Script must be run by root
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
+        then echo "Script can only be run user 'root'"         # Advise User should be root
+             echo "Process aborted"                            # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
 
-    main_process                                                        # Main Process
+    # Support only Redhat/CentOS or Debian/Ubuntu
+    if [ "${OS_NAME}" == "REDHAT" ] || [ "${OS_NAME}" == "CENTOS" ]
+        then if [ "${SADM_OSVERSION}" -lt "7" ]
+                then echo "Version of ${OS_NAME} is too low - Support Version 7 and up"
+                     exit 1
+             fi
+    fi 
+    if [ "${OS_NAME}" == "DEBIAN" ] || [ "${OS_NAME}" == "UBUNTU" ]
+        then if [ "${SADM_OSVERSION}" -lt "7" ]
+                then echo "Version of ${OS_NAME} is too low - Support Version 7 and up"
+                     exit 1
+             fi
+    fi 
+
+    check_python                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
 
-su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm'
-
-Install a package from the EPEL repository
-# yum --enablerepo=epel install zabbix
-
-
-[EPEL] How to install Python 3.4 on CentOS 6 & 7
-sudo yum install -y epel-release
-sudo yum install -y python34
-
-# Install pip3
-sudo yum install -y python34-setuptools  # install easy_install-3.4
-sudo easy_install-3.4 pip
