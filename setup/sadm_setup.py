@@ -47,7 +47,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5a"                                            # Setup Version Number
+sver                = "1.5b"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -537,7 +537,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         req_work = req_server                                           # Move Server Dict in WDict.
         writelog (" ")
         writelog ("--------------------")
-        writelog ("Checking SADMIN Server Package requirement")  # Show User what we do
+        writelog ("Checking SADMIN Server Package requirement",'bold')  # Show User what we do
     writelog (" ")
 
     # If Debian Package, Refresh The Local Repository 
@@ -610,7 +610,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ('--------------------')
     writelog ("Setup SADMIN MySQL Database",'bold')
     
-    # Test access with MySQL 'root' user - If not working, set MySQL 'root' password
+    # Accept 'root' Database user password
     sdefault = ""                                                       # No Default Password 
     sprompt  = "Enter MySQL Database 'root' user password"              # Prompt for Answer
     dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P")   # Accept Mysql root pwd
@@ -656,8 +656,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # time.sleep(2)
 
     # Starting and Enabling MariabDB Service
-    writelog (" ")
-    writelog ("--------------------")
+    writelog ('  ')
+    writelog ('----------')
+    writelog ("Restart Mariadb Service & Setup Service",'bold')
     cmd = "systemctl restart mariadb"
     writelog ("Starting MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
@@ -696,9 +697,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
     time.sleep(2)
 
     # Load Initial Database
-    writelog ('')
-    writelog ('--------------------')
-    writelog ("Loading SADMIN Database")                                # Load Initial Database 
+    writelog ('  ')
+    writelog ('----------')
+    writelog ("Loading Initial Data in SADMIN Database ... ",'nonl')    # Load Initial Database 
     cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem deleting user
@@ -707,14 +708,11 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     else:                                                               # If user deleted
-        writelog ("Initial SADMIN Database is in place.")               # Advise User ok to proceed
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+        writelog (' Done ')                                             # Advise User ok to proceed
     time.sleep(2)
     
     # Create 'sadmin' user and Grant permission 
-    writelog ("Creating 'sadmin' user ... ")
+    writelog ("Creating 'sadmin' user ... ",'nonl')
     sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
     sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
     sql += " flush privileges;"
@@ -728,7 +726,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog (" Done ")                                             # Advise User ok to proceed
     
     # Create 'squery' user and Grant permission 
-    writelog ("Creating 'squery' user ... ")
+    writelog ("Creating 'squery' user ... ",'nonl')
     sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
     sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
     sql += " flush privileges;"
@@ -767,13 +765,15 @@ def setup_mysql(sroot,wcfg_server,wpass):
     #if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
     #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     #time.sleep(2)
-    writelog ("Starting MariaDB Server")
+    writelog ("Restarting MariaDB Server ...",'nonl')
     cmd = "systemctl restart mariadb"
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem creating user
-        writelog ("Problem Restarting MariaDB Service - Error %d \n%s" % (ccode,cmd))       # Show Return Code No
+        writelog ("Problem Restarting MariaDB Service - Error %d \n%s" % (ccode,cmd)) # Show Error#
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+    else:
+        writelog (' Done ')
 
 
 #===================================================================================================
@@ -783,8 +783,10 @@ def setup_mysql(sroot,wcfg_server,wpass):
 def setup_webserver(sroot,spacktype,sdomain,semail):
 
     writelog ('  ')
+    writelog ('  ')
     writelog ('--------------------')
     writelog ("Setup SADMIN Web Site",'bold')
+    writelog ('  ')
     open("%s/log/sadmin_error.log"  % (sroot),'a').close                  # Touch Apache SADMIN log
     open("%s/log/sadmin_access.log" % (sroot),'a').close                  # Touch Apache SADMIN log
 
@@ -802,14 +804,12 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
 
     # Get the httpd process owner
-    cmd = "ps -ef | grep -Ev 'root|grep' | grep '%s' | awk '{ writelog $1 }' | sort | uniq" % (sservice)
+    cmd = "ps -ef | grep -Ev 'root|grep' | grep '%s' | awk '{ print $1 }' | sort | uniq" % (sservice)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
-    writelog ("PS RESULT Standard out is %s" % (cstdout))                     # Print command stdout
-    writelog ("PS RESULT Standard error is %s" % (cstderr))                   # Print command stderr
     apache_user = cstdout                                               # Get Apache Process Usr
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd user name is %d" % (ccode))
-    writelog ("Apache process user name is %s" % (apache_user))         # Show Apache Proc. User
+    writelog ("Apache process user name  : %s" % (apache_user))         # Show Apache Proc. User
 
     # Get the group of httpd process owner 
     cmd = "id -gn %s" % (apache_user)                                   # Get Apache User Group
@@ -817,7 +817,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_group = cstdout                                              # Get Group from StdOut
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd group name is %d" % (ccode))                 
-    writelog ("Apache user group name is %s" % (apache_group))          # Show Apache  Group
+    writelog ("Apache process group name : %s" % (apache_group))        # Show Apache  Group
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -853,36 +853,35 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
             writelog ("Problem enabling SADMIN Web Site")
             writelog ("%s - %s" % (cstdout,cstderr))
         apache2_config = "/etc/apache2/sites-enabled/sadmin.conf"
-        writelog ("Configuration of SADMIN Web site is now in place (%s)" % (apache2_config))
 
     # Setup Web configuration for RedHat, CentOS, Fedora (rpm)
     if (spacktype == "rpm") :
         # Updating the httpd configuration file 
         sadm_file="%s/setup/apache2/sadmin.conf" % (sroot)              # Init. Sadmin Web Cfg
-        apache2_file="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
-        if not os.path.exists(apache2_file):                            # If Web cfg Not Found
+        apache2_config="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
+        if not os.path.exists(apache2_config):                            # If Web cfg Not Found
             try:
-                shutil.copyfile(sadm_file,apache2_file)                 # Copy Initial Web cfg
+                shutil.copyfile(sadm_file,apache2_config)                 # Copy Initial Web cfg
             except IOError as e:
                 writelog("Unable to copy httpd config file. %s" % e)    # Advise user before exiting
                 sys.exit(1)                                             # Exit to O/S With Error
             except:
                 writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
-        update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
-        update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}     
+        update_apache_config(sroot,apache2_config,"{WROOT}",sroot)        # Set WWW Root Document
+        update_apache_config(sroot,apache2_config,"{EMAIL}",semail)       # Set WWW Admin Email
+        update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}     
 
                
     # Update the sadmin.cfg with Web Server User and Group
     writelog('')
-    writelog ("Initial SADMIN Web site configuration file in place.")   # Advise User ok to proceed
+    writelog ("  - SADMIN Web site configuration now in place (%s)" % (apache2_config))
     writelog ("  - Record Web Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user,False)          # Update Value in sadmin.cfg
     update_sadmin_cfg(sroot,"SADM_WWW_GROUP",apache_group,False)        # Update Value in sadmin.cfg
 
     # Setting Files and Directories Permissions for Web sites 
-    writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www)" % (sroot),'nonl') 
+    writelog ("  - Setting Owner/Group on SADMIN WebSite(%s/www) ... " % (sroot),'nonl') 
     cmd = "chown -R %s.%s %s/www" % (apache_user,apache_group,sroot)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on Web Dir.
     if (ccode == 0):
@@ -892,7 +891,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Setting Access permission on web site
-    writelog ("  - Setting permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
+    writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
     cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
@@ -1144,7 +1143,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
  
     # Print Field name we will input (name used in sadmin.cfg file)
     writelog (" ")
-    writelog ("--------------------")
+    writelog ("----------")
     writelog ("[%s]" % (sname),'bold')                                  # Bold Attr. Name in sadmin
 
     # Display field documentation file  
