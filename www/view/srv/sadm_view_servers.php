@@ -121,7 +121,7 @@ function setup_table() {
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
 function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO ;
+    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER ;
 
     echo "\n<tr>";
     echo "\n<td class='dt-left'>" ;
@@ -290,7 +290,7 @@ function display_data($con,$row) {
         exit;                                                           # Exit - Should not occurs
     }
 
-    display_std_heading($BACK_URL,$TITLE,"","",$WVER) ;
+    display_std_heading($URL_HOME,$TITLE,"","",$WVER) ;
     setup_table();                                                      # Create Table & Heading
     echo "\n<tbody>\n";                                                 # Start of Table Body
 

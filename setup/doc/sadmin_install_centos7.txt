@@ -45,35 +45,16 @@ SEE ALSO
 dwalsh@redhat.com                              7 April 2004                                  getenforce(8)
 
 ----------------------------------------------------------------------------------------------------
+SADMIN Setup Version 1.2
+Installing lsb_release command ...
+System is running CENTOS Ver.7 ...
+Python 3 is not installed ...
+Adding CentOS/Redhat V7 EPEL repository (Disabled) ...
+Installing python3 ...
+Setup detected that python3 is installed ... Great !
+Let's continue the setup ...
+
 ----------------------------------------------------------------------------------------------------
-
-su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm'
-
-Install a package from the EPEL repository
-# yum --enablerepo=epel install zabbix
-
-
-[EPEL] How to install Python 3.4 on CentOS 6 & 7
-sudo yum install -y epel-release
-sudo yum install -y python34
-
-# Install pip3
-sudo yum install -y python34-setuptools  # install easy_install-3.4
-sudo easy_install-3.4 pip
-
-# I guess you would like to install virtualenv or virtualenvwrapper
-sudo pip3 install virtualenv
-sudo pip3 install virtualenvwrapper
-
-If you want to use pyvenv, you can do the following to install pip3 in your virtualenv:
-
-pyvenv --without-pip my_env
-curl https://bootstrap.pypa.io/get-pip.py | my_env/bin/python
-But if you want to have it out-of-the-box, you can add this bash function (alias) in your .bashrc:
-    
-$@; for env in $@; do curl https://bootstrap.pypa.io/get-pip.py | "$env/bin/python"; done; }
-
-
 
 ----------------------------------------------------------------------------------------------------
 
@@ -89,6 +70,9 @@ Resolving deltas: 100% (4359/4359), done.
 root@tcentos7:/opt# 
 
 ----------------------------------------------------------------------------------------------------
+
+
+
 SADMIN Setup V1.5a
 ------------------
 Enter directory path where your install SADMIN : /opt/sadmin
@@ -225,45 +209,54 @@ Every day SADMIN will check the IP utilisation on your network.
 
 Enter the Network Netmask [1-30] [24] : 
 [SADM_NETWORK1] set to '192.168.1.0/24' in /opt/sadmin/cfg/sadmin.cfg
-
-
+ 
+--------------------
 Checking SADMIN Client Package requirement
-Checking for net-tools ... Ok
-Checking for ethtool ... Ok
-Checking for mailx ... Ok
-Checking for sudo ... Ok
+ 
+Checking for util-linux ... Ok
 Checking for dmidecode ... Ok
-Checking for nmon ... Installing nmon ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
-Checking for util-linux ... Ok
-Checking for perl-DateTime ... Installing perl-DateTime ... Done
-Checking for parted ... Ok
-Checking for facter ... Installing facter ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
-Checking for openssh-clients ... Ok
-Checking for lshw ... Installing lshw ... Done
 Checking for bc ... Ok
-Checking for python3-pip ... Installing python3-pip ... Error Code is 1 - See log /opt/sadmin/setup/log/sadm_setup.log
-Checking for redhat-lsb-core ... Ok
-Checking for util-linux ... Ok
+Checking for openssh-clients ... Ok
+Checking for perl-DateTime ... Installing perl-DateTime ... Done
 Checking for perl ... Ok
-Installing python3 PyMySQL module ... Problem Installing PyMysql Python module
- - /bin/sh: pip3: command not found
+Checking for lshw ... Installing lshw ... Done
+Checking for sudo ... Ok
+Checking for mailx ... Ok
+Checking for util-linux ... Ok
+Checking for parted ... Ok
+Checking for nmon ... Installing nmon ...  from EPEL ... Done
+Checking for redhat-lsb-core ... Ok
+Checking for ethtool ... Ok
+Checking for facter ... Installing facter ...  from EPEL ... Done
+Checking for net-tools ... Ok
+Installing python3 PyMySQL module ...  Done 
 
+--------------------
 Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
 Permission on sudo file changed successfully
 Ownership of sudo file changed successfully
 
+--------------------
 Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
 Client Crontab Permission changed successfully
 Ownership of client crontab changed successfully
 
-
-Checking SADMIN Server Package requirement
-Checking for httpd httpd-tools ... Installing httpd httpd-tools ... Done
-Checking for rrdtool ... Installing rrdtool ... Done
-Checking for php php-common php-cli php-mysqlnd php-mbstring ... Installing php php-common php-cli php-mysqlnd php-mbstring ... Done
-Checking for mariadb-server mariadb MySQL-python ... Installing mariadb-server mariadb MySQL-python ... Done
-  
 ----------
+Adding 'sadmin' to /etc/hosts file
+ 
+--------------------
+Problem changing SeLinux
+ - setenforce: SELinux is disabled
+ 
+--------------------
+Checking SADMIN Server Package requirement
+ 
+Checking for php php-common php-cli php-mysqlnd php-mbstring ... Installing php php-common php-cli php-mysqlnd php-mbstring ... Done
+Checking for rrdtool ... Installing rrdtool ... Done
+Checking for mariadb-server MySQL-python ... Installing mariadb-server MySQL-python ... Done
+Checking for httpd httpd-tools ... Ok
+  
+--------------------
 Setup SADMIN MySQL Database
  
 --------------------
@@ -287,54 +280,45 @@ Give this password to people you want to consult server information,
 but don't want them to modify any information in the Database.
 Enter 'squery' database user password : 
  
-Stopping MariaDB Server
-Starting MariaDB Server in safe mode
+--------------------
+Starting MariaDB Service - systemctl restart mariadb
+Enabling MariaDB Service - systemctl enable mariadb
 
 --------------------
 Loading SADMIN Database
-Problem loading the database ...
-Return code is 1 - mysql -u root < /opt/sadmin/setup/mysql/sadmin.sql
+Initial SADMIN Database is in place.
+Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin.sql
 Standard out is 
-Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+Standard error is 
 Creating 'sadmin' user ... 
-Error code returned is 1 
-mysql -u root -e "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY 'Nimdas17'; grant all privileges on sadmin.* to 'sadmin'@'localhost'; flush privileges;"
-Standard out is 
-Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+ Done 
 Creating 'squery' user ... 
-Error code returned is 1 
-mysql -u root -e "CREATE USER 'squery'@'localhost' IDENTIFIED BY 'Squery18'; grant select, show view on sadmin.* to 'squery'@'localhost'; flush privileges;"
-Standard out is 
-Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
-Error code returned is 1 
-mysql -u root -e "grant all privileges on *.* to 'root'@'localhost' identified by 'jacques'; flush privileges;"
-Standard out is 
-Standard error is ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
-Stopping MariaDB Server
+ Done 
 Starting MariaDB Server
   
-----------
+--------------------
 Setup SADMIN Web Site
-
-Adding 'sadmin' to /etc/hosts file
+Making sure Web Server is started
+PS RESULT Standard out is 
+PS RESULT Standard error is 
 Apache process user name is 
 Apache user group name is root
+
 Initial SADMIN Web site configuration file in place.
   - Record Web Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
-[SADM_WWW_USER] set to '' in /opt/sadmin/cfg/sadmin.cfg
-[SADM_WWW_GROUP] set to 'root' in /opt/sadmin/cfg/sadmin.cfg
-  - Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www) Done 
-  - Setting access permission on SADMIN WebSite files (/opt/sadmin/www) ...  Done 
-Problem restarting SADMIN Web Site
- - Job for httpd.service failed because the control process exited with error code. See "systemctl status httpd.service" and "journalctl -xe" for details.
+  - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) Done 
+  - Setting permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
+Web Server Restarting ...  Done 
+Enabling Web Server Service ...  Done 
 
+--------------------
 Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
 Server Crontab Permission changed successfully
 Ownership of Server crontab changed successfully
 
 
-------------------------------
-End of SADMIN Setup, you can now use the SADMIN Tools
+--------------------------------------------------
+END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS
 
 You need to logout and log back in, before using SADM Tools
 or type the following command (The dot and the space are important)
@@ -353,8 +337,167 @@ USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
 
 
-------------------------------
+--------------------------------------------------
 root@tcentos7:/opt/sadmin/setup# 
+
+root@tcentos7:~# mysql -uroot -pjacques
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 7
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> select User, Host, Password  from mysql.user;
++--------+--------------------+-------------------------------------------+
+| User   | Host               | Password                                  |
++--------+--------------------+-------------------------------------------+
+| root   | localhost          | *738B7C27A3280ED8B36A8EF923A3ADBCE49BB321 |
+| root   | tcentos7.maison.ca | *738B7C27A3280ED8B36A8EF923A3ADBCE49BB321 |
+| root   | 127.0.0.1          |                                           |
+| root   | ::1                |                                           |
+|        | localhost          |                                           |
+|        | tcentos7.maison.ca |                                           |
+| sadmin | localhost          | *13713D30E5A0C731C2533E28F50DA82CE206C049 |
+| squery | localhost          | *BCA0C6EB378D6542C25ACA6A90DD8483C359AB79 |
++--------+--------------------+-------------------------------------------+
+8 rows in set (0.00 sec)
+
+MariaDB [(none)]> 
+MariaDB [(none)]> show grants;
++----------------------------------------------------------------------------------------------------------------------------------------+
+| Grants for root@localhost                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------------------------+
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*738B7C27A3280ED8B36A8EF923A3ADBCE49BB321' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION                                                                           |
++----------------------------------------------------------------------------------------------------------------------------------------+
+2 rows in set (0.00 sec)
+
+MariaDB [(none)]> select * from information_schema.user_privileges;
++-----------------------------+---------------+-------------------------+--------------+
+| GRANTEE                     | TABLE_CATALOG | PRIVILEGE_TYPE          | IS_GRANTABLE |
++-----------------------------+---------------+-------------------------+--------------+
+| 'root'@'localhost'          | def           | SELECT                  | YES          |
+| 'root'@'localhost'          | def           | INSERT                  | YES          |
+| 'root'@'localhost'          | def           | UPDATE                  | YES          |
+| 'root'@'localhost'          | def           | DELETE                  | YES          |
+| 'root'@'localhost'          | def           | CREATE                  | YES          |
+| 'root'@'localhost'          | def           | DROP                    | YES          |
+| 'root'@'localhost'          | def           | RELOAD                  | YES          |
+| 'root'@'localhost'          | def           | SHUTDOWN                | YES          |
+| 'root'@'localhost'          | def           | PROCESS                 | YES          |
+| 'root'@'localhost'          | def           | FILE                    | YES          |
+| 'root'@'localhost'          | def           | REFERENCES              | YES          |
+| 'root'@'localhost'          | def           | INDEX                   | YES          |
+| 'root'@'localhost'          | def           | ALTER                   | YES          |
+| 'root'@'localhost'          | def           | SHOW DATABASES          | YES          |
+| 'root'@'localhost'          | def           | SUPER                   | YES          |
+| 'root'@'localhost'          | def           | CREATE TEMPORARY TABLES | YES          |
+| 'root'@'localhost'          | def           | LOCK TABLES             | YES          |
+| 'root'@'localhost'          | def           | EXECUTE                 | YES          |
+| 'root'@'localhost'          | def           | REPLICATION SLAVE       | YES          |
+| 'root'@'localhost'          | def           | REPLICATION CLIENT      | YES          |
+| 'root'@'localhost'          | def           | CREATE VIEW             | YES          |
+| 'root'@'localhost'          | def           | SHOW VIEW               | YES          |
+| 'root'@'localhost'          | def           | CREATE ROUTINE          | YES          |
+| 'root'@'localhost'          | def           | ALTER ROUTINE           | YES          |
+| 'root'@'localhost'          | def           | CREATE USER             | YES          |
+| 'root'@'localhost'          | def           | EVENT                   | YES          |
+| 'root'@'localhost'          | def           | TRIGGER                 | YES          |
+| 'root'@'localhost'          | def           | CREATE TABLESPACE       | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | SELECT                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | INSERT                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | UPDATE                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | DELETE                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | DROP                    | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | RELOAD                  | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | SHUTDOWN                | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | PROCESS                 | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | FILE                    | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | REFERENCES              | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | INDEX                   | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | ALTER                   | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | SHOW DATABASES          | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | SUPER                   | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE TEMPORARY TABLES | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | LOCK TABLES             | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | EXECUTE                 | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | REPLICATION SLAVE       | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | REPLICATION CLIENT      | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE VIEW             | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | SHOW VIEW               | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE ROUTINE          | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | ALTER ROUTINE           | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE USER             | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | EVENT                   | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | TRIGGER                 | YES          |
+| 'root'@'tcentos7.maison.ca' | def           | CREATE TABLESPACE       | YES          |
+| 'root'@'127.0.0.1'          | def           | SELECT                  | YES          |
+| 'root'@'127.0.0.1'          | def           | INSERT                  | YES          |
+| 'root'@'127.0.0.1'          | def           | UPDATE                  | YES          |
+| 'root'@'127.0.0.1'          | def           | DELETE                  | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE                  | YES          |
+| 'root'@'127.0.0.1'          | def           | DROP                    | YES          |
+| 'root'@'127.0.0.1'          | def           | RELOAD                  | YES          |
+| 'root'@'127.0.0.1'          | def           | SHUTDOWN                | YES          |
+| 'root'@'127.0.0.1'          | def           | PROCESS                 | YES          |
+| 'root'@'127.0.0.1'          | def           | FILE                    | YES          |
+| 'root'@'127.0.0.1'          | def           | REFERENCES              | YES          |
+| 'root'@'127.0.0.1'          | def           | INDEX                   | YES          |
+| 'root'@'127.0.0.1'          | def           | ALTER                   | YES          |
+| 'root'@'127.0.0.1'          | def           | SHOW DATABASES          | YES          |
+| 'root'@'127.0.0.1'          | def           | SUPER                   | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE TEMPORARY TABLES | YES          |
+| 'root'@'127.0.0.1'          | def           | LOCK TABLES             | YES          |
+| 'root'@'127.0.0.1'          | def           | EXECUTE                 | YES          |
+| 'root'@'127.0.0.1'          | def           | REPLICATION SLAVE       | YES          |
+| 'root'@'127.0.0.1'          | def           | REPLICATION CLIENT      | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE VIEW             | YES          |
+| 'root'@'127.0.0.1'          | def           | SHOW VIEW               | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE ROUTINE          | YES          |
+| 'root'@'127.0.0.1'          | def           | ALTER ROUTINE           | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE USER             | YES          |
+| 'root'@'127.0.0.1'          | def           | EVENT                   | YES          |
+| 'root'@'127.0.0.1'          | def           | TRIGGER                 | YES          |
+| 'root'@'127.0.0.1'          | def           | CREATE TABLESPACE       | YES          |
+| 'root'@'::1'                | def           | SELECT                  | YES          |
+| 'root'@'::1'                | def           | INSERT                  | YES          |
+| 'root'@'::1'                | def           | UPDATE                  | YES          |
+| 'root'@'::1'                | def           | DELETE                  | YES          |
+| 'root'@'::1'                | def           | CREATE                  | YES          |
+| 'root'@'::1'                | def           | DROP                    | YES          |
+| 'root'@'::1'                | def           | RELOAD                  | YES          |
+| 'root'@'::1'                | def           | SHUTDOWN                | YES          |
+| 'root'@'::1'                | def           | PROCESS                 | YES          |
+| 'root'@'::1'                | def           | FILE                    | YES          |
+| 'root'@'::1'                | def           | REFERENCES              | YES          |
+| 'root'@'::1'                | def           | INDEX                   | YES          |
+| 'root'@'::1'                | def           | ALTER                   | YES          |
+| 'root'@'::1'                | def           | SHOW DATABASES          | YES          |
+| 'root'@'::1'                | def           | SUPER                   | YES          |
+| 'root'@'::1'                | def           | CREATE TEMPORARY TABLES | YES          |
+| 'root'@'::1'                | def           | LOCK TABLES             | YES          |
+| 'root'@'::1'                | def           | EXECUTE                 | YES          |
+| 'root'@'::1'                | def           | REPLICATION SLAVE       | YES          |
+| 'root'@'::1'                | def           | REPLICATION CLIENT      | YES          |
+| 'root'@'::1'                | def           | CREATE VIEW             | YES          |
+| 'root'@'::1'                | def           | SHOW VIEW               | YES          |
+| 'root'@'::1'                | def           | CREATE ROUTINE          | YES          |
+| 'root'@'::1'                | def           | ALTER ROUTINE           | YES          |
+| 'root'@'::1'                | def           | CREATE USER             | YES          |
+| 'root'@'::1'                | def           | EVENT                   | YES          |
+| 'root'@'::1'                | def           | TRIGGER                 | YES          |
+| 'root'@'::1'                | def           | CREATE TABLESPACE       | YES          |
+| 'sadmin'@'localhost'        | def           | USAGE                   | NO           |
+| 'squery'@'localhost'        | def           | USAGE                   | NO           |
+| ''@'localhost'              | def           | USAGE                   | NO           |
+| ''@'tcentos7.maison.ca'     | def           | USAGE                   | NO           |
++-----------------------------+---------------+-------------------------+--------------+
+116 rows in set (0.00 sec)
+
+MariaDB [(none)]> 
 
 
 ----------------------------------------------------------------------------------------------------
