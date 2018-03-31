@@ -1,7 +1,7 @@
 
 ----------------------------------------------------------------------------------------------------
 
-24 Mars 2018
+30 Mars 2018
 ----------------------------------------------------------------------------------------------------
 Things to do 
 ----------------------------------------------------------------------------------------------------
@@ -54,26 +54,25 @@ Installing python3 ...
 Setup detected that python3 is installed ... Great !
 Let's continue the setup ...
 
-----------------------------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------------------------
-
-root@tcentos7:~# cd /opt
-root@tcentos7:/opt# git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git
-Cloning into 'sadmin'...
-Password for 'https://jadupl2@bitbucket.org': 
-remote: Counting objects: 6971, done.
-remote: Compressing objects: 100% (3137/3137), done.
-remote: Total 6971 (delta 4359), reused 5965 (delta 3607)
-Receiving objects: 100% (6971/6971), 38.93 MiB | 8.02 MiB/s, done.
-Resolving deltas: 100% (4359/4359), done.
-root@tcentos7:/opt# 
-
-----------------------------------------------------------------------------------------------------
 
 
 
-SADMIN Setup V1.5a
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SADMIN Setup V1.5b
 ------------------
 Enter directory path where your install SADMIN : /opt/sadmin
 SADMIN Environment variable is now set to /opt/sadmin
@@ -83,27 +82,27 @@ SADMIN Environment variable is now set to /opt/sadmin
 Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) is now in place
  
  
---------------------
+----------
 [SADM_HOST_TYPE]
 Specify if this host is to become a SADMIN [C]lient or [S]erver.
 Host will be a SADMIN [S]erver or a [C]lient [C] : s
 [SADM_HOST_TYPE] set to 'S' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_CIE_NAME]
 This name that will appear in the heading of the web interface
 and on some report and email that SADMIN produce.
 Enter your Company Name : The Batcave
 [SADM_CIE_NAME] set to 'The Batcave' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAIL_ADDR]
 This field specify the email address of the system administrator.
 It is used by SADMIN Tools to send various email.
 Enter System Administrator Email : batman@batcave.com
 [SADM_MAIL_ADDR] set to 'batman@batcave.com' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAIL_TYPE]
 Default option for sending email after a script is finish.
 Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
@@ -114,13 +113,13 @@ Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
 Enter default email type [1] : 
 [SADM_MAIL_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_DOMAIN]
 Enter the default Domain Name to use when you will be adding a new server.
 Default domain name : maison.ca
 [SADM_DOMAIN] set to 'maison.ca' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_SERVER]
 Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
 This name can't be an alias in the DNS, it must be the real name of the server.
@@ -129,7 +128,7 @@ Enter SADMIN (FQDN) server name : tcentos7.maison.ca
 Validating server name ...
 [SADM_SERVER] set to 'tcentos7.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAX_LOGLINE]
 Every time a script (python or bash script) that use SADMIN Tools is run,
 it produce a log, in the dedicated directory ${SADMIN}/log.
@@ -142,7 +141,7 @@ it produce a log, in the dedicated directory ${SADMIN}/log.
 Maximum number of lines in LOG file [1000] : 
 [SADM_MAX_LOGLINE] set to '1000' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAX_RCHLINE]
 When a (python or shell) script using the SADMIN tools start and ends,
 it record the date/time and the ending status of your script in what we call
@@ -157,7 +156,7 @@ This will keep an history of 50 days and is the default value.
 Maximum number of lines in RCH file [100] : 
 [SADM_MAX_RCHLINE] set to '100' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_GROUP]
 This is the primary user group that have access to all SADMIN directories.
     - All files in the $SADMIN directories are own by this group.
@@ -169,7 +168,7 @@ Enter SADMIN User Group [sadmin] :
 Creating group sadmin
 [SADM_GROUP] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_USER]
 Main SADMIN user that have access to all SADMIN directories and files.
     - This user will be assign to the SADMIN user group you just specified.
@@ -181,13 +180,13 @@ Creating user sadmin
  
 Change /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
  
---------------------
+----------
 [SADM_SSH_PORT]
 TCP/IP Port used for SSH.
 SSH port number to connect to client [22] : 
 [SADM_SSH_PORT] set to '22' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_NETWORK1]
 Every day SADMIN will check the IP utilisation on your network.
     - The result will be visible on SADMIN network web page.
@@ -198,7 +197,7 @@ Every day SADMIN will check the IP utilisation on your network.
 
 Enter the network IP [192.168.1.0] : 
  
---------------------
+----------
 [SADM_NETMASK1]
 Every day SADMIN will check the IP utilisation on your network.
     - The result will be visible on SADMIN network web page.
@@ -213,21 +212,21 @@ Enter the Network Netmask [1-30] [24] :
 --------------------
 Checking SADMIN Client Package requirement
  
-Checking for util-linux ... Ok
-Checking for dmidecode ... Ok
-Checking for bc ... Ok
-Checking for openssh-clients ... Ok
-Checking for perl-DateTime ... Installing perl-DateTime ... Done
-Checking for perl ... Ok
-Checking for lshw ... Installing lshw ... Done
-Checking for sudo ... Ok
-Checking for mailx ... Ok
-Checking for util-linux ... Ok
 Checking for parted ... Ok
-Checking for nmon ... Installing nmon ...  from EPEL ... Done
-Checking for redhat-lsb-core ... Ok
+Checking for util-linux ... Ok
+Checking for perl-DateTime ... Installing perl-DateTime ... Done
+Checking for bc ... Ok
+Checking for sudo ... Ok
+Checking for lshw ... Installing lshw ... Done
 Checking for ethtool ... Ok
 Checking for facter ... Installing facter ...  from EPEL ... Done
+Checking for perl ... Ok
+Checking for mailx ... Ok
+Checking for dmidecode ... Ok
+Checking for nmon ... Installing nmon ...  from EPEL ... Done
+Checking for util-linux ... Ok
+Checking for redhat-lsb-core ... Ok
+Checking for openssh-clients ... Ok
 Checking for net-tools ... Ok
 Installing python3 PyMySQL module ...  Done 
 
@@ -251,63 +250,58 @@ Problem changing SeLinux
 --------------------
 Checking SADMIN Server Package requirement
  
-Checking for php php-common php-cli php-mysqlnd php-mbstring ... Installing php php-common php-cli php-mysqlnd php-mbstring ... Done
 Checking for rrdtool ... Installing rrdtool ... Done
+Checking for httpd httpd-tools ... Installing httpd httpd-tools ... Done
 Checking for mariadb-server MySQL-python ... Installing mariadb-server MySQL-python ... Done
-Checking for httpd httpd-tools ... Ok
+Checking for php php-common php-cli php-mysqlnd php-mbstring ... Installing php php-common php-cli php-mysqlnd php-mbstring ... Done
   
 --------------------
 Setup SADMIN MySQL Database
  
---------------------
+----------
 [SADM_ROOT]
 This is MySQL Database 'root' user password.
 If the password isn't currently, it will be set to the one you will enter.
 If the password is currently set, we will test Database connection using it.
 Enter MySQL Database 'root' user password : 
  
---------------------
+----------
 [SADM_RW_DBPWD]
 Password read/write user "sadmin" on the SADMIN database.
 You can give this password to people who have permission to update
 server information in the database.
 Enter Read/Write 'sadmin' database user password : 
  
---------------------
+----------
 [SADM_RO_DBPWD]
 Password of the read only user "squery" on the 'sadmin' database
 Give this password to people you want to consult server information,
 but don't want them to modify any information in the Database.
 Enter 'squery' database user password : 
- 
---------------------
+  
+----------
+Restart Mariadb Service & Setup Service
 Starting MariaDB Service - systemctl restart mariadb
 Enabling MariaDB Service - systemctl enable mariadb
-
---------------------
-Loading SADMIN Database
-Initial SADMIN Database is in place.
-Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin.sql
-Standard out is 
-Standard error is 
-Creating 'sadmin' user ... 
- Done 
-Creating 'squery' user ... 
- Done 
-Starting MariaDB Server
+  
+----------
+Loading Initial Data in SADMIN Database ...  Done 
+Creating 'sadmin' user ...  Done 
+Creating 'squery' user ...  Done 
+Restarting MariaDB Server ... Done 
+  
   
 --------------------
 Setup SADMIN Web Site
+  
 Making sure Web Server is started
-PS RESULT Standard out is 
-PS RESULT Standard error is 
-Apache process user name is 
-Apache user group name is root
+Apache process user name  : apache
+Apache process group name : apache
 
-Initial SADMIN Web site configuration file in place.
+  - SADMIN Web site configuration now in place (/etc/httpd/conf.d/sadmin.conf)
   - Record Web Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
-  - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) Done 
-  - Setting permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
+  - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) ...  Done 
+  - Setting Permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
 Web Server Restarting ...  Done 
 Enabling Web Server Service ...  Done 
 
@@ -335,6 +329,10 @@ They will present all functions available to your shell or Python script
 
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
 The web Interface is available at http://sadmin.maison.ca
+
+
+--------------------------------------------------
+root@tcentos7:/opt/sadmin/setup# 
 
 
 --------------------------------------------------
