@@ -49,6 +49,8 @@ www/cfg/.crontab.txt
 
 # Specific files to exclude 
 sysmon.lock
+.bash_history
+.mysql_history
 sys/*.log
 cfg/.dbpass
 cfg/*.txt
@@ -68,3 +70,12 @@ __pycache__/
 
 # Linux Trash Can
 .Trash-*/
+.ICEauthority
+.bash_history
+.viminfo
+.config/gnome-initial-setup-done
+.config/user-dirs.dirs
+.config/dconf/user
+.config/nautilus/desktop-metadata
+.config/yelp/yelp.cfg
+.esd_auth

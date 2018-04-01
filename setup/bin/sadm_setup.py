@@ -671,6 +671,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(1)
+    # Make sure MariaDB restart upon reboot
     cmd = "systemctl enable mariadb"                                    # Enable MariaDB on boot
     writelog ("Enabling MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
@@ -681,38 +682,36 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(1)
 
-    # Change MariaDB root password
-    cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)             # Cmd to change root pwd
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (ccode != 0):                                                    # If problem Changing Passwd
-        writelog ("Problem changing MariaDB password (mysqladmin)... ") # Advise User
-        writelog ("Return code is %d" % (ccode))                        # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    time.sleep(1)
-    cmd = "mysqladmin -u root -h %s password '%s'" % (wcfg_server,dbroot_pwd) # Cmd to change root pwd
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (ccode != 0):                                                    # If problem deleting user
-        writelog ("Problem changing MariaDB password (mysqladmin)... ") # Advise User
-        writelog ("Return code is %d" % (ccode))                        # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    time.sleep(1)
+    # Test Access to MySQL with the password given by user
+    cmd = "mysql -uroot -p%s -e 'show databases;'" % (dbroot_pwd)       # Cmd to show databases
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command
+    if (ccode != 0):                                                    # If can't connect 
+        cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)         # Try Changing Password
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Load DB
+        if (ccode != 0):                                                # If problem Changing Passwd
+            writelog ("Problem changing MariaDB password (mysqladmin)") # Advise User
+            writelog ("Return code is %d" % (ccode))                        # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+            time.sleep(1)
+            return (1)                                                  # Abort MySQL Setup
 
     # Load Initial Database
-    writelog ('  ')
-    writelog ('----------')
-    writelog ("Loading Initial Data in SADMIN Database ... ",'nonl')    # Load Initial Database 
-    cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    if (ccode != 0):                                                    # If problem deleting user
-        writelog ("Problem loading the database ...")                   # Advise User
-        writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    else:                                                               # If user deleted
-        writelog (' Done ')                                             # Advise User ok to proceed
-    time.sleep(1)
+    answer=askyesno ('Want to load initial Database (Will erase actual content of Database)')
+    if (answer):
+        writelog ('  ')
+        writelog ('----------')
+        writelog ("Loading Initial Data in SADMIN Database ... ",'nonl')    # Load Initial Database 
+        cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
+        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
+        if (ccode != 0):                                                    # If problem deleting user
+            writelog ("Problem loading the database ...")                   # Advise User
+            writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
+        else:                                                               # If user deleted
+            writelog (' Done ')                                             # Advise User ok to proceed
+        time.sleep(1)
     
     # Create 'sadmin' user and Grant permission 
     writelog ("Creating 'sadmin' user ... ",'nonl')
@@ -1372,12 +1371,12 @@ def setup_sadmin_config_file(sroot):
     else:
         writelog ("Creating user %s" % (wcfg_user))                     # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
-            cmd = "useradd -g %s -s /bin/sh " % (wcfg_group)            # Build Add user Command 
+            cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
             cmd += " -c'%s' %s" % ("SADMIN Tools User",wcfg_user)       # Add comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
         if wostype == "AIX" :                                           # Under AIX
-            cmd = "mkuser pgrp='%s' -s /bin/sh " % (wcfg_group)         # Build mkuser command
+            cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
