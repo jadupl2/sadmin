@@ -1,0 +1,16 @@
+Package		,RPM					,REPO			,DEB															,REPO
+nmon		,nmon					,epel			,nmon															,std
+ethtool		,ethtool				,base			,ethtool														,std
+parted		,parted					,base			,parted															,std
+mail		,mailx					,base			,mailutils														,std
+facter		,facter					,epel			,facter															,std
+bc			,bc						,base			,bc																,std
+lsb_release	,redhat-lsb-core		,base			,N/A															,std
+fdisk		,util-linux				,base			,util-linux. 													,std
+ssh			,openssh-clients		,base			,openssh-client													,std
+dmidecode	,dmidecode				,base			,dmidecode														,std
+perl		,perl					,base			,perl-base														,std
+lscpu		,util-linux				,base			,util-linux														,std
+mariadb		,mariadb-server			,base			,mariadb-server mariadb-client									,std
+apache		,httpd httpd-tools		,base			,apache2 apache2-utils											,std
+php			,php php-mysql php-common ,base			,php php-common libapache2-mod-php php-mcrypt php-mysql			,std

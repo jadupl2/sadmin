@@ -11,4 +11,3 @@ a RCH file ([R]eturn [C]ode [H]istory] file).
      
 A value of 100 lines is recommended.
 This will keep an history of 50 days and is the default value.
-

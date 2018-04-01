@@ -1,0 +1,3026 @@
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-01-12 10:57 EST
+Warning: 192.168.1.221 giving up on port because retransmission cap hit (10).
+Nmap scan report for 192.168.1.1
+Host is up (0.00022s latency).
+Not shown: 993 closed ports
+PORT     STATE SERVICE     VERSION
+21/tcp   open  ftp         vsftpd 2.0.8 or later
+22/tcp   open  ssh         Dropbear sshd 2012.55 (protocol 2.0)
+| ssh-hostkey: 1024 d0:31:8b:5c:0b:31:98:d7:0d:dc:a6:79:cd:7b:4b:4e (DSA)
+|_1040 28:95:60:7c:de:9d:08:f0:44:25:d7:93:19:a9:1b:45 (RSA)
+23/tcp   open  telnet?
+139/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)
+445/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)
+1900/tcp open  upnp        Portable SDK for UPnP devices 1.6.19 (Linux 2.6.36.4brcmarm; UPnP 1.0)
+8200/tcp open  trivnet1?
+2 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port23-TCP:V=6.40%I=7%D=1/12%Time=5A58ED99%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,18,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03\r\r\nusername
+SF::")%r(GenericLines,4B,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03
+SF:\r\r\nusername:\r\npassword:\r\nLogin\x20incorrect\.\x20Try\x20again\.\
+SF:r\nusername:")%r(GetRequest,6B,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xf
+SF:f\xfb\x03\r\r\nGET\x20/\x20HTTP/1\.0\r\n\r\nusername:GET\x20/\x20HTTP/1
+SF:\.0\r\npassword:\r\nLogin\x20incorrect\.\x20Try\x20again\.\r\nusername:
+SF:")%r(HTTPOptions,73,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03\r
+SF:\r\nOPTIONS\x20/\x20HTTP/1\.0\r\n\r\nusername:OPTIONS\x20/\x20HTTP/1\.0
+SF:\r\npassword:\r\nLogin\x20incorrect\.\x20Try\x20again\.\r\nusername:")%
+SF:r(RTSPRequest,73,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03\r\r\
+SF:nOPTIONS\x20/\x20RTSP/1\.0\r\n\r\nusername:OPTIONS\x20/\x20RTSP/1\.0\r\
+SF:npassword:\r\nLogin\x20incorrect\.\x20Try\x20again\.\r\nusername:")%r(R
+SF:PCCheck,19,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03\r\r\n\x80\
+SF:^@\^@\(r\xfe\^\]")%r(DNSVersionBindReq,F,"\xff\xfd\x01\xff\xfd\x1f\xff\
+SF:xfb\x01\xff\xfb\x03\r\r\n")%r(DNSStatusRequest,4B,"\xff\xfd\x01\xff\xfd
+SF:\x1f\xff\xfb\x01\xff\xfb\x03\r\r\n\^@\^L\^@\^@\^P\^@\^@\^@\^@\^@\^@\^@\
+SF:^@username:\x1b\[1H\x1b\[2J\r\x1b\[J\rusername:\x1b\[J")%r(Help,2D,"\xf
+SF:f\xfd\x01\xff\xfd\x1f\xff\xfb\x01\xff\xfb\x03\r\r\nHELP\r\nusername:HEL
+SF:P\r\npassword:")%r(SSLSessionReq,CF,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x
+SF:01\xff\xfb\x03\r\r\n\^\x08\^C\^@\^@S\^A\^@\^@O\^C\^@\?G\xd7\xf7\xba,\xe
+SF:e\xea\xb2`~\xf3\^@\xfd\x82{\xb9\xd5\x96\xc8w\x9b\xe6\xc4\xdb<=\xdbo\xef
+SF:\^Pn\^@\^@\(\^@\^\x08\^@\^@\r\n\^@f\^@\^E\^@\^@e\^@d\^@c\^@b\^@a\^@`\^@
+SF:\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x0
+SF:8\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x
+SF:08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\
+SF:x08\x08\x20\x08\x08\x20\x08\^@\^R\r\n\^@\^@\x20\x20\x20\x20\^@\^T\^@\^@
+SF:\^H\^@\^F\^@\^C\^A")%r(Kerberos,11D,"\xff\xfd\x01\xff\xfd\x1f\xff\xfb\x
+SF:01\xff\xfb\x03\r\r\n\^@\^@\^@qj\x81n0\x81k\xa1\^C\^B\^A\^E\xa2\^C\^B\^A
+SF:\r\n\xa4\x81\^0\\\xa0\^G\^C\^E\^@P\x80\^@\^P\xa2\^\[\^BNM\xa3\x08\x20\x
+SF:08\x08\x20\x08\x08\x20\x080\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20
+SF:\x08\x08\x20\x08\xa0\^C\^B\^A\^@\xa1\^N0\^L\^\[\^Fkrbtgt\^\[\^BNM\xa5\^
+SF:X\^O19700101000000Z\xa7\^F\^B\^_\^\^\xb9\xd9\xa8\x08\x20\x08\x08\x20\x0
+SF:80\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\
+SF:x08\^B\^A\^R\r\n\^B\^A\^B\^A\^B\^A\^P\^B\^A\x08\x20\x08\x08\x20\x08\x08
+SF:\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x0
+SF:8\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\x
+SF:08\x20\x08\x08\x20\x08\x08\x20\x08\x08\x20\x08\^B\^A\^A\^B\^A\^C\^B\^A\
+SF:^B");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port8200-TCP:V=6.40%I=7%D=1/12%Time=5A58ED99%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,161,"HTTP/1\.1\x20501\x20Not\x20Implemented\r\nContent-T
+SF:ype:\x20text/html\r\nConnection:\x20close\r\nContent-Length:\x20149\r\n
+SF:Server:\x203\.13\.0-32-generic\x20DLNADOC/1\.50\x20UPnP/1\.0\x20MiniDLN
+SF:A/1\.1\.4\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:17:13\x20GMT\r\nE
+SF:XT:\r\n\r\n<HTML><HEAD><TITLE>501\x20Not\x20Implemented</TITLE></HEAD><
+SF:BODY><H1>Not\x20Implemented</H1>The\x20HTTP\x20Method\x20is\x20not\x20i
+SF:mplemented\x20by\x20this\x20server\.</BODY></HTML>\r\n")%r(GetRequest,8
+SF:F6,"HTTP/1\.1\x20200\x20OK\r\nContent-Type:\x20text/html\r\nConnection:
+SF:\x20close\r\nContent-Length:\x202102\r\nServer:\x203\.13\.0-32-generic\
+SF:x20DLNADOC/1\.50\x20UPnP/1\.0\x20MiniDLNA/1\.1\.4\r\nDate:\x20Fri,\x201
+SF:2\x20Jan\x202018\x2017:17:13\x20GMT\r\nEXT:\r\n\r\n<HTML><HEAD><TITLE>M
+SF:iniDLNA\x201\.1\.4</TITLE></HEAD><BODY><div\x20style=\"text-align:\x20c
+SF:enter\"><h2>MiniDLNA\x20status</h2></div><h3>Media\x20library</h3><tabl
+SF:e\x20border=1\x20cellpadding=10><tr><td>Audio\x20files</td><td>0</td></
+SF:tr><tr><td>Video\x20files</td><td>0</td></tr><tr><td>Image\x20files</td
+SF:><td>0</td></tr></table><h3>Connected\x20clients</h3><table\x20border=1
+SF:\x20cellpadding=10><tr><td>ID</td><td>Type</td><td>IP\x20Address</td><t
+SF:d>HW\x20Address</td><td>Connections</td></tr><tr><td>0</td><td>Generic\
+SF:x20UPnP\x201\.0</td><td>192\.168\.1\.47</td><td>00:11:32:02:F1:A6</td><
+SF:td>0</td></tr><tr><td>1</td><td>Generic\x20UPnP\x201\.0</td><td>192\.16
+SF:8\.1\.48</td><td>BC:30:5B:EB:41:F7</td><td>0</td></tr><tr><td>2</td><td
+SF:>Generic\x20UPnP\x201\.0</td><td>192\.168\.1\.7</td><td>0")%r(HTTPOptio
+SF:ns,161,"HTTP/1\.1\x20501\x20Not\x20Implemented\r\nContent-Type:\x20text
+SF:/html\r\nConnection:\x20close\r\nContent-Length:\x20149\r\nServer:\x203
+SF:\.13\.0-32-generic\x20DLNADOC/1\.50\x20UPnP/1\.0\x20MiniDLNA/1\.1\.4\r\
+SF:nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:17:13\x20GMT\r\nEXT:\r\n\r\n<
+SF:HTML><HEAD><TITLE>501\x20Not\x20Implemented</TITLE></HEAD><BODY><H1>Not
+SF:\x20Implemented</H1>The\x20HTTP\x20Method\x20is\x20not\x20implemented\x
+SF:20by\x20this\x20server\.</BODY></HTML>\r\n");
+MAC Address: 84:16:F9:21:31:CC (Unknown)
+Device type: general purpose
+Running: Linux 2.6.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6
+OS details: Linux 2.6.31 - 2.6.35
+Network Distance: 1 hop
+Service Info: Host: TP-LINK; OS: Linux; CPE: cpe:/o:linux:linux_kernel, cpe:/o:linux:linux_kernel:2.6.36.4brcmarm
+
+Host script results:
+|_nbstat: NetBIOS name: BATROUTER, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Unix (Samba 3.0.14a)
+|   NetBIOS computer name: 
+|   Workgroup: WORKGROUP
+|_  System time: 2018-01-12T12:23:24-05:00
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.22 ms 192.168.1.1
+
+Nmap scan report for 192.168.1.3
+Host is up (0.080s latency).
+All 1000 scanned ports on 192.168.1.3 are filtered
+MAC Address: A0:99:9B:08:F5:11 (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT      ADDRESS
+1   80.30 ms 192.168.1.3
+
+Nmap scan report for raspi0.maison.ca (192.168.1.4)
+Host is up (0.0034s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi0.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=raspi0.maison.ca
+| Not valid before: 2017-05-12T14:37:42+00:00
+|_Not valid after:  2027-05-10T14:37:42+00:00
+|_ssl-date: 2104-08-13T18:00:51+00:00; +86y214d0h38m32s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+3389/tcp open  ms-wbt-server xrdp
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58ED99%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_6\.7p1\x20Raspbian-5\+deb8u4\r\n");
+MAC Address: B8:27:EB:9E:77:81 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=31835%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=104%GCD=1%ISR=10C%TI=Z%CI=I%
+OS:II=I%TS=7)OPS(O1=M5B4ST11NW6%O2=M5B4ST11NW6%O3=M5B4NNT11NW6%O4=M5B4ST11N
+OS:W6%O5=M5B4ST11NW6%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi0.maison.ca
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   3.38 ms raspi0.maison.ca (192.168.1.4)
+
+Nmap scan report for 192.168.1.7
+Host is up (0.00029s latency).
+Not shown: 994 filtered ports
+PORT     STATE SERVICE       VERSION
+135/tcp  open  msrpc         Microsoft Windows RPC
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds?
+2869/tcp open  http          Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 503)
+|_http-title: Service Unavailable
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+5357/tcp open  http          Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 503)
+|_http-title: Service Unavailable
+MAC Address: 00:23:AE:AC:65:4D (Dell)
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Device type: general purpose
+Running (JUST GUESSING): Microsoft Windows XP|7|2008 (87%)
+OS CPE: cpe:/o:microsoft:windows_xp::sp2 cpe:/o:microsoft:windows_7 cpe:/o:microsoft:windows_server_2008::sp1
+Aggressive OS guesses: Microsoft Windows XP SP2 (87%), Microsoft Windows 7 (85%), Microsoft Windows Server 2008 SP1 (85%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 1 hop
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_nbstat: NetBIOS name: WATSON, NetBIOS user: <unknown>, NetBIOS MAC: 00:23:ae:ac:65:4d (Dell)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.29 ms 192.168.1.7
+
+Nmap scan report for imac.maison.ca (192.168.1.8)
+Host is up (0.00027s latency).
+Not shown: 994 closed ports
+PORT     STATE SERVICE       VERSION
+22/tcp   open  ssh?
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+88/tcp   open  kerberos-sec?
+445/tcp  open  microsoft-ds?
+548/tcp  open  afp?
+|_afp-serverinfo: ERROR: Script execution failed (use -d to debug)
+3283/tcp open  netassistant?
+5900/tcp open  vnc?
+| vnc-info: 
+|   Protocol version: 3.889
+|   Security types:
+|     Mac OS X security type (30)
+|     Unknown security type (33)
+|     Unknown security type (36)
+|     Unknown security type (31)
+|     Unknown security type (32)
+|     VNC Authentication
+|_    Mac OS X security type (35)
+MAC Address: C8:2A:14:3B:59:A1 (Apple)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=22%CT=1%CU=34882%PV=Y%DS=1%DC=D%G=Y%M=C82A14%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=FE%GCD=1%ISR=107%TI=Z%CI=RD%
+OS:II=RI%TS=A)OPS(O1=M5B4NW5NNT11SLL%O2=M5B4NW5NNT11SLL%O3=M5B4NW5NNT11%O4=
+OS:M5B4NW5NNT11SLL%O5=M5B4NW5NNT11SLL%O6=M5B4NNT11SLL)WIN(W1=FFFF%W2=FFFF%W
+OS:3=FFFF%W4=FFFF%W5=FFFF%W6=FFFF)ECN(R=Y%DF=Y%TG=40%W=FFFF%O=M5B4NW5SLL%CC
+OS:=N%Q=)ECN(R=Y%DF=Y%T=40%W=FFFF%O=M5B4NW5SLL%CC=N%Q=)T1(R=Y%DF=Y%TG=40%S=
+OS:O%A=S+%F=AS%RD=0%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N
+OS:)T4(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=N)T5(R=Y%DF=N%T
+OS:=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=N)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R
+OS:%O=%RD=0%Q=)T7(R=N)T7(R=Y%DF=N%T=40%W=0%S=Z%A=S%F=AR%O=%RD=0%Q=)U1(R=N)U
+OS:1(R=Y%DF=N%T=40%IPL=38%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=0%RUD=G)IE(R=N)IE(
+OS:R=Y%DFI=S%T=40%CD=S)
+
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.27 ms imac.maison.ca (192.168.1.8)
+
+Nmap scan report for raspi3.maison.ca (192.168.1.17)
+Host is up (0.00037s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi3.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=raspi3.maison.ca
+| Not valid before: 2017-05-11T12:53:03+00:00
+|_Not valid after:  2027-05-09T12:53:03+00:00
+|_ssl-date: 2070-09-04T10:01:05+00:00; +52y234d16h37m33s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+3389/tcp open  ms-wbt-server xrdp
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58ED9E%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_6\.7p1\x20Raspbian-5\+deb8u4\r\n");
+MAC Address: B8:27:EB:C7:4C:82 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=37522%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=107%GCD=1%ISR=10E%TI=Z%CI=I%
+OS:II=I%TS=7)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi3.maison.ca
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.37 ms raspi3.maison.ca (192.168.1.17)
+
+Nmap scan report for 192.168.1.19
+Host is up (0.00036s latency).
+Not shown: 991 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi4.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=raspi4
+| Not valid before: 2016-12-26T21:08:51+00:00
+|_Not valid after:  2026-12-24T21:08:51+00:00
+|_ssl-date: 2004-05-20T18:29:32+00:00; -13y236d22h53m20s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      36048/udp  mountd
+|   100005  1,2,3      44373/tcp  mountd
+|   100021  1,3,4      44683/tcp  nlockmgr
+|   100021  1,3,4      60284/udp  nlockmgr
+|   100024  1          35663/udp  status
+|   100024  1          58379/tcp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: RASPI4)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: RASPI4)
+2049/tcp open  nfs           2-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      36048/udp  mountd
+|   100005  1,2,3      44373/tcp  mountd
+|   100021  1,3,4      44683/tcp  nlockmgr
+|   100021  1,3,4      60284/udp  nlockmgr
+|   100024  1          35663/udp  status
+|   100024  1          58379/tcp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+9418/tcp open  git?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58ED9E%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_6\.7p1\x20Raspbian-5\+deb8u4\r\n");
+MAC Address: B8:27:EB:5F:38:70 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=35181%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=103%GCD=1%ISR=109%TI=Z%CI=I%
+OS:II=I%TS=7)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi4.maison.ca
+
+Host script results:
+|_nbstat: NetBIOS name: RASPI4, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.2.14-Debian)
+|   Computer name: raspi4
+|   NetBIOS computer name: RASPI4
+|   Domain name: 
+|   FQDN: raspi4
+|_  System time: 2018-01-12T12:23:28-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.36 ms 192.168.1.19
+
+Nmap scan report for ds410.maison.ca (192.168.1.47)
+Host is up (0.00016s latency).
+Not shown: 982 closed ports
+PORT      STATE SERVICE     VERSION
+21/tcp    open  ftp
+| ssl-cert: Subject: commonName=synology.com/organizationName=Synology Inc./stateOrProvinceName=Taiwan/countryName=TW
+| Not valid before: 2017-03-27T23:06:50+00:00
+|_Not valid after:  2036-12-13T00:06:50+00:00
+|_ssl-date: 2000-09-07T17:17:28+00:00; -17y127d0h05m08s from local time.
+22/tcp    open  ssh         OpenSSH 6.6p2-hpn14v4 (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+80/tcp    open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+|_http-title: Did not follow redirect to http://ds410.maison.ca:5000/
+111/tcp   open  rpcbind     2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3         2049/tcp  nfs
+|   100003  2,3         2049/udp  nfs
+|   100005  1,2,3        892/tcp  mountd
+|   100005  1,2,3        892/udp  mountd
+|   100021  1,3,4      36576/tcp  nlockmgr
+|   100021  1,3,4      41023/udp  nlockmgr
+|   100024  1          58348/udp  status
+|_  100024  1          60249/tcp  status
+139/tcp   open  netbios-ssn Samba smbd 3.X (workgroup: DS410)
+161/tcp   open  snmp?
+445/tcp   open  netbios-ssn Samba smbd 3.X (workgroup: DS410)
+515/tcp   open  printer
+548/tcp   open  afp?
+| afp-serverinfo: 
+|   | Server Flags: 0x8f79
+|   |   Super Client: Yes
+|   |   UUIDs: Yes
+|   |   UTF8 Server Name: Yes
+|   |   Open Directory: Yes
+|   |   Reconnect: No
+|   |   Server Notifications: Yes
+|   |   TCP/IP: Yes
+|   |   Server Signature: Yes
+|   |   ServerMessages: Yes
+|   |   Password Saving Prohibited: No
+|   |   Password Changing: No
+|   |_  Copy File: Yes
+|   Server Name: ds410
+|   Machine Type: Netatalk3.1.1
+|   AFP Versions: AFP2.2, AFPX03, AFP3.1, AFP3.2, AFP3.3, AFP3.4
+|   UAMs: DHX2, DHCAST128
+|   Server Signature: 3914d1ad30912c7195124d0981701a6a
+|   Network Address 1: 192.168.1.47
+|_  UTF8 Server Name: ds410
+631/tcp   open  ipp         CUPS 1.5
+|_http-methods: No Allow or Public header in OPTIONS response (status code 400)
+|_http-title: Bad Request - CUPS v1.5.4
+873/tcp   open  rsync
+2049/tcp  open  nfs         2-3 (RPC #100003)
+3689/tcp  open  daap        mt-daapd DAAP 0.2.4.1
+5000/tcp  open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Did not follow redirect to https://ds410.maison.ca:5001
+5001/tcp  open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 301)
+|_http-title: 400 Bad Request
+49160/tcp open  upnp        Portable SDK for UPnP devices 1.6.18 (Linux 2.6.32.12; UPnP 1.0)
+50001/tcp open  upnp        Portable SDK for UPnP devices 1.6.18 (Linux 2.6.32.12; UPnP 1.0)
+50002/tcp open  http        lighttpd 1.4.35
+|_http-title: 404 - Not Found
+2 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port21-TCP:V=6.40%I=7%D=1/12%Time=5A58ED9F%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,1D,"220\x20ds410\x20FTP\x20server\x20ready\.\r\n")%r(GenericLines,
+SF:5B,"220\x20ds410\x20FTP\x20server\x20ready\.\r\n500\x20:\x20command\x20
+SF:not\x20understood\.\r\n500\x20:\x20command\x20not\x20understood\.\r\n")
+SF:%r(Help,26F,"220\x20ds410\x20FTP\x20server\x20ready\.\r\n214-\x20The\x2
+SF:0following\x20commands\x20are\x20recognized\x20\(\*\x20=>'s\x20unimplem
+SF:ented\)\.\r\n\x20\x20\x20USER\x20\x20\x20\x20LPRT\x20\x20\x20\x20MODE\x
+SF:20\x20\x20\x20MSOM\*\x20\x20\x20RNTO\x20\x20\x20\x20SITE\x20\x20\x20\x2
+SF:0RMD\x20\x20\x20\x20\x20SIZE\x20\x20\x20\x20AUTH\x20\r\n\x20\x20\x20PAS
+SF:S\x20\x20\x20\x20EPRT\x20\x20\x20\x20RETR\x20\x20\x20\x20MSAM\*\x20\x20
+SF:\x20ABOR\x20\x20\x20\x20SYST\x20\x20\x20\x20XRMD\x20\x20\x20\x20MDTM\x2
+SF:0\x20\x20\x20PBSZ\x20\r\n\x20\x20\x20ACCT\*\x20\x20\x20PASV\x20\x20\x20
+SF:\x20STOR\x20\x20\x20\x20MRSQ\*\x20\x20\x20DELE\x20\x20\x20\x20STAT\x20\
+SF:x20\x20\x20PWD\x20\x20\x20\x20\x20MFMT\x20\x20\x20\x20PROT\x20\r\n\x20\
+SF:x20\x20SMNT\*\x20\x20\x20LPSV\x20\x20\x20\x20APPE\x20\x20\x20\x20MRCP\*
+SF:\x20\x20\x20CWD\x20\x20\x20\x20\x20HELP\x20\x20\x20\x20XPWD\x20\x20\x20
+SF:\x20MLSD\x20\r\n\x20\x20\x20REIN\*\x20\x20\x20EPSV\x20\x20\x20\x20MLFL\
+SF:*\x20\x20\x20ALLO\x20\x20\x20\x20XCWD\x20\x20\x20\x20NOOP\x20\x20\x20\x
+SF:20CDUP\x20\x20\x20\x20MLST\x20\r\n\x20\x20\x20QUIT\x20\x20\x20\x20TYPE\
+SF:x20\x20\x20\x20MAIL\*\x20\x20\x20REST\x20\x20\x20\x20LIST\x20\x20\x20\x
+SF:20MKD\x20\x20\x20\x20\x20XCUP\x20\x20\x20\x20FEAT\x20\r\n\x20\x20\x20PO
+SF:RT\x20\x20\x20\x20STRU\x20\x20\x20\x20MSND\*\x20\x20\x20RNFR\x20\x20\x2
+SF:0\x20NLST\x20\x20\x20\x20XMKD\x20\x20\x20\x20STOU\x20\x20\x20\x20OPTS\x
+SF:20\r\n214\x20Direct\x20comments\x20to\x20ftp-bugs@ds410\.\r\n")%r(SMBPr
+SF:ogNeg,1D,"220\x20ds410\x20FTP\x20server\x20ready\.\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port548-TCP:V=6.40%I=7%D=1/12%Time=5A58EDA9%P=x86_64-redhat-linux-gnu%r
+SF:(afp,190,"\x01\x03\0\x01\0\0\0\0\0\0\x01\x80\0\0\0\0\0\x18\0&\0Q\0a\x8f
+SF:y\x05ds410\x01a\x01q\x01x\x01y\rNetatalk3\.1\.1\x06\x06AFP2\.2\x06AFPX0
+SF:3\x06AFP3\.1\x06AFP3\.2\x06AFP3\.3\x06AFP3\.4\x02\x04DHX2\tDHCAST128\0\
+SF:0\0\0\0\x80\x02\0\x01\x80\x03\0\x02\x80\x02\x80\x02\x80\x02\x80\x04\x80
+SF:\x02@\x04\x87\xc2@\x04X4@\x04\x20\x08@\x02\x16\xd0\x80\x01\x01\x01\0\x0
+SF:2\x80\x02\x80\x02\x9cr\x80\x04\"\x88@\x04A\x04@\x04A\x04@\x04A\x04@\x04
+SF:I\$@\x0eUT\xe0\x10\]t\x10\x10>\xf8\x10\x7f\xfc\x7f\xfe\x20\x04@\x04\x1f
+SF:\xfc\x7f\xf8\0\x07\xc0\0\0\x04@\0\0\x03\x80\0\0\x04@\0\xaf\xf9\?\xf5\0\
+SF:x02\x80\0\xaf\xfc\x7f\xf5\0\0\0\0\0\0\0\0\0\x80\x02\0\x01\x80\x03\0\x03
+SF:\x80\x03\x80\x03\x80\x03\x80\x07\x80\x03\xc0\x07\x87\xc3\xc0\x07\xdf\xf
+SF:7\xc0\x07\xff\xff\xc0\x03\xff\xff\x80\x01\xff\xff\0\x03\xff\xff\x80\x03
+SF:\xff\xff\x80\x07\xff\xff\xc0\x07\xff\xff\xc0\x07\xff\xff\xc0\x07\xff\xf
+SF:f\xc0\x07\xff\xff\xc0\x0f\xff\xff\xe0\x1f\xff\xff\xf0\x1f\xff\xff\xf0\x
+SF:7f\xff\xff\xfe\?\xff\xff\xfc\x1f\xff\xff\xf8\0\x07\xc0\0\0\x07\xc0\0\0\
+SF:x03\x80\0\0\x04@\0\xaf\xf9\?\xf5\0\x02\x80\0\xaf\xfc\x7f\xf5\0\0\0\x009
+SF:\x14\xd1\xad0\x91,q\x95\x12M\t\x81p\x1aj\x01\x06\x01\xc0\xa8\x01/\0\0\x
+SF:05ds410");
+MAC Address: 00:11:32:02:F1:A6 (Synology Incorporated)
+Device type: general purpose
+Running: Linux 2.6.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6
+OS details: Linux 2.6.24 - 2.6.36
+Network Distance: 1 hop
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel:2.6.32.12
+
+Host script results:
+|_nbstat: NetBIOS name: DS410, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server doesn't support SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.16 ms ds410.maison.ca (192.168.1.47)
+
+Nmap scan report for sherlock.maison.ca (192.168.1.48)
+Host is up (0.00026s latency).
+Not shown: 982 filtered ports
+PORT      STATE SERVICE              VERSION
+32/tcp    open  ssh                  SCS sshd 6.4.8.305 (protocol 2.0)
+|_ssh-hostkey: 1536 77:68:8f:05:69:e8:89:01:cb:a4:7b:b8:59:ae:02:3d (RSA)
+111/tcp   open  rpcbind?
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100003  3           2049/tcp  nfs
+|_  100005  3           1063/tcp  mountd
+135/tcp   open  msrpc                Microsoft Windows RPC
+139/tcp   open  netbios-ssn
+443/tcp   open  ssl/http             VMware VirtualCenter Web service
+|_http-methods: No Allow or Public header in OPTIONS response (status code 501)
+|_http-title: Site doesn't have a title (text; charset=plain).
+| ssl-cert: Subject: commonName=VMware/countryName=US
+| Not valid before: 2015-10-02T13:12:21+00:00
+|_Not valid after:  2016-10-01T13:12:21+00:00
+445/tcp   open  netbios-ssn
+902/tcp   open  ssl/vmware-auth      VMware Authentication Daemon 1.10 (Uses VNC, SOAP)
+912/tcp   open  vmware-auth          VMware Authentication Daemon 1.0 (Uses VNC, SOAP)
+1063/tcp  open  kyoceranetdev?
+1801/tcp  open  msmq?
+2049/tcp  open  nfs?
+2103/tcp  open  msrpc                Microsoft Windows RPC
+2105/tcp  open  msrpc                Microsoft Windows RPC
+2107/tcp  open  msrpc                Microsoft Windows RPC
+3389/tcp  open  ms-wbt-server        Microsoft Terminal Service
+5357/tcp  open  http                 Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 503)
+|_http-title: Service Unavailable
+10001/tcp open  msexchange-logcopier Microsoft Exchange 2010 log copier
+10003/tcp open  msexchange-logcopier Microsoft Exchange 2010 log copier
+3 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port111-TCP:V=6.40%I=7%D=1/12%Time=5A58EDAB%P=x86_64-redhat-linux-gnu%r
+SF:(RPCCheck,1C,"\x80\0\0\x18r\xfe\x1d\x13\0\0\0\x01\0\0\0\0\0\0\0\x03\0\0
+SF:\0\0\0\0\0\0");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port1063-TCP:V=6.40%I=7%D=1/12%Time=5A58EDAF%P=x86_64-redhat-linux-gnu%
+SF:r(RPCCheck,1C,"\x80\0\0\x18r\xfe\x1d\x13\0\0\0\x01\0\0\0\0\0\0\0\x03\0\
+SF:0\0\0\0\0\0\0");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port2049-TCP:V=6.40%I=7%D=1/12%Time=5A58EDAF%P=x86_64-redhat-linux-gnu%
+SF:r(RPCCheck,1C,"\x80\0\0\x18r\xfe\x1d\x13\0\0\0\x01\0\0\0\0\0\0\0\x03\0\
+SF:0\0\0\0\0\0\0");
+MAC Address: BC:30:5B:EB:41:F7 (Dell)
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Device type: general purpose
+Running (JUST GUESSING): Microsoft Windows XP|2008 (85%)
+OS CPE: cpe:/o:microsoft:windows_xp::sp2 cpe:/o:microsoft:windows_server_2008::sp1
+Aggressive OS guesses: Microsoft Windows XP SP2 (85%), Microsoft Windows Server 2008 SP1 (85%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 1 hop
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_nbstat: NetBIOS name: SHERLOCK, NetBIOS user: <unknown>, NetBIOS MAC: bc:30:5b:eb:41:f7 (Dell)
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.26 ms sherlock.maison.ca (192.168.1.48)
+
+Nmap scan report for 192.168.1.49
+Host is up (0.000099s latency).
+Not shown: 987 closed ports
+PORT     STATE SERVICE     VERSION
+22/tcp   open  ssh         OpenSSH 5.8p1-hpn13v11 (protocol 2.0)
+| ssh-hostkey: 1024 f0:b5:9a:08:08:aa:94:d1:89:df:a3:90:42:f8:e9:52 (DSA)
+| 2048 1b:f6:a8:10:b7:72:9b:64:fb:96:15:2d:fe:24:b4:71 (RSA)
+|_256 dc:6b:cf:ab:38:04:74:72:c7:2c:51:c5:fe:9d:8f:2a (ECDSA)
+80/tcp   open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+|_http-title: Did not follow redirect to http://192.168.1.49:5000/
+111/tcp  open  rpcbind     2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3        892/tcp  mountd
+|   100005  1,2,3        892/udp  mountd
+|   100021  1,3,4      35548/udp  nlockmgr
+|   100021  1,3,4      50177/tcp  nlockmgr
+|   100024  1          33911/tcp  status
+|_  100024  1          39738/udp  status
+139/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: MAISON)
+161/tcp  open  snmp?
+445/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: MAISON)
+515/tcp  open  printer
+548/tcp  open  afp         Netatalk 2.2.3 (name: ds409; protocol 3.3)
+| afp-serverinfo: 
+|   | Server Flags: 0x8f79
+|   |   Super Client: Yes
+|   |   UUIDs: Yes
+|   |   UTF8 Server Name: Yes
+|   |   Open Directory: Yes
+|   |   Reconnect: No
+|   |   Server Notifications: Yes
+|   |   TCP/IP: Yes
+|   |   Server Signature: Yes
+|   |   ServerMessages: Yes
+|   |   Password Saving Prohibited: No
+|   |   Password Changing: No
+|   |_  Copy File: Yes
+|   Server Name: ds409
+|   Machine Type: Netatalk2.2.3
+|   AFP Versions: AFP2.2, AFPX03, AFP3.1, AFP3.2, AFP3.3
+|   UAMs: Cleartxt Passwrd, No User Authent, DHX2, DHCAST128
+|   Server Signature: f345935d949f1af85d6dad13bc5f1a9d
+|   Network Address 1: 192.168.1.49
+|_  UTF8 Server Name: ds409
+631/tcp  open  ipp         CUPS 1.5
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Not Found - CUPS v1.5.4
+2049/tcp open  nfs         2-4 (RPC #100003)
+5000/tcp open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Did not follow redirect to https://192.168.1.49:5001
+5001/tcp open  http        Apache httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+|_http-title: 400 Bad Request
+5432/tcp open  postgresql  PostgreSQL DB 8.3.20 - 8.3.21
+MAC Address: 00:11:32:02:A5:C9 (Synology Incorporated)
+Device type: general purpose
+Running: Linux 2.6.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6
+OS details: Linux 2.6.19 - 2.6.36
+Network Distance: 1 hop
+Service Info: OS: Unix
+
+Host script results:
+|_nbstat: NetBIOS name: DS409, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-security-mode: 
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server doesn't support SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.10 ms 192.168.1.49
+
+Nmap scan report for fedora25.maison.ca (192.168.1.53)
+Host is up (0.00029s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE       VERSION
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100024  1          52086/udp  status
+|_  100024  1          57463/tcp  status
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+9090/tcp open  zeus-admin?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port9090-TCP:V=6.40%I=7%D=1/12%Time=5A58EDC1%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,DD7,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-Type:\x
+SF:20text/html;\x20charset=utf8\r\nTransfer-Encoding:\x20chunked\r\n\r\n29
+SF:\r\n<!DOCTYPE\x20html>\n<html>\n<head>\n\x20\x20\x20\x20<title>\r\nb\r\
+SF:nBad\x20request\r\ncf6\r\n</title>\n\x20\x20\x20\x20<meta\x20http-equiv
+SF:=\"Content-Type\"\x20content=\"text/html;\x20charset=utf-8\">\n\x20\x20
+SF:\x20\x20<meta\x20name=\"viewport\"\x20content=\"width=device-width,\x20
+SF:initial-scale=1\.0\">\n\x20\x20\x20\x20<style>\n\tbody\x20{\n\x20\x20\x
+SF:20\x20\x20\x20\x20\x20\x20\x20\x20\x20margin:\x200;\n\x20\x20\x20\x20\x
+SF:20\x20\x20\x20\x20\x20\x20\x20font-family:\x20\"Open\x20Sans\",\x20Helv
+SF:etica,\x20Arial,\x20sans-serif;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x
+SF:20\x20\x20font-size:\x2012px;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20
+SF:\x20\x20line-height:\x201\.66666667;\n\x20\x20\x20\x20\x20\x20\x20\x20\
+SF:x20\x20\x20\x20color:\x20#333333;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20
+SF:\x20\x20\x20background-color:\x20#f5f5f5;\n\x20\x20\x20\x20\x20\x20\x20
+SF:\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20img\x20{\n\x20\x20\x20\x20\x20\x
+SF:20\x20\x20\x20\x20\x20\x20border:\x200;\n\x20\x20\x20\x20\x20\x20\x20\x
+SF:20\x20\x20\x20\x20vertical-align:\x20middle;\n\x20\x20\x20\x20\x20\x20\
+SF:x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20h1\x20{\n\x20\x20\x20\x20\x20
+SF:\x20\x20\x20\x20\x20\x20\x20font-weight:\x20300;\n\x20\x20\x20\x20\x20\
+SF:x20\x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20p\x20{\n\x20\x20\x20\x20\
+SF:x20\x20\x20\x20\x20\x20\x20\x20margin:\x200\x200\x2010px;\n\x20\x20\x20
+SF:\x20\x20\x20\x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20@font-face\x20{\
+SF:n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-family:\x20'Open\
+SF:x20Sans';\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-style:\
+SF:x20normal;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-weight
+SF::\x20300;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20src:\x20u")%
+SF:r(HTTPOptions,DD7,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-Type:\
+SF:x20text/html;\x20charset=utf8\r\nTransfer-Encoding:\x20chunked\r\n\r\n2
+SF:9\r\n<!DOCTYPE\x20html>\n<html>\n<head>\n\x20\x20\x20\x20<title>\r\nb\r
+SF:\nBad\x20request\r\ncf6\r\n</title>\n\x20\x20\x20\x20<meta\x20http-equi
+SF:v=\"Content-Type\"\x20content=\"text/html;\x20charset=utf-8\">\n\x20\x2
+SF:0\x20\x20<meta\x20name=\"viewport\"\x20content=\"width=device-width,\x2
+SF:0initial-scale=1\.0\">\n\x20\x20\x20\x20<style>\n\tbody\x20{\n\x20\x20\
+SF:x20\x20\x20\x20\x20\x20\x20\x20\x20\x20margin:\x200;\n\x20\x20\x20\x20\
+SF:x20\x20\x20\x20\x20\x20\x20\x20font-family:\x20\"Open\x20Sans\",\x20Hel
+SF:vetica,\x20Arial,\x20sans-serif;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\
+SF:x20\x20\x20font-size:\x2012px;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x2
+SF:0\x20\x20line-height:\x201\.66666667;\n\x20\x20\x20\x20\x20\x20\x20\x20
+SF:\x20\x20\x20\x20color:\x20#333333;\n\x20\x20\x20\x20\x20\x20\x20\x20\x2
+SF:0\x20\x20\x20background-color:\x20#f5f5f5;\n\x20\x20\x20\x20\x20\x20\x2
+SF:0\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20img\x20{\n\x20\x20\x20\x20\x20\
+SF:x20\x20\x20\x20\x20\x20\x20border:\x200;\n\x20\x20\x20\x20\x20\x20\x20\
+SF:x20\x20\x20\x20\x20vertical-align:\x20middle;\n\x20\x20\x20\x20\x20\x20
+SF:\x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20h1\x20{\n\x20\x20\x20\x20\x2
+SF:0\x20\x20\x20\x20\x20\x20\x20font-weight:\x20300;\n\x20\x20\x20\x20\x20
+SF:\x20\x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20p\x20{\n\x20\x20\x20\x20
+SF:\x20\x20\x20\x20\x20\x20\x20\x20margin:\x200\x200\x2010px;\n\x20\x20\x2
+SF:0\x20\x20\x20\x20\x20}\n\x20\x20\x20\x20\x20\x20\x20\x20@font-face\x20{
+SF:\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-family:\x20'Open
+SF:\x20Sans';\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-style:
+SF:\x20normal;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-weigh
+SF:t:\x20300;\n\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20src:\x20u");
+MAC Address: 00:50:56:A8:24:64 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=32%CT=1%CU=42962%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=102%GCD=2%ISR=109%TI=Z%TS=A)
+OS:OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11NW7%O5=M5B4
+OS:ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=7120%W6=7120)
+OS:ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%
+OS:F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T
+OS:5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=
+OS:Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF
+OS:=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40
+OS:%CD=S)
+
+Network Distance: 1 hop
+Service Info: OS: Windows
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.29 ms fedora25.maison.ca (192.168.1.53)
+
+Nmap scan report for puppet.maison.ca (192.168.1.65)
+Host is up (0.00038s latency).
+Not shown: 993 closed ports
+PORT     STATE SERVICE   VERSION
+21/tcp   open  ftp       vsftpd 2.0.8 or later
+32/tcp   open  ssh       OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 50:dd:23:fb:2d:23:3c:48:ce:7e:54:e3:4e:e5:9b:21 (DSA)
+|_2048 ca:a4:da:09:56:67:a8:62:9b:27:94:f1:ed:37:0d:c1 (RSA)
+80/tcp   open  http      Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 500)
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Did not follow redirect to https://puppet.maison.ca/
+111/tcp  open  rpcbind   2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100024  1          54650/udp  status
+|_  100024  1          56507/tcp  status
+443/tcp  open  ssl/http  Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 500)
+| http-robots.txt: 1 disallowed entry 
+|_/
+| http-title: Login
+|_Requested resource was https://puppet.maison.ca/users/login
+| ssl-cert: Subject: commonName=puppet.maison.ca
+| Not valid before: 2015-02-18T23:03:22+00:00
+|_Not valid after:  2020-02-18T23:03:22+00:00
+|_ssl-date: 2018-01-12T17:22:22+00:00; 0s from local time.
+5666/tcp open  ssl/nrpe?
+8443/tcp open  ssl/http  WEBrick httpd 1.3.1 (Ruby 1.8.7 (2013-06-27); OpenSSL 1.0.1e)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 403)
+|_http-title: Site doesn't have a title (text/html).
+| ssl-cert: Subject: commonName=puppet.maison.ca
+| Not valid before: 2015-02-18T23:03:22+00:00
+|_Not valid after:  2020-02-18T23:03:22+00:00
+|_ssl-date: 2018-01-12T17:22:19+00:00; 0s from local time.
+MAC Address: 00:0C:29:CE:49:C3 (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.38 ms puppet.maison.ca (192.168.1.65)
+
+Nmap scan report for nomad.maison.ca (192.168.1.66)
+Host is up (0.00032s latency).
+Not shown: 985 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+32/tcp   open  ssh           OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 63:c3:85:8d:fa:3c:ac:5b:40:95:b2:c8:41:31:88:3a (DSA)
+|_2048 13:c6:6b:a6:0e:1c:3a:d5:0b:27:2e:8f:96:db:ef:10 (RSA)
+80/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Server & Storage Information
+81/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Server & Storage Information
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      37392/udp  mountd
+|   100005  1,2,3      50716/tcp  mountd
+|   100021  1,3,4      35289/tcp  nlockmgr
+|   100021  1,3,4      42257/udp  nlockmgr
+|   100024  1          45554/tcp  status
+|   100024  1          50951/udp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+443/tcp  open  ssl/http      Apache httpd 2.2.15 ((CentOS))
+| http-methods: Potentially risky methods: TRACE
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Apache HTTP Server Test Page powered by CentOS
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=SomeOrganization/stateOrProvinceName=SomeState/countryName=--
+| Not valid before: 2014-04-18T20:08:56+00:00
+|_Not valid after:  2015-04-18T20:08:56+00:00
+|_ssl-date: 2018-01-12T17:23:24+00:00; 0s from local time.
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+631/tcp  open  ipp           CUPS 1.4
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Home - CUPS 1.4.2
+873/tcp  open  tcpwrapped
+2049/tcp open  nfs           2-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      37392/udp  mountd
+|   100005  1,2,3      50716/tcp  mountd
+|   100021  1,3,4      35289/tcp  nlockmgr
+|   100021  1,3,4      42257/udp  nlockmgr
+|   100024  1          45554/tcp  status
+|   100024  1          50951/udp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+3306/tcp open  mysql         MySQL 5.1.73
+| mysql-info: Protocol: 10
+| Version: 5.1.73
+| Thread ID: 1393
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: B._tL\j~]77Og;-m`yaX
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+8443/tcp open  https-alt?
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=example.com/countryName=US
+| Not valid before: 2014-04-18T20:01:50+00:00
+|_Not valid after:  2018-04-18T20:01:50+00:00
+|_ssl-date: 2028-06-16T20:16:51+00:00; +10y156d2h53m19s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port8443-TCP:V=6.40%I=7%D=1/12%Time=5A58EDD5%P=x86_64-redhat-linux-gnu%
+SF:r(HTTPOptions,7,"\x15\x03\x03\0\x02\x02\x16")%r(RTSPRequest,7,"\x15\x03
+SF:\x03\0\x02\x02\x16")%r(RPCCheck,7,"\x15\x03\x03\0\x02\x02/")%r(Help,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(SSLSessionReq,7,"\x15\x03\x03\0\x02\x02\
+SF:(")%r(Kerberos,7,"\x15\x03\x03\0\x02\x02/")%r(SMBProgNeg,7,"\x15\x03\x0
+SF:3\0\x02\x02/")%r(X11Probe,7,"\x15\x03\x03\0\x02\x02/")%r(SIPOptions,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(LANDesk-RC,7,"\x15\x03\x03\0\x02\x02\x16
+SF:")%r(NCP,7,"\x15\x03\x03\0\x02\x02\x16")%r(afp,7,"\x15\x03\x03\0\x02\x0
+SF:2/");
+MAC Address: 00:50:56:A8:24:78 (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+
+Host script results:
+|_nbstat: NetBIOS name: NOMAD, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Unix (Samba 3.6.23-45.el6_9)
+|   NetBIOS computer name: 
+|   Workgroup: MAISON
+|_  System time: 2018-01-12T12:23:31-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   Share-level authentication (dangerous)
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server doesn't support SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.32 ms nomad.maison.ca (192.168.1.66)
+
+Nmap scan report for 192.168.1.69
+Host is up (0.00036s latency).
+Not shown: 985 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+32/tcp   open  ssh           OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 63:c3:85:8d:fa:3c:ac:5b:40:95:b2:c8:41:31:88:3a (DSA)
+|_2048 13:c6:6b:a6:0e:1c:3a:d5:0b:27:2e:8f:96:db:ef:10 (RSA)
+80/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 500)
+|_http-title: Database Error
+81/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      37392/udp  mountd
+|   100005  1,2,3      50716/tcp  mountd
+|   100021  1,3,4      35289/tcp  nlockmgr
+|   100021  1,3,4      42257/udp  nlockmgr
+|   100024  1          45554/tcp  status
+|   100024  1          50951/udp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+443/tcp  open  ssl/http      Apache httpd 2.2.15 ((CentOS))
+| http-methods: Potentially risky methods: TRACE
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Apache HTTP Server Test Page powered by CentOS
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=SomeOrganization/stateOrProvinceName=SomeState/countryName=--
+| Not valid before: 2014-04-18T20:08:56+00:00
+|_Not valid after:  2015-04-18T20:08:56+00:00
+|_ssl-date: 2018-01-12T17:22:50+00:00; 0s from local time.
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+631/tcp  open  ipp           CUPS 1.4
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Home - CUPS 1.4.2
+873/tcp  open  tcpwrapped
+2049/tcp open  nfs           2-4 (RPC #100003)
+3306/tcp open  mysql         MySQL 5.1.73
+| mysql-info: Protocol: 10
+| Version: 5.1.73
+| Thread ID: 1387
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: Ap2HQ=}#.`y`Vl<'K%t<
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+8443/tcp open  https-alt?
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=example.com/countryName=US
+| Not valid before: 2014-04-18T20:01:50+00:00
+|_Not valid after:  2018-04-18T20:01:50+00:00
+|_ssl-date: 2043-05-28T14:16:12+00:00; +25y135d20h53m36s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port8443-TCP:V=6.40%I=7%D=1/12%Time=5A58EDE0%P=x86_64-redhat-linux-gnu%
+SF:r(HTTPOptions,7,"\x15\x03\x03\0\x02\x02\x16")%r(RTSPRequest,7,"\x15\x03
+SF:\x03\0\x02\x02\x16")%r(RPCCheck,7,"\x15\x03\x03\0\x02\x02/")%r(Help,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(SSLSessionReq,7,"\x15\x03\x03\0\x02\x02\
+SF:(")%r(Kerberos,7,"\x15\x03\x03\0\x02\x02/")%r(SMBProgNeg,7,"\x15\x03\x0
+SF:3\0\x02\x02/")%r(X11Probe,7,"\x15\x03\x03\0\x02\x02/")%r(SIPOptions,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(LANDesk-RC,7,"\x15\x03\x03\0\x02\x02\x16
+SF:")%r(NCP,7,"\x15\x03\x03\0\x02\x02\x16")%r(afp,7,"\x15\x03\x03\0\x02\x0
+SF:2/");
+MAC Address: 00:50:56:A8:24:78 (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+
+Host script results:
+|_nbstat: NetBIOS name: NOMAD, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Unix (Samba 3.6.23-45.el6_9)
+|   NetBIOS computer name: 
+|   Workgroup: MAISON
+|_  System time: 2018-01-12T12:22:20-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   Share-level authentication (dangerous)
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server doesn't support SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.36 ms 192.168.1.69
+
+Nmap scan report for mail.maison.ca (192.168.1.70)
+Host is up (0.00035s latency).
+Not shown: 985 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+32/tcp   open  ssh           OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 63:c3:85:8d:fa:3c:ac:5b:40:95:b2:c8:41:31:88:3a (DSA)
+|_2048 13:c6:6b:a6:0e:1c:3a:d5:0b:27:2e:8f:96:db:ef:10 (RSA)
+80/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 500)
+|_http-title: Database Error
+81/tcp   open  http          Apache httpd 2.2.15 ((CentOS))
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      37392/udp  mountd
+|   100005  1,2,3      50716/tcp  mountd
+|   100021  1,3,4      35289/tcp  nlockmgr
+|   100021  1,3,4      42257/udp  nlockmgr
+|   100024  1          45554/tcp  status
+|   100024  1          50951/udp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+443/tcp  open  ssl/http      Apache httpd 2.2.15 ((CentOS))
+| http-methods: Potentially risky methods: TRACE
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Apache HTTP Server Test Page powered by CentOS
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=SomeOrganization/stateOrProvinceName=SomeState/countryName=--
+| Not valid before: 2014-04-18T20:08:56+00:00
+|_Not valid after:  2015-04-18T20:08:56+00:00
+|_ssl-date: 2018-01-12T17:23:30+00:00; -1s from local time.
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: MAISON)
+631/tcp  open  ipp           CUPS 1.4
+|_http-methods: No Allow or Public header in OPTIONS response (status code 400)
+|_http-title: 400 Bad Request
+873/tcp  open  tcpwrapped
+2049/tcp open  nfs           2-4 (RPC #100003)
+3306/tcp open  mysql         MySQL 5.1.73
+| mysql-info: Protocol: 10
+| Version: 5.1.73
+| Thread ID: 1386
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: wl7k6h+=1|Al}NNz>eb<
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+8443/tcp open  https-alt?
+| ssl-cert: Subject: commonName=nomad.maison.ca/organizationName=example.com/countryName=US
+| Not valid before: 2014-04-18T20:01:50+00:00
+|_Not valid after:  2018-04-18T20:01:50+00:00
+|_ssl-date: 1971-06-05T07:17:43+00:00; -46y221d10h05m46s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port8443-TCP:V=6.40%I=7%D=1/12%Time=5A58EDEA%P=x86_64-redhat-linux-gnu%
+SF:r(HTTPOptions,7,"\x15\x03\x03\0\x02\x02\x16")%r(RTSPRequest,7,"\x15\x03
+SF:\x03\0\x02\x02\x16")%r(RPCCheck,7,"\x15\x03\x03\0\x02\x02/")%r(Help,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(SSLSessionReq,7,"\x15\x03\x03\0\x02\x02\
+SF:(")%r(Kerberos,7,"\x15\x03\x03\0\x02\x02/")%r(SMBProgNeg,7,"\x15\x03\x0
+SF:3\0\x02\x02/")%r(X11Probe,7,"\x15\x03\x03\0\x02\x02/")%r(SIPOptions,7,"
+SF:\x15\x03\x03\0\x02\x02\x16")%r(LANDesk-RC,7,"\x15\x03\x03\0\x02\x02\x16
+SF:")%r(NCP,7,"\x15\x03\x03\0\x02\x02\x16")%r(afp,7,"\x15\x03\x03\0\x02\x0
+SF:2/");
+MAC Address: 00:50:56:A8:24:78 (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+
+Host script results:
+|_nbstat: NetBIOS name: NOMAD, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Unix (Samba 3.6.23-45.el6_9)
+|   NetBIOS computer name: 
+|   Workgroup: MAISON
+|_  System time: 2018-01-12T12:23:26-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   Share-level authentication (dangerous)
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server doesn't support SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.35 ms mail.maison.ca (192.168.1.70)
+
+Nmap scan report for raspi2.maison.ca (192.168.1.77)
+Host is up (0.00051s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi2.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=raspi2.maison.ca
+| Not valid before: 2017-06-24T20:03:58+00:00
+|_Not valid after:  2027-06-22T20:03:58+00:00
+|_ssl-date: 2001-09-23T22:46:35+00:00; -16y110d18h35m55s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+3389/tcp open  ms-wbt-server xrdp
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58EDE0%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_6\.7p1\x20Raspbian-5\+deb8u4\r\n");
+MAC Address: B8:27:EB:1A:DC:B3 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=38549%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=108%GCD=1%ISR=10B%TI=Z%CI=I%
+OS:II=I%TS=7)OPS(O1=M5B4ST11NW6%O2=M5B4ST11NW6%O3=M5B4NNT11NW6%O4=M5B4ST11N
+OS:W6%O5=M5B4ST11NW6%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi2.maison.ca
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.51 ms raspi2.maison.ca (192.168.1.77)
+
+Nmap scan report for 192.168.1.99
+Host is up (0.00066s latency).
+Not shown: 995 closed ports
+PORT     STATE SERVICE    VERSION
+23/tcp   open  telnet     Brother/HP printer telnetd
+80/tcp   open  http       Debut embedded httpd 1.20 (Brother/HP printer http admin)
+| http-title: Brother HL-2270DW series
+|_Requested resource was /printer/main.html
+515/tcp  open  printer
+631/tcp  open  ipp?
+9100/tcp open  jetdirect?
+MAC Address: 00:1B:A9:71:7B:A4 (Brother Industries)
+Device type: printer|webcam
+Running: HP embedded, Brother embedded, Sony embedded
+OS CPE: cpe:/h:sony:snc-rz30n
+OS details: HP LaserJet (1020-, 2010-, 2600-, 2800-, 3050-, or 3390-series), or Brother (DCP-375CW, HL-5250DN, HL-22700W, MFC-7840N, MFC-8860DN, or MFC-9970CDW) printer; or Sony SNC-RZ30N network camera
+Network Distance: 1 hop
+Service Info: Device: printer
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.66 ms 192.168.1.99
+
+Nmap scan report for esx2.maison.ca (192.168.1.100)
+Host is up (0.00026s latency).
+Not shown: 989 filtered ports
+PORT     STATE  SERVICE         VERSION
+22/tcp   open   ssh             OpenSSH 7.3 (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+80/tcp   open   http            VMware ESXi Server httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 301)
+|_http-title: Did not follow redirect to https://esx2.maison.ca/
+427/tcp  open   svrloc?
+443/tcp  open   ssl/https?
+|_http-methods: No Allow or Public header in OPTIONS response (status code 501)
+|_http-title: Site doesn't have a title (text/html).
+| ssl-cert: Subject: commonName=esx2.maison.ca/organizationName=VMware/stateOrProvinceName=California/countryName=US
+| Not valid before: 2015-08-25T14:10:10+00:00
+|_Not valid after:  2020-08-24T14:10:10+00:00
+902/tcp  open   ssl/vmware-auth VMware Authentication Daemon 1.10 (Uses VNC, SOAP)
+5988/tcp closed wbem-http
+5989/tcp open   tcpwrapped
+8000/tcp open   http-alt?
+8080/tcp closed http-proxy
+8300/tcp open   tmi?
+9080/tcp open   ssl/soap        gSOAP soap 2.8
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/xml).
+| ssl-cert: Subject: commonName=esx2.maison.ca/organizationName=VMware/stateOrProvinceName=California/countryName=US
+| Not valid before: 2015-08-25T14:10:10+00:00
+|_Not valid after:  2020-08-24T14:10:10+00:00
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port443-TCP:V=6.40%T=SSL%I=7%D=1/12%Time=5A58EDE9%P=x86_64-redhat-linux
+SF:-gnu%r(GetRequest,192,"HTTP/1\.1\x20200\x20OK\r\nDate:\x20Fri,\x2012\x2
+SF:0Jan\x202018\x2017:18:33\x20GMT\r\nConnection:\x20close\r\nContent-Type
+SF::\x20text/html\r\nX-Frame-Options:\x20DENY\r\nContent-Length:\x20258\r\
+SF:n\r\n<!DOCTYPE\x20HTML\x20PUBLIC\x20\"-//W3C//DTD\x20HTML\x204\.01//EN\
+SF:"\x20\"http://www\.w3\.org/TR/html4/strict\.dtd\">\n\n<html\x20lang=\"e
+SF:n\">\n<head>\n\x20\x20\x20\x20<meta\x20http-equiv=\"content-type\"\x20c
+SF:ontent=\"text/html;\x20charset=utf8\">\n\x20\x20\x20\x20<meta\x20http-e
+SF:quiv=\"refresh\"\x20content=\"0;URL='/ui'\"/>\n</head>\n</html>\n")%r(H
+SF:TTPOptions,A5,"HTTP/1\.1\x20501\x20Not\x20Implemented\r\nDate:\x20Fri,\
+SF:x2012\x20Jan\x202018\x2017:18:38\x20GMT\r\nConnection:\x20close\r\nCont
+SF:ent-Type:\x20text;\x20charset=plain\r\nX-Frame-Options:\x20DENY\r\nCont
+SF:ent-Length:\x200\r\n\r\n")%r(RTSPRequest,B3,"HTTP/1\.1\x20400\x20Bad\x2
+SF:0Request\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:18:38\x20GMT\r\nCo
+SF:nnection:\x20close\r\nContent-Type:\x20text/html\r\nContent-Length:\x20
+SF:50\r\n\r\n<HTML><BODY><H1>400\x20Bad\x20Request</H1></BODY></HTML>")%r(
+SF:FourOhFourRequest,9F,"HTTP/1\.1\x20404\x20Not\x20Found\r\nDate:\x20Fri,
+SF:\x2012\x20Jan\x202018\x2017:19:21\x20GMT\r\nConnection:\x20close\r\nCon
+SF:tent-Type:\x20text;\x20charset=plain\r\nX-Frame-Options:\x20DENY\r\nCon
+SF:tent-Length:\x200\r\n\r\n")%r(SIPOptions,B3,"HTTP/1\.1\x20400\x20Bad\x2
+SF:0Request\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:19:31\x20GMT\r\nCo
+SF:nnection:\x20close\r\nContent-Type:\x20text/html\r\nContent-Length:\x20
+SF:50\r\n\r\n<HTML><BODY><H1>400\x20Bad\x20Request</H1></BODY></HTML>");
+MAC Address: BC:30:5B:E8:FA:86 (Dell)
+Aggressive OS guesses: Crestron XPanel control system (92%), Netgear DG834G WAP or Western Digital WD TV media player (91%), VMware ESXi Server 5.0 (90%), FreeBSD 8.0-BETA2 - 9.1-RELEASE (90%), VMware ESXi Server 4.1 (90%), Linux 2.6.24 (89%), Epson Stylus Pro 400 printer (89%), Apple Mac OS X 10.4.11 (Tiger) (Darwin 8.11.0, PowerPC) (88%), FreeBSD 6.2-RELEASE (88%), FreeBSD 7.0-RELEASE-p1 - 10.0-CURRENT (88%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.26 ms esx2.maison.ca (192.168.1.100)
+
+Nmap scan report for gumby.maison.ca (192.168.1.101)
+Host is up (0.00034s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd (before 2.0.8) or WU-FTPD
+32/tcp   open  ssh           OpenSSH 4.3 (protocol 2.0)
+| ssh-hostkey: 1024 da:4f:52:02:5a:2a:6a:fc:73:63:e9:47:0b:36:6b:8f (DSA)
+|_2048 b4:8d:56:71:c9:7e:97:ba:79:87:95:0d:8a:29:fc:9a (RSA)
+80/tcp   open  http          Apache httpd 2.2.3 ((Red Hat))
+|_http-generator: WordPress 3.1.2
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title:  LINterNUX
+111/tcp  open  rpcbind       2 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3        970/udp  mountd
+|   100005  1,2,3        973/tcp  mountd
+|   100011  1,2          941/udp  rquotad
+|   100011  1,2          944/tcp  rquotad
+|   100021  1,3,4      23189/udp  nlockmgr
+|   100021  1,3,4      54169/tcp  nlockmgr
+|   100024  1            930/udp  status
+|_  100024  1            933/tcp  status
+443/tcp  open  ssl/http      Apache httpd 2.2.3 ((Red Hat))
+| http-methods: Potentially risky methods: TRACE
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Test Page for the Apache HTTP Server on Red Hat Enterprise Linux
+| ssl-cert: Subject: commonName=localhost.localdomain/organizationName=SomeOrganization/stateOrProvinceName=SomeState/countryName=--
+| Not valid before: 2007-06-28T19:05:10+00:00
+|_Not valid after:  2008-06-27T19:05:10+00:00
+|_ssl-date: 2018-01-12T17:23:24+00:00; 0s from local time.
+514/tcp  open  tcpwrapped
+631/tcp  open  ipp           CUPS 1.3.7
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Home - CUPS 1.3.7
+873/tcp  open  tcpwrapped
+2049/tcp open  nfs           2-4 (RPC #100003)
+3306/tcp open  mysql         MySQL 5.0.95
+| mysql-info: Protocol: 10
+| Version: 5.0.95
+| Thread ID: 9
+| Some Capabilities: Connect with DB, Compress, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: ^w^NMv+qy,ma~uRx)\tU
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:50:56:89:6F:93 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=21%CT=1%CU=39344%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=FD%GCD=1%ISR=111%TI=Z%CI=Z%I
+OS:I=I%TS=A)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11NW
+OS:7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=16A0%W2=16A0%W3=16A0%W4=16A0%W5=16A0
+OS:%W6=16A0)ECN(R=Y%DF=Y%T=40%W=16D0%O=M5B4NNSNW7%CC=N%Q=)T1(R=Y%DF=Y%T=40%
+OS:S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%
+OS:RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W
+OS:=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)
+OS:U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%D
+OS:FI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.34 ms gumby.maison.ca (192.168.1.101)
+
+Nmap scan report for 192.168.1.103
+Host is up (0.00033s latency).
+Not shown: 993 closed ports
+PORT     STATE SERVICE       VERSION
+32/tcp   open  ssh           OpenSSH 4.3 (protocol 2.0)
+| ssh-hostkey: 1024 81:47:45:6b:12:4b:92:38:cc:87:b1:06:2e:08:cf:9d (DSA)
+|_2048 cc:16:6b:99:ba:11:35:49:f0:69:bd:a9:4f:d6:63:8f (RSA)
+111/tcp  open  rpcbind       2 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100024  1            711/udp  status
+|_  100024  1            714/tcp  status
+514/tcp  open  tcpwrapped
+631/tcp  open  ipp           CUPS 1.3.7
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+| http-robots.txt: 1 disallowed entry 
+|_/
+|_http-title: Home - CUPS 1.3.7
+714/tcp  open  status        1 (RPC #100024)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100024  1            711/udp  status
+|_  100024  1            714/tcp  status
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:50:56:89:6F:95 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=32%CT=1%CU=30769%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=108%GCD=1%ISR=105%TI=Z%CI=Z%
+OS:II=I%TS=A)OPS(O1=M5B4ST11NW4%O2=M5B4ST11NW4%O3=M5B4NNT11NW4%O4=M5B4ST11N
+OS:W4%O5=M5B4ST11NW4%O6=M5B4ST11)WIN(W1=16A0%W2=16A0%W3=16A0%W4=16A0%W5=16A
+OS:0%W6=16A0)ECN(R=Y%DF=Y%T=40%W=16D0%O=M5B4NNSNW4%CC=N%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.33 ms 192.168.1.103
+
+Nmap scan report for hpjetdirect.maison.ca (192.168.1.107)
+Host is up (0.0024s latency).
+Not shown: 990 closed ports
+PORT     STATE    SERVICE    VERSION
+21/tcp   open     ftp        HP JetDirect ftpd
+|_ftp-anon: ERROR: Script execution failed (use -d to debug)
+|_ftp-bounce: no banner
+23/tcp   open     telnet     HP JetDirect printer telnetd
+80/tcp   open     http?
+280/tcp  filtered http-mgmt
+515/tcp  open     printer
+631/tcp  filtered ipp
+5120/tcp open     tcpwrapped
+9100/tcp open     jetdirect?
+9220/tcp open     hp-gsg     HP JetDirect Generic Scan Gateway 1.0
+9290/tcp filtered unknown
+MAC Address: 00:01:E6:75:23:9C (Hewlett-Packard Company)
+Device type: print server|printer
+Running: HP embedded
+OS CPE: cpe:/h:hp:jetdirect_170x cpe:/h:hp:inkjet_3000
+OS details: HP 170X print server or Inkjet 3000 printer, HP LaserJet 4250 printer
+Network Distance: 1 hop
+Service Info: Devices: print server, printer
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   2.36 ms hpjetdirect.maison.ca (192.168.1.107)
+
+Nmap scan report for gotham.maison.ca (192.168.1.108)
+Host is up (0.00035s latency).
+Not shown: 995 closed ports
+PORT     STATE SERVICE   VERSION
+21/tcp   open  ftp       vsftpd 2.0.8 or later
+25/tcp   open  smtp      Postfix smtpd
+|_smtp-commands: gotham.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh       OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 df:2a:4f:0f:74:dc:f5:73:58:cd:d9:e6:4c:4d:f8:85 (DSA)
+|_2048 a0:3b:32:98:31:b3:d2:0e:4f:c5:f8:22:26:97:3c:f5 (RSA)
+111/tcp  open  rpcbind   2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100024  1          43460/udp  status
+|_  100024  1          63374/tcp  status
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:50:56:89:D0:BF (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+Service Info: Host:  gotham.maison.ca
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.35 ms gotham.maison.ca (192.168.1.108)
+
+Nmap scan report for 192.168.1.118
+Host is up (0.00050s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi1.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, SMTPUTF8, 
+| ssl-cert: Subject: commonName=raspi1.maison.ca
+| Not valid before: 2017-12-18T21:26:15+00:00
+|_Not valid after:  2027-12-16T21:26:15+00:00
+|_ssl-date: 2076-01-21T14:01:00+00:00; +58y8d20h36m55s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100021  1,3,4      44059/tcp  nlockmgr
+|   100021  1,3,4      49396/udp  nlockmgr
+|   100024  1          44525/udp  status
+|_  100024  1          47097/tcp  status
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58EDF9%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_7\.4p1\x20Raspbian-10\+deb9u2\n");
+MAC Address: B8:27:EB:E5:0B:A2 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=37763%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=FF%GCD=1%ISR=101%TI=Z%CI=I%I
+OS:I=I%TS=7)OPS(O1=M5B4ST11NW6%O2=M5B4ST11NW6%O3=M5B4NNT11NW6%O4=M5B4ST11NW
+OS:6%O5=M5B4ST11NW6%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=7120
+OS:%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40%
+OS:S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%
+OS:RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W
+OS:=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)
+OS:U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%D
+OS:FI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi1.maison.ca; OS: Windows
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.50 ms 192.168.1.118
+
+Nmap scan report for dns2.maison.ca (192.168.1.127)
+Host is up (0.00040s latency).
+Not shown: 990 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: raspi4.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=raspi4
+| Not valid before: 2016-12-26T21:08:51+00:00
+|_Not valid after:  2026-12-24T21:08:51+00:00
+|_ssl-date: 2026-02-18T06:52:16+00:00; +8y36d13h28m47s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+53/tcp   open  domain        ISC BIND Access Restricted
+| dns-nsid: 
+|_  bind.version: Access Restricted
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      36048/udp  mountd
+|   100005  1,2,3      44373/tcp  mountd
+|   100021  1,3,4      44683/tcp  nlockmgr
+|   100021  1,3,4      60284/udp  nlockmgr
+|   100024  1          35663/udp  status
+|   100024  1          58379/tcp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: RASPI4)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: RASPI4)
+2049/tcp open  nfs           2-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  2,3,4       2049/tcp  nfs
+|   100003  2,3,4       2049/udp  nfs
+|   100005  1,2,3      36048/udp  mountd
+|   100005  1,2,3      44373/tcp  mountd
+|   100021  1,3,4      44683/tcp  nlockmgr
+|   100021  1,3,4      60284/udp  nlockmgr
+|   100024  1          35663/udp  status
+|   100024  1          58379/tcp  status
+|   100227  2,3         2049/tcp  nfs_acl
+|_  100227  2,3         2049/udp  nfs_acl
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+9418/tcp open  git?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58EDFA%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_6\.7p1\x20Raspbian-5\+deb8u4\r\n");
+MAC Address: B8:27:EB:5F:38:70 (Raspberry Pi Foundation)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=35618%PV=Y%DS=1%DC=D%G=Y%M=B827EB%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=108%GCD=1%ISR=109%TI=Z%CI=I%
+OS:II=I%TS=7)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  raspi4.maison.ca
+
+Host script results:
+|_nbstat: NetBIOS name: RASPI4, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.2.14-Debian)
+|   Computer name: raspi4
+|   NetBIOS computer name: RASPI4
+|   Domain name: 
+|   FQDN: raspi4
+|_  System time: 2018-01-12T12:23:27-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.40 ms dns2.maison.ca (192.168.1.127)
+
+Nmap scan report for rhel3.maison.ca (192.168.1.131)
+Host is up (0.00037s latency).
+Not shown: 992 closed ports
+PORT      STATE SERVICE    VERSION
+21/tcp    open  ftp        vsftpd (before 2.0.8) or WU-FTPD
+32/tcp    open  ssh        OpenSSH 3.6.1p2 (protocol 2.0)
+| ssh-hostkey: 1024 22:b0:4f:10:2a:1a:bc:56:3a:12:55:7a:7e:da:58:4f (DSA)
+|_1024 c3:f5:d5:b4:5b:d0:b8:72:a6:93:91:46:dd:44:de:90 (RSA)
+111/tcp   open  rpcbind    2 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100024  1          32768/tcp  status
+|   100024  1          32768/udp  status
+|_  391002  2          32769/tcp  sgi_fam
+199/tcp   open  smux       Linux SNMP multiplexer
+514/tcp   open  tcpwrapped
+3306/tcp  open  mysql      MySQL (unauthorized)
+6000/tcp  open  X11        (access denied)
+32768/tcp open  status     1 (RPC #100024)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100024  1          32768/tcp  status
+|   100024  1          32768/udp  status
+|_  391002  2          32769/tcp  sgi_fam
+MAC Address: 00:0C:29:A4:48:2F (VMware)
+Device type: general purpose
+Running: Linux 2.4.X
+OS CPE: cpe:/o:linux:linux_kernel:2.4
+OS details: Linux 2.4.18 - 2.4.35 (likely embedded)
+Network Distance: 1 hop
+Service Info: OSs: Linux, Unix; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.37 ms rhel3.maison.ca (192.168.1.131)
+
+Nmap scan report for 192.168.1.132
+Host is up (0.00041s latency).
+Not shown: 998 closed ports
+PORT    STATE SERVICE VERSION
+32/tcp  open  ssh     OpenSSH 3.9p1 (protocol 1.99)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+|_sshv1: Server supports SSHv1
+111/tcp open  rpcbind 2 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2            111/tcp  rpcbind
+|   100000  2            111/udp  rpcbind
+|   100024  1            757/udp  status
+|_  100024  1            760/tcp  status
+MAC Address: 00:50:56:89:F2:BD (VMware)
+Device type: general purpose
+Running: Linux 2.6.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6
+OS details: Linux 2.6.9 - 2.6.30
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.41 ms 192.168.1.132
+
+Nmap scan report for centos6.maison.ca (192.168.1.138)
+Host is up (0.00035s latency).
+Not shown: 997 closed ports
+PORT    STATE SERVICE VERSION
+21/tcp  open  ftp     vsftpd 2.0.8 or later
+32/tcp  open  ssh     OpenSSH 5.3 (protocol 2.0)
+| ssh-hostkey: 1024 df:2a:4f:0f:74:dc:f5:73:58:cd:d9:e6:4c:4d:f8:85 (DSA)
+|_2048 a0:3b:32:98:31:b3:d2:0e:4f:c5:f8:22:26:97:3c:f5 (RSA)
+111/tcp open  rpcbind 2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100024  1          12393/tcp  status
+|_  100024  1          44810/udp  status
+MAC Address: 00:50:56:89:40:E4 (VMware)
+Device type: general purpose
+Running: Linux 2.6.X|3.X
+OS CPE: cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3
+OS details: Linux 2.6.32 - 3.9
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.35 ms centos6.maison.ca (192.168.1.138)
+
+Nmap scan report for centos7.maison.ca (192.168.1.140)
+Host is up (0.00029s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE       VERSION
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 1d:84:a7:6b:79:8e:b2:05:26:d2:e2:fb:2f:52:6b:af (RSA)
+|_256 92:03:27:92:8e:b3:1c:b7:93:95:6f:05:73:77:64:17 (ECDSA)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100021  1,3,4      36744/udp  nlockmgr
+|   100021  1,3,4      41998/tcp  nlockmgr
+|   100024  1          57948/udp  status
+|_  100024  1          58559/tcp  status
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:0C:29:B3:81:EB (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=32%CT=1%CU=33839%PV=Y%DS=1%DC=D%G=Y%M=000C29%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=FF%GCD=1%ISR=10A%TI=Z%II=I%T
+OS:S=A)SEQ(SP=FF%GCD=1%ISR=10A%TI=Z%TS=A)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%
+OS:O3=M5B4NNT11NW7%O4=M5B4ST11NW7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2
+OS:=7120%W3=7120%W4=7120%W5=7120%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNS
+OS:NW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%
+OS:DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%
+OS:O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%
+OS:W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%
+OS:RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: OS: Windows
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.29 ms centos7.maison.ca (192.168.1.140)
+
+Nmap scan report for 192.168.1.143
+Host is up (0.00031s latency).
+Not shown: 995 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: ubuntu1604.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=ubuntu1604.maison.ca
+| Not valid before: 2017-02-03T17:24:59+00:00
+|_Not valid after:  2027-02-01T17:24:59+00:00
+|_ssl-date: 2008-11-06T15:05:13+00:00; -9y67d2h17m41s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100021  1,3,4      36299/tcp  nlockmgr
+|   100021  1,3,4      55450/udp  nlockmgr
+|   100024  1          37939/tcp  status
+|_  100024  1          43822/udp  status
+3389/tcp open  ms-wbt-server xrdp
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58EE0C%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,29,"SSH-2\.0-OpenSSH_7\.2p2\x20Ubuntu-4ubuntu2\.2\r\n");
+MAC Address: 00:50:56:A8:13:5A (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=21%CT=1%CU=40063%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=105%GCD=1%ISR=109%TI=Z%CI=I%
+OS:II=I%TS=8)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  ubuntu1604.maison.ca
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.31 ms 192.168.1.143
+
+Nmap scan report for ubuntu1404.maison.ca (192.168.1.144)
+Host is up (0.00031s latency).
+Not shown: 994 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: ubuntu1404, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=ubuntu1404.maison.ca
+| Not valid before: 2017-01-16T03:54:11+00:00
+|_Not valid after:  2027-01-14T03:54:11+00:00
+|_ssl-date: 2033-09-18T10:28:04+00:00; +15y248d17h05m20s from local time.
+32/tcp   open  ssh           (protocol 2.0)
+| ssh-hostkey: 1024 5f:f5:7e:08:ec:2e:7c:e2:53:6e:31:76:f5:73:d5:f4 (DSA)
+| 2048 83:4d:40:82:a4:ca:d2:ad:44:f6:a8:6d:ce:1a:dc:6a (RSA)
+|_256 ed:e0:7c:83:ba:2e:86:14:97:a3:fc:5d:22:c9:cb:66 (ECDSA)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100021  1,3,4      34189/udp  nlockmgr
+|   100021  1,3,4      55559/tcp  nlockmgr
+|   100024  1          52184/tcp  status
+|_  100024  1          53365/udp  status
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port32-TCP:V=6.40%I=7%D=1/12%Time=5A58EE0F%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,2B,"SSH-2\.0-OpenSSH_6\.6\.1p1\x20Ubuntu-2ubuntu2\.8\r\n");
+MAC Address: 00:50:56:A8:9C:D6 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=21%CT=1%CU=34044%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=100%GCD=2%ISR=10F%TI=Z%CI=I%
+OS:II=I%TS=8)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  ubuntu1404
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.31 ms ubuntu1404.maison.ca (192.168.1.144)
+
+Nmap scan report for debian7.maison.ca (192.168.1.146)
+Host is up (0.00028s latency).
+Not shown: 996 closed ports
+PORT     STATE SERVICE       VERSION
+32/tcp   open  ssh           OpenSSH 6.0p1 Debian 4+deb7u6 (protocol 2.0)
+| ssh-hostkey: 1024 d3:fc:48:de:7f:d6:8d:7d:e8:29:10:df:97:cd:fe:1f (DSA)
+| 2048 43:04:b4:81:ba:23:d9:8f:b0:e8:2a:f6:49:d0:de:36 (RSA)
+|_256 83:05:b3:4b:9f:0b:b4:5f:f6:4c:7b:93:29:23:8a:33 (ECDSA)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100024  1          34794/udp  status
+|_  100024  1          48229/tcp  status
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:50:56:A8:59:A6 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=32%CT=1%CU=40492%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=100%GCD=1%ISR=10F%TI=Z%CI=I%
+OS:II=I%TS=8)OPS(O1=M5B4ST11NW4%O2=M5B4ST11NW4%O3=M5B4NNT11NW4%O4=M5B4ST11N
+OS:W4%O5=M5B4ST11NW4%O6=M5B4ST11)WIN(W1=3890%W2=3890%W3=3890%W4=3890%W5=389
+OS:0%W6=3890)ECN(R=Y%DF=Y%T=40%W=3908%O=M5B4NNSNW4%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.28 ms debian7.maison.ca (192.168.1.146)
+
+Nmap scan report for debian8.maison.ca (192.168.1.147)
+Host is up (0.00031s latency).
+Not shown: 995 closed ports
+PORT     STATE SERVICE       VERSION
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: debian8.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+| ssl-cert: Subject: commonName=debian8.maison.ca
+| Not valid before: 2017-01-19T21:29:53+00:00
+|_Not valid after:  2027-01-17T21:29:53+00:00
+|_ssl-date: 2105-03-31T22:12:04+00:00; +87y78d4h49m46s from local time.
+32/tcp   open  ssh           OpenSSH 6.7p1 Debian 5+deb8u4 (protocol 2.0)
+|_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100021  1,3,4      36262/tcp  nlockmgr
+|   100021  1,3,4      53464/udp  nlockmgr
+|   100024  1          39363/tcp  status
+|_  100024  1          45010/udp  status
+3389/tcp open  ms-wbt-server xrdp
+5666/tcp open  ssl/nrpe?
+MAC Address: 00:50:56:A8:E6:F4 (VMware)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=25%CT=1%CU=40636%PV=Y%DS=1%DC=D%G=Y%M=005056%T
+OS:M=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=104%GCD=1%ISR=107%TI=Z%CI=I%
+OS:II=I%TS=8)OPS(O1=M5B4ST11NW7%O2=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11N
+OS:W7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=712
+OS:0%W6=7120)ECN(R=Y%DF=Y%T=40%W=7210%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40
+OS:%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=
+OS:%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%
+OS:W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=
+OS:)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%
+OS:DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: Host:  debian8.maison.ca; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.31 ms debian8.maison.ca (192.168.1.147)
+
+Nmap scan report for win7lab.maison.ca (192.168.1.175)
+Host is up (0.00042s latency).
+Not shown: 996 filtered ports
+PORT     STATE SERVICE       VERSION
+135/tcp  open  msrpc         Microsoft Windows RPC
+139/tcp  open  netbios-ssn
+445/tcp  open  netbios-ssn
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+MAC Address: 00:50:56:89:D0:C2 (VMware)
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Device type: general purpose
+Running: Microsoft Windows Vista|7|2008
+OS CPE: cpe:/o:microsoft:windows_vista::sp2 cpe:/o:microsoft:windows_7::sp1 cpe:/o:microsoft:windows_server_2008
+OS details: Microsoft Windows Vista SP2, Windows 7 SP1, or Windows Server 2008
+Network Distance: 1 hop
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_nbstat: NetBIOS name: WIN7LAB, NetBIOS user: <unknown>, NetBIOS MAC: 00:50:56:89:d0:c2 (VMware)
+| smb-os-discovery: 
+|   OS: Windows 7 Ultimate 7601 Service Pack 1 (Windows 7 Ultimate 6.1)
+|   OS CPE: cpe:/o:microsoft:windows_7::sp1
+|   Computer name: win7lab
+|   NetBIOS computer name: WIN7LAB
+|   Workgroup: MAISON
+|_  System time: 2018-01-12T12:22:30-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.42 ms win7lab.maison.ca (192.168.1.175)
+
+Nmap scan report for dhcp221.maison.ca (192.168.1.221)
+Host is up (0.0046s latency).
+Not shown: 634 closed ports, 358 filtered ports
+PORT      STATE SERVICE          VERSION
+3689/tcp  open  rendezvous?
+5000/tcp  open  upnp?
+7000/tcp  open  afs3-fileserver?
+7100/tcp  open  font-service?
+49152/tcp open  unknown
+49153/tcp open  unknown
+49155/tcp open  unknown
+62078/tcp open  tcpwrapped
+4 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port3689-TCP:V=6.40%I=7%D=1/12%Time=5A58EE1D%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,74,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nDAAP-Server:\x20
+SF:iTunes/11\.1b37\x20\(OS\x20X\)\r\nDate:\x202018-01-12\x2017:19:20\x20\+
+SF:0000\r\nContent-Length:\x200\r\n\r\n")%r(GenericLines,74,"HTTP/1\.1\x20
+SF:400\x20Bad\x20Request\r\nDAAP-Server:\x20iTunes/11\.1b37\x20\(OS\x20X\)
+SF:\r\nDate:\x202018-01-12\x2017:19:25\x20\+0000\r\nContent-Length:\x200\r
+SF:\n\r\n")%r(HTTPOptions,74,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nDAAP-S
+SF:erver:\x20iTunes/11\.1b37\x20\(OS\x20X\)\r\nDate:\x202018-01-12\x2017:1
+SF:9:30\x20\+0000\r\nContent-Length:\x200\r\n\r\n")%r(RTSPRequest,74,"HTTP
+SF:/1\.1\x20400\x20Bad\x20Request\r\nDAAP-Server:\x20iTunes/11\.1b37\x20\(
+SF:OS\x20X\)\r\nDate:\x202018-01-12\x2017:19:35\x20\+0000\r\nContent-Lengt
+SF:h:\x200\r\n\r\n")%r(SSLSessionReq,74,"HTTP/1\.1\x20400\x20Bad\x20Reques
+SF:t\r\nDAAP-Server:\x20iTunes/11\.1b37\x20\(OS\x20X\)\r\nDate:\x202018-01
+SF:-12\x2017:20:03\x20\+0000\r\nContent-Length:\x200\r\n\r\n")%r(Kerberos,
+SF:74,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nDAAP-Server:\x20iTunes/11\.1b
+SF:37\x20\(OS\x20X\)\r\nDate:\x202018-01-12\x2017:20:08\x20\+0000\r\nConte
+SF:nt-Length:\x200\r\n\r\n")%r(FourOhFourRequest,74,"HTTP/1\.1\x20400\x20B
+SF:ad\x20Request\r\nDAAP-Server:\x20iTunes/11\.1b37\x20\(OS\x20X\)\r\nDate
+SF::\x202018-01-12\x2017:20:23\x20\+0000\r\nContent-Length:\x200\r\n\r\n")
+SF:%r(SIPOptions,74,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nDAAP-Server:\x2
+SF:0iTunes/11\.1b37\x20\(OS\x20X\)\r\nDate:\x202018-01-12\x2017:20:38\x20\
+SF:+0000\r\nContent-Length:\x200\r\n\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port5000-TCP:V=6.40%I=7%D=1/12%Time=5A58EE18%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\
+SF:r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(RTSPRequest,48,"RTSP/1\.0
+SF:\x20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354
+SF:\.56\.7\r\n\r\n")%r(HTTPOptions,48,"HTTP/1\.1\x20403\x20Forbidden\r\nCo
+SF:ntent-Length:\x200\r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(FourOh
+SF:FourRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\r
+SF:\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(SIPOptions,5A,"RTSP/1\.0\x
+SF:20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354\.
+SF:56\.7\r\nCSeq:\x2042\x20OPTIONS\r\n\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port7000-TCP:V=6.40%I=7%D=1/12%Time=5A58EE28%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\
+SF:r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(HTTPOptions,48,"HTTP/1\.1
+SF:\x20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354
+SF:\.56\.7\r\n\r\n")%r(RTSPRequest,48,"RTSP/1\.0\x20403\x20Forbidden\r\nCo
+SF:ntent-Length:\x200\r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(FourOh
+SF:FourRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\r
+SF:\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(SIPOptions,5A,"RTSP/1\.0\x
+SF:20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354\.
+SF:56\.7\r\nCSeq:\x2042\x20OPTIONS\r\n\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port7100-TCP:V=6.40%I=7%D=1/12%Time=5A58EE1A%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\
+SF:r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(HTTPOptions,48,"HTTP/1\.1
+SF:\x20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354
+SF:\.56\.7\r\n\r\n")%r(RTSPRequest,48,"RTSP/1\.0\x20403\x20Forbidden\r\nCo
+SF:ntent-Length:\x200\r\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(FourOh
+SF:FourRequest,48,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\r
+SF:\nServer:\x20AirTunes/354\.56\.7\r\n\r\n")%r(SIPOptions,48,"RTSP/1\.0\x
+SF:20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/354\.
+SF:56\.7\r\n\r\n");
+MAC Address: 40:CB:C0:D0:CD:07 (Unknown)
+No exact OS matches for host (If you know what OS is running on it, see http://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=6.40%E=4%D=1/12%OT=3689%CT=1%CU=36777%PV=Y%DS=1%DC=D%G=Y%M=40CBC0
+OS:%TM=5A58EF82%P=x86_64-redhat-linux-gnu)SEQ(SP=107%GCD=1%ISR=105%TI=Z%CI=
+OS:RD%II=RI%TS=A)SEQ(TI=Z%CI=RD%II=RI%TS=A)OPS(O1=M5B4NW6NNT11SLL%O2=M5B4NW
+OS:6NNT11SLL%O3=M5B4NW6NNT11%O4=M5B4NW6NNT11SLL%O5=M5B4NW6NNT11SLL%O6=M5B4N
+OS:NT11SLL)WIN(W1=FFFF%W2=FFFF%W3=FFFF%W4=FFFF%W5=FFFF%W6=FFFF)ECN(R=Y%DF=Y
+OS:%T=40%W=FFFF%O=M5B4NW6SLL%CC=N%Q=)ECN(R=N)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS
+OS:%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=
+OS:Y%DF=N%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=
+OS:R%O=%RD=0%Q=)T7(R=Y%DF=N%T=40%W=0%S=Z%A=S%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=
+OS:40%IPL=38%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=0%RUD=G)IE(R=Y%DFI=S%T=40%CD=S)
+
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   4.63 ms dhcp221.maison.ca (192.168.1.221)
+
+Nmap scan report for dhcp222.maison.ca (192.168.1.222)
+Host is up (0.0087s latency).
+Not shown: 995 closed ports
+PORT      STATE SERVICE    VERSION
+3689/tcp  open  daap       Apple iTunes DAAP 11.1b37
+5000/tcp  open  upnp?
+7000/tcp  open  http       Apple AirPlay httpd
+| http-methods: Potentially risky methods: PUT
+|_See http://nmap.org/nsedoc/scripts/http-methods.html
+|_http-title: Site doesn't have a title.
+7100/tcp  open  http       Apple AirPlay httpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 400)
+|_http-title: Site doesn't have a title.
+62078/tcp open  tcpwrapped
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port5000-TCP:V=6.40%I=7%D=1/12%Time=5A58EE1D%P=x86_64-redhat-linux-gnu%
+SF:r(GetRequest,46,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\
+SF:r\nServer:\x20AirTunes/200\.54\r\n\r\n")%r(RTSPRequest,46,"RTSP/1\.0\x2
+SF:0403\x20Forbidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/200\.5
+SF:4\r\n\r\n")%r(HTTPOptions,46,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-
+SF:Length:\x200\r\nServer:\x20AirTunes/200\.54\r\n\r\n")%r(FourOhFourReque
+SF:st,46,"HTTP/1\.1\x20403\x20Forbidden\r\nContent-Length:\x200\r\nServer:
+SF:\x20AirTunes/200\.54\r\n\r\n")%r(SIPOptions,58,"RTSP/1\.0\x20403\x20For
+SF:bidden\r\nContent-Length:\x200\r\nServer:\x20AirTunes/200\.54\r\nCSeq:\
+SF:x2042\x20OPTIONS\r\n\r\n");
+MAC Address: B8:17:C2:C9:D7:FC (Apple)
+Device type: media device|phone
+Running: Apple iOS 4.X|5.X|6.X
+OS CPE: cpe:/o:apple:iphone_os:4 cpe:/a:apple:apple_tv:4 cpe:/o:apple:iphone_os:5 cpe:/o:apple:iphone_os:6
+OS details: Apple Mac OS X 10.8.0 - 10.8.3 (Mountain Lion) or iOS 4.4.2 - 6.1.3 (Darwin 11.0.0 - 12.3.0)
+Network Distance: 1 hop
+Service Info: OS: OS X; Device: media device
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   8.69 ms dhcp222.maison.ca (192.168.1.222)
+
+Nmap scan report for ipadminij.maison.ca (192.168.1.233)
+Host is up (1.2s latency).
+Not shown: 999 closed ports
+PORT      STATE SERVICE      VERSION
+62078/tcp open  iphone-sync?
+MAC Address: 6C:94:F8:8E:5A:D7 (Unknown)
+OS fingerprint not ideal because: Didn't receive UDP response. Please try again with -sSU
+No OS matches for host
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT        ADDRESS
+1   1220.61 ms ipadminij.maison.ca (192.168.1.233)
+
+NSOCK ERROR [5377.4660s] mksock_bind_addr(): Bind to 0.0.0.0:631 failed (IOD #1656): Address already in use (98)
+NSOCK ERROR [5390.7290s] mksock_bind_addr(): Bind to 0.0.0.0:80 failed (IOD #2175): Address already in use (98)
+NSOCK ERROR [5390.8290s] mksock_bind_addr(): Bind to 0.0.0.0:80 failed (IOD #2178): Address already in use (98)
+NSOCK ERROR [5391.0820s] mksock_bind_addr(): Bind to 0.0.0.0:80 failed (IOD #2191): Address already in use (98)
+Nmap scan report for 192.168.1.6
+Host is up (0.000011s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-generator: MediaWiki 1.26.4
+|_http-methods: No Allow or Public header in OPTIONS response (status code 301)
+|_http-title: Did not follow redirect to http://wiki.maison.ca/index.php/Main_Page
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 876
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: CL5bn$bF
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2071-04-13T11:31:48+00:00; +53y90d18h04m01s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF88%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1B39,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=3f3d8599226de68a;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=D1p4hM9AZEWUmYQze4Ukcgjor8s6MTUxNTc3
+SF:NzkyODc5Mjc2MTQ4OA%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:28\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:29\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"D1p4hM9AZEWUmYQze4Ukcgjor8s6MTUxNTc3
+SF:NzkyODc5Mjc2MTQ4OA==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,1000,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=012ad075bc71641e;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=pXTWhciMpC9Ixc_7b4cJf7A65mw6MTUxNTc3NzkzNDE3ODA2NjEyM
+SF:w%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:34\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:34\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"pXTWhciMpC9Ixc_7b4cJf7A65mw6MTUxNTc3NzkzNDE3ODA2NjEyM
+SF:w==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:46-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for holmes.maison.ca (192.168.1.12)
+Host is up (0.0000030s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp?
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 836
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: hE^*THN-
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2091-01-10T14:25:52+00:00; +72y362d20h58m17s from local time.
+2 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port21-TCP:V=6.40%I=7%D=1/12%Time=5A58EF88%P=x86_64-redhat-linux-gnu%r(
+SF:NULL,23,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n")%r(GenericL
+SF:ines,23,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n")%r(Help,40,
+SF:"421\x20There\x20are\x20too\x20many\x20connections\x20from\x20your\x20i
+SF:nternet\x20address\.\r\n")%r(GetRequest,49,"220\x20MyBatcave\x20-\x20Re
+SF:stricted\x20Access\r\n530\x20Please\x20login\x20with\x20USER\x20and\x20
+SF:PASS\.\r\n")%r(HTTPOptions,49,"220\x20MyBatcave\x20-\x20Restricted\x20A
+SF:ccess\r\n530\x20Please\x20login\x20with\x20USER\x20and\x20PASS\.\r\n")%
+SF:r(RTSPRequest,49,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n530\
+SF:x20Please\x20login\x20with\x20USER\x20and\x20PASS\.\r\n")%r(RPCCheck,23
+SF:,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n")%r(DNSVersionBindR
+SF:eq,23,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n")%r(DNSStatusR
+SF:equest,23,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n")%r(SSLSes
+SF:sionReq,49,"220\x20MyBatcave\x20-\x20Restricted\x20Access\r\n530\x20Ple
+SF:ase\x20login\x20with\x20USER\x20and\x20PASS\.\r\n")%r(Kerberos,49,"220\
+SF:x20MyBatcave\x20-\x20Restricted\x20Access\r\n530\x20Please\x20login\x20
+SF:with\x20USER\x20and\x20PASS\.\r\n")%r(SMBProgNeg,23,"220\x20MyBatcave\x
+SF:20-\x20Restricted\x20Access\r\n")%r(X11Probe,23,"220\x20MyBatcave\x20-\
+SF:x20Restricted\x20Access\r\n")%r(FourOhFourRequest,49,"220\x20MyBatcave\
+SF:x20-\x20Restricted\x20Access\r\n530\x20Please\x20login\x20with\x20USER\
+SF:x20and\x20PASS\.\r\n")%r(LPDString,49,"220\x20MyBatcave\x20-\x20Restric
+SF:ted\x20Access\r\n530\x20Please\x20login\x20with\x20USER\x20and\x20PASS\
+SF:.\r\n")%r(LDAPBindReq,23,"220\x20MyBatcave\x20-\x20Restricted\x20Access
+SF:\r\n")%r(SIPOptions,19F,"220\x20MyBatcave\x20-\x20Restricted\x20Access\
+SF:r\n530\x20Please\x20login\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Pl
+SF:ease\x20login\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Please\x20logi
+SF:n\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Please\x20login\x20with\x2
+SF:0USER\x20and\x20PASS\.\r\n530\x20Please\x20login\x20with\x20USER\x20and
+SF:\x20PASS\.\r\n530\x20Please\x20login\x20with\x20USER\x20and\x20PASS\.\r
+SF:\n530\x20Please\x20login\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Ple
+SF:ase\x20login\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Please\x20login
+SF:\x20with\x20USER\x20and\x20PASS\.\r\n530\x20Please\x20login\x20with\x20
+SF:USER\x20and\x20PASS\.\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF88%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=85761d7614493049;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=JvMxQJlGjiyAF-Xj1OstZkFjSvQ6MTUxNTc3
+SF:NzkyODg4Njc2NTUyMA%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:28\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:29\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"JvMxQJlGjiyAF-Xj1OstZkFjSvQ6MTUxNTc3
+SF:NzkyODg4Njc2NTUyMA==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,13F9,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=2dd10b9f1fd98436;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=49sBJJt68l2KV1gCOtbXdwxqzwE6MTUxNTc3NzkzNDE4NDk3ODg4M
+SF:g%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:34\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:34\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"49sBJJt68l2KV1gCOtbXdwxqzwE6MTUxNTc3NzkzNDE4NDk3ODg4M
+SF:g==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:46-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for linternux.maison.ca (192.168.1.13)
+Host is up (0.0000020s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-generator: WordPress 4.8.4
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+| http-robots.txt: 1 disallowed entry 
+|_/wp-admin/
+|_http-title: LINternUX &#8211; For Linux System Administrator
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 872
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: zb_4$Wi.
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 1984-05-05T12:34:08+00:00; -33y252d4h53m27s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF8E%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=bef0f8c0508da40a;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=bimoCxYYwGZ9hY5h3bfbrLzX-BY6MTUxNTc3
+SF:NzkzNDczMDQ4NDgzNg%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:34\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:34\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"bimoCxYYwGZ9hY5h3bfbrLzX-BY6MTUxNTc3
+SF:NzkzNDczMDQ4NDgzNg==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,13F9,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=5ddc004fdf71f1ce;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=P6gEPMApaTQ9Z0yY4sc-Pst8DPo6MTUxNTc3NzkzOTc5NzE5MDExN
+SF:Q%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:39\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:39\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"P6gEPMApaTQ9Z0yY4sc-Pst8DPo6MTUxNTc3NzkzOTc5NzE5MDExN
+SF:Q==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:35-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for sadmin.maison.ca (192.168.1.20)
+Host is up (0.0000020s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: SADMIN for Linux System ADMINistrator
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 829
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: G0ZUy#?U
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2063-10-29T13:42:19+00:00; +45y289d20h14m39s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF93%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=53ba0655dc44c89f;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=oVL10Wq1N-bvY00Fs1CbuAaSxiY6MTUxNTc3
+SF:NzkzOTc3Mzg3NDE4Ng%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:39\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:39\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"oVL10Wq1N-bvY00Fs1CbuAaSxiY6MTUxNTc3
+SF:NzkzOTc3Mzg3NDE4Ng==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,1000,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=c3be5fbd4f48cadb;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=BcFsxzoujx0vSr7e6SJG3Y-qOos6MTUxNTc3Nzk0NDgzNzcyNDc0N
+SF:Q%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:44\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:44\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"BcFsxzoujx0vSr7e6SJG3Y-qOos6MTUxNTc3Nzk0NDgzNzcyNDc0N
+SF:Q==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:35-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for stadmin.maison.ca (192.168.1.23)
+Host is up (0.000022s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 867
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: q?$6%QJ_
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2104-09-22T11:21:35+00:00; +86y253d17h53m47s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF99%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=f5b39a8e17b24e9c;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=lo2pgO1njw29PdiSCr4bM-9rJCk6MTUxNTc3
+SF:Nzk0NTc0Njk2MTE3Mg%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:45\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:45\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"lo2pgO1njw29PdiSCr4bM-9rJCk6MTUxNTc3
+SF:Nzk0NTc0Njk2MTE3Mg==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,1000,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=5698a661abc344ee;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=mmHPjaR51BJcl5XTfnqtou90Jw06MTUxNTc3Nzk1MDgyMjI2NDA1O
+SF:A%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:50\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:50\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"mmHPjaR51BJcl5XTfnqtou90Jw06MTUxNTc3Nzk1MDgyMjI2NDA1O
+SF:A==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:34-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for 192.168.1.28
+Host is up (0.0000050s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-generator: sadmin
+| http-git: 
+|   192.168.1.28:80/.git/
+|     Git repository found!
+|     Repository description: Unnamed repository; edit this file 'description' to name the...
+|     Last commit message: Remove Sidebar Test 
+|     Remotes:
+|       https://jadupl2@bitbucket.org/jadupl2/wsadmin.git
+|       http://gitserver.maison.ca:3000/jacques/wsadmin.git
+|_    Project type: Python application (guessed from .gitignore)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: SADMIN for Linux System ADMINistrator
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 871
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: $ly=_J2Z
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2018-11-01T00:06:51+00:00; +292d6h39m05s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EF9F%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=bec53e062f22d50c;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=lJXBPzJOpT2ZN5EPbGX09yvz4t86MTUxNTc3
+SF:Nzk1MTc0NzU1MDIyNA%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:51\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:51\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"lJXBPzJOpT2ZN5EPbGX09yvz4t86MTUxNTc3
+SF:Nzk1MTc0NzU1MDIyNA==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,1000,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=24d609d5ec7d4d01;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=FSDFxpZA2peXwwqcWrnEG18uNj86MTUxNTc3Nzk1Njc3NDgzODQ1M
+SF:Q%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:25:56\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:25:56\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"FSDFxpZA2peXwwqcWrnEG18uNj86MTUxNTc3Nzk1Njc3NDgzODQ1M
+SF:Q==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:34-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: <blank>
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for gitserver.maison.ca (192.168.1.68)
+Host is up (0.0000020s latency).
+Not shown: 988 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 835
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: hE_.g><T
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 2001-04-10T06:24:47+00:00; -16y277d11h02m57s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EFA5%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=53d0269102f5a862;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=t0LregiTDh3p_3STsOLlz1fsZi86MTUxNTc3
+SF:Nzk1Nzc0NTUwNTY1Mw%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:25:57\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:25:57\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"t0LregiTDh3p_3STsOLlz1fsZi86MTUxNTc3
+SF:Nzk1Nzc0NTUwNTY1Mw==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,1000,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=2eb3a58a3beb0638;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=7S2I2dfWsQ9DQs3m6UlBJNwy85U6MTUxNTc3Nzk2Mjc4NzU5MjUzN
+SF:A%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:26:02\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:26:02\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"7S2I2dfWsQ9DQs3m6UlBJNwy85U6MTUxNTc3Nzk2Mjc4NzU5MjUzN
+SF:A==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:45-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Nmap scan report for dns1.maison.ca (192.168.1.126)
+Host is up (0.0000020s latency).
+Not shown: 987 closed ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           vsftpd 2.0.8 or later
+25/tcp   open  smtp          Postfix smtpd
+|_smtp-commands: holmes.maison.ca, PIPELINING, SIZE 10240000, VRFY, ETRN, ENHANCEDSTATUSCODES, 8BITMIME, DSN, 
+32/tcp   open  ssh           OpenSSH 7.4 (protocol 2.0)
+| ssh-hostkey: 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA)
+|_256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA)
+53/tcp   open  domain        ISC BIND Access Restricted
+| dns-nsid: 
+|_  bind.version: Access Restricted
+80/tcp   open  http          Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+| rpcinfo: 
+|   program version   port/proto  service
+|   100000  2,3,4        111/tcp  rpcbind
+|   100000  2,3,4        111/udp  rpcbind
+|   100003  3,4         2049/tcp  nfs
+|   100003  3,4         2049/udp  nfs
+|   100005  1,2,3      20048/tcp  mountd
+|   100005  1,2,3      20048/udp  mountd
+|   100021  1,3,4      43633/tcp  nlockmgr
+|   100021  1,3,4      46375/udp  nlockmgr
+|   100024  1          44005/tcp  status
+|   100024  1          57950/udp  status
+|   100227  3           2049/tcp  nfs_acl
+|_  100227  3           2049/udp  nfs_acl
+139/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+445/tcp  open  netbios-ssn   Samba smbd 3.X (workgroup: HOLMES)
+2049/tcp open  nfs           3-4 (RPC #100003)
+3000/tcp open  ppp?
+3306/tcp open  mysql         MySQL 5.5.56-MariaDB
+| mysql-info: Protocol: 10
+| Version: 5.5.56-MariaDB
+| Thread ID: 848
+| Some Capabilities: Long Passwords, Connect with DB, Compress, ODBC, Transactions, Secure Connection
+| Status: Autocommit
+|_Salt: ^J7tdyTx
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+8080/tcp open  ssl/http      lighttpd
+|_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+|_http-title: Storix System Backup Administrator
+| ssl-cert: Subject: commonName=SBAdmin/organizationName=Storix Inc/stateOrProvinceName=California/countryName=US
+| Not valid before: 2016-06-30T21:40:37+00:00
+|_Not valid after:  2019-03-27T21:40:37+00:00
+|_ssl-date: 1972-02-11T10:40:55+00:00; -45y335d6h46m40s from local time.
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at http://www.insecure.org/cgi-bin/servicefp-submit.cgi :
+SF-Port3000-TCP:V=6.40%I=7%D=1/12%Time=5A58EFAC%P=x86_64-redhat-linux-gnu%
+SF:r(GenericLines,58,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\
+SF:x20text/plain\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(
+SF:GetRequest,1000,"HTTP/1\.0\x20200\x20OK\r\nContent-Type:\x20text/html;\
+SF:x20charset=UTF-8\r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=21
+SF:47483647\r\nSet-Cookie:\x20i_like_gogits=11764d2ecef0665c;\x20Path=/;\x
+SF:20HttpOnly\r\nSet-Cookie:\x20_csrf=5GAmjcv1h_ryLWf9qJmi9ndiZNA6MTUxNTc3
+SF:Nzk2NDg0ODMwMzk5MA%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x2020
+SF:18\x2017:26:04\x20GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x20201
+SF:8\x2017:26:04\x20GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-s
+SF:uburl=\"\">\n\t<meta\x20http-equiv=\"Content-Type\"\x20content=\"text/h
+SF:tml;\x20charset=UTF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\
+SF:"\x20content=\"IE=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gog
+SF:s\x20-\x20Go\x20Git\x20Service\"\x20/>\n\t<meta\x20name=\"description\"
+SF:\x20content=\"Gogs\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x
+SF:20self-hosted\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta
+SF:\x20name=\"keywords\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\
+SF:">\n\t<meta\x20name=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<m
+SF:eta\x20name=\"_csrf\"\x20content=\"5GAmjcv1h_ryLWf9qJmi9ndiZNA6MTUxNTc3
+SF:Nzk2NDg0ODMwMzk5MA==\"\x20/>\n\t<meta\x20name=\"")%r(Help,58,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain\r\nConnection:
+SF:\x20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,13F9,"HTTP/1\.0\
+SF:x20404\x20Not\x20Found\r\nContent-Type:\x20text/html;\x20charset=UTF-8\
+SF:r\nSet-Cookie:\x20lang=en-US;\x20Path=/;\x20Max-Age=2147483647\r\nSet-C
+SF:ookie:\x20i_like_gogits=02d959cde83a9612;\x20Path=/;\x20HttpOnly\r\nSet
+SF:-Cookie:\x20_csrf=mX_PgnObmz8XlLViSbS5ceKk0AQ6MTUxNTc3Nzk2OTkwMjg5MTE2M
+SF:w%3D%3D;\x20Path=/;\x20Expires=Sat,\x2013\x20Jan\x202018\x2017:26:09\x2
+SF:0GMT;\x20HttpOnly\r\nDate:\x20Fri,\x2012\x20Jan\x202018\x2017:26:09\x20
+SF:GMT\r\n\r\n<!DOCTYPE\x20html>\n<html>\n<head\x20data-suburl=\"\">\n\t<m
+SF:eta\x20http-equiv=\"Content-Type\"\x20content=\"text/html;\x20charset=U
+SF:TF-8\"\x20/>\n\t<meta\x20http-equiv=\"X-UA-Compatible\"\x20content=\"IE
+SF:=edge\"/>\n\t<meta\x20name=\"author\"\x20content=\"Gogs\x20-\x20Go\x20G
+SF:it\x20Service\"\x20/>\n\t<meta\x20name=\"description\"\x20content=\"Gog
+SF:s\x20\(Go\x20Git\x20Service\)\x20is\x20a\x20painless\x20self-hosted\x20
+SF:Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"keywor
+SF:ds\"\x20content=\"go,\x20git,\x20self-hosted,\x20gogs\">\n\t<meta\x20na
+SF:me=\"referrer\"\x20content=\"no-referrer\"\x20/>\n\t<meta\x20name=\"_cs
+SF:rf\"\x20content=\"mX_PgnObmz8XlLViSbS5ceKk0AQ6MTUxNTc3Nzk2OTkwMjg5MTE2M
+SF:w==\"\x20/>\n\t<meta");
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+Service Info: Host:  holmes.maison.ca; OS: Windows
+
+Host script results:
+|_nbstat: NetBIOS name: HOLMES, NetBIOS user: <unknown>, NetBIOS MAC: <unknown>
+| smb-os-discovery: 
+|   OS: Windows 6.1 (Samba 4.6.2)
+|   Computer name: holmes
+|   NetBIOS computer name: HOLMES
+|   Domain name: maison.ca
+|   FQDN: holmes.maison.ca
+|_  System time: 2018-01-12T12:27:42-05:00
+| smb-security-mode: 
+|   Account that was used for smb scripts: guest
+|   User-level authentication
+|   SMB Security: Challenge/response passwords supported
+|_  Message signing disabled (dangerous, but default)
+|_smbv2-enabled: Server supports SMBv2 protocol
+
+Post-scan script results:
+| ssh-hostkey: Possible duplicate hosts
+| Key 2048 13:c6:6b:a6:0e:1c:3a:d5:0b:27:2e:8f:96:db:ef:10 (RSA) used by:
+|   192.168.1.66
+|   192.168.1.69
+|   192.168.1.70
+| Key 1024 63:c3:85:8d:fa:3c:ac:5b:40:95:b2:c8:41:31:88:3a (DSA) used by:
+|   192.168.1.66
+|   192.168.1.69
+|   192.168.1.70
+| Key 256 cb:78:f8:3a:b1:70:58:9b:d9:84:de:69:3e:53:9f:31 (ECDSA) used by:
+|   192.168.1.6
+|   192.168.1.12
+|   192.168.1.13
+|   192.168.1.20
+|   192.168.1.23
+|   192.168.1.28
+|   192.168.1.68
+|   192.168.1.126
+| Key 2048 a0:3b:32:98:31:b3:d2:0e:4f:c5:f8:22:26:97:3c:f5 (RSA) used by:
+|   192.168.1.108
+|   192.168.1.138
+| Key 1024 df:2a:4f:0f:74:dc:f5:73:58:cd:d9:e6:4c:4d:f8:85 (DSA) used by:
+|   192.168.1.108
+|   192.168.1.138
+| Key 2048 24:b7:42:4b:02:c0:05:13:ec:7c:c1:53:bc:03:92:fd (RSA) used by:
+|   192.168.1.6
+|   192.168.1.12
+|   192.168.1.13
+|   192.168.1.20
+|   192.168.1.23
+|   192.168.1.28
+|   192.168.1.68
+|_  192.168.1.126
+OS and Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+Nmap done: 256 IP addresses (44 hosts up) scanned in 5421.02 seconds

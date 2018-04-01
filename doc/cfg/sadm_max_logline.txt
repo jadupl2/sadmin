@@ -8,5 +8,4 @@ it produce a log, in the dedicated directory ${SADMIN}/log.
     - Log file are cumulative by default, but it can be overriden if you want.
     - This number indicate the maximum of lines you want to keep in your log.
     - This help keeping our log to a reasonnable size.
-
-Default number is 1000 lines as a starting point.
+    
