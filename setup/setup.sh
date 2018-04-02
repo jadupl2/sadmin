@@ -34,17 +34,17 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.3'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SCRIPT="$(dirname "$0")/sadm_setup.py"     ; export SCRIPT              # Main Setup SCRIPT Next
+SCRIPT="$(dirname "$0")/bin/sadm_setup.py" ; export SCRIPT              # Main Setup SCRIPT Next
 
 # Display OS Name and Version
 tput clear 
-echo "SADMIN Setup Version $SADM_VER"
+echo "SADMIN Pre-Installation Verification Version $SADM_VER"
 
 
 # Only Supported on Linux
@@ -57,13 +57,20 @@ fi
 # Make sure lsb_release is installed
 which lsb_release > /dev/null 2>&1
 if [ $? -ne 0 ] 
-    then echo "Installing lsb_release command ..."
+    then echo " " 
+         echo "The lsb_release command is needed and not installed" 
+         echo "Installing lsb_release command ..."
          yum -y install redhat-lsb-core > /dev/null 2>&1
          apt-get update >/dev/null 2>&1
          apt-get -y install lsb-release >/dev/null 2>&1
          which lsb_release > /dev/null 2>&1
          if [ $? -ne 0 ]
-            then echo "Please install lsb-release package, then run this script again."
+            then echo " " 
+                 echo "----------"
+                 echo "We have problem installing lsb_release command"
+                 echo "Please install lsb-release(deb) or redhat-lsb-core(rpm) package"
+                 echo "Run this script again."
+                 echo "----------"
                  exit 1
          fi
 fi
@@ -137,7 +144,7 @@ check_python()
 #                                       Script Start HERE
 #===================================================================================================
 #
-    echo "System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."
+    echo "Your System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."
     
     # Script must be run by root
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?

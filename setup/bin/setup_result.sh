@@ -42,8 +42,10 @@ SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Curren
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SLOG="$(dirname "$0")/setup_result.log"    ; export SLOG                # Script resulting log 
-SDIR=`grep "^SADMIN=" /etc/environment | awk -F= '{ print $2 }'` ; export SDIR # SADMIN Base Dir. 
+
+# SADMIN Base Dir. 
+SDIR=`grep "^export SADMIN=" /etc/profile.d/sadmin.sh| awk -F= '{ print $2 }'` ; export SDIR 
+SLOG="${SDIR}/setup/log/${SADM_INST}.log"  ; export SLOG                # Script resulting log
 
 # Display OS Name and Version
 tput clear 
@@ -88,12 +90,20 @@ print_file()
 #===================================================================================================
 main_process()
 {
-    print_file "/etc/environment" 
+    print_file "$SDIR/setup/log/sadm_setup.log"
+    print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SDIR/cfg/sadmin.cfg"
     print_file "/etc/sudoers.d/033_sadmin-nopasswd"
+    print_file "/etc/cron.d/sadm_server"
+    print_file "/etc/cron.d/sadm_client"
+    print_file "/etc/selinux/config"
+    print_file "/etc/hosts"
+    print_file "/etc/httpd/conf.d/sadmin.conf"
 
-    return 0                                                            # Return No Error to Caller
+
+    return 0
 }
+
 
 
 #===================================================================================================

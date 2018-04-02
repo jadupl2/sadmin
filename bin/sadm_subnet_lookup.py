@@ -1,4 +1,4 @@
-#!/usr/bin/env python  
+#!/usr/bin/env python3  
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      ping_lookup.py
@@ -39,20 +39,12 @@
 try :
     import os,time,sys,pdb,socket,datetime,glob,pwd,grp,fnmatch     # Import Std Python3 Modules
     SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    #print ("SADM=%s" % (SADM))
     sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
     import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
-
-# try :
-#     import os, time, sys, pdb, socket, datetime, glob, fnmatch, pymysql
-#     import getpass, subprocess, pwd, grp
-#     from subprocess import Popen, PIPE   
-# except ImportError as e:
-#     print ("Import Error : %s " % e)
-#     sys.exit(1)
-#pdb.set_trace()                                                        # Activate Python Debugging
 
 
 #===================================================================================================
@@ -151,7 +143,7 @@ def main_process(st) :
 
           WLINE = "%s, %s, %s" % (ip, host_state, hostname)
           st.writelog ("%s" % WLINE)
-          print "%s" % WLINE
+          print ("%s" % WLINE)
           SH.write ("%s\n" % (WLINE))
        SH.close()                                                       # Close Subnet File
       
