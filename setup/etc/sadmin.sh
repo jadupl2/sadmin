@@ -10,9 +10,11 @@
 # Synopsis	:   	This script is executed when users login system wide & when system start 
 #                   Do not modify this, it be overwritten with new release of SADMIN Tools
 ####################################################################################################
+#
 # SADMIN root Directory
-export SADMIN=/sadmin
-
+SADMIN=/sadmin
+export SADMIN
+#
 # Add SADMIN/bin to PATH
 export PATH=$PATH:${SADMIN}/bin:
 #

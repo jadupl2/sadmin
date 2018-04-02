@@ -20,24 +20,34 @@
 #       V2.4 Add RRD Tools Variable 
 #   2018_03_13 JDuplessis
 #       V2.5 Get Root directory of SADMIN from /etc/environment
+#   2018_04_02 JDuplessis
+#       V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
 # --------------------------------------------------------------------------------------------------
+$DEBUG=False;  
 #
+
 # Setting the HOSTNAME Variable
 list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
 
-# GET THE SADMIN ENVIRONMENT VARIABLE CONTENT FROM /ETC/ENVIRONMENT
-define("SADM_ENV" , "/etc/environment") ;                               # Name of O/S Environment file
+# GET THE SADMIN ENVIRONMENT VARIABLE CONTENT FROM /ETC/PROFILE.D/SADMIN.SH
+define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                       # Name of O/S Environment file
 $handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
-        if ( strpos(trim($line), '#') === 0  )                          # If 1st Non-WhiteSpace is #
-            continue;                                                   # Skip Line
+        if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
+        if ((strpos(trim($line),'#') === 0) or (strlen($line) === 0))   # if 1st Non-WhiteSpace is #
+            { continue; }                                               # Skip Blank or comment line
         list($fname,$fvalue) = explode ('=',$line);                     # Split Line by Name & Value
+        if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
+        if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
         if (trim($fname) == "SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
     }
     fclose($handle);
 }else{
     echo "Error opening the file " . SADM_ENV ;
+}
+if ($DEBUG) { 
+    echo "\n<br>SADMIN DIR = " . SADM_BASE_DIR . " <br>\n" ;
 }
 
 # SET SADMIN ROOT BASE DIRECTORY
@@ -76,7 +86,7 @@ define("SADM_WWW_SAR_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/sar");    # Web sa
 define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web net dir
 define("SADM_WWW_DR_DIR"   , SADM_WWW_DAT_DIR . "/${HOSTNAME}/dr");     # Web Disaster Recovery Dir
 define("SADM_WWW_NMON_DIR" , SADM_WWW_DAT_DIR . "/${HOSTNAME}/nmon");   # Web nmon Dir
-define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
+#define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
 define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LOG Dir
 
 
@@ -97,12 +107,14 @@ $handle = fopen(SADM_CFG_FILE , "r");                                   # Set Co
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read
           $lineno++;                                                    # Increase Line Number
-          if ( strpos(trim($line), '#') === 0  )                        # If 1st Non-WhiteSpace is #
+          if ((strpos(trim($line),'#') === 0) or (strlen($line) === 0))      # If 1st Non-WhiteSpace is #
              continue;                                                  # Go Read the next line
           list($fname,$fvalue) = explode ('=',$line);                   # Split Line by Name & Value
-          #echo "\n$lineno : $line";
-          #echo "\nThe Parameter is : " . $fname ;
-          #echo "\nThe Value is     : " . $fvalue ;
+          if ($DEBUG) {
+                echo "\n<BR>$lineno : $line";
+                echo "\n<BR>The Parameter is : " . $fname ;
+                echo "\n<BR>The Value is     : " . $fvalue ;
+          }
           if (trim($fname) == "SADM_MAIL_ADDR")     { define("SADM_MAIL_ADDR"     , trim($fvalue));}
           if (trim($fname) == "SADM_MAIL_TYPE")     { define("SADM_MAIL_TYPE"     , trim($fvalue));}
           if (trim($fname) == "SADM_CIE_NAME")      { define("SADM_CIE_NAME"      , trim($fvalue));}
@@ -148,7 +160,7 @@ if ($handle) {                                                          # If Suc
     }
     fclose($handle);
 } else {
-    echo "Error opening the file " . SADM_CFG_FILE ;
+    echo "<BR>\nError opening the file " . SADM_CFG_FILE . "<BR>";
 }
 
 
@@ -161,7 +173,7 @@ if (file_exists(SADM_REL_FILE)) {                                       # If Rel
     define("SADM_VERSION" , trim($release));                            # Create Var. from Release
 }else{
     define("SADM_VERSION" , "00.00");                                   # Default if File Not Exist
-    echo "Release file is missing " . SADM_REL_FILE ;                   # Error Mess. - File Missing
+    echo "<BR>\nRelease file is missing " . SADM_REL_FILE ;             # Error Mess. - File Missing
 }
 
 
@@ -174,7 +186,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 $con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME);
 if (mysqli_connect_errno())                                             # Check if Error Connecting
 {
-  echo ">>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'<br/>";
-  echo ">>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
+  echo "<BR>\n>>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'";
+  echo "<BR>\n>>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
 }
 ?>

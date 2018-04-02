@@ -58,7 +58,7 @@ $URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Perfor
 // ================================================================================================
 function build_sidebar_scripts_info() {
     
-        #$DEBUG = TRUE;                                                     # Activate/Deactivate Debug
+        $DEBUG = FALSE;                                                     # Activate/Deactivate Debug
     
         # Reset All Counters
         $count=0;                                                           # Working Counter

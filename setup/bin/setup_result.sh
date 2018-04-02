@@ -44,7 +44,7 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 
 # SADMIN Base Dir. 
-SDIR=`grep "^export SADMIN=" /etc/profile.d/sadmin.sh| awk -F= '{ print $2 }'` ; export SDIR 
+SDIR=`grep "^SADMIN=" /etc/profile.d/sadmin.sh| awk -F= '{ print $2 }'` ; export SDIR 
 SLOG="${SDIR}/setup/log/${SADM_INST}.log"  ; export SLOG                # Script resulting log
 
 # Display OS Name and Version
@@ -99,7 +99,8 @@ main_process()
     print_file "/etc/selinux/config"
     print_file "/etc/hosts"
     print_file "/etc/httpd/conf.d/sadmin.conf"
-
+    print_file "/etc/php.ini"
+    print_file "$SDIR/log/sadmin_error.log"
 
     return 0
 }
@@ -110,12 +111,13 @@ main_process()
 #                                       Script Start HERE
 #===================================================================================================
 #
-    echo "-------------------------------------------------------------------------" > $SLOG
-    echo "SADMIN $SADM_PN - Version $SADM_VER" >> $SLOG
+    if [ -f "$SLOG" ] ; then rm -f $SLOG >/dev/null 2>&1 ; fi           # Remove log if exist
+    echo "-------------------------------------------------------------------------" >> $SLOG
+    echo "SADMIN $SADM_PN - Version $SADM_VER"                                       >> $SLOG
     echo "-------------------------------------------------------------------------" >> $SLOG
     echo "System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."
-    echo "`date` - System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..." >> $SLOG
-    echo "SADMIN Base Directory is $SDIR" >> $SLOG
+    echo "`date` - System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."           >> $SLOG
+    echo "SADMIN Base Directory is $SDIR"                                            >> $SLOG
     echo "-------------------------------------------------------------------------" >> $SLOG
     echo " " >> $SLOG
     echo " " >> $SLOG
