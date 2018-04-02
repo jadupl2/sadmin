@@ -1026,16 +1026,16 @@ def set_sadmin_env(ver):
     try : 
         fi = open(SADM_PROFILE,'r')                                     # Open SADMIN Env. Setting 
     except FileNotFoundError as e :                                     # If Env file doesn't exist
-        fi = open(SADM_PROFILE,'w')                                     # Open in Write Mode 
-        fi.close()                                                      # Just to create one
+        fi = open(SADM_PROFILE,'w')                                     # Open in Write Mode(Create)
+        fi.close()                                                      # Just to create file
         fi = open(SADM_PROFILE,'r')                                     # Re-open in read mode
 
     # Open the new sadmin.sh tmp file to ake sure SADMIN variable is set properly
     fo = open(SADM_TMPFILE,'w')                                         # Environment Output File
     fileEmpty=True                                                      # Env. file assume empty
-    eline = "export SADMIN=%s\n" % (sadm_base_dir)                      # Line needed in sadmin.sh.
+    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
     for line in fi:                                                     # Read Input file until EOF
-        if line.startswith( 'export SADMIN=' ) :                        # line Start with 'SADMIN='?
+        if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
            line = "%s" % (eline)                                        # Replace line with latest
         fo.write (line)                                                 # Write line to output file
         fileEmpty=False                                                 # File was not empty flag
@@ -1045,10 +1045,10 @@ def set_sadmin_env(ver):
         fo.write (line)                                                 # Write 'export SADMIN=' Line
     fo.close                                                            # Close the output file
     try:                                                                # Will try rename env. file
-        os.rename(SADM_PROFILE,SADM_ORGFILE)                            # Rename current to org
+        os.remove(SADM_PROFILE)                                         # Remove current sadmin.cfg
         os.rename(SADM_TMPFILE,SADM_PROFILE)                            # Rename tmp to real one
     except:
-        print ("Error renaming %s" % (SADM_PROFILE))                    # Show User if error
+        print ("Error removing or renaming %s" % (SADM_PROFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
     print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
