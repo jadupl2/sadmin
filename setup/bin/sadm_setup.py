@@ -1,9 +1,9 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3  
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
 #   Date        :   2017-09-09
 #   Name        :   sadm_setup.py
-#   Synopsis    :
+#   Synopsis    : 
 #   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
@@ -34,6 +34,8 @@
 #   V1.5 Setup Release Candidate 2
 # 2018_03_31 JDuplessis
 #   V1.5G Setup Release Candidate 3
+# 2018_04_03 JDuplessis
+#   V1.5G Setup Release Candidate 3A
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -49,7 +51,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5G"                                            # Setup Version Number
+sver                = "1.5H"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -184,16 +186,20 @@ def open_logfile(sroot):
     except FileExistsError as e :                                       # If Dir. already exists 
         pass                                                            # It's ok if it exist
 
-    # Open/Create the setup script log
+    # Setup the name of the Log file
     logfile = "%s/setup/log/%s.log" % (sroot,'sadm_setup')              # Set Log file name
     if (DEBUG) : print ("Open the log file %s" % (logfile))             # Debug, Show Log file
+
+    # Open the Script log in append mode (setup.sh create the log, don't want to erae it)
     try:                                                                # Try to Open/Create Log
-        fhlog=open(logfile,'w')                                         # Open Log File 
+        fhlog=open(logfile,'a')                                         # Open Log File 
     except IOError as e:                                                # If Can't Create Log
         print ("Error creating log file %s" % (logfile))                # Print Log FileName
         print ("Error Number : {0}".format(e.errno))                    # Print Error Number    
         print ("Error Text   : {0}".format(e.strerror))                 # Print Error Message
         sys.exit(1)                                                     # Exit with Error
+    
+    writelog ("SADMIN Setup V%s\n------------------" % (sver),'log')    # Print Version Number
     return (fhlog,logfile)                                              # Return File Handle
 
 
@@ -202,8 +208,8 @@ def open_logfile(sroot):
 #===================================================================================================
 def writelog(sline,stype="normal"):
     global fhlog                                                        # Need to share file handler
-    fhlog.write ("%s\n" % (sline))                                      # Write Line to Log
-    if (stype == "log") : return                                        # Nothing on screen  
+    fhlog.write ("%s\n" % (sline))                                      # Write Line to Log 
+    if (stype == "log") : return                                        # Log Only Nothing on screen   
 
     # Display Line on Screen
     if (stype == "normal") : print (sline)                              
@@ -894,7 +900,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
     # Setting Access permission on web site
     writelog ("  - Setting Permission on SADMIN WebSite (%s/www) ... " % (sroot),'nonl') 
-    cmd = "chmod -R 775 %s/www" % (sroot)                               # chmod 775 on all www dir.
+    cmd = "find %s/www -type d -exec chmod 775 {} \;" % (sroot)         # chmod 775 on all www dir.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
         writelog( " Done ")
@@ -904,7 +910,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     
     # Setting permissions on Website images
     writelog ("  - Setting Permission on SADMIN WebSite images (%s/www/images) ... " % (sroot),'nonl') 
-    cmd = "chmod -R 644 %s/www/images" % (sroot)                        # chmod 775 on all www dir.
+    cmd = "chmod -R 664 %s/www/images/*" % (sroot)                      # chmod 644 on all images
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode == 0):
         writelog( " Done ")
@@ -1052,9 +1058,9 @@ def set_sadmin_env(ver):
         sys.exit(1)                                                     # Exit to O/S with Error
 
     print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
-    print ("      - The line below is now in %s now" % (SADM_PROFILE)) 
-    print ("      - %s" % (eline),end='')                               # SADMIN Line in sadmin.sh
-    print ("      - This will make sure it is set upon reboot")         # Under Linux This will work
+    print ("   - The line below is now in %s" % (SADM_PROFILE)) 
+    print ("   - %s" % (eline),end='')                               # SADMIN Line in sadmin.sh
+    print ("   - This will make sure 'SADMIN' environment variable is set upon reboot")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
@@ -1074,7 +1080,7 @@ def create_sadmin_config_file(sroot):
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
-    writelog ("Initial SADMIN configuration file (%s) is now in place" % (cfgfile)) # Advise User
+    writelog ("Initial SADMIN configuration file (%s) now in place" % (cfgfile)) # Advise User
     writelog (' ')
     
 
@@ -1458,7 +1464,7 @@ def end_message(sroot,sdomain):
 def main():
     global fhlog                                                        # Script Log File Handler
 
-    os.system('clear')                                                  # Clear the screen
+    #os.system('clear')                                                  # Clear the screen
     print ("SADMIN Setup V%s\n------------------" % (sver))             # Print Version Number
 
     # Insure that this script can only be run by the user root (Optional Code)
