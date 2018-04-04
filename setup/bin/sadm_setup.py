@@ -34,8 +34,8 @@
 #   V1.5 Setup Release Candidate 2
 # 2018_03_31 JDuplessis
 #   V1.5G Setup Release Candidate 3
-# 2018_04_03 JDuplessis
-#   V1.5G Setup Release Candidate 3A
+# 2018_04_04 JDuplessis
+#   V1.5I Setup Release Candidate 3B
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -51,7 +51,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5H"                                            # Setup Version Number
+sver                = "1.5I"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -161,10 +161,12 @@ def printBold(emsg):
 #===================================================================================================
 #           Print the message received & Ask for Yes (Return True) or No (Return False)
 #===================================================================================================
-def askyesno(emsg):
+def askyesno(emsg,sdefault="Y"):
     while True:
-        wmsg = emsg + " (" + color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") ? " 
+        wmsg = emsg + " (" + color.DARKCYAN + color.BOLD + "Y/N" + color.END + ") " 
+        wmsg += "[" + sdefault + "] ? "
         wanswer = input(wmsg)
+        if (len(wanswer) == 0) : wanswer=sdefault
         if ((wanswer.upper() == "Y") or (wanswer.upper() == "N")):
             break
         else:
@@ -609,6 +611,40 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
             writelog   ("Error Code is %d - See log %s" % (ccode,logfile),'bold')
 
 
+
+#===================================================================================================
+#   Test if user received (uname) exist in the MariaDB, root password must is needed (dbroot_pwd)                                 M A I N     P R O G R A M
+#===================================================================================================
+#
+def user_exist(uname,dbroot_pwd):
+    userfound = False
+    sql = "select User from mysql.user where User='%s';" % (uname) 
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode == 0):
+        userlist = cstdout.splitlines()
+        for user in userlist:
+            if (user == uname) : userfound = True
+    return (userfound)
+
+
+#===================================================================================================
+#   Test if sadmin database exist
+#===================================================================================================
+#
+def database_exist(dbname,dbroot_pwd):
+    dbfound = False
+    sql = 'show databases;'
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode == 0):
+        listdb = cstdout.splitlines()
+        for db in listdb:
+             if (db == dbname) : dbfound = True
+    return (dbfound)
+
+
+
 #===================================================================================================
 #                       Setup MySQL Package and Load the SADMIN Database
 #===================================================================================================
@@ -667,7 +703,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
     # Starting and Enabling MariabDB Service
     writelog ('  ')
     writelog ('----------')
-    writelog ("Restart Mariadb Service & Setup Service",'bold')
+    writelog ("Setup 'sadmin' database in MariaDB",'bold')
+    writelog ('  ')
     cmd = "systemctl restart mariadb"
     writelog ("Starting MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
@@ -677,6 +714,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
     time.sleep(1)
+
     # Make sure MariaDB restart upon reboot
     cmd = "systemctl enable mariadb"                                    # Enable MariaDB on boot
     writelog ("Enabling MariaDB Service - %s" % (cmd))
@@ -702,77 +740,78 @@ def setup_mysql(sroot,wcfg_server,wpass):
             time.sleep(1)
             return (1)                                                  # Abort MySQL Setup
 
-    # Load Initial Database
-    answer=askyesno ('Want to load initial Database (Will erase actual content of Database)')
-    if (answer):
-        writelog ('  ')
-        writelog ('----------')
-        writelog ("Loading Initial Data in SADMIN Database ... ",'nonl')    # Load Initial Database 
-        cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)             # SQL Cmd to Load DB
-        ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-        if (ccode != 0):                                                    # If problem deleting user
-            writelog ("Problem loading the database ...")                   # Advise User
-            writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-        else:                                                               # If user deleted
-            writelog (' Done ')                                             # Advise User ok to proceed
-        time.sleep(1)
+    # Test if SADMIN Database exist in MariaDB
+    dbname = "sadmin"                                                   # Set DB Name to check 
+    load_db = False                                                     # Default not to Load Init
+    if not (database_exist(dbname,dbroot_pwd)):                         # If SADMIN DB don't exist
+        load_db = True                                                  # Default is to load Init DB
+    else:                                                               # If SADMIN DB Exist=Warning
+        writelog ('')                                                   # Space Line
+        writelog ("Database 'sadmin' already exist !")                  # Show user DB exist
+        answer=askyesno("Want to reload initial 'sadmin' Database (Will erase actual content)",'N')
+        if (answer): load_db = True                                     # Answer Yes Reload Database
+
+    # If Database SADMIN don't exist or user want to drop SADMIN DB and reload initial Data
+    if (load_db) :                                                      # If Load/Reload Selected
+        writelog('  ')                                                  # Space Line
+        writelog('----------')                                          # Separation Line
+        cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)         # SQL Cmd to Load DB
+        writelog("Loading Initial Data in SADMIN Database ... ",'nonl') # Load Initial Database 
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
+        if (ccode != 0):                                                # If problem deleting user
+            writelog ("Problem loading the database ...")               # Advise User
+            writelog ("Return code is %d - %s" % (ccode,cmd))           # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+        else:                                                           # If user deleted
+            writelog (' Done ')                                         # Advise User ok to proceed
+        time.sleep(1)                                                   # Sleep for user to see
     
-    # Create 'sadmin' user and Grant permission 
-    writelog ("Creating 'sadmin' user ... ",'nonl')
-    sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
-    sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
-    sql += " flush privileges;"
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    if (ccode != 0):                                                    # If problem creating user
-        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    else:                                                               # If user created
-        writelog (" Done ")                                             # Advise User ok to proceed
+    # Check if 'sadmin' user exist in Database, if not create User and Grant permission 
+    writelog ('')                                                       # Space line
+    uname = "sadmin"                                                    # User to check in DB
+    writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl') # Show User
+    if (user_exist(uname,dbroot_pwd)):
+        print ("User '%s' already exist" % (uname))                     # Show user was found
+    else:                                                               # User was not found
+        print ("User %s don't exist" % (uname))                         # Show User was not found
+    if (user_exist(uname,dbroot_pwd)):                                  # If user exist in DB
+        writelog ("Creating 'sadmin' user ... ",'nonl')
+        sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
+        sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
+        sql += " flush privileges;"
+        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
+        if (ccode != 0):                                                # If problem creating user
+            writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+        else:                                                           # If user created
+            writelog (" Done ")                                         # Advise User ok to proceed
     
-    # Create 'squery' user and Grant permission 
-    writelog ("Creating 'squery' user ... ",'nonl')
-    sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
-    sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
-    sql += " flush privileges;"
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    if (ccode != 0):                                                    # If problem creating user
-        writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
-        writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-        writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    else:                                                               # If user created
-        writelog (" Done ")                                             # Advise User ok to proceed
+    # Check if 'squery' user exist in Database, if not create User and Grant permission 
+    uname = "squery"
+    writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl')    
+    if (user_exist(uname,dbroot_pwd)):
+        print ("User %s already exist" % (uname))
+    else:
+        print ("User %s don't exist" % (uname))    
+        writelog ("Creating 'squery' user ... ",'nonl')
+        sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
+        sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
+        sql += " flush privileges;"
+        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
+        if (ccode != 0):                                                # If problem creating user
+            writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+        else:                                                           # If user created
+            writelog (" Done ")                                         # Advise User ok to proceed
     time.sleep(1)
 
-    # Change root mysql password to the one user entered
-    #sql = "grant all privileges on *.* to 'root'@'localhost' identified by '%s';" % (dbroot_pwd)
-    #sql += " flush privileges;"
-    #cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
-    #cmd = "mysql -u root -e \"%s\"" % (sql)
-    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    #if (ccode != 0):                                                    # If problem creating user
-    #    writelog ("Error code returned is %d \n%s" % (ccode,cmd))       # Show Return Code No
-    #    writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-    #    writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    #else:                                                               # If user created
-    #    writelog (" Done ")                                             # Advise User ok to proceed
-    #time.sleep(1)
-
-    # Stop / Restart the MariaDB Process
-    #writelog ("Stopping MariaDB Server")
-    #cmd = "systemctl stop mariadb"
-    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    #cmd = "service mariadb stop" 
-    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    #if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
-    #if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
-    #if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
-    #ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    #time.sleep(1)
+    # Restart MariaDB Service
+    writelog ('')                                                       # Space line
     writelog ("Restarting MariaDB Server ...",'nonl')
     cmd = "systemctl restart mariadb"
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
@@ -817,7 +856,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_user = cstdout                                               # Get Apache Process Usr
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd user name is %d" % (ccode))
-    writelog ("Apache process user name  : %s" % (apache_user))         # Show Apache Proc. User
+    writelog ("Apache process user name  : %s" % (apache_user),'log')   # Show Apache Proc. User
 
     # Get the group of httpd process owner 
     cmd = "id -gn %s" % (apache_user)                                   # Get Apache User Group
@@ -825,7 +864,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_group = cstdout                                              # Get Group from StdOut
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd group name is %d" % (ccode))                 
-    writelog ("Apache process group name : %s" % (apache_group))        # Show Apache  Group
+    writelog ("Apache process group name : %s" % (apache_group),'log')  # Show Apache  Group
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -882,7 +921,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
 
                
     # Update the sadmin.cfg with Web Server User and Group
-    writelog('')
+    #writelog('')
     writelog ("  - SADMIN Web site configuration now in place (%s)" % (apache2_config))
     writelog ("  - Record Apache Process Owner in SADMIN configuration (%s/cfg/sadmin.cfg)" % (sroot))
     update_sadmin_cfg(sroot,"SADM_WWW_USER",apache_user,False)          # Update Value in sadmin.cfg
@@ -920,7 +959,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
                 
 
     # Restarting Web Server with new configuration
-    writelog ("Web Server Restarting ... ",'nonl')
+    writelog ("  - Web Server Restarting ... ",'nonl')
     cmd = "systemctl restart %s" % (sservice) 
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
@@ -930,7 +969,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Enable Web Server Service so it restart upon reboot
-    writelog ("Enabling Web Server Service ... ",'nonl')
+    writelog ("  - Enabling Web Server Service ... ",'nonl')
     cmd = "systemctl enable %s" % (sservice) 
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
@@ -1443,15 +1482,18 @@ def getpacktype(sroot):
 def end_message(sroot,sdomain):
     writelog ("\n\n--------------------------------------------------")
     writelog ("END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS\n",'bold')
-    writelog ("You need to logout and log back in, before using SADM Tools")
+    writelog ("You need to logout and log back in, before using SADM Tools,")
     writelog ("or type the following command (The dot and the space are important)")
     writelog (". /etc/profile.d/sadmin.sh")
-    writelog ("This will make sure SADMIN environment variable is define with the right content.")
+    writelog ("This will make sure SADMIN environment variable is define with proper content.")
     writelog ("\n\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
-    writelog ("To create your own script using SADMIN, you may want to run and view the code of ")
-    writelog ("%s/bin/sadm_template.sh and %s/bin/sadm_template.py as a starting point.\n" % (sroot,sroot))
-    writelog ("You may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
-    writelog ("They will present all functions available to your shell or Python script")
+    writelog ("To create your own script using the SADMIN tools, you may want to run ")
+    writelog ("and view the code of the template script.")
+    writelog ("\nbash shell script      : %s/bin/sadm_template.sh " % (sroot))
+    writelog ("or")
+    writelog ("python template script : %s/bin/sadm_template.py " % (sroot))
+    writelog ("\nYou may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
+    writelog ("They will show you all the functions available to your shell or Python script")
     writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
     writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
     writelog ("\n\n--------------------------------------------------")
@@ -1476,7 +1518,7 @@ def main():
 
     sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
     (fhlog,logfile) = open_logfile(sroot)                               # OpenLog Return File Handle
-    if (DEBUG) : writelog("Directory SADMIN now set to %s" % (sroot))   # Show SADMIN Root Dir.
+    if (DEBUG) : ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
     create_sadmin_config_file(sroot)                                    # Create Initial sadmin.cfg
     (packtype) = getpacktype(sroot)                                     # Pack Type (rpm,deb,lslpp)
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
