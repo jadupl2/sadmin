@@ -537,17 +537,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         req_work = req_client                                           # Move CLient Dict in WDict.
         writelog ("Checking SADMIN Client Package requirement",'bold')  # Show User what we do
     else:
-        # if (packtype == "rpm"):
-        #     cmd = "setenforce 0" 
-        #     ccode,cstdout,cstderr = oscommand(cmd)                      # Set SELinux to Permissive
-        #     if (ccode == 0):
-        #         writelog( "SeLinux Set to permissive mode for installation")
-        #     else:
-        #         writelog ("Problem changing SeLinux")
-        #         writelog ("%s - %s" % (cstdout,cstderr))       
         req_work = req_server                                           # Move Server Dict in WDict.
-        writelog (" ")
-        writelog ("--------------------")
         writelog ("Checking SADMIN Server Package requirement",'bold')  # Show User what we do
     writelog (" ")
 
@@ -653,57 +643,9 @@ def setup_mysql(sroot,wcfg_server,wpass):
     
     writelog ('  ')
     writelog ('--------------------')
-    writelog ("Setup SADMIN MySQL Database",'bold')
-    
-    # Accept 'root' Database user password
-    sdefault = ""                                                       # No Default Password 
-    sprompt  = "Enter MySQL Database 'root' user password"              # Prompt for Answer
-    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P")   # Accept Mysql root pwd
-
-    # Accept 'sadmin' Database Host to localhost 
-    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost",False)            # Update Value in sadmin.cfg
-   
-    # Accept 'sadmin' (Read/Write) User Password
-    sdefault = "Nimdas1701"                                             # Default Password 
-    sprompt  = "Enter Read/Write 'sadmin' database user password"       # Prompt for Answer
-    wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Accept sadmin DB user pwd
-    update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd,False)        # Update Value in sadmin.cfg
-   
-    # Accept 'squery' (Read Only) User Password
-    sdefault = "Query18"                                                # Default Password 
-    sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
-    wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
-    update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
-
-    # Check if the initial Database Load SQL is present (sadmin.sql)
-    init_sql = "%s/setup/etc/sadmin.sql" % (sroot)                      # Initial DB LOad SQL File
-    if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
-        writelog("Initial Load SADMIN SQL Data (%s) file is missing" % (init_sql),'bold')
-        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
-        return (1)
-
-    # # Stop the MariaDB Process & Start in Safe Mode
-    # writelog (" ")
-    # writelog ("Stopping MariaDB Server")
-    # cmd = "systemctl stop mariadb"
-    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    # cmd = "service mariadb stop" 
-    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    # if os.path.isfile("/run/mariadb/mariadb.pid")     : cmd = "pkill -F /run/mariadb/mariadb.pid"
-    # if os.path.isfile("/var/run/mysqld/mysqld.pid")   : cmd = "pkill -F /var/run/mysqld/mysqld.pid"
-    # if os.path.isfile("/var/run/mariadb/mariadb.pid") : cmd = "pkill -F /var/run/mariadb/mariadb.pid"
-    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    # time.sleep(1)
- 
-    # writelog ("Starting MariaDB Server in safe mode")
-    # cmd = "mysqld_safe --user=mysql &"
-    # ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
-    # time.sleep(1)
+    writelog ("Setup SADMIN MariaDB Database",'bold')
 
     # Starting and Enabling MariabDB Service
-    writelog ('  ')
-    writelog ('----------')
-    writelog ("Setup 'sadmin' database in MariaDB",'bold')
     writelog ('  ')
     cmd = "systemctl restart mariadb"
     writelog ("Starting MariaDB Service - %s" % (cmd))
@@ -713,7 +655,6 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    time.sleep(1)
 
     # Make sure MariaDB restart upon reboot
     cmd = "systemctl enable mariadb"                                    # Enable MariaDB on boot
@@ -724,7 +665,14 @@ def setup_mysql(sroot,wcfg_server,wpass):
         writelog ("Return code is %d - %s" % (ccode,cmd))               # Show Return Code No
         writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-    time.sleep(1)
+
+    # Set 'sadmin' Database Host to localhost in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_DBHOST","localhost",False)            # Update Value in sadmin.cfg
+       
+    # Accept 'root' Database user password
+    sdefault = ""                                                       # No Default Password 
+    sprompt  = "Enter MySQL Database 'root' user password"              # Prompt for Answer
+    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P")   # Accept Mysql root pwd
 
     # Test Access to MySQL with the password given by user
     cmd = "mysql -uroot -p%s -e 'show databases;'" % (dbroot_pwd)       # Cmd to show databases
@@ -733,12 +681,21 @@ def setup_mysql(sroot,wcfg_server,wpass):
         cmd = "mysqladmin -u root password '%s'" % (dbroot_pwd)         # Try Changing Password
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Load DB
         if (ccode != 0):                                                # If problem Changing Passwd
-            writelog ("Problem changing MariaDB password (mysqladmin)") # Advise User
-            writelog ("Return code is %d" % (ccode))                        # Show Return Code No
-            writelog ("Standard out is %s" % (cstdout))                     # Print command stdout
-            writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
-            time.sleep(1)
+            writelog ("Error accessing or changing MariaDB password (mysqladmin)") # Advise User
+            writelog ("Return code is %d" % (ccode))                    # Show Return Code No
+            writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
+            writelog ("Standard error is %s" % (cstderr))               # Print command stderr
+            writelog ("ERROR: Cannot continue sadmin database setup",'bold')
+            time.sleep(2)                                               # Sleep 2 Seconds
             return (1)                                                  # Abort MySQL Setup
+    writelog("Access to Database is working ...",'bold')                # Access to Database went OK
+
+    # Check if the initial Database Load SQL is present (sadmin.sql)
+    init_sql = "%s/setup/etc/sadmin.sql" % (sroot)                      # Initial DB LOad SQL File
+    if not os.path.isfile(init_sql):                                    # Initial SQL don't exist
+        writelog("Initial Load SADMIN SQL Data (%s) file is missing" % (init_sql),'bold')
+        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+        return (1)
 
     # Test if SADMIN Database exist in MariaDB
     dbname = "sadmin"                                                   # Set DB Name to check 
@@ -748,7 +705,7 @@ def setup_mysql(sroot,wcfg_server,wpass):
     else:                                                               # If SADMIN DB Exist=Warning
         writelog ('')                                                   # Space Line
         writelog ("Database 'sadmin' already exist !")                  # Show user DB exist
-        answer=askyesno("Want to reload initial 'sadmin' Database (Will erase actual content)",'N')
+        answer=askyesno("Do you want to reload initial 'sadmin' Database (Will erase actual content)",'N')
         if (answer): load_db = True                                     # Answer Yes Reload Database
 
     # If Database SADMIN don't exist or user want to drop SADMIN DB and reload initial Data
@@ -773,8 +730,11 @@ def setup_mysql(sroot,wcfg_server,wpass):
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl') # Show User
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))                     # Show user was found
-    else:                                                               # User was not found
-        print ("User %s don't exist" % (uname))                         # Show User was not found
+    else:                                                               # User sadmin was not found
+        sdefault = "Nimdas2018"                                         # Default sadmin Password 
+        sprompt  = "Enter Read/Write 'sadmin' database user password"   # Prompt for Answer
+        wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Accept sadmin DB user pwd
+        update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd,False)    # Update Value in sadmin.cfg
         writelog ("Creating 'sadmin' user ... ",'nonl')
         sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
@@ -792,9 +752,12 @@ def setup_mysql(sroot,wcfg_server,wpass):
     uname = "squery"
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl')    
     if (user_exist(uname,dbroot_pwd)):
-        print ("User %s already exist" % (uname))
+        print ("User '%s' already exist" % (uname))
     else:
-        print ("User %s don't exist" % (uname))    
+        sdefault = "Query18"                                                # Default Password 
+        sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
+        wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
+        update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
         writelog ("Creating 'squery' user ... ",'nonl')
         sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
         sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
@@ -807,7 +770,6 @@ def setup_mysql(sroot,wcfg_server,wpass):
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
             writelog (" Done ")                                         # Advise User ok to proceed
-    time.sleep(1)
 
     # Restart MariaDB Service
     writelog ('')                                                       # Space line
@@ -1096,9 +1058,9 @@ def set_sadmin_env(ver):
         sys.exit(1)                                                     # Exit to O/S with Error
 
     print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
-    print ("   - The line below is now in %s" % (SADM_PROFILE)) 
-    print ("   - %s" % (eline),end='')                               # SADMIN Line in sadmin.sh
-    print ("   - This will make sure 'SADMIN' environment variable is set upon reboot")
+    print ("  - The line below is now in %s" % (SADM_PROFILE)) 
+    print ("  - %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
+    print ("  - This make sure 'SADMIN' environment variable is set upon reboot")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
@@ -1118,7 +1080,7 @@ def create_sadmin_config_file(sroot):
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
-    writelog ("Initial SADMIN configuration file (%s) now in place" % (cfgfile)) # Advise User
+    writelog ("  - Initial SADMIN configuration file (%s) in place" % (cfgfile)) # Advise User
     writelog (' ')
     
 
@@ -1479,7 +1441,8 @@ def getpacktype(sroot):
 #===================================================================================================
 #
 def end_message(sroot,sdomain):
-    writelog ("\n\n--------------------------------------------------")
+    writelog ("\n\n")
+    writelog ("===========================================================================")
     writelog ("END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS\n",'bold')
     writelog ("You need to logout and log back in, before using SADM Tools,")
     writelog ("or type the following command (The dot and the space are important)")
@@ -1490,12 +1453,13 @@ def end_message(sroot,sdomain):
     writelog ("and view the code of the template script.")
     writelog ("\nbash shell script      : %s/bin/sadm_template.sh " % (sroot))
     writelog ("or")
-    writelog ("python template script : %s/bin/sadm_template.py " % (sroot))
-    writelog ("\nYou may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
-    writelog ("They will show you all the functions available to your shell or Python script")
+    writelog ("python script          : %s/bin/sadm_template.py " % (sroot))
+    writelog ("\nTo show you all the functions available to your shell or Python script, ")
+    writelog ("you may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
     writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
-    writelog ("The web Interface is available at http://sadmin.%s" % (sdomain))
-    writelog ("\n\n--------------------------------------------------")
+    writelog ("The Web interface is available at http://sadmin.%s" % (sdomain))
+    writelog ("\n\n")
+    writelog ("===========================================================================")
 
 
 #===================================================================================================
@@ -1505,9 +1469,10 @@ def end_message(sroot,sdomain):
 def main():
     global fhlog                                                        # Script Log File Handler
 
-    #os.system('clear')                                                  # Clear the screen
-    print ("SADMIN Setup V%s\n------------------" % (sver))             # Print Version Number
-
+    #os.system('clear')                                                 # Clear the screen
+    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
+    print ("---------------------------------------------------------------------------")
+    
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        print ("This script must be run by the 'root' user")             # Advise User Message / Log

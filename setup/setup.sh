@@ -208,7 +208,7 @@ check_lsb_release()
     check_python                                                        # python3 must be found
 
     # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
-    echo "We will now proceed with main setup program ($SCRIPT)" | tee -a $SLOG 
+    echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
 
