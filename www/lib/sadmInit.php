@@ -22,8 +22,10 @@
 #       V2.5 Get Root directory of SADMIN from /etc/environment
 #   2018_04_02 JDuplessis
 #       V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
+#   2018_04_04 JDuplessis
+#       V2.7 Bug Fix Offset error while reading sadmin.cfg and sadmin.sh
 # --------------------------------------------------------------------------------------------------
-$DEBUG=False;  
+$DEBUG=False ;  
 #
 
 # Setting the HOSTNAME Variable
@@ -34,13 +36,17 @@ define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                       # Name o
 $handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
-        if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
-        if ((strpos(trim($line),'#') === 0) or (strlen($line) === 0))   # if 1st Non-WhiteSpace is #
-            { continue; }                                               # Skip Blank or comment line
-        list($fname,$fvalue) = explode ('=',$line);                     # Split Line by Name & Value
-        if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
-        if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
-        if (trim($fname) == "SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
+        #$line = trim($line);
+        #if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
+        $pos = strpos($line,'=');
+        if ($pos !== false) {
+            if (strpos(trim($line),'#') === 0)                          # if 1st Non-WhiteSpace is #
+                { continue; }                                               # Skip Blank or comment line
+            list($fname,$fvalue) = explode ('=',$line);                     # Split Line by Name & Value
+            if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
+            if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
+            if (trim($fname) == "SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
+        }
     }
     fclose($handle);
 }else{
@@ -107,11 +113,16 @@ $handle = fopen(SADM_CFG_FILE , "r");                                   # Set Co
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read
           $lineno++;                                                    # Increase Line Number
-          if ((strpos(trim($line),'#') === 0) or (strlen($line) === 0))      # If 1st Non-WhiteSpace is #
+          if ($DEBUG) {
+            $long = strlen($line);
+            echo "\n<BR>$lineno : $line - $long ";
+          }
+          if ((strpos(trim($line),'#') === 0) or (strlen($line) < 2)) # If 1st Non-WhiteSpace is #
              continue;                                                  # Go Read the next line
           list($fname,$fvalue) = explode ('=',$line);                   # Split Line by Name & Value
           if ($DEBUG) {
-                echo "\n<BR>$lineno : $line";
+                $long = strlen($line);
+                echo "\n<BR>$lineno : $line - $long ";
                 echo "\n<BR>The Parameter is : " . $fname ;
                 echo "\n<BR>The Value is     : " . $fvalue ;
           }
