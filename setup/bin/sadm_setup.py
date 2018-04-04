@@ -775,7 +775,6 @@ def setup_mysql(sroot,wcfg_server,wpass):
         print ("User '%s' already exist" % (uname))                     # Show user was found
     else:                                                               # User was not found
         print ("User %s don't exist" % (uname))                         # Show User was not found
-    if (user_exist(uname,dbroot_pwd)):                                  # If user exist in DB
         writelog ("Creating 'sadmin' user ... ",'nonl')
         sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
