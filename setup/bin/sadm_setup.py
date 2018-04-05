@@ -115,7 +115,7 @@ req_client = {
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
 #                    'deb':'cfg2html',                       'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime',                  'rrepo':'base',
+    'datetime'   :{ 'rpm':'perl-DateTime perl-libwww-perl', 'rrepo':'base',
                     'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'}

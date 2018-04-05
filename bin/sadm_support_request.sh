@@ -84,7 +84,6 @@ print_file()
     echo "Content of $wfile" >> $SLOG
     echo "--------------------------------------------------------" >> $SLOG
     cat $wfile >> $SLOG
-    echo "-----" >> $SLOG
     return 0                                                            # Return No Error to Caller
 }
 
@@ -102,9 +101,7 @@ main_process()
     print_file "/etc/selinux/config"
     print_file "/etc/hosts"
     print_file "/etc/httpd/conf.d/sadmin.conf"
-    print_file "/etc/php.ini"
     print_file "$SDIR/log/sadmin_error.log"
-
     return 0
 }
 
