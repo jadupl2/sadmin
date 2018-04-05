@@ -633,8 +633,10 @@ def database_exist(dbname,dbroot_pwd):
              if (db == dbname) : dbfound = True
     return (dbfound)
 
+
+
 #===================================================================================================
-#   Test if sadmin database exist
+#           Add the new server into the Database as a Starting point for Web Interface
 #===================================================================================================
 #
 def add_server_to_db(sserver,dbroot_pwd,sdomain):
@@ -642,14 +644,14 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     insert_ok = False                                                   # Default Insert Failed
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
-    writelog("Insert new server %s in Database ... " % (sname),'nonl')  # Show User adding Server
+    writelog("Inserting server '%s' in Database ... " % (sname),'nonl') # Show User adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
     curtime = cnow.strftime("%H:%M:%S")                                 # Format Current Time
     dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
     #
-    # Construct insert SQL Statement
+    # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
     sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
@@ -659,14 +661,14 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    if (ccode == 0):
-        writelog(" Done")
-        insert_ok = True
-    else:
-        writelog("Problem inserting new server")
-        writelog("SQL Statement : %s" % (sql))
-        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))
-    return (insert_ok)
+    if (ccode == 0):                                                    # Insert SQL Went OK
+        writelog(" Done")                                               # Inform User
+        insert_ok = True                                                # Return Value will be True
+    else:                                                               # If Problem with the insert
+        writelog("Problem inserting new server")                        # Infor User
+        writelog("SQL Statement : %s" % (sql))                          # Show SQL used for insert
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+    return (insert_ok)                                                  # Return Insert Status
 
 
 
@@ -1473,6 +1475,25 @@ def getpacktype(sroot):
     return (packtype)                                                   # Return Packtype 
 
 
+
+#===================================================================================================
+# Just before ending - Run some SADM scripts to gather information and feed database/Web Interface 
+#===================================================================================================
+#
+def run_script(sroot,sname):
+    run_status = False                                                  # Default Run Failed
+    writelog("Running '%s' script ... " % (sname),'nonl')               # Show User Script running
+    script = "%s/bin/%s" % (sroot,sname)                                # Bld Full Path Script name
+    ccode,cstdout,cstderr = oscommand(script)                           # Execute Script
+    if (ccode == 0):                                                    # Command Execution Went OK
+        writelog(" Done")                                               # Inform User
+        run_status = True                                               # Return Value will be True
+    else:                                                               # If Problem with the insert
+        writelog("Problem running %s" % (script))                       # Infor User
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+    return (run_status)                                                 # Return Insert Status
+
+
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
@@ -1538,6 +1559,9 @@ def main():
         setup_mysql(sroot,userver,udomain)                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
+
+    # Run First SADM Script to feed Web interface and Database
+    run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
 
     # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
