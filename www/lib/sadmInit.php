@@ -23,7 +23,7 @@
 #   2018_04_02 JDuplessis
 #       V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
 #   2018_04_04 JDuplessis
-#       V2.7 Bug Fix Offset error while reading sadmin.cfg and sadmin.sh
+#       V2.8 Message when error while reading sadmin.cfg and sadmin.sh
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -33,6 +33,12 @@ list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNA
 
 # GET THE SADMIN ENVIRONMENT VARIABLE CONTENT FROM /ETC/PROFILE.D/SADMIN.SH
 define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                       # Name of O/S Environment file
+
+# Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
+if (!is_readable(SADM_ENV)) {
+    exit ("The SADMIN environment file " . SADM_ENV . " wasn't found or not readable") ;
+}
+
 $handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
@@ -41,19 +47,28 @@ if ($handle) {                                                          # If Suc
         $pos = strpos($line,'=');
         if ($pos !== false) {
             if (strpos(trim($line),'#') === 0)                          # if 1st Non-WhiteSpace is #
-                { continue; }                                               # Skip Blank or comment line
-            list($fname,$fvalue) = explode ('=',$line);                     # Split Line by Name & Value
+                { continue; }                                           # Skip comment line
+            list($fname,$fvalue) = explode ('=',$line);                 # Split Line by Name & Value
             if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
             if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
-            if (trim($fname) == "SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
+            if (trim($fname) == "SADMIN")        { define("SADM_BASE_DIR", trim($fvalue)); }
+            if (trim($fname) == "export SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
         }
     }
     fclose($handle);
 }else{
-    echo "Error opening the file " . SADM_ENV ;
+    exit ("Error opening the SADMIN Environment file " . SADM_ENV) ;
 }
 if ($DEBUG) { 
-    echo "\n<br>SADMIN DIR = " . SADM_BASE_DIR . " <br>\n" ;
+    exit ("\n<br>SADMIN DIR = " . SADM_BASE_DIR . " <br>\n") ;
+}
+
+
+#
+# Validate SADM_BASE_DIR by checking the existence of the lib directory in that Directory
+$LIBDIR=SADM_BASE_DIR . "/lib";
+if (!is_dir($LIBDIR)) {
+    exit("SADMIN environment variable in " .SADM_ENV. " isn't set correctly (" .SADM_BASE_DIR.")");
 }
 
 # SET SADMIN ROOT BASE DIRECTORY
@@ -106,6 +121,12 @@ define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File N
 
 #
 define("SADM_UPDATE_SCRIPT", "sadm_osupdate_server.sh -s ");            # O/S Update Script Name
+
+
+# Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
+if (!is_readable(SADM_CFG_FILE)) {
+    exit ("The SADMIN configuration file " . SADM_CFG_FILE . " wasn't found or not readable") ;
+}
 
 # LOADING CONFIGURATION FILE AND DEFINE GLOBAL SADM ENVIRONMENT VARIABLE
 $lineno = 0;                                                            # Clear Line Number
@@ -171,7 +192,7 @@ if ($handle) {                                                          # If Suc
     }
     fclose($handle);
 } else {
-    echo "<BR>\nError opening the file " . SADM_CFG_FILE . "<BR>";
+    echo "<BR>\nError opening the SADMIN configuration file " . SADM_CFG_FILE . "<BR>";
 }
 
 
