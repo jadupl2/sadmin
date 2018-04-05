@@ -642,6 +642,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     insert_ok = False                                                   # Default Insert Failed
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
+    writelog("Insert new server %s in Database ... " % (sname),'nonl')  # Show User adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
@@ -649,18 +650,22 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
     #
     # Construct insert SQL Statement
-    sql  = "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
-    sql += " srv_desc='SADMIN Server', srv_active='1', srv_creation_date='%s'," % (dbdate);
-    sql += " srv_sporadic='1', srv_monitor='1', srv_cat='Prod', srv_group='Service' ";
-    sql += " srv_backup='0', srv_update='0'"
+    sql = "use sadmin; "
+    sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
+    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
+    sql += " srv_backup='0', srv_update_auto='0', srv_ostype='linux', srv_graph='1' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
     if (ccode == 0):
-        listdb = cstdout.splitlines()
-        for db in listdb:
-             if (db == dbname) : dbfound = True
+        writelog(" Done")
+        insert_ok = True
+    else:
+        writelog("Problem inserting new server")
+        writelog("SQL Statement : %s" % (sql))
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))
     return (insert_ok)
 
 
@@ -669,7 +674,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
 #                       Setup MySQL Package and Load the SADMIN Database
 #===================================================================================================
 #
-def setup_mysql(sroot,wcfg_server,wpass):
+def setup_mysql(sroot,sserver,sdomain):
     
     writelog ('  ')
     writelog ('--------------------')
@@ -800,6 +805,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
             writelog (" Done ")                                         # Advise User ok to proceed
+        
+    add_server_to_db(sserver,dbroot_pwd,sdomain)                        # Add current Server to DB
 
     # Restart MariaDB Service
     writelog ('')                                                       # Space line
@@ -1528,10 +1535,9 @@ def main():
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain)                                       # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
+        setup_mysql(sroot,userver,udomain)                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
-        add_server_to_db(userver,dbroot_pwd,udomain)
 
     # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
