@@ -35,7 +35,7 @@
 # 2018_03_31 JDuplessis
 #   V1.5G Setup Release Candidate 3
 # 2018_04_04 JDuplessis
-#   V1.5I Setup Release Candidate 3B
+#   V1.5J If Server Install, Insert Server into MariaDB 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -51,7 +51,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5I"                                            # Setup Version Number
+sver                = "1.5J"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -632,6 +632,36 @@ def database_exist(dbname,dbroot_pwd):
         for db in listdb:
              if (db == dbname) : dbfound = True
     return (dbfound)
+
+#===================================================================================================
+#   Test if sadmin database exist
+#===================================================================================================
+#
+def add_server_to_db(sserver,dbroot_pwd,sdomain):
+
+    insert_ok = False                                                   # Default Insert Failed
+    server    = sserver.split('.')                                      # Split FQDN Server Name
+    sname     = server[0]                                               # Only Keep Server Name
+    #
+    cnow    = datetime.datetime.now()                                   # Get Current Time
+    curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
+    curtime = cnow.strftime("%H:%M:%S")                                 # Format Current Time
+    dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
+    #
+    # Construct insert SQL Statement
+    sql  = "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
+    sql += " srv_desc='SADMIN Server', srv_active='1', srv_creation_date='%s'," % (dbdate);
+    sql += " srv_sporadic='1', srv_monitor='1', srv_cat='Prod', srv_group='Service' ";
+    sql += " srv_backup='0', srv_update='0'"
+    #
+    # Execute the Insert New Server Statement
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode == 0):
+        listdb = cstdout.splitlines()
+        for db in listdb:
+             if (db == dbname) : dbfound = True
+    return (insert_ok)
 
 
 
@@ -1501,6 +1531,7 @@ def main():
         setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
+        add_server_to_db(userver,dbroot_pwd,udomain)
 
     # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
