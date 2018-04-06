@@ -177,7 +177,7 @@ function print_ip_heading($iptype,$wsubnet) {
     $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $net1 . ".". $net2 . ".". $net3 . ".txt";
     if (! file_exists($subnet_file))  {
        echo "<br>The subnet file " . $subnet_file . " does not exist.\n";
-       echo "<br>Correct the situation and retry request\n";
+       echo "<br>You may have to run " .SADM_BIN_DIR. "/sadm_subnet_lookup.py to create it.\n";
        echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
        exit ;
     }

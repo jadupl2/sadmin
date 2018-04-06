@@ -44,7 +44,7 @@ SADM_TPID="$$"                             ; export SADM_TPID           # Script
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
 SCRIPT="$(dirname "$0")/bin/sadm_setup.py" ; export SCRIPT              # Main Setup SCRIPT Next
 SLOGDIR="$(dirname "$0")/log"              ; export SLOGDIR             # Log Directory
-if [ ! -d ${LOGDIR} ] ; then mkdir $SLOGDIR ; fi                        # If Don't exist create dir
+if [ ! -d ${SLOGDIR} ] ; then mkdir $SLOGDIR ; fi                       # If Don't exist create dir
 SLOG="${SLOGDIR}/sadm_setup.log"           ; export SLOG                # Script Log Name
 
 
@@ -56,18 +56,18 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
-        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled) ..." | tee -a $SLOG
+        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled) ..." >> $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
     fi
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
-        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled) ..." | tee -a $SLOG
+        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled) ..." >> $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
     fi
 
     # Disable the EPEL Repository, Will Activate when needed only.
-    echo "Disabling EPEL Repository, will activate it only when needed" | tee -a $SLOG
+    echo "Disabling EPEL Repository, will activate it only when needed" >> $SLOG
     yum-config-manager --disable epel >/dev/null 2>&1
 }
 
@@ -80,8 +80,7 @@ check_python()
     echo -n "Checking if 'python3' is installed ... " | tee -a $SLOG
     which python3 >/dev/null 2>&1
     if [ $? -ne 0 ] 
-        then echo " " | tee -a $SLOG
-             echo -n "Installing python3 ... " | tee -a $SLOG
+        then echo -n "Installing python3 ... " | tee -a $SLOG
              which yum >/dev/null 2>&1
              if [ $? -eq 0 ] 
                 then add_epel_repo

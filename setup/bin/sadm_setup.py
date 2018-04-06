@@ -416,7 +416,7 @@ def update_sudo_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
+    writelog ('Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
     sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
@@ -633,6 +633,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     insert_ok = False                                                   # Default Insert Failed
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
+    writelog('')
     writelog("Inserting server '%s' in Database ... " % (sname),'nonl') # Show User adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
@@ -1421,7 +1422,7 @@ def setup_sadmin_config_file(sroot):
     # Change owner of all files in $SADMIN
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     writelog (" ")                                                      # White Line
-    writelog ("Change %s ownership : %s" % (sroot,cmd))                 # Show what we are doing
+    writelog ("Setting %s ownership : %s" % (sroot,cmd))                # Show what we are doing
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change SADMIN Dir Owner 
 
 
@@ -1553,7 +1554,7 @@ def main():
     writelog ('  ')
     writelog ('  ')
     writelog ('--------------------')
-    writelog ("Run SADM scripts for '%s' to feed Database and Web Interface",'bold')
+    writelog ("Run SADM scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
     run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
