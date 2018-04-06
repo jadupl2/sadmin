@@ -23,19 +23,8 @@
 # CHANGE LOG
 # 2018_01_18 JDuplessis 
 #   V1.0 Initial Version
-#   V1.0b WIP Version#   
-# 2018_02_23 JDuplessis
-#   V1.1 First Beta Version 
-# 2018_03_02 JDuplessis
-#   V1.2b Second Beta Version 
-# 2018_03_13 JDuplessis
-#   V1.3 Third Beta Version 
-# 2018_03_22 JDuplessis
-#   V1.5 Setup Release Candidate 2
-# 2018_03_31 JDuplessis
-#   V1.5G Setup Release Candidate 3
-# 2018_04_04 JDuplessis
-#   V1.5J If Server Install, Insert Server into MariaDB 
+# 2018_04_06 JDuplessis
+#   V1.6 Running SADM Scripts at the end of setup to feed DN and Web Interface
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -51,7 +40,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5J"                                            # Setup Version Number
+sver                = "1.6"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -834,12 +823,12 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ('--------------------')
     writelog ("Setup SADMIN Web Site",'bold')
     writelog ('  ')
-    open("%s/log/sadmin_error.log"  % (sroot),'a').close                  # Touch Apache SADMIN log
-    open("%s/log/sadmin_access.log" % (sroot),'a').close                  # Touch Apache SADMIN log
 
     # Set the name of Web Server Service depending on Linux O/S
     sservice = "httpd"
     if (spacktype == "deb" ) : sservice = "apache2" 
+    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close        # Touch Apache SADMIN log
+    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close        # Touch Apache SADMIN log
     
     # Start Web Server
     writelog ("Making sure Web Server is started")
@@ -1561,8 +1550,25 @@ def main():
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
 
     # Run First SADM Script to feed Web interface and Database
+    writelog ('  ')
+    writelog ('  ')
+    writelog ('--------------------')
+    writelog ("Run SADM scripts for '%s' to feed Database and Web Interface",'bold')
+    writelog ('  ')
     run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
+    run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
+    run_script(sroot,"sadm_fs_save_info.sh")                            # Client Save LVM FS Info
+    run_script(sroot,"sadm_create_cfg2html.sh")                         # Produce cfg2html html file
+    run_script(sroot,"sadm_nmon_watcher.sh")                            # Make sure nmon running
+    run_script(sroot,"sadm_sysmon.pl")                                  # Run SADM System MOnitor
 
+    # Scripts to run on Server Installation Only
+    if (stype == "S"):                                                  # If Server Installation
+        run_script(sroot,"sadm_fetch_servers.sh")                       # Grab Status from clients
+        run_script(sroot,"sadm_daily_data_collection.sh")               # mv ClientData to ServerDir
+        run_script(sroot,"sadm_housekeeping_server.sh")                 # Validate Owner/Grp/Perm
+        run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
+        
     # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
     fhlog.close()                                                       # Close Script Log
