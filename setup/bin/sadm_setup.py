@@ -23,19 +23,8 @@
 # CHANGE LOG
 # 2018_01_18 JDuplessis 
 #   V1.0 Initial Version
-#   V1.0b WIP Version#   
-# 2018_02_23 JDuplessis
-#   V1.1 First Beta Version 
-# 2018_03_02 JDuplessis
-#   V1.2b Second Beta Version 
-# 2018_03_13 JDuplessis
-#   V1.3 Third Beta Version 
-# 2018_03_22 JDuplessis
-#   V1.5 Setup Release Candidate 2
-# 2018_03_31 JDuplessis
-#   V1.5G Setup Release Candidate 3
-# 2018_04_04 JDuplessis
-#   V1.5I Setup Release Candidate 3B
+# 2018_04_06 JDuplessis
+#   V1.6 Running SADM Scripts at the end of setup to feed DN and Web Interface
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -51,7 +40,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.5I"                                            # Setup Version Number
+sver                = "1.6"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -636,10 +625,47 @@ def database_exist(dbname,dbroot_pwd):
 
 
 #===================================================================================================
+#           Add the new server into the Database as a Starting point for Web Interface
+#===================================================================================================
+#
+def add_server_to_db(sserver,dbroot_pwd,sdomain):
+
+    insert_ok = False                                                   # Default Insert Failed
+    server    = sserver.split('.')                                      # Split FQDN Server Name
+    sname     = server[0]                                               # Only Keep Server Name
+    writelog("Inserting server '%s' in Database ... " % (sname),'nonl') # Show User adding Server
+    #
+    cnow    = datetime.datetime.now()                                   # Get Current Time
+    curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
+    curtime = cnow.strftime("%H:%M:%S")                                 # Format Current Time
+    dbdate  = curdate + " " + curtime                                   # MariaDB Insert Date/Time  
+    #
+    # Construct insert new server SQL Statement
+    sql = "use sadmin; "
+    sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
+    sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
+    sql += " srv_backup='0', srv_update_auto='0', srv_ostype='linux', srv_graph='1' ;"
+    #
+    # Execute the Insert New Server Statement
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
+    if (ccode == 0):                                                    # Insert SQL Went OK
+        writelog(" Done")                                               # Inform User
+        insert_ok = True                                                # Return Value will be True
+    else:                                                               # If Problem with the insert
+        writelog("Problem inserting new server")                        # Infor User
+        writelog("SQL Statement : %s" % (sql))                          # Show SQL used for insert
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+    return (insert_ok)                                                  # Return Insert Status
+
+
+
+#===================================================================================================
 #                       Setup MySQL Package and Load the SADMIN Database
 #===================================================================================================
 #
-def setup_mysql(sroot,wcfg_server,wpass):
+def setup_mysql(sroot,sserver,sdomain):
     
     writelog ('  ')
     writelog ('--------------------')
@@ -770,6 +796,8 @@ def setup_mysql(sroot,wcfg_server,wpass):
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
             writelog (" Done ")                                         # Advise User ok to proceed
+        
+    add_server_to_db(sserver,dbroot_pwd,sdomain)                        # Add current Server to DB
 
     # Restart MariaDB Service
     writelog ('')                                                       # Space line
@@ -795,12 +823,12 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     writelog ('--------------------')
     writelog ("Setup SADMIN Web Site",'bold')
     writelog ('  ')
-    open("%s/log/sadmin_error.log"  % (sroot),'a').close                  # Touch Apache SADMIN log
-    open("%s/log/sadmin_access.log" % (sroot),'a').close                  # Touch Apache SADMIN log
 
     # Set the name of Web Server Service depending on Linux O/S
     sservice = "httpd"
     if (spacktype == "deb" ) : sservice = "apache2" 
+    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close        # Touch Apache SADMIN log
+    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close        # Touch Apache SADMIN log
     
     # Start Web Server
     writelog ("Making sure Web Server is started")
@@ -1436,6 +1464,25 @@ def getpacktype(sroot):
     return (packtype)                                                   # Return Packtype 
 
 
+
+#===================================================================================================
+# Just before ending - Run some SADM scripts to gather information and feed database/Web Interface 
+#===================================================================================================
+#
+def run_script(sroot,sname):
+    run_status = False                                                  # Default Run Failed
+    writelog("Running '%s' script ... " % (sname),'nonl')               # Show User Script running
+    script = "%s/bin/%s" % (sroot,sname)                                # Bld Full Path Script name
+    ccode,cstdout,cstderr = oscommand(script)                           # Execute Script
+    if (ccode == 0):                                                    # Command Execution Went OK
+        writelog(" Done")                                               # Inform User
+        run_status = True                                               # Return Value will be True
+    else:                                                               # If Problem with the insert
+        writelog("Problem running %s" % (script))                       # Infor User
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+    return (run_status)                                                 # Return Insert Status
+
+
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
@@ -1498,10 +1545,30 @@ def main():
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain)                                       # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
-        setup_mysql(sroot,userver,' ')                                  # Setup/Load MySQL Database
+        setup_mysql(sroot,userver,udomain)                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
 
+    # Run First SADM Script to feed Web interface and Database
+    writelog ('  ')
+    writelog ('  ')
+    writelog ('--------------------')
+    writelog ("Run SADM scripts for '%s' to feed Database and Web Interface",'bold')
+    writelog ('  ')
+    run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
+    run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
+    run_script(sroot,"sadm_fs_save_info.sh")                            # Client Save LVM FS Info
+    run_script(sroot,"sadm_create_cfg2html.sh")                         # Produce cfg2html html file
+    run_script(sroot,"sadm_nmon_watcher.sh")                            # Make sure nmon running
+    run_script(sroot,"sadm_sysmon.pl")                                  # Run SADM System MOnitor
+
+    # Scripts to run on Server Installation Only
+    if (stype == "S"):                                                  # If Server Installation
+        run_script(sroot,"sadm_fetch_servers.sh")                       # Grab Status from clients
+        run_script(sroot,"sadm_daily_data_collection.sh")               # mv ClientData to ServerDir
+        run_script(sroot,"sadm_housekeeping_server.sh")                 # Validate Owner/Grp/Perm
+        run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
+        
     # End of Setup
     end_message(sroot,udomain)                                          # Last Message to User
     fhlog.close()                                                       # Close Script Log

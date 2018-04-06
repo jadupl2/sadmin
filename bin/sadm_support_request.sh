@@ -47,7 +47,7 @@ SADM_EXIT_CODE=0                            ; export SADM_EXIT_CODE     # Script
 
 # SADMIN Base Dir. 
 SDIR=`grep "^SADMIN=" /etc/profile.d/sadmin.sh| awk -F= '{ print $2 }'` ; export SDIR 
-SLOG="${SDIR}/log/${SADM_INST}.log"         ; export SLOG               # Script resulting log
+SLOG="${SDIR}/log/${SADM_HOSTNAME}_${SADM_INST}.log" ; export SLOG      # Script resulting log
 
 # Display OS Name and Version
 tput clear 

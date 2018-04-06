@@ -40,6 +40,8 @@
 #   v1.9 Remove rrd_update and move it to sadm_sod_server.sh (start of day script)
 # 2018_02_04 - JDuplessis
 #   v2.0 Remove MySql Backup & Change Script name from sadm_eod_client.sh to sadm_client_sunset.sh
+# 2018_04_05 - JDuplessis
+#   v2.1 Remove execution of sadm_create_sar_perfdata.sh not neede anymmore
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +58,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 # These variables need to be defined prior to loading the SADMIN function Libraries
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -127,10 +129,6 @@ main_process()
 
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
     run_command "sadm_fs_save_info.sh"                                  # Client Save LVM FS Info
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
-
-    # Collect System Activity report and store it in $SADMIN/dat/sar 
-    run_command "sadm_create_sar_perfdata.sh"                           # Create Perf. File from SAR
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)

@@ -25,6 +25,8 @@
 #       V2.8 Fix compatibility problem with 'dash' shell
 #   2018_02_10 JDuplessis 
 #       V2.9 Rsync on SADMIN server (locally) is not using ssh
+#   2018_04_05 JDuplessis 
+#       V2.10 Do not copy web Interface crontab fro backup unless file exist
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -53,7 +55,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.10'                            ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -365,8 +367,10 @@ process_servers()
     fi
 
     # Being root can update o/s update crontab - Can't while in web interface
-    cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                                # Put in place Final Crontab
-    chmod 600 ${SADM_CRONTAB} ; chown root.root ${SADM_CRONTAB}         # Set Permission on crontab
+    if [ -f ${SADM_CRON_FILE} ]                                         # If Web Interface Crontab
+        then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                       # Put in place Final Crontab
+             chmod 600 $SADM_CRONTAB ; chown root.root ${SADM_CRONTAB}  # Set Permission on crontab
+    fi
 
     # Gracefully Exit the script
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
