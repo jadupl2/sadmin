@@ -1,11 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # ==================================================================================================
 #   Author      :   Jacques Duplessis
-#   Date        :   2018-02-27
+#   Date        :   2017-09-09
 #   Name        :   sadm_git_config.py
 #   Synopsis    :
-#   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
-#                   License, v.2 or above.
+#   Licence     :   Initial Personnal Git Setup Environment
 # ==================================================================================================
 #   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
@@ -16,21 +15,24 @@
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
-
+#
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-#
-# 2018_02_27 JDuplessis
+# 2017_09_06 JDuplessis 
 #   V1.0 Initial Version
+# 2018_04_06 JDuplessis 
+#   V1.1 Rewritten using template 
 #
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
-    import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil      # Import Std Python3 Modules
-    from subprocess import Popen, PIPE
+    import os,time,sys,pdb,socket,datetime                          # Import Std Python3 Modules
+    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
+    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
+    import sadmlib_std as sadm                                      # Import SADMIN Python Library
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
@@ -40,74 +42,25 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-pn                  = os.path.basename(sys.argv[0])                     # Program name
-inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
-conn                = ""                                                # MySQL Database Connector
-cur                 = ""                                                # MySQL Database Cursor
-sadm_base_dir       = ""                                                # SADMIN Install Directory
-sver                = "1.0"
-DEBUG               = False                                             # Debug Activated or Not
-DRYRUN              = True                                              # Don't Install, Print Cmd
-#
-sroot               = ""                                                # SADMIN Root Directory
-fhlog               = ""                                                # Log File Handle
 
-# Text Colors Attributes Class
-class color:
-    PURPLE      = '\033[95m'
-    CYAN        = '\033[96m'
-    DARKCYAN    = '\033[36m'
-    BLUE        = '\033[94m'
-    GREEN       = '\033[92m'
-    YELLOW      = '\033[93m'
-    RED         = '\033[91m'
-    BOLD        = '\033[1m'
-    UNDERLINE   = '\033[4m'
-    END         = '\033[0m'
 
-#===================================================================================================
-#                   Print [ERROR] in Red, followed by a the message received
-#===================================================================================================
-def printError(emsg):
-    print ( color.RED + color.BOLD + "[ERROR] " + emsg + color.END)
-
-#===================================================================================================
-#                  Print [WARNING] in Red, followed by a the message received
-#===================================================================================================
-def printWarning(emsg):
-    print ( color.YELLOW + color.BOLD + "[WARNING] " + emsg + color.END)
-
-#===================================================================================================
-#                   Print [OK] in Yellow, followed by a the message received
-#===================================================================================================
-def printOk(emsg):
-    print ( color.GREEN + color.BOLD + "[OK] " + emsg + color.END)
-
-#===================================================================================================
-#                           Print the message received in Bold
-#===================================================================================================
-def printBold(emsg):
-    print ( color.DARKCYAN + color.BOLD + emsg + color.END)
 
 
 #===================================================================================================
-#                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+#                                   Setup Git Personnal Environment
 #===================================================================================================
-def oscommand(command) :
-    if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
-    p = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-    out = p.stdout.read().strip().decode()
-    err = p.stderr.read().strip().decode()
-    returncode = p.wait()
-    if (DEBUG) :
-        print ("In sadm_oscommand function stdout is      : %s" % (out))
-        print ("In sadm_oscommand function stderr is      : %s " % (err))
-        print ("In sadm_oscommand function returncode is  : %s" % (returncode))
-    #if returncode:
-    #    raise Exception(returncode,err)
-    #else :
-    return (returncode,out,err)
+def setup_git(st):
+    st.writelog ("Setup Git Personnal Environment")
+    
+    cmd = "git config --global user.name 'Jacques Duplessis - %s'" % (st.hostname)
+    print (cmd)
+    st.oscommand (cmd)
 
+    cmd = "git config --global user.email duplessis.jacques@gmail.com"
+    print (cmd)
+    st.oscommand (cmd)
+
+    return (0)                                                       # Return Error Code To Caller
 
 
 
@@ -116,16 +69,23 @@ def oscommand(command) :
 #===================================================================================================
 #
 def main():
-    
-    cmd = "git config --global user.name 'Jacques Duplessis - mdebian9'"
-    print (cmd)
-    oscommand (cmd)
 
-    cmd = "git config --global user.email duplessis.jacques@gmail.com"
-    print (cmd)
-    oscommand (cmd)
-
-    sys.exit(0)
+    # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
+    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
+    st.ver  = "1.1"                             # Indicate this script Version 
+    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
+    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
+    st.log_append = True                        # True=Append existing log  False=start a new log
+    st.debug = 0                                # Debug level and verbosity (0-9)
+    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.usedb = True                             # True=Use Database  False=DB Not needed for script
+    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
+    st.exit_code = setup_git(st)                # Go Setup Git Environment
+    st.stop(st.exit_code)                       # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()

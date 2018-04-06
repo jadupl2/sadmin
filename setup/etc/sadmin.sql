@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Mar 08, 2018 at 12:44 PM
+-- Generation Time: Apr 05, 2018 at 06:57 PM
 -- Server version: 5.5.56-MariaDB
 -- PHP Version: 5.4.16
 
@@ -28,7 +28,8 @@ USE `sadmin`;
 -- Table structure for table `server`
 --
 
-CREATE TABLE IF NOT EXISTS `server` (
+DROP TABLE IF EXISTS `server`;
+CREATE TABLE `server` (
   `srv_id` int(11) NOT NULL COMMENT 'Server ID',
   `srv_name` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Name',
   `srv_domain` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Domain',
@@ -83,28 +84,11 @@ CREATE TABLE IF NOT EXISTS `server` (
 ) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 --
--- Dumping data for table `server`
---
-
-INSERT INTO `server` (`srv_id`, `srv_name`, `srv_domain`, `srv_desc`, `srv_tag`, `srv_note`, `srv_active`, `srv_sporadic`, `srv_monitor`, `srv_graph`, `srv_cat`, `srv_group`, `srv_vm`, `srv_osname`, `srv_ostype`, `srv_oscodename`, `srv_osversion`, `srv_osver_major`, `srv_date_creation`, `srv_date_edit`, `srv_date_update`, `srv_date_osupdate`, `srv_kernel_version`, `srv_kernel_bitmode`, `srv_hwd_bitmode`, `srv_model`, `srv_serial`, `srv_memory`, `srv_nb_cpu`, `srv_cpu_speed`, `srv_nb_socket`, `srv_core_per_socket`, `srv_thread_per_core`, `srv_ip`, `srv_ips_info`, `srv_disks_info`, `srv_vgs_info`, `srv_backup`, `srv_backup_hour`, `srv_backup_minute`, `srv_update_auto`, `srv_update_status`, `srv_update_reboot`, `srv_update_month`, `srv_update_dom`, `srv_update_dow`, `srv_update_hour`, `srv_update_minute`, `srv_maint`, `srv_maint_date_start`, `srv_maint_date_end`) VALUES
-(11, 'aixb50', 'maison.ca', 'Aix 5.3 Dev. Server', '', '', 0, 1, 0, 1, 'Legacy', 'Regular', 0, 'aix', 'aix', 'IBM_AIX', '5.3', '5', '2017-11-26 11:25:45', '2017-12-31 11:00:38', '2017-01-28 00:00:32', '0000-00-00 00:00:00', '3', 32, 32, '7046-B50', '01102DD2F', 1024, 1, 375, 1, 1, 1, '192.168.1.102', 'en0|192.168.1.102|255.255.255.0|00:04:ac:17:9c:b3', 'hdisk0|34715,hdisk1|34715', 'rootvg|34688|33600|1088,datavg|34688|256|34432', 1, 1, 0, 0, '', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'YNNNNNNN', 1, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(12, 'batman', 'maison.ca', 'Aix 7.1 NIM Server', '', '', 0, 1, 0, 1, 'Dev', 'Regular', 0, 'aix', 'aix', 'IBM_AIX', '7.1', '7', '2017-11-26 11:27:51', '2017-12-31 11:00:46', '2017-01-29 11:13:26', '0000-00-00 00:00:00', '1', 64, 64, '7028-6C4', '0110549CA', 1024, 1, 1002, 1, 1, 1, '192.168.1.79', 'en0|192.168.1.79|255.255.255.0|00:02:55:cf:28:39', 'hdisk0|140013,hdisk1|140013,hdisk2|140013', 'rootvg|139776|10752|129024,nimvg|139776|15616|124160', 1, 1, 0, 0, '', 0, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'YNNNNNNN', 1, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(14, 'centos6', 'maison.ca', 'CentOS 6 Server', '', '', 1, 0, 1, 1, 'Dev', 'Regular', 1, 'centos', 'linux', 'Final', '6.9', '6', '2017-11-26 11:32:07', '2017-12-31 11:01:15', '2018-03-07 23:25:23', '2018-02-09 10:36:14', '2.6.32-696', 32, 64, 'VM', '', 1006, 1, 2800, 1, 1, 1, '192.168.1.138', 'eth0|192.168.1.138|255.255.255.0|00:50:56:89:40:e4', 'sda|65945', 'rootvg|57088|52767|4321', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 1, 15, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(15, 'centos7', 'maison.ca', 'CentOS 7 Server', '', '', 1, 0, 1, 1, 'Dev', 'Regular', 1, 'centos', 'linux', 'Core', '7.4.1708', '7', '2017-11-26 11:34:06', '2017-12-31 11:01:23', '2018-03-07 23:24:18', '2017-12-30 01:45:14', '3.10.0-693', 64, 64, 'VM', '', 1444, 1, 2800, 1, 2, 1, '192.168.1.140', 'ens192|192.168.1.140|255.255.255.0|00:0c:29:b3:81:eb', 'sda|43929', 'rootvg|40448|25150|15298', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 1, 45, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(17, 'debian8', 'maison.ca', 'Debian 8 Server', '', '', 1, 0, 1, 1, 'Dev', 'Regular', 1, 'debian', 'linux', 'jessie', '8.10', '8', '2017-11-26 11:35:29', '2017-12-31 11:01:44', '2018-03-07 23:24:40', '2017-12-30 02:15:14', '3.16.0-4-amd64', 64, 64, 'VM', '', 2010, 1, 2800, 1, 1, 1, '192.168.1.147', 'eth0|192.168.1.147|255.255.255.0|00:50:56:a8:e6:f4', 'sda|38502', '', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 2, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(20, 'gotham', 'maison.ca', 'CentOS 5 Server', '', '', 1, 0, 1, 1, 'Test', 'Temporary', 1, 'centos', 'linux', 'Final', '6.9', '6', '2017-11-26 11:39:26', '2017-12-31 11:07:00', '2018-03-07 23:24:58', '2017-12-30 03:45:07', '2.6.32-696', 32, 64, 'VM', '', 1502, 1, 2800, 1, 1, 1, '192.168.1.108', 'eth4|192.168.1.108|255.255.255.0|00:50:56:89:d0:bf', 'sda|65945,sdb|17612,sdc|17612,sdd|105', 'data2vg|96|0|96,datavg|16373|10250|6123,datavg_sdb|16373|4444|11929,rootvg|57088|52480|4608', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 5, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(24, 'raspi0', 'maison.ca', 'Raspberry Zero W', '', '', 1, 0, 1, 1, 'Test', 'Raspberry', 0, 'raspbian', 'linux', 'jessie', '8.0', '8', '2017-11-26 11:51:06', '2017-12-31 11:08:15', '2018-03-07 23:26:42', '2017-12-30 05:02:53', '4.9.35+', 32, 32, 'Raspberry Rev.9000c1', '000000007ecb22d4', 434, 1, 1000, 1, 1, 1, '192.168.1.4', 'wlan0|192.168.1.4|255.255.255.0|b8:27:eb:9e:77:81', 'mmcblk0|7860', '', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 2, 15, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(27, 'raspi4', 'maison.ca', 'Raspberry Pi 3 Model B Rev 1', '', '', 1, 0, 1, 1, 'Prod', 'Raspberry', 0, 'raspbian', 'linux', 'jessie', '8.0', '8', '2017-11-26 11:54:10', '2018-01-04 10:52:37', '2018-03-07 23:24:24', '2017-12-30 05:45:49', '4.9.35-v7+', 32, 32, 'Raspberry Rev.a02082', '00000000825f3870', 923, 1, 1200, 1, 4, 1, '192.168.1.19', 'eth0:1|192.168.1.127|255.255.255.0|b8:27:eb:5f:38:70,eth0|192.168.1.19|255.255.255.0|b8:27:eb:5f:38:70', 'sda|3073024,sdb|3073024,mmcblk0|32153', '', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 3, 45, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(31, 'ubuntu1604', 'maison.ca', 'Ubuntu 16.04 Server', '', '', 1, 0, 1, 1, 'Dev', 'Regular', 1, 'ubuntu', 'linux', 'xenial', '16.04', '16', '2017-11-26 11:57:14', '2017-12-31 11:10:04', '2018-03-07 23:24:39', '2017-12-30 06:45:28', '4.4.0-66-generic', 64, 64, 'VM', '', 1496, 1, 2800, 1, 1, 1, '192.168.1.143', 'ens160|192.168.1.143|255.255.255.0|00:50:56:a8:13:5a', 'sda|43929', 'rootvg|40468|21524|18944', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 4, 30, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(34, 'yoda', 'maison.ca', 'Laptop Ubuntu 16.04', '', '', 1, 1, 1, 1, 'Dev', 'Laptop', 0, 'ubuntu', 'linux', 'xenial', '16.04', '16', '2017-11-26 12:04:56', '2018-02-05 09:28:35', '2018-03-01 23:23:35', '2018-02-12 11:30:58', '4.4.0-116-generic', 64, 64, 'Latitude D630', 'HSD0PH1', 3942, 1, 1200, 1, 2, 1, '192.168.1.10', 'enp9s0|192.168.1.10|255.255.255.0|00:21:70:b2:b7:21,wlx000f13280a37|192.168.1.18|255.255.255.0|00:0f:13:28:0a:37', 'sda|122880', 'rootvg|113981|33802|80179', 1, 1, 0, 1, 'S', 1, 'YNNNNNNNNNNNN', 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN', 'NNNNYNNN', 2, 5, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `server_category`
 --
 
-CREATE TABLE IF NOT EXISTS `server_category` (
+DROP TABLE IF EXISTS `server_category`;
+CREATE TABLE `server_category` (
   `cat_id` int(11) NOT NULL COMMENT 'Category ID',
   `cat_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Code',
   `cat_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Description',
@@ -118,11 +102,10 @@ CREATE TABLE IF NOT EXISTS `server_category` (
 --
 
 INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `cat_date`, `cat_default`) VALUES
-(2, 'Legacy', 'Legacy Unsupported Server', 1, '2017-11-07 05:00:00', 0),
 (3, 'Dev', 'Development Environment', 1, '2017-11-07 05:00:00', 1),
 (5, 'Poc', 'Proof Of Concept env.', 1, '2017-11-07 05:00:00', 0),
 (6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
-(11, 'Temporary', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
+(11, 'Temp', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
 
 -- --------------------------------------------------------
 
@@ -130,7 +113,8 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 -- Table structure for table `server_group`
 --
 
-CREATE TABLE IF NOT EXISTS `server_group` (
+DROP TABLE IF EXISTS `server_group`;
+CREATE TABLE `server_group` (
   `grp_id` int(11) NOT NULL COMMENT 'Server Group ID',
   `grp_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Groupe Code',
   `grp_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Grp Des.',
@@ -144,12 +128,11 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 --
 
 INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
-(2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
+(2, 'Legacy', 'Legacy O/S version', 1, '2017-11-22 16:55:50', 0),
 (3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
 (4, 'Retired', 'Server not in use', 1, '2017-11-07 05:00:00', 0),
 (5, 'Raspberry', 'Raspberry Pi', 1, '2017-11-07 05:00:00', 0),
-(6, 'Regular', 'Normal App. Server', 1, '2017-11-23 17:33:43', 1),
-(7, 'Temporary', 'Temporaly in service', 1, '2017-11-07 05:00:00', 0),
+(6, 'Regular', 'App. Server', 1, '2017-11-23 17:33:43', 1),
 (8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
 
 --

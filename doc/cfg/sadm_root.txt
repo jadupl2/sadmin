@@ -2,5 +2,5 @@
 # Revise 2018_03_18
 #----------------------------------------------------------------------------
 This is MySQL Database 'root' user password.
-If the password isn't currently, it will be set to the one you will enter.
+If the password isn't currently set, it will be set to the one you will enter.
 If the password is currently set, we will test Database connection using it.
