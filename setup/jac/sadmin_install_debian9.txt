@@ -10,10 +10,8 @@ drwxr-xr-x 2 root root  4096 Apr  7 11:00 jac
 root@mdebian9:/opt/sadmin/setup# 
 root@mdebian9:/opt/sadmin/setup# 
 root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
+
+root@mdebian9:/opt/sadmin# cd setup
 root@mdebian9:/opt/sadmin/setup# ./setup.sh 
 
 SADMIN Pre-Installation Verification Version 1.4
@@ -163,24 +161,24 @@ Enter the Network Netmask [1-30] [24] :
 Checking SADMIN Client Package requirement
  
 Running apt-get update... Done 
-Checking for mailutils ... Installing mailutils ...  Done 
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
-Checking for nmon ... Installing nmon ...  Done 
-Checking for parted ...  Ok 
-Checking for util-linux ...  Ok 
-Checking for perl-base ...  Ok 
-Checking for openssh-client ...  Ok 
-Checking for lsb-release ...  Ok 
-Checking for lshw ... Installing lshw ...  Done 
-Checking for bc ...  Ok 
-Checking for net-tools ... Installing net-tools ...  Done 
-Checking for dmidecode ...  Ok 
-Checking for util-linux ...  Ok 
 Checking for sudo ... Installing sudo ...  Done 
+Checking for parted ...  Ok 
+Checking for python3-pip ... Installing python3-pip ...  Done 
+Checking for util-linux ...  Ok 
+Checking for openssh-client ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for lsb-release ...  Ok 
+Checking for perl-base ...  Ok 
 Checking for ethtool ... Installing ethtool ...  Done 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for net-tools ... Installing net-tools ...  Done 
 Checking for facter ... Installing facter ...  Done 
-Installing python3 PyMySQL module ... Problem Installing PyMysql Python module
- - /bin/sh: 1: pip3: not found
+Checking for bc ...  Ok 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for util-linux ...  Ok 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for mailutils ... Installing mailutils ...  Done 
+Installing python3 PyMySQL module ...  Done 
 
 --------------------
 Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
@@ -200,9 +198,9 @@ Checking SADMIN Server Package requirement
  
 Running apt-get update... Done 
 Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
+Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
 Checking for rrdtool ... Installing rrdtool ...  Done 
 Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
-Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
   
 --------------------
 Setup SADMIN MariaDB Database
@@ -254,9 +252,7 @@ SADMIN Web Site enable
   - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) ...  Done 
   - Setting Permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
   - Setting Permission on SADMIN WebSite images (/opt/sadmin/www/images) ...  Done 
-  - Web Server Restarting ... Problem Starting the Web Server
- - Job for apache2.service failed because the control process exited with error code.
-See "systemctl status apache2.service" and "journalctl -xe" for details.
+  - Web Server Restarting ...  Done 
   - Enabling Web Server Service ...  Done 
 
 --------------------
@@ -276,47 +272,35 @@ Running 'sadm_nmon_watcher.sh' script ...  Done
 Running 'sadm_sysmon.pl' script ...  Done
 Running 'sadm_fetch_servers.sh' script ...  Done
 Running 'sadm_daily_data_collection.sh' script ... Problem running /opt/sadmin/bin/sadm_daily_data_collection.sh
-Error 1 - 2018.04.07 11:13:41 ================================================================================
-2018.04.07 11:13:41 Starting sadm_daily_data_collection.sh V2.5 - SADM Lib. V2.19
-2018.04.07 11:13:41 Server Name: mdebian9.maison.ca - Type: LINUX
-2018.04.07 11:13:41 O/S: DEBIAN 9.4 - Code Name: stretch
-2018.04.07 11:13:41 ==================================================
-2018.04.07 11:13:41  
-2018.04.07 11:13:41 Processing All Actives Server(s)
-2018.04.07 11:13:41  
-2018.04.07 11:13:41 ----------
-2018.04.07 11:13:41 Processing (1) mdebian9.maison.ca
-2018.04.07 11:13:44 [ ERROR ] Will not be able to process that server.
-2018.04.07 11:13:44 Error Count at 1
-2018.04.07 11:13:44  
-2018.04.07 11:13:44 FINAL number of Error(s) detected is 1
-2018.04.07 11:13:44  
-2018.04.07 11:13:44 ==================================================
-2018.04.07 11:13:44 Script return code is 1
-2018.04.07 11:13:44 Script execution time is 00:00:03
-2018.04.07 11:13:44 Trim History /opt/sadmin/dat/rch/mdebian9_sadm_daily_data_collection.rch to 100 lines
-2018.04.07 11:13:44 User requested mail only if script fail - Will send mail
-2018.04.07 11:13:44 Trim log /opt/sadmin/log/mdebian9_sadm_daily_data_collection.log to 1000 lines
-2018.04.07 11:13:44 Sat Apr  7 11:13:44 EDT 2018 - End of sadm_daily_data_collection.sh
-2018.04.07 11:13:44 ================================================================================
-2018.04.07 11:13:44  
-2018.04.07 11:13:44  
-2018.04.07 11:13:44  
-2018.04.07 11:13:44 - 
+Error 1 - 2018.04.07 15:47:37 ================================================================================
+2018.04.07 15:47:37 Starting sadm_daily_data_collection.sh V2.5 - SADM Lib. V2.19
+2018.04.07 15:47:37 Server Name: mdebian9.maison.ca - Type: LINUX
+2018.04.07 15:47:37 O/S: DEBIAN 9.4 - Code Name: stretch
+2018.04.07 15:47:37 ==================================================
+2018.04.07 15:47:37  
+2018.04.07 15:47:37 Processing All Actives Server(s)
+2018.04.07 15:47:37  
+2018.04.07 15:47:37 ----------
+2018.04.07 15:47:37 Processing (1) mdebian9.maison.ca
+2018.04.07 15:47:40 [ ERROR ] Will not be able to process that server.
+2018.04.07 15:47:40 Error Count at 1
+2018.04.07 15:47:40  
+2018.04.07 15:47:40 FINAL number of Error(s) detected is 1
+2018.04.07 15:47:40  
+2018.04.07 15:47:40 ==================================================
+2018.04.07 15:47:40 Script return code is 1
+2018.04.07 15:47:40 Script execution time is 00:00:03
+2018.04.07 15:47:40 Trim History /opt/sadmin/dat/rch/mdebian9_sadm_daily_data_collection.rch to 100 lines
+2018.04.07 15:47:40 User requested mail only if script fail - Will send mail
+2018.04.07 15:47:40 Trim log /opt/sadmin/log/mdebian9_sadm_daily_data_collection.log to 1000 lines
+2018.04.07 15:47:40 Sat Apr  7 15:47:40 EDT 2018 - End of sadm_daily_data_collection.sh
+2018.04.07 15:47:40 ================================================================================
+2018.04.07 15:47:40  
+2018.04.07 15:47:40  
+2018.04.07 15:47:40  
+2018.04.07 15:47:40 - 
 Running 'sadm_housekeeping_server.sh' script ...  Done
-Running 'sadm_database_update.py' script ... Problem running /opt/sadmin/bin/sadm_database_update.py
-Error 1 - The Python Module to access MySQL is not installed : No module named 'pymysql' 
-We need to install it before continuying
-
-If you are on Debian,Raspbian,Ubuntu family type the following command to install it:
-sudo apt-get install python3-pip
-sudo pip3 install PyMySQL
-After run sadm_setup.py again, to continue installation of SADMIN Tools
-
-If you are on Redhat, CentOS, Fedora family type the following command to install it:
-sudo yum --enablerepo=epel install python34-pip
-sudo pip3 install pymysql
-After run sadm_setup.py again, to continue installation of SADMIN Tools - 
+Running 'sadm_database_update.py' script ...  Done
 
 
 
@@ -348,4 +332,3 @@ The Web interface is available at http://sadmin.maison.ca
 
 ===========================================================================
 root@mdebian9:/opt/sadmin/setup# 
-
