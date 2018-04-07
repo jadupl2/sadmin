@@ -98,8 +98,8 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-#    'pymsql'     :{ 'rpm':'python3-pip',                    'rrepo':'base',
-#                    'deb':'python3-pip',                    'drepo':'base'},
+    'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'base',
+                    'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
@@ -873,6 +873,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
+        update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
@@ -895,19 +896,20 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     if (spacktype == "rpm") :
         # Updating the httpd configuration file 
         sadm_file="%s/setup/etc/sadmin.conf" % (sroot)                  # Init. Sadmin Web Cfg
-        apache2_config="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
-        if not os.path.exists(apache2_config):                            # If Web cfg Not Found
+        apache2_config="/etc/httpd/conf.d/sadmin.conf"                  # Apache Path to cfg File
+        if not os.path.exists(apache2_config):                          # If Web cfg Not Found
             try:
-                shutil.copyfile(sadm_file,apache2_config)                 # Copy Initial Web cfg
+                shutil.copyfile(sadm_file,apache2_config)               # Copy Initial Web cfg
             except IOError as e:
                 writelog("Unable to copy httpd config file. %s" % e)    # Advise user before exiting
                 sys.exit(1)                                             # Exit to O/S With Error
             except:
                 writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        update_apache_config(sroot,apache2_config,"{WROOT}",sroot)        # Set WWW Root Document
-        update_apache_config(sroot,apache2_config,"{EMAIL}",semail)       # Set WWW Admin Email
-        update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}     
+        update_apache_config(sroot,apache2_config,"{WROOT}",sroot)      # Set WWW Root Document
+        update_apache_config(sroot,apache2_config,"{EMAIL}",semail)     # Set WWW Admin Email
+        update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)   # Set WWW sadmin.{Domain}     
+        update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
 
                
     # Update the sadmin.cfg with Web Server User and Group
