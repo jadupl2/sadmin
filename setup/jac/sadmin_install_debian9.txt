@@ -13,6 +13,13 @@ root@mdebian9:/opt/sadmin/setup#
 
 root@mdebian9:/opt/sadmin# cd setup
 root@mdebian9:/opt/sadmin/setup# ./setup.sh 
+root@tdebian9:/opt/sadmin/setup# ls -l
+total 24
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 bin
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 etc
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 jac
+-rwxrwxrwx 1 root root 10625 Apr  7 16:28 setup.sh
+root@tdebian9:/opt/sadmin/setup# ./setup.sh 
 
 SADMIN Pre-Installation Verification Version 1.4
 ---------------------------------------------------------------------------
@@ -72,9 +79,9 @@ Default domain name [maison.ca] :
 Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
 This name can't be an alias in the DNS, it must be the real name of the server.
 It MUST be the result of the 'hostname' command on the SADMIN server.
-Enter SADMIN (FQDN) server name [mdebian9.maison.ca] : 
+Enter SADMIN (FQDN) server name [tdebian9.maison.ca] : 
 Validating server name ...
-[SADM_SERVER] set to 'mdebian9.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+[SADM_SERVER] set to 'tdebian9.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
 [SADM_MAX_LOGLINE]
@@ -161,23 +168,23 @@ Enter the Network Netmask [1-30] [24] :
 Checking SADMIN Client Package requirement
  
 Running apt-get update... Done 
-Checking for sudo ... Installing sudo ...  Done 
+Checking for util-linux ...  Ok 
+Checking for net-tools ... Installing net-tools ...  Done 
 Checking for parted ...  Ok 
-Checking for python3-pip ... Installing python3-pip ...  Done 
+Checking for lsb-release ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for ethtool ... Installing ethtool ...  Done 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
 Checking for util-linux ...  Ok 
 Checking for openssh-client ...  Ok 
-Checking for dmidecode ...  Ok 
-Checking for lsb-release ...  Ok 
-Checking for perl-base ...  Ok 
-Checking for ethtool ... Installing ethtool ...  Done 
-Checking for lshw ... Installing lshw ...  Done 
-Checking for net-tools ... Installing net-tools ...  Done 
-Checking for facter ... Installing facter ...  Done 
 Checking for bc ...  Ok 
-Checking for nmon ... Installing nmon ...  Done 
-Checking for util-linux ...  Ok 
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for dmidecode ...  Ok 
+Checking for perl-base ...  Ok 
+Checking for facter ... Installing facter ...  Done 
+Checking for sudo ... Installing sudo ...  Done 
 Checking for mailutils ... Installing mailutils ...  Done 
+Checking for python3-pip ... Installing python3-pip ...  Done 
 Installing python3 PyMySQL module ...  Done 
 
 --------------------
@@ -197,10 +204,10 @@ Adding 'sadmin' to /etc/hosts file
 Checking SADMIN Server Package requirement
  
 Running apt-get update... Done 
-Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
-Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
-Checking for rrdtool ... Installing rrdtool ...  Done 
 Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
+Checking for rrdtool ... Installing rrdtool ...  Done 
+Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
   
 --------------------
 Setup SADMIN MariaDB Database
@@ -236,7 +243,7 @@ but don't want them to modify any information in the Database.
 Enter 'squery' database user password : 
 Creating 'squery' user ...  Done 
 
-Inserting server 'mdebian9' in Database ...  Done
+Inserting server 'tdebian9' in Database ...  Done
 
 Restarting MariaDB Server ... Done 
   
@@ -271,34 +278,7 @@ Running 'sadm_create_cfg2html.sh' script ...  Done
 Running 'sadm_nmon_watcher.sh' script ...  Done
 Running 'sadm_sysmon.pl' script ...  Done
 Running 'sadm_fetch_servers.sh' script ...  Done
-Running 'sadm_daily_data_collection.sh' script ... Problem running /opt/sadmin/bin/sadm_daily_data_collection.sh
-Error 1 - 2018.04.07 15:47:37 ================================================================================
-2018.04.07 15:47:37 Starting sadm_daily_data_collection.sh V2.5 - SADM Lib. V2.19
-2018.04.07 15:47:37 Server Name: mdebian9.maison.ca - Type: LINUX
-2018.04.07 15:47:37 O/S: DEBIAN 9.4 - Code Name: stretch
-2018.04.07 15:47:37 ==================================================
-2018.04.07 15:47:37  
-2018.04.07 15:47:37 Processing All Actives Server(s)
-2018.04.07 15:47:37  
-2018.04.07 15:47:37 ----------
-2018.04.07 15:47:37 Processing (1) mdebian9.maison.ca
-2018.04.07 15:47:40 [ ERROR ] Will not be able to process that server.
-2018.04.07 15:47:40 Error Count at 1
-2018.04.07 15:47:40  
-2018.04.07 15:47:40 FINAL number of Error(s) detected is 1
-2018.04.07 15:47:40  
-2018.04.07 15:47:40 ==================================================
-2018.04.07 15:47:40 Script return code is 1
-2018.04.07 15:47:40 Script execution time is 00:00:03
-2018.04.07 15:47:40 Trim History /opt/sadmin/dat/rch/mdebian9_sadm_daily_data_collection.rch to 100 lines
-2018.04.07 15:47:40 User requested mail only if script fail - Will send mail
-2018.04.07 15:47:40 Trim log /opt/sadmin/log/mdebian9_sadm_daily_data_collection.log to 1000 lines
-2018.04.07 15:47:40 Sat Apr  7 15:47:40 EDT 2018 - End of sadm_daily_data_collection.sh
-2018.04.07 15:47:40 ================================================================================
-2018.04.07 15:47:40  
-2018.04.07 15:47:40  
-2018.04.07 15:47:40  
-2018.04.07 15:47:40 - 
+Running 'sadm_daily_data_collection.sh' script ...  Done
 Running 'sadm_housekeeping_server.sh' script ...  Done
 Running 'sadm_database_update.py' script ...  Done
 
@@ -331,4 +311,4 @@ The Web interface is available at http://sadmin.maison.ca
 
 
 ===========================================================================
-root@mdebian9:/opt/sadmin/setup# 
+root@tdebian9:/opt/sadmin/setup# 
