@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   setup.sh
@@ -172,20 +172,6 @@ check_lsb_release()
              exit 1
     fi
 
-    # Support only Redhat/CentOS or Debian/Ubuntu
-    if [ "${OS_NAME}" == "REDHAT" ] || [ "${OS_NAME}" == "CENTOS" ]
-        then if [ "${SADM_OSVERSION}" -lt "6" ]
-                then echo "O/S Version ${OS_NAME} too low - Support Version 6 and up" | tee -a $SLOG
-                     exit 1
-             fi
-    fi 
-    if [ "${OS_NAME}" == "DEBIAN" ] || [ "${OS_NAME}" == "UBUNTU" ]
-        then if [ "${SADM_OSVERSION}" -lt "8" ]
-                then echo "O/S Version ${OS_NAME} too low - Support Version 8 and up" | tee -a $SLOG
-                     exit 1
-             fi
-    fi 
-
     # Make sure lsb_release exist, if not install it
     check_lsb_release                                                   # lsb_release must be found
 
@@ -202,6 +188,20 @@ check_lsb_release()
              echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
+
+    # Support only Redhat/CentOS or Debian/Ubuntu
+    if [ "${SADM_OSNAME}" == "REDHAT" ] || [ "${SADM_OSNAME}" == "CENTOS" ]
+        then if [ "${SADM_OSVERSION}" -lt "6" ]
+                then echo "O/S Version ${SADM_OSNAME} too low - Support Version 6 and up" | tee -a $SLOG
+                     exit 1
+             fi
+    fi 
+    if [ "$SADM_OSNAME" == "DEBIAN" ] || [ "$SADM_OSNAME" == "UBUNTU" ] 
+        then if [ "${SADM_OSVERSION}" -lt "8" ]
+                then echo "O/S Version ${SADM_OSNAME} too low - Support Version 8 and up" | tee -a $SLOG
+                     exit 1
+             fi
+    fi 
 
     # Make sure python3 exist, if not install it
     check_python                                                        # python3 must be found
