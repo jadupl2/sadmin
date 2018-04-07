@@ -442,8 +442,8 @@ div.server_data {
 div.server_leftside {
     width           : 43%;
     float           : left;
-    margin-left     : 10px; 
-    padding         : 5px;
+    margin-left     : 1px; 
+    padding         : 0px;
     /* background-color: red; */
 }
 /* ===== Server Right side of Server Info Screen  ===== */
@@ -480,8 +480,8 @@ div.server_left_data {
     margin-bottom   : 4px;
     margin-left     : 40%;
     color           : black;
-    background-color:   #f5f4f0;
-    border:1px solid black;
+    background-color: #f5f4f0;
+    border:1px solid  black;
     width           : 60%;
     /* font: 13px arial, sans-serif; */
     /*background-color: green;*/

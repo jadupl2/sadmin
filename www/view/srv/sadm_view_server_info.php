@@ -28,6 +28,8 @@
 #       V2.1 Add Button at bottom of page to display more System Information
 #   2018_02_08 JDuplessis
 #       V2.2 Rework page design and button at bottom of page
+#   2018_04_07 JDuplessis
+#       V2.3 Change Page & Fixes some bugs
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -42,7 +44,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.3" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -65,28 +67,28 @@ function display_server_data ($wrow) {
     global $URL_UPDATE, $URL_MENU;
     
     # DISPLAY TOP BUTTONS 
-    echo "\n\n<div class='server_top_buttons'> <!-- Start of Bottom Buttons DIV -->";
+    echo "\n\n<div class='server_top_buttons'>          <!-- Start of Bottom Buttons DIV -->";
     echo "\n<center>";
     display_top_buttons ($wrow);  
     echo "\n</center>";
-    echo "\n</div>                                    <!-- End of Bottom Buttons DIV -->";
+    echo "\n</div>                                      <!-- End of Bottom Buttons DIV -->";
     echo "\n<br>";
     
     # Server Data Info DIV
-    echo "\n\n<div class='server_data'>             <!-- Start of Server Data DIV -->";
+    echo "\n\n<div class='server_data'>                 <!-- Start of Server Data DIV -->";
 
     # DATA LEFT SIDE DIV
-    echo "\n\n<div class='server_leftside'>         <!-- Start Data LeftSide  -->";
+    echo "\n\n<div class='server_leftside'>             <!-- Start Data LeftSide  -->";
     display_left_side ($wrow);
-    echo "\n\n</div>                                <!-- End of LeftSide Data -->";
+    echo "\n\n</div>                                    <!-- End of LeftSide Data -->";
 
     # DATA RIGHT SIDE DIV
-    echo "\n\n<div class='server_rightside'>        <!-- Start RightSide Data  -->";
+    echo "\n\n<div class='server_rightside'>            <!-- Start RightSide Data  -->";
     display_right_side ($wrow);
-    echo "\n\n</div>                                <!-- End of RightSide Data -->";
+    echo "\n\n</div>                                    <!-- End of RightSide Data -->";
 
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
-    echo "\n</div>                                  <!-- End of Server Data DIV -->";
+    echo "\n</div>                                      <!-- End of Server Data DIV -->";
 
 
 
@@ -177,7 +179,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Server Virtual ?
-    echo "\n\n<div class='server_left_label'>Virtual/Physical Server</div>";
+    echo "\n\n<div class='server_left_label'>Virtual/Physical</div>";
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_vm'] == True) { echo "Virtual" ; }else{ echo "Physical" ; }
     echo "</div>";
@@ -189,7 +191,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Include Server in Performance Graph
-    echo "\n\n<div class='server_left_label'>Show Performance Graph</div>";
+    echo "\n\n<div class='server_left_label'>Performance Graph</div>";
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_graph'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
@@ -233,7 +235,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Last Update Date 
-    echo "\n\n<div class='server_left_label'>Last Auto Update Date</div>";
+    echo "\n\n<div class='server_left_label'>Last Automatic Upd.</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_date_update'])) { 
         echo "&nbsp" ; 
@@ -243,7 +245,7 @@ function display_left_side ($wrow) {
     echo "</div>";
     
     # Last O/S Update Date 
-    echo "\n\n<div class='server_left_label'>Last O/S Update Date</div>";
+    echo "\n\n<div class='server_left_label'>Last O/S Update</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_date_osupdate'])) { 
         echo "&nbsp" ; 
@@ -253,10 +255,10 @@ function display_left_side ($wrow) {
     echo "</div>";
     
     # Last O/S Update Status
-    echo "\n\n<div class='server_left_label'>Last O/S Update Status</div>";
+    echo "\n\n<div class='server_left_label'>Last O/S Upd. Status</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_update_status'])) { 
-        echo "&nbsp" ; 
+        echo "No Update Yet" ; 
     }else{ 
         $os_status = "Unknown";
         if ($wrow['srv_update_status'] =="R") { $os_status = "Running" ; } 
@@ -271,7 +273,7 @@ function display_left_side ($wrow) {
     echo "\n\n<div class='server_left_label'>Run Backup Script</div>";
     echo "\n<div class='server_left_data'>\n";
     switch ($wrow['srv_backup']) {
-        case 0: echo "No Backup";
+        case 0: echo "No Backup Scheduled";
                       break;
         case 1: echo "Monday "    ;
                      break;
@@ -290,8 +292,10 @@ function display_left_side ($wrow) {
     }
 
     # Date & Time the Backup Start 
-    echo " at " . sprintf("%02d",$wrow['srv_backup_hour']) . ":" ;
-    echo sprintf("%02d",$wrow['srv_backup_minute']) ;
+    if ($wrow['srv_backup'] != 0) {
+        echo " at " . sprintf("%02d",$wrow['srv_backup_hour']) . ":" ;
+        echo sprintf("%02d",$wrow['srv_backup_minute']) ;
+    }
     echo "</div>";
 
 
@@ -344,13 +348,13 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Server Nb. of Socket
-    echo "\n\n<div class='server_right_label'>Number of CPU Socket</div>";
+    echo "\n\n<div class='server_right_label'>Nb. of CPU Socket</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_nb_socket'])) { echo "&nbsp" ; }else{ echo $wrow['srv_nb_socket']; }
     echo "</div>";
 
     # Server Nb. of Core per Socket
-    echo "\n\n<div class='server_right_label'>Number of Core per Socket</div>";
+    echo "\n\n<div class='server_right_label'>Nb. of Core per Socket</div>";
     echo "\n<div class='server_right_data'>";
     if (empty($wrow['srv_core_per_socket'])) { echo "&nbsp" ; }else{ echo $wrow['srv_core_per_socket']; }
     echo "</div>";
@@ -421,7 +425,7 @@ function display_right_side ($wrow) {
     echo "</div>";
     
     # Month that O/S Update Can Occurs
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Month</div>";
+    echo "\n\n<div class='server_right_label'>Update O/S Allowed Mth</div>";
     echo "\n<div class='server_right_data'>";
     $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
     if ($wrow['srv_update_month'] == "YNNNNNNNNNNNN" ) {
@@ -452,7 +456,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Day of the week that O/S Update can Occur
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Day(s)</div>";
+    echo "\n\n<div class='server_right_label'>Update O/S Allowed Days</div>";
     echo "\n<div class='server_right_data'>";
     $days = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
     if ($wrow['srv_update_dow'] == "YNNNNNNN") {                        # If it's to run every Day
@@ -570,7 +574,7 @@ function display_top_buttons ($wrow) {
 
     # Display the Update Button
     echo "\n<a href=" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] .">";
-    echo "\n<button type='button'>Update Server Static Information</button></a>";
+    echo "\n<button type='button'>Update Static Information</button></a>";
     echo "\n\n<br>                                          ";
 }
 
