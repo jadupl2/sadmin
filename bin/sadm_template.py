@@ -21,20 +21,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_03_01 JDuplessis 
+# 2018_12_01 JDuplessis 
 #   V1.0 Initial Version
-# 2016_10_03 JDuplessis
-#   V1.1 Adjust Verification of root user and allow to only run on sadmin server
-# 2017_09_03 JDuplessis 
-#   V1.2 Minors changes
-# 2017_12_23 JDuplessis 
-#   V1.3 Adjust for using MySQL instead of PostGres - Review logic to use new SADM Library
-# 2018_01_20 JDuplessis 
-#   V1.4 Minor Adjustments
-# 2018_02_17 JDuplessis 
-#   V1.5 Install instruction to install PyMySQL  
-# 2018_02_21 JDuplessis 
-#   V1.6 No SSH needed on SADMIN Server(SSH Security/No root access)
 #
 #===================================================================================================
 #

@@ -209,7 +209,7 @@ def writelog(sline,stype="normal"):
 
 
 #===================================================================================================
-#                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+#                                    RUN O/S COMMAND FUNCTION
 #===================================================================================================
 def oscommand(command) :
     if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
