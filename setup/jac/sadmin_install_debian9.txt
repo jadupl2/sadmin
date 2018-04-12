@@ -1,110 +1,89 @@
 Debian 9 Installation Notes
-Problem to Solve
+7 Avril 2018
 
-1- When asking question, show default in bracket next to question
+root@mdebian9:/opt/sadmin/setup# ls -l
+total 24
+drwxr-xr-x 2 root root  4096 Apr  7 11:00 bin
+drwxr-xr-x 2 root root  4096 Apr  7 11:00 etc
+drwxr-xr-x 2 root root  4096 Apr  7 11:00 jac
+-rwxrwxrwx 1 root root 10625 Apr  7 11:00 setup.sh
+root@mdebian9:/opt/sadmin/setup# 
+root@mdebian9:/opt/sadmin/setup# 
+root@mdebian9:/opt/sadmin/setup# 
+
+root@mdebian9:/opt/sadmin# cd setup
+root@mdebian9:/opt/sadmin/setup# ./setup.sh 
+root@tdebian9:/opt/sadmin/setup# ls -l
+total 24
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 bin
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 etc
+drwxr-xr-x 2 root root  4096 Apr  7 16:28 jac
+-rwxrwxrwx 1 root root 10625 Apr  7 16:28 setup.sh
+root@tdebian9:/opt/sadmin/setup# ./setup.sh 
+
+SADMIN Pre-Installation Verification Version 1.4
+---------------------------------------------------------------------------
+Checking if 'lsb_release' is installed ...  Done 
+Checking if 'python3' is installed ...  Done 
 
 
------
-20 Mars 2018 
-
-root@mdebian9:~# 
-root@mdebian9:~# cd /opt
-
-root@mdebian9:/opt# ls -l
-total 0
-
-root@mdebian9:/opt# git clone https://jadupl2@bitbucket.org/jadupl2/sadmin.git
-Cloning into 'sadmin'...
-Password for 'https://jadupl2@bitbucket.org': 
-remote: Counting objects: 6881, done.
-remote: Compressing objects: 100% (3049/3049), done.
-remote: Total 6881 (delta 4300), reused 5965 (delta 3607)
-Receiving objects: 100% (6881/6881), 38.90 MiB | 7.71 MiB/s, done.
-Resolving deltas: 100% (4300/4300), done.
-
-root@mdebian9:/opt# ls -l
-total 4
-drwxr-xr-x 15 root root 4096 Mar 16 13:21 sadmin
-
-root@mdebian9:/opt# cd SADMIN
-
-root@mdebian9:/opt/sadmin# ls -l
-total 88
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 bin
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 cfg
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 dat
-drwxr-xr-x  4 root root  4096 Mar 16 13:21 doc
-drwxr-xr-x  3 root root  4096 Mar 16 13:21 jac
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 lib
--rw-r--r--  1 root root 35141 Mar 16 13:21 LICENSE
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 log
-drwxr-xr-x  9 root root  4096 Mar 16 13:21 pkg
--rw-r--r--  1 root root  4067 Mar 16 13:21 README.md
-drwxr-xr-x  4 root root  4096 Mar 16 13:21 setup
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 sys
-drwxr-xr-x  2 root root  4096 Mar 16 13:21 tmp
-drwxr-xr-x 13 root root  4096 Mar 16 13:21 www
-
-root@mdebian9:/opt/sadmin# cd setup/
-
-root@mdebian9:/opt/sadmin/setup# ls
-apache2  mysql  sadm_setup.py
-root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py 
-
-root@mdebian9:/opt/sadmin/setup# ./sadm_setup.py 
-
-SADMIN Setup V1.4e
-------------------
+SADMIN Setup V1.6
+---------------------------------------------------------------------------
 Enter directory path where your install SADMIN : /opt/sadmin
 SADMIN Environment variable is now set to /opt/sadmin
-      - The line below is now in /etc/environment now
-      - SADMIN=/opt/sadmin
-      - This will make sure it is set upon reboot
-Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) is now in place
+  - The line below is now in /etc/profile.d/sadmin.sh
+  - SADMIN=/opt/sadmin
+  - This make sure 'SADMIN' environment variable is set upon reboot
+  - Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) in place
  
  
---------------------
+----------
 [SADM_HOST_TYPE]
 Specify if this host is to become a SADMIN [C]lient or [S]erver.
-Host will be a SADMIN [S]erver or a [C]lient (S,C) : s
-SADMIN Server installation selected
+Host will be a SADMIN [S]erver or a [C]lient [C] : s
+[SADM_HOST_TYPE] set to 'S' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_CIE_NAME]
 This name that will appear in the heading of the web interface
 and on some report and email that SADMIN produce.
-Enter your Company Name  : The Batcave
+Enter your Company Name : The Batcave
+[SADM_CIE_NAME] set to 'The Batcave' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAIL_ADDR]
 This field specify the email address of the system administrator.
 It is used by SADMIN Tools to send various email.
-For example, you can request that the log of a script be sent when an
-error occured or every time is it run. (See SADM_MAIL_TYPE later on)
-Multiple email can be specify, a comma must seperate each of them.
 Enter System Administrator Email : batman@batcave.com
+[SADM_MAIL_ADDR] set to 'batman@batcave.com' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAIL_TYPE]
 Default option for sending email after a script is finish.
 Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
-
 [0] = Never send email.
 [1] = Only send the log when script finish with error (Default)
 [2] = Only send the log when script finish with success.
 [3] = Always send the script log when script finish.
-Enter default email type : 1
+Enter default email type [1] : 
+[SADM_MAIL_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
+[SADM_DOMAIN]
+Enter the default Domain Name to use when you will be adding a new server.
+Default domain name [maison.ca] : 
+[SADM_DOMAIN] set to 'maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
 [SADM_SERVER]
 Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
 This name can't be an alias in the DNS, it must be the real name of the server.
-This is the server where SADMIN Database and Web site will reside.
 It MUST be the result of the 'hostname' command on the SADMIN server.
-Enter SADMIN (FQDN) server name : mdebian9.maison.ca
+Enter SADMIN (FQDN) server name [tdebian9.maison.ca] : 
 Validating server name ...
+[SADM_SERVER] set to 'tdebian9.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAX_LOGLINE]
 Every time a script (python or bash script) that use SADMIN Tools is run,
 it produce a log, in the dedicated directory ${SADMIN}/log.
@@ -114,10 +93,10 @@ it produce a log, in the dedicated directory ${SADMIN}/log.
     - This number indicate the maximum of lines you want to keep in your log.
     - This help keeping our log to a reasonnable size.
 
-Default number is 1000 lines as a starting point.
-Maximum number of lines in LOG file : 999
+Maximum number of lines in LOG file [1000] : 
+[SADM_MAX_LOGLINE] set to '1000' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_MAX_RCHLINE]
 When a (python or shell) script using the SADMIN tools start and ends,
 it record the date/time and the ending status of your script in what we call
@@ -129,15 +108,10 @@ a RCH file ([R]eturn [C]ode [H]istory] file).
 
 A value of 100 lines is recommended.
 This will keep an history of 50 days and is the default value.
-
-Maximum number of lines in RCH file : 99
+Maximum number of lines in RCH file [100] : 
+[SADM_MAX_RCHLINE] set to '100' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
-[SADM_DOMAIN]
-Enter the default Domain Name to use when you will be adding a new server.
-Default domain name : maison.ca
- 
---------------------
+----------
 [SADM_GROUP]
 This is the primary user group that have access to all SADMIN directories.
     - All files in the $SADMIN directories are own by this group.
@@ -145,28 +119,29 @@ This is the primary user group that have access to all SADMIN directories.
       they must be part of this group.
     - The SADMIN default user group is 'sadmin'.
 
-Enter SADMIN User Group : sadmin
+Enter SADMIN User Group [sadmin] : 
 Creating group sadmin
+[SADM_GROUP] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_USER]
 Main SADMIN user that have access to all SADMIN directories and files.
     - This user will be assign to the SADMIN user group you just specified.
     - The SADMIN default user name is 'sadmin'.
 
-Enter the default user name : sadmin
+Enter the default user name [sadmin] : 
 Creating user sadmin
+[SADM_USER] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
  
-Change /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
+Setting /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
  
---------------------
+----------
 [SADM_SSH_PORT]
 TCP/IP Port used for SSH.
-Default port is 22.
-
-SSH port number to connect to client : 32
+SSH port number to connect to client [22] : 
+[SADM_SSH_PORT] set to '22' in /opt/sadmin/cfg/sadmin.cfg
  
---------------------
+----------
 [SADM_NETWORK1]
 Every day SADMIN will check the IP utilisation on your network.
     - The result will be visible on SADMIN network web page.
@@ -175,9 +150,9 @@ Every day SADMIN will check the IP utilisation on your network.
     - It will facilitate, the clean up of your DNS and IP usage.
     - Network should be specify in this form, '192.168.1.0"
 
-Enter the network IP : 192.168.1.0
+Enter the network IP [192.168.1.0] : 
  
---------------------
+----------
 [SADM_NETMASK1]
 Every day SADMIN will check the IP utilisation on your network.
     - The result will be visible on SADMIN network web page.
@@ -186,174 +161,154 @@ Every day SADMIN will check the IP utilisation on your network.
     - It will facilitate, the clean up of your DNS and IP usage.
     - Netmask should specify the number bits use (1-30) (Default 24)
 
-Enter the Network Netmask [1-30] : 24
-
-
+Enter the Network Netmask [1-30] [24] : 
+[SADM_NETWORK1] set to '192.168.1.0/24' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
 Checking SADMIN Client Package requirement
+ 
 Running apt-get update... Done 
-Checking for openssh-client ... Ok
-Checking for util-linux ... Ok
-Checking for python3-pip ... Installing python3-pip ... Done
-Checking for util-linux ... Ok
-Checking for sudo ... Installing sudo ... Done
-Checking for mailutils ... Installing mailutils ... Done
-Checking for parted ... Ok
-Checking for dmidecode ... Ok
-Checking for net-tools ... Installing net-tools ... Done
-Checking for facter ... Installing facter ... Done
-Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ... Done
-Checking for lshw ... Installing lshw ... Done
-Checking for bc ... Ok
-Checking for nmon ... Installing nmon ... Done
-Checking for ethtool ... Installing ethtool ... Done
-Checking for perl-base ... Ok
-Checking for lsb-release ... Ok
-Installting python3 PyMySQL module ...  Done 
+Checking for util-linux ...  Ok 
+Checking for net-tools ... Installing net-tools ...  Done 
+Checking for parted ...  Ok 
+Checking for lsb-release ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
+Checking for ethtool ... Installing ethtool ...  Done 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for util-linux ...  Ok 
+Checking for openssh-client ...  Ok 
+Checking for bc ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for perl-base ...  Ok 
+Checking for facter ... Installing facter ...  Done 
+Checking for sudo ... Installing sudo ...  Done 
+Checking for mailutils ... Installing mailutils ...  Done 
+Checking for python3-pip ... Installing python3-pip ...  Done 
+Installing python3 PyMySQL module ...  Done 
 
-Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
+--------------------
+Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
 Permission on sudo file changed successfully
 Ownership of sudo file changed successfully
 
+--------------------
 Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
 Client Crontab Permission changed successfully
 Ownership of client crontab changed successfully
 
-
-Checking SADMIN Server Package requirement
-Running apt-get update... Done 
-Checking for php php-mysql php-common ... Installing php php-mysql php-common ... Done
-Checking for rrdtool ... Installing rrdtool ... Done
-Checking for apache2 apache2-utils ... Ok
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ... Done
-  
 ----------
-Setup SADMIN MySQL Database
+Adding 'sadmin' to /etc/hosts file
  
 --------------------
+Checking SADMIN Server Package requirement
+ 
+Running apt-get update... Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
+Checking for rrdtool ... Installing rrdtool ...  Done 
+Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
+  
+--------------------
+Setup SADMIN MariaDB Database
+  
+Starting MariaDB Service - systemctl restart mariadb
+Enabling MariaDB Service - systemctl enable mariadb
+ 
+----------
 [SADM_ROOT]
 This is MySQL Database 'root' user password.
-If the password isn't currently, it will be set to the one you will enter.
+If the password isn't currently set, it will be set to the one you will enter.
 If the password is currently set, we will test Database connection using it.
 Enter MySQL Database 'root' user password : 
+Access to Database is working ...
   
 ----------
-Testing Access to Database ... Database access succeeded
-Securing MySQL Database ... Database is now secured ... 
- 
---------------------
+Loading Initial Data in SADMIN Database ...  Done 
+
+Checking if 'sadmin' user exist in MariaDB ...  
+----------
 [SADM_RW_DBPWD]
 Password read/write user "sadmin" on the SADMIN database.
 You can give this password to people who have permission to update
 server information in the database.
 Enter Read/Write 'sadmin' database user password : 
- 
---------------------
+Creating 'sadmin' user ...  Done 
+Checking if 'squery' user exist in MariaDB ...  
+----------
 [SADM_RO_DBPWD]
 Password of the read only user "squery" on the 'sadmin' database
 Give this password to people you want to consult server information,
 but don't want them to modify any information in the Database.
 Enter 'squery' database user password : 
+Creating 'squery' user ...  Done 
 
---------------------
-Loading SADMIN Database
-Initial SADMIN Database is in place.
-Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin.sql
-Standard out is 
-Standard error is 
- 
-Creating SADMIN MySQL user 'sadmin' and 'squery'
-Database users created ...
-Return code is 0 - mysql -u root -pjacques < /opt/sadmin/setup/mysql/sadmin_users.sql
-Standard out is 
-Standard error is 
+Inserting server 'tdebian9' in Database ...  Done
+
+Restarting MariaDB Server ... Done 
   
-----------
-Set up SADMIN Web Site
-
-Adding 'sadmin' to /etc/hosts file
-Owner and Group of apache2 process are www-data.www-data
+  
+--------------------
+Setup SADMIN Web Site
+  
+Making sure Web Server is started
 Disable default apache configuration
 SADMIN Web Site enable
-Configuration of SADMIN Web site is now in place (/etc/apache2/sites-enabled/sadmin.conf)
-Initial SADMIN Web site configuration file in place.
-  - Record Web Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
-  - Setting Owner/Group on SADMIN WebSite files (/opt/sadmin/www) Done 
-  - Setting access permission on SADMIN WebSite files (/opt/sadmin/www) ...  Done 
-Web Server restarted successfully
+  - SADMIN Web site configuration now in place (/etc/apache2/sites-enabled/sadmin.conf)
+  - Record Apache Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
+  - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) ...  Done 
+  - Setting Permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
+  - Setting Permission on SADMIN WebSite images (/opt/sadmin/www/images) ...  Done 
+  - Web Server Restarting ...  Done 
+  - Enabling Web Server Service ...  Done 
 
+--------------------
 Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
 Server Crontab Permission changed successfully
 Ownership of Server crontab changed successfully
+  
+  
+--------------------
+Run SADM scripts to feed Database and Web Interface
+  
+Running 'sadm_create_server_info.sh' script ...  Done
+Running 'sadm_housekeeping_client.sh' script ...  Done
+Running 'sadm_fs_save_info.sh' script ...  Done
+Running 'sadm_create_cfg2html.sh' script ...  Done
+Running 'sadm_nmon_watcher.sh' script ...  Done
+Running 'sadm_sysmon.pl' script ...  Done
+Running 'sadm_fetch_servers.sh' script ...  Done
+Running 'sadm_daily_data_collection.sh' script ...  Done
+Running 'sadm_housekeeping_server.sh' script ...  Done
+Running 'sadm_database_update.py' script ...  Done
 
 
-------------------------------
-End of SADMIN Setup, you can now use the SADMIN Tools
 
-You need to logout and log back in, before using SADM Tools
+===========================================================================
+END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS
+
+You need to logout and log back in, before using SADM Tools,
 or type the following command (The dot and the space are important)
-. /etc/environment
-This will make sure SADMIN environment variable is define with the right content
+. /etc/profile.d/sadmin.sh
+This will make sure SADMIN environment variable is define with proper content.
 
 
 TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
-To create your own script using SADMIN, you may want to run and view the code of 
-/opt/sadmin/bin/sadm_template.sh and /opt/sadmin/bin/sadm_template.py as a starting point
-You may also want to run /opt/sadmin/lib/sadmlib_test.sh and /opt/sadmin/lib/sadmlib_test.py.
-They will present all functions available to your shell or Python script
+To create your own script using the SADMIN tools, you may want to run 
+and view the code of the template script.
+
+bash shell script      : /opt/sadmin/bin/sadm_template.sh 
+or
+python script          : /opt/sadmin/bin/sadm_template.py 
+
+To show you all the functions available to your shell or Python script, 
+you may also want to run /opt/sadmin/lib/sadmlib_test.sh and /opt/sadmin/lib/sadmlib_test.py.
 
 
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
-The web Interface is available at http://sadmin.maison.ca
-
-
-------------------------------
-root@mdebian9:/opt/sadmin/setup# 
-
-
-root@mdebian9:/opt/sadmin/setup/mysql# ls -l
-total 40
--rw-r--r-- 1 sadmin sadmin   128 Mar 20 11:23 checkdb.sql
--rw-r--r-- 1 sadmin sadmin 24755 Mar 20 11:23 sadmin.sql
--rw-r--r-- 1 root   root     248 Mar 20 11:32 sadmin_users.sql
--rw-r--r-- 1 sadmin sadmin   148 Mar 20 11:23 secure_mysql.sql
-root@mdebian9:/opt/sadmin/setup/mysql# mysql <checkdb.sql 
-Database
-information_schema
-mysql
-performance_schema
-sadmin
-Tables_in_sadmin
-server
-server_category
-server_group
-srv_name	srv_desc
-rhel3	Red Hat Enterprise V3
-aixb50	Aix 5.3 Dev. Server
-batman	Aix 7.1 NIM Server
-borg	Linux Virtual Box Server
-centos6	CentOS 6 Server
-centos7	CentOS 7 Server
-debian7	Debian V7 Server
-debian8	Debian 8 Server
-fedora25	Fedora 25 Test Server
-gandalf	CentOS V5 Server
-gotham	CentOS 5 Server
-gumby	Old Sysinfo RHEL 5 Server
-nomad	Old Sysinfo CentOS 6 Server
-puppet	Puppet Master and Foreman
-raspi0	Raspberry Zero W
-raspi1	Raspberry Pi V1 Modele B+
-raspi2	Raspberry Pi V1 Modele XX
-raspi4	Raspberry Pi 3 Model B Rev 1
-raspi3	Raspberry Pi V2 Modele B
-rhel4	Red Hat Enterprise V4
-ubuntu1404	Ubuntu 14.04 Server
-ubuntu1604	Ubuntu 16.04 Server
-holmes	DNS,DHCP,Git,Nagios,Wiki
-nano	Laptop Acer Aspire One
-yoda	Laptop Ubuntu 16.04
-User	Host	Password
-root	localhost	
+The Web interface is available at http://sadmin.maison.ca
 
 
 
+===========================================================================
+root@tdebian9:/opt/sadmin/setup# 

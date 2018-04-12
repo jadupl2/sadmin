@@ -98,8 +98,8 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-#    'pymsql'     :{ 'rpm':'python3-pip',                    'rrepo':'base',
-#                    'deb':'python3-pip',                    'drepo':'base'},
+    'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'base',
+                    'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
 #    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
@@ -209,7 +209,7 @@ def writelog(sline,stype="normal"):
 
 
 #===================================================================================================
-#                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
+#                                    RUN O/S COMMAND FUNCTION
 #===================================================================================================
 def oscommand(command) :
     if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
@@ -416,7 +416,7 @@ def update_sudo_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Updating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
+    writelog ('Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
     sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
@@ -633,6 +633,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     insert_ok = False                                                   # Default Insert Failed
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
+    writelog('')
     writelog("Inserting server '%s' in Database ... " % (sname),'nonl') # Show User adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
@@ -872,6 +873,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_file,"{WROOT}",sroot)        # Set WWW Root Document
         update_apache_config(sroot,apache2_file,"{EMAIL}",semail)       # Set WWW Admin Email
         update_apache_config(sroot,apache2_file,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}
+        update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
         # Disable Default apache2 configuration
         cmd = "a2dissite 000-default.conf"                              # Disable default Web Site 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute Command
@@ -894,19 +896,20 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     if (spacktype == "rpm") :
         # Updating the httpd configuration file 
         sadm_file="%s/setup/etc/sadmin.conf" % (sroot)                  # Init. Sadmin Web Cfg
-        apache2_config="/etc/httpd/conf.d/sadmin.conf"                    # Apache Path to cfg File
-        if not os.path.exists(apache2_config):                            # If Web cfg Not Found
+        apache2_config="/etc/httpd/conf.d/sadmin.conf"                  # Apache Path to cfg File
+        if not os.path.exists(apache2_config):                          # If Web cfg Not Found
             try:
-                shutil.copyfile(sadm_file,apache2_config)                 # Copy Initial Web cfg
+                shutil.copyfile(sadm_file,apache2_config)               # Copy Initial Web cfg
             except IOError as e:
                 writelog("Unable to copy httpd config file. %s" % e)    # Advise user before exiting
                 sys.exit(1)                                             # Exit to O/S With Error
             except:
                 writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
                 sys.exit(1)                                             # Exit to O/S with Error
-        update_apache_config(sroot,apache2_config,"{WROOT}",sroot)        # Set WWW Root Document
-        update_apache_config(sroot,apache2_config,"{EMAIL}",semail)       # Set WWW Admin Email
-        update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)     # Set WWW sadmin.{Domain}     
+        update_apache_config(sroot,apache2_config,"{WROOT}",sroot)      # Set WWW Root Document
+        update_apache_config(sroot,apache2_config,"{EMAIL}",semail)     # Set WWW Admin Email
+        update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)   # Set WWW sadmin.{Domain}     
+        update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
 
                
     # Update the sadmin.cfg with Web Server User and Group
@@ -1421,7 +1424,7 @@ def setup_sadmin_config_file(sroot):
     # Change owner of all files in $SADMIN
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     writelog (" ")                                                      # White Line
-    writelog ("Change %s ownership : %s" % (sroot,cmd))                 # Show what we are doing
+    writelog ("Setting %s ownership : %s" % (sroot,cmd))                # Show what we are doing
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change SADMIN Dir Owner 
 
 
@@ -1553,7 +1556,7 @@ def main():
     writelog ('  ')
     writelog ('  ')
     writelog ('--------------------')
-    writelog ("Run SADM scripts for '%s' to feed Database and Web Interface",'bold')
+    writelog ("Run SADM scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
     run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
