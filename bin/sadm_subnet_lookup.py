@@ -1,9 +1,9 @@
 #!/usr/bin/env python3  
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      ping_lookup.py
-#   Synopsis:   ping and do a nslookup on all IP in the subnet and produce a report
-#               Support Redhat/Centos v3,4,5,6,7 - Ubuntu - Debian V7,8 - Raspbian V7,8 - Fedora
+#   Title:      sadm_subnet_lookup.py
+#   Synopsis:   arp-scan, dns lookup of all IP specify in sadmin.cfg and produce file use by web 
+#               interface
 #===================================================================================================
 # Description
 #  This script ping and do a nslookup for every IP specify in the "SUBNET" Variable.
@@ -13,150 +13,189 @@
 #  It is run once a day from the crontab.
 #
 # --------------------------------------------------------------------------------------------------
-# Version 2.6 - Nov 2016 
-#       Insert Logic to Reboot the server after a successfull update
-#        (If Specified in Server information in the Database)
-#        The script receive a Y or N (Uppercase) as the first command line parameter to 
-#        indicate if a reboot is requested.
-# Version 2.7 - Nov 2016
-#       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking 
-#       if update were available. Now Script return an error (1) when checking for update.
-# Version 2.8 - Dec 2016
-#       Correction minor bug with shutdown reboot command on Raspberry Pi
-#       Now Checking if Script is running of SADMIN server at the beginning
-#           - No automatic reboot on the SADMIN server while it is use to start update on client
-# Version 2.9 - April 2017
-#       Email log only when error for now on
-# 2017_12_30 - JDuplessis
-#       V2.10 Introduction of New Python Library  
-# 2017_12_31 - JDuplessis
-#       V2.11 Correct problem with copy r5esultant file into web Directory
-# 2018_02_21 - JDuplessis
-#       V2.12 Adjust to new calling sadmin lib method
+# 8 April 2018
+#   V1.0 Initial Beta version
+# 11 April 2018
+#   V1.1 Output File include MAC,Manufacturer
+# 13 April 2018
+#   V1.2 Manufacturer Info Expanded
 # --------------------------------------------------------------------------------------------------
-#
-# The following modules are needed by SADMIN Tools and they all come with Standard Python 3
+# 
 try :
-    import os,time,sys,pdb,socket,datetime,glob,pwd,grp,fnmatch     # Import Std Python3 Modules
-    SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Root Dir. Name
-    #print ("SADM=%s" % (SADM))
-    sys.path.insert(0,os.path.join(SADM,'lib'))                     # Add SADMIN to sys.path
-    import sadmlib_std as sadm                                      # Import SADMIN Python Library
+    import os,time,sys,pdb,socket,datetime,pwd,grp,subprocess,ipaddress # Import Std Python3 Modules
+    SADM = os.environ.get('SADMIN')                                     # Get SADMIN Root Dir. Name
+    sys.path.insert(0,os.path.join(SADM,'lib'))                         # Add SADMIN to sys.path
+    import sadmlib_std as sadm                                          # Import SADMIN Python Libr.
 except ImportError as e:
     print ("Import Error : %s " % e)
     sys.exit(1)
+#pdb.set_trace()                                                        # Activate Python Debugging
 
 
 #===================================================================================================
 #                                 Local Variables used by this script
 #===================================================================================================
-SUBNET= ['192.168.1', '192.168.0' ]                                    # Subnet to Scan
-
+#
+DEBUG = False                                                            # Activate Debug (Verbosity)
+netdict = {}                                                            # Network Work Dictionnary
 
 
 #===================================================================================================
-#                                 Initialize SADM Tools Function
+#                                       RUN O/S COMMAND FUNCTION
 #===================================================================================================
 #
-def initSADM():
-    """
-    Start the SADM Tools 
-      - Make sure All SADM Directories exist, 
-      - Open log in append mode if attribute log_append="Y", otherwise a new Log file is started.
-      - Write Log Header
-      - Record the start Date/Time and Status Code 2(Running) to RCH file
-      - Check if Script is already running (pid_file) 
-        - Advise user & Quit if Attribute multiple_exec="N"
-    """
+def oscommand(command) :
+    if DEBUG : print ("In sadm_oscommand function to run command : %s" % (command))
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out = p.stdout.read().strip().decode()
+    err = p.stderr.read().strip().decode()
+    returncode = p.wait()
+    if (DEBUG) :
+        print ("In sadm_oscommand function stdout is      : %s" % (out))
+        print ("In sadm_oscommand function stderr is      : %s " % (err))
+        print ("In sadm_oscommand function returncode is  : %s" % (returncode))
+    return (returncode,out,err)
 
-    # Making Sure SADMIN Environment Variable is Define and 'sadmlib_std.py' can be found & imported
-    if not "SADMIN" in os.environ:                                      # SADMIN Env. Var. Defined ?
-        print (('=' * 65))
-        print ("SADMIN Environment Variable is not define")
-        print ("It indicate the directory where you installed the SADMIN Tools")
-        print ("Put this line in your ~/.bash_profile")
-        print ("export SADMIN=/INSTALL_DIR")
-        print (('=' * 65))
-        sys.exit(1)
-    try :
-        SADM = os.environ.get('SADMIN')                                 # Getting SADMIN Dir. Name
-        sys.path.append(os.path.join(SADM,'lib'))                       # Add $SADMIN/lib to PyPath
-        import sadmlib_std as sadm                                      # Import SADM Python Library
-        #import sadmlib_mysql as sadmdb
-    except ImportError as e:
-        print ("Import Error : %s " % e)
-        sys.exit(1)
 
-    st = sadm.sadmtools()                                               # Create Sadm Tools Instance
+
+#===================================================================================================
+#                            Scan The Network Received (Example: "192.168.1.0/24")
+#===================================================================================================
+#
+def scan_network(st,snet) :
+    if DEBUG : st.writelog ("In 'scan_network', parameter received : %s" % (snet))
+
+    # Get Main Network Interface Name (from route table)
+    cmd = "netstat -rn |grep '^0.0.0.0' |awk '{ print $NF }'"           # Get Main Network Interface 
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
+    if (ccode != 0):                                                    # If Error running command
+        st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
+        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+    else:                                                               # If netstat succeeded
+        netdev=cstdout                                                  # Save Net. Interface Name
+        st.writelog ("Current host interface name     : %s" % (netdev)) # Show Interface selected
+
+    # Print Number of IP in Network - Based on network and Netmask in sadmin.cfg
+    NET4 = ipaddress.ip_network(snet)                                   # Create instance of network
+    snbip = NET4.num_addresses                                          # Save Number of possible IP
+    st.writelog ("Possible IP on %s   : %s " % (snet,snbip))            # Show Nb. Possible IP
+
+    # Print the Network Netmask
+    snetmask = NET4.netmask                                             # Save Network Netmask
+    st.writelog ("Network netmask                 : %s" % (snetmask))   # Show User Netmask
+
+    # Open Network Output Result File (Read by Web Interface)
+    (wnet,wmask) = snet.split('/')                                      # Split Network & Netmask
+    OFILE = 'network_' + wnet + '_' + wmask + '.txt'                    # Output file name
+    SFILE = st.net_dir + '/' + OFILE                                    # Build Full Path FileName
+    st.writelog ("Output Network Information file : %s" % (SFILE))      # Show Output file name
+    try : 
+        OUT=open(SFILE,'w')                                             # Open Output Subnet File
+    except Exception:                                                   # If Error opening file
+        st.writelog ("Error creating output file %s" % (SFILE))         # Error Msg if open failed
+        sys.exit(1)                                                     # Exit Script with Error
+
+    # Run arp-scan command to create Arp file (MAC Address and Network Interface Manufacturer)
+    (ip1,ip2,ip3,ip4) = wnet.split('.')                                 # Split Network IP
+    arpfile = "%s/arp-scan.txt" % (st.net_dir)                          # arp result file name
+    cmd  = "arp-scan --interface=%s %s | " % (netdev,snet)              # arp-scan command
+    cmd += "awk -F'\t' '{ print $1,$2,$3 }' | tr -d ',' |grep '^%s'> %s" % (ip1,arpfile)  # Format Result output
+    st.writelog ("The arp-scan output file        : %s" % (arpfile))    # Show arp-scan IP+Mac Addr.
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
+    if (ccode != 0):                                                    # If Error running command
+        st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
+        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+        sys.exit(1)                                                     # Exit script with Error
     
-    # Variables are specific to this program, change them if you want or need to -------------------
-    st.ver  = "2.11"                            # Your Script Version 
-    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  L=LogFileOnly  S=StdOutOnly  B=Both
-    st.log_append = True                        # True=Append to Existing Log  False=Start a new log
-    st.debug = 5                                # Debug Level (0-9)
+    # Opening Arp file, read all file into memory
+    try:                                                                # Try Opening arp-scan file
+        f = open(arpfile, "r")                                          # Open result arp-scan file
+    except Exception:                                                   # If Error opening file
+        st.writelog("Error opening arp-scan result file %s" % (arpfile))# Error Msg if open failed
+        sys.exit(1)                                                     # Exit Script with Error
+    lines = f.readlines()                                               # Read all lines put in list
+    f.close()                                                           # Close Arp Result file
+
+
+    # Iterating through the “usable” addresses on a network:
+    for ip in NET4.hosts():                                             # Loop through possible IP
+        hip = str(ipaddress.ip_address(ip))                             # Save processing IP 
+        try :                                                           # Try Get Hostname of the IP
+            (hname,halias,hiplist)   = socket.gethostbyaddr(hip)        # Get IP DNS Name
+            #print ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
+        except socket.herror as e:                                      # If IP has no Name
+            hname = ""                                                  # Clear IP Hostname
+        hmac = ''                                                       # Clear Work Mac Address
+        hmanu = ''                                                      # Clear Work Manufacturer
+        hactive = 'N'                                                   # Default Card is inactive
+        for arpline in lines:                                           # Loop through arp file
+            if (arpline.split(' ')[0] == hip) :                         # Found Cur. IP in arp file
+                hmac  = arpline.split(' ')[1]                           # Save Mac Address
+                arpline = arpline.replace (hip ,  "%s," % (hip))
+                arpline = arpline.replace (hmac , "%s," % (hmac))
+                hmanu = arpline.split(',')[2]                           # Save Manufacturer
+                hmanu = hmanu.rstrip(',\n')                             # Remove command & NewLine
+                hactive = "Y"   
+                break                                                   # Break out of loop
+        #response = os.system("ping -c 1 " + hip + ">/dev/null 2>&1")    # Ping IP 
+        #if response == 0: hactive = "Y"                                 # If Ping Work Active=Yes
+        (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP
+        zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Build Ip Addr with ZeroIP
+        WLINE = "%s,%s,%s,%s,%s" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
+        netdict[hip] = WLINE                                            # Put Line in Dictionary
+
+    # Loop through the dictionnary create and write value to output file
+    for k, v in netdict.items():                                        # For every line in dict
+        if (DEBUG) : st.writelog("Key : {0}, Value : {1}".format(k, v)) # Under Debug print out Line
+        OUT.write ("%s,%s\n" % (v,k))                                   # Dict Value to Output File
+    OUT.close()                                                         # Close Output File
+
+    # Create Sorted Output file in www/dat/`hostname`/net
+    NFILE = st.www_net_dir + '/' + OFILE                                # Sorted Full Path FileName
+    st.writelog (" ")                                                   # Blank Line
+    st.writelog ("Sort %s to %s" % (SFILE,NFILE))                       # Show what we are doing
+    cmd  = "sort %s > %s" % (SFILE,NFILE)                               # Sort file by IP
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
+    if (ccode != 0):                                                    # If Error running command
+        st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
+        st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
+        sys.exit(1)                                                     # Exit script with Error
     
-    # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr = ""                      # Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
+    # # Copy the resultant output file into the SADM Web Net Data Directory
+    # st.writelog (" ")                                                   # Blank Line
+    # st.writelog ("Copy %s to %s" % (SFILE,st.www_net_dir))              # Show what we copy
+    # rc = os.system("cp " + SFILE + " " + st.www_net_dir + " >/dev/null 2>&1") # Do Actual Copy      
+    # if ( rc != 0 ) :                                                    # If error occurs on copy
+    #     st.writelog ("Can't copy %s to %s" % (SFILE,st.www_net_dir))    # Show User Error
+    #     return (1)                                                      # Return Error to Caller
+    st.writelog ("Change file owner and group to %s.%s" % (st.cfg_www_user, st.cfg_www_group))
+    wuid = pwd.getpwnam(st.cfg_www_user).pw_uid                         # Get UID User of Wev User 
+    wgid = grp.getgrnam(st.cfg_www_group).gr_gid                        # Get GID User of Web Group 
+    os.chown(NFILE,wuid,wgid)                                           # Change owner/group of file
 
-    # False = On MySQL Error, return MySQL Error Code & Display MySQL  Error Message
-    # True  = On MySQL Error, return MySQL Error Code & Do NOT Display Error Message
-    st.dbsilent = False                         # True or False
-
-    # Start the SADM Tools 
-    #   - Make sure All SADM Directories exist, 
-    #   - Open log in append mode if st_log_append="Y" else create a new Log file.
-    #   - Write Log Header
-    #   - Write Start Date/Time and Status Code 2(Running) to RCH file
-    #   - Check if Script is already running (pid_file) 
-    #       - Advise user & Quit if st-multiple_exec="N"
-    st.start()                                  # Make SADM Sertup is OK - Initialize SADM Env.
-
-    return(st)                                  # Return Instance Object to caller
-
-
+    return(0)                                                           # Return to Caller
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
 def main_process(st) :
-    for net in SUBNET:
-       SFILE = st.net_dir + '/subnet_' + net + '.txt'                   # Construct Subnet FileName
-       st.writelog ("Opening %s" % SFILE)                               # Log File Name been created
-       SH=open(SFILE,'w')                                               # Open Output Subnet File
-       for host in range(1,255):                                        # Define Range IP in Subnet
-          ip = net + '.' + str(host)                                    # Cronstruct IP Address
-          rc = os.system("ping -c 1 " + ip + " > /dev/null 2>&1")       # Ping THe IP Address
-          if ( rc == 0 ) :                                              # Ping Work
-             host_state = 'Yes'                                         # State = Yes = Alive
-          else :                                                        # Ping don't work
-            host_state = 'No'                                           # State = No = No response
-        
-          try:
-            line = socket.gethostbyaddr(ip)                             # Try to resolve IP Address
-            hostname = line[0]                                          # Save DNS Name 
-          except:
-       	    hostname = ' '                                              # No Name = Clear Name
 
-          WLINE = "%s, %s, %s" % (ip, host_state, hostname)
-          st.writelog ("%s" % WLINE)
-          print ("%s" % WLINE)
-          SH.write ("%s\n" % (WLINE))
-       SH.close()                                                       # Close Subnet File
-      
-       # Copy the resultant subnet txt file into the SADM Web Data Directory
-       st.writelog ("Copy %s into %s" % (SFILE,st.www_net_dir))
-       rc = os.system("cp " + SFILE + " " + st.www_net_dir + " >/dev/null 2>&1")       
-       if ( rc != 0 ) :                                                  
-            st.writelog ("ERROR : Could not copy %s into %s" % (SFILE,st.www_net_dir))
-            return (1)
-       st.writelog ("Change file owner and group to %s.%s" % (st.cfg_www_user, st.cfg_www_group))
-       wuid = pwd.getpwnam(st.cfg_www_user).pw_uid                      # Get UID User of Wev User 
-       wgid = grp.getgrnam(st.cfg_www_group).gr_gid                     # Get GID User of Web Group 
-       os.chown(st.www_net_dir + '/subnet_' + net + '.txt', wuid, wgid) # Change owner of Subnet 
+    if (DEBUG): st.writelog("Processing Network1 = _%s_" % (st.cfg_network1))
+    if (st.cfg_network1 != "") : scan_network(st,st.cfg_network1)       # Network Subnet 1 to report
+        
+    if (DEBUG): st.writelog("Processing Network2 = _%s_" % (st.cfg_network2))
+    if (st.cfg_network2 != "") : scan_network(st,st.cfg_network2)       # Network Subnet 2 to report
+        
+    if (DEBUG): st.writelog("Processing Network3 = _%s_" % (st.cfg_network3))
+    if (st.cfg_network3 != "") : scan_network(st,st.cfg_network3)       # Network Subnet 3 to report
+        
+    if (DEBUG): st.writelog("Processing Network4 = _%s_" % (st.cfg_network4))
+    if (st.cfg_network4 != "") : scan_network(st,st.cfg_network4)       # Network Subnet 4 to report
+        
+    if (DEBUG): st.writelog("Processing Network5 = _%s_" % (st.cfg_network5))
+    if (st.cfg_network5 != "") : scan_network(st,st.cfg_network5)       # Network Subnet 5 to report
+
     return(0)
 
 
@@ -168,11 +207,10 @@ def main_process(st) :
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "2.12"                            # Indicate this script Version 
+    st.ver  = "1.2"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
-    st.debug = 0                                # Debug level and verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     st.usedb = False                            # True=Use Database  False=DB Not needed for script
     st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
@@ -181,10 +219,11 @@ def main():
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available 
 
+    
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st.writelog ("Try sudo ./%s" % (sadm.pn))                        # Suggest to use 'sudo'
+       st.writelog ("Try sudo ./%s" % (st.pn))                          # Suggest to use 'sudo'
        st.writelog ("Process aborted")                                  # Process Aborted Msg
        st.stop (1)                                                      # Close and Trim Log/Email
        sys.exit(1)                                                      # Exit with Error Code
@@ -195,6 +234,7 @@ def main():
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
+        
         
     st.exit_code = main_process(st)                                     # Process Subnet
     st.stop(st.exit_code)                                               # Close SADM Environment
