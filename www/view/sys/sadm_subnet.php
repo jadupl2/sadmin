@@ -40,7 +40,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "lengthMenu": [[125, 300, -1], [125, 300, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -57,7 +57,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
+$DEBUG = False ;                                                         # Debug Activated True/False
 $SVER  = "2.0" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 
@@ -94,18 +94,23 @@ function print_subnet($wfile,$woption,$wsubnet) {
     // Loop through our array, show HTML source as HTML source; and line numbers too.
     foreach ($lines as $line_num => $line) {
         #echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n";
-        list($wip, $wstatus, $wname) = explode(",", htmlspecialchars($line));
+        list($wip, $wname, $wmac, $wmanu, $wactive) = explode(",", htmlspecialchars($line));
         $wname  = trim($wname);
-        $wstatus= trim($wstatus);
+        // $wstatus= trim($wstatus);
         echo "\n<tr>";
-        echo "\n<td class='dt-center'>" . $wip     . "</td>";
-        echo "\n<td class='dt-center'>" . $wstatus . "</td>";
-        echo "\n<td class='dt-center'>" . $wname   . "</td>";
-        if (($wstatus == "No")  and ($wname == "")) { $wtype = "free" ; } 
-        if (($wstatus == "Yes") and ($wname != "")) { $wtype = "used" ; }
-        if (($wstatus == "Yes") and ($wname == "")) { $wtype = "Actine, No Hostname" ; }
-        if (($wstatus == "No")  and ($wname != "")) { $wtype = "Inactive, With Hostname" ; }
-        echo "\n<td>" . $wtype   . "</td>";
+        #echo "\n<td class='dt-center'>" . $wip     . "</td>";
+        #echo "\n<td class='dt-left'>" . $wname   . "</td>";
+        #echo "\n<td class='dt-left'>" . $wmac    . "</td>";
+        echo "\n<td align=center>" . $wip     . "</td>";
+        echo "\n<td align=center>" . $wname   . "</td>";
+        echo "\n<td align=center>" . $wmac    . "</td>";
+        echo "\n<td align=center>" . $wmanu   . "</td>";
+        echo "\n<td align=center>" . $wactive . "</td>";
+        // if (($wstatus == "No")  and ($wname == "")) { $wtype = "free" ; } 
+        // if (($wstatus == "Yes") and ($wname != "")) { $wtype = "used" ; }
+        // if (($wstatus == "Yes") and ($wname == "")) { $wtype = "Actine, No Hostname" ; }
+        // if (($wstatus == "No")  and ($wname != "")) { $wtype = "Inactive, With Hostname" ; }
+        // echo "\n<td>" . $wtype   . "</td>";
         echo "\n</tr>";
     }
     echo "\n</tbody>\n</table></center><br>";
@@ -124,23 +129,27 @@ function print_ip_heading($iptype,$wsubnet) {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border wrap width="80%">';   
-
+    #echo '<table id="sadmTable" class="display" compact row-border wrap width="60%">';   
+    #echo '<table id="sadmTable" class="cell-border" compact row-border wrap width="60%">';   
+    echo '<table border=1 width="60%">';   
+     
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th width=150 halign='center'>IP Address</th>";
-    echo "\n<th width=150>Ping Response</th>";
-    echo "\n<th width=250>DNS Hostname</th>";
-    echo "\n<th width=220>IP Status</th>";
+    echo "\n<th align=center width=10>IP Address</th>";
+    echo "\n<th align=center width=100>DNS Hostname</th>";
+    echo "\n<th align=center width=100>Mac Address</th>";
+    echo "\n<th align=center width=100>Manufacturer</th>";
+    echo "\n<th align=center width=15>Active</th>";
     echo "\n</tr>";
     echo "\n</thead>";
 
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th width=150 halign='center'>IP Address</th>";
-    echo "\n<th width=150>Ping Response</th>";
-    echo "\n<th width=250>DNS Hostname</th>";
-    echo "\n<th width=220>IP Status</th>";
+    echo "\n<th align=center width=10>IP Address</th>";
+    echo "\n<th align=center width=100>DNS Hostname</th>";
+    echo "\n<th align=center width=100>Mac Address</th>";
+    echo "\n<th align=center width=100>Manufacturer</th>";
+    echo "\n<th align=center width=15>Active</th>";
     echo "\n</tr>";
     echo "\n</tfoot>";
 
@@ -174,13 +183,14 @@ function print_ip_heading($iptype,$wsubnet) {
     # Verify if subnet file exist    
     list($network,$mask) = explode('/',$SUBNET);
     list($net1,$net2,$net3,$net4) = explode('.',$network);
-    $subnet_file =  SADM_WWW_NET_DIR . "/subnet_" . $net1 . ".". $net2 . ".". $net3 . ".txt";
+    $subnet_file =  SADM_WWW_NET_DIR . "/network_" . $network . "_". $mask . ".txt";
     if (! file_exists($subnet_file))  {
        echo "<br>The subnet file " . $subnet_file . " does not exist.\n";
        echo "<br>You may have to run " .SADM_BIN_DIR. "/sadm_subnet_lookup.py to create it.\n";
        echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
        exit ;
     }
+    if ($DEBUG)  { echo "\n<br>Subnet File used : $subnet_file "; }
 
     # Validate the display option received
     if (($OPTION != "all") and ($OPTION!="free") and ($OPTION!="used")
@@ -192,7 +202,7 @@ function print_ip_heading($iptype,$wsubnet) {
     }
     
     # Display Content Heading
-     display_std_heading("NotHome",ucfirst ($iptype) . " IP of Subnet ${SUBNET}","",""," - $SVER");
+    display_std_heading("NotHome",ucfirst ($iptype) . " IP of Subnet ${SUBNET}","",""," - $SVER");
     # Print the Subnet File
     print_subnet ("$subnet_file","$OPTION",$SUBNET);
 
