@@ -1,22 +1,22 @@
-# README #
-This project is in constant evolution and is not yet ready for production, althought it is running well.
-Jan 2018 - Version 0.74
+# README V1.2 #
+This project is in constant evolution and is almost ready for production
+April 2018 - Version 0.85 
 
 * SADMIN is Designed to Help Linux/Aix System Administration
-* Version 0.84
+* Version 0.85
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 
 Quick Start
 -----------
-Choose a directory (or a filesystem) where you want to install SADMIN. Make sure you have around 2GB of free disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MariaDB Database).  For here on, we will assume that you have install SADM in '/opt/sadmin' directory.
+Choose a directory (or a filesystem) where you want to install SADMIN tools. Make sure you have around 2GB of free disk space on the server and 256MB for each client. All SADMIN software and data will reside in that directory (beside MariaDB Database).  For here on, we will assume that you have install SADM in '/opt/sadmin' directory.
 
 ### Running the Setup script
 Run the setup program by typing the command below. This program will ask you some questions and will feed the configuration file ($SADMIN/cfg/sadmin.cfg). This file is used by
-every script you will run, the web interface and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can be run more than once, so don't worry if you made a mistake, just run it again. This step needs to be done only on the SADMIN server.
+every scripts you will run, the web interface and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can b e run more than once, so don't worry if you made a mistake, just run it again. 
 
 
-####    # $SADMIN/bin/sadm_setup.py
+####    # sudo /opt/sadmin/setup/setup.sh
 
 
 
