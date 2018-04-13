@@ -18,7 +18,7 @@
 # 11 April 2018
 #   V1.1 Output File include MAC,Manufacturer
 # 13 April 2018
-#   V1.2 Manufacturer Info Expanded
+#   V1.3 Manufacturer Info Expanded and use fping to check if host is up
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -103,10 +103,16 @@ def scan_network(st,snet) :
     st.writelog ("The arp-scan output file        : %s" % (arpfile))    # Show arp-scan IP+Mac Addr.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
-        st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
+        st.writelog ("Problem running : %s" % (cmd))                    # Show Command in Error
         st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
         sys.exit(1)                                                     # Exit script with Error
-    
+
+    # Run fping on Subnet and generate a file containing that IP of servers alive.
+    fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
+    cmd  = "fping -g %s 2>/dev/null | grep -i alive "  % (snet)         # fping command
+    st.writelog ("The fping output file           : %s" % (fpingfile))  # Show fping output filename 
+    ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
+        
     # Opening Arp file, read all file into memory
     try:                                                                # Try Opening arp-scan file
         f = open(arpfile, "r")                                          # Open result arp-scan file
@@ -115,7 +121,6 @@ def scan_network(st,snet) :
         sys.exit(1)                                                     # Exit Script with Error
     lines = f.readlines()                                               # Read all lines put in list
     f.close()                                                           # Close Arp Result file
-
 
     # Iterating through the “usable” addresses on a network:
     for ip in NET4.hosts():                                             # Loop through possible IP
@@ -127,7 +132,6 @@ def scan_network(st,snet) :
             hname = ""                                                  # Clear IP Hostname
         hmac = ''                                                       # Clear Work Mac Address
         hmanu = ''                                                      # Clear Work Manufacturer
-        hactive = 'N'                                                   # Default Card is inactive
         for arpline in lines:                                           # Loop through arp file
             if (arpline.split(' ')[0] == hip) :                         # Found Cur. IP in arp file
                 hmac  = arpline.split(' ')[1]                           # Save Mac Address
@@ -135,10 +139,9 @@ def scan_network(st,snet) :
                 arpline = arpline.replace (hmac , "%s," % (hmac))
                 hmanu = arpline.split(',')[2]                           # Save Manufacturer
                 hmanu = hmanu.rstrip(',\n')                             # Remove command & NewLine
-                hactive = "Y"   
                 break                                                   # Break out of loop
-        #response = os.system("ping -c 1 " + hip + ">/dev/null 2>&1")    # Ping IP 
-        #if response == 0: hactive = "Y"                                 # If Ping Work Active=Yes
+        hactive = 'N'                                                   # Default Card is inactive
+        if (hip in fpinglist) : hactive = "Y"
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP
         zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Build Ip Addr with ZeroIP
         WLINE = "%s,%s,%s,%s,%s" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
@@ -207,7 +210,7 @@ def main_process(st) :
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.2"                             # Indicate this script Version 
+    st.ver  = "1.3"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
