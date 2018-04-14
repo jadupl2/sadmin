@@ -6,8 +6,6 @@
 #   Date     :  14 April 2016
 #   Requires :  php
 #
-#
-#
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -21,26 +19,26 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
-# ChangeLog
+# Changelog
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#   2017_12_31 JDuplessis
-#       V2.1  Change Name of input subnet file
+#   2018_04_14 JDuplessis
+#       V2.1  Page Redesign & Change Name/Format of input file (Inlude Mac Address, Manufacturer)
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');       # <head>CSS,JavaScript</Head>
-require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
+require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head><body>,SideBar
 
 # DataTable Initialisation Function
 ?>
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[125, 300, -1], [125, 300, "All"]],
+            "lengthMenu": [[255, 300, -1], [255, 300, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -48,7 +46,6 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
         } );
     } );
 </script>
-
 <?php
 
 
@@ -57,17 +54,17 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                         # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
-$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
-
+$DEBUG           = False ;                                              # Debug Activated True/False
+$SVER            = "2.1" ;                                              # Current version number
+$URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
+$CREATE_FILE_PGM = "sadm_subnet_lookup.py";                             # Script to create in file
 
 
 
 # ==================================================================================================
 #                      DISPLAY CONTENT OF THE SELECTED SUBNET FILE
 #
-#  wfile    = Name of the subnet file to process
+#  wfile    = Name of the network file to process
 #  woption  = [all]   Display either free, used, or ghost entries 
 #             [free]  Display only free IPs     (no respond to ping and NO DNS entry)
 #             [iwn]   Inactive With Name        (no respond to ping and have DNS entry)
@@ -75,48 +72,35 @@ $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Displa
 #             [used]  Display only the used IPs (respond to ping and have DNS entry)
 # --------------------------------------------------------------------------------------------------
 # File Content Examples
-# 192.168.1.6, No,                      # [FREE]
-# 192.168.1.7, Yes, watson.maison.ca    # [USED] [ACTIVE WITH NAME] 
-# 192.168.1.8, Yes,                     # [AWN] [ACTIVE WITHOUT NAME]
-# 192.168.1.9, No, imacw.maison.ca      # [IWN] [INACTIVE WITH NAME] [GHOST]
+# 192.168.001.003,mycroftw.maison.ca,a0:99:9b:08:f5:11, Apple Inc.,Y,192.168.1.3
+# 192.168.001.004,raspi0.maison.ca,b8:27:eb:9e:77:81, Raspberry Pi Foundation,Y,192.168.1.4
+# 192.168.001.005,gandhi.maison.ca,,,Y,192.168.1.5
+#
 # ==================================================================================================
 function print_subnet($wfile,$woption,$wsubnet) {
 
-    # SUBNET DIV START
-    #echo "\n\n<div class='subnet_container'>                 <!-- Start Subnet Container DIV -->\n";
-    
-    # Print Heading and Start Body Section
-    print_ip_heading ("$woption",$wsubnet);
-    
-    # Load the IP File into $lines Array.
-    $lines = file($wfile);
+    print_ip_heading ("$woption",$wsubnet);                             # Print Data Page Heading
+    $lines = file($wfile);                                              # Read Network File in Array
 
-    // Loop through our array, show HTML source as HTML source; and line numbers too.
+    # LOOP THROUGH NETWORK ARRAY AND DISPLAY DATA
     foreach ($lines as $line_num => $line) {
-        #echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n";
+        if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n";}
         list($wip, $wname, $wmac, $wmanu, $wactive) = explode(",", htmlspecialchars($line));
         $wname  = trim($wname);
-        // $wstatus= trim($wstatus);
+        if (($wactive == "N") and ($wname == "")) { $wstate = "Free IP" ; } 
+        if (($wactive == "Y") and ($wname != "")) { $wstate = "Used IP" ; }
+        if (($wactive == "Y") and ($wname == "")) { $wstate = "Active, No Hostname" ; }
+        if (($wactive == "N") and ($wname != "")) { $wstate = "Inactive Hostname" ; }
         echo "\n<tr>";
-        #echo "\n<td class='dt-center'>" . $wip     . "</td>";
-        #echo "\n<td class='dt-left'>" . $wname   . "</td>";
-        #echo "\n<td class='dt-left'>" . $wmac    . "</td>";
-        echo "\n<td align=center>" . $wip     . "</td>";
-        echo "\n<td align=center>" . $wname   . "</td>";
-        echo "\n<td align=center>" . $wmac    . "</td>";
-        echo "\n<td align=center>" . $wmanu   . "</td>";
-        echo "\n<td align=center>" . $wactive . "</td>";
-        // if (($wstatus == "No")  and ($wname == "")) { $wtype = "free" ; } 
-        // if (($wstatus == "Yes") and ($wname != "")) { $wtype = "used" ; }
-        // if (($wstatus == "Yes") and ($wname == "")) { $wtype = "Actine, No Hostname" ; }
-        // if (($wstatus == "No")  and ($wname != "")) { $wtype = "Inactive, With Hostname" ; }
-        // echo "\n<td>" . $wtype   . "</td>";
+        echo "\n<td class='dt-center'>" . $wip         ."</td>";
+        echo "\n<td class='dt-center'>" . $wstate      ."</td>";
+        echo "\n<td class='dt-center'>" . $wactive     ."</td>";
+        echo "\n<td class='dt-center'>" . $wname       ."</td>";
+        echo "\n<td class='dt-center'>" . $wmac        ."</td>";
+        echo "\n<td class='dt-center'>" . $wmanu       ."</td>";
         echo "\n</tr>";
     }
     echo "\n</tbody>\n</table></center><br>";
-   
-    # SUBNET DIV END
-#    echo "\n\n</div'>                                        <!-- End Subnet Container DIV -->\n";
     echo "\n<BR>                                             <!-- Blank Line -->\n";
 }
 
@@ -129,27 +113,29 @@ function print_ip_heading($iptype,$wsubnet) {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    #echo '<table id="sadmTable" class="display" compact row-border wrap width="60%">';   
-    #echo '<table id="sadmTable" class="cell-border" compact row-border wrap width="60%">';   
-    echo '<table border=1 width="60%">';   
-     
+    echo '<table id="sadmTable" class="cell-border" compact row-border wrap width="70%">';   
+    
+    # TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th align=center width=10>IP Address</th>";
-    echo "\n<th align=center width=100>DNS Hostname</th>";
-    echo "\n<th align=center width=100>Mac Address</th>";
-    echo "\n<th align=center width=100>Manufacturer</th>";
-    echo "\n<th align=center width=15>Active</th>";
+    echo "\n<th class='dt-head-center'>IP Address</th>";
+    echo "\n<th class='dt-head-center'>IP State</th>";
+    echo "\n<th class='dt-head-center'>Active</th>";
+    echo "\n<th class='dt-head-center'>DNS Hostname</th>";
+    echo "\n<th class='dt-head-center'>Mac Address</th>";
+    echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n</tr>";
     echo "\n</thead>";
 
+    # TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th align=center width=10>IP Address</th>";
-    echo "\n<th align=center width=100>DNS Hostname</th>";
-    echo "\n<th align=center width=100>Mac Address</th>";
-    echo "\n<th align=center width=100>Manufacturer</th>";
-    echo "\n<th align=center width=15>Active</th>";
+    echo "\n<th class='dt-head-center'>IP Address</th>";
+    echo "\n<th class='dt-head-center'>IP State</th>";
+    echo "\n<th class='dt-head-center'>Active</th>";
+    echo "\n<th class='dt-head-center'>DNS Hostname</th>";
+    echo "\n<th class='dt-head-center'>Mac Address</th>";
+    echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n</tr>";
     echo "\n</tfoot>";
 
@@ -161,51 +147,59 @@ function print_ip_heading($iptype,$wsubnet) {
 # ==================================================================================================
 #                                      PROGRAM START HERE
 # ==================================================================================================
-#
-    # Get the first parameter - Subnet file to use
-    if (! isset($_GET['net']) ) { 
-       echo "<br>No Subnet received\n<br>Correct the situation and retry request\n";
-       echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+
+    # VALIDATE IF THE 'NET' PARAMETER IS RECEIVED - IF RECEIVED SAVE SUBNET ------------------------ 
+    if (! isset($_GET['net']) ) {                                       # Does Variable Net Defined?
+       echo "<br>No Subnet paramater received\n";                       # Show what is wrong
+       echo "<br><a href='javascript:history.go(-1)'>";                 # Link to previous page
+       echo "Go back to adjust request</a>\n";                          # Description of link
        exit ;
     }    
-    $SUBNET = $_GET['net'];
-    if ($DEBUG)  { echo "<br>Subnet Received is $SUBNET "; }
+    $SUBNET = $_GET['net'];                                             # Save Network Received 
+    if ($DEBUG)  { echo "<br>Subnet Received is '$SUBNET'"; }           # Under Debug show Network
     
-    # Get the second paramater ([all] IPs, [free] IPs, [used] IPs, [ghost] IPS)
-    if (! isset($_GET['option']) ) { 
-       echo "<br>Second parameter not received\n<br>Correct the situation and retry request\n";
-       echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+    
+    # GET THE SECOND PARAMATER ([ALL] IPS, [FREE] IPS, [USED] IPS, [GHOST] IPS) --------------------
+    if (! isset($_GET['option']) ) {                                    # Does Variable option exist
+       echo "<br>The option paramater not received\n";                  # Show what is wrong
+       echo "<br><a href='javascript:history.go(-1)'>";                 # Link to previous page
+       echo "Go back to adjust request</a>\n";                          # Description of link
        exit ;
     }    
-    $OPTION= $_GET['option'];
-    if ($DEBUG)  { echo "<br>Subnet page option is $OPTION "; }
+    $OPTION= $_GET['option'];                                           # Save Option Received
+    if ($DEBUG)  { echo "<br>Page option is '$OPTION' <br>"; }          # Under Debug Show Option 
     
-    # Verify if subnet file exist    
-    list($network,$mask) = explode('/',$SUBNET);
-    list($net1,$net2,$net3,$net4) = explode('.',$network);
-    $subnet_file =  SADM_WWW_NET_DIR . "/network_" . $network . "_". $mask . ".txt";
-    if (! file_exists($subnet_file))  {
-       echo "<br>The subnet file " . $subnet_file . " does not exist.\n";
-       echo "<br>You may have to run " .SADM_BIN_DIR. "/sadm_subnet_lookup.py to create it.\n";
-       echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
+    
+    # VERIFY IF NETWORK FILE EXIST -----------------------------------------------------------------
+    list($network,$mask) = explode('/',$SUBNET);                        # Separate Network & Netmask
+    #list($net1,$net2,$net3,$net4) = explode('.',$network);             # Split Network in 4 Digits
+    $netfile = SADM_WWW_NET_DIR. "/network_" .$network. "_" .$mask. ".txt";
+    if (! file_exists($netfile))  {                                     # Does Network file exist ?
+       echo "<br>Network file '" .$netfile. "' doesn't exist.\n<br>";   # Inform User 
+       echo "<br>You may have to run '" .SADM_BIN_DIR. "/" . $CREATE_FILE_PGM . "' to create it.\n";
+       echo "<br><br><a href='javascript:history.go(-1)'>";             # Link to previous page
+       echo "Go back to adjust request</a>\n";                          # Description of link
        exit ;
     }
-    if ($DEBUG)  { echo "\n<br>Subnet File used : $subnet_file "; }
+    if ($DEBUG)  { echo "\n<br>Subnet File used : $netfile "; }         # On Debug show input file
 
-    # Validate the display option received
-    if (($OPTION != "all") and ($OPTION!="free") and ($OPTION!="used")
-        and ($OPTION!="awn") and ($OPTION!="iwn")) {
-           echo "<br>The Display Option Received " . $OPTION . " is not valid.\n";
-           echo "<br>Correct the situation and retry request\n";
-           echo "<br><a href='javascript:history.go(-1)'>Go back to adjust request</a>\n";
-           exit ;
+
+    # VALIDATE THE DISPLAY OPTION RECEIVED ---------------------------------------------------------
+    if (($OPTION != "all") and ($OPTION!="free") and ($OPTION!="used")) {
+        echo "<br>Invalid display option received '" . $OPTION . "'";   # Inform user option Invalid
+        echo "<br><br>\nCorrect the situation and retry request\n";     # Need to be corrected
+        echo "<br><br><a href='javascript:history.go(-1)'>";            # Link to previous page
+        echo "Go back to adjust request</a>\n";                         # Description of link
+        exit ;
     }
     
-    # Display Content Heading
-    display_std_heading("NotHome",ucfirst ($iptype) . " IP of Subnet ${SUBNET}","",""," - $SVER");
-    # Print the Subnet File
-    print_subnet ("$subnet_file","$OPTION",$SUBNET);
+    # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
+    display_std_heading("NotHome",ucfirst($iptype) . " Subnet ${SUBNET}","",""," - $SVER");
 
+    # PRINT THE NETWORK FILE------------------------------------------------------------------------
+    print_subnet ("$netfile","$OPTION",$SUBNET);                        # Go Print Network file
+
+    # END OF PAGE FOOTER ---------------------------------------------------------------------------
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
     echo "</div> <!-- End of SimpleTable          -->" ;                # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer
