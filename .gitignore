@@ -50,6 +50,7 @@ www/cfg/.crontab.txt
 # Specific files to exclude 
 sysmon.lock
 .bash_history
+.viminfo
 .mysql_history
 sys/*.log
 cfg/.dbpass

@@ -14,7 +14,7 @@ alias rm='rm -i'
 alias ll='ls -l'
 alias grpe='grep'
 
-# Setup The Linux Prompt
+# Setup The Color Linux Prompt
 PS1='\[\033[1;33m\]\u\[\033[1;37m\]@\[\033[1;32m\]\h\[\033[1;37m\]:\w\[\033[1;36m\]\$ \[\033[0m\]'
 export PS1
 
