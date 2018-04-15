@@ -103,7 +103,7 @@ td {
     text-align      :   center;
     background-color: #124f44; 
     color           : white;
-    padding         :   10px;
+    padding         :   5px 5px 5px 5px;
     margin          :   2px;
     border-width    :   1px;
     border-style    :   solid;
@@ -125,8 +125,8 @@ td {
 
 /* Page Heading Line 1 */
 #sadmEnteteLine1{
-    clear           :   both;
-    line-height     :   1.0;
+    #clear           :   both;
+    #line-height     :   1.0;
     padding         :   1px;
 }
 /* Page Heading Line 1 - Left of Line */
@@ -153,34 +153,16 @@ td {
     /* color : #9B869C; */
     /* display: block; */
 }
-/* Page Heading Line 2 */
-#sadmEnteteLine2{
-    clear           :   both;
-    line-height     :   1.0;
-    padding         :   1px;
-}
-/* Page Heading Line 2 - Left of Line */
-#sadmEntete2L{
+/* Page Heading Line 1 - Company Name */
+#sadmEntete1C{
     font-family     :   Verdana, Geneva, sans-serif;
     float           :   left;
     padding         :   5px;
-    color           :   #FF9800;
+    color           :   #7bff00;
     font-size       :   20px;
     text-decoration :   none;
 	font-weight     :   bold;
     /* font-size: x-large; */
-}
-/* Page Heading Line 2 - Right of Line */
-#sadmEntete2R {
-    font-family     :   Verdana, Monaco, monospace;
-    float           :   right;
-    color           :   #FF9800;
-    padding         :   5px;
-    font-size       :   14px;
-    text-align      :   right;
-    font-weight     :   bold;
-    /* color : #9B869C; */
-    /* display: block; */
 }
 
 
