@@ -19,10 +19,12 @@
 #   V1.1 Output File include MAC,Manufacturer
 # 13 April 2018
 #   V1.3 Manufacturer Info Expanded and use fping to check if host is up
+# 2018-04-17 JDuplessis
+#   V1.4 Added update to server_network table in Mariadb
 # --------------------------------------------------------------------------------------------------
 # 
 try :
-    import os,time,sys,pdb,socket,datetime,pwd,grp,subprocess,ipaddress # Import Std Python3 Modules
+    import os,time,sys,pdb,socket,datetime,pwd,grp,pymysql,subprocess,ipaddress # Import Std Modules
     SADM = os.environ.get('SADMIN')                                     # Get SADMIN Root Dir. Name
     sys.path.insert(0,os.path.join(SADM,'lib'))                         # Add SADMIN to sys.path
     import sadmlib_std as sadm                                          # Import SADMIN Python Libr.
@@ -57,16 +59,134 @@ def oscommand(command) :
     return (returncode,out,err)
 
 
+# ----------------------------------------------------------------------------------------------
+# READ IP KEY IN SERVER_NETWORK TABLE 
+# Return 2 parameters :
+#   1 = Error Code (0=found 1=NotFound)
+#   2 = If Row was found then return row data as a tuple.
+#       If Row was not found 'None' is returned as the second parameter
+# ----------------------------------------------------------------------------------------------
+def db_readkey(st,wconn,wcur,tbkey,dbsilent):
+
+
+    sql = "SELECT * FROM server_network WHERE net_ip='%s'" % (tbkey)    # Build select statement
+    try :
+        number_of_rows = wcur.execute(sql)                              # Execute the Select Stat.
+        if (number_of_rows == 0):
+            if not dbsilent :                                           # If not in Silent Mode
+                emsg = "Key '%s' not found in table" % (tbkey)          # Build Error Message
+                st.writelog(">>>>>>>>>>>>> %d %s" % (1,emsg))           # Show Error No. & Message
+            return(1,None)                                              # Return Error No. & No Data
+
+        dbrow = wcur.fetchone()                                         # Get one row base on key
+        if (dbrow == None) :                                            # If not row returned
+            if not dbsilent :                                           # If not in Silent Mode
+                emsg = "No row found with matching key '%s'" % (tbkey)
+                st.writelog(">>>>>>>>>>>>> %d %s" % (1,emsg))           # Show Error No. & Message
+            return(1,None)                                              # Return Error No. & No Data
+
+    except (pymysql.err.InternalError,pymysql.err.IntegrityError,pymysql.err.DataError) as e:
+        if not dbsilent :                                               # If not in Silent Mode
+            enum, emsg = e.args                                         # Get Error No. & Message
+            st.writelog(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
+            return(1,None)                                              # Return Error No. & No Data
+
+    return(0,dbrow)                                                     # Return no Error & row data
+
+
+#-----------------------------------------------------------------------------------------------
+# INSERT ROW IN SERVER_NETWORK TABLE
+# return (0) if no error - return (1) if error encountered
+#
+# Example of tbdata received
+# ['192.168.1.1','192.168.001.001','Router','b8:27:eb:9e:77:81','Y',\
+#   '2018-04-18 21:09:58','2018-04-18 21:09:58']
+#-----------------------------------------------------------------------------------------------
+def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
+    if DEBUG : st.writelog("Insert IP: %s " % tbkey);                   # Show key to Insert
+    wdate = time.strftime('%Y-%m-%d %H:%M:%S')                          # Save Current Date & Time
+
+    # If IP is pingable then update the last ping date
+    if (tbdata[4] == True):                                             # If IP Was pingable
+        wpingdate = wdate                                               # Pingable Update Ping Date
+    else:                                                               # If IP is not pingable
+        wpingdate = None                                                # No Ping Date by Default
+
+    # BUILD THE INSERT STATEMENT
+    try:
+        sql = "INSERT INTO server_network SET \
+              net_ip='%s', net_ip_wzero='%s', net_hostname='%s', net_mac='%s', \
+              net_ping='%d', net_date_ping='%s', net_date_update='%s' " % \
+              (tbdata[0], tbdata[1], tbdata[2], tbdata[3], tbdata[4], wpingdate, wdate);
+        if DEBUG : st.writelog("Insert SQL: %s " % sql);                # Debug Show SQL Statement
+    except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
+        enum=1                                                          # Set Class Error Number 
+        emsg=error                                                      # Get Error Message
+        if not dbsilent:                                                # If not in Silent Mode
+            st.writelog(">>>>>>>>>>>>>",enum,error)                     # Print Error No. & Message
+            return(enum)                                                # return (1) indicate Error
+
+    # EXECUTE INSERT STATEMENT
+    try:
+        wcur.execute(sql)                                               # Insert new Data 
+        wconn.commit()                                                  # Commit the transaction
+    except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
+        if not dbsilent :                                               # If not in Silent Mode
+            enum, emsg = error.args                                     # Get Error No. & Message
+            st.writelog(">>>>>>>>>>>>> %d %s" % (enum,emsg))            # Show Error No. & Message
+        return(enum)                                                    # return Error Number
+
+    return(0)                                                           # return (0) Insert Worked
+
+
+#===================================================================================================
+# UPDATE THE NETWORK IP DATABASE TABLE
+#===================================================================================================
+#
+def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wping,wdateping,wdatechange):
+
+    # Update Server Row With Info collected from the sysinfo.txt file
+    try:
+        sql = "UPDATE server_network SET net_ip='%s', net_ip_wzero='%s', net_hostname='%s', \
+                net_mac='%s', net_ping='%s', net_date_ping='%s', net_date_update='%s' \
+                where net_ip='%s' " % (wip,wzero,wname,wmac,wping,wdateping,wdatechange,wip) 
+    except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
+        enum, emsg = error.args                                         # Get Error No. & Message
+        #enum=1
+        #emsg=error                                                     # Get Error Message
+        st.writelog(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
+        st.writelog("sql=%s" % (sql))
+        return(1)                                                       # return (1) to indicate Err
+
+    # Execute the SQL Update Statement
+    try:
+        wcur.execute(sql)                                               # Update Server Data 
+        wconn.commit()                                                  # Commit the transaction
+    except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
+        enum, emsg = error.args                                         # Get Error No. & Message
+        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+        if (DEBUG) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
+        wconn.rollback()                                                # RollBack Transaction
+        return (1)                                                      # return (1) to indicate Err
+    except Exception as error: 
+        enum, emsg = error.args                                         # Get Error No. & Message
+        st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
+        if (DEBUG) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
+        wconn.rollback()                                                # RollBack Transaction
+        return (1)                                                      # return (1) to indicate Err
+    return(0)                                                           # Return 0 = update went OK
+
+
 
 #===================================================================================================
 #                            Scan The Network Received (Example: "192.168.1.0/24")
 #===================================================================================================
 #
-def scan_network(st,snet) :
+def scan_network(st,snet,wconn,wcur) :
     if DEBUG : st.writelog ("In 'scan_network', parameter received : %s" % (snet))
 
-    # Get Main Network Interface Name (from route table)
-    cmd = "netstat -rn |grep '^0.0.0.0' |awk '{ print $NF }'"           # Get Main Network Interface 
+    # Get Main Network Interface Name of this host (from route table)-------------------------------
+    cmd = "netstat -rn |grep '^0.0.0.0' |awk '{ print $NF }'"           # Get Default Route DevName
     ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
         st.writelog ("Problem running : %s" & (cmd))                    # Show Command in Error
@@ -75,12 +195,12 @@ def scan_network(st,snet) :
         netdev=cstdout                                                  # Save Net. Interface Name
         st.writelog ("Current host interface name     : %s" % (netdev)) # Show Interface selected
 
-    # Print Number of IP in Network - Based on network and Netmask in sadmin.cfg
+    # Print Number of IP in Network Subnet----------------------------------------------------------
     NET4 = ipaddress.ip_network(snet)                                   # Create instance of network
     snbip = NET4.num_addresses                                          # Save Number of possible IP
     st.writelog ("Possible IP on %s   : %s " % (snet,snbip))            # Show Nb. Possible IP
 
-    # Print the Network Netmask
+    # Print the Network Netmask of Subnet-----------------------------------------------------------
     snetmask = NET4.netmask                                             # Save Network Netmask
     st.writelog ("Network netmask                 : %s" % (snetmask))   # Show User Netmask
 
@@ -140,17 +260,56 @@ def scan_network(st,snet) :
                 hmanu = arpline.split(',')[2]                           # Save Manufacturer
                 hmanu = hmanu.rstrip(',\n')                             # Remove command & NewLine
                 break                                                   # Break out of loop
-        hactive = 'N'                                                   # Default Card is inactive
-        if (hip in fpinglist) : hactive = "Y"
+        hactive = 0                                                     # Default Card is inactive
+        if (hip in fpinglist) : hactive = 1                             # Ip Is Pingable
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP
         zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Build Ip Addr with ZeroIP
-        WLINE = "%s,%s,%s,%s,%s" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
+        WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
         netdict[hip] = WLINE                                            # Put Line in Dictionary
+
+        st.writelog(' ')                                                # Space line
+        st.writelog("Verifying if IP '%s' exist in database" % (hip))   # Show IP were looking for 
+        (dberr,dbrow) = db_readkey(st,wconn,wcur,hip,True)              # Read IP Row if Exist
+        if (dberr != 0):                                                # If IP Not in Database
+            st.writelog("IP %s doesn't exist in database" % (hip))      # Advise User of logic flow
+            cdata = [hip,zip,hname,hmac,hactive]                        # Data to Insert
+            dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert Data in Cat. Table
+            if (dberr == 0) :                                           # Did the insert went well ?
+                st.writelog("'%s' successfully added to database" % (hip)) # Show user IP was added
+            else:                                                       # Else we had problem      
+                st.writelog("Error %d adding '%s' to database" % (rdberr,hip))  # Show Error & Mess.
+        else :
+            old_hostname    = dbrow[2]
+            old_mac         = dbrow[3]
+            old_ping        = dbrow[4]
+            wdateping       = dbrow[5]
+            wdatechange     = dbrow[6]
+            st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
+            wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
+            if (old_ping != hactive) : 
+                st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
+                wdateping = wdate
+                st.writelog("Ping Date Updated")
+                wdatechange = wdate
+            if (old_mac != hmac):
+                st.writelog("IP %s Mac Address changed from %s to %s" % (hip,old_mac,hmac))
+                wdatechange = wdate
+            if (old_hostname != hname):
+                st.writelog("IP %s Host Name changed from %s to %s" % (hip,old_hostname,hname))
+                wdatechange = wdate
+            st.writelog ("Updating '%s' data" % (hip))
+            dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hactive,wdateping,wdatechange) 
+            if (dberr == 0) :                                           # If no Error updating IP
+                st.writelog("[OK] Update of IP '%s' succeeded" % (hip)) # Advise User Update is OK
+            else:                                                       # If something went wrong
+                st.writelog("[ERROR] Updating IP '%s'" % (hip))         # Advise User Update Error
+                
 
     # Loop through the dictionnary create and write value to output file
     for k, v in netdict.items():                                        # For every line in dict
-        if (DEBUG) : st.writelog("Key : {0}, Value : {1}".format(k, v)) # Under Debug print out Line
+        #if (DEBUG) : st.writelog("Key: {0}, Value: {1}".format(k, v)) # Under Debug print out Line
         OUT.write ("%s,%s\n" % (v,k))                                   # Dict Value to Output File
+
     OUT.close()                                                         # Close Output File
 
     # Create Sorted Output file in www/dat/`hostname`/net
@@ -164,13 +323,6 @@ def scan_network(st,snet) :
         st.writelog ("Stdout : %s \nStdErr : %s" % (cstdout,cstderr))   # Write stdout & stderr
         sys.exit(1)                                                     # Exit script with Error
     
-    # # Copy the resultant output file into the SADM Web Net Data Directory
-    # st.writelog (" ")                                                   # Blank Line
-    # st.writelog ("Copy %s to %s" % (SFILE,st.www_net_dir))              # Show what we copy
-    # rc = os.system("cp " + SFILE + " " + st.www_net_dir + " >/dev/null 2>&1") # Do Actual Copy      
-    # if ( rc != 0 ) :                                                    # If error occurs on copy
-    #     st.writelog ("Can't copy %s to %s" % (SFILE,st.www_net_dir))    # Show User Error
-    #     return (1)                                                      # Return Error to Caller
     st.writelog ("Change file owner and group to %s.%s" % (st.cfg_www_user, st.cfg_www_group))
     wuid = pwd.getpwnam(st.cfg_www_user).pw_uid                         # Get UID User of Wev User 
     wgid = grp.getgrnam(st.cfg_www_group).gr_gid                        # Get GID User of Web Group 
@@ -182,19 +334,22 @@ def scan_network(st,snet) :
 #                                  M A I N     P R O G R A M
 #===================================================================================================
 #
-def main_process(st) :
-
+def main_process(wconn,wcur,st):
     if (DEBUG): st.writelog("Processing Network1 = _%s_" % (st.cfg_network1))
-    if (st.cfg_network1 != "") : scan_network(st,st.cfg_network1)       # Network Subnet 1 to report
+    if (st.cfg_network1 != "") : 
+        scan_network(st,st.cfg_network1,wconn,wcur)                     # Network Subnet 1 to report
         
     if (DEBUG): st.writelog("Processing Network2 = _%s_" % (st.cfg_network2))
-    if (st.cfg_network2 != "") : scan_network(st,st.cfg_network2)       # Network Subnet 2 to report
+    if (st.cfg_network2 != "") : 
+        scan_network(st,st.cfg_network2,wconn,wcur)                     # Network Subnet 2 to report
         
     if (DEBUG): st.writelog("Processing Network3 = _%s_" % (st.cfg_network3))
-    if (st.cfg_network3 != "") : scan_network(st,st.cfg_network3)       # Network Subnet 3 to report
+    if (st.cfg_network3 != "") : 
+        scan_network(st,st.cfg_network3,wconn,wcur)                     # Network Subnet 3 to report
         
     if (DEBUG): st.writelog("Processing Network4 = _%s_" % (st.cfg_network4))
-    if (st.cfg_network4 != "") : scan_network(st,st.cfg_network4)       # Network Subnet 4 to report
+    if (st.cfg_network4 != "") : 
+        scan_network(st,st.cfg_network4,wconn,wcur)                     # Network Subnet 4 to report
         
     if (DEBUG): st.writelog("Processing Network5 = _%s_" % (st.cfg_network5))
     if (st.cfg_network5 != "") : scan_network(st,st.cfg_network5)       # Network Subnet 5 to report
@@ -210,7 +365,7 @@ def main_process(st) :
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.3"                             # Indicate this script Version 
+    st.ver  = "1.4"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
@@ -238,9 +393,10 @@ def main():
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
         
-        
-    st.exit_code = main_process(st)                                     # Process Subnet
+    (conn,cur) = st.dbconnect()                                         # Connect to SADMIN Database
+    st.exit_code = main_process(conn,cur,st)                            # Use Subnet in sadmin.cfg 
+    st.dbclose()                                                        # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
-
+    
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
