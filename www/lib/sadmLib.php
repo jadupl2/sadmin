@@ -29,6 +29,8 @@
 #       V2.1 Include Function to update User Crontab (permit tun run O/s Update Schedule)
 #   2018_01_04 - Jacques Duplessis
 #       V2.2 Remove display_file function & Page footer now have default value for parameter
+#   2018_04_17 - Jacques Duplessis
+#       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
 #
 # ==================================================================================================
 #
@@ -90,6 +92,54 @@ function std_page_footer($wcon="") {
     echo "\n</html>";
 }
 
+
+# ==================================================================================================
+# Function accept an IP Address (Example: 192.168.1.5) and a Netmask (Example: 255.255.255.0)
+# Function Return 4 Values - 1=Network IP, 2=First Usable IP, 3=Last Usable IP 4=Broadcast IP
+# ==================================================================================================
+function netinfo ($ip_address,$ip_nmask) {
+
+    # convert ip addresses to long form
+    $ip_address_long     = ip2long($ip_address);
+    $ip_nmask_long       = ip2long($ip_nmask);
+    # caculate network address
+    $ip_net              = $ip_address_long & $ip_nmask_long;
+    # caculate first usable address
+    $ip_host_first       = ((~$ip_nmask_long) & $ip_address_long);
+    $ip_first            = ($ip_address_long ^ $ip_host_first) + 1;
+    # caculate last usable address
+    $ip_broadcast_invert = ~$ip_nmask_long;
+    $ip_last             = ($ip_address_long | $ip_broadcast_invert) - 1;
+    # caculate broadcast address
+    $ip_broadcast        = $ip_address_long | $ip_broadcast_invert;
+
+    return array (long2ip($ip_net), long2ip($ip_first), long2ip($ip_last), long2ip($ip_broadcast));
+}
+
+# ==================================================================================================
+# Function to convert a netmask (ex: 255.255.255.240) to a cidr mask (ex: 28):
+# Example: mask2cidr('255.255.255.0') would return 24 
+# ==================================================================================================
+function mask2cidr($wmask)
+{
+    $long = ip2long($wmask);
+    $base = ip2long('255.255.255.255');
+    return 32-log(($long ^ $base)+1,2);
+}
+
+# ==================================================================================================
+# Function to convert a CIDR (Example: 24) to Netmask (Example: 255.255.255.000) 
+# Example: cidr2netmask(23) would return 255.255.254.0 ; 
+# ==================================================================================================
+function cidr2mask($cidr) {
+    static $max_ip;
+    if (!isset($max_ip))                                                # Make sure max_ip is set
+        $max_ip = ip2long('255.255.255.255');                           # Set maximum NetMask
+    if ($cidr < 0 || $cidr > 32)                                        # Validate CIDR 
+        return NULL;                                                    # Return NULL if invalid
+    $subnet_long = $max_ip << (32 - $cidr);                             # Calculate netmask
+    return long2ip($subnet_long);                                       # Return NetMask
+}
 
 # ==================================================================================================
 #                      Update the crontab based on the $paction parameter
