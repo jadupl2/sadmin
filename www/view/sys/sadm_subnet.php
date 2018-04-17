@@ -87,14 +87,18 @@ function print_subnet($wfile,$woption,$wsubnet) {
         if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n";}
         list($wip, $wname, $wmac, $wmanu, $wactive) = explode(",", htmlspecialchars($line));
         $wname  = trim($wname);
-        if (($wactive == "N") and ($wname == "")) { $wstate = "Free IP" ; } 
-        if (($wactive == "Y") and ($wname != "")) { $wstate = "Used IP" ; }
-        if (($wactive == "Y") and ($wname == "")) { $wstate = "Active, No Hostname" ; }
-        if (($wactive == "N") and ($wname != "")) { $wstate = "Inactive Hostname" ; }
+        if (($wactive == "0")  and ($wname == "")) { $wstate = "Free IP" ; } 
+        if (($wactive == "1")  and ($wname != "")) { $wstate = "Used IP" ; }
+        if (($wactive == "1")  and ($wname == "")) { $wstate = "Active, No Hostname" ; }
+        if (($wactive == "0")  and ($wname != "")) { $wstate = "Inactive Hostname" ; }
         echo "\n<tr>";
         echo "\n<td class='dt-center'>" . $wip         ."</td>";
         echo "\n<td class='dt-center'>" . $wstate      ."</td>";
-        echo "\n<td class='dt-center'>" . $wactive     ."</td>";
+        if ($wactive == 0) {
+            echo "\n<td class='dt-center'>No</td>";
+        }else{
+            echo "\n<td class='dt-center'>Yes</td>";
+        }
         echo "\n<td class='dt-center'>" . $wname       ."</td>";
         echo "\n<td class='dt-center'>" . $wmac        ."</td>";
         echo "\n<td class='dt-center'>" . $wmanu       ."</td>";
@@ -104,6 +108,36 @@ function print_subnet($wfile,$woption,$wsubnet) {
     echo "\n<BR>                                             <!-- Blank Line -->\n";
 }
 
+function print_line($line,$woption,$wsubnet) {
+
+    print_ip_heading ("$woption",$wsubnet);                             # Print Data Page Heading
+    $lines = file($wfile);                                              # Read Network File in Array
+
+    # LOOP THROUGH NETWORK ARRAY AND DISPLAY DATA
+    foreach ($lines as $line_num => $line) {
+        if ($DEBUG) { echo "Line #<b>{$line_num}</b> : " . htmlspecialchars($line) . "<br />\n";}
+        list($wip, $wname, $wmac, $wmanu, $wactive) = explode(",", htmlspecialchars($line));
+        $wname  = trim($wname);
+        if (($wactive == "0")  and ($wname == "")) { $wstate = "Free IP" ; } 
+        if (($wactive == "1")  and ($wname != "")) { $wstate = "Used IP" ; }
+        if (($wactive == "1")  and ($wname == "")) { $wstate = "Active, No Hostname" ; }
+        if (($wactive == "0")  and ($wname != "")) { $wstate = "Inactive Hostname" ; }
+        echo "\n<tr>";
+        echo "\n<td class='dt-center'>" . $wip         ."</td>";
+        echo "\n<td class='dt-center'>" . $wstate      ."</td>";
+        if ($wactive == 0) {
+            echo "\n<td class='dt-center'>No</td>";
+        }else{
+            echo "\n<td class='dt-center'>Yes</td>";
+        }
+        echo "\n<td class='dt-center'>" . $wname       ."</td>";
+        echo "\n<td class='dt-center'>" . $wmac        ."</td>";
+        echo "\n<td class='dt-center'>" . $wmanu       ."</td>";
+        echo "\n</tr>";
+    }
+    echo "\n</tbody>\n</table></center><br>";
+    echo "\n<BR>                                             <!-- Blank Line -->\n";
+}
 
 # ==================================================================================================
 #                             PRINT IP HEADING FUNCTION
@@ -141,8 +175,6 @@ function print_ip_heading($iptype,$wsubnet) {
 
     echo "\n\n<tbody>";
 }
-
-
 
 # ==================================================================================================
 #                                      PROGRAM START HERE
@@ -195,9 +227,41 @@ function print_ip_heading($iptype,$wsubnet) {
     
     # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
     display_std_heading("NotHome",ucfirst($iptype) . " Subnet ${SUBNET}","",""," - $SVER");
+    
+    // $ip_address = "192.168.1.20";
+    // $ip_nmask = "255.255.255.0";
+    // list ($wnet, $wfirstip, $wlastip, $wbroadcast) = netinfo($ip_address,$ip_nmask);
+    // echo "Network - " . $wnet . "<br>";
+    // echo "First usable - " . $wfirstip . "<br>";
+    // echo "Last usable - " . $wlastip . "<br>";
+    // echo "Broadcast - " . $wbroadcast . "<br>";
+    // $mask = '255.255.255.0';
+    // $cidr = mask2cidr($mask);
+    // echo "Netmask " . $mask . " to cidr = " . $cidr . "<br>";
+    // $CIDR = "24";
+    // $ip_mask = cidr2netmask($CIDR);
+    // echo "INPUT " . $CIDR . " to netmask = " . $ip_mask . "<br>";
 
     # PRINT THE NETWORK FILE------------------------------------------------------------------------
     print_subnet ("$netfile","$OPTION",$SUBNET);                        # Go Print Network file
+
+    # Perform the SQL Requested ANd Display Data
+    $sql = 'SELECT * FROM server_network order by net_ip_wzero;';
+    if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
+        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_msg1 = "IP (" . $SUBNET . ") not found.\n";                # Row was not found Msg.
+        $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
+        $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
+        $err_msg4 = $err_line . " in " . basename(__FILE__);            # Insert Filename in Mess.
+        sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4);     # Display Msg. Box for User
+        exit;                                                           # Exit - Should not occurs
+    }
+    # LOOP THROUGH RETREIVED DATA AND DISPLAY EACH ROW
+    while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
+        display_data($con,$row);                                        # Display Row Data
+    }
+
+
 
     # END OF PAGE FOOTER ---------------------------------------------------------------------------
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
