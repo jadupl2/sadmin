@@ -31,7 +31,8 @@
 #       V2.2 Remove display_file function & Page footer now have default value for parameter
 #   2018_04_17 - Jacques Duplessis
 #       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
-#
+#   2018_04_17 - Jacques Duplessis
+#       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
 # ==================================================================================================
 #
 
@@ -139,6 +140,34 @@ function cidr2mask($cidr) {
         return NULL;                                                    # Return NULL if invalid
     $subnet_long = $max_ip << (32 - $cidr);                             # Calculate netmask
     return long2ip($subnet_long);                                       # Return NetMask
+}
+
+# ==================================================================================================
+# Function getEachIpInRange return an array of ip address in CIDR Received (Ex: '192.168.1.0/24')
+# (Function getIpRange is used by getEachIpInRange)
+# ==================================================================================================
+function getIpRange($cidr) {
+    list($ip, $mask) = explode('/', $cidr);
+    $maskBinStr =str_repeat("1", $mask ) . str_repeat("0", 32-$mask );      //net mask binary string
+    $inverseMaskBinStr = str_repeat("0", $mask ) . str_repeat("1",  32-$mask ); //inverse mask
+
+    $ipLong = ip2long( $ip );
+    $ipMaskLong = bindec( $maskBinStr );
+    $inverseIpMaskLong = bindec( $inverseMaskBinStr );
+    $netWork = $ipLong & $ipMaskLong; 
+
+    $start = $netWork+1;//ignore network ID(eg: 192.168.1.0)
+    $end = ($netWork | $inverseIpMaskLong) -1 ; //ignore brocast IP(eg: 192.168.1.255)
+    return array('firstIP' => $start, 'lastIP' => $end );
+}
+
+function getEachIpInRange ($cidr) {
+    $ips = array();
+    $range = getIpRange($cidr);
+    for ($ip = $range['firstIP']; $ip <= $range['lastIP']; $ip++) {
+        $ips[] = long2ip($ip);
+    }
+    return $ips;
 }
 
 # ==================================================================================================
