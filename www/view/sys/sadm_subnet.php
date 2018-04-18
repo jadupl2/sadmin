@@ -228,9 +228,9 @@ function print_ip_heading($iptype,$wsubnet) {
     # DISPLAY STANDARD PAGE HEADING ----------------------------------------------------------------
     display_std_heading("NotHome",ucfirst($iptype) . " Subnet ${SUBNET}","",""," - $SVER");
     
-    // $ip_address = "192.168.1.20";
-    // $ip_nmask = "255.255.255.0";
-    // list ($wnet, $wfirstip, $wlastip, $wbroadcast) = netinfo($ip_address,$ip_nmask);
+    $ip_address = "192.168.1.20";
+    $ip_nmask = "255.255.255.0";
+    list ($wnet, $wfirstip, $wlastip, $wbroadcast) = netinfo($ip_address,$ip_nmask);
     // echo "Network - " . $wnet . "<br>";
     // echo "First usable - " . $wfirstip . "<br>";
     // echo "Last usable - " . $wlastip . "<br>";
@@ -241,6 +241,13 @@ function print_ip_heading($iptype,$wsubnet) {
     // $CIDR = "24";
     // $ip_mask = cidr2netmask($CIDR);
     // echo "INPUT " . $CIDR . " to netmask = " . $ip_mask . "<br>";
+
+    
+    // $SUBNET = '192.168.1.0/24'; // max. 30 ips
+    // $IPARRAY = getEachIpInRange ($SUBNET);
+    // foreach ($IPARRAY as $wip) {
+    //     echo "<br>" . $wip;
+    // }
 
     # PRINT THE NETWORK FILE------------------------------------------------------------------------
     print_subnet ("$netfile","$OPTION",$SUBNET);                        # Go Print Network file
