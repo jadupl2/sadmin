@@ -107,7 +107,7 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
     wdate = time.strftime('%Y-%m-%d %H:%M:%S')                          # Save Current Date & Time
 
     # If IP is pingable then update the last ping date
-    if (tbdata[4] == True):                                             # If IP Was pingable
+    if (tbdata[5] == True):                                             # If IP Was pingable
         wpingdate = wdate                                               # Pingable Update Ping Date
     else:                                                               # If IP is not pingable
         wpingdate = None                                                # No Ping Date by Default
@@ -115,9 +115,9 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
     # BUILD THE INSERT STATEMENT
     try:
         sql = "INSERT INTO server_network SET \
-              net_ip='%s', net_ip_wzero='%s', net_hostname='%s', net_mac='%s', \
+              net_ip='%s', net_ip_wzero='%s', net_hostname='%s', net_mac='%s', net_man='%s', \
               net_ping='%d', net_date_ping='%s', net_date_update='%s' " % \
-              (tbdata[0], tbdata[1], tbdata[2], tbdata[3], tbdata[4], wpingdate, wdate);
+              (tbdata[0], tbdata[1], tbdata[2], tbdata[3], tbdata[4], tbdata[5], wpingdate, wdate);
         if DEBUG : st.writelog("Insert SQL: %s " % sql);                # Debug Show SQL Statement
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
         enum=1                                                          # Set Class Error Number 
@@ -143,13 +143,13 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
 # UPDATE THE NETWORK IP DATABASE TABLE
 #===================================================================================================
 #
-def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wping,wdateping,wdatechange):
+def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange):
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
         sql = "UPDATE server_network SET net_ip='%s', net_ip_wzero='%s', net_hostname='%s', \
-                net_mac='%s', net_ping='%s', net_date_ping='%s', net_date_update='%s' \
-                where net_ip='%s' " % (wip,wzero,wname,wmac,wping,wdateping,wdatechange,wip) 
+              net_mac='%s', net_man='%s', net_ping='%s', net_date_ping='%s', net_date_update='%s' \
+              where net_ip='%s' " % (wip,wzero,wname,wmac,wman,wping,wdateping,wdatechange,wip) 
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
         enum, emsg = error.args                                         # Get Error No. & Message
         #enum=1
@@ -272,7 +272,7 @@ def scan_network(st,snet,wconn,wcur) :
         (dberr,dbrow) = db_readkey(st,wconn,wcur,hip,True)              # Read IP Row if Exist
         if (dberr != 0):                                                # If IP Not in Database
             st.writelog("IP %s doesn't exist in database" % (hip))      # Advise User of logic flow
-            cdata = [hip,zip,hname,hmac,hactive]                        # Data to Insert
+            cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
             dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert Data in Cat. Table
             if (dberr == 0) :                                           # Did the insert went well ?
                 st.writelog("'%s' successfully added to database" % (hip)) # Show user IP was added
@@ -281,9 +281,9 @@ def scan_network(st,snet,wconn,wcur) :
         else :
             old_hostname    = dbrow[2]
             old_mac         = dbrow[3]
-            old_ping        = dbrow[4]
-            wdateping       = dbrow[5]
-            wdatechange     = dbrow[6]
+            old_ping        = dbrow[5]
+            wdateping       = dbrow[6]
+            wdatechange     = dbrow[7]
             st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
             wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
             if (old_ping != hactive) : 
@@ -298,7 +298,7 @@ def scan_network(st,snet,wconn,wcur) :
                 st.writelog("IP %s Host Name changed from %s to %s" % (hip,old_hostname,hname))
                 wdatechange = wdate
             st.writelog ("Updating '%s' data" % (hip))
-            dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hactive,wdateping,wdatechange) 
+            dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hmanu,hactive,wdateping,wdatechange) 
             if (dberr == 0) :                                           # If no Error updating IP
                 st.writelog("[OK] Update of IP '%s' succeeded" % (hip)) # Advise User Update is OK
             else:                                                       # If something went wrong
