@@ -49,7 +49,8 @@ $URL_EDIT_CAT = '/crud/cat/sadm_category_main.php';                     # Mainte
 $URL_EDIT_GRP = '/crud/grp/sadm_group_main.php';                        # Maintenance Grp. Page URL
 $URL_EDIT_SRV = '/crud/srv/sadm_server_main.php';                       # Maintenance Srv. Page URL
 $URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return Code History View
-$URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
+#$URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
+$URL_NETWORK  = '/view/net/sadm_view_subnet.php';                       # Network Scan Result URL
 $URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Performance Graph Menu URL
 
 
