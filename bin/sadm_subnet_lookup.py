@@ -21,6 +21,8 @@
 #   V1.3 Manufacturer Info Expanded and use fping to check if host is up
 # 2018-04-17 JDuplessis
 #   V1.4 Added update to server_network table in Mariadb
+# 2018-04-18 JDuplessis
+#   V1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -286,14 +288,18 @@ def scan_network(st,snet,wconn,wcur) :
             wdatechange     = dbrow[7]
             st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
             wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
-            if (old_ping != hactive) : 
+            if ((old_ping != hactive) and (hactive != 0)) : 
                 st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
                 wdateping = wdate
                 st.writelog("Ping Date Updated")
                 wdatechange = wdate
-            if (old_mac != hmac):
-                st.writelog("IP %s Mac Address changed from %s to %s" % (hip,old_mac,hmac))
-                wdatechange = wdate
+            if (old_mac != hmac) :
+                if (hmac == "") :
+                    hmac = old_mac
+                    st.writelog("Leave old mac %s since new mac is %s" % (old_mac,hmac))
+                else:
+                    st.writelog("%s - Mac Address changed from %s to %s" % (hip,old_mac,hmac))
+                    wdatechange = wdate
             if (old_hostname != hname):
                 st.writelog("IP %s Host Name changed from %s to %s" % (hip,old_hostname,hname))
                 wdatechange = wdate
@@ -365,7 +371,7 @@ def main_process(wconn,wcur,st):
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.4"                             # Indicate this script Version 
+    st.ver  = "1.5"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
