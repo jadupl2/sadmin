@@ -52,7 +52,7 @@ my $PSFILE2             = "$SADM_TMP_DIR/PSFILE2.$$";                   # Result
 my $SADM_TMP_FILE1      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp1";      # SYSMON Temp work file 1
 my $SADM_TMP_FILE2      = "$SADM_TMP_DIR/${HOSTNAME}_sysmon.tmp2";      # SYSMON Temp work file 2
 my $SYSMON_CFG_FILE     = "$SADM_CFG_DIR/$HOSTNAME.smon";               # SYSMON Configuration file
-my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/template.smon";                # SYSMON Config Std file
+my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/.template.smon";               # SYSMON Config Std file
 my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Host Report File 
 my $SYSMON_LOCK_FILE    = "$SADM_BASE_DIR/sysmon.lock";                 # SYSMON Lock file
 

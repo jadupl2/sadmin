@@ -1216,7 +1216,7 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     writelog ("[%s]" % (sname),'bold')                                  # Bold Attr. Name in sadmin
 
     # Display field documentation file  
-    docname = "%s/doc/cfg/%s.txt" % (sroot,sname.lower())               # Set Documentation FileName
+    docname = "%s/setup/msg/%s.txt" % (sroot,sname.lower())             # Set Documentation FileName
     try :                                                               # Try to Open Doc File
         doc = open(docname,'r')                                         # Open Documentation file
         for line in doc:                                                # Read Doc. file until EOF

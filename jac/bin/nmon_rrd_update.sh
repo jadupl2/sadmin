@@ -17,8 +17,7 @@
 #
 PN=${0##*/}                                 ; export PN                 # Program name
 VER='2.3'                                   ; export VER                # Program version
-SYSADMIN="aixteam@standardlife.ca"          ; export SYSADMIN           # sysadmin email
-SYSADMIN="jack.duplessis@standardlife.ca"   ; export SYSADMIN           # sysadmin email
+SYSADMIN="duplessis.jacques@gmail.com"      ; export SYSADMIN           # sysadmin email
 DEBUG=0                                     ; export DEBUG              # 0=NoDebug 1=Debug 2-5=Ext.Debug
                                                                         # 9=Huge Output
 DASH=`printf %100s | tr " " "-"`            ; export DASH               # 80 dashes

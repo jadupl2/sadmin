@@ -1,8 +1,13 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_template_servers.sh
-#   Synopsis : .
+#   Title    :  sadm_rear_initiator.sh
+#   Synopsis :  Read All Active servers, check if today is the day you selected to run rear.
+#               If it's today, then the rear backup is initiated. 
+#               Backup will not be run all at once.
+#               Will first check how many backup need to run today and how many hours we 
+#               got (MAX_HOURS) to run them.
+#               Will run 'at' command so that each rear backup run within the MAX_HOURS Limit.
 #   Version  :  1.6
 #   Date     :  14 November 2015
 #   Requires :  sh

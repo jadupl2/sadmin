@@ -167,10 +167,6 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_SAR_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SAR Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
     set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
@@ -223,9 +219,9 @@ file_housekeeping()
     # If we are not of the SADMIN Server, remove some server files
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
        then sadm_writelog "Remove useless files on client"
-            afile="$SADM_CFG_DIR/.crontab.txt"
+            afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.pgpass"
+            afile="$SADM_CFG_DIR/.dbpass"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             afile="$SADM_CFG_DIR/holmes.cfg"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
@@ -241,15 +237,15 @@ file_housekeeping()
     chmod 0644 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
 
-    if [ -f $SADM_CFG_DIR/.crontab.txt ] 
-        then sadm_writelog "chmod 0644 $SADM_CFG_DIR/.crontab.txt" 
-             chmod 0644 $SADM_CFG_DIR/.crontab.txt
-             ls -l $SADM_CFG_DIR/.crontab.txt | tee -a $SADM_LOG
+    if [ -f $SADM_WWW_LIB_DIR/.crontab.txt ] 
+        then sadm_writelog "chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt" 
+             chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt
+             ls -l $SADM_WWW_LIB_DIR/.crontab.txt | tee -a $SADM_LOG
     fi
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
-        then chmod 644 ${SADM_BASE_DIR}/README.md
+        then chmod 664 ${SADM_BASE_DIR}/README.md
              chown ${SADM_USER}.${SADM_GROUP} ${SADM_BASE_DIR}/README.md
     fi
 
@@ -471,23 +467,6 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-    fi
-
-    # Delete old sar files - As defined in the sadmin.cfg file
-    if [ -d "${SADM_SAR_DIR}" ]
-       then sadm_writelog "${SADM_TEN_DASH}"
-            sadm_writelog "Keep sar files for $SADM_SAR_KEEPDAYS days"
-            sadm_writelog "List of sar file that will be deleted"
-            sadm_writelog "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name *.sar -exec ls -l {} \;"
-            find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec ls -l {} \; >> $SADM_LOG 2>&1
-            sadm_writelog "find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name '*.sar' -exec rm {} \;"
-            find $SADM_SAR_DIR -mtime +${SADM_SAR_KEEPDAYS} -type f -name "*.sar" -exec rm {} \; >/dev/null 2>&1
-            if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
-            fi
     fi
 
     return $ERROR_COUNT

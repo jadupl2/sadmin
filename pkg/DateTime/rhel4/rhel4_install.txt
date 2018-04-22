@@ -1,8 +1,0 @@
-root@rhel4 tmp]# rpm -Uvh perl-DateTime-0.41-1.el4.i386.rpm perl-Params-Validate-0.95-1.el4.i386.rpm perl-Class-Singleton-1.4-1.el4.rf.noarch.rpm
-warning: perl-Class-Singleton-1.4-1.el4.rf.noarch.rpm: V3 DSA signature: NOKEY, key ID 6b8d79e6
-Preparing...                ########################################### [100%]
-   1:perl-Class-Singleton   ########################################### [ 33%]
-   2:perl-Params-Validate   ########################################### [ 67%]
-   3:perl-DateTime          ########################################### [100%]
-[root@rhel4 tmp]# 
-

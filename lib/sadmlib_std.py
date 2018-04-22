@@ -135,7 +135,6 @@ class sadmtools():
         self.nmon_dir           = os.path.join(self.dat_dir,'nmon')     # SADM nmon File Directory
         self.rch_dir            = os.path.join(self.dat_dir,'rch')      # SADM Result Code Dir.
         self.dr_dir             = os.path.join(self.dat_dir,'dr')       # SADM Disaster Recovery Dir
-        self.sar_dir            = os.path.join(self.dat_dir,'sar')      # SADM System Activity Rep.
         self.net_dir            = os.path.join(self.dat_dir,'net')      # SADM Network/Subnet Dir 
         self.rpt_dir            = os.path.join(self.dat_dir,'rpt')      # SADM Sysmon Report Dir.
         self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
@@ -144,11 +143,9 @@ class sadmtools():
         self.www_dat_dir        = os.path.join(self.www_dir,'dat')      # SADM Web Site Data Dir
         self.www_cfg_dir        = os.path.join(self.www_dir,'cfg')      # SADM Web Site CFG Dir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
-        self.www_arc_dir        = os.path.join(self.www_dir,'arc')      # SADM Web Site Archive Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_net_dir        = self.www_dat_dir + '/' + self.hostname + '/net' # Web Data Net.Dir
         self.www_rch_dir        = self.www_dat_dir + '/' + self.hostname + '/rch' # Web Data RCH Dir
-        self.www_sar_dir        = self.www_dat_dir + '/' + self.hostname + '/sar' # Web Data SAR Dir
         self.www_dr_dir         = self.www_dat_dir + '/' + self.hostname + '/dr'  # Web Disaster Rec
         self.www_nmon_dir       = self.www_dat_dir + '/' + self.hostname + '/nmon'# Web NMON Dir.
         self.www_tmp_dir        = self.www_dat_dir + '/' + self.hostname + '/tmp' # Web tmp Dir.
@@ -159,7 +156,7 @@ class sadmtools():
         self.rch_file           = self.rch_dir + '/' + self.hostname + '_' + self.inst + '.rch' 
         self.cfg_file           = self.cfg_dir + '/sadmin.cfg'          # Configuration Filename
         self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'         # Hidden Config Filename
-        self.crontab_work       = self.www_cfg_dir + '/.crontab.txt'    # Work crontab
+        self.crontab_work       = self.www_lib_dir + '/.crontab.txt'    # Work crontab
         self.crontab_file       = '/etc/cron.d/sadmin'                  # Final crontab
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
         self.pid_file           = "%s/%s.pid" % (self.tmp_dir, self.inst) # Process ID File
@@ -968,7 +965,6 @@ class sadmtools():
         if not os.path.exists(self.nmon_dir) : os.mkdir(self.nmon_dir,0o0775) # Create SADM nmon Dir.
         if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
         if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
-        if not os.path.exists(self.sar_dir)  : os.mkdir(self.sar_dir,0o0775)# Create SADM System Act Dir
         if not os.path.exists(self.rch_dir)  : os.mkdir(self.rch_dir,0o0775)# Create SADM RCH Dir.
         if not os.path.exists(self.net_dir)  : os.mkdir(self.net_dir,0o0775)# Create SADM RCH Dir.
         if not os.path.exists(self.rpt_dir)  : os.mkdir(self.rpt_dir,0o0775)# Create SADM RCH Dir.
@@ -985,7 +981,6 @@ class sadmtools():
             if not os.path.exists(www_doc_dir)  : os.mkdir(www_doc_dir,0o0775)  # Create SADM HTML Dir.
             if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,0o0775)  # Create Web  DAT  Dir.
             if not os.path.exists(www_lib_dir)  : os.mkdir(www_lib_dir,0o0775)  # Create Web  DAT  Dir.
-            if not os.path.exists(www_arc_dir)  : os.mkdir(www_arc_dir,0o0775)  # Create Web  DAT  Dir.
             wuid = pwd.getpwnam(cfg_www_user).pw_uid                    # Get UID User of Wev User 
             wgid = grp.getgrnam(cfg_www_group).gr_gid                   # Get GID User of Web Group 
             os.chown(www_dir, wuid, wgid)                               # Change owner of log file
@@ -993,7 +988,6 @@ class sadmtools():
             os.chown(www_doc_dir, wuid, wgid)                           # Change owner of rch file
             os.chown(www_dat_dir, wuid, wgid)                           # Change owner of dat file
             os.chown(www_lib_dir, wuid, wgid)                           # Change owner of lib file
-            os.chown(www_arc_dir, wuid, wgid)                           # Change owner of lib file
     
         
         # Write SADM Header to Script Log
@@ -1232,7 +1226,6 @@ class sadmtools():
         print("obj.nmon_dir             Host nmon performance files   : %s" % (self.nmon_dir))
         print("obj.rch_dir              Host Result Code History files: %s" % (self.rch_dir))
         print("obj.dr_dir               Host Disaster Recovery files  : %s" % (self.dr_dir))
-        print("obj.sar_dir              System Activity Report files  : %s" % (self.sar_dir))
 
         print(" ")                                                     
         print("SADM Servers Only Directories Attribute")
@@ -1240,7 +1233,6 @@ class sadmtools():
         print("obj.www_dir              Web Root Dir. (On Server Only): %s" % (self.www_dir))
         print("obj.www_dat_dir          Web Systems Info Dir  (Server): %s" % (self.www_dat_dir))
         print("obj.www_lib_dir          Web Systems Lib Dir   (Server): %s" % (self.www_lib_dir))
-        print("obj.www_arc_dir          Web Systems Arch. Dir (Server): %s" % (self.www_arc_dir))
         print("obj.www_cfg_dir          Web Systems Config Dir(Server): %s" % (self.www_cfg_dir))
         print("obj.www_net_dir          Web Systems Net Data  (Server): %s" % (self.www_net_dir))
         print("obj.www_doc_dir          Web Documentation Dir.(Server): %s" % (self.www_doc_dir))

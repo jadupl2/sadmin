@@ -243,21 +243,18 @@ check_nmon()
     sadm_writelog "Nb. SnapShot till 23:59:58  = $TOT_SNAPSHOT" 
     sadm_writelog "----------------------"
 
-    pre_validation                                                      # nmon Cmd present ?
+    pre_validation                                                      # Does 'nmon' cmd present ?
     if [ $? -ne 0 ]                                                     # If not there
         then sadm_stop 1                                                # Upd. RC & Trim Log & Set RC
              exit 1                                                     # Abort Program
     fi                             
     
-    # Don't Check nmon status when nmon rotation script (sadm_nmon_midnight_restart) is running
-    if [ ! -e "${SADM_TMP_DIR}/sadm_nmon_midnight_restart.pid" ]        # nmon No Rotation running ?
-        then check_nmon                                                 # nmon not running start it
-             SADM_EXIT_CODE=$?                                          # Recuperate error code
-             if [ $SADM_EXIT_CODE -ne 0 ]                               # if error occured
-                then sadm_writelog "Problem starting nmon"              # Advise User
-             fi
-        else sadm_writelog "Don't check nmon when sadm_nmon_midnight_restart.sh is running"
+    # Check if nmon is running
+    check_nmon                                                          # nmon not running start it
+    SADM_EXIT_CODE=$?                                                   # Recuperate error code
+    if [ $SADM_EXIT_CODE -ne 0 ]                                        # if error occured
+        then sadm_writelog "Problem starting nmon ...."                 # Advise User
     fi
-
+    
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RC & Trim Log & Set RC
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

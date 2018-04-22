@@ -80,7 +80,6 @@ SADM_DOC_DIR="$SADM_BASE_DIR/doc"           ; export SADM_DOC_DIR       # Docume
 SADM_PKG_DIR="$SADM_BASE_DIR/pkg"           ; export SADM_PKG_DIR       # Package rpm,deb  directory
 SADM_NMON_DIR="$SADM_DAT_DIR/nmon"          ; export SADM_NMON_DIR      # Where nmon file reside
 SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disaster Recovery  files 
-SADM_SAR_DIR="$SADM_DAT_DIR/sar"            ; export SADM_SAR_DIR       # System Activty Report Dir
 SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
@@ -91,12 +90,10 @@ SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DO
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
-SADM_WWW_ARC_DIR="$SADM_WWW_DIR/arc"                        ; export SADM_WWW_ARC_DIR  # www arc Dir
 SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
 SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IMG_DIR  # www Img Dir
 SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR  # web rch dir
 SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR  # web rpt dir
-SADM_WWW_SAR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/sar"   ; export SADM_WWW_SAR_DIR  # web sar dir
 SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NET_DIR  # web net dir
 SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR   # web dr dir
 SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR # web nmon dir
@@ -108,7 +105,7 @@ SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/log"   ; export SADM_WWW_LO
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
-SADM_CRON_FILE="$SADM_WWW_CFG_DIR/.crontab.txt"             ; export SADM_CRON_FILE  # Work crontab
+SADM_CRON_FILE="$SADM_WWW_LIB_DIR/.crontab.txt"             ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadmin"                           ; export SADM_CRONTAB    # Final crontab
 SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HIDDEN # Cfg file name
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1 
@@ -1684,13 +1681,6 @@ sadm_start() {
              chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
     fi
 
-    # If SADM Server Web Archive Directory doesn't exist, create it.
-    if [ ! -d "$SADM_WWW_ARC_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
-        then mkdir -p $SADM_WWW_ARC_DIR
-             chmod 0775 $SADM_WWW_SRC_DIR  
-             chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_ARC_DIR
-    fi
-
     # If SADM Server Web Site Images Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then mkdir -p $SADM_WWW_IMG_DIR
@@ -1717,11 +1707,6 @@ sadm_start() {
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
     chmod 0775 $SADM_RPT_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
-
-    # If Performance Server Data Directory doesn't exist, create it.
-    [ ! -d "$SADM_SAR_DIR" ] && mkdir -p $SADM_SAR_DIR
-    chmod 0775 $SADM_SAR_DIR
-    chown ${SADM_USER}:${SADM_GROUP} $SADM_SAR_DIR
 
     # If Return Code History Directory doesn't exist, create it.
     [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR

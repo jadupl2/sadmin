@@ -109,5 +109,4 @@ main_process()
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
     
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    sleep 5                                                             # Give time to send mail
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)

@@ -238,31 +238,6 @@ process_servers()
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count is now at $ERROR_COUNT" ;fi
 
-
-        # SAR PERF FILES
-        # Transfer Remote $SADMIN/dat/performance_data files to local $SADMIN/www/dat/$server_name/sar 
-        #-------------------------------------------------------------------------------------------
-        WDIR="${SADM_WWW_DAT_DIR}/${server_name}/sar"                     # Local Receiving Dir.
-        sadm_writelog " " ; sadm_writelog "---------- System Activity Report (sar) Directory"
-        sadm_writelog "Make sure local directory $WDIR Exist"
-        if [ ! -d "${WDIR}" ]
-            then sadm_writelog "Creating ${WDIR} directory"
-                 mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_writelog "Perfect ${WDIR} directory already exist"
-        fi
-        if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/"
-                 rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_SAR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${SADM_SAR_DIR}/ $WDIR/"
-                 rsync -var --delete -e 'ssh -qp32' ${SADM_SAR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
-        fi
-        RC=$?
-        if [ $RC -ne 0 ]
-           then sadm_writelog "[ERROR] $RC for $server_name"
-                ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_writelog "[OK] Rsync Success"
-        fi
-        if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count is now at $ERROR_COUNT" ;fi
         done < $SADM_TMP_FILE1
 
     sadm_writelog " "

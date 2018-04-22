@@ -44,7 +44,7 @@ jac/*
 # Web Directories
 www/arc/
 www/rrd/
-www/cfg/.crontab.txt
+www/lib/.crontab.txt
 
 
 # Specific files to exclude 
@@ -56,7 +56,7 @@ sys/*.log
 cfg/.dbpass
 cfg/*.cfg
 cfg/*.smon
-!cfg/template.smon
+!cfg/.template.smon
 
 # Python Related Exclude 
 __pycache__/

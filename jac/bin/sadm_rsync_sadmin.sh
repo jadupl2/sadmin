@@ -93,7 +93,7 @@ rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_BASE_DIR}/jac/bin"
                    ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
 
 # Array of Files to rsync to SADM client
-rem_files_to_rsync=( "${SADM_CFG_DIR}/template.smon" "${SADM_CFG_DIR}/sadmin.cfg"
+rem_files_to_rsync=( "${SADM_CFG_DIR}/.template.smon" "${SADM_CFG_DIR}/sadmin.cfg"
                      "${SADM_CFG_DIR}/.release"      "${SADM_CFG_DIR}/.sadmin.cfg" ) 
 
 

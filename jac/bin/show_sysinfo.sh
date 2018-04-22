@@ -17,8 +17,7 @@
 # --------------------------------------------------------------------------------------------------
 PN=${0##*/}                                     ; export PN             # Current Script name
 VER='2.1'                                       ; export VER            # Program version
-SYSADMIN="aixteam@standardlife.ca"              ; export SYSADMIN       # sysadmin email
-SYSADMIN="jack.duplessis@standardlife.ca"       ; export SYSADMIN       # sysadmin email
+SYSADMIN="duplessis.jacques@gmail.com"          ; export SYSADMIN       # sysadmin email
 DASH=`printf %100s |tr " " "="`                 ; export DASH           # 100 dashes line
 INST=`echo "$PN" | awk -F\. '{ print $1 }'`     ; export INST           # Get Current script name
 RC=0                                            ; export RC             # Default Script Return Code

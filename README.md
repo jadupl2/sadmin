@@ -13,7 +13,7 @@ Choose a directory (or a filesystem) where you want to install SADMIN tools. Mak
 
 ### Running the Setup script
 Run the setup program by typing the command below. This program will ask you some questions and will feed the configuration file ($SADMIN/cfg/sadmin.cfg). This file is used by
-every scripts you will run, the web interface and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can b e run more than once, so don't worry if you made a mistake, just run it again. 
+every scripts you will run, the web interface and it help standardize and add flexibility to your SADMIN environnment. The configuration can be modified afterward if you need to. The setup program can be run more than once, so don't worry if you made a mistake, just run it again. 
 
 
 ####    # sudo /opt/sadmin/setup/setup.sh
