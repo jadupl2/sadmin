@@ -26,6 +26,10 @@
 # CHANGELOG
 # 2017_04_20 JDuplessis 
 #   V1.0 - Initial Version
+# 2017_04_20 JDuplessis 
+#   V1.2 - First Production Release
+# 2017_04_24 JDuplessis 
+#   V1.3 - Exclude __pycache__ file from update
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -40,7 +44,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.3'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -75,11 +79,10 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 PSADMIN="/psadmin"                          ; export PSADMIN            # Prod. SADMIN Root Dir.
 PSBIN="${PSADMIN}/bin"                      ; export PSBIN              # Prod. bin Directory
 PSCFG="${PSADMIN}/cfg"                      ; export PSCFG              # Prod. cfg Directory
+#
 REL=`cat /sadmin/cfg/.release`              ; export REL                # Save Release Number
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
-TGZ_DIR="/wsadmin/jack/version_history"     ; export TGZ_DIR            # Where Ver. are stored
-TGZ_FILE="${TGZ_DIR}/sadmin_${REL}_${EPOCH}.tgz" ; export TGZ_FILE      # Final Update File Version
-
+#
 
 
 #===================================================================================================
@@ -166,6 +169,53 @@ create_dir()
     run_oscommand "chmod 775 $WDIR"
     run_oscommand "chown sadmin.sadmin $WDIR"
     return 0
+}
+
+#---------------------------------------------------------------------------------------------------
+# CREATE LATEST VERSION OF TGZ AND TXT FILE
+#---------------------------------------------------------------------------------------------------
+create_release_file()
+{
+    wreturn=0                                                           # Return Default Value
+#
+    REL=`cat /sadmin/cfg/.release`                   ; export REL       # Save Release Number
+    EPOCH=`date +%s`                                 ; export EPOCH     # Current EPOCH Time
+    WSADMIN="/wsadmin"                               ; export WSADMIN   # Root Dir of Web Site
+
+    # Increase Minor Release Number
+    RELMIN_FILE="$WSADMIN/jack/cfg/relmin"                              # Minor Release file No.
+    relmin=`cat $RELMIN_FILE`                                           # Get Previous Minor Rel No.
+    relmin=$(($relmin+1))                                               # Increase Nimor Release No.    
+    RELMIN=`echo $relmin | awk '{ printf "%02d", $1}'`                  # Minor Rel always 2 digits
+    echo "$RELMIN" > $RELMIN_FILE                                       # Update Minor Release File
+
+    # Create Version tgz file
+    WCUR_DATE=$(date "+%C%y%m%d")                                       # Save Current Date
+    TGZ_DIR="$WSADMIN/jack/version_history"                             # Where Ver. are stored
+    TGZ_FILE="${TGZ_DIR}/sadmin_${REL}_${WCUR_DATE}.tgz"                # Update TGZ File Version
+    echo "sadmin_${REL}_${WCUR_DATE}" > ${PSADMIN}/cfg/.version         # Create version file in tgz
+    cd $PSADMIN                                                         # cd in production root
+    #
+
+    # Create New Release CheckSum file
+    sadm_writelog " " 
+    sadm_writelog "Creation Release ${REL}_${WCUR_DATE} CheckSum File (${PSADMIN}/cfg/.versum)" 
+    find  . -type f -exec md5sum {} \; | grep -iv "__pycache__" > ${PSADMIN}/cfg/.versum  
+    #
+    sadm_writelog " " 
+    sadm_writelog "Creation Release ${REL}_${WCUR_DATE} tgz file ($TGZ_FILE)" # Show Usr backup begin
+    tar -cvzf $TGZ_FILE . >> $SADM_LOG 2>&1                             # Create tgz file
+    wreturn=$?                                                          # Save Return code
+
+    # Create Version txt File
+    TXT_FILE="${TGZ_DIR}/sadmin_${REL}_${WCUR_DATE}_checksum.txt"       # SADMIN TXT Version File
+    sadm_writelog "Creating SADMIN CheckSum File $TXT_FILE ..."
+    echo "SADMIN Release ${REL} - sadmin_${REL}_${WCUR_DATE}.tgz"   > $TXT_FILE
+    sha1sum   $TGZ_FILE | awk '{ printf "sha1sum   : %s \n", $1 }' >> $TXT_FILE
+    md5sum    $TGZ_FILE | awk '{ printf "md5sum    : %s \n", $1 }' >> $TXT_FILE
+    sha256sum $TGZ_FILE | awk '{ printf "sha256sum : %s \n", $1 }' >> $TXT_FILE
+
+    return $wreturn                                                     # Return 0=No 1=Yes
 }
 
 
@@ -433,11 +483,8 @@ main_process()
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
     ask_user "Do you want to create production environment"
     if [ $? -eq 1 ]
-        then main_process                                                      # Main Process
-             cd $PSADMIN
-             sadm_writelog " " 
-             sadm_writelog "Creation SADMIN tgz file ($TGZ_FILE) ..."
-             tar -cvzf $TGZ_FILE . > /dev/null 2>&1
+        then main_process                                               # Upd./psadmin with latest
+             create_release_file                                        # Create tgz and txt file
              SADM_EXIT_CODE=$?
              if [ $SADM_EXIT_CODE -ne 0 ] ; then sadm_writelog "[ERROR] Creating tgz file" ; fi
     fi
