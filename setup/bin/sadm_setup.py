@@ -28,7 +28,7 @@
 # 2018_04_14 JDuplessis
 #   V1.7 Commands fping and arp-scan are now part of server requirement for web network report page
 # 2018_04_24 JDuplessis
-#   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib - Run Network Collection Added 
+#   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
