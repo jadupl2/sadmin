@@ -183,11 +183,11 @@ create_release_file()
     WSADMIN="/wsadmin"                               ; export WSADMIN   # Root Dir of Web Site
 
     # Increase Minor Release Number
-    RELMIN_FILE="$WSADMIN/jack/cfg/relmin"                              # Minor Release file No.
-    relmin=`cat $RELMIN_FILE`                                           # Get Previous Minor Rel No.
-    relmin=$(($relmin+1))                                               # Increase Nimor Release No.    
-    RELMIN=`echo $relmin | awk '{ printf "%02d", $1}'`                  # Minor Rel always 2 digits
-    echo "$RELMIN" > $RELMIN_FILE                                       # Update Minor Release File
+    #RELMIN_FILE="$WSADMIN/jack/cfg/relmin"                              # Minor Release file No.
+    #relmin=`cat $RELMIN_FILE`                                           # Get Previous Minor Rel No.
+    #relmin=$(($relmin+1))                                               # Increase Nimor Release No.    
+    #RELMIN=`echo $relmin | awk '{ printf "%02d", $1}'`                  # Minor Rel always 2 digits
+    #echo "$RELMIN" > $RELMIN_FILE                                       # Update Minor Release File
 
     # Create Version tgz file
     WCUR_DATE=$(date "+%C%y%m%d")                                       # Save Current Date

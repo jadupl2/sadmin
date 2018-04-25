@@ -208,6 +208,7 @@ check_lsb_release()
 
     # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
+    echo "All Verifications Pass ..."
     echo -e "\n" | tee -a $SLOG                                         # Blank Lines
     $SCRIPT 
 

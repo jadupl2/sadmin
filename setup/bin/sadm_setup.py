@@ -577,7 +577,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         pline = "Installing %s ... " % (needed_packages)
         writelog (pline,'nonl')        
         if (packtype == "deb") : 
-            icmd = "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
+            icmd = "DEBIAN_FRONTEND=noninteractive ; "
+            icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             if (needed_repo == "epel"):
                 writelog (" from EPEL ... ",'nonl')
