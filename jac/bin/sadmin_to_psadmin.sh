@@ -29,7 +29,7 @@
 # 2017_04_20 JDuplessis 
 #   V1.2 - First Production Release
 # 2017_04_24 JDuplessis 
-#   V1.3 - Exclude __pycache__ file from update
+#   V1.3 - Exclude __pycache__ file from update - Setup msg Directory Added
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -199,17 +199,16 @@ create_release_file()
 
     # Create New Release CheckSum file
     sadm_writelog " " 
-    sadm_writelog "Creation Release ${REL}_${WCUR_DATE} CheckSum File (${PSADMIN}/cfg/.versum)" 
+    sadm_writelog "Creation Release ${REL}_${WCUR_DATE} Snapshot File (${PSADMIN}/cfg/.versum)" 
     find  . -type f -exec md5sum {} \; | grep -iv "__pycache__" > ${PSADMIN}/cfg/.versum  
     #
-    sadm_writelog " " 
     sadm_writelog "Creation Release ${REL}_${WCUR_DATE} tgz file ($TGZ_FILE)" # Show Usr backup begin
     tar -cvzf $TGZ_FILE . >> $SADM_LOG 2>&1                             # Create tgz file
     wreturn=$?                                                          # Save Return code
 
     # Create Version txt File
     TXT_FILE="${TGZ_DIR}/sadmin_${REL}_${WCUR_DATE}_checksum.txt"       # SADMIN TXT Version File
-    sadm_writelog "Creating SADMIN CheckSum File $TXT_FILE ..."
+    sadm_writelog "Creating Release CheckSum File $TXT_FILE ..."
     echo "SADMIN Release ${REL} - sadmin_${REL}_${WCUR_DATE}.tgz"   > $TXT_FILE
     sha1sum   $TGZ_FILE | awk '{ printf "sha1sum   : %s \n", $1 }' >> $TXT_FILE
     md5sum    $TGZ_FILE | awk '{ printf "md5sum    : %s \n", $1 }' >> $TXT_FILE
@@ -252,6 +251,7 @@ main_process()
     create_dir "cfg"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup"      ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup/etc"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "setup/msg"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup/bin"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup/log"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "www"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
@@ -306,8 +306,16 @@ main_process()
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
     run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    #
     sadm_writelog " "
     SDIR="${SADMIN}/setup/etc" ; DDIR="${PSADMIN}/setup/etc"            # Source & Destination Dir.
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
+    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
+    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
+    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    #
+    sadm_writelog " "
+    SDIR="${SADMIN}/setup/msg" ; DDIR="${PSADMIN}/setup/msg"            # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
