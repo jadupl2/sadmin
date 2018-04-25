@@ -27,6 +27,8 @@
 #   V1.6 Running SADM Scripts at the end of setup to feed DN and Web Interface
 # 2018_04_14 JDuplessis
 #   V1.7 Commands fping and arp-scan are now part of server requirement for web network report page
+# 2018_04_24 JDuplessis
+#   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib - Run Network Collection Added 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -42,7 +44,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.7"                                             # Setup Version Number
+sver                = "1.8"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -116,7 +118,7 @@ req_client = {
 req_server = {}                                                         # Require Packages Dict.
 req_server = { 
     'httpd'      :{ 'rpm':'httpd httpd-tools',                              'rrepo':'base',
-                    'deb':'apache2 apache2-utils',                          'drepo':'base'},
+                    'deb':'apache2 apache2-utils libapache2-mod-php',       'drepo':'base'},
     'rrdtool'    :{ 'rpm':'rrdtool',                                        'rrepo':'base',
                     'deb':'rrdtool',                                        'drepo':'base'},
     'fping'      :{ 'rpm':'fping',                                          'rrepo':'epel',
@@ -559,7 +561,8 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
     # Process Package requirement and check if package is installedm, if not install it
     for cmd,pkginfo in req_work.items():                                # For all item in Work Dict.
         needed_cmd = cmd                                                # File/Cmd Req. Check 
-        if (packtype == "deb"):                                         # If Current host use .deb
+        if (packtype == "deb"):        create_dir "setup/etc"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+                                     # If Current host use .deb
             needed_packages = pkginfo['deb']                            # Save Packages to install
             needed_repo = pkginfo['drepo']                              # Packages Repository to use
         else:                                                           # If Current Host use .rpm
@@ -577,7 +580,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         pline = "Installing %s ... " % (needed_packages)
         writelog (pline,'nonl')        
         if (packtype == "deb") : 
-            icmd = "DEBIAN_FRONTEND=noninteractive ; "
+            icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
             if (needed_repo == "epel"):
@@ -588,7 +591,9 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
         if (DRYRUN):
             writelog ("We would install %s with %s" % (needed_packages,icmd))
             continue                                                    # Proceed with Next Package
+        writelog ("-----------------------",'log')
         writelog (icmd,'log')
+        writelog ("-----------------------",'log')
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
@@ -1577,6 +1582,7 @@ def main():
         run_script(sroot,"sadm_fetch_servers.sh")                       # Grab Status from clients
         run_script(sroot,"sadm_daily_data_collection.sh")               # mv ClientData to ServerDir
         run_script(sroot,"sadm_housekeeping_server.sh")                 # Validate Owner/Grp/Perm
+        run_script(sroot,"sadm_subnet_lookup.py")                       # Collect Network Info 
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
     # End of Setup
