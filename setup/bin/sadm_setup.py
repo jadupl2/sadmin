@@ -1520,7 +1520,7 @@ def end_message(sroot,sdomain):
     writelog ("You need to logout and log back in, before using SADM Tools,")
     writelog ("or type the following command (The dot and the space are important)")
     writelog (". /etc/profile.d/sadmin.sh")
-    writelog ("This will make sure SADMIN environment variable is define with proper content.")
+    writelog ("This will make sure SADMIN environment variable is define with proper directory.")
     writelog ("\n\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
     writelog ("To create your own script using the SADMIN tools, you may want to run ")
     writelog ("and view the code of the template script.")
