@@ -212,7 +212,7 @@ check_nmon()
 
     # Display Last two nmon files created
     sadm_writelog " "                                                   # Blank line in log
-    sadm_writelog "Last two nmon files created"                         # SHow what were doing
+    sadm_writelog "Last nmon files created"                             # SHow what were doing
     ls -ltr $SADM_NMON_DIR | tail -2 |  while read wline ; do sadm_writelog "$wline"; done
     sadm_writelog " "                                                   # Blank line in log
 
