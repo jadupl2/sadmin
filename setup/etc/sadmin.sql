@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Apr 05, 2018 at 06:57 PM
+-- Generation Time: Apr 25, 2018 at 12:04 PM
 -- Server version: 5.5.56-MariaDB
 -- PHP Version: 5.4.16
 
@@ -29,7 +29,7 @@ USE `sadmin`;
 --
 
 DROP TABLE IF EXISTS `server`;
-CREATE TABLE `server` (
+CREATE TABLE IF NOT EXISTS `server` (
   `srv_id` int(11) NOT NULL COMMENT 'Server ID',
   `srv_name` varchar(15) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Name',
   `srv_domain` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Domain',
@@ -83,12 +83,13 @@ CREATE TABLE `server` (
   `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode'
 ) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
+
 --
 -- Table structure for table `server_category`
 --
 
 DROP TABLE IF EXISTS `server_category`;
-CREATE TABLE `server_category` (
+CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_id` int(11) NOT NULL COMMENT 'Category ID',
   `cat_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Code',
   `cat_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Category Description',
@@ -114,7 +115,7 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 --
 
 DROP TABLE IF EXISTS `server_group`;
-CREATE TABLE `server_group` (
+CREATE TABLE IF NOT EXISTS `server_group` (
   `grp_id` int(11) NOT NULL COMMENT 'Server Group ID',
   `grp_code` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Groupe Code',
   `grp_desc` varchar(25) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Grp Des.',
@@ -134,6 +135,24 @@ INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp
 (5, 'Raspberry', 'Raspberry Pi', 1, '2017-11-07 05:00:00', 0),
 (6, 'Regular', 'App. Server', 1, '2017-11-23 17:33:43', 1),
 (8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `server_network`
+--
+
+DROP TABLE IF EXISTS `server_network`;
+CREATE TABLE IF NOT EXISTS `server_network` (
+  `net_ip` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Address',
+  `net_ip_wzero` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP with zero included',
+  `net_hostname` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Hostname',
+  `net_mac` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Mac Address',
+  `net_man` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Card Manufacturer',
+  `net_ping` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'IP Respond to ping ?',
+  `net_date_ping` datetime DEFAULT NULL COMMENT 'Last Ping Respond Date',
+  `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Indexes for dumped tables
@@ -159,6 +178,13 @@ ALTER TABLE `server_category`
 ALTER TABLE `server_group`
   ADD PRIMARY KEY (`grp_id`),
   ADD UNIQUE KEY `idx_grp_code` (`grp_code`) USING BTREE;
+
+--
+-- Indexes for table `server_network`
+--
+ALTER TABLE `server_network`
+  ADD PRIMARY KEY (`net_ip`(15)),
+  ADD UNIQUE KEY `key_ip_zero` (`net_ip_wzero`(15));
 
 --
 -- AUTO_INCREMENT for dumped tables
