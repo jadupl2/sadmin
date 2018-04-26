@@ -24,7 +24,7 @@
 # 2018-04-18 JDuplessis
 #   V1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
 # 2018-04-26 JDuplessis
-#   V1.6 Show Some Messages only with DEBUG Mode ON & Bug fixes
+#   V1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -320,6 +320,10 @@ def scan_network(st,snet,wconn,wcur) :
 
     OUT.close()                                                         # Close Output File
 
+    # Make Sure $SADMIN/www/dat/`hostname -s`/net Directory exist
+    cmd = "mkdir -p %s" % st.www_net_dir
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
+
     # Create Sorted Output file in www/dat/`hostname`/net
     NFILE = st.www_net_dir + '/' + OFILE                                # Sorted Full Path FileName
     st.writelog (" ")                                                   # Blank Line
@@ -373,7 +377,7 @@ def main_process(wconn,wcur,st):
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.6"                             # Indicate this script Version 
+    st.ver  = "1.7"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
