@@ -84,7 +84,7 @@ ERROR_COUNT=0                                    ; export ERROR_COUNT   # Global
 TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Error in Aix Function
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
-DEBUG_LEVEL=9                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 
 
 # --------------------------------------------------------------------------------------------------
