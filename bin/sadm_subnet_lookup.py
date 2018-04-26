@@ -23,6 +23,8 @@
 #   V1.4 Added update to server_network table in Mariadb
 # 2018-04-18 JDuplessis
 #   V1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
+# 2018-04-26 JDuplessis
+#   V1.6 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -243,6 +245,8 @@ def scan_network(st,snet,wconn,wcur) :
         sys.exit(1)                                                     # Exit Script with Error
     lines = f.readlines()                                               # Read all lines put in list
     f.close()                                                           # Close Arp Result file
+    st.writelog(' ')                                                    # Space line
+    st.writelog('----------')                                           # Space line
 
     # Iterating through the “usable” addresses on a network:
     for ip in NET4.hosts():                                             # Loop through possible IP
@@ -269,16 +273,15 @@ def scan_network(st,snet,wconn,wcur) :
         WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
         netdict[hip] = WLINE                                            # Put Line in Dictionary
 
-        st.writelog(' ')                                                # Space line
-        st.writelog("Verifying if IP '%s' exist in database" % (hip))   # Show IP were looking for 
+        if (DEBUG) :
+            st.writelog(' ')                                            # Space line
+            st.writelog("Verifying if IP '%s' exist in database" % (hip)) # Show IP were looking for 
         (dberr,dbrow) = db_readkey(st,wconn,wcur,hip,True)              # Read IP Row if Exist
         if (dberr != 0):                                                # If IP Not in Database
-            st.writelog("IP %s doesn't exist in database" % (hip))      # Advise User of logic flow
+            if (DEBUG) : st.writelog("IP %s doesn't exist in database" % (hip)) # Advise Usr of flow
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
             dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert Data in Cat. Table
-            if (dberr == 0) :                                           # Did the insert went well ?
-                st.writelog("'%s' successfully added to database" % (hip)) # Show user IP was added
-            else:                                                       # Else we had problem      
+            if (dberr != 0) :                                           # Did the insert went well ?
                 st.writelog("Error %d adding '%s' to database" % (rdberr,hip))  # Show Error & Mess.
         else :
             old_hostname    = dbrow[2]
@@ -286,7 +289,8 @@ def scan_network(st,snet,wconn,wcur) :
             old_ping        = dbrow[5]
             wdateping       = dbrow[6]
             wdatechange     = dbrow[7]
-            st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
+            if (DEBUG) :
+                st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
             wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
             if ((old_ping != hactive) and (hactive != 0)) : 
                 st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
@@ -295,19 +299,17 @@ def scan_network(st,snet,wconn,wcur) :
                 wdatechange = wdate
             if (old_mac != hmac) :
                 if (hmac == "") :
+                    st.writelog("%s Leave old mac at '%s' since new mac is '%s'" % (hip,old_mac,hmac))
                     hmac = old_mac
-                    st.writelog("Leave old mac %s since new mac is %s" % (old_mac,hmac))
                 else:
-                    st.writelog("%s - Mac Address changed from %s to %s" % (hip,old_mac,hmac))
+                    st.writelog("%s - Mac Address changed from '%s' to '%s'" % (hip,old_mac,hmac))
                     wdatechange = wdate
             if (old_hostname != hname):
-                st.writelog("IP %s Host Name changed from %s to %s" % (hip,old_hostname,hname))
+                st.writelog("IP %s Host Name changed from '%s' to '%s'" % (hip,old_hostname,hname))
                 wdatechange = wdate
-            st.writelog ("Updating '%s' data" % (hip))
+            if (DEBUG) : st.writelog ("Updating '%s' data" % (hip))
             dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hmanu,hactive,wdateping,wdatechange) 
-            if (dberr == 0) :                                           # If no Error updating IP
-                st.writelog("[OK] Update of IP '%s' succeeded" % (hip)) # Advise User Update is OK
-            else:                                                       # If something went wrong
+            if (dberr != 0) :                                           # If no Error updating IP
                 st.writelog("[ERROR] Updating IP '%s'" % (hip))         # Advise User Update Error
                 
 
@@ -371,7 +373,7 @@ def main_process(wconn,wcur,st):
 def main():
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.5"                             # Indicate this script Version 
+    st.ver  = "1.6"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
