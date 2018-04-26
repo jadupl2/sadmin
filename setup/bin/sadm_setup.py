@@ -92,6 +92,8 @@ req_client = {
                     'deb':'parted',                         'drepo':'base'},
     'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
                     'deb':'mailutils',                      'drepo':'base'},
+    'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
+                    'deb':'gawk',                           'drepo':'base'},
     'facter'     :{ 'rpm':'facter',                         'rrepo':'epel',  
                     'deb':'facter',                         'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
@@ -561,8 +563,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
     # Process Package requirement and check if package is installedm, if not install it
     for cmd,pkginfo in req_work.items():                                # For all item in Work Dict.
         needed_cmd = cmd                                                # File/Cmd Req. Check 
-        if (packtype == "deb"):        create_dir "setup/etc"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-                                     # If Current host use .deb
+        if (packtype == "deb"):                                         # If Current host use .deb
             needed_packages = pkginfo['deb']                            # Save Packages to install
             needed_repo = pkginfo['drepo']                              # Packages Repository to use
         else:                                                           # If Current Host use .rpm
@@ -684,9 +685,12 @@ def setup_mysql(sroot,sserver,sdomain):
     writelog ('--------------------')
     writelog ("Setup SADMIN MariaDB Database",'bold')
 
-    # Starting and Enabling MariabDB Service
+    # Restart MariaDB Service
     writelog ('  ')
-    cmd = "systemctl restart mariadb"
+    if not os.path.isfile('/etc/init.d/mysql'):
+        cmd = "systemctl restart mariadb.service"
+    else:
+        cmd = "systemctl restart mysql.service"
     writelog ("Starting MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
@@ -696,7 +700,10 @@ def setup_mysql(sroot,sserver,sdomain):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
 
     # Make sure MariaDB restart upon reboot
-    cmd = "systemctl enable mariadb"                                    # Enable MariaDB on boot
+    if not os.path.isfile('/etc/init.d/mysql'):
+        cmd = "systemctl enable mariadb.service"
+    else:
+        cmd = "systemctl enable mysql.service"
     writelog ("Enabling MariaDB Service - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
@@ -793,7 +800,7 @@ def setup_mysql(sroot,sserver,sdomain):
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))
     else:
-        sdefault = "Query18"                                                # Default Password 
+        sdefault = "Squery18"                                               # Default Password 
         sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
         update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
@@ -810,12 +817,16 @@ def setup_mysql(sroot,sserver,sdomain):
         else:                                                           # If user created
             writelog (" Done ")                                         # Advise User ok to proceed
         
-    add_server_to_db(sserver,dbroot_pwd,sdomain)                        # Add current Server to DB
+    if (load_db) :                                                      # If first Time 
+        add_server_to_db(sserver,dbroot_pwd,sdomain)                    # Add current Server to DB
 
     # Restart MariaDB Service
     writelog ('')                                                       # Space line
     writelog ("Restarting MariaDB Server ...",'nonl')
-    cmd = "systemctl restart mariadb"
+    if not os.path.isfile('/etc/init.d/mysql'):
+        cmd = "systemctl restart mariadb.service"
+    else:
+        cmd = "systemctl restart mysql.service"
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Problem Restarting MariaDB Service - Error %d \n%s" % (ccode,cmd)) # Show Error#
@@ -1570,6 +1581,7 @@ def main():
     writelog ('--------------------')
     writelog ("Run SADM scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
+    os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
     run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
     run_script(sroot,"sadm_fs_save_info.sh")                            # Client Save LVM FS Info
