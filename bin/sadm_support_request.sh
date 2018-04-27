@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_support_request.sh
@@ -26,10 +26,12 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_03_30 JDuplessis
+# 2018_03_30 JDuplessisBug Fixes
 #   V1.0 Initial Version
 # 2018_04_04 JDuplessis
 #   V1.1 Bug Fixes
+# 2018_04_27 JDuplessis
+#   V1.2 Change Default Shell to Bash for running this script
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -38,7 +40,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='1.1'                              ; export SADM_VER           # Your Script Version
+SADM_VER='1.2'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -137,11 +139,13 @@ main_process()
                      exit 1
              fi
     fi 
-    if [ "${OS_NAME}" == "DEBIAN" ] || [ "${OS_NAME}" == "UBUNTU" ]
-        then if [ "${SADM_OSVERSION}" -lt "8" ]
-                then echo "Version of ${OS_NAME} is too low - Support Version 8 and up"| tee -a $SLOG
-                     exit 1
-             fi
+    if [ "${OS_NAME}" == "DEBIAN" ] && [ "${SADM_OSVERSION}" -lt "8" ]
+        then echo "Version of ${OS_NAME} is too low - Support Version 8 and up"| tee -a $SLOG
+             exit 1
+    fi 
+    if [ "${OS_NAME}" == "UBUNTU" ] && [ "${SADM_OSVERSION}" -lt "16" ]
+        then echo "Version of ${OS_NAME} is too low - Support Version 16 and up"| tee -a $SLOG
+             exit 1
     fi 
 
     main_process                                                        # Main Process
