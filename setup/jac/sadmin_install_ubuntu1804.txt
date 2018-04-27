@@ -1,0 +1,865 @@
+jacques@tubuntu1804:~$ su - 
+Password: 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# 
+root@tubuntu1804:~# uname -a
+Linux tubuntu1804 4.15.0-20-generic #21-Ubuntu SMP Tue Apr 24 06:16:15 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
+root@tubuntu1804:~# cd /opt
+root@tubuntu1804:/opt# ls -l 
+total 0
+root@tubuntu1804:/opt# sftp -P32 jacques@tubuntu1804
+ssh: connect to host tubuntu1804 port 32: Connection refused
+Connection closed
+root@tubuntu1804:/opt# sftp -P32 jacques@holmes
+The authenticity of host '[holmes]:32 ([192.168.1.12]:32)' can't be established.
+ECDSA key fingerprint is SHA256:ZkHl9aG2qJ+UyOjfkDUKIFS+43iIsZ6pnX1z8ZvLI8o.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[holmes]:32,[192.168.1.12]:32' (ECDSA) to the list of known hosts.
+jacques@holmes's password: 
+Connected to holmes.
+sftp> cd /wsadmin/jack/
+sftp> ls
+cfg                sadmin_old.css     sidebar_menu.css   version_history    
+sftp> cd version_history/
+sftp> ls
+sadmin_0.86_20180422.tgz           sadmin_0.86_20180422_checksum.txt  sadmin_0.86_20180424.tgz           sadmin_0.86_20180424_checksum.txt  sadmin_0.86_20180425.tgz           sadmin_0.86_20180425_checksum.txt  
+sadmin_0.86_20180426.tgz           sadmin_0.86_20180426_checksum.txt  sadmin_0.86_20180427.tgz           sadmin_0.86_20180427_checksum.txt  
+sftp> get sad
+sadmin_0.86_20180422.tgz           sadmin_0.86_20180422_checksum.txt  sadmin_0.86_20180424.tgz           sadmin_0.86_20180424_checksum.txt  sadmin_0.86_20180425.tgz           sadmin_0.86_20180425_checksum.txt  
+sadmin_0.86_20180426.tgz           sadmin_0.86_20180426_checksum.txt  sadmin_0.86_20180427.tgz           sadmin_0.86_20180427_checksum.txt  
+sftp> get sadmin_0.86_20180427
+sadmin_0.86_20180427.tgz           sadmin_0.86_20180427_checksum.txt  
+sftp> get sadmin_0.86_20180427.tgz
+Fetching /wsadmin/jack/version_history/sadmin_0.86_20180427.tgz to sadmin_0.86_20180427.tgz
+/wsadmin/jack/version_history/sadmin_0.86_20180427.tgz                                                                                                                           100%   20MB  39.1MB/s   00:00    
+sftp> quit
+root@tubuntu1804:/opt# 
+root@tubuntu1804:/opt# ls -l 
+total 20288
+-rw-r--r-- 1 root root 20772180 Apr 27 14:32 sadmin_0.86_20180427.tgz
+root@tubuntu1804:/opt# mkdir sadmin
+root@tubuntu1804:/opt# cd sadmin 
+root@tubuntu1804:/opt/sadmin# tar -xvzf ../sadmin_0.86_20180427.tgz 
+./
+./bin/
+./bin/sadm
+./bin/sdf
+./bin/smon
+./bin/srch
+./bin/template/
+./bin/template/sadm_template.py
+./bin/template/sadm_template.sh
+./bin/template/sadm_template_menus.sh
+./bin/sadm_backup.sh
+./bin/sadm_backupdb.sh
+./bin/sadm_client_sunset.sh
+./bin/sadm_create_cfg2html.sh
+./bin/sadm_create_mksysb.sh
+./bin/sadm_create_server_info.sh
+./bin/sadm_daily_data_collection.sh
+./bin/sadm_database_update.py
+./bin/sadm_df
+./bin/sadm_fetch_servers.sh
+./bin/sadm_fs_recreate.sh
+./bin/sadm_fs_save_info.sh
+./bin/sadm_housekeeping_client.sh
+./bin/sadm_housekeeping_server.sh
+./bin/sadm_nmon_rrd_update.sh
+./bin/sadm_nmon_watcher.sh
+./bin/sadm_osupdate_client.sh
+./bin/sadm_osupdate_server.sh
+./bin/sadm_rch_scr_summary.sh
+./bin/sadm_rear_backup.sh
+./bin/sadm_rear_initiator.sh
+./bin/sadm_server_sunrise.sh
+./bin/sadm_service_ctrl.sh
+./bin/sadm_subnet_lookup.py
+./bin/sadm_support_request.sh
+./bin/sadm_sysmon.pl
+./bin/sadm_sysmon_cli.sh
+./bin/sadm_sysmon_tui.pl
+./bin/sadm_ui.sh
+./bin/sadm_ui_fsmenu.sh
+./bin/sadm_ui_rpm.sh
+./bin/sadm_update_version.sh
+./bin/sadm_wrapper.sh
+./pkg/
+./pkg/cfg2html/
+./pkg/cfg2html/cfg2html.deb
+./pkg/cfg2html/cfg2html.rpm
+./pkg/cfg2html/cfg2html_aix
+./pkg/cfg2html/cfg2html
+./pkg/cfg2html/cfg2html-6.30-151.1-CentOS7.noarch.rpm
+./pkg/cfg2html/cfg2html-linux-2.94-2.noarch.rpm
+./pkg/cfg2html/cfg2html-linux-2.99-1.noarch.rpm
+./pkg/cfg2html/cfg2html-linux_2.94-2_all.deb
+./pkg/cfg2html/cfg2html-linux_2.99-1_all.deb
+./pkg/cfg2html/cfg2html_AIX_282-20140313.tar.gz
+./pkg/cfg2html/cfg2html_rhel7.rpm
+./pkg/cfg2html/cfg2html_rhel7.sh
+./pkg/css_tools/
+./pkg/css_tools/DataTables-1.10.11.zip
+./pkg/css_tools/DataTables-1.10.12.zip
+./pkg/nmon/
+./pkg/nmon/aix/
+./pkg/nmon/aix/nmon_aix43
+./pkg/nmon/aix/nmon_aix51
+./pkg/nmon/aix/nmon_aix52
+./pkg/nmon/aix/nmon_aix53
+./pkg/nmon/aix/nmon_aix61
+./pkg/nmon/centos/
+./pkg/nmon/centos/3/
+./pkg/nmon/centos/3/32Bits/
+./pkg/nmon/centos/3/32Bits/nmon.rpm
+./pkg/nmon/centos/3/32Bits/nmon-14g-1.el3.rf.i386.rpm
+./pkg/nmon/centos/3/64Bits/
+./pkg/nmon/centos/3/64Bits/nmon.rpm
+./pkg/nmon/centos/3/64Bits/nmon-14g-1.el3.rf.x86_64.rpm
+./pkg/nmon/centos/4/
+./pkg/nmon/centos/4/32Bits/
+./pkg/nmon/centos/4/32Bits/nmon.rpm
+./pkg/nmon/centos/4/32Bits/nmon-14g-1.el4.rf.i386.rpm
+./pkg/nmon/centos/4/64Bits/
+./pkg/nmon/centos/4/64Bits/nmon.rpm
+./pkg/nmon/centos/4/64Bits/nmon-14g-1.el4.rf.x86_64.rpm
+./pkg/nmon/centos/5/
+./pkg/nmon/centos/5/32Bits/
+./pkg/nmon/centos/5/32Bits/nmon.rpm
+./pkg/nmon/centos/5/32Bits/nmon-14g-1.el5.rf.i386.rpm
+./pkg/nmon/centos/5/64Bits/
+./pkg/nmon/centos/5/64Bits/nmon.rpm
+./pkg/nmon/centos/5/64Bits/nmon-14g-1.el5.rf.x86_64.rpm
+./pkg/nmon/centos/6/
+./pkg/nmon/centos/6/32Bits/
+./pkg/nmon/centos/6/32Bits/nmon.rpm
+./pkg/nmon/centos/6/32Bits/nmon-14g-1.el6.rf.i686.rpm
+./pkg/nmon/centos/6/64Bits/
+./pkg/nmon/centos/6/64Bits/nmon.rpm
+./pkg/nmon/centos/6/64Bits/nmon-14g-1.el6.rf.x86_64.rpm
+./pkg/nmon/centos/7/
+./pkg/nmon/centos/7/32Bits/
+./pkg/nmon/centos/7/32Bits/nmon.rpm
+./pkg/nmon/centos/7/32Bits/nmon-14g-1.el7.rf.x86_64.rpm
+./pkg/nmon/centos/7/64Bits/
+./pkg/nmon/centos/7/64Bits/nmon.rpm
+./pkg/nmon/centos/7/64Bits/nmon-14g-1.el7.rf.x86_64.rpm
+./pkg/nmon/centos/8/
+./pkg/nmon/debian/
+./pkg/nmon/debian/6/
+./pkg/nmon/debian/6/32Bits/
+./pkg/nmon/debian/6/32Bits/nmon
+./pkg/nmon/debian/6/32Bits/nmon_x86_debian6
+./pkg/nmon/debian/6/64Bits/
+./pkg/nmon/debian/6/64Bits/nmon
+./pkg/nmon/debian/6/64Bits/nmon_x86_64_debian60
+./pkg/nmon/debian/7/
+./pkg/nmon/debian/7/32Bits/
+./pkg/nmon/debian/7/32Bits/nmon
+./pkg/nmon/debian/7/32Bits/nmon_x86_debian7
+./pkg/nmon/debian/7/64Bits/
+./pkg/nmon/debian/7/64Bits/nmon
+./pkg/nmon/debian/7/64Bits/nmon_x86_64_debian7
+./pkg/nmon/debian/8/
+./pkg/nmon/debian/8/32Bits/
+./pkg/nmon/debian/8/32Bits/nmon
+./pkg/nmon/debian/8/32Bits/nmon.deb
+./pkg/nmon/debian/8/32Bits/nmon_14g+debian-1_i386.deb
+./pkg/nmon/debian/8/32Bits/nmon_x86_debian7
+./pkg/nmon/debian/8/64Bits/
+./pkg/nmon/debian/8/64Bits/nmon
+./pkg/nmon/debian/8/64Bits/nmon.deb
+./pkg/nmon/debian/8/64Bits/nmon_14g+debian-1_amd64.deb
+./pkg/nmon/debian/8/64Bits/nmon_x86_64_debian7
+./pkg/nmon/debian/9/
+./pkg/nmon/fedora/
+./pkg/nmon/fedora/21/
+./pkg/nmon/fedora/21/32Bits/
+./pkg/nmon/fedora/21/32Bits/nmon.rpm
+./pkg/nmon/fedora/21/32Bits/nmon-14i-9.fc23.i686.rpm
+./pkg/nmon/fedora/21/64Bits/
+./pkg/nmon/fedora/21/64Bits/nmon.rpm
+./pkg/nmon/fedora/21/64Bits/nmon-14i-8.fc21.x86_64.rpm
+./pkg/nmon/fedora/22/
+./pkg/nmon/fedora/22/32Bits/
+./pkg/nmon/fedora/22/32Bits/nmon.rpm
+./pkg/nmon/fedora/22/32Bits/nmon-14i-8.fc22.i686.rpm
+./pkg/nmon/fedora/22/64Bits/
+./pkg/nmon/fedora/22/64Bits/nmon.rpm
+./pkg/nmon/fedora/22/64Bits/nmon-14i-8.fc22.x86_64.rpm
+./pkg/nmon/fedora/23/
+./pkg/nmon/fedora/23/32Bits/
+./pkg/nmon/fedora/23/32Bits/nmon.rpm
+./pkg/nmon/fedora/23/32Bits/nmon-14i-9.fc23.i686.rpm
+./pkg/nmon/fedora/23/64Bits/
+./pkg/nmon/fedora/23/64Bits/nmon.rpm
+./pkg/nmon/fedora/23/64Bits/nmon-14i-9.fc23.x86_64.rpm
+./pkg/nmon/opensuse/
+./pkg/nmon/opensuse/11/
+./pkg/nmon/opensuse/11/32Bits/
+./pkg/nmon/opensuse/11/32Bits/nmon
+./pkg/nmon/opensuse/11/32Bits/nmon_x86_opensuse11
+./pkg/nmon/opensuse/11/64Bits/
+./pkg/nmon/opensuse/11/64Bits/nmon
+./pkg/nmon/opensuse/11/64Bits/nmon_x86_64_opensuse11
+./pkg/nmon/opensuse/12/
+./pkg/nmon/opensuse/12/32Bits/
+./pkg/nmon/opensuse/12/32Bits/nmon
+./pkg/nmon/opensuse/12/32Bits/nmon_x86_opensuse12
+./pkg/nmon/opensuse/12/64Bits/
+./pkg/nmon/opensuse/12/64Bits/nmon
+./pkg/nmon/opensuse/12/64Bits/nmon-14g-2.1.x86_64.rpm
+./pkg/nmon/opensuse/13/
+./pkg/nmon/opensuse/13/32Bits/
+./pkg/nmon/opensuse/13/32Bits/nmon
+./pkg/nmon/opensuse/13/32Bits/nmon.rpm
+./pkg/nmon/opensuse/13/32Bits/nmon-15h-11.1.i586.rpm
+./pkg/nmon/opensuse/13/32Bits/nmon_x86_opensuse13
+./pkg/nmon/opensuse/13/64Bits/
+./pkg/nmon/opensuse/13/64Bits/nmon
+./pkg/nmon/opensuse/13/64Bits/nmon.rpm
+./pkg/nmon/opensuse/13/64Bits/nmon-15h-11.1.x86_64.rpm
+./pkg/nmon/opensuse/13/64Bits/nmon_x86_64_opensuse13
+./pkg/nmon/raspberry/
+./pkg/nmon/raspberry/7/
+./pkg/nmon/raspberry/7/nmon
+./pkg/nmon/raspberry/7/nmon16b_arm_raspian
+./pkg/nmon/raspberry/8/
+./pkg/nmon/raspberry/9/
+./pkg/nmon/rhel/
+./pkg/nmon/rhel/3/
+./pkg/nmon/rhel/3/32Bits/
+./pkg/nmon/rhel/3/32Bits/nmon.rpm
+./pkg/nmon/rhel/3/32Bits/nmon-14g-1.el3.rf.i386.rpm
+./pkg/nmon/rhel/3/64Bits/
+./pkg/nmon/rhel/3/64Bits/nmon.rpm
+./pkg/nmon/rhel/3/64Bits/nmon-14g-1.el3.rf.x86_64.rpm
+./pkg/nmon/rhel/4/
+./pkg/nmon/rhel/4/32Bits/
+./pkg/nmon/rhel/4/32Bits/nmon.rpm
+./pkg/nmon/rhel/4/32Bits/nmon-14g-1.el4.rf.i386.rpm
+./pkg/nmon/rhel/4/64Bits/
+./pkg/nmon/rhel/4/64Bits/nmon.rpm
+./pkg/nmon/rhel/4/64Bits/nmon-14g-1.el4.rf.x86_64.rpm
+./pkg/nmon/rhel/5/
+./pkg/nmon/rhel/5/32Bits/
+./pkg/nmon/rhel/5/32Bits/nmon.rpm
+./pkg/nmon/rhel/5/32Bits/nmon-14g-1.el5.rf.i386.rpm
+./pkg/nmon/rhel/5/64Bits/
+./pkg/nmon/rhel/5/64Bits/nmon.rpm
+./pkg/nmon/rhel/5/64Bits/nmon-14g-1.el5.rf.x86_64.rpm
+./pkg/nmon/rhel/6/
+./pkg/nmon/rhel/6/32Bits/
+./pkg/nmon/rhel/6/32Bits/nmon.rpm
+./pkg/nmon/rhel/6/32Bits/nmon-14g-1.el6.rf.i686.rpm
+./pkg/nmon/rhel/6/64Bits/
+./pkg/nmon/rhel/6/64Bits/nmon.rpm
+./pkg/nmon/rhel/6/64Bits/nmon-14g-1.el6.rf.x86_64.rpm
+./pkg/nmon/rhel/7/
+./pkg/nmon/rhel/7/32Bits/
+./pkg/nmon/rhel/7/32Bits/nmon.rpm
+./pkg/nmon/rhel/7/32Bits/nmon-14g-1.el7.rf.x86_64.rpm
+./pkg/nmon/rhel/7/64Bits/
+./pkg/nmon/rhel/7/64Bits/nmon.rpm
+./pkg/nmon/rhel/7/64Bits/nmon-14g-1.el7.rf.x86_64.rpm
+./pkg/nmon/rhel/8/
+./pkg/nmon/sles/
+./pkg/nmon/sles/11/
+./pkg/nmon/sles/11/32Bits/
+./pkg/nmon/sles/11/32Bits/nmon
+./pkg/nmon/sles/11/32Bits/nmon_x86_sles11
+./pkg/nmon/sles/11/64Bits/
+./pkg/nmon/sles/11/64Bits/nmon
+./pkg/nmon/sles/11/64Bits/nmon_x86_64_sles11
+./pkg/nmon/sles/12/
+./pkg/nmon/sles/12/32Bits/
+./pkg/nmon/sles/12/32Bits/nmon
+./pkg/nmon/sles/12/32Bits/nmon_x86_opensuse12
+./pkg/nmon/sles/12/64Bits/
+./pkg/nmon/sles/13/
+./pkg/nmon/sles/13/32Bits/
+./pkg/nmon/sles/13/32Bits/nmon
+./pkg/nmon/sles/13/32Bits/nmon_x86_opensuse13
+./pkg/nmon/sles/13/64Bits/
+./pkg/nmon/sles/13/64Bits/nmon
+./pkg/nmon/sles/13/64Bits/nmon_x86_64_opensuse13
+./pkg/nmon/ubuntu/
+./pkg/nmon/ubuntu/12/
+./pkg/nmon/ubuntu/12/32Bits/
+./pkg/nmon/ubuntu/12/32Bits/nmon.deb
+./pkg/nmon/ubuntu/12/32Bits/nmon_13g+debian-1_i386.deb
+./pkg/nmon/ubuntu/12/64Bits/
+./pkg/nmon/ubuntu/12/64Bits/nmon.deb
+./pkg/nmon/ubuntu/12/64Bits/nmon_13g+debian-1_amd64.deb
+./pkg/nmon/ubuntu/13/
+./pkg/nmon/ubuntu/13/32Bits/
+./pkg/nmon/ubuntu/13/32Bits/nmon
+./pkg/nmon/ubuntu/13/32Bits/nmon_x86_ubuntu13
+./pkg/nmon/ubuntu/13/64Bits/
+./pkg/nmon/ubuntu/13/64Bits/nmon.deb
+./pkg/nmon/ubuntu/13/64Bits/nmon_13g+debian-1_amd64.deb
+./pkg/nmon/ubuntu/14/
+./pkg/nmon/ubuntu/14/32Bits/
+./pkg/nmon/ubuntu/14/32Bits/nmon
+./pkg/nmon/ubuntu/14/32Bits/nmon.deb
+./pkg/nmon/ubuntu/14/32Bits/nmon_14g+debian-1_i386.deb
+./pkg/nmon/ubuntu/14/32Bits/nmon_x86_ubuntu1404
+./pkg/nmon/ubuntu/14/64Bits/
+./pkg/nmon/ubuntu/14/64Bits/nmon
+./pkg/nmon/ubuntu/14/64Bits/nmon.deb
+./pkg/nmon/ubuntu/14/64Bits/nmon_14g+debian-1_amd64.deb
+./pkg/nmon/ubuntu/14/64Bits/nmon_x86_64_ubuntu1404
+./pkg/nmon/ubuntu/16/
+./pkg/nmon/ubuntu/18/
+./pkg/rear/
+./pkg/rear/centos/
+./pkg/rear/centos/5/
+./pkg/rear/centos/5/rear-2.2-5.el5.i386.rpm
+./pkg/rear/centos/5/rear-2.2-5.el5.x86_64.rpm
+./pkg/rear/centos/6/
+./pkg/rear/centos/6/genisoimage-1.1.9-12.el6.i686.rpm
+./pkg/rear/centos/6/genisoimage-1.1.9-12.el6.x86_64.rpm
+./pkg/rear/centos/6/rear-2.2-5.el6.i686.rpm
+./pkg/rear/centos/6/rear-2.2-5.el6.x86_64.rpm
+./pkg/rear/centos/7/
+./pkg/rear/centos/7/rear-2.2-5.el7.x86_64.rpm
+./pkg/rear/debian/
+./pkg/rear/debian/7.0/
+./pkg/rear/debian/7.0/rear_2.2_amd64_7.0.deb
+./pkg/rear/debian/7.0/rear_2.2_i386_7.0.deb
+./pkg/rear/debian/8.0/
+./pkg/rear/debian/8.0/rear_2.2_amd64_8.0.deb
+./pkg/rear/debian/8.0/rear_2.2_i386_8.0.deb
+./pkg/rear/debian/9.0/
+./pkg/rear/debian/9.0/rear_2.2_amd64_9.0.deb
+./pkg/rear/debian/9.0/rear_2.2_i386_9.0.deb
+./pkg/rear/fedora/
+./pkg/rear/fedora/25/
+./pkg/rear/fedora/25/rear-2.2-5.fc25.x86_64.rpm
+./pkg/rear/fedora/26/
+./pkg/rear/fedora/26/rear-2.2-5.fc26.x86_64.rpm
+./pkg/rear/rhel/
+./pkg/rear/rhel/5/
+./pkg/rear/rhel/5/rear-1.19-2.el5.i386.rpm
+./pkg/rear/rhel/5/rear-1.19-2.el5.x86_64.rpm
+./pkg/rear/rhel/6/
+./pkg/rear/rhel/6/rear-1.19-2.el6.i686.rpm
+./pkg/rear/rhel/6/rear-1.19-2.el6.x86_64.rpm
+./pkg/rear/rhel/7/
+./pkg/rear/rhel/7/rear-1.19-2.el7.x86_64.rpm
+./pkg/rear/ubuntu/
+./pkg/rear/ubuntu/14.04/
+./pkg/rear/ubuntu/14.04/rear_2.2_amd64.deb
+./pkg/rear/ubuntu/14.04/rear_2.2_i386.deb
+./pkg/rear/ubuntu/16.04/
+./pkg/rear/ubuntu/16.04/rear_2.2_amd64.deb
+./pkg/rear/ubuntu/16.04/rear_2.2_i386.deb
+./pkg/sadm_update/
+./tmp/
+./sys/
+./sys/sadm_shutdown.sh
+./sys/sadm_startup.sh
+./sys/sadmin.rc
+./sys/sadmin.service
+./lib/
+./lib/__pycache__/
+./lib/__pycache__/sadmlib_mysql.cpython-34.pyc
+./lib/__pycache__/sadmlib_sqlite3.cpython-34.pyc
+./lib/__pycache__/sadmlib_std.cpython-34.pyc
+./lib/sadmlib_fs.sh
+./lib/sadmlib_mysql.py
+./lib/sadmlib_mysql_test.py
+./lib/sadmlib_screen.sh
+./lib/sadmlib_screen_test.sh
+./lib/sadmlib_sqlite3.py
+./lib/sadmlib_sqlite3_test.py
+./lib/sadmlib_std.py
+./lib/sadmlib_std.pyc
+./lib/sadmlib_std.sh
+./lib/sadmlib_std_test.py
+./lib/sadmlib_std_test.sh
+./log/
+./cfg/
+./cfg/.dbpass
+./cfg/.release
+./cfg/.sadmin.cfg
+./cfg/.template.smon
+./cfg/.version
+./cfg/.versum
+./setup/
+./setup/etc/
+./setup/etc/sadmin.conf
+./setup/etc/sadmin.sh
+./setup/etc/sadmin.sql
+./setup/msg/
+./setup/msg/sadm_cie_name.txt
+./setup/msg/sadm_client.txt
+./setup/msg/sadm_dbhost.txt
+./setup/msg/sadm_domain.txt
+./setup/msg/sadm_group.txt
+./setup/msg/sadm_host_type.txt
+./setup/msg/sadm_mail_addr.txt
+./setup/msg/sadm_mail_type.txt
+./setup/msg/sadm_max_logline.txt
+./setup/msg/sadm_max_rchline.txt
+./setup/msg/sadm_netmask1.txt
+./setup/msg/sadm_network1.txt
+./setup/msg/sadm_ro_dbpwd.txt
+./setup/msg/sadm_root.txt
+./setup/msg/sadm_rw_dbpwd.txt
+./setup/msg/sadm_server.txt
+./setup/msg/sadm_ssh_port.txt
+./setup/msg/sadm_user.txt
+./setup/bin/
+./setup/bin/sadm_setup.py
+./setup/log/
+./setup/setup.sh
+./www/
+./www/tmp/
+./www/rrd/
+./www/dat/
+./www/crud/
+./www/crud/cat/
+./www/crud/cat/sadm_category_common.php
+./www/crud/cat/sadm_category_create.php
+./www/crud/cat/sadm_category_delete.php
+./www/crud/cat/sadm_category_main.php
+./www/crud/cat/sadm_category_update.php
+./www/crud/grp/
+./www/crud/grp/sadm_group_common.php
+./www/crud/grp/sadm_group_create.php
+./www/crud/grp/sadm_group_delete.php
+./www/crud/grp/sadm_group_main.php
+./www/crud/grp/sadm_group_update.php
+./www/crud/srv/
+./www/crud/srv/sadm_server_common.php
+./www/crud/srv/sadm_server_create.php
+./www/crud/srv/sadm_server_delete.php
+./www/crud/srv/sadm_server_main.php
+./www/crud/srv/sadm_server_menu.php
+./www/crud/srv/sadm_server_osupdate.php
+./www/crud/srv/sadm_server_update.php
+./www/css/
+./www/css/calendar.css
+./www/css/datatables.css
+./www/css/datatables.min.css
+./www/css/jquery.dataTables.css
+./www/css/jquery.dataTables.min.css
+./www/css/sadmin_v2.css
+./www/doc/
+./www/icons/
+./www/icons/favicon.ico
+./www/images/
+./www/images/AddButton.png
+./www/images/DeleteButton.png
+./www/images/EditButton.png
+./www/images/ReportButton.png
+./www/images/UpdateButton.png
+./www/images/aix.png
+./www/images/centos.png
+./www/images/cfg2html.png
+./www/images/cfg2html_back.jpg
+./www/images/debian.png
+./www/images/error.png
+./www/images/favicon.ico
+./www/images/fedora.png
+./www/images/fedora_logo.jpg
+./www/images/linuxmint.png
+./www/images/network.jpg
+./www/images/network2.jpg
+./www/images/nodelete.png
+./www/images/noreport.jpg
+./www/images/pencil.gif
+./www/images/pencil2.gif
+./www/images/profbull.gif
+./www/images/question_mark.jpg
+./www/images/raspbian.png
+./www/images/redhat.png
+./www/images/running.png
+./www/images/running2.jpg
+./www/images/sadmin.ca.jpg
+./www/images/sadmin.jpg
+./www/images/sadmin_head.png
+./www/images/sadmin_logo.png
+./www/images/suse.png
+./www/images/suse_logo.jpg
+./www/images/ubuntu.png
+./www/images/update.png
+./www/images/vault.png
+./www/images/warning.png
+./www/js/
+./www/js/jquery.min.js
+./www/js/calendar_db.js
+./www/js/calendar_eu.js
+./www/js/calendar_us.js
+./www/js/datatables.js
+./www/js/datatables.min.js
+./www/js/jquery-1.12.3.min.js
+./www/js/jquery-2.2.3.min.js
+./www/js/jquery-3.2.1.min.js
+./www/js/jquery.dataTables.js
+./www/js/jquery.dataTables.min.js
+./www/lib/
+./www/lib/.crontab.txt
+./www/lib/sadmInit.php
+./www/lib/sadmLib.php
+./www/lib/sadmPageFooter.php
+./www/lib/sadmPageHeader.php
+./www/lib/sadmPageSideBar.php
+./www/lib/sadmPageWrapper.php
+./www/lib/sadmlib_graph.php
+./www/view/
+./www/view/cat/
+./www/view/grp/
+./www/view/log/
+./www/view/log/sadm_view_file.php
+./www/view/log/sadm_view_logfile.php
+./www/view/net/
+./www/view/net/sadm_view_subnet.php
+./www/view/perf/
+./www/view/perf/sadm_server_perf.php
+./www/view/perf/sadm_server_perf_adhoc.php
+./www/view/perf/sadm_server_perf_adhoc_all.php
+./www/view/perf/sadm_server_perf_menu.php
+./www/view/perf/sadm_server_perf_period.php
+./www/view/rch/
+./www/view/rch/sadm_view_rch_summary.php
+./www/view/rch/sadm_view_rchfile.php
+./www/view/srv/
+./www/view/srv/sadm_view_server_info.php
+./www/view/srv/sadm_view_servers.php
+./www/view/sys/
+./www/view/sys/sadm_subnet.php
+./www/view/sys/sadm_view_cfg2html.php
+./www/view/sys/sadm_view_schedule.php
+./www/view/sys/sadm_view_sysmon.php
+./www/view/phpinfo.php
+./www/view/sadm_view_template.php
+./www/index.php
+./dat/
+./dat/dbb/
+./dat/dr/
+./dat/net/
+./dat/nmon/
+./dat/rch/
+./dat/rpt/
+./LICENSE
+./README.md
+./.bashrc
+./.bash_profile
+root@tubuntu1804:/opt/sadmin# 
+
+root@tubuntu1804:/opt/sadmin# cd setup
+root@tubuntu1804:/opt/sadmin/setup# ./setup.sh 
+
+
+SADMIN Pre-Installation Verification Version 1.4
+---------------------------------------------------------------------------
+Checking if 'lsb_release' is installed ...  Done 
+Checking if 'python3' is installed ...  Done 
+All Verifications Pass ...
+
+
+SADMIN Setup V1.8
+---------------------------------------------------------------------------
+Enter directory path where your install SADMIN : /opt/sadmin
+SADMIN Environment variable is now set to /opt/sadmin
+  - The line below is now in /etc/profile.d/sadmin.sh
+  - SADMIN=/opt/sadmin
+  - This make sure 'SADMIN' environment variable is set upon reboot
+  - Initial SADMIN configuration file (/opt/sadmin/cfg/sadmin.cfg) in place
+ 
+ 
+----------
+[SADM_HOST_TYPE]
+Specify if this host is to become a SADMIN [C]lient or [S]erver.
+Host will be a SADMIN [S]erver or a [C]lient [C] : s
+[SADM_HOST_TYPE] set to 'S' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_CIE_NAME]
+This name that will appear in the heading of the web interface
+and on some report and email that SADMIN produce.
+Enter your Company Name : The Batcave
+[SADM_CIE_NAME] set to 'The Batcave' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_MAIL_ADDR]
+This field specify the email address of the system administrator.
+It is used by SADMIN Tools to send various email.
+Enter System Administrator Email : batman@batcave.com
+[SADM_MAIL_ADDR] set to 'batman@batcave.com' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_MAIL_TYPE]
+Default option for sending email after a script is finish.
+Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
+[0] = Never send email.
+[1] = Only send the log when script finish with error (Default)
+[2] = Only send the log when script finish with success.
+[3] = Always send the script log when script finish.
+Enter default email type [1] : 
+[SADM_MAIL_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_DOMAIN]
+Enter the default Domain Name to use when you will be adding a new server.
+Default domain name [maison.ca] : 
+[SADM_DOMAIN] set to 'maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_SERVER]
+Enter the name of the SADMIN Server - (MUST be a fully qualified domain name)
+This name can't be an alias in the DNS, it must be the real name of the server.
+It MUST be the result of the 'hostname' command on the SADMIN server.
+Enter SADMIN (FQDN) server name [tubuntu1804.maison.ca] : 
+Validating server name ...
+[SADM_SERVER] set to 'tubuntu1804.maison.ca' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_MAX_LOGLINE]
+Every time a script (python or bash script) that use SADMIN Tools is run,
+it produce a log, in the dedicated directory ${SADMIN}/log.
+
+    - The name of the Log file is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
+    - Log file are cumulative by default, but it can be overriden if you want.
+    - This number indicate the maximum of lines you want to keep in your log.
+    - This help keeping our log to a reasonnable size.
+
+Maximum number of lines in LOG file [1000] : 
+[SADM_MAX_LOGLINE] set to '1000' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_MAX_RCHLINE]
+When a (python or shell) script using the SADMIN tools start and ends,
+it record the date/time and the ending status of your script in what we call
+a RCH file ([R]eturn [C]ode [H]istory] file).
+
+     - The RCH file name are "[HOSTNAME]_[NAME_OF_SCRIPT].rch"
+     - They are located in the directory ${SADM_BASE_DIR}/dat/rch.
+     - This number represent the maximum number of lines that each RCH file can contain.
+
+A value of 100 lines is recommended.
+This will keep an history of 50 days and is the default value.
+Maximum number of lines in RCH file [100] : 
+[SADM_MAX_RCHLINE] set to '100' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_GROUP]
+This is the primary user group that have access to all SADMIN directories.
+    - All files in the $SADMIN directories are own by this group.
+    - If others users need to access or used scripts located in $SADMIN,
+      they must be part of this group.
+    - The SADMIN default user group is 'sadmin'.
+
+Enter SADMIN User Group [sadmin] : 
+[SADM_GROUP] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_USER]
+Main SADMIN user that have access to all SADMIN directories and files.
+    - This user will be assign to the SADMIN user group you just specified.
+    - The SADMIN default user name is 'sadmin'.
+
+Enter the default user name [sadmin] : 
+Creating user sadmin
+[SADM_USER] set to 'sadmin' in /opt/sadmin/cfg/sadmin.cfg
+ 
+Setting /opt/sadmin ownership : find /opt/sadmin -exec chown sadmin.sadmin {} \;
+ 
+----------
+[SADM_SSH_PORT]
+TCP/IP Port used for SSH.
+SSH port number to connect to client [22] : 
+[SADM_SSH_PORT] set to '22' in /opt/sadmin/cfg/sadmin.cfg
+ 
+----------
+[SADM_NETWORK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on SADMIN network web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Network should be specify in this form, '192.168.1.0"
+
+Enter the network IP [192.168.1.0] : 
+ 
+----------
+[SADM_NETMASK1]
+Every day SADMIN will check the IP utilisation on your network.
+    - The result will be visible on SADMIN network web page.
+    - You will be able to tell what IP are in use or not (respond to ping),
+      and what DNS name each IP has (if any).
+    - It will facilitate, the clean up of your DNS and IP usage.
+    - Netmask should specify the number bits use (1-30) (Default 24)
+
+Enter the Network Netmask [1-30] [24] : 
+[SADM_NETWORK1] set to '192.168.1.0/24' in /opt/sadmin/cfg/sadmin.cfg
+ 
+--------------------
+Checking SADMIN Client Package requirement
+ 
+Running apt-get update... Done 
+Checking for lsb-release ...  Ok 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for ethtool ...  Ok 
+Checking for net-tools ...  Ok 
+Checking for sudo ...  Ok 
+Checking for lshw ...  Ok 
+Checking for parted ...  Ok 
+Checking for mailutils ... Installing mailutils ...  Done 
+Checking for gawk ...  Ok 
+Checking for facter ... Installing facter ...  Done 
+Checking for bc ...  Ok 
+Checking for util-linux ...  Ok 
+Checking for openssh-client ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for python3-pip ... Installing python3-pip ...  Done 
+Checking for perl-base ...  Ok 
+Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
+Checking for util-linux ...  Ok 
+Installing python3 PyMySQL module ...  Done 
+
+--------------------
+Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
+Permission on sudo file changed successfully
+Ownership of sudo file changed successfully
+
+--------------------
+Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
+Client Crontab Permission changed successfully
+Ownership of client crontab changed successfully
+
+----------
+Adding 'sadmin' to /etc/hosts file
+ 
+--------------------
+Checking SADMIN Server Package requirement
+ 
+Running apt-get update... Done 
+
+Checking for apache2 apache2-utils libapache2-mod-php ... Installing apache2 apache2-utils libapache2-mod-php ...  Done 
+Checking for rrdtool ... Installing rrdtool ...  Done 
+Checking for fping monitoring-plugins-standard ... Installing fping monitoring-plugins-standard ...  Done 
+Checking for arp-scan ... Installing arp-scan ...  Done 
+Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+  
+--------------------
+Setup SADMIN MariaDB Database
+  
+Starting MariaDB Service - systemctl restart mysql.service
+Enabling MariaDB Service - systemctl enable mysql.service
+Problem with enabling MariabDB Service.
+Return code is 1 - systemctl enable mysql.service
+Standard out is 
+Standard error is Synchronizing state of mysql.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable mysql
+Failed to enable unit: Refusing to operate on linked unit file mysql.service
+ 
+----------
+----------
+[SADM_ROOT]
+This is MySQL Database 'root' user password.
+If the password isn't currently set, it will be set to the one you will enter.
+If the password is currently set, we will test Database connection using it.
+Enter MySQL Database 'root' user password : 
+Access to Database is working ...
+  
+----------
+Loading Initial Data in SADMIN Database ...  Done 
+
+Checking if 'sadmin' user exist in MariaDB ...  
+----------
+[SADM_RW_DBPWD]
+Password read/write user "sadmin" on the SADMIN database.
+You can give this password to people who have permission to update
+server information in the database.
+Enter Read/Write 'sadmin' database user password : 
+Creating 'sadmin' user ...  Done 
+Checking if 'squery' user exist in MariaDB ...  
+----------
+[SADM_RO_DBPWD]
+Password of the read only user "squery" on the 'sadmin' database
+Give this password to people you want to consult server information,
+but don't want them to modify any information in the Database.
+Enter 'squery' database user password : 
+Creating 'squery' user ...  Done 
+
+Inserting server 'tubuntu1804' in Database ...  Done
+
+Restarting MariaDB Server ... Done 
+  
+  
+--------------------
+Setup SADMIN Web Site
+  
+Making sure Web Server is started
+Disable default apache configuration
+SADMIN Web Site enable
+  - SADMIN Web site configuration now in place (/etc/apache2/sites-enabled/sadmin.conf)
+  - Record Apache Process Owner in SADMIN configuration (/opt/sadmin/cfg/sadmin.cfg)
+  - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) ...  Done 
+  - Setting Permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
+  - Setting Permission on SADMIN WebSite images (/opt/sadmin/www/images) ...  Done 
+  - Web Server Restarting ...  Done 
+  - Enabling Web Server Service ...  Done 
+
+--------------------
+Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
+Server Crontab Permission changed successfully
+Ownership of Server crontab changed successfully
+  
+  
+--------------------
+Run SADM scripts to feed Database and Web Interface
+  
+Running 'sadm_create_server_info.sh' script ...  Done
+Running 'sadm_housekeeping_client.sh' script ...  Done
+Running 'sadm_fs_save_info.sh' script ...  Done
+Running 'sadm_create_cfg2html.sh' script ...  Done
+Running 'sadm_nmon_watcher.sh' script ...  Done
+Running 'sadm_sysmon.pl' script ...  Done
+Running 'sadm_fetch_servers.sh' script ...  Done
+Running 'sadm_daily_data_collection.sh' script ...  Done
+Running 'sadm_housekeeping_server.sh' script ...  Done
+Running 'sadm_subnet_lookup.py' script ...  Done
+Running 'sadm_database_update.py' script ...  Done
+
+
+
+===========================================================================
+END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS
+
+You need to logout and log back in, before using SADM Tools,
+or type the following command (The dot and the space are important)
+. /etc/profile.d/sadmin.sh
+This will make sure SADMIN environment variable is define with proper directory.
+
+
+TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
+To create your own script using the SADMIN tools, you may want to run 
+and view the code of the template script.
+
+bash shell script      : /opt/sadmin/bin/sadm_template.sh 
+or
+python script          : /opt/sadmin/bin/sadm_template.py 
+
+To show you all the functions available to your shell or Python script, 
+you may also want to run /opt/sadmin/lib/sadmlib_test.sh and /opt/sadmin/lib/sadmlib_test.py.
+
+
+USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
+The Web interface is available at http://sadmin.maison.ca
+
+
+
+===========================================================================
+You have new mail in /var/mail/root
+root@tubuntu1804:/opt/sadmin/setup# 
+
