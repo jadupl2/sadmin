@@ -29,6 +29,8 @@
 #   V1.7 Commands fping and arp-scan are now part of server requirement for web network report page
 # 2018_04_24 JDuplessis
 #   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
+# 2018_04_27 JDuplessis
+#   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -44,7 +46,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.8"                                             # Setup Version Number
+sver                = "1.9"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -864,6 +866,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Standard error is %s" % (cstderr))                   # Print command stderr
 
     # Get the httpd process owner
+    time.sleep( 4 )                                                     # Wait Web Server to Start
     cmd = "ps -ef | grep -Ev 'root|grep' | grep '%s' | awk '{ print $1 }' | sort | uniq" % (sservice)
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute O/S Command
     apache_user = cstdout                                               # Get Apache Process Usr
