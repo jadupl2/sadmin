@@ -31,6 +31,8 @@
 #   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
 # 2018_04_27 JDuplessis
 #   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
+# 2018_04_28 JDuplessis
+#   V2.0 Enhance user experience, re-tested on Ubuntu 16.04 Server - Minor fix 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -46,7 +48,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "1.9"                                             # Setup Version Number
+sver                = "2.0"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -246,7 +248,7 @@ def update_host_file(wdomain) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin' to /etc/hosts file")
+    writelog ("Adding 'sadmin' to /etc/hosts file",'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -270,7 +272,7 @@ def update_client_crontab_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)')
+    writelog ('Creating SADMIN Client Crontab file (/etc/cron.d/sadm_client)','bold')
     ccron_file = '/etc/cron.d/sadm_client'                              # Client Crontab File
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
@@ -338,7 +340,7 @@ def update_server_crontab_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)')
+    writelog ('Creating SADMIN Server Crontab file (/etc/cron.d/sadm_server)','bold')
     ccron_file = '/etc/cron.d/sadm_server'                              # Server Crontab File
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
@@ -428,7 +430,8 @@ def update_sudo_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
+    writelog("Creating 'sadmin' user sudo file",'bold')
+    writelog ('Creating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
     sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
@@ -649,7 +652,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
     writelog('')
-    writelog("Inserting server '%s' in Database ... " % (sname),'nonl') # Show User adding Server
+    writelog("Inserting server '%s' in Database ... " % (sname),'bold') # Show User adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
@@ -761,7 +764,7 @@ def setup_mysql(sroot,sserver,sdomain):
         writelog('  ')                                                  # Space Line
         writelog('----------')                                          # Separation Line
         cmd = "mysql -u root -p%s < %s" % (dbroot_pwd,init_sql)         # SQL Cmd to Load DB
-        writelog("Loading Initial Data in SADMIN Database ... ",'nonl') # Load Initial Database 
+        writelog("Loading Initial Data in SADMIN Database ... ",'bold') # Load Initial Database 
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Lload DB
         if (ccode != 0):                                                # If problem deleting user
             writelog ("Problem loading the database ...")               # Advise User
@@ -857,8 +860,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     open("/var/log/%s/sadmin_access.log" % (sservice),'a').close        # Touch Apache SADMIN log
     
     # Start Web Server
-    writelog ("Making sure Web Server is started")
     cmd = "systemctl restart %s" % (sservice)
+    writelog ("Making sure Web Server is started - %s" % (cmd))
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Lload DB
     if (ccode != 0):                                                    # If problem creating user
         writelog ("Problem Restarting Web Server - Error %d \n%s" % (ccode,cmd)) # Show Return Code No
@@ -977,8 +980,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
                 
 
     # Restarting Web Server with new configuration
-    writelog ("  - Web Server Restarting ... ",'nonl')
     cmd = "systemctl restart %s" % (sservice) 
+    writelog ("  - Web Server Restarting - %s ..." % (cmd),'nonl')
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
         writelog( " Done ")
@@ -987,8 +990,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("%s - %s" % (cstdout,cstderr))        
 
     # Enable Web Server Service so it restart upon reboot
-    writelog ("  - Enabling Web Server Service ... ",'nonl')
     cmd = "systemctl enable %s" % (sservice) 
+    writelog ("  - Enabling Web Server Service - %s ... " % (cmd),'nonl')
     ccode,cstdout,cstderr = oscommand(cmd)                          
     if (ccode == 0):
         writelog( " Done ")
@@ -996,6 +999,15 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         writelog ("Problem enabling Web Server Service",'bold')
         writelog ("%s - %s" % (cstdout,cstderr))        
  
+#===================================================================================================
+# Read the SADMIN version file and return the current version number
+#===================================================================================================
+#
+def get_sadmin_version(sroot):
+    vfile = "%s/cfg/.version" % (sroot)                                 # Current Version File Name
+    sversion = open(vfile).readline()                                   # Open,Read 1st line,Close
+    return (sversion.rstrip())                                          # Return Version Number
+
 
 #===================================================================================================
 #               Replacing Value in Apache Configuration file by users specified values
@@ -1500,7 +1512,7 @@ def getpacktype(sroot):
 #
 def run_script(sroot,sname):
     run_status = False                                                  # Default Run Failed
-    writelog("Running '%s' script ... " % (sname),'nonl')               # Show User Script running
+    writelog("Running '%s/bin/%s' script ... " % (sroot,sname),'nonl')  # Show User Script running
     script = "%s/bin/%s" % (sroot,sname)                                # Bld Full Path Script name
     ccode,cstdout,cstderr = oscommand(script)                           # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
@@ -1513,29 +1525,40 @@ def run_script(sroot,sname):
 
 
 #===================================================================================================
-#                                  M A I N     P R O G R A M
+#                                 END OF SCRIPT - MESSAGE TO USER
 #===================================================================================================
 #
-def end_message(sroot,sdomain):
-    writelog ("\n\n")
+def end_message(sroot,sdomain,sserver):
+    #os.system('clear')                                                 # Clear the screen
+    sversion = get_sadmin_version(sroot)
+    writelog ("\n\n\n\n\nSADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
-    writelog ("END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS\n",'bold')
-    writelog ("You need to logout and log back in, before using SADM Tools,")
+    writelog ("You need to logout and log back in before using SADMIN Tools,")
     writelog ("or type the following command (The dot and the space are important)")
     writelog (". /etc/profile.d/sadmin.sh")
-    writelog ("This will make sure SADMIN environment variable is define with proper directory.")
-    writelog ("\n\nTO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
-    writelog ("To create your own script using the SADMIN tools, you may want to run ")
-    writelog ("and view the code of the template script.")
-    writelog ("\nbash shell script      : %s/bin/sadm_template.sh " % (sroot))
-    writelog ("or")
-    writelog ("python script          : %s/bin/sadm_template.py " % (sroot))
-    writelog ("\nTo show you all the functions available to your shell or Python script, ")
-    writelog ("you may also want to run %s/lib/sadmlib_test.sh and %s/lib/sadmlib_test.py." % (sroot,sroot))
-    writelog ("\n\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
-    writelog ("The Web interface is available at http://sadmin.%s" % (sdomain))
-    writelog ("\n\n")
+    writelog ("This will make sure SADMIN environment variable is define.")
     writelog ("===========================================================================")
+    writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
+    writelog ("The Web interface is available at http://%s" % (sserver))
+    writelog ("  - If 'sadmin.%s' is defined in your DNS, the web interface is also available at http://sadmin.%s" % (sdomain,sdomain))
+    writelog ("  - Use it to add, update and delete server from you server farm.")
+    writelog ("  - View performance graph of your servers, statistics are kept for 2 years.")
+    writelog ("  - If you want, you can automatically update your server O/S at the time and day you scheduled.")
+    writelog ("  - View you servers information (Network,Disks,...) (Usefull in case of a Disaster Recovery)")
+    writelog ("  - View your server farm network IP and name usage and spot if an IP free to use.")
+    writelog ("  - There is still more to come.")
+    writelog ("===========================================================================")
+    writelog ("\nCREATE YOU YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
+    writelog ("To create your own script using the SADMIN tools, you may want to take a look ")
+    writelog ("at the templates, run them and view their code.")
+    writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
+    writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
+    writelog ("===========================================================================")
+    writelog ("\nVIEW THE SADMIN FUNCTION IN ACTION AND LEARN OF TO USE THEM RUNNING THESE :",'bold')
+    writelog ("  - %s/lib/sadmlib_test.sh " % (sroot))
+    writelog ("  - %s/lib/sadmlib_test.py." % (sroot))
+    writelog ("===========================================================================")
+    writelog ("ENJOY !!",'bold')
 
 
 #===================================================================================================
@@ -1601,7 +1624,7 @@ def main():
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
     # End of Setup
-    end_message(sroot,udomain)                                          # Last Message to User
+    end_message(sroot,udomain,userver)                                  # Last Message to User
     fhlog.close()                                                       # Close Script Log
     sys.exit(0)                                                         # Exit to Operating System
 
