@@ -67,7 +67,7 @@ wdict           = {}                                                    # Dict f
 #===================================================================================================
 #
 def update_row(st,wconn, wcur, wdict):
-    st.writelog ("Updating %s.%s server data" % (wdict['srv_name'],wdict['srv_domain']))
+    st.writelog ("Updating %s.%s data in Database" % (wdict['srv_name'],wdict['srv_domain']))
 
     # Update Server Row With Info collected from the sysinfo.txt file
     try:
@@ -133,11 +133,11 @@ def update_row(st,wconn, wcur, wdict):
 #===================================================================================================
 #
 def process_servers(wconn,wcur,st):
-    st.writelog (" ")
-    st.writelog (" ")
+    #st.writelog (" ")
+    #st.writelog (" ")
     st.writelog (('-' * 40))
     st.writelog ("PROCESSING ALL ACTIVES SERVERS")
-    st.writelog (" ")
+    #st.writelog (" ")
 
     # Read All Actives Servers
     sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname "

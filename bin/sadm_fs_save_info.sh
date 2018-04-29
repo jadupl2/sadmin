@@ -188,8 +188,8 @@ check_lvm_version()
     
     # If LVM Not Installed
     if [ $LVMVER -eq 0 ]                                                # lvm wasn't found on server
-        then sadm_writelog "The lvm2 package is not installed"            # Advise user no lvm package
-             sadm_writelog "No value running this script, Script Aborted" # No LVM - No Script
+        then sadm_writelog "The lvm2 package is not installed"          # Advise user no lvm package
+             sadm_writelog "No value running this script, Script Terminated" # No LVM - No Script
     fi
     return $LVMVER                                                      # Return LVM Version
 }
