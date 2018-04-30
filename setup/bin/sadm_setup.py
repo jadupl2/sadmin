@@ -31,10 +31,10 @@
 #   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
 # 2018_04_27 JDuplessis
 #   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
-# 2018_04_28 JDuplessis
-#   V2.0 Enhance user experience, re-tested on Ubuntu 16.04 Server - Minor fix 
+# 2018_04_30 JDuplessis
+#   V2.1 Enhance user experience, re-tested on Ubuntu 18.04,16.04 Server/Desktop, RedHat/CentOS7 and Debian 9 
 #===================================================================================================
-#
+# 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
@@ -48,7 +48,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.0"                                             # Setup Version Number
+sver                = "2.1"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -875,7 +875,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_user = cstdout                                               # Get Apache Process Usr
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd user name is %d" % (ccode))
-    writelog ("Apache process user name  : %s" % (apache_user),'log')   # Show Apache Proc. User
+    writelog ("Apache process user name  : %s" % (apache_user))         # Show Apache Proc. User
 
     # Get the group of httpd process owner 
     cmd = "id -gn %s" % (apache_user)                                   # Get Apache User Group
@@ -883,7 +883,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_group = cstdout                                              # Get Group from StdOut
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd group name is %d" % (ccode))                 
-    writelog ("Apache process group name : %s" % (apache_group),'log')  # Show Apache  Group
+    writelog ("Apache process group name : %s" % (apache_group))        # Show Apache  Group
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -938,8 +938,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
         update_apache_config(sroot,apache2_config,"{WROOT}",sroot)      # Set WWW Root Document
         update_apache_config(sroot,apache2_config,"{EMAIL}",semail)     # Set WWW Admin Email
         update_apache_config(sroot,apache2_config,"{DOMAIN}",sdomain)   # Set WWW sadmin.{Domain}     
-        update_apache_config(sroot,apache2_file,"{SERVICE}",sservice)   # Set WWW sadmin log dir
-
+        update_apache_config(sroot,apache2_config,"{SERVICE}",sservice) # Set WWW sadmin log dir
+ 
                
     # Update the sadmin.cfg with Web Server User and Group
     #writelog('')
@@ -1528,33 +1528,38 @@ def run_script(sroot,sname):
 #                                 END OF SCRIPT - MESSAGE TO USER
 #===================================================================================================
 #
-def end_message(sroot,sdomain,sserver):
+def end_message(sroot,sdomain,sserver,stype):
     #os.system('clear')                                                 # Clear the screen
     sversion = get_sadmin_version(sroot)
-    writelog ("\n\n\n\n\nSADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
+    writelog ("\n\n\n\n\n")
+    writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
     writelog ("You need to logout and log back in before using SADMIN Tools,")
     writelog ("or type the following command (The dot and the space are important)")
-    writelog (". /etc/profile.d/sadmin.sh")
+    writelog (". /etc/profile.d/sadmin.sh",'bold')
     writelog ("This will make sure SADMIN environment variable is define.")
     writelog ("===========================================================================")
-    writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
-    writelog ("The Web interface is available at http://%s" % (sserver))
-    writelog ("  - If 'sadmin.%s' is defined in your DNS, the web interface is also available at http://sadmin.%s" % (sdomain,sdomain))
-    writelog ("  - Use it to add, update and delete server from you server farm.")
-    writelog ("  - View performance graph of your servers, statistics are kept for 2 years.")
-    writelog ("  - If you want, you can automatically update your server O/S at the time and day you scheduled.")
-    writelog ("  - View you servers information (Network,Disks,...) (Usefull in case of a Disaster Recovery)")
-    writelog ("  - View your server farm network IP and name usage and spot if an IP free to use.")
-    writelog ("  - There is still more to come.")
-    writelog ("===========================================================================")
-    writelog ("\nCREATE YOU YOUR OWN SCRIPT USING SADMIN LIBRARY",'bold')
+    if (stype == "S") :
+        writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
+        writelog ("The Web interface is available at http://sadmin.%s or http://%s" % (sdomain,sserver))
+        writelog ("  - For http://sadmin.%s to work, 'sadmin.%s' must be define in your DNS or /etc/hosts file." % (sdomain,sdomain))
+        writelog ("  - Use it to add, update and delete server from your server farm.")
+        writelog ("  - View performance graph of your servers up to two years in the past.")
+        writelog ("  - If you want, you can automatically update your server O/S at the time and day you scheduled.")
+        writelog ("  - View your servers information (Network,Disks,...) (Usefull information in case of a Disaster Recovery)")
+        writelog ("  - View your servers farm network IP and DNS name usage and spot if an IP free to use.")
+        writelog ("  - There is still more to come.")
+        writelog ("===========================================================================")
+    writelog ("\nCREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
     writelog ("To create your own script using the SADMIN tools, you may want to take a look ")
     writelog ("at the templates, run them and view their code.")
     writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
     writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
+    writelog (" ")
+    writelog ("For example, to create your own shell script, copy '%s/bin/sadm_template.sh' " % (sroot))
+    writelog ("to a name of your choice 'your_script.sh', modify it to your need, run it and see the results.") 
     writelog ("===========================================================================")
-    writelog ("\nVIEW THE SADMIN FUNCTION IN ACTION AND LEARN OF TO USE THEM RUNNING THESE :",'bold')
+    writelog ("\nVIEW SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/lib/sadmlib_test.sh " % (sroot))
     writelog ("  - %s/lib/sadmlib_test.py." % (sroot))
     writelog ("===========================================================================")
@@ -1624,7 +1629,7 @@ def main():
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
     # End of Setup
-    end_message(sroot,udomain,userver)                                  # Last Message to User
+    end_message(sroot,udomain,userver,stype)                            # Last Message to User
     fhlog.close()                                                       # Close Script Log
     sys.exit(0)                                                         # Exit to Operating System
 

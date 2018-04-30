@@ -1,33 +1,30 @@
-Debian 9 Installation Notes
-7 Avril 2018
 
-root@mdebian9:/opt/sadmin/setup# ls -l
-total 24
-drwxr-xr-x 2 root root  4096 Apr  7 11:00 bin
-drwxr-xr-x 2 root root  4096 Apr  7 11:00 etc
-drwxr-xr-x 2 root root  4096 Apr  7 11:00 jac
--rwxrwxrwx 1 root root 10625 Apr  7 11:00 setup.sh
-root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
-root@mdebian9:/opt/sadmin/setup# 
+root@tdebian9:/opt/sadmin/setup# date
+Mon Apr 30 11:15:28 EDT 2018
+root@tdebian9:/opt/sadmin/setup# uname -a
+Linux tdebian9.maison.ca 4.9.0-6-amd64 #1 SMP Debian 4.9.82-1+deb9u3 (2018-03-02) x86_64 GNU/Linux
+root@tdebian9:/opt/sadmin/setup# 
 
-root@mdebian9:/opt/sadmin# cd setup
-root@mdebian9:/opt/sadmin/setup# ./setup.sh 
+
+
+root@tdebian9:/opt/sadmin# cd setup
 root@tdebian9:/opt/sadmin/setup# ls -l
-total 24
-drwxr-xr-x 2 root root  4096 Apr  7 16:28 bin
-drwxr-xr-x 2 root root  4096 Apr  7 16:28 etc
-drwxr-xr-x 2 root root  4096 Apr  7 16:28 jac
--rwxrwxrwx 1 root root 10625 Apr  7 16:28 setup.sh
+total 28
+drwxrwxr-x 2 601 601  4096 Apr  8 09:22 bin
+drwxrwxr-x 2 601 601  4096 Apr 25 12:32 etc
+drwxrwxr-x 2 601 601  4096 Apr 30 11:03 log
+drwxrwxr-x 2 601 601  4096 Apr  4 15:38 msg
+-rwxrwxr-x 1 601 601 10663 Apr 30 11:03 setup.sh
 root@tdebian9:/opt/sadmin/setup# ./setup.sh 
 
 SADMIN Pre-Installation Verification Version 1.4
 ---------------------------------------------------------------------------
 Checking if 'lsb_release' is installed ...  Done 
 Checking if 'python3' is installed ...  Done 
+All Verifications Pass ...
 
 
-SADMIN Setup V1.6
+SADMIN Setup V2.0
 ---------------------------------------------------------------------------
 Enter directory path where your install SADMIN : /opt/sadmin
 SADMIN Environment variable is now set to /opt/sadmin
@@ -47,8 +44,8 @@ Host will be a SADMIN [S]erver or a [C]lient [C] : s
 [SADM_CIE_NAME]
 This name that will appear in the heading of the web interface
 and on some report and email that SADMIN produce.
-Enter your Company Name : The Batcave
-[SADM_CIE_NAME] set to 'The Batcave' in /opt/sadmin/cfg/sadmin.cfg
+Enter your Company Name : The batcave
+[SADM_CIE_NAME] set to 'The batcave' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
 [SADM_MAIL_ADDR]
@@ -168,32 +165,34 @@ Enter the Network Netmask [1-30] [24] :
 Checking SADMIN Client Package requirement
  
 Running apt-get update... Done 
-Checking for util-linux ...  Ok 
 Checking for net-tools ... Installing net-tools ...  Done 
-Checking for parted ...  Ok 
-Checking for lsb-release ...  Ok 
-Checking for lshw ... Installing lshw ...  Done 
 Checking for ethtool ... Installing ethtool ...  Done 
-Checking for nmon ... Installing nmon ...  Done 
+Checking for util-linux ...  Ok 
+Checking for bc ...  Ok 
 Checking for libdatetime-perl libwww-perl ... Installing libdatetime-perl libwww-perl ...  Done 
 Checking for util-linux ...  Ok 
 Checking for openssh-client ...  Ok 
-Checking for bc ...  Ok 
-Checking for dmidecode ...  Ok 
-Checking for perl-base ...  Ok 
+Checking for lshw ... Installing lshw ...  Done 
 Checking for facter ... Installing facter ...  Done 
-Checking for sudo ... Installing sudo ...  Done 
-Checking for mailutils ... Installing mailutils ...  Done 
 Checking for python3-pip ... Installing python3-pip ...  Done 
+Checking for sudo ... Installing sudo ...  Done 
+Checking for gawk ...  Ok 
+Checking for dmidecode ...  Ok 
+Checking for nmon ... Installing nmon ...  Done 
+Checking for perl-base ...  Ok 
+Checking for mailutils ... Installing mailutils ...  Done 
+Checking for lsb-release ...  Ok 
+Checking for parted ...  Ok 
 Installing python3 PyMySQL module ...  Done 
 
 --------------------
-Adding SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
+Creating 'sadmin' user sudo file
+Creating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)
 Permission on sudo file changed successfully
 Ownership of sudo file changed successfully
 
 --------------------
-Updating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
+Creating SADMIN Client Crontab file (/etc/cron.d/sadm_client)
 Client Crontab Permission changed successfully
 Ownership of client crontab changed successfully
 
@@ -204,16 +203,24 @@ Adding 'sadmin' to /etc/hosts file
 Checking SADMIN Server Package requirement
  
 Running apt-get update... Done 
-Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
-Checking for apache2 apache2-utils ... Installing apache2 apache2-utils ...  Done 
 Checking for rrdtool ... Installing rrdtool ...  Done 
+Checking for fping monitoring-plugins-standard ... Installing fping monitoring-plugins-standard ...  Done 
+Checking for mariadb-server mariadb-client ... Installing mariadb-server mariadb-client ...  Done 
+Checking for apache2 apache2-utils libapache2-mod-php ... Installing apache2 apache2-utils libapache2-mod-php ...  Done 
 Checking for php php-mysql php-common php-cli  ... Installing php php-mysql php-common php-cli  ...  Done 
+Checking for arp-scan ... Installing arp-scan ...  Done 
   
 --------------------
 Setup SADMIN MariaDB Database
   
-Starting MariaDB Service - systemctl restart mariadb
-Enabling MariaDB Service - systemctl enable mariadb
+Starting MariaDB Service - systemctl restart mysql.service
+Enabling MariaDB Service - systemctl enable mysql.service
+Problem with enabling MariabDB Service.
+Return code is 1 - systemctl enable mysql.service
+Standard out is 
+Standard error is Synchronizing state of mysql.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable mysql
+Failed to enable unit: Refusing to operate on linked unit file mysql.service
  
 ----------
 [SADM_ROOT]
@@ -224,7 +231,8 @@ Enter MySQL Database 'root' user password :
 Access to Database is working ...
   
 ----------
-Loading Initial Data in SADMIN Database ...  Done 
+Loading Initial Data in SADMIN Database ... 
+ Done 
 
 Checking if 'sadmin' user exist in MariaDB ...  
 ----------
@@ -243,7 +251,8 @@ but don't want them to modify any information in the Database.
 Enter 'squery' database user password : 
 Creating 'squery' user ...  Done 
 
-Inserting server 'tdebian9' in Database ...  Done
+Inserting server 'tdebian9' in Database ... 
+ Done
 
 Restarting MariaDB Server ... Done 
   
@@ -251,7 +260,9 @@ Restarting MariaDB Server ... Done
 --------------------
 Setup SADMIN Web Site
   
-Making sure Web Server is started
+Making sure Web Server is started - systemctl restart apache2
+Apache process user name  : www-data
+Apache process group name : www-data
 Disable default apache configuration
 SADMIN Web Site enable
   - SADMIN Web site configuration now in place (/etc/apache2/sites-enabled/sadmin.conf)
@@ -259,11 +270,11 @@ SADMIN Web Site enable
   - Setting Owner/Group on SADMIN WebSite(/opt/sadmin/www) ...  Done 
   - Setting Permission on SADMIN WebSite (/opt/sadmin/www) ...  Done 
   - Setting Permission on SADMIN WebSite images (/opt/sadmin/www/images) ...  Done 
-  - Web Server Restarting ...  Done 
-  - Enabling Web Server Service ...  Done 
+  - Web Server Restarting - systemctl restart apache2 ... Done 
+  - Enabling Web Server Service - systemctl enable apache2 ...  Done 
 
 --------------------
-Updating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
+Creating SADMIN Server Crontab file (/etc/cron.d/sadm_server)
 Server Crontab Permission changed successfully
 Ownership of Server crontab changed successfully
   
@@ -271,44 +282,55 @@ Ownership of Server crontab changed successfully
 --------------------
 Run SADM scripts to feed Database and Web Interface
   
-Running 'sadm_create_server_info.sh' script ...  Done
-Running 'sadm_housekeeping_client.sh' script ...  Done
-Running 'sadm_fs_save_info.sh' script ...  Done
-Running 'sadm_create_cfg2html.sh' script ...  Done
-Running 'sadm_nmon_watcher.sh' script ...  Done
-Running 'sadm_sysmon.pl' script ...  Done
-Running 'sadm_fetch_servers.sh' script ...  Done
-Running 'sadm_daily_data_collection.sh' script ...  Done
-Running 'sadm_housekeeping_server.sh' script ...  Done
-Running 'sadm_database_update.py' script ...  Done
+Running '/opt/sadmin/bin/sadm_create_server_info.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_housekeeping_client.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_fs_save_info.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_create_cfg2html.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_nmon_watcher.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_sysmon.pl' script ...  Done
+Running '/opt/sadmin/bin/sadm_fetch_servers.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_daily_data_collection.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_housekeeping_server.sh' script ...  Done
+Running '/opt/sadmin/bin/sadm_subnet_lookup.py' script ...  Done
+Running '/opt/sadmin/bin/sadm_database_update.py' script ...  Done
 
 
 
+
+
+
+SADMIN TOOLS - VERSION sadmin_0.86_20180430 - Successfully Installed
 ===========================================================================
-END OF SADMIN SETUP, YOU CAN NOW USE THE SADMIN TOOLS
-
-You need to logout and log back in, before using SADM Tools,
+You need to logout and log back in before using SADMIN Tools,
 or type the following command (The dot and the space are important)
 . /etc/profile.d/sadmin.sh
-This will make sure SADMIN environment variable is define with proper content.
-
-
-TO CREATE YOUR OWN SCRIPT USING SADMIN LIBRARY
-To create your own script using the SADMIN tools, you may want to run 
-and view the code of the template script.
-
-bash shell script      : /opt/sadmin/bin/sadm_template.sh 
-or
-python script          : /opt/sadmin/bin/sadm_template.py 
-
-To show you all the functions available to your shell or Python script, 
-you may also want to run /opt/sadmin/lib/sadmlib_test.sh and /opt/sadmin/lib/sadmlib_test.py.
-
+This will make sure SADMIN environment variable is define.
+===========================================================================
 
 USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM
-The Web interface is available at http://sadmin.maison.ca
-
-
-
+The Web interface is available at http://sadmin.maison.ca or http://tdebian9.maison.ca
+  - For http://sadmin.maison.ca to work, 'sadmin.maison.ca' must be define in your DNS or /etc/hosts file
+  - Use it to add, update and delete server from you server farm.
+  - View performance graph of your servers, statistics are kept for 2 years.
+  - If you want, you can automatically update your server O/S at the time and day you scheduled.
+  - View you servers information (Network,Disks,...) (Usefull in case of a Disaster Recovery)
+  - View your server farm network IP and name usage and spot if an IP free to use.
+  - There is still more to come.
 ===========================================================================
-root@tdebian9:/opt/sadmin/setup# 
+
+CREATE YOU YOUR OWN SCRIPT USING SADMIN LIBRARY
+To create your own script using the SADMIN tools, you may want to take a look 
+at the templates, run them and view their code.
+  - bash shell script      : /opt/sadmin/bin/sadm_template.sh 
+  - python script          : /opt/sadmin/bin/sadm_template.py 
+ 
+For example, to create your own shell script, copy '/opt/sadmin/bin/sadm_template.sh' 
+to a name of your choice 'your_script.sh', modify it to your need, run it and see the results.
+===========================================================================
+
+VIEW SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :
+  - /opt/sadmin/lib/sadmlib_test.sh 
+  - /opt/sadmin/lib/sadmlib_test.py.
+===========================================================================
+ENJOY !!
+root@tdebian9:/opt/sadmin/setup#
