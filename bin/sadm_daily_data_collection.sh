@@ -36,6 +36,8 @@
 #   V2.4    Fix compatibility problem with 'dash' shell
 # 2018_02_11 J.Duplessis
 #   V2.5    Rsync locally for SADMN Server
+# 2018_05_01 J.Duplessis
+#   V2.6    Don't return an error if no active server are found
 ######################################################################################&&&&&&&#######
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -50,7 +52,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.6'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -112,7 +114,7 @@ process_servers()
     # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
         then sadm_writelog "No Active Server were found." 
-             return 1 
+             return 0 
     fi 
 
     xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
