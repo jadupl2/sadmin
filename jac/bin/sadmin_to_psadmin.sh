@@ -30,6 +30,8 @@
 #   V1.2 - First Production Release
 # 2017_04_24 JDuplessis 
 #   V1.3 - Exclude __pycache__ file from update - Setup msg Directory Added
+# 2017_05_01 JDuplessis 
+#   V1.4 - Test if not root at beginning
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -451,6 +453,12 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
+    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
+        then echo  "Script can only be run user 'root'"         # Advise User should be root
+             echo  "Process aborted"                            # Abort advise message
+             exit 1                                                     # Exit To O/S
+    fi
+
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
@@ -461,12 +469,6 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
     while getopts "hd:" opt ; do                                        # Loop to process Switch
