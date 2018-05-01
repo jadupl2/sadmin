@@ -14,6 +14,8 @@
 # 2.5 Added support for LinuxMint (April 2017)
 # 2018_01_03 JDuplessis
 #   2.8 Add message to user stating that script is not supported on MacOS
+# 2018_05_01 JDuplessis
+#   2.9 On Fedora 27 and Up - cfg2html hang - So in will not run when Fedora 27 and Up
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -28,7 +30,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -69,8 +71,14 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
     sadm_start                                                          # Init Env. Dir & RC/Log File
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
        then sadm_writelog "This script is not supported on MacOS"       # Advise User
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+             sadm_stop 0                                                # Close and Trim Log
+             exit 0                                                     # Exit To O/S
+    fi
+    # Bug - Hang on Fedora 27 and Up - Skip Execution
+    if [ "$(sadm_get_osname)" = "FEDORA" ] && [ "$(sadm_get_osmajorversion)" > "26" ] 
+       then sadm_writelog "This script is not supported on Fedora higher than 26"  # Advise User
+             sadm_stop 0                                                # Close and Trim Log
+             exit 0                                                     # Exit To O/S
     fi
     if ! $(sadm_is_root)                                                # Only ROOT can run Script
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
