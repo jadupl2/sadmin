@@ -33,6 +33,8 @@
 #   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
 # 2018_04_30 JDuplessis
 #   V2.1 Enhance user experience, re-tested on Ubuntu 18.04,16.04 Server/Desktop, RedHat/CentOS7 and Debian 9 
+# 2018_05_01 JDuplessis
+#   V2.2 Fix Bugs after Testing on Fedora 27
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -48,7 +50,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.1"                                             # Setup Version Number
+sver                = "2.2"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -112,8 +114,6 @@ req_client = {
                     'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-#    'cfg2html'   :{ 'rpm':'cfg2html',                       'rrepo':'local',
-#                    'deb':'cfg2html',                       'drepo':'base'},
     'datetime'   :{ 'rpm':'perl-DateTime perl-libwww-perl', 'rrepo':'base',
                     'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -316,7 +316,7 @@ def update_client_crontab_file(logfile) :
     cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
     if (ccode == 0):                                                    # If chmod went ok
-        writelog( "Client Crontab Permission changed successfully")     # Show success
+        writelog( "  - Client Crontab Permission changed successfully") # Show success
     else:                                                               # Did not went well
         writelog ("Problem changing Client crontab file permission")    # Had error on chmod cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -325,7 +325,7 @@ def update_client_crontab_file(logfile) :
     cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
     if (ccode == 0):                                                    # If chown went ok
-        writelog( "Ownership of client crontab changed successfully")   # Show success to user
+        writelog( "  - Ownership of client crontab changed successfully") # Show success to user
     else:                                                               # Did not went well
         writelog ("Problem changing ownership of client crontab file")  # Had an error on chown cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -384,7 +384,7 @@ def update_server_crontab_file(logfile) :
     cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
     if (ccode == 0):                                                    # If chmod went ok
-        writelog( "Server Crontab Permission changed successfully")     # Show success
+        writelog( "  - Server Crontab Permission changed successfully") # Show success
     else:                                                               # Did not went well
         writelog ("Problem changing Server crontab file permission")    # Had error on chmod cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -393,7 +393,7 @@ def update_server_crontab_file(logfile) :
     cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
     if (ccode == 0):                                                    # If chown went ok
-        writelog( "Ownership of Server crontab changed successfully")   # Show success to user
+        writelog( "  - Ownership of Server crontab changed successfully") # Show success to user
     else:                                                               # Did not went well
         writelog ("Problem changing ownership of Server crontab file")  # Had an error on chown cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -431,7 +431,7 @@ def update_sudo_file(logfile) :
     writelog('')
     writelog('--------------------')
     writelog("Creating 'sadmin' user sudo file",'bold')
-    writelog ('Creating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
+    writelog ('  - Creating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
     sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
@@ -461,7 +461,7 @@ def update_sudo_file(logfile) :
     cmd = "chmod 440 %s" % (sudofile)                                   # chmod 440 on sudofile
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on sudofile
     if (ccode == 0):                                                    # If chmod went ok
-        writelog( "Permission on sudo file changed successfully")       # Show success to user
+        writelog( "  - Permission on sudo file changed successfully")   # Show success to user
     else:                                                               # Did not went well
         writelog ("Problem changing sudo file permission")              # Had an error on sudo cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -470,7 +470,7 @@ def update_sudo_file(logfile) :
     cmd = "chown %s.%s %s" % ('root','root',sudofile)                   # chowner on sudofile
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on sudofile
     if (ccode == 0):                                                    # If chown went ok
-        writelog( "Ownership of sudo file changed successfully")        # Show success to user
+        writelog( "  - Ownership of sudo file changed successfully")    # Show success to user
     else:                                                               # Did not went well
         writelog ("Problem changing ownership of sudo file")            # Had an error on chown cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -531,7 +531,7 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(stype,sroot,packtype,logfile):
+def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
@@ -589,7 +589,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile):
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
         if (packtype == "rpm") : 
-            if (needed_repo == "epel"):
+            if (needed_repo == "epel") and (sosname != "FEDORA"):
                 writelog (" from EPEL ... ",'nonl')
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
@@ -664,7 +664,8 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
     sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
     sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
-    sql += " srv_backup='0', srv_update_auto='0', srv_ostype='linux', srv_graph='1' ;"
+    sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
+    sql += " srv_ostype='linux', srv_graph='1' ;"
     #
     # Execute the Insert New Server Statement
     cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
@@ -690,6 +691,19 @@ def setup_mysql(sroot,sserver,sdomain):
     writelog ('--------------------')
     writelog ("Setup SADMIN MariaDB Database",'bold')
 
+    # Updating the apache2 configuration file 
+    mysql_file1 = "%s/setup/etc/sadmin.cnf" % (sroot)                   # MariaDB sadmin cfg file
+    mysql_file2 = "/etc/mysql.d/sadmin.cnf"                             # MariaDB sadmin in /etc
+    if os.path.exists("/etc/my.cnf.d") == True:                         # If MariaDB Dir. Exist
+        try:
+            shutil.copyfile(mysql_file1,mysql_file2)                    # Copy Initial Web cfg
+        except IOError as e:
+            writelog("Error copying Mariadb %s config file. %s" % (mysql_file1,e)) 
+            sys.exit(1)                                             # Exit to O/S With Error
+        except:
+            writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
+            sys.exit(1)          
+    
     # Restart MariaDB Service
     writelog ('  ')
     if not os.path.isfile('/etc/init.d/mysql'):
@@ -875,7 +889,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_user = cstdout                                               # Get Apache Process Usr
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd user name is %d" % (ccode))
-    writelog ("Apache process user name  : %s" % (apache_user))         # Show Apache Proc. User
+    writelog ("  - Apache process user name  : %s" % (apache_user))     # Show Apache Proc. User
 
     # Get the group of httpd process owner 
     cmd = "id -gn %s" % (apache_user)                                   # Get Apache User Group
@@ -883,7 +897,7 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     apache_group = cstdout                                              # Get Group from StdOut
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Return code for getting httpd group name is %d" % (ccode))                 
-    writelog ("Apache process group name : %s" % (apache_group))        # Show Apache  Group
+    writelog ("  - Apache process group name : %s" % (apache_group))    # Show Apache  Group
 
     # If Package type is 'deb', (Debian, LinuxMint, Ubuntu, Raspbian,...) ... 
     if (spacktype == "deb") :
@@ -1501,8 +1515,19 @@ def getpacktype(sroot):
         writelog ('None of these commands are found (rpm, pkg or lslpp absent)')
         writelog ('No supported package type is detected')
         writelog ('Process aborted')
-        sys.exit(1)                                                     # Exit to O/S    
-    return (packtype)                                                   # Return Packtype 
+        sys.exit(1)                                                     # Exit to O/S  
+
+    # Get O/S Name   
+    cmd = "lsb_release -si"                                             # Get OSName with lsb_release
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Script
+    if (ccode == 0):                                                    # Command Execution Went OK
+        osname = cstdout.upper()
+        if (cstdout == "REDHATENTERPRISESERVER"): osname="REDHAT" 
+        if (cstdout == "REDHATENTERPRISEAS"): osname="REDHAT" 
+    else:                                                               # If Problem with the cmd
+        writelog("Problem running %s" % (cmd))                          # Infor User
+        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+    return (packtype,osname)                                            # Return Packtype & O/S Name
 
 
 
@@ -1588,10 +1613,11 @@ def main():
     (fhlog,logfile) = open_logfile(sroot)                               # OpenLog Return File Handle
     if (DEBUG) : ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
     create_sadmin_config_file(sroot)                                    # Create Initial sadmin.cfg
-    (packtype) = getpacktype(sroot)                                     # Pack Type (rpm,deb,lslpp)
+    (packtype,sosname) = getpacktype(sroot)                             # PackType (deb,rpm)/OSName
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
+    if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
     (userver,udomain,uemail) = setup_sadmin_config_file(sroot)          # Ask Config questions
-    satisfy_requirement('C',sroot,packtype,logfile)                     # Verify/Install Client Req.
+    satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
     update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)          # Update Value in sadmin.cfg
     special_install(packtype)                                           # pip3 PyMySQL Install
@@ -1601,7 +1627,7 @@ def main():
     # SADMIN Server 
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain)                                       # Update /etc/hosts file
-        satisfy_requirement('S',sroot,packtype,logfile)                 # Verify/Install Server Req.
+        satisfy_requirement('S',sroot,packtype,logfile,sosname)         # Verify/Install Server Req.
         setup_mysql(sroot,userver,udomain)                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
