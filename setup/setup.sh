@@ -28,6 +28,8 @@
 #   V1.1 Initial Version - Make sure python 3 is installed and then execute sadm_setup.py
 # 2018_04_03 JDuplessis
 #   V1.4 Bug Fixes and add detail to log for support purpose 
+# 2018_05_01 JDuplessis
+#   V1.5 Show Full O/S Version in Log
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -36,7 +38,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.5'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -179,8 +181,9 @@ check_lsb_release()
     SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`
     if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
-    SADM_OSVERSION=`lsb_release -sr | awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
-    echo "Your System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..." >> $SLOG
+    SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
+    SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
+    echo "Your System is running $SADM_OSNAME Version $SADM_OSNAME ..." >> $SLOG
     
     # Script must be run by root
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
