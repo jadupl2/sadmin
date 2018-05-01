@@ -114,7 +114,7 @@ def db_insert(st,wconn,wcur,tbkey,tbdata,dbsilent=False):
     if (tbdata[5] == True):                                             # If IP Was pingable
         wpingdate = wdate                                               # Pingable Update Ping Date
     else:                                                               # If IP is not pingable
-        wpingdate = None                                                # No Ping Date by Default
+        wpingdate = '0000-00-00 00:00:00'                               # No Ping Date by Default
 
     # BUILD THE INSERT STATEMENT
     try:
@@ -282,7 +282,7 @@ def scan_network(st,snet,wconn,wcur) :
             cdata = [hip,zip,hname,hmac,hmanu,hactive]                  # Data to Insert
             dberr = db_insert(st,wconn,wcur,hip,cdata,False)            # Insert Data in Cat. Table
             if (dberr != 0) :                                           # Did the insert went well ?
-                st.writelog("Error %d adding '%s' to database" % (rdberr,hip))  # Show Error & Mess.
+                st.writelog("Error %d adding '%s' to database" % (dberr,hip))  # Show Error & Mess.
         else :
             old_hostname    = dbrow[2]
             old_mac         = dbrow[3]
