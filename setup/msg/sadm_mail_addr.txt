@@ -2,4 +2,4 @@
 # Revise 2018_02_14
 #----------------------------------------------------------------------------
 This field specify the email address of the system administrator.
-It is used by SADMIN Tools to send various email. 
+It is used by SADMIN Tools to send various email and alert.
