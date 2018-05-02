@@ -111,7 +111,7 @@ def update_row(st,wconn, wcur, wdict):
         wcur.execute(sql)                                               # Update Server Data 
         wconn.commit()                                                  # Commit the transaction
         st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
-        return (0)                                                  # return (0) Insert Worked
+        return (0)                                                      # return (0) Insert Worked
     except (pymysql.err.InternalError, pymysql.err.IntegrityError) as error:
         enum, emsg = error.args                                         # Get Error No. & Message
         st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
