@@ -16,7 +16,6 @@
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
-
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
@@ -35,6 +34,8 @@
 #   V2.1 Enhance user experience, re-tested on Ubuntu 18.04,16.04 Server/Desktop, RedHat/CentOS7 and Debian 9 
 # 2018_05_01 JDuplessis
 #   V2.2 Fix Bugs after Testing on Fedora 27
+# 2018_05_03 JDuplessis
+#   V2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -50,7 +51,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.2"                                             # Setup Version Number
+sver                = "2.3"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -110,8 +111,8 @@ req_client = {
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
                     'deb':'dmidecode',                      'drepo':'base'},
-    'pymsql'     :{ 'rpm':'python34-pip',                   'rrepo':'base',
-                    'deb':'python3-pip',                    'drepo':'base'},
+    # 'pymsql'     :{ 'rpm':'python34-pip python3-pip',       'rrepo':'epel',
+    #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
     'datetime'   :{ 'rpm':'perl-DateTime perl-libwww-perl', 'rrepo':'base',
@@ -217,9 +218,12 @@ def writelog(sline,stype="normal"):
     if (stype == "log") : return                                        # Log Only Nothing on screen   
 
     # Display Line on Screen
-    if (stype == "normal") : print (sline)                              
-    if (stype == "nonl")   : print (sline, end='')                              
-    if (stype == "bold")   : print ( color.DARKCYAN + color.BOLD + sline + color.END)
+    if (stype == "normal") : 
+        print (sline)  
+    if (stype == "nonl") : 
+        print (sline,end='') 
+    if (stype == "bold") : 
+        print ( color.DARKCYAN + color.BOLD + sline + color.END)
 
 
 #===================================================================================================
@@ -244,7 +248,7 @@ def oscommand(command) :
 #===================================================================================================
 #                              MAKE SURE SADMIN LINE IS IN /etc/hosts FILE
 #===================================================================================================
-def update_host_file(wdomain) :
+def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
@@ -254,7 +258,7 @@ def update_host_file(wdomain) :
     except :
         writelog("Error Opening /etc/hosts file")
         sys.exit(1)
-    eline = "127.0.0.1      sadmin  sadmin.%s" % (wdomain)              # Line that should be hosts
+    eline = "%s      sadmin  sadmin.%s" % (wip,wdomain)                 # Line that should be hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
         if (eline.rstrip() == line.rstrip()):                           # Line already there    
@@ -272,7 +276,7 @@ def update_client_crontab_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Creating SADMIN Client Crontab file (/etc/cron.d/sadm_client)','bold')
+    writelog ('Creating SADMIN client crontab file (/etc/cron.d/sadm_client)','bold')
     ccron_file = '/etc/cron.d/sadm_client'                              # Client Crontab File
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
@@ -340,7 +344,7 @@ def update_server_crontab_file(logfile) :
 
     writelog('')
     writelog('--------------------')
-    writelog ('Creating SADMIN Server Crontab file (/etc/cron.d/sadm_server)','bold')
+    writelog ('Creating SADMIN server crontab file (/etc/cron.d/sadm_server)','bold')
     ccron_file = '/etc/cron.d/sadm_server'                              # Server Crontab File
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
@@ -384,7 +388,7 @@ def update_server_crontab_file(logfile) :
     cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
     if (ccode == 0):                                                    # If chmod went ok
-        writelog( "  - Server Crontab Permission changed successfully") # Show success
+        writelog( "  - Server crontab permission changed successfully") # Show success
     else:                                                               # Did not went well
         writelog ("Problem changing Server crontab file permission")    # Had error on chmod cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -393,7 +397,7 @@ def update_server_crontab_file(logfile) :
     cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
     if (ccode == 0):                                                    # If chown went ok
-        writelog( "  - Ownership of Server crontab changed successfully") # Show success to user
+        writelog( "  - Ownership of server crontab changed successfully") # Show success to user
     else:                                                               # Did not went well
         writelog ("Problem changing ownership of Server crontab file")  # Had an error on chown cmd
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
@@ -401,16 +405,51 @@ def update_server_crontab_file(logfile) :
     return()                                                            # Return Cmd Path
 
 #===================================================================================================
-#                            Install pymysql module 
+#                                 Install pymysql module 
 #===================================================================================================
-def special_install(lpacktype) :
+def special_install(lpacktype,sosname) :
 
     if ((lpacktype != "deb") and (lpacktype != "rpm")):                 # Only rpm & deb Supported 
         writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
         return (False)                                                  # Return False to caller
 
+    # Check if the command 'pip3' is present on system - If not return to caller
+    writelog("Checking for python pip3 command ... ",'nonl')
+    if (locate_command('pip3') == "") :                                 # If pip3 command not found
+        writelog("Installing python3 pip3")
+        # If Debian Package, Refresh The Local Repository ------------------------------------------
+        if (packtype == "deb"):                                         # Is Debian Style Package
+            cmd =  "apt-get -y update >> %s 2>&1" % (logfile)           # Build Refresh Pack Cmd
+            writelog ("Running apt-get update...",'nonl')               # Show what we are running
+            (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
+            if (ccode == 0) :                                           # If command went ok
+                writelog (" Done ")                                     # Print DOne
+            else:                                                       # If we had error 
+                writelog ("Error Code is %d" % (ccode))                 # Advise user of error     
+            writelog ('Installing python3-pip','nonl')                  # Show User Pkg Installing
+            icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
+            icmd += "apt-get -y install python3-pip >>%s 2>&1" % (logfile)
+
+        # If RPM Package, RedHat/CentOS 6,7 Install pip3 form EPEL / Fedora Base Repo is OK --------
+        else:
+            if (sosname != "FEDORA"):                                   # On Redhat/CentOS
+                writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
+                icmd = "yum install --enablerepo=epel -y python34-pip >>%s 2>&1" % (logfile)
+            else:
+                writelog ('Installing python3-pip ... ','nonl')         # Inform User Pkg installing
+                icmd="yum install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
+
+        # Install pip3 command 
+        ccode, cstdout, cstderr = oscommand(icmd)                       # Run Install Cmd for pip3
+        if (ccode == 0) :                                               # If no problem installing
+            writelog (" Done ")                                         # Show user it is done
+        else:                                                           # If error while installing
+            writelog("Error Code is %d - See log %s" % (ccode,logfile),'bold') # Show Err & Logname
+    else:
+        writelog("Done")
+
     # Install pymysql python3 module using pip3
-    writelog ("Installing python3 PyMySQL module ... ",'nonl')          # Show what we are doing  
+    writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ",'nonl') 
     cmd = "pip3 install PyMySQL"                                        # Command to execute
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Command 
     if (ccode == 0):                                                    # If install went ok
@@ -476,6 +515,46 @@ def update_sudo_file(logfile) :
         writelog ("%s - %s" % (cstdout,cstderr))                        # Write stdout & stderr
 
     return()                                                            # Return Cmd Path
+
+#===================================================================================================
+# IF FIREWALL IS RUNNING - OPEN PORT (80) FOR HTTP
+#===================================================================================================
+def firewall_rule() :
+    writelog('')
+    writelog('--------------------')
+    writelog("Checking Firewall Information",'bold')
+
+    # Check if the command 'firewalld-cmd' is present on system - If not return to caller
+    writelog("  - Checking Firewall ... ",'nonl')
+    if (locate_command('firewall-cmd') == "") :                         # firewalld command not found
+        writelog("Not installed")
+        return (0)                                                      # No need to continue
+    else :
+        writelog("Installed")
+
+    # Check if Firewall is running - If not then return to caller 
+    writelog("  - Checking if firewall is running ... ",'nonl')
+    COMMAND = "systemctl status firewalld"                              # Check if Firewall running
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+    if ccode is not 0 :  
+        writelog("Not running")
+        return (0)                                                      # If Firewall not running
+    else:
+        writelog("Running")
+
+    # Open TCP Port 80 on Firewall
+    writelog("  - Adding rules to allow incoming connection on port 80")
+    COMMAND = "firewall-cmd --pemanent --add-port=80/tcp"               # Allow port 80 for HTTP 
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+
+    # Restart Firewall to activate the new rule
+    COMMAND = "systemctl restart firewalld"                             # Activate Rule - Restart FW
+    if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
+    ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
+
+    return (0)                                                          # Return to Caller
 
 
 #===================================================================================================
@@ -693,7 +772,7 @@ def setup_mysql(sroot,sserver,sdomain):
 
     # Updating the apache2 configuration file 
     mysql_file1 = "%s/setup/etc/sadmin.cnf" % (sroot)                   # MariaDB sadmin cfg file
-    mysql_file2 = "/etc/mysql.d/sadmin.cnf"                             # MariaDB sadmin in /etc
+    mysql_file2 = "/etc/my.cnf.d/sadmin.cnf"                            # MariaDB sadmin in /etc
     if os.path.exists("/etc/my.cnf.d") == True:                         # If MariaDB Dir. Exist
         try:
             shutil.copyfile(mysql_file1,mysql_file2)                    # Copy Initial Web cfg
@@ -1390,14 +1469,15 @@ def setup_sadmin_config_file(sroot):
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
         try :
-            xip = socket.gethostbyname(wcfg_server)                     # Try to get IP of Server
+            SADM_IP = socket.gethostbyname(wcfg_server)                 # Try to get IP of Server
         except (socket.gaierror) as error :                             # Unable to get Server IP
             writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
             continue                                                    # Go Re-Accept Server Name
-        xarray = socket.gethostbyaddr(xip)                              # Use IP & Get HostName
-        yname = repr(xarray[0]).replace("'","")                         # Remove the ' from answer
+        xarray = socket.gethostbyaddr(SADM_IP)                              # Use IP & Get HostName
+#        yname = repr(xarray[0]).replace("'","")                         # Remove the ' from answer
+        yname = socket.getfqdn(xarray[0])                               # Get FQDN of IP
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
-            writelog("The server %s with ip %s is returning %s" % (wcfg_server,xip,yname))
+            writelog("The server %s with ip %s is returning %s" % (wcfg_server,SADM_IP,yname))
             writelog("FQDN is wrong or the IP doesn't correspond")      # Advise USer 
             continue                                                    # Return Re-Accept SADMIN
         else:
@@ -1475,8 +1555,9 @@ def setup_sadmin_config_file(sroot):
     
     # Change owner of all files in $SADMIN
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
-    writelog (" ")                                                      # White Line
-    writelog ("Setting %s ownership : %s" % (sroot,cmd))                # Show what we are doing
+    if (DEBUG):
+        writelog (" ")                                                  # White Line
+        writelog ("Setting %s ownership : %s" % (sroot,cmd))            # Show what we are doing
     ccode, cstdout, cstderr = oscommand(cmd)                            # Change SADMIN Dir Owner 
 
 
@@ -1497,7 +1578,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
-    return(wcfg_server,wcfg_domain,wcfg_mail_addr)                      # Return to Caller
+    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr)              # Return to Caller
 
 
 #===================================================================================================
@@ -1616,23 +1697,24 @@ def main():
     (packtype,sosname) = getpacktype(sroot)                             # PackType (deb,rpm)/OSName
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
-    (userver,udomain,uemail) = setup_sadmin_config_file(sroot)          # Ask Config questions
+    (userver,uip,udomain,uemail) = setup_sadmin_config_file(sroot)      # Ask Config questions
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
     update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)          # Update Value in sadmin.cfg
-    special_install(packtype)                                           # pip3 PyMySQL Install
+    special_install(packtype,sosname)                                   # Install pymysql module
     update_sudo_file(logfile)                                           # Create the sudo file
     update_client_crontab_file(logfile)                                 # Create Client Crontab File 
 
     # SADMIN Server 
     if (stype == 'S') :                                                 # If install SADMIN Server
-        update_host_file(udomain)                                       # Update /etc/hosts file
+        update_host_file(udomain,uip)                                   # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile,sosname)         # Verify/Install Server Req.
+        firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain)                              # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
 
-    # Run First SADM Script to feed Web interface and Database
+    # Run First SADM Client Script to feed Web interface and Database
     writelog ('  ')
     writelog ('  ')
     writelog ('--------------------')
@@ -1646,7 +1728,7 @@ def main():
     run_script(sroot,"sadm_nmon_watcher.sh")                            # Make sure nmon running
     run_script(sroot,"sadm_sysmon.pl")                                  # Run SADM System MOnitor
 
-    # Scripts to run on Server Installation Only
+    # Run First SADM Server Script to feed Web interface and Database
     if (stype == "S"):                                                  # If Server Installation
         run_script(sroot,"sadm_fetch_servers.sh")                       # Grab Status from clients
         run_script(sroot,"sadm_daily_data_collection.sh")               # mv ClientData to ServerDir
