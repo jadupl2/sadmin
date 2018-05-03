@@ -34,6 +34,8 @@
 #   V2.8 Minor Changes
 # 2018_02_22 JDuplessis
 #   V2.9 Add Field SADM_HOST_TYPE in sadmin.cfg 
+# 2018_05_04 JDuplessis
+#   V2.10 Database User and Password are not read from .dbpass now (no longer from sadmin.cfg)
 # 
 # ==================================================================================================
 try :
@@ -66,7 +68,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.9"                                             # This Library Version
+libver              = "2.10"                                             # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -159,6 +161,7 @@ class sadmtools():
         self.crontab_work       = self.www_lib_dir + '/.crontab.txt'    # Work crontab
         self.crontab_file       = '/etc/cron.d/sadmin'                  # Final crontab
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
+        self.dbpass_file        = self.cfg_dir + '/.dbpass'             # SADMIN DB User/Pwd file
         self.pid_file           = "%s/%s.pid" % (self.tmp_dir, self.inst) # Process ID File
         self.tmp_file_prefix    = self.tmp_dir + '/' + self.hostname + '_' + self.inst # TMP Prefix
         self.tmp_file1          = "%s_1.%s" % (self.tmp_file_prefix,self.tpid)  # Temp1 Filename
@@ -394,6 +397,28 @@ class sadmtools():
             if "SADM_NETWORK4"               in CFG_NAME: self.cfg_network4        = CFG_VALUE
             if "SADM_NETWORK5"               in CFG_NAME: self.cfg_network5        = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
+
+        # Open Database Password File, Read 'sadmin' and 'squery' user from .dbpass file
+        try:
+            FH_DBPWD = open(self.dbpass_file,'r')                       # Open DB Password File
+        except IOError as e:                                            # If Can't open DB Pwd  file
+            print ("Error opening file %s \r\n" % self.dbpass_file)     # Print DBPass FileName
+            print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number    
+            print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
+            sys.exit(1) 
+        for dbline in FH_DBPWD :                                        # Loop until on all lines
+            wline = dbline.strip()                                      # Strip CR/LF & Trail spaces
+            if (wline[0:1] == '#' or len(wline) == 0) :                 # If comment or blank line
+                continue                                                # Go read the next line
+            if wline.startswith('sadmin,') :                            # Line begin with 'sadmin,'
+                self.cfg_rw_dbuser = 'sadmin'                           # Set DB R/W User Name
+                split_line = wline.split(',')                           # Split Line based on comma  
+                self.cfg_rw_dbpwd  = split_line[1]                      # Set DB R/W 'sadmin' Passwd
+            if wline.startswith('squery,') :                            # Line begin with 'squery,'
+                self.cfg_ro_dbuser = 'squery'                           # Set DB R/O User Name
+                split_line = wline.split(',')                           # Split Line based on comma  
+                self.cfg_ro_dbpwd  = split_line[1]                      # Set DB R/O 'squery' Passwd
+        FH_DBPWD.close()                                                # Close DB Password file
         return        
 
 
@@ -459,7 +484,7 @@ class sadmtools():
     def get_release(self) :
         if os.path.exists(self.rel_file):
             wcommand = "head -1 %s" % (self.rel_file)
-            ccode, cstdout, cstderr = self.oscommand("%s" % (wcommand))      # Execute O/S CMD 
+            ccode, cstdout, cstderr = self.oscommand("%s" % (wcommand)) # Execute O/S CMD 
             wrelease=cstdout
         else:
             wrelease="00.00"
@@ -471,10 +496,10 @@ class sadmtools():
     # # ----------------------------------------------------------------------------------------------
     # def get_hostname(self):
     #     cstdout="unknown"
-    #     if self.os_type == "LINUX" :                                         # Under Linux
-    #         ccode, cstdout, cstderr = self.oscommand("hostname -s")          # Execute O/S CMD 
-    #     if self.os_type == "AIX" :                                      # Under AIX
-    #         ccode, cstdout, cstderr = self.oscommand("hostname")             # Execute O/S CMD 
+    #     if self.os_type == "LINUX" :                                  # Under Linux
+    #         ccode, cstdout, cstderr = self.oscommand("hostname -s")   # Execute O/S CMD 
+    #     if self.os_type == "AIX" :                                    # Under AIX
+    #         ccode, cstdout, cstderr = self.oscommand("hostname")      # Execute O/S CMD 
     #     whostname=cstdout.upper()
     #     return whostname
 
