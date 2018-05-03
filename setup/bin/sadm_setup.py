@@ -880,7 +880,7 @@ def setup_mysql(sroot,sserver,sdomain):
         sdefault = "Nimdas2018"                                         # Default sadmin Password 
         sprompt  = "Enter Read/Write 'sadmin' database user password"   # Prompt for Answer
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Accept sadmin DB user pwd
-        update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd,False)    # Update Value in sadmin.cfg
+        #update_sadmin_cfg(sroot,"SADM_RW_DBPWD",wcfg_rw_dbpwd,False)    # Update Value in sadmin.cfg
         writelog ("Creating 'sadmin' user ... ",'nonl')
         sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
@@ -905,7 +905,7 @@ def setup_mysql(sroot,sserver,sdomain):
         sdefault = "Squery18"                                               # Default Password 
         sprompt  = "Enter 'squery' database user password"                  # Prompt for Answer
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# Accept sadmin DB user pwd
-        update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
+        #update_sadmin_cfg(sroot,"SADM_RO_DBPWD",wcfg_ro_dbpwd,False)        # Update Value in sadmin.cfg
         writelog ("Creating 'squery' user ... ",'nonl')
         sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
         sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
