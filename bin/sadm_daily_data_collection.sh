@@ -37,7 +37,7 @@
 # 2018_02_11 J.Duplessis
 #   V2.5    Rsync locally for SADMN Server
 # 2018_05_01 J.Duplessis
-#   V2.6    Don't return an error if no active server are found
+#   V2.6    Don't return an error if no active server are found & remove unnecessary message
 ######################################################################################&&&&&&&#######
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -179,13 +179,14 @@ process_servers()
         # CREATE LOCAL RECEIVING DIR
         # Making sure the $SADMIN/dat/$server_name exist on Local SADMIN server
         #-------------------------------------------------------------------------------------------
-        sadm_writelog " " ; sadm_writelog "---------- Making Sure Client Directory exist on Server"
+        sadm_writelog " " ; 
+        #sadm_writelog "---------- Making Sure Client Directory exist on Server"
         sadm_writelog "Make sure local directory ${SADM_WWW_DAT_DIR}/${server_name} Exist"
         if [ ! -d "${SADM_WWW_DAT_DIR}/${server_name}" ]
-            then sadm_writelog "Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
+            then sadm_writelog "  - Creating ${SADM_WWW_DAT_DIR}/${server_name} directory"
                  mkdir -p "${SADM_WWW_DAT_DIR}/${server_name}"
                  chmod 2775 "${SADM_WWW_DAT_DIR}/${server_name}"
-            else sadm_writelog "Perfect ${SADM_WWW_DAT_DIR}/${server_name} directory already exist"
+            else sadm_writelog "  - [OK] Directory already exist"
         fi
 
     
@@ -193,13 +194,15 @@ process_servers()
         # Transfer $SADMIN/dat/dr (Disaster Recovery) from Remote to $SADMIN/www/dat/$server/dr Dir.
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/dr"                    # Local Receiving Dir.
-        sadm_writelog " " ; sadm_writelog "---------- Disaster Recovery Directory"
+        sadm_writelog " " ; 
+        #sadm_writelog "---------- Disaster Recovery Directory"
         sadm_writelog "Make sure local directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_writelog "Creating ${WDIR} directory"
+            then sadm_writelog "  - Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_writelog "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "  - [OK] Directory already exist"
         fi
+        sadm_writelog " " ; 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/"
                  rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_DR_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
@@ -208,9 +211,9 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_writelog "[ERROR] $RC for $server_name"
+           then sadm_writelog "  - [ERROR] $RC for $server_name"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_writelog "[SUCCESS] Rsync ${server_name}:${SADM_DR_DIR}/ $WDIR/"
+           else sadm_writelog "  - [SUCCESS] Rsync ${server_name}:${SADM_DR_DIR}/ $WDIR/"
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
 
@@ -219,13 +222,15 @@ process_servers()
         # Transfer Remote $SADMIN/dat/nmon files to local $SADMIN/www/dat/$server_name/nmon  Dir
         #-------------------------------------------------------------------------------------------
         WDIR="${SADM_WWW_DAT_DIR}/${server_name}/nmon"                     # Local Receiving Dir.
-        sadm_writelog " " ; sadm_writelog "---------- nmon Data Directory"
+        sadm_writelog " " ; 
+        #sadm_writelog "---------- nmon Data Directory"
         sadm_writelog "Make sure local directory $WDIR Exist"
         if [ ! -d "${WDIR}" ]
-            then sadm_writelog "Creating ${WDIR} directory"
+            then sadm_writelog "  - Creating ${WDIR} directory"
                  mkdir -p ${WDIR} ; chmod 2775 ${WDIR}
-            else sadm_writelog "Perfect ${WDIR} directory already exist"
+            else sadm_writelog "  - [OK] Directory already exist"
         fi
+        sadm_writelog " " ; 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
             then sadm_writelog "rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/"
                  rsync -var --delete -e 'ssh -qp32' ${server_name}:${SADM_NMON_DIR}/ $WDIR/ >>$SADM_LOG 2>&1
@@ -234,9 +239,9 @@ process_servers()
         fi
         RC=$?
         if [ $RC -ne 0 ]
-           then sadm_writelog "[ERROR] $RC for $server_name"
+           then sadm_writelog "  - [ERROR] $RC for $server_name"
                 ERROR_COUNT=$(($ERROR_COUNT+1))
-           else sadm_writelog "[OK] Rsync Success"
+           else sadm_writelog "  - [OK] Rsync Success"
         fi
         if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count is now at $ERROR_COUNT" ;fi
 
