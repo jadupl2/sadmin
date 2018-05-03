@@ -36,6 +36,7 @@
 #   V2.2 Fix Bugs after Testing on Fedora 27
 # 2018_05_03 JDuplessis
 #   V2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
+#   V2.4 Database Standard User Password are recorded now in .dbpass
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -51,7 +52,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.3"                                             # Setup Version Number
+sver                = "2.4"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
