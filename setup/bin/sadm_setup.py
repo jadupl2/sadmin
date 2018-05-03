@@ -31,7 +31,7 @@
 # 2018_04_27 JDuplessis
 #   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
 # 2018_04_30 JDuplessis
-#   V2.1 Enhance user experience, re-tested on Ubuntu 18.04,16.04 Server/Desktop, RedHat/CentOS7 and Debian 9 
+#   V2.1 Enhance user experience, re-tested Ubuntu 18.04,16.04 Server/Desktop,RedHat/CentOS7,Debian9 
 # 2018_05_01 JDuplessis
 #   V2.2 Fix Bugs after Testing on Fedora 27
 # 2018_05_03 JDuplessis
@@ -709,15 +709,15 @@ def user_exist(uname,dbroot_pwd):
 #===================================================================================================
 #
 def database_exist(dbname,dbroot_pwd):
-    dbfound = False
-    sql = 'show databases;'
-    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)
+    dbfound = False                                                     # Default sadminDB not there
+    sql = 'show databases;'                                             # Command to list Databases
+    cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)             # Build CmdLine to run SQL
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute MySQL Command 
-    if (ccode == 0):
-        listdb = cstdout.splitlines()
-        for db in listdb:
-             if (db == dbname) : dbfound = True
-    return (dbfound)
+    if (ccode == 0):                                                    # If Execution went well
+        listdb = cstdout.splitlines()                                   # Split Database Line
+        for db in listdb:                                               # For each DB in List
+             if (db == dbname) : dbfound = True                         # If sadmin Database Found
+    return (dbfound)                                                    # Return if sadmin DB found
 
 
 
@@ -778,9 +778,9 @@ def setup_mysql(sroot,sserver,sdomain):
             shutil.copyfile(mysql_file1,mysql_file2)                    # Copy Initial Web cfg
         except IOError as e:
             writelog("Error copying Mariadb %s config file. %s" % (mysql_file1,e)) 
-            sys.exit(1)                                             # Exit to O/S With Error
+            sys.exit(1)                                                 # Exit to O/S With Error
         except:
-            writelog("Unexpected error:", sys.exc_info())           # Advise Usr Show Error Msg
+            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)          
     
     # Restart MariaDB Service
@@ -871,6 +871,7 @@ def setup_mysql(sroot,sserver,sdomain):
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission 
     writelog ('')                                                       # Space line
     uname = "sadmin"                                                    # User to check in DB
+    rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl') # Show User
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))                     # Show user was found
@@ -890,10 +891,12 @@ def setup_mysql(sroot,sserver,sdomain):
             writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
+            rw_passwd = wcfg_rw_dbpwd                                   # DBpwd R/W sadmin Password
             writelog (" Done ")                                         # Advise User ok to proceed
     
     # Check if 'squery' user exist in Database, if not create User and Grant permission 
     uname = "squery"
+    ro_passwd = ""                                                      # Clear dbpass squery Pwd
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl')    
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))
@@ -913,10 +916,16 @@ def setup_mysql(sroot,sserver,sdomain):
             writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
+            ro_passwd = wcfg_ro_dbpwd                                   # DBpwd R/O squery Password
             writelog (" Done ")                                         # Advise User ok to proceed
         
     if (load_db) :                                                      # If first Time 
         add_server_to_db(sserver,dbroot_pwd,sdomain)                    # Add current Server to DB
+        dpfile = "%s/cfg/.dbpass" % (sroot)                             # Database Password File
+        dbpwd  = open(dpfile,'w')                                       # Open DBPass in write mode
+        dbpwd.write("sadmin,%s") % (rw_passwd))                         # Create R/W user & Password
+        dbpwd.write("squery,%s") % (ro_passwd))                         # Create R/O user & Password
+        dbpwd.close                                                     # Close DB Password File
 
     # Restart MariaDB Service
     writelog ('')                                                       # Space line
@@ -1379,7 +1388,6 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
         wdata = 0                                                       # Where response is store
         while True:                                                     # Loop until Valid response
             eprompt = sprompt + " [" + color.BOLD + str(sdefault) + color.END + "]" # Ins Def. in prompt
-#           wdata = int(input("%s : " % (eprompt)))                 # Accept an Integer
             wdata = input("%s : " % (eprompt))                       # Accept an Integer
             if (len(wdata) ==0): wdata = sdefault
             try:
@@ -1474,7 +1482,6 @@ def setup_sadmin_config_file(sroot):
             writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
             continue                                                    # Go Re-Accept Server Name
         xarray = socket.gethostbyaddr(SADM_IP)                              # Use IP & Get HostName
-#        yname = repr(xarray[0]).replace("'","")                         # Remove the ' from answer
         yname = socket.getfqdn(xarray[0])                               # Get FQDN of IP
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
             writelog("The server %s with ip %s is returning %s" % (wcfg_server,SADM_IP,yname))
