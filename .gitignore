@@ -79,3 +79,4 @@ __pycache__/
 .config/nautilus/desktop-metadata
 .config/yelp/yelp.cfg
 .esd_auth
+cfg/.dbpass
