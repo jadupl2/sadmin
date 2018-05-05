@@ -24,52 +24,50 @@
 #       V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
 #   2018_04_04 JDuplessis
 #       V2.8 Message when error while reading sadmin.cfg and sadmin.sh
+#   2018_05_04 JDuplessis
+#       V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
 
-# Setting the HOSTNAME Variable
-list($HOSTNAME) = explode ('.', gethostname());                         # HOSTNAME without domain
+    # Setting the HOSTNAME Variable
+    list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
 
-# GET THE SADMIN ENVIRONMENT VARIABLE CONTENT FROM /ETC/PROFILE.D/SADMIN.SH
-define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                       # Name of O/S Environment file
-
-# Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
-if (!is_readable(SADM_ENV)) {
-    exit ("The SADMIN environment file " . SADM_ENV . " wasn't found or not readable") ;
-}
-
-$handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
-if ($handle) {                                                          # If Successfully Open
-    while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
-        #$line = trim($line);
-        #if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
-        $pos = strpos($line,'=');
-        if ($pos !== false) {
-            if (strpos(trim($line),'#') === 0)                          # if 1st Non-WhiteSpace is #
-                { continue; }                                           # Skip comment line
-            list($fname,$fvalue) = explode ('=',$line);                 # Split Line by Name & Value
-            if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
-            if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
-            if (trim($fname) == "SADMIN")        { define("SADM_BASE_DIR", trim($fvalue)); }
-            if (trim($fname) == "export SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
-        }
+    # Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
+    define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                   # Name O/S Environment file
+    if (!is_readable(SADM_ENV)) {                                       # If file nt readable
+        exit ("SADMIN environment file " . SADM_ENV . " wasn't found or not readable") ;
     }
-    fclose($handle);
-}else{
-    exit ("Error opening the SADMIN Environment file " . SADM_ENV) ;
-}
-if ($DEBUG) { 
-    exit ("\n<br>SADMIN DIR = " . SADM_BASE_DIR . " <br>\n") ;
-}
+
+    $handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
+    if ($handle) {                                                          # If Successfully Open
+        while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
+            #$line = trim($line);
+            #if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
+            $pos = strpos($line,'=');
+            if ($pos !== false) {
+                if (strpos(trim($line),'#') === 0)                          # if 1st Non-WhiteSpace is #
+                    { continue; }                                           # Skip comment line
+                list($fname,$fvalue) = explode ('=',$line);                 # Split Line by Name & Value
+                #if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
+                #if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
+                if (trim($fname) == "SADMIN")        { define("SADM_BASE_DIR", trim($fvalue)); }
+                if (trim($fname) == "export SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
+            }
+        }
+        fclose($handle);
+    }else{
+        exit ("Error opening the SADMIN Environment file " . SADM_ENV) ;
+    }
+    if ($DEBUG) { echo  "\n<br>SADMIN DIR = " . SADM_BASE_DIR . " <br>\n" ; }
 
 
-#
-# Validate SADM_BASE_DIR by checking the existence of the lib directory in that Directory
-$LIBDIR=SADM_BASE_DIR . "/lib";
-if (!is_dir($LIBDIR)) {
-    exit("SADMIN environment variable in " .SADM_ENV. " isn't set correctly (" .SADM_BASE_DIR.")");
-}
+
+    # Validate SADM_BASE_DIR by checking the existence of the lib directory in that Directory
+    $LIBDIR=SADM_BASE_DIR . "/lib";
+    if (!is_dir($LIBDIR)) {
+        exit("SADMIN environment variable in " .SADM_ENV. " isn't set correctly (" .SADM_BASE_DIR.")");
+    }
 
 # SET SADMIN ROOT BASE DIRECTORY
 #$TMPVAR = getenv('SADMIN');                                             # Get SADMIN Env. Variable
@@ -111,6 +109,8 @@ define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LO
 
 # SADMIN FILES DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
+define("SADM_DBPASS_FILE"  , SADM_CFG_DIR . "/.dbpass") ;               # Name of Database Usr Pwd
+define("SADM_REL_FILE"     , SADM_CFG_DIR . "/.release") ;              # Name of the Release File
 define("SADM_CRON_FILE"    , SADM_WWW_LIB_DIR . "/.crontab.txt");       # SADM Crontab File
 define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_TMP_FILE2", SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
@@ -162,10 +162,6 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_DBDIR")         { define("SADM_DBDIR"         , trim($fvalue));}
           if (trim($fname) == "SADM_DBHOST")        { define("SADM_DBHOST"        , trim($fvalue));}
           if (trim($fname) == "SADM_DBPORT")        { define("SADM_DBPORT"        , trim($fvalue));}
-          if (trim($fname) == "SADM_RW_DBUSER")     { define("SADM_RW_DBUSER"     , trim($fvalue));}
-          if (trim($fname) == "SADM_RW_DBPWD")      { define("SADM_RW_DBPWD"      , trim($fvalue));}
-          if (trim($fname) == "SADM_RO_DBUSER")     { define("SADM_RO_DBUSER"     , trim($fvalue));}
-          if (trim($fname) == "SADM_RO_DBPWD")      { define("SADM_RO_DBPWD"      , trim($fvalue));}
           if (trim($fname) == "SADM_SERVER")        { define("SADM_SERVER"        , trim($fvalue));}
           if (trim($fname) == "SADM_DOMAIN")        { define("SADM_DOMAIN"        , trim($fvalue));}
           if (trim($fname) == "SADM_NETWORK1")      { define("SADM_NETWORK1"      , trim($fvalue));}
@@ -194,17 +190,47 @@ if ($handle) {                                                          # If Suc
 }
 
 
-# GET THE SADMIN RELEASE NUMBER FORM THE .RELEASE FILE
-define("SADM_REL_FILE" , SADM_CFG_DIR . "/.release") ;                  # Name of the Release File
-if (file_exists(SADM_REL_FILE)) {                                       # If Release file exist
-    $f = fopen(SADM_REL_FILE, 'r');                                     # Open Release FIle
-    $release = fgets($f);                                               # Read Rel No. from File
-    fclose($f);                                                         # Close .release file
-    define("SADM_VERSION" , trim($release));                            # Create Var. from Release
-}else{
-    define("SADM_VERSION" , "00.00");                                   # Default if File Not Exist
-    echo "<BR>\nRelease file is missing " . SADM_REL_FILE ;             # Error Mess. - File Missing
-}
+# Get SADMIN Tool release number form the .release file --------------------------------------------
+    if (file_exists(SADM_REL_FILE)) {                                   # If Release file exist
+        $f = fopen(SADM_REL_FILE, 'r');                                 # Open Release FIle
+        $release = fgets($f);                                           # Read Rel No. from File
+        fclose($f);                                                     # Close .release file
+        define("SADM_VERSION" , trim($release));                        # Create Var. from Release
+    }else{
+        define("SADM_VERSION" , "00.00");                               # Default if File Not Exist
+        echo "<BR>\nRelease file is missing " . SADM_REL_FILE ;         # Error Mess. - File Missing
+    }
+
+# Get 'sadmin' and 'squery' password from .dbpass file ---------------------------------------------
+    define("SADM_RW_DBUSER" , 'sadmin');                                # DB Read/Write User Name
+    $sadmin_pwd = "";                                                   # DB Read/Write Default Pwd 
+    define("SADM_RO_DBUSER" , 'squery');                                # DB Read Only User
+    $squery_pwd = "";                                                   # DB Read Only Default Pwd
+    if (file_exists(SADM_DBPASS_FILE)) {                                # If .dbpass file exist
+        $file = fopen(SADM_DBPASS_FILE, "r") or exit ("Unable to open .dbpass file !");
+        while(!feof($file)) {                                           # Read File Until EndOfFile
+            $line = trim(fgets($file));                                 # Read Line and trim it
+            if ((strpos(trim($line),'#') === 0) or (strlen($line) < 2)) # If 1st Non-WhiteSpace is #
+                continue;                                               # Go Read the next line
+            $strpos = strpos($line,'sadmin,');                          # Get Pos of 'sadmin,'
+            if ($strpos !== False) {                                    # If at beginning of line OK
+                list($fuser,$fpwd) = explode (',',$line);               # Split Line User,Password
+                $sadmin_pwd = $fpwd;                                    # Save sadmin user password
+                continue;
+            }
+            $strpos = strpos($line,'squery,');                          # Get Pos of 'squery,'
+            if ($strpos !== False) {                                    # If at beginning of line OK
+                list($fuser,$fpwd) = explode (',',$line);               # Split Line User,Password
+                $squery_pwd = $fpwd;                                    # Save squery user password
+                continue;
+            }
+        }
+        fclose($file);                                                  # Close Database Passwd file
+        define("SADM_RW_DBPWD"  , $sadmin_pwd);                         # DB Read/Write Password
+        define("SADM_RO_DBPWD"  , $squery_pwd);                         # DB Read Only Password
+    }else{
+        echo "<BR>\nDatabase password file missing " .SADM_DBPASS_FILE; # Error Mess. - File Missing
+    }
 
 
 # ADD PHP LIBRARY DIRECTORY TO PATH
@@ -212,11 +238,18 @@ if (file_exists(SADM_REL_FILE)) {                                       # If Rel
 set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
 //echo ini_get('include_path');
 
-# Connect to MySQL DataBase
-$con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME);
-if (mysqli_connect_errno())                                             # Check if Error Connecting
-{
-  echo "<BR>\n>>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'";
-  echo "<BR>\n>>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
-}
+    # Connect to MySQL DataBase
+    if ($DEBUG) { 
+        echo "\n<br>SADM_RW_DBUSER = ..." . SADM_RW_DBUSER  ."...";
+        echo "\n<br>SADM_RW_DBPWD  = ..." . SADM_RW_DBPWD   ."...";
+        echo "\n<br>SADM_RO_DBUSER = ..." . SADM_RO_DBUSER  ."...";
+        echo "\n<br>SADM_RO_DBPWD  = ..." . SADM_RO_DBPWD   ."...";
+        echo "\n<br>SADM_DBHOST    = ..." . SADM_DBHOST     ."...";
+        echo "\n<br>SADM_DBNAME    = ..." . SADM_DBNAME     ."...";
+    }
+    $con = mysqli_connect(SADM_DBHOST,SADM_RW_DBUSER,SADM_RW_DBPWD,SADM_DBNAME);
+    if (mysqli_connect_errno()) {                                       # Check if Error Connecting
+        echo "<BR>\n>>>>> Failed to connect to MySQL Database: '" . SADM_DBNAME . "'";
+        echo "<BR>\n>>>>> Error (" . mysqli_connect_errno() . ") " . mysqli_connect_error() . "'<br/>";
+    }
 ?>
