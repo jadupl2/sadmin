@@ -26,7 +26,9 @@
 #   2018_02_10 JDuplessis 
 #       V2.9 Rsync on SADMIN server (locally) is not using ssh
 #   2018_04_05 JDuplessis 
-#       V2.10 Do not copy web Interface crontab fro backup unless file exist
+#       V2.10 Do not copy web Interface crontab from backup unless file exist
+#   2018_05_06 JDuplessis 
+#       V2.11 Remove URL from Email when Error are detecting while fetching data
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -55,7 +57,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.10'                            ; export SADM_VER            # Your Script Version
+SADM_VER='2.11'                            ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -356,8 +358,6 @@ process_servers()
 
     if [ "$SADM_EXIT_CODE" -ne 0 ]
         then sadm_writelog "Writing Error Encountered at the top of the log"
-             echo "View the script log by clicking on the link below :" >> $SADM_ELOG
-             echo 'http://sadmin/sadmin/sadm_view_logfile.php?host=holmes&filename=holmes_sadm_fetch_servers.log'  >> $SADM_ELOG
              echo "----------" >> $SADM_ELOG
              cat $SADM_ELOG $SADM_LOG > $SADM_TMP_FILE3 2>&1
              cp $SADM_TMP_FILE3 $SADM_LOG
