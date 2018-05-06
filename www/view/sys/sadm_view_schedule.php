@@ -27,6 +27,8 @@
 #           Added VM or Physical Server
 # December 2017 - Jacques DUplessis
 #       2.0 Adapted for MySQL and various look enhancement
+# 2018_05_06    JDuplessis
+#       2.1 Use Standard view file web page instead of custom vie log pageAdapted for MySQL and various look enhancement
 #   
 # ==================================================================================================
 #
@@ -57,7 +59,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.0" ;                                                # Current version number
+$WVER          = "2.1" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -65,7 +67,8 @@ $URL_MAIN      = '/crud/srv/sadm_server_main.php';                      # Mainte
 $URL_HOME      = '/index.php';                                          # Site Main Page
 $URL_SERVER    = '/view/srv/sadm_view_servers.php';                     # View Servers List
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
-$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
+$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
+
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
@@ -125,7 +128,7 @@ function setup_table() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($count, $row) {
-    global $URL_HOST_INFO, $URL_VIEW_LOG, $URL_OSUPDATE ; 
+    global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_OSUPDATE ; 
     
     echo "<tr>\n";  
     #echo "<td class='dt-center'>" . $count . "</td>\n";  
@@ -237,8 +240,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
     if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_LOG . "?host=".  $row['srv_name'];
-        echo "&filename=" . $row['srv_name'] . "_sadm_osupdate_client.log' " ;
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name " ;
         echo " title='View Update Log'>Log</a>";
     }else{
         echo "N/A";
