@@ -28,7 +28,8 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_02_12 JDuplessis
 #       v2.1 Added Some Debugging Information
-#
+#   2018_05_06 JDuplessis
+#       2.2 Use Standard view file web page instead of custom vie log page
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -61,7 +62,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -69,7 +70,8 @@ $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
 $URL_CURRENT= '/view/sys/sadm_view_sysmon.php';                         # This page Current URL
-$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
+$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
+
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $tmp_file1          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp1_');
 $tmp_file2          = tempnam (SADM_TMP_DIR . "/", 'sysmon_tmp2_');
@@ -247,7 +249,7 @@ function sysmon_page_heading() {
 #                     Display Main Page Data from the row received in parameter
 #===================================================================================================
 function display_data($con,$alert_file) {
-    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_LOG ;
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_FILE ;
 
     echo "\n<tbody>\n";                                                 # Start of Table Body
     $array_sysmon = file($alert_file);                                  # Put Alert file in Array
@@ -327,8 +329,9 @@ function display_data($con,$alert_file) {
         $wlog =  $whost . "_" . $wscript . ".log";
         echo "<td>";
         if ($wdummy == "Script") {
-            echo "<a href='" . $URL_VIEW_LOG . "?host=" . $whost ;
-            echo "&filename=" . $wlog . "' title='View the script log - ";
+            echo "<a href='" . $URL_VIEW_FILE . "?";
+            $log_name  = SADM_WWW_DAT_DIR . "/" . $whost . "/log/" . trim($wlog) ;
+            echo "filename=" . $log_name . "' title='View the script log - ";
             echo $wlog . "'>" . $wdesc . "</a>";
         }else{
             echo $wdesc ;
