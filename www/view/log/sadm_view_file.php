@@ -24,28 +24,45 @@
 # ChangeLog
 #   2018_01_04 JDuplessis
 #       V1.0 Initial Version 
+#   2018_05_06 JDuplessis
+#       V1.1 Change the look of the web page (Simplify code)
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
+?>
+<style>
+pre, code{
+    direction: ltr;
+    text-align: left;
+}
+pre {border: solid 1px blue;
+    font-size: 1.0 em;
+    color: blue;
+    margin: 10px;
+    padding:10px;
+    background: #FFFFB3;
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */     
+}
+code {font-size:0.9em;
+    color: #003399
+}
+</style>
+<?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-echo "<style>";
-echo "table { ";
-echo "    display: table;";
-echo "    border-collapse: separate;";
-echo "    border-spacing: 2px;";
-echo "    border-color: black;";
-echo "}";
-echo "</style>";
 
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "10" ;                                                         # Current version number
+$SVER  = "1.1" ;                                                         # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -54,28 +71,24 @@ $CREATE_BUTTON = False ;                                                # Yes Di
 # ==================================================================================================
 function display_file ($WNAME)
 {
-    echo "\n<center>";                                                  # Center the Table
-    echo "\n<table>";                                # Define Table
-    echo "\n<tr>" ;                                                     # Begin Heading Row
-    $TITRE="Content of file " . basename($WNAME);                        # Build the Table Heading
-    echo "\n<th colspan=2 >" . $TITRE . "</th>";                         # Print 1st Row Heading
-    echo "\n</tr>";                                                     # Enf of Row Heading
+
+    # Display Table Heading
+    $TITRE = basename($WNAME);                                          # Build the Table Heading
+    echo "\n<h3><strong>" .$TITRE. "</strong></h3>";                    # Print 1st Row Heading
     
-    $count=0; $ddate = 0 ; 
-    $fh = fopen($WNAME,"r") or exit("Unable to open file : " . $WNAME); # Load Log In Memory
+    $count=0;                                                           # Set Line Counter to Zero
+    $fh = fopen($WNAME,"r") or exit("Unable to open file : " . $WNAME); # Load File In Memory
+    echo "<pre><code>";
     while(!feof($fh)) {                                                 # Read till End Of File
-        $wline = fgets($fh);                                            # Read Log Line By Line    
+        $wline = fgets($fh);                                            # Read Line By Line    
         if (strlen($wline) > 0) {                                       # Don't process empty Line
             $count+=1;                                                  # Increase Line Counter
-            echo "\n<tr>";                                              # Begin Table Row
-            if ($count % 2 == 0) { $BGCOLOR="#f8f1f8" ; }else{ $BGCOLOR="#f5d7f5" ;}
-            echo "\n<td width=40>" . $count   . "</td>\n";              # Print Line Counter
-            echo "\n<td>" . $wline  . "</td>";                          # Print Log Line
-            echo "\n</tr>";                                             # End of Row
+            $pline = sprintf("%6d - %s\n" , $count,trim($wline));       # Format Line
+            echo $pline;                                                # Print Log Line
         }
     }
+    echo "</code></pre>";
     fclose($fh);                                                        # Close Log
-    echo "</table></center><br>\n";                                         # End of Table
     return ;
 }
 
