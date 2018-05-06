@@ -25,6 +25,8 @@
 #       V 1.0 Initial Version
 #   2018_02_06 JDuplessis
 #       V 1.1 Add Default Start/End Date for Adhoc graph 
+#   2018_05_06 JDuplessis
+#       V 1.2 Remove unnecessary variable
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -39,11 +41,10 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                        # Current version number
+$SVER  = "1.2" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
-$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
 
 #display_std_heading("NotHome","Performance","","",$SVER);           # Display Content Heading
 echo "<H2>Performance Graph for Unix servers</H2><br>\n" ; 
