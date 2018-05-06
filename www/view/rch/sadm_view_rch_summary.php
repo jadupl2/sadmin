@@ -25,7 +25,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#
+#   2018_05_06 JDuplessis
+#       2.1 Change to use sadm_view_file instead of sadm_view_log 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -55,11 +56,11 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
-$URL_VIEW_LOG  = '/view/log/sadm_view_logfile.php';                     # View LOG File Content URL
+$URL_VIEW_FILE = '/view/log/sadm_view_file.php';                        # View File Content URL
 
 # ==================================================================================================
 # SETUP TABLE HEADER AND FOOTER
@@ -111,7 +112,7 @@ function setup_table() {
 #   3rd Parameter is the Script Array 
 # ==================================================================================================
 function display_script_array($con,$wpage_type,$script_array) {
-    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_VIEW_LOG ; 
+    global $DEBUG, $URL_HOST_INFO, $URL_VIEW_RCH, $URL_VIEW_FILE ; 
     
     # LOOP THROUGH THE SCRIPT ARRAY ----------------------------------------------------------------
     foreach($script_array as $key=>$value) { 
@@ -184,8 +185,8 @@ function display_script_array($con,$wpage_type,$script_array) {
             echo "\n<td class='dt-center'>" ;
             $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . trim($LOGFILE) ;
             if (file_exists($log_name)) {
-                echo "<a href='" . $URL_VIEW_LOG . "?host=". $cserver . "&filename=" . 
-                 $LOGFILE .  "' data-toggle='tooltip' title='View Script Log File'>View Log</a>";
+                 echo "<a href='" . $URL_VIEW_FILE . "?filename=" . 
+                 $log_name .  "' data-toggle='tooltip' title='View Script Log File'>View Log</a>";
             }else{
                 echo "No Log";                                          # If No log exist for script
             }
@@ -194,7 +195,6 @@ function display_script_array($con,$wpage_type,$script_array) {
         }
     }    
 }
-
 
 
 
