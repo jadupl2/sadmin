@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------------------------------------------
 # UPDATED FOR VERSION 2.1
-# SADM SYSMON Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.cfg
+# SADM SYSMON Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.smon
 # This file is read and updated by SADM SYSMON every time it run.
 # New Filesystem line will be added automatically to this file when Detected.
 #----------------------------------------------------------------------------------------------------------------------------------------
@@ -45,21 +45,32 @@ swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 2002
 #---------- Linux Service Monitoring
 service_crond|cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 #service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
-#service_named                   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+#service_named|named-chroot      0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_chronyd|ntp|ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_ssh|sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_postfix|sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_syslog|rsyslog|syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+
 #
-#
-#---------- Issue a network ping to server and issue warning or error based on threshold
-#ping_www.google.com              0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-#ping_www.ibm.com                 0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-#
-#http_sadmin.maison.ca            1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-#http_sysinfo.maison.ca           1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-#http_www.linternux.com           1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
-# 
+# Daemon or process running monitoring
+#daemon_dhcpd                     1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+
+# Check Linux Multipath Status (1=ok 0=Error)
+# - Here we have an online status (1) and a problem with multipath (0) (Warning Level is at 0)
+# - If the status is different than 1 then an error is signaled
+check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+
+# Test http access to web sites below
+http_www.linux.com                  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+
+
+# Issue a ping to server and issue warning based on threshold
+ping_www.google.com              0  >  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+
+# Issue a ping to server and issue error based on threshold
+ping_www.ibm.com                 0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
+
+ 
 #---------- Filesystem Usage Monitoring - Can increase it by 10% if increasing script is specified (Last Parameter).
 #
 #SADMSTAT 2.5 holmes - Sat Feb  4 09:56:10 2017 - Execution Time 5.00 seconds
