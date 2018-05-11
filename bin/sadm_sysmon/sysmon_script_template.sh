@@ -33,6 +33,8 @@ VER='1.0'                                   ; export VER                # Script
 INST=`echo "$PN" | awk -F\. '{ print $1 }'` ; export INST               # Script name without ext.
 WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`         ; export WDATE              # Today Date and Time
 DASH=`printf %80s |tr ' ' '-'`              ; export DASH               # 80 dashes
+FILENAME='/tmp/sysmon.tmp'                  ; export FILENAME           # FileName to test Existence
+
 
 
 #===================================================================================================
@@ -43,13 +45,12 @@ main_process()
     # Show Script Name, Versrion and starting Date/Time.
     echo -e "\n\n${DASH}\nStarting script $PN on ${HOSTNAME} `date`"    # Print Script Header
 
-    # Check if a process "job123"  is running
-    JOBNAME='job123'                                                    # Name of Process to check
-    ps -ef | grep -v grep | grep -v "$INST" | grep -i "$JOBNAME" > /dev/null 2>&1
-    RC=$?                                                               # Save Return Code
-    if [ $RC -ne 0 ]                                                    # If Job Not Running
-        then echo -e "\nJob $JOBNAME not running ... "                  # Feed the script Log
-        else echo -e "\nJob $JOBNAME running ... "                      # Feed the script Log
+    # Check if file exist
+    if [ -r $FILENAME ] 
+        then echo -e "\nFile $FILENAME exist"
+             RC=0
+        else echo -e "\nFile $FILENAME doesn't exist"
+             RC=1
     fi
     #
     return $RC                                                          # Return Status to Caller

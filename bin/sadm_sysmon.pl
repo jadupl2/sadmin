@@ -139,7 +139,7 @@ my $SCP_CON       = "$CMD_SCP -rP${SADM_SSH_PORT} ${SADM_USER}\@${SADM_SERVER}";
 
 # AUTOMATIC FILESYSTEM INCREASE PARAMETERS
 my $MINIMUM_SEC=86400;                 # 1 Day=86400 Sec. = Minimum between Filesystem Incr.
-my $INCREASE_PER_DAY=2;                # Number of filesystem increase allowed per Day.
+my $MAX_FS_INCR=2;                     # Number of filesystem increase allowed per Day.
 my $SCRIPT_MIN_SEC_BETWEEN_EXEC=86400; # Restart script didn't run for more than value then ok 2 run
 
 # HTTP match 
@@ -259,7 +259,6 @@ sub load_smon_file {
 
 
 
-
 #---------------------------------------------------------------------------------------------------
 # Unload the sysmon array back to `hostname`.smon configuration file with updated values
 #---------------------------------------------------------------------------------------------------
@@ -302,9 +301,6 @@ sub show_sysmon_array {
         print ("$sysmon_array[$widx]"); 
     }
 }
-
-
-
 
 
 
@@ -359,7 +355,7 @@ sub combine_fields {
         $SADM_RECORD->{SADM_FRI},
         $SADM_RECORD->{SADM_SAT},
         $SADM_RECORD->{SADM_ACTIVE},
-        $SADM_RECORD->{SADM_DATE},
+        $SADM_RECORD->{SADM_DATE},                  # Last Time that the error Occured
         $SADM_RECORD->{SADM_TIME},
         $SADM_RECORD->{SADM_QPAGE},
         $SADM_RECORD->{SADM_EMAIL},
@@ -370,329 +366,310 @@ sub combine_fields {
 
 
 #---------------------------------------------------------------------------------------------------
-#                               FILESYSTEM INCREASE FUNCTION
+# Filesystem Increase Function
 #---------------------------------------------------------------------------------------------------
 sub filesystem_increase {
-    my ($FILESYSTEM) = @_;                                              # filesystem name to incr.
-    print "\nFilesystem $FILESYSTEM selected for increase";             # Entering filesystem funct.
+    my ($FILESYSTEM) = @_;                                              # Filesystem name to enlarge
+    print "\n\nFilesystem $FILESYSTEM selected for increase";           # Show User Filesystem Incr.
 
-    my $FS_SCRIPT = "${SADM_BIN_DIR}/$SADM_RECORD->{SADM_SCRIPT}";
+    my $FS_SCRIPT = "${SADM_BIN_DIR}/$SADM_RECORD->{SADM_SCRIPT}";      # Get FS Enlarge Script Name
     $FSCMD = "$FS_SCRIPT $FILESYSTEM >>${SADM_LOG_DIR}/$SADM_RECORD->{SADM_SCRIPT}.log 2>&1" ;
-    print "\nThe command that will be executed is $FSCMD";
-    @args = ("$FSCMD");
-    $src = system(@args) ;
-    if ( $src == -1 ) { 
-        print "\ncommand failed: $!"; 
-    }else{ 
-        printf "\ncommand exited with value %d", $? >> 8; 
+    print "\n  - Command that will be executed: $FSCMD";                # SHow User CMD to Increase
+    @args = ("$FSCMD");                                                 # Build System Cmd
+    $src = system(@args) ;                                              # Execute FS Increase Script
+    if ( $src == -1 ) {                                                 # If FS Enlarge Failed
+        print "\n  - [ERROR] Command failed: $!";                       # Advise USer
+    }else{                                                              # If FS Enlarge Succeeded
+        printf "\n  - [OK] Filesystem increase succeeded - Return Code: %d", $? >> 8; 
     }
-    return $src ;
+    return $src ;                                                       # Return Err. Code to Caller
 }
 
 
 
 #---------------------------------------------------------------------------------------------------
-#               ROUTINE TO CHECK THE ACTUAL VALUE VERSUS THE WARNING & ERROR VALUE
+# Function the check Actual Value against the warning and error value
+# Fields received as parameters ;
+#   - Actual Value ($ACTVAL), Warning Value ($WARVAL), Error Value ($ERRVAL), 
+#   - Test to make (>=, <=, !=, =, <, >)
+#   - Name of Module ($MODULE), Name of SubModule ($SUBMODULE)
+#   - Precision, Value use in error message
 #---------------------------------------------------------------------------------------------------
 sub check_for_error {
+    my ($ACTVAL,$WARVAL,$ERRVAL,$TEST,$MODULE,$SUBMODULE,$WID)=@_;      # Split Array Received
+    if ($SYSMON_DEBUG >= 6) { 
+        print "\nCheck_for_error Function";
+        print "\nActual Value  = $ACTVAL";
+        print "\nWarning Value = $WARVAL";
+        print "\nError Value   = $ERRVAL";
+        print "\nTest Operator = $TEST";
+        print "\nModule        = $MODULE";
+        print "\nSub-Module    = $SUBMODULE";
+        print "\nWID           = $WID";
+    } 
+    $alert_type="N";                                                    # No Error by default
 
-    # Fields received as parameters ;
-    #  Actual Value, Warning Value, Error Value, Test to make (=,<,>,...) 
-    #  Module Name (AIX, PSSP, ADSM, AUTOSYS, ...) Submodule (Filesystem, ...) and
-    #  Value used in the error message.
-    my ($ACTVAL, $WARVAL, $ERRVAL, $TEST, $MODULE, $SUBMODULE, $WID) = @_;
-
-
-    if ($SYSMON_DEBUG >= 6) { printf "\nCheck for Error - WID = $WID";}
-    $error_detected="N";                                                # No Error by default
-
-    # IF THE TEST TO PERFORM INVOLVE ">=" OPERATOR.
-    if ($TEST eq ">=" ) {
-        if (($ACTVAL >= $WARVAL) && ($WARVAL != 0)) {                   # Check actual value against the warning level
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
+    # If the test to perform involve ">=" operator.
+    if ($TEST eq ">=" ) {                                               # Operator >= was used 
+        if (($ACTVAL >= $WARVAL) && ($WARVAL != 0)) {                   # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
         }
-        if (($ACTVAL >= $ERRVAL) && ($ERRVAL != 0)) {                   # Check the actual value against the error level
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
-        }
-    }
-
-    # IF THE TEST TO PERFORM INVOLVE "<=" OPERATOR.
-    if ($TEST eq "<=" ) {
-        # Check the actual value against the warning level
-        if (($ACTVAL <= $WARVAL) && ($WARVAL != 0)) {
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
-        }
-        # Check the actual value against the error level
-        if (($ACTVAL <= $ERRVAL) && ($ERRVAL != 0)) {
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
+        if (($ACTVAL >= $ERRVAL) && ($ERRVAL != 0)) {                   # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
         }
     }
 
-    # IF THE TEST TO PERFORM INVOLVE "!=" OPERATOR.
-    if ($TEST eq "!=" ) {
-        # Check the actual value against the warning level
-        if (($ACTVAL != $WARVAL) && ($WARVAL != 0)) {
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
+    # If the test to perform involve "<=" operator.
+    if ($TEST eq "<=" ) {                                               # Operator <= was used 
+        if (($ACTVAL <= $WARVAL) && ($WARVAL != 0)) {                   # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
         }
-        # Check the actual value against the error level
-        if (($ACTVAL != $ERRVAL) && ($ERRVAL != 0)) {
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
+        if (($ACTVAL <= $ERRVAL) && ($ERRVAL != 0)) {                   # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
         }
     }
 
-    # IF THE TEST TO PERFORM INVOLVE "=" OPERATOR
-    if ($TEST eq "=" ) {
-        # Check the actual value against the warning level
-        if (($ACTVAL == $WARVAL) && ($WARVAL != 0)) {
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
+    # If the test to perform involve "!=" operator.
+    if ($TEST eq "!=" ) {                                               # Operator != was used
+        if (($ACTVAL != $WARVAL) && ($WARVAL != 0)) {                   # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
         }
-        # Check the actual value against the error level
-        if (($ACTVAL == $ERRVAL) && ($ERRVAL != 0)) {
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
+        if (($ACTVAL != $ERRVAL) && ($ERRVAL != 0)) {                   # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
         }
     }
 
-    # IF THE TEST TO PERFORM INVOLVE "<" OPERATOR.
-    if ($TEST eq "<" ) {
-        # Check the actual value against the warning level
-        if (($ACTVAL < $WARVAL) && ($WARVAL != 0)) {
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
+    # If the test to perform involve "=" operator
+    if ($TEST eq "=" ) {                                                # Operator != was used
+        if (($ACTVAL == $WARVAL) && ($WARVAL != 0)) {                   # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
         }
-        # Check the actual value against the error level
-        if (($ACTVAL < $ERRVAL) && ($ERRVAL != 0)) {
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
+        if (($ACTVAL == $ERRVAL) && ($ERRVAL != 0)) {                   # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
         }
     }
 
-    # IF THE TEST TO PERFORM INVOLVE ">" OPERATOR.
-    if ($TEST eq ">" ) {
-        # Check the actual value against the warning level
-        if (($ACTVAL > $WARVAL) && ($WARVAL != 0)) {
-            $error_detected="W";                                        # Save type of error encountered
-            $value_exceeded=$WARVAL;                                    # Save the warning level value
+    # If the test to perform involve "<" operator.
+    if ($TEST eq "<" ) {                                                # Operator < was used
+        if (($ACTVAL < $WARVAL) && ($WARVAL != 0)) {                    # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
         }
-        # Check the actual value against the error level
-        if (($ACTVAL > $ERRVAL) && ($ERRVAL != 0)) {
-            $error_detected="E";                                        # Save type of error encountered
-            $value_exceeded=$ERRVAL;                                    # Save the error level value
+        if (($ACTVAL < $ERRVAL) && ($ERRVAL != 0)) {                    # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
         }
     }
 
+    # If the test to perform involve ">" operator.
+    if ($TEST eq ">" ) {                                                # Operator > was used
+        if (($ACTVAL > $WARVAL) && ($WARVAL != 0)) {                    # Act.Value vs Warning Value
+            $alert_type="W";                                            # Err. Detected is a warning
+            $value_exceeded=$WARVAL;                                    # Save the Warning value
+        }
+        if (($ACTVAL > $ERRVAL) && ($ERRVAL != 0)) {                    # Act.Value vs Error Value
+            $alert_type="E";                                            # Err. Detected is a Error
+            $value_exceeded=$ERRVAL;                                    # Save the Error value
+        }
+    }
 
-    # IF NO ERROR WAS DETECTED - EXIT FUNCTION
-    if ($error_detected eq "N") { return ; }                            # Return to caller
+    # If no error was detected - exit function
+    if ($alert_type eq "N") { return ; }                                # Return to caller
 
+    ## Operating System Error Related Section
+    if (($MODULE eq "aix") || ($MODULE eq "linux")) {                   # If Module is aix or linux
 
-    #---------- AIX or LINUX Operating System Error Related portion
-    if (($MODULE eq "aix") || ($MODULE eq "linux")) {
+      ## Load average alert occured
+      if ($SUBMODULE eq "LOAD") {                                       # Check Uptime Load Average
+        ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get Date,Time,Epoch Time
+        if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
+           print "\nActual Time : $year $month $day $hour $min $sec";   # Show Actual Time
+           print "\nActual Epoch: $epoch";                              # Show Actual Epoch Time
+        }
+        # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+        if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
+           $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
+           $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
+        }
+        # Split Date and Time when the load began to exceed warning or error value
+        $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
+        $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
+        $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
+        $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
+        $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
+        # Get Epoch Time of the last time we had a load exceeded
+        $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0"); 
+        if ($SYSMON_DEBUG >= 5) { 
+            print "\nLoad Average Alert started at $wyear $wmonth $wday $whrs $wmin 00"; 
+            print "\nLoad Average Alert Started at this epoch time $last_epoch"; 
+        }
+        # Calculate number of seconds before SADM report the error (Min * 60 sec)
+        $elapse_second = $epoch - $last_epoch;                          # Cur. Epoch - $last_epoch
+        $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;               # Min. Before alert in Sec.
+        if ($SYSMON_DEBUG >= 5) {                                       # Under Debug Mode
+           print "\nSo $epoch - $last_epoch = $elapse_second seconds";  # Sec. Elapse Since Started
+           print "\nYou asked to wait $max_second seconds before issuing alert";
+        }
+        # If number of second since the last error is greater than wanted - Issue Alert
+        if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait 
+           $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
+           $ERR_MESS = "Load Average at $WID & exceed $value_exceeded for more than $wmin Min";
+           write_error_file($alert_type,"$OSNAME","LOAD",$ERR_MESS);    # Go Reporting Alert
+           $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
+        }
+      } 
            
-      #---------- FILESYSTEM ALERT OCCURED
-      if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If error/warning on filesystem
-        $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%" ;  # Set up Error Message
-        write_error_file($error_detected ,"$OSNAME", "FILESYSTEM",$ERR_MESS); # Write rpt file
+      ## Paging alert occured
+      if ($SUBMODULE eq "PAGING") {                                     # When Paging Alert
+            $ERR_MESS = "Paging space at $ACTVAL% > $value_exceeded%" ; # Build Error Message
+            write_error_file($alert_type,"$OSNAME","PAGING",$ERR_MESS );# Go Report Alert
+      }
       
-      #   ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
-      #   if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
-      #      print "\n\n----- Filesystem Increase: $WID at $ACTVAL%\n";  # FileSystem Entered
-      #      print "\nActual Time is $year $month $day $hour $min $sec\n"; # Print current time
-      #      print "\nActual epoch time is $epoch\n";                      # Print Epoch time
-      #   }
-      #   # If it is the first occurence of the Error - Put Date and Time in cfg
-      #   if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                        # If current date = 0 in SADM Array
-      #      $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d",$year,$month,$day); # SADM_DATE=current date
-      #      $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);       # SADM_Time=current time
-      #   }
-      #            
-      #   # Split Date and Time of last file increase to be ready to call get_epoch function
-      #   $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year from SADM_DATE
-      #   $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Month from SADM_DATE
-      #   $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day from SADM_DATE
-      #   $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hour from SADM_TIME
-      #   $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min from SADM_TIME
-      #     
-      #   # Calculate Epoch Time of the last filesystem increase
-      #   $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0");   
-      #   if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
-      #       print "Last series of filesystem increase started at $wyear $wmonth $wday $whrs $wmin 00\n"; 
-      #       print "Elapsed time since last series of filesystem increase : $last_epoch\n"; 
-      #   }
-      #
-      #   # Calculate the number of seconds since the last execution 
-      #   # Current Epoch - Last Epoch of filesystem increase
-      #   $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
-      #   if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-      #      print "So $epoch - $last_epoch = $elapse_second seconds\n";  # Print Elapsed seconds
-      #   }
-      #
-      #   # If number of second between the last increase and now is greater than 1 Day = OK RUN
-      #   if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 1 Day
-      #      ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
-      #      $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); 
-      #      $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        
-      #      $SADM_RECORD->{SADM_MINUTES} = "001";                        # First one Today
-      #      if ($SYSMON_DEBUG >= 5) {                                    # If DEBUG Activated
-      #         print "Filesystem increase number $SADM_RECORD->{SADM_MINUTES} ";  
-      #      }
-      #      filesystem_increase($WID);                                   # Go Increase Filesystem
-      #   }else{
-      #      #$SADM_RECORD->{SADM_MINUTES} ++ ;                           # Increase filesystem counter 
-      #      if (($SADM_RECORD->{SADM_MINUTES} + 1) > $INCREASE_PER_DAY){ # If Counter exceed limit
-      #         if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-      #            print "Filesystem increase for $WID as been done $INCREASE_PER_DAY times within last 24 Hrs.";
-      #            print "\nFilesystem increase will not be done.";       # Inform user not done
-      #         }
-      #         $ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
-      #         write_error_file($error_detected ,"$OSNAME", "FILESYSTEM",$ERR_MESS); # Write rpt file
-      #      }else{
-      #         $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
-      #         $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
-      #         if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-      #            print "Filesystem increase number $SADM_RECORD->{SADM_MINUTES} ";
-      #         }
-      #         filesystem_increase($WID);                                # Go Increase Filesystem
-      #      }
-      #   }
-      } # End of Filesystem Module
-           
+      ## Multipath alert occured     
+      if ($SUBMODULE eq "MULTIPATH")   {                                # When Multipath Alert 
+         $ERR_MESS = "MultiPath Error - Status is $WID" ;               # Build Error Message
+         write_error_file($alert_type,"$OSNAME","MULTIPATH",$ERR_MESS );# Go Report Alert
+      } 
       
-      #---------- LOAD AVERAGE ALERT OCCURED
-      if ($SUBMODULE eq "LOAD") {
-         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get Date,Time,Epoch Time
-         if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG Activated
-            print "\nActual Time : $year $month $day $hour $min $sec\n"; 
-            print "Actual Epoch Time : $epoch\n"; 
-         }
-         #----- If it is the first occurence of the Error - Put Date and Time in cfg
-         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {
-            $SADM_RECORD->{SADM_DATE} = sprintf ("%04d%02d%02d", $year,$month,$day);
-            $SADM_RECORD->{SADM_TIME} = sprintf ("%02d%02d",$hour,$min,$sec); 
-         }
-         #----- Split Date and Time ready to call get_epoch function
-         $wyear  = sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);
-         $wmonth = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);
-         $wday   = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);
-         $whrs   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);
-         $wmin   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);
-         #----- Get Epoch Time of the last time we had a load exceeded
-         $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0");
-         if ($SYSMON_DEBUG >= 5) { 
-             print "The load on the cpu started at $wyear $wmonth $wday $whrs $wmin 00\n"; 
-             print "The load started time in epoch time $last_epoch\n"; 
-         }
-         #----- Calculate the number of seconds before SADM report the error (Min * 60 sec)
-         $elapse_second = $epoch - $last_epoch;
-         $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;
-         if ($SYSMON_DEBUG >= 5) { 
-            print "So $epoch - $last_epoch = $elapse_second seconds\n"; 
-            print "You asked to wait $max_second seconds before report an error\n";
-         }
-         #----- If number of second since the last error is greater than wanted - Issue error
-         if ( $elapse_second >= $max_second ) {
-            $ERR_MESS = "Load Average is $WID and exceeding $value_exceeded for more than $SADM_RECORD->{SADM_MINUTES} Min.";
-            write_error_file($error_detected ,"$OSNAME", "LOAD", $ERR_MESS );
-            $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;
-         }
-      } # End of Load Module
-           
-
-      #---------- PAGING ALERT OCCURED     
-      if ($SUBMODULE eq "PAGING")   { 
-         $ERR_MESS = "Paging space at $ACTVAL% > $value_exceeded%" ;
-         write_error_file($error_detected ,"$OSNAME", "PAGING", $ERR_MESS );
-      } # End of Paging Module
-      
-           
-      #---------- MULTIPATH ALERT OCCURED     
-      if ($SUBMODULE eq "MULTIPATH")   { 
-         $ERR_MESS = "MultiPath Error - Status is $WID" ;
-         write_error_file($error_detected ,"$OSNAME", "MULTIPATH", $ERR_MESS );
-      } # End of Multipath Module
-      
-
-      #---------- SCRIPT EXECUTION REQUEST WHEN ERROR OCCURED
-      if ($SUBMODULE eq "SCRIPT")   { 
-         $ERR_MESS = "$OSNAME - Script ${WID}.sh failed !" ;
-         my $smess = "${WID}.txt";
-         if ( -e "${SADM_SCR_DIR}/$smess" ) {
-            if ($SYSMON_DEBUG >= 5) { print "\nContent of file ${SADM_SCR_DIR}/$smess used for error msg"; }
-            open SMESSAGE, "${SADM_SCR_DIR}/$smess" or die $!;
-            while ($sline = <SMESSAGE>) { chomp $sline ; $ERR_MESS="$sline "; }
-            close SMESSAGE;
-         }
-         write_error_file($error_detected ,"$OSNAME", "SCRIPT", $ERR_MESS );
-      } # End of Script Module
-
-
-      #---------- CPU ERROR OCCURED   
-      if ($SUBMODULE eq "CPU") {
+      ## Cpu utilization percentage alert 
+      if ($SUBMODULE eq "CPU") {                                        # When CPU Utilization Alert
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get Date,Time, Epoch Time
+         if ($SYSMON_DEBUG >= 5) {                                      # IF Debug Level >= 5
+            print "\nActual Time is $year $month $day $hour $min $sec"; # Show Current Date/Time
+            print "\nActual epoch time is $epoch";                      # Show Current Epoch Time
+         }
+         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
+            $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day); # Save Excess Date
+            $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);       # Save Excess Time
+         }
+         # Split Date and Time when the load began to exceed warning or error value
+         $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);  # Extract Year Error started
+         $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);  # Extract Mth Error started
+         $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);  # Extract Day Error Started
+         $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);  # Extract Hrs Error Started
+         $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);  # Extract Min Error Started
+         # Get Epoch Time of the last time we started to have an exceeding load
+         $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); 
          if ($SYSMON_DEBUG >= 5) { 
-            print "\nActual Time is $year $month $day $hour $min $sec";
-            print "\nActual epoch time is $epoch";
+             print "\nLoad on cpu started at $wyear $wmonth $wday $whrs $wmin 00";
+             print "\nLoad on cpu started time in epoch time $last_epoch";
          }
-         #----- If it is the first occurence of the Error - Put Date and Time in cfg
-         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {
-            $SADM_RECORD->{SADM_DATE} = sprintf ("%04d%02d%02d", $year,$month,$day);
-            $SADM_RECORD->{SADM_TIME} = sprintf ("%02d%02d",$hour,$min,$sec);
-         }
-         #----- Split Date and Time ready to call get_epoch function
-         $wyear  = sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);
-         $wmonth = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);
-         $wday   = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);
-         $whrs   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);
-         $wmin   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);
-         #----- Get Epoch Time of the last time we had a load exceeded
-         $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0");
-         if ($SYSMON_DEBUG >= 5) { 
-             print "\nLoad on the cpu started at $wyear $wmonth $wday $whrs $wmin 00";
-             print "\nLhe load started time in epoch time $last_epoch";
-         }
-         #----- Calculate the number of seconds before SADM SYSMON report the errors (Min * 60 sec)
-         $elapse_second = $epoch - $last_epoch;
+         # Calculate number of seconds before SYSMON report the errors (Min * 60 sec)
+         $elapse_second = $epoch - $last_epoch;                         # Nb Sec. Since Load Started
          $max_second = $SADM_RECORD->{SADM_MINUTES} * 60 ;
          if ($SYSMON_DEBUG >= 5) { 
             print "\nSo $epoch - $last_epoch = $elapse_second seconds";
             print "\nYou asked to wait $max_second seconds before report an error";
          }
-         #-----  Number of second between last error and now is greater than wanted - Issue error
-         if ( $elapse_second >= $max_second ) {
-            print "\nValue exceeded = $value_exceeded";
-            print "\nActual Value   = $ACTVAL";
-            print "\nMinutes        = $SADM_RECORD->{SADM_MINUTES}";
-            $ERR_MESS = sprintf ("CPU at %-3d pct for more than %-3d min",$ACTVAL,$SADM_RECORD->{SADM_MINUTES}) ;
-            write_error_file($error_detected ,"$OSNAME", "CPU", $ERR_MESS );
-            $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;
-         }
-      }  # End of CPU SubModule
+        # If number of second since the last error is greater than wanted - Issue Alert
+        if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait 
+           $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
+           $ERR_MESS = sprintf("CPU at %-3d pct for more than %-3d min",$ACTVAL,$wmin);
+           write_error_file($alert_type,"$OSNAME","CPU",$ERR_MESS );    # Go Process Alert
+           $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
+        }
+      }  
 
-   } # End of AIX/LINUX Module 
+      ## Filesystem alert occured
+      if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
+         $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%";  # Set up Error Message
+         write_error_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);# Go Report Alert 
+
+         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
+         if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
+            print "\n\nFilesystem Increase: $WID at $ACTVAL%\n";        # FileSystem Incr. Entered
+            print "\nActual Time is $year $month $day $hour $min $sec"; # Print current time
+            print "\nActual epoch time is $epoch";                      # Print Epoch time
+         }
+         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
+         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
+            $SADM_RECORD->{SADM_DATE}=sprintf ("%04d%02d%02d",$year,$month,$day);# Save Excess Date
+            $SADM_RECORD->{SADM_TIME}=sprintf ("%02d%02d",$hour,$min,$sec);      # Save Excess Time
+         }
+         # Split Date and Time when the last file increase Happened 
+         $wyear  =sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4); # Extract Year Error started
+         $wmonth =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2); # Extract Mth Error started
+         $wday   =sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2); # Extract Day Error Started
+         $whrs   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2); # Extract Hrs Error Started
+         $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
+         $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); 
+         if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
+            print "\nLast series of filesystem increase started at $wyear $wmonth $wday $whrs $wmin";
+            print "\nElapsed time since last series of filesystem increase : $last_epoch"; 
+         }
+         # Calculate the number of seconds since the last execution 
+         $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
+         if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
+            print "So $elapse_second seconds since last increase";       # Print Elapsed seconds
+         }
+         # If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
+         if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
+            ($year,$month,$day,$hour,$min,$sec,$epoch) =Today_and_Now(); # Get current epoch time
+            $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); 
+            $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        
+            $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
+            if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
+            filesystem_increase($WID);                                   # Go Increase Filesystem
+         }else{
+            if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
+               if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+                  print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
+                  print "\nFilesystem increase will not be done.";       # Inform user not done
+               }
+               $ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
+               write_error_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
+            }else{
+               $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
+               $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
+               if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
+                  print "Filesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
+               }
+               filesystem_increase($WID);                                # Go Increase Filesystem
+            }
+         }
+      } 
+    } # End of AIX/LINUX Module 
              
 
-   #---------- Error detected for the Module name "NETWORK" 
-   # Error detected for the Module name "Network"
+   ## Error detected for the Module name "NETWORK" 
    if ($MODULE eq "NETWORK")   { 
       if ($SUBMODULE eq "PING")   { 
-         if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID Failed"; }
-         $ERR_MESS = "Cannot ping server $WID - Server may be down" ;
-         write_error_file($error_detected ,"NETWORK", "PING", $ERR_MESS );
+         if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
+         $ERR_MESS = "Cannot ping server $WID" ;
+         write_error_file($alert_type,"NETWORK","PING",$ERR_MESS );
       }
-   } # End of Network Module
+   } 
+
+
+    ## Script execution Alert 
+    if ($MODULE eq "SCRIPT")   {                                        # If Script Execution Alert 
+        $ERR_MESS = "Script ${WID} failed !" ;                          # Build Error Message
+        my $smess = "${WID}.txt";                                       # Custom Message Text File
+        if ( -e "${SADM_SCR_DIR}/$smess" ) {                            # Does Custom  Mess Exist ?
+            print "\nUsing message in ${SADM_SCR_DIR}/$smess for rpt file";
+            open SMESSAGE, "${SADM_SCR_DIR}/$smess" or die $!;          # Open Script Message File
+            while ($sline = <SMESSAGE>) {                               # Read Message file
+                chomp $sline; $ERR_MESS="$sline ";                      # Get Text Message
+            }
+            close SMESSAGE;                                             # Close Script Message File
+        }
+        write_error_file($alert_type,"SCRIPT","${WID}",$ERR_MESS );     # Go Report Alert
+    } 
 
 
    #---------- Error detected for the Module HTTP
    if ($MODULE eq "HTTP")   { 
-      $ERR_MESS = "Web Server $WID isn't responding" ;
-      write_error_file($error_detected ,"HTTP", "WEBSITE", $ERR_MESS );
+      $ERR_MESS = "Web Site $WID isn't responding" ;
+      write_error_file($alert_type ,"HTTP", "WEBSITE", $ERR_MESS );
    } # End of HTTP Module
 
 
@@ -700,7 +677,7 @@ sub check_for_error {
    if ($MODULE eq "DAEMON") {
       if ($SUBMODULE eq "PROCESS") {
          $ERR_MESS = "Daemon $WID not running !";
-         write_error_file($error_detected ,"DAEMON", "PROCESS", $ERR_MESS );
+         write_error_file($alert_type ,"DAEMON", "PROCESS", $ERR_MESS );
       }  
    } # End of Daemon Module
 
@@ -709,12 +686,10 @@ sub check_for_error {
    if ($MODULE eq "SERVICE") {
       if ($SUBMODULE eq "DAEMON") {
          $ERR_MESS = "Service $WID not running !";
-         write_error_file($error_detected ,"SERVICE", "DAEMON", $ERR_MESS );
+         write_error_file($alert_type ,"SERVICE", "DAEMON", $ERR_MESS );
       }  
-   } # End of Service Module
-
-
-} # End of Function
+   } 
+} 
 
 
 
@@ -722,7 +697,7 @@ sub check_for_error {
 
 
 #---------------------------------------------------------------------------------------------------
-#                                       CHECK HTTP SERVER
+# Check if we have a response from the web site
 #---------------------------------------------------------------------------------------------------
 sub check_http {
 
@@ -756,7 +731,6 @@ sub check_http {
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert 
     return;                                                             # Return to Caller
 }
-
 
 
 
@@ -824,7 +798,6 @@ sub check_service {
 
 
 
-
 #---------------------------------------------------------------------------------------------------
 # Check if Daemon/Process is running
 #---------------------------------------------------------------------------------------------------
@@ -867,11 +840,9 @@ sub check_daemon {
 
 
 
-
-
 #---------------------------------------------------------------------------------------------------
-#                           RETURN DATE AND TIME OF THE DAY
-#           EXAMPLE : ($CYEAR,$CMONTH,$CDAY,$CHOUR,$CMIN,$CSEC,$CEPOCH) = TODAY_AND_NOW();
+# Function tha return date and time of the day
+# Example : ($cyear,$cmonth,$cday,$chour,$cmin,$csec,$cepoch) = today_and_now();
 #---------------------------------------------------------------------------------------------------
 sub Today_and_Now {
     $ctyear  = strftime ("%Y", localtime);                              # The year including century
@@ -880,28 +851,27 @@ sub Today_and_Now {
     $cthrs   = strftime ("%H", localtime);                              # The hour (range 00 to 23)
     $ctmin   = strftime ("%M", localtime);                              # The minute range 00 to 59
     $ctsec   = strftime ("%S", localtime);                              # The second range 00 to 60
-    $ctepoch = time();
-    return ($ctyear,$ctmonth,$ctday,$cthrs,$ctmin,$ctsec,$ctepoch);
+    $ctepoch = time();                                                  # Epoch Time
+    return ($ctyear,$ctmonth,$ctday,$cthrs,$ctmin,$ctsec,$ctepoch);     # Return Date Info
 }
 
+
+
 #---------------------------------------------------------------------------------------------------
-#                   FUNCTION YOU GIVE A DATE AND RETURN YOU THE EPOCH TIME
-#           EXAMPLE : $WEPOCH = GET_EPOCH($CYEAR,$CMONTH,$CDAY,$CHOUR,$CMIN,$CSEC);
+# Function that accept a date and return the opech time
+# Example : $wepoch = get_epoch($cyear,$cmonth,$cday,$chour,$cmin,$csec);
 #---------------------------------------------------------------------------------------------------
 sub get_epoch {
-    my ($eyear, $emonth, $eday, $ehrs, $emin, $esec) = @_;
-    $emth=$emonth-1 ;
-    $epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emonth,$eyear); 
-    return $epoch_time;
+    my ($eyear, $emonth, $eday, $ehrs, $emin, $esec) = @_;              # Split Array Received
+    $emth=$emonth-1 ;                                                   # Substract 1 from month
+    $epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emonth,$eyear);    # Calc. Epoch Time
+    return $epoch_time;                                                 # Return Epoch Time
 }
 
 
 
-
-
-
 #---------------------------------------------------------------------------------------------------
-# CHECK CPU LOAD AVERAGE
+# Check CPU Load Average
 #---------------------------------------------------------------------------------------------------
 sub check_load_average {
     if ($SYSMON_DEBUG >= 5) {print "\n\nChecking CPU Load Average ...";}# Entering Load Average Test
@@ -944,9 +914,8 @@ sub check_load_average {
 
 
 
-
 #---------------------------------------------------------------------------------------------------
-# CHECK CPU (USER + SYSTEM) USAGE
+# Check CPU (user + system) usage
 #---------------------------------------------------------------------------------------------------
 sub check_cpu_usage {
     if ($SYSMON_DEBUG >= 5) { print "\n\nChecking CPU Usage ..."; }     # Entering CPU USage Check
@@ -1005,9 +974,8 @@ sub check_cpu_usage {
 
 
 
-
 #---------------------------------------------------------------------------------------------------
-#                                   PAGING SPACE CHECKING
+# Check Swap Space Utilization
 #---------------------------------------------------------------------------------------------------
 sub check_swap_space  {
     if ($SYSMON_DEBUG >= 5) { print "\n\nChecking Swap Space ..." ;}    # Entering Swap Space Check
@@ -1077,6 +1045,7 @@ sub check_filesystems_usage  {
 }
 
 
+
 #---------------------------------------------------------------------------------------------------
 # Ping the specified server 
 #---------------------------------------------------------------------------------------------------
@@ -1104,54 +1073,67 @@ sub ping_ip  {
 }
 
 
+
 #---------------------------------------------------------------------------------------------------
 # Function called when script execution is required
+# Example of smn line entry for execiting a script inside SysMon
+# script:sysmon_script_template.sh 1 != 00 01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm
 #---------------------------------------------------------------------------------------------------
 sub run_script {
     ($dummy,$sname) = split /:/, $SADM_RECORD->{SADM_ID} ;              # Extract Full script name
     (my $sfile_name, my $dirName, my $sfile_extension) = fileparse($sname, ('\.sh') );
     #(my $sfile_name, my $sfile_extension) = split /./, $sname ;        # Split name & extension
-    $sname = "${SADM_SCR_DIR}/${sname}";
-    if ( $SYSMON_DEBUG >=5) {
-         print "\n-----\nExecution of script $sname is requested";
-         print "\nFilename is $sfile_name - Extension is $sfile_extension";
-    }
+    $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
+    print "\n\nExecution of script $sname is requested";                # Show User Script Name
+    print "\nFilename: $sfile_name - Extension: $sfile_extension";      # Show Splitted Name/Ext.
    
-    #----- If no script specified - return to caller
-    if ((length $sname == 0 ) || ($sname eq "-")) {                     # no script specified Error
-        print "Script $sname is not specified ??" ;                     # Inform user no script specified
-        $SADM_RECORD->{SADM_CURVAL}=1;                                  # Set actual value to 1
-        #check_for_error($src,$SADM_RECORD->{SADM_WARVAL},$SADM_RECORD->{SADM_ERRVAL},$SADM_RECORD->{SADM_TEST},"$OSNAME","SCRIPT",$sname);
-        check_for_error($src,$SADM_RECORD->{SADM_WARVAL},$SADM_RECORD->{SADM_ERRVAL},$SADM_RECORD->{SADM_TEST},"$OSNAME","SCRIPT",$sfile_name);
+    # If no script specified - Return to caller
+    if ((length $sname == 0 ) || ($sname eq "-")) {                     # If No script specified
+        $SADM_RECORD->{SADM_CURVAL}=1       ;                           # Set Return value to 1=Err
+        $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                           # Current Value
+        $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                           # Warning Threshold Value
+        $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                           # Error Threshold Value
+        $TEST = $SADM_RECORD->{SADM_TEST}   ;                           # Test Operator (=,<=,!=,..)
+        $MOD  = "$OSNAME"                   ;                           # Module Category
+        $SMOD = "SCRIPT"                    ;                           # Sub-Module Category
+        $STAT = $sfile_name                 ;                           # Current Value Returned
+        print "Script $sname is not valid ..." ;                        # Show Usr not script specify
+        check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);      # Go Evaluate Error/Alert 
         return;                                                         # return to caller
     }      
 
-    #----- Make sure script Exist and is executable - if not return to caller
+    # Make sure script Exist and is executable - If not return to caller
     if (( -e "$sname" ) && ( ! -x "$sname")) {                          # Script !exist or !executable
+        $SADM_RECORD->{SADM_CURVAL}=1       ;                           # Set Return value to 1=Err
+        $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                           # Current Value
+        $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                           # Warning Threshold Value
+        $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                           # Error Threshold Value
+        $TEST = $SADM_RECORD->{SADM_TEST}   ;                           # Test Operator (=,<=,!=,..)
+        $MOD  = "SCRIPT"                    ;                           # Module Category
+        $SMOD = "$sfile_name"               ;                           # Sub-Module Category
+        $STAT = "$sfile_name"               ;                           # Current Value Returned
         print "\nScript $sname exist, but not executable";              # Inform user of error
-        $SADM_RECORD->{SADM_CURVAL}=1;                                  # Set Actual Value to 1
-        check_for_error($src,$SADM_RECORD->{SADM_WARVAL},$SADM_RECORD->{SADM_ERRVAL},$SADM_RECORD->{SADM_TEST},"$OSNAME","SCRIPT",$sfile_name);
+        check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);      # Go Evaluate Error/Alert 
         return;                                                         # return to caller
     }
 
-    #----- Create an empty file when no error are reported
-    #($script_name, $dirName, $sfile_extension) = fileparse($sname, ('\.sh') );
-    #$SCOM_APP_FILE = "$SCOM_APP_DIR" . "/" . "$script_name" . ".txt" ;
-    #if ($SYSMON_DEBUG >= 5) { printf "\nCreate an empty file name $SCOM_APP_FILE";} 
-    #unlink "$SCOM_APP_FILE" ;  
-    #open OUT, ">$SCOM_APP_FILE";
-    #close OUT;
-
-    #----- Execute the script   
-    @args = ("$sname >> ${sname}.log 2>&1");                            # Command to execute
+    # Execute the script   
+    printf "\nRunning script $sname ... ";                              # Print Script Name
+    @args = ("$sname >> ${sfile_name}.log 2>&1");                       # Command to execute
     system(@args) ;                                                     # Execute the Script
     $src = $? >> 8;                                                     # Return code from script
-
-
-    #----- Put current value in sadm array.
-    if ($SYSMON_DEBUG >= 5) { printf "\nScript $sname return code is $src";}    # Print Return Code
+    printf "\nReturn code is $src";                                     # Print Return Code
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Actual Value=Return Code
-    check_for_error($src,$SADM_RECORD->{SADM_WARVAL},$SADM_RECORD->{SADM_ERRVAL},$SADM_RECORD->{SADM_TEST},"$OSNAME","SCRIPT",$sfile_name);
+
+    $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                               # Current Value
+    $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                               # Warning Threshold Value
+    $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                               # Error Threshold Value
+    $TEST = $SADM_RECORD->{SADM_TEST}   ;                               # Test Operator (=,<=,!=,..)
+    $MOD  = "$OSNAME"                   ;                               # Module Category
+    $SMOD = "SCRIPT"                    ;                               # Sub-Module Category
+    $STAT = $sfile_name                 ;                               # Current Value Returned
+    check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert 
+    return;                                                             # return to caller
 }
 
 
@@ -1219,6 +1201,7 @@ sub check_for_new_filesystems  {
     }
     close DF_FILE;                                          # Close df output file
 }
+
 
 
 #---------------------------------------------------------------------------------------------------
@@ -1302,117 +1285,126 @@ sub check_multipath {
 
 
 #---------------------------------------------------------------------------------------------------
-#    THIS FUNCTION IS CALLED EVERY TIME AN ERROR IS DETECTED, IT WRITE A LINE TO THE ERROR FILE.
+# Function is called every time an error or a warning is detected.
+# The error/warning line is then written to the SysMon Report File ($SADMIN/dat/rpt/`hostname`.rpt).
+#
+# Example of line that could be received by this function
+#   write_error_file($alert_type ,"SERVICE", "DAEMON", $ERR_MESS );
+#
+# Example of Layout for SysMon Report file (`hostname`.rpt)
+#   Error;holmes;2018.05.11;12:00;SERVICE;DAEMON;Service syslogd not running !;sadm;sadm
+#   Error;holmes;2018.05.11;12:09;HTTP;WEBSITE;Web Site sysinfo.maison.ca isn't responding;sadm;sadm
+#   Warning;holmes;2018.05.11;12:09;linux;FILESYSTEM;Filesystem /usr at 81% > 80%;sadm;sadm
 #---------------------------------------------------------------------------------------------------
 sub write_error_file {
-
-    #----- Save variables received as parameter
-    my ($ERR_LEVEL,$ERR_SOFT,$ERR_SUBSYSTEM,$ERR_MESSAGE) = @_;
-    if ($SYSMON_DEBUG >= 6) {                                                   # If Debug is ON
-        print "\nError Soft       = $ERR_SOFT";
-        print "\nError SUBSYSTEM  = $ERR_SUBSYSTEM";
-        print "\nError MEssage    = $ERR_MESSAGE";
+    my ($ERR_LEVEL,$ERR_SOFT,$ERR_SUBSYSTEM,$ERR_MESSAGE) = @_;         # Split Array Parameter Rcv.
+    if ($SYSMON_DEBUG >= 6) {                                           # If Debug Level 6 and Up
+        print "\nError Level      = $ERR_LEVEL";                        # Print Alert Type
+        print "\nError Soft       = $ERR_SOFT";                         # Print Module
+        print "\nError SUBSYSTEM  = $ERR_SUBSYSTEM";                    # Print Sub Module
+        print "\nError MEssage    = $ERR_MESSAGE";                      # Print Error Message
     }
+    $ERR_DATE = `date +%Y.%m.%d`; chop $ERR_DATE;                       # Setup Date of Error
+    $ERR_TIME = `date +%H:%M`   ; chop $ERR_TIME;                       # Setup Time of Error
+    if ($ERR_LEVEL eq "W") { $ERROR_TYPE = "Warning" ; }                # Setup Warning Type
+    if ($ERR_LEVEL eq "E") { $ERROR_TYPE = "Error"   ; }                # Setup Error Type
    
-    #----- Set Error/Warning Date and Time
-    $ERR_DATE = `date +%Y.%m.%d`; chop $ERR_DATE;
-    $ERR_TIME = `date +%H:%M`   ; chop $ERR_TIME;
+    # Create Line that we may write to the SysMon Report file (`hostname`.rpt)
+    $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                 $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
+                 $ERR_SUBSYSTEM,$ERR_MESSAGE,
+                 $SADM_RECORD->{SADM_QPAGE},$SADM_RECORD->{SADM_EMAIL};
+   
+    # Set to "N" at beginning of SysMon - Set to "Y", so we know that at least 1 error is found,
+    $ERROR_FOUND = "Y";                                                 # At least 1 Error was found
 
-    #----- Set Error Type 
-   if ($ERR_LEVEL eq "W") { $ERROR_TYPE = "Warning" ; }
-   if ($ERR_LEVEL eq "E") { $ERROR_TYPE = "Error"   ; }
-   
-    #----- Create Line that we may write to the rpt file later
-    $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",$ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,$ERR_SUBSYSTEM,$ERR_MESSAGE,$SADM_RECORD->{SADM_QPAGE},$SADM_RECORD->{SADM_EMAIL};
-   
-    #----- This global variable is set to "Y", so we know that at least one error were found 
-    $ERROR_FOUND = "Y";
-
-    #----- If it is a warning write rpt file and return to caller (No script to run for sure)
+    # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
 
-
-    #----- From here it is an error - If filesystem error will be taken care - no script to execute
+    # If it's a filesystem size error, it will be taken care - no script to execute
     if ($ERR_SUBSYSTEM eq "FILESYSTEM")  { print SADMRPT $SADM_LINE; return; }
 
-
-    # So error were discovered - But have no script to correct the situation - return to caller
+    # At This point we have an error and we may want to run a script that could correct the situation
     my $script_name="$SADM_RECORD->{SADM_SCRIPT}";                      # Get Basename script to run
     if ((length $script_name == 0 ) || ($script_name eq "-")) {         # If no script name given
-        printf SADMRPT $SADM_LINE;                                      # Write Error to rpt
+        printf SADMRPT $SADM_LINE;                                      # Write Error to SysMon rpt
         return;                                                         # Return to caller
     }
 
-    #---- Make sure script exist - if not return to caller
-    $script_name="${SADM_SCR_DIR}/$script_name";                        # Full path to script name added
+    # We now have a script name that we want to run to resolve problem - does script exist on disk?
+    $script_name="${SADM_SCR_DIR}/$script_name";                        # Full path to script name
     if (! -e $script_name) {                                            # If script doesn't exist
         print "\nThe requested script doesn't exist ($script_name)";    # Advise user
-        printf SADMRPT $SADM_LINE;
-        return;
+        printf SADMRPT $SADM_LINE;                                      # Write SysMon Report Line
+        return;                                                         # Return to caller
     }
 
-    #----- Make sure script is executable - if not return to caller
+    # Make sure script is executable - if not return to caller
     if (( -e "$script_name" ) && ( ! -x "$script_name")) {              # Script not exist,not exec.
         print "\nScript $script_name exist, but is not executable";     # Inform user of error
         printf SADMRPT $SADM_LINE;
         return;
     }
 
-    #----- Get current date & time in epoch time
+    # Get current date & time in epoch time
     ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();       # Get current epoch time
     if ($SYSMON_DEBUG >= 5) {                                           # If Debug is ON
         print "\nScript name is : $script_name ";                       # Print Script name
-        print "\nCurrent Time: $year $month $day $hour $min $sec";      # Print current time
-        print "\nThe Actual epoch time is $epoch";                      # Print Epoch time
+        print "\nCurrent Time   : $year $month $day $hour $min $sec";   # Print current time
+        print "\nCurrent Epoch  : $epoch";                              # Print Epoch time
     }
          
-    #----- If first time the script is run - put current date and time in hostname.smon array
+    # Is this the first time the script is run - Update Last Execution Data/Time in Array Line
     if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                             # If current date=0 in Array
-        $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d",$year,$month,$day);  # Update SADM_DATE
-        $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Update SADM_Time
+         $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d",$year,$month,$day);  # Update SADM_DATE
+         $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Update SADM_Time
     }
                   
-    #----- Break last execution date and time from hostname.smon array - ready for epoch calculation 
+    # Break last execution date and time from hostname.smon array - ready for epoch calculation 
     $wyear  = sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);     # Extract Year from SADM_DATE
     $wmonth = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);     # Extract Mth from SADM_DATE
     $wday   = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},6,2);     # Extract Day from SADM_DATE
     $whrs   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},0,2);     # Extract Hrs from SADM_TIME
     $wmin   = sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2);     # Extract Min from SADM_TIME
            
-    #----- Get epoch time of the last time script execution
+    # Get epoch time of the last time script execution
     $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); # Epoch of last Exec.
     if ($SYSMON_DEBUG >= 5) {                                           # If DEBUG if ON
-        print "\nLast time that $script_name script was executed : $wyear $wmonth $wday $whrs $wmin 00"; 
+        print "\nLast time $script_name script was executed : $wyear $wmonth $wday $whrs $wmin 00"; 
         print "\nEpoch time of last execution : $last_epoch";           # Last execution epoch time
     }
 
-    #----- Calculate the number of seconds since the last execution in seconds
+    # Calculate the number of seconds since the last execution in seconds
     $elapse_second = $epoch - $last_epoch;                              # Elapsed time in sec.
     if ($SYSMON_DEBUG >= 5) {                                           # If DEBUG Activated
         print "\nSo $epoch - $last_epoch = $elapse_second seconds";     # Print Elapsed seconds
     }
 
-    #----- Get Process Name
+    # Get Process Name
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;
     $daemon_name = $dummy[1];
 
-    #----- If number of seconds since last run time is greater than wanted - issue error
+    # If Elapse seconds since last run time is greater than (86400Sec=1Day) what we decided
     if ( $elapse_second >= $SCRIPT_MIN_SEC_BETWEEN_EXEC ) {             # Elapsed Sec>= 86400 =  ok
         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get current date and time
-        $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); # Update SADM_DATE
-        $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Update SADM_Time
-        $SADM_RECORD->{SADM_MINUTES} = "001";                           # Reset since first run today
+        $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); # Upd Last Exec DATE
+        $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Upd Last Exec Time
+        $SADM_RECORD->{SADM_MINUTES} = "001";                           # Reset Exec Counter to 1
         if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
             print "\nScript selected for execution $SADM_RECORD->{SADM_SCRIPT}";
         }
-        my $mail_message1 = "Daemon $daemon_name was not running on $HOSTNAME\n";
+        my $mail_message1 = "Daemon $daemon_name wasn't running on $HOSTNAME\n";
         my $mail_message2 = "SADM Automatically executed restart script : $SADM_RECORD->{SADM_SCRIPT}";
         my $mail_message3 = " to restart the service. \nThis is the first time I am restarting it.";
         my $mail_message  = "$mail_message1 $mail_message2 $mail_message3";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         system(@args) ;
-        if ( $? == -1 ) { print "\ncommand failed: $!"; }else{ printf "\ncommand exited with value %d", $? >> 8; }
+        if ( $? == -1 ) { 
+            print "\nCommand failed: $!"; 
+        }else{ 
+            printf "\nCommand exited with value %d", $? >> 8; 
+        }
         $COMMAND = "$script_name >>${script_name}.log 2>&1";
         print "\nCommand sent ${COMMAND}"; 
         @args = ("$COMMAND");
@@ -1427,7 +1419,7 @@ sub write_error_file {
             @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;
             $daemon_name = $dummy[1];
             $ERR_MESS = "Failed to restart daemon $daemon_name " ;      # Set up Error Message
-            $error_detected="E";
+            $alert_type="E";
             print SADMRPT $SADM_LINE;
         }else{
             $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                   # Incr. Run script Counter
@@ -1443,7 +1435,7 @@ sub write_error_file {
         }
     }
 
-} # End of write_error_file
+} 
 
 
 
@@ -1544,7 +1536,7 @@ sub init_process {
 
 
 #---------------------------------------------------------------------------------------------------
-# UNLOAD THE UPDATED VERSION OF sysmon_array TO SADM.CFG FILE
+# Loop through everyline in @sysmon_array (loaded from `hostname`.smon) and evaluate each of them
 #---------------------------------------------------------------------------------------------------
 sub loop_through_array {
 
@@ -1555,74 +1547,77 @@ sub loop_through_array {
         split_fields($sysmon_array[$index]);                            # Split line into fields
         next if $SADM_RECORD->{SADM_ACTIVE} eq "N";                     # Skip Inactive line
 
-        next if `date +%a` =~ /Sun/ && $SADM_RECORD->{SADM_SUN} =~ /N/; # Skip if today=Sunday & Sunday inactivate
-        next if `date +%a` =~ /Mon/ && $SADM_RECORD->{SADM_MON} =~ /N/; # Skip if today=Monday & Monday inactivate
-        next if `date +%a` =~ /Tue/ && $SADM_RECORD->{SADM_TUE} =~ /N/; # Skip if today=Tuesday & Tuesday inactivate
-        next if `date +%a` =~ /Wed/ && $SADM_RECORD->{SADM_WED} =~ /N/; # Skip if today=Wednesday & Wednesday inactivate
-        next if `date +%a` =~ /Thu/ && $SADM_RECORD->{SADM_THU} =~ /N/; # Skip if today=Thursday & Thursday inactivate
-        next if `date +%a` =~ /Fri/ && $SADM_RECORD->{SADM_FRI} =~ /N/; # Skip if today=Friday & Friday inactivate
-        next if `date +%a` =~ /Sat/ && $SADM_RECORD->{SADM_SAT} =~ /N/; # Skip if today=Sat & Sat inactivate
+        next if `date +%a` =~ /Sun/ && $SADM_RECORD->{SADM_SUN} =~ /N/; # If Sunday & Sun.  Inactive
+        next if `date +%a` =~ /Mon/ && $SADM_RECORD->{SADM_MON} =~ /N/; # If Monday & Mon.  Inactive
+        next if `date +%a` =~ /Tue/ && $SADM_RECORD->{SADM_TUE} =~ /N/; # If Tuesday & Tue. Inactive
+        next if `date +%a` =~ /Wed/ && $SADM_RECORD->{SADM_WED} =~ /N/; # If Wed. & Wed. inactive
+        next if `date +%a` =~ /Thu/ && $SADM_RECORD->{SADM_THU} =~ /N/; # If Thu. & Thu. inactive
+        next if `date +%a` =~ /Fri/ && $SADM_RECORD->{SADM_FRI} =~ /N/; # If Fri. & Friday inactive
+        next if `date +%a` =~ /Sat/ && $SADM_RECORD->{SADM_SAT} =~ /N/; # If Sat. & Sat. inactivate
 
-        # IF A START OR AN END TIME WAS SPECIFIED , WE NEED TO VERIFY IF THE LINE IS ACTIVE AT CURRENT TIME
-        $evaluate_line="yes" ;                                          # evaluate line? Default=yes
+        # If Start and End Time Specified, Verify if line is active at current time
+        $evaluate_line="yes" ;                                          # Default to evaluate line
         if ($SADM_RECORD->{SADM_STHRS} != 0 and $SADM_RECORD->{SADM_ENDHRS} != 0) {
             $current_time = `date +%H%M` ;                              # Get current Time
             if ($SADM_RECORD->{SADM_ENDHRS} < $SADM_RECORD->{SADM_STHRS}) {
-                if (($current_time > $SADM_RECORD->{SADM_STHRS})  || ($current_time < $SADM_RECORD->{SADM_ENDHRS})) { 
-                    $evaluate_line="yes"; 
+                if (($current_time > $SADM_RECORD->{SADM_STHRS})  || 
+                    ($current_time < $SADM_RECORD->{SADM_ENDHRS})) { 
+                    $evaluate_line="yes";                               # Yes Line Active
                 }else{
-                    $SADM_RECORD->{SADM_DATE} = 0; 
-                    $SADM_RECORD->{SADM_TIME} = 0; 
-                    $evaluate_line="no"; 
-                    $sysmon_array[$index] = combine_fields(); # Combine all fields & put it back into array 
+                    $SADM_RECORD->{SADM_DATE} = 0;                      # Reset Last Error Date
+                    $SADM_RECORD->{SADM_TIME} = 0;                      # Reset Last Error Time
+                    $evaluate_line="no";                                # No - Line is Inactive
+                    $sysmon_array[$index] = combine_fields();           # Combine field/put in array  
                 }   
             }else{
-                if (($current_time >= $SADM_RECORD->{SADM_STHRS}) && ($current_time <= $SADM_RECORD->{SADM_ENDHRS})) { 
+                if (($current_time >= $SADM_RECORD->{SADM_STHRS}) && 
+                    ($current_time <= $SADM_RECORD->{SADM_ENDHRS})) { 
                     $evaluate_line="yes"; 
                 }else{ 
-                    $SADM_RECORD->{SADM_DATE} = 0; 
-                    $SADM_RECORD->{SADM_TIME} = 0; 
-                    $evaluate_line="no"; 
-                    $sysmon_array[$index] = combine_fields(); # Combine all fields & put it back into array 
+                    $SADM_RECORD->{SADM_DATE} = 0;                      # Reset Last Error Date
+                    $SADM_RECORD->{SADM_TIME} = 0;                      # Reset Last Error Time
+                    $evaluate_line="no";                                # No - Line is Inactive
+                    $sysmon_array[$index] = combine_fields();           # Combine field/put in array 
                 }
             }
         }  
-        next if $evaluate_line eq "no" ;                      # If not within Time Range, next line
+        
+        # If not within Time Range, is line active (should we evaluate line), if not next line
+        next if $evaluate_line eq "no" ;
                   
         # Check Linux Multipath State
-        if ($SADM_RECORD->{SADM_ID} =~ /^check_multipath/  )  {check_multipath ;}           
+        if ($SADM_RECORD->{SADM_ID} =~ /^check_multipath/  ) {check_multipath ;}
         
         # Load Average
-        if ($SADM_RECORD->{SADM_ID} =~ /^load_average/ )      {check_load_average ; }       
+        if ($SADM_RECORD->{SADM_ID} =~ /^load_average/ ) {check_load_average ; }
         
         # Check CPU Usage
-        if ($SADM_RECORD->{SADM_ID} =~ /^cpu_level/ )         {check_cpu_usage ;  }
+        if ($SADM_RECORD->{SADM_ID} =~ /^cpu_level/ ) {check_cpu_usage ;  }
 
         # Check Swap Space
-        if ($SADM_RECORD->{SADM_ID} eq "swap_space")          {check_swap_space ; }         
+        if ($SADM_RECORD->{SADM_ID} eq "swap_space") {check_swap_space ; }
         
         # Check filesystem usage
-        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ )                {check_filesystems_usage ; }
+        if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) {check_filesystems_usage ; }
 
         # Check Ping an IP
-        if ($SADM_RECORD->{SADM_ID} =~ /^ping_/ )             {ping_ip; }                   
+        if ($SADM_RECORD->{SADM_ID} =~ /^ping_/ ) {ping_ip; }
 
         # Check if specified service is running
-        if ($SADM_RECORD->{SADM_ID} =~ /^service_/ )          {check_service; }             
+        if ($SADM_RECORD->{SADM_ID} =~ /^service_/ ) {check_service; }
 
         # Check if specified daemon is running
-        if ($SADM_RECORD->{SADM_ID} =~ /^daemon_/ )           {check_daemon; }              
+        if ($SADM_RECORD->{SADM_ID} =~ /^daemon_/ ) {check_daemon; }
         
         # Check HTTP
-        if ($SADM_RECORD->{SADM_ID} =~ /^http/ )              {check_http;    }             
+        if ($SADM_RECORD->{SADM_ID} =~ /^http/ ) {check_http;    }
         
         # Check Running Script
-        if ($SADM_RECORD->{SADM_ID} =~ /^script/  )           {run_script ;}               
+        if ($SADM_RECORD->{SADM_ID} =~ /^script/  ) {run_script ;}
         
         # Combine all the fields into a line and put it back into the array
-        $sysmon_array[$index] = combine_fields() ;               
-    
-    } # End of for loop
+        $sysmon_array[$index] = combine_fields() ;
+    }
 } 
 
 
