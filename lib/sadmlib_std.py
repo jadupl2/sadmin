@@ -36,6 +36,8 @@
 #   V2.9 Add Field SADM_HOST_TYPE in sadmin.cfg 
 # 2018_05_04 JDuplessis
 #   V2.10 Database User and Password are not read from .dbpass now (no longer from sadmin.cfg)
+# 2018_05_14 JDuplessis
+#   V2.11 Add Variable obj.use_rch, to use or not the Return Code History file (for interactice Pgm)
 # 
 # ==================================================================================================
 try :
@@ -68,7 +70,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.10"                                             # This Library Version
+libver              = "2.11"                                            # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -108,6 +110,7 @@ class sadmtools():
         # Set Default Values for Script Related Variables
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.multiple_exec      = "N"                                   # Default Run multiple copy
+        self.use_rch            = True                                  # True=Use RCH File else No
         self.log_append         = True                                  # Append to Existing Log ?
         self.ver                = "1.0"                                 # Default Program Version
         self.pn                 = os.path.basename(sys.argv[0])         # Program name
@@ -122,7 +125,6 @@ class sadmtools():
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
         self.os_type            = self.get_ostype()                     # O/S LINUX,AIX,DARWIN
         self.username           = getpass.getuser()                     # Get Current User Name
-
 
         # SADM Sub Directories Definitions
         self.lib_dir            = os.path.join(self.base_dir,'lib')     # SADM Lib. Directory
@@ -1033,26 +1035,27 @@ class sadmtools():
 
         # If the PID file already exist - Script is already Running
         if os.path.exists(self.pid_file) and self.multiple_exec == "N" :# PID Exist & No MultiRun
-            self.writelog ("Script %s is already running" % self.pn)         # Same script is running
+            self.writelog ("Script %s is already running" % self.pn)    # Same script is running
             self.writelog ("PID File %s exist." % self.pid_file)        # Display PID File Location
             self.writelog ("Will not run a second copy of this script") # Advise the user
             self.writelog ("Script Aborted")                            # Script Aborted
             sys.exit(1)                                                 # Exit with Error
     
         # Record Date & Time the script is starting in the RCH File
-        i = datetime.datetime.now()                                     # Get Current Time
-        start_time=i.strftime('%Y.%m.%d %H:%M:%S')                      # Save Start Date & Time
         start_epoch = int(time.time())                                  # StartTime in Epoch Time
-        try:
-            FH_RCH_FILE=open(self.rch_file,'a')                         # Open RC Log in append mode
-        except IOError as e:                                            # If Can't Create or open
-            print ("Error open file %s \r\n" % rch_file)                # Print Log FileName
-            print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number    
-            print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
-            sys.exit(1)     
-        rch_line="%s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,"2")
-        FH_RCH_FILE.write ("%s\n" % (rch_line))                         # Write Line to RCH Log
-        FH_RCH_FILE.close()                                             # Close RCH File
+        if (self.use_rch) :                                             # If want to Create/Upd RCH
+            i = datetime.datetime.now()                                 # Get Current Time
+            start_time=i.strftime('%Y.%m.%d %H:%M:%S')                  # Save Start Date & Time
+            try:
+                FH_RCH_FILE=open(self.rch_file,'a')                     # Open RC Log in append mode
+            except IOError as e:                                        # If Can't Create or open
+                print ("Error open file %s \r\n" % rch_file)            # Print Log FileName
+                print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number    
+                print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
+                sys.exit(1)     
+            rch_line="%s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,"2")
+            FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
+            FH_RCH_FILE.close()                                         # Close RCH File
         return 0
 
 
@@ -1087,13 +1090,14 @@ class sadmtools():
 
     
         # Update the [R]eturn [C]ode [H]istory File
-        i = datetime.datetime.now()                                     # Get Current Stop Time
-        stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                       # Format Stop Date & Time
-        FH_RCH_FILE=open(self.rch_file,'a')                             # Open RCH Log - append mode
-        rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.exit_code)
-        FH_RCH_FILE.write ("%s\n" % (rch_line))                         # Write Line to RCH Log
-        FH_RCH_FILE.close()                                             # Close RCH File
-        self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
+        if (self.use_rch) :                                             # If Want to use RCH File
+            i = datetime.datetime.now()                                 # Get Current Stop Time
+            stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                   # Format Stop Date & Time
+            FH_RCH_FILE=open(self.rch_file,'a')                         # Open RCH Log - append mode
+            rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.exit_code)
+            FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
+            FH_RCH_FILE.close()                                         # Close RCH File
+            self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
 
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
@@ -1164,12 +1168,13 @@ class sadmtools():
 
         # Trimming the Log 
         self.trimfile (self.log_file, self.cfg_max_logline)             # Trim the Script Log 
-        self.trimfile (self.rch_file, self.cfg_max_rchline)             # Trim the Script RCH Log 
+        if (self.use_rch) :                                             # If Using a RCH File
+            self.trimfile (self.rch_file, self.cfg_max_rchline)         # Trim the Script RCH Log 
     
         # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
         try :
-            uid = pwd.getpwnam(self.cfg_user).pw_uid                        # Get UID User in sadmin.cfg
-            gid = grp.getgrnam(self.cfg_group).gr_gid                       # Get GID User in sadmin.cfg
+            uid = pwd.getpwnam(self.cfg_user).pw_uid                    # Get UID User in sadmin.cfg
+            gid = grp.getgrnam(self.cfg_group).gr_gid                   # Get GID User in sadmin.cfg
         except KeyError as e: 
             msg = "User %s doesn't exist or not define in sadmin.cfg" % (self.cfg_user) 
             print (msg)
@@ -1184,13 +1189,14 @@ class sadmtools():
             print ("%s" % (e))
 
         # Make Sure Owner/Group of RCH File are the one chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-        try : 
-            #os.chown(self.rch_file, uid, gid)                           # Change owner of rch file
-            os.chown(self.rch_file, -1, gid)                            # -1 leave UID unchange 
-            os.chmod(self.rch_file, 0o0660)                             # Change RCH File Permission
-        except Exception as e: 
-            msg = "Warning : Couldn't change owner or chmod of "        # Build Warning Message
-            print ("%s %s to %s.%s" % (msg,self.rch_file,self.cfg_user,self.cfg_group))
+        if (self.use_rch) :                                             # If Using a RCH File
+            try : 
+                #os.chown(self.rch_file, uid, gid)                      # Change owner of rch file
+                os.chown(self.rch_file, -1, gid)                        # -1 leave UID unchange 
+                os.chmod(self.rch_file, 0o0660)                         # Change RCH File Permission
+            except Exception as e: 
+                msg = "Warning : Couldn't change owner or chmod of "    # Build Warning Message
+                print ("%s %s to %s.%s" % (msg,self.rch_file,self.cfg_user,self.cfg_group))
 
         # Delete Temproray files used
         self.silentremove (self.pid_file)                               # Delete PID File
@@ -1233,6 +1239,7 @@ class sadmtools():
         print("obj.debug                                Current Debug Level [1-9]               : %s" % (str(self.debug)))
         print("obj.log_type                             Set/Get Logtype(Both,Scr,Log)           : %s" % (self.log_type))
         print("obj.multiple_exec                        Allow Simultanious Execution            : %s" % (self.multiple_exec))
+        print("obj.use_rch                              Produce/Upd. Return Code History file   : %s" % (self.use_rch))
         print("obj.log_append                           Open log in Append Mode                 : %s" % (self.log_append))
 
         print(" ")                                                      # Space Line in the LOG
