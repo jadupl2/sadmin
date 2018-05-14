@@ -32,6 +32,8 @@
 #   V2.2  - Correct typo error and correct problem when creating filesystem (when changing type)
 # 2018_01_03 JDuplessis 
 #   V2.3  - Correct Main Menu Display Problem 
+# 2018_05_14 JDuplessis 
+#   V2.4  - Fix Problem with echo command on MacOS
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -47,7 +49,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -79,14 +81,17 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
 #            M A I N      S E C T I O N   -   P R O G R A M   S T A R T    H E R E 
 #===================================================================================================
 #
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
-        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
+    # User root you must be 
+    if ! [ $(id -u) -eq 0 ]                                             # Only ROOT can run Script
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"   
+             printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
+
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
     stty_orig=`stty -g`                                                 # Save stty setting    
     #stty erase "^H"                                                    # Make sure backspace work
     CURDIR=`pwd` ; export CURDIR                                        # Save Current Directory
