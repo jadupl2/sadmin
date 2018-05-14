@@ -29,6 +29,8 @@
 #   v1.1   Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # 2018_05_14 JDuplessis
 #   v1.2 Check if root is running script before calling sadm tool library
+# 2018_05_14 JDuplessis
+#   v1.3 Add SADM_RCH_USE Variable to use or not the [R]eturn [C]ode [H]istory file
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -47,6 +49,7 @@ SADM_VER='1.2'                             ; export SADM_VER            # Your S
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_RCH_USE="Y"                           ; export SADM_RCH_USE        # Upd Record History File
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
@@ -222,7 +225,7 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Main Process as started ..."
+    sadm_writelog "Main Process as started ... "
 
     return 0                                                            # Return No Error to Caller
 }
@@ -241,6 +244,7 @@ main_process()
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
+    # Include this 'if' when you wan this script to only be run on the SADMIN server.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
