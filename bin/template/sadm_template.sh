@@ -30,7 +30,7 @@
 # 2018_05_14 JDuplessis
 #   v1.2 Check if root is running script before calling sadm tool library
 # 2018_05_14 JDuplessis
-#   v1.3 Add SADM_RCH_USE Variable to use or not the [R]eturn [C]ode [H]istory file
+#   v1.3 Add SADM_USE_RCH Variable to use or not the [R]eturn [C]ode [H]istory file
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -49,7 +49,7 @@ SADM_VER='1.2'                             ; export SADM_VER            # Your S
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_RCH_USE="Y"                           ; export SADM_RCH_USE        # Upd Record History File
+SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Upd Record History File
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
