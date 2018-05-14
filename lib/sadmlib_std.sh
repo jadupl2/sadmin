@@ -1716,7 +1716,7 @@ sadm_start() {
 
     # Feed the Return Code History File stating the script is starting
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
-    if [ $SADM_RCH_USE = "Y" ]                                          # If Want to use a RCH File
+    if [ $SADM_USE_RCH = "Y" ]                                          # If Want to use a RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Assign user/group to RCH
@@ -1776,7 +1776,7 @@ sadm_stop() {
     sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
 
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
-    if [ $SADM_RCH_USE = "Y" ]                                          # Want to Produce RCH File
+    if [ $SADM_USE_RCH = "Y" ]                                          # Want to Produce RCH File
         then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE" # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
