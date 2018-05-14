@@ -27,6 +27,8 @@
 # 2017_07_07 JDuplessis V1.0 - Initial Version
 # 2018_02_08 JDuplessis
 #   v1.1   Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
+# 2018_05_14 JDuplessis
+#   v1.2 Check if root is running script before calling sadm tool library
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -41,7 +43,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -229,6 +231,13 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
+    # User root you must be 
+    if ! [ $(id -u) -eq 0 ]                                             # Only ROOT can run Script
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"   
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S
+    fi
     sadm_start                                                          # Init Env. Dir. & RC/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
@@ -236,13 +245,6 @@ main_process()
         then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
 
