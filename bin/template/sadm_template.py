@@ -21,9 +21,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2018_12_01 JDuplessis 
+# 2017_12_01 JDuplessis 
 #   V1.0 Initial Version
-#
+# 2018_05_14 JDuplessis 
+#   V1.1 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -143,6 +144,7 @@ def main():
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
+    st.use_rch = True                           # True=Produce/Use RCH File, False=Don't Use/Upd RCH
     st.debug = 0                                # Debug level and verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     st.usedb = True                             # True=Use Database  False=DB Not needed for script
@@ -170,11 +172,15 @@ def main():
         
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-        st.exit_code = process_servers(conn,cur,st)                     # Go Process Actives Servers 
+    
+    # Main Processing
+    #st.exit_code = process_servers(conn,cur,st)                        # Go Process Actives Servers 
+    # OR 
+    st.exit_code = main_process(st)                                     # Process Not Using Database
+ 
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         st.dbclose()                                                    # Close the Database
-    else:                                                               # Script don't need Database
-        st.exit_code = main_process(st)                                 # Process Not Using Database
     st.stop(st.exit_code)                                               # Close SADM Environment
-
+ 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
