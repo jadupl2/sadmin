@@ -51,6 +51,8 @@
 #   V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
 # 2018_05_06 JDuplessis
 #   V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
+# 2018_05_14 JDuplessis
+#   V2.22 Don't abort if mysql is not install on server.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -69,7 +71,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.21"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.22"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -461,21 +463,7 @@ sadm_check_requirements() {
     SADM_MYSQL=""                                                       # Default mysql Location
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
         then sadm_check_command_availibility "mysql"                    # Command available?
-             if [ "$SADM_VAR1" = "" ]                                   # If Command not found
-                then sadm_install_package "mysql" "mysql"               # Go Install Missing Package
-                     if [ $? -eq 0 ]                                    # If Install Went OK
-                        then sadm_check_command_availibility mysql      # Check if command now Avail
-                             if [ $? -eq 0 ] 
-                                then SADM_MYSQL=$SADM_VAR1              # Save Command Path
-                                else sadm_writelog "Please install mysql software"
-                                     sadm_stop 1
-                             fi
-                        else sadm_writelog "Please install mysql software"
-                             sadm_stop 1
-                    fi
-             else
-                SADM_MYSQL=$SADM_VAR1                                   # Save Command Path
-             fi
+             SADM_MYSQL=$SADM_VAR1                                      # Save Command Path
     fi
     return 0
 }
