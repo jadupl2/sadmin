@@ -157,8 +157,8 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
 
     tput clear 
     echo "----------------------------------------------------------------------------------"
-    e_bold "Based on the current configutation file $SADM_CFG_DIR/${HOSTNAME}.cfg"
-    e_bold "Here is the output file $SADM_RPT_DIR/${HOSTNAME}.rpt of SADM System Monitor"
+    e_bold "Based on SysMon configuration file $SADM_CFG_DIR/${HOSTNAME}.smon"
+    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${HOSTNAME}.rpt."
     echo "----------------------------------------------------------------------------------"
     if [ -s $SADM_RPT_DIR/${HOSTNAME}.rpt ] 
         then cat $SADM_RPT_DIR/${HOSTNAME}.rpt | while read line 
