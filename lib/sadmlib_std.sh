@@ -52,7 +52,7 @@
 # 2018_05_06 JDuplessis
 #   V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
 # 2018_05_14 JDuplessis
-#   V2.22 Don't abort if mysql is not install on server.
+#   V2.22 Add Option not to use RC File and don't abort if mysql is not install on server.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -1713,16 +1713,15 @@ sadm_start() {
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
     if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
-    
-    # If Return Code History Log doesn't exist, Create it and Make sure it have right permission
-    [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG
-    chmod 664 $SADM_RCHLOG
-    chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
 
-    # Feed the Return Code History File stating the script is started
-    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"` ; export SADM_STIME
-    echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
-    
+    # Feed the Return Code History File stating the script is starting
+    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
+    if [ $SADM_RCH_USE = "Y" ]                                          # If Want to use a RCH File
+        then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
+             chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Assign user/group to RCH
+             echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
+    fi
     # Write Starting Info in the Log
     sadm_writelog "${SADM_80_DASH}"
     sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
@@ -1768,7 +1767,7 @@ sadm_stop() {
  
     # Start Writing Log Footer
     sadm_writelog " "                                                   # Blank Line
-    sadm_writelog "${SADM_FIFTY_DASH}"                                 # 20 Dash Line
+    sadm_writelog "${SADM_FIFTY_DASH}"                                  # Dash Line
     sadm_writelog "Script return code is $SADM_EXIT_CODE"               # Final Exit Code to log
     
     # Get End time and Calculate Elapse Time
@@ -1776,16 +1775,16 @@ sadm_stop() {
     sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
     sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
 
-    # Append ending line to the [R]eturn [C]ode [H]istory File
-    RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"               # Format Part1 of RCH File
-    RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE"          # Format Part2 of RCH File
-    echo "$RCHLINE" >>$SADM_RCHLOG                                      # Append Line to  RCH File
-    
     # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
-    sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" # Advise of trimm value
-    sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"                     # Trim file to Desired Nb.
-    chmod 664 ${SADM_RCHLOG}                                            # Writable by O/G Readable W
-    chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}                     # Change RCH file Owner
+    if [ $SADM_RCH_USE = "Y" ]                                          # Want to Produce RCH File
+        then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
+             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE" # Format Part2 of RCH File
+             echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
+             sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" # Advise of trim
+             sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
+             chmod 664 ${SADM_RCHLOG}                                   # Writable by O/G Readable W
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
+    fi
 
     # Write email choice in the log footer
     if [ "$SADM_MAIL" = "" ] ; then SADM_MAIL_TYPE=4 ; fi               # Mail not Install - no Mail
