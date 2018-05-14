@@ -34,6 +34,8 @@
 #   V2.3  - Correct Main Menu Display Problem 
 # 2018_05_14 JDuplessis 
 #   V2.4  - Fix Problem with echo command on MacOS
+# 2018_05_14 JDuplessis 
+#   V2.5  - Add SADM_RCH_USE Variable to use or not a RCH FIle (Set to 'N' for this Script)
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -49,10 +51,11 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_RCH_USE="N"                           ; export SADM_RCH_USE        # Upd Record History File
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
@@ -84,7 +87,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
     # User root you must be 
     if ! [ $(id -u) -eq 0 ]                                             # Only ROOT can run Script
         then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"   
+             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"             # Suggest using 'sudo'
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S
     fi
@@ -111,7 +114,7 @@ SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1
             #2)  . $SADM_BIN_DIR/sadm_ui_rpm.sh
             #    ;;
             99) stty $stty_orig
-                cd $CURDIR                                              
+                cd $CURDIR
                 SADM_EXIT_CODE=0
                 break
                 ;;
