@@ -35,7 +35,7 @@
 # 2018_05_14 JDuplessis 
 #   V2.4  - Fix Problem with echo command on MacOS
 # 2018_05_14 JDuplessis 
-#   V2.5  - Add SADM_RCH_USE Variable to use or not a RCH FIle (Set to 'N' for this Script)
+#   V2.5  - Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -55,7 +55,7 @@ SADM_VER='2.5'                             ; export SADM_VER            # Your S
 SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_RCH_USE="N"                           ; export SADM_RCH_USE        # Upd Record History File
+SADM_USE_RCH="N"                           ; export SADM_USE_RCH        # Upd Record History File
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
