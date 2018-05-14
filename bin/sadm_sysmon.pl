@@ -15,6 +15,8 @@
 #   V2.9 Change Message Sent to user when host.cfg file not there and using template file
 # 2018_05_07 JDuplessis
 #   V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file 
+# 2018_05_14 JDuplessis
+#   V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement 
 #===================================================================================================
 #
 use English;
@@ -30,14 +32,13 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.10";                                       # Version Number
+my $VERSION_NUMBER      = "2.11";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
-$OSNAME                 =~ tr/A-Z/a-z/;                                 # OSName in lowercase
+$OSNAME                 =~ tr/A-Z/a-z/;                                 # Make OSName in lowercase
 my $HOSTNAME            = `hostname -s`; chomp $HOSTNAME;               # HostName of current System
 my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "5";                # debugging purpose set to 5
-my $ERROR_FOUND         = "N";                                          # Yes after write to ErrFile
 my $start_time = $end_time = 0;                                         # Use to Calc execution Time
 my $WORK                = 0;                                            # For temp usage
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
@@ -141,9 +142,6 @@ my $SCP_CON       = "$CMD_SCP -rP${SADM_SSH_PORT} ${SADM_USER}\@${SADM_SERVER}";
 my $MINIMUM_SEC=86400;                 # 1 Day=86400 Sec. = Minimum between Filesystem Incr.
 my $MAX_FS_INCR=2;                     # Number of filesystem increase allowed per Day.
 my $SCRIPT_MIN_SEC_BETWEEN_EXEC=86400; # Restart script didn't run for more than value then ok 2 run
-
-# HTTP match 
-my $MATCH_HTTP="perl -ne 'print \"\$1_\$2\n\" if m#-f /usr/http/(.*?)/.*?/(.*?)-httpd.conf# || m#-f /usr/http/(.*?)/instances/(.*?)/httpd.conf#'";
 
 
 #---------------------------------------------------------------------------------------------------
@@ -279,7 +277,7 @@ sub unload_smon_file {
     $end_time = time;                                                   # Get current time
     $xline1 = sprintf ("#SADMSTAT $VERSION_NUMBER $HOSTNAME - ");
     $xline2 = sprintf ("%s" , scalar localtime(time));
-    $xline3 = sprintf (" - Execution Time %2,2f seconds\n" ,$end_time - $start_time); 
+    $xline3 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time); 
     printf (SADMTMP "${xline1}${xline2}${xline3}");
     close SADMTMP ;                                                     # Close temporary file
 
@@ -305,7 +303,7 @@ sub show_sysmon_array {
 
 
 #---------------------------------------------------------------------------------------------------
-#           EXTRACT EACH FIELDS FROM THE LINE RECEIVED IN PARAMETER TO WORK FIELDS
+# Extract each field from the line (`hostname`.smon file format) received in parameter.
 #---------------------------------------------------------------------------------------------------
 sub split_fields {
     my $wline = $_[0];
@@ -335,7 +333,7 @@ sub split_fields {
 
 
 #---------------------------------------------------------------------------------------------------
-#               COMBINE ALL FIELDS BACK TOGETHER INTO A LINE IN SADM SERVER.CFG FORMAT
+# Combine all fields from SADM_RECORD back together into a line with `hostname`.smon format.
 # --------------------------------------------------------------------------------------------------
 sub combine_fields {
     my $wline = sprintf "%-30s %3s %2s %3s %3s %3s %04d %04d %1s %1s %1s %1s %1s %1s %1s %1s %08d %04d %s %s %s\n",
@@ -522,7 +520,7 @@ sub check_for_error {
         if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait 
            $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
            $ERR_MESS = "Load Average at $WID & exceed $value_exceeded for more than $wmin Min";
-           write_error_file($alert_type,"$OSNAME","LOAD",$ERR_MESS);    # Go Reporting Alert
+           write_rpt_file($alert_type,"$OSNAME","LOAD",$ERR_MESS);    # Go Reporting Alert
            $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
         }
       } 
@@ -530,13 +528,13 @@ sub check_for_error {
       ## Paging alert occured
       if ($SUBMODULE eq "PAGING") {                                     # When Paging Alert
             $ERR_MESS = "Paging space at $ACTVAL% > $value_exceeded%" ; # Build Error Message
-            write_error_file($alert_type,"$OSNAME","PAGING",$ERR_MESS );# Go Report Alert
+            write_rpt_file($alert_type,"$OSNAME","PAGING",$ERR_MESS );# Go Report Alert
       }
       
       ## Multipath alert occured     
       if ($SUBMODULE eq "MULTIPATH")   {                                # When Multipath Alert 
          $ERR_MESS = "MultiPath Error - Status is $WID" ;               # Build Error Message
-         write_error_file($alert_type,"$OSNAME","MULTIPATH",$ERR_MESS );# Go Report Alert
+         write_rpt_file($alert_type,"$OSNAME","MULTIPATH",$ERR_MESS );# Go Report Alert
       } 
       
       ## Cpu utilization percentage alert 
@@ -574,7 +572,7 @@ sub check_for_error {
         if ( $elapse_second >= $max_second ) {                          # Problem Exceed Sec. Wait 
            $wmin = $SADM_RECORD->{SADM_MINUTES};                        # min. before issuing alert
            $ERR_MESS = sprintf("CPU at %-3d pct for more than %-3d min",$ACTVAL,$wmin);
-           write_error_file($alert_type,"$OSNAME","CPU",$ERR_MESS );    # Go Process Alert
+           write_rpt_file($alert_type,"$OSNAME","CPU",$ERR_MESS );      # Go Process Alert
            $SADM_RECORD->{SADM_DATE} = $SADM_RECORD->{SADM_TIME} = 0 ;  # Reset Last Alert Date/Time
         }
       }  
@@ -582,7 +580,7 @@ sub check_for_error {
       ## Filesystem alert occured
       if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
          $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%";  # Set up Error Message
-         write_error_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);# Go Report Alert 
+         write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);# Go Report Alert 
 
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
          if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
@@ -626,7 +624,7 @@ sub check_for_error {
                   print "\nFilesystem increase will not be done.";       # Inform user not done
                }
                $ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
-               write_error_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
+               write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
             }else{
                $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
                $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
@@ -645,10 +643,9 @@ sub check_for_error {
       if ($SUBMODULE eq "PING")   { 
          if ($SYSMON_DEBUG >= 5) { print "\nPing to server $WID failed"; }
          $ERR_MESS = "Cannot ping server $WID" ;
-         write_error_file($alert_type,"NETWORK","PING",$ERR_MESS );
+         write_rpt_file($alert_type,"NETWORK","PING",$ERR_MESS );
       }
    } 
-
 
     ## Script execution Alert 
     if ($MODULE eq "SCRIPT")   {                                        # If Script Execution Alert 
@@ -662,37 +659,31 @@ sub check_for_error {
             }
             close SMESSAGE;                                             # Close Script Message File
         }
-        write_error_file($alert_type,"SCRIPT","${WID}",$ERR_MESS );     # Go Report Alert
+        write_rpt_file($alert_type,"SCRIPT","${WID}",$ERR_MESS );     # Go Report Alert
     } 
 
-
    #---------- Error detected for the Module HTTP
-   if ($MODULE eq "HTTP")   { 
-      $ERR_MESS = "Web Site $WID isn't responding" ;
-      write_error_file($alert_type ,"HTTP", "WEBSITE", $ERR_MESS );
+   if ($MODULE eq "HTTP")   {                                           # Error WebSite no Response
+      $ERR_MESS = "Web Site $WID isn't responding" ;                    # Prepare Mess. to rpt file
+      write_rpt_file($alert_type ,"HTTP", "WEBSITE", $ERR_MESS );     # Go write ALert to rpt file
    } # End of HTTP Module
 
-
    #---------- Error detected - A Daemon was suppose to be running and it is not
-   if ($MODULE eq "DAEMON") {
-      if ($SUBMODULE eq "PROCESS") {
-         $ERR_MESS = "Daemon $WID not running !";
-         write_error_file($alert_type ,"DAEMON", "PROCESS", $ERR_MESS );
+   if ($MODULE eq "DAEMON") {                                           # If Daemon Error
+      if ($SUBMODULE eq "PROCESS") {                                    # Process Sub-Module
+         $ERR_MESS = "Daemon $WID not running !";                       # Prepare Mess. to rpt file
+         write_rpt_file($alert_type,"DAEMON","PROCESS",$ERR_MESS );   # Go write ALert to rpt file
       }  
    } # End of Daemon Module
 
-
    #---------- Error detected - A service was suppose to be running and it is not
-   if ($MODULE eq "SERVICE") {
-      if ($SUBMODULE eq "DAEMON") {
-         $ERR_MESS = "Service $WID not running !";
-         write_error_file($alert_type ,"SERVICE", "DAEMON", $ERR_MESS );
+   if ($MODULE eq "SERVICE") {                                          # If Service not Running
+      if ($SUBMODULE eq "DAEMON") {                                     # And Daemon as a Sub-Module
+         $ERR_MESS = "Service $WID not running !";                      # Prepare Mess. to rpt file
+         write_rpt_file($alert_type,"SERVICE","DAEMON",$ERR_MESS );   # Go write ALert to rpt file
       }  
-   } 
+   } # End of Service Module
 } 
-
-
-
 
 
 
@@ -740,11 +731,15 @@ sub check_http {
 #       - Can specify multiple name 'service_syslog|rsyslog|syslogd' for same service
 #   - If it's not running try to start it 2 times 
 #   - If it can't be started then trigger an alert
+#slam_master.pl:            if ($alias ne "none" and $alias ne $hostname) 
+# launchctl list | grep ssh
 #---------------------------------------------------------------------------------------------------
 sub check_service {
+    if ( $OSNAME eq "darwin" ) { return ; }                             # Not Yet Supported on MacOS
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split service Line 
     my $SERVICE = $dummy[1];                                            # Get Service name Part
     print "\n\nChecking service $SERVICE";                              # Show Service Name(s)
+
 
     #----- From the sysmon_array extract the service name
     my $service_count = 0 ;                                             # Service Running counter
@@ -777,6 +772,8 @@ sub check_service {
         }
         $service_count = $service_count + $service_ok ;                 # Upd. Running Service total
     }
+
+    # Show Service Check Result
     if ($service_count >= 1) {                                          # At least 1 service running
         printf "\n[OK] Service is running - Total returned (%d)",$service_count;
     }else{                                                              # No Service are running
@@ -874,17 +871,13 @@ sub get_epoch {
 # Check CPU Load Average
 #---------------------------------------------------------------------------------------------------
 sub check_load_average {
-    if ($SYSMON_DEBUG >= 5) {print "\n\nChecking CPU Load Average ...";}# Entering Load Average Test
+    print "\n\nChecking CPU Load Average ...";                          # Entering Load Average Test
 
     # Get Load Average - Via the uptime command
     open (DB_FILE, "$CMD_UPTIME |");                                    # 'uptime' output to stdout
     $load_line = <DB_FILE> ;                                            # Save output to load_line
     @ligne = split ' ',$load_line;                                      # Split line based on space
-    if ( $OSNAME eq "darwin" ) {                                        # If on MacOS
-        @dummy = split ',',$ligne[7];                                   # Get 7th Parm - Recent Load
-    }else{                                                              # If on Linux or Aix
-        @dummy = split ',',$ligne[10];                                  # Get 10th Parm/Recent Load
-    }
+    @dummy = split ',',$ligne[10];                                      # Get 10th Parm/Recent Load
     $load_average = int $dummy[0];                                      # Save Load Average
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level >= 5
         printf "\nUptime line: $load_line";                            # Print uptime output line
@@ -980,21 +973,67 @@ sub check_cpu_usage {
 sub check_swap_space  {
     if ($SYSMON_DEBUG >= 5) { print "\n\nChecking Swap Space ..." ;}    # Entering Swap Space Check
 
-    # Linux will return line similar to this "Swap: 3145724 0 3145724"
-    open (DF_FILE,"free | grep -i swap |");                             # Use free command swap info
-    while ($paging = <DF_FILE>) {                                       # Read Output of free cmd.
-        @pline = split ' ', $paging;                                    # Split Line based on space
-        $paging_size = $pline[1] ;                                      # Save Swap Size
-        $paging_use  = $pline[2] ;                                      # Save Swap Usage
-        if ($SYSMON_DEBUG >= 5) {                                       # Debug Level 5 and up
-            print "\nSwap size: $paging_size - Usage: $paging_use";    # Show swap size and usage 
+    # MacOS 
+    # Output Example: sysctl vm.swapusage --> 
+    # 'vm.swapusage: total = 1024.00M  used = 188.75M  free = 835.25M  (encrypted)'
+    if ( $OSNAME eq "darwin" ) {                                            # Under MacOS
+        open (DF_FILE,"sysctl vm.swapusage |");                             # Get Swap File Usage 
+        while ($paging = <DF_FILE>) {                                       # Read Output of cmd.
+            @pline = split ' ', $paging;                                    # Split Line 
+            $paging_size = $pline[3] ;                                      # Save Swap Size
+            $paging_size =~ tr/M/ /;                                        # Remove Trailing M
+            $paging_use  = $pline[6] ;                                      # Save Swap Usage
+            $paging_use  =~ tr/M/ /;                                        # Remove Trailing M
+            if ($SYSMON_DEBUG >= 5) {                                       # Debug Level 5 and up
+                print "\nSwap Info Line: $paging";                          # Output from sysctl
+                print "Swap size: $paging_size - Usage: $paging_use";       # Show swap size/usage 
+            }
+        }
+        close DF_FILE;                                                      # Close stdout
+        if ($paging_use == 0) {                                             # If usage is 0 
+            $paging_pct = 0 ;                                               # Usage=0, percentage=0
+        }else{                                                              # if usage not 0
+            $paging_pct = int (($paging_use / $paging_size) * 100) ;        # Calc. Usage Percentage
+        }        
+    }
+
+    # Linux 
+    # Output Example: free | grep -i swap --> 'Swap:  3145724 0 3145724'
+    if ( $OSNAME eq "linux" ) {                                             # Under Linux
+        open (DF_FILE,"free | grep -i swap |");                             # free command swap info
+        while ($paging = <DF_FILE>) {                                       # Read Output of cmd.
+            @pline = split ' ', $paging;                                    # Split Line 
+            $paging_size = $pline[1] ;                                      # Save Swap Size
+            $paging_use  = $pline[2] ;                                      # Save Swap Usage
+            if ($SYSMON_DEBUG >= 5) {                                       # Debug Level 5 and up
+                print "\nSwap Info Line: $paging";                          # Output from free 
+                print "Swap size: $paging_size - Usage: $paging_use";       # Show swap size/usage 
+            }
+        }
+        close DF_FILE;                                                      # Close stdout
+        if ($paging_use == 0) {                                             # If usage is 0 
+            $paging_pct = 0 ;                                               # Usage=0, percentage=0
+        }else{                                                              # if usage not 0
+            $paging_pct = int (($paging_use / $paging_size) * 100) ;        # Calc. Usage Percentage
         }
     }
-    close DF_FILE;                                                      # Close stdout
-    if ($paging_use == 0) {                                             # If usage is 0 
-        $paging_pct = 0 ;                                               # Usage=0 then percentage=0
-    }else{                                                              # if usage not 0
-        $paging_pct = int (($paging_use / $paging_size) * 100) } ;      # Calc. Usage Percentage
+
+    # AIX
+    # AIX Will return a line similar to this "512MB  2%"
+    if ( $OSNAME eq "aix" ) {                                           # Under Aix
+        open (DF_FILE, "/usr/sbin/lsps -s | tail -1 |");                # Use lsps Command
+        $total_size = $total_use = 0;                                   # Clear Total Size/Use
+        while ($paging = <DF_FILE>) {                                   # Read Output of cmd.
+            @pline = split ' ', $paging;
+            if ($DEBUG >= 5) { print "Paging line used is @pline\n"; }
+            $paging_size = $pline[0] ;                                  # Get Size Of Paging Space
+            $paging_size =~ s/MB//;                                     # Remove Unit Specification
+            $paging_use  = $pline[1] ;                                  # Get % usage
+            $paging_use  =~ s/%//;                                      # Remove Percentage Sign
+        }
+        close DF_FILE;
+        $paging_pct = $paging_use ; 
+    }
 
     # Set Parameter of Current Evaluation, ready to be evaluated. 
     $SADM_RECORD->{SADM_CURVAL} = sprintf "%d" ,$paging_pct ;
@@ -1148,13 +1187,18 @@ sub check_for_new_filesystems  {
     open (DF_FILE, "/bin/df -hP | grep \"^\/\" | grep -v \"\/mnt\/\"| grep -v \"cdrom\"| grep -v \":\" |");
 
     # Then Compare Actual value versus Warning & Error Value.
+    $newcount = 0 ;                                                     # New filesystem counter
     while ($filesys = <DF_FILE>) {                                      # While still 'df' result 
         @sysline = split ' ', $filesys;                                 # Split 'df' result in array
         $fname = $sysline[5];                                           # Extract FS Name
+        if ( $OSNAME eq "darwin" ) {                                    # Under MacOS        
+            next if ( $sysline[0] =~ /^map /  ) ;                       # Skip MacOS map FS Line
+            next if ( $sysline[0] =~ /^\/\//  ) ;                       # Skip MacOS Mount Volumes
+            next if ( $sysline[0] =~ /ˆdevfs/ ) ;                       # Devices filessystem
+        }
 
         # Try to locate the filesystem name in @sysmon_array 
         $found="N";                                                     # Assume FS Name not found
-        $newcount = 0 ;                                                 # New filesystem counter
         for ($index = 0; $index < @sysmon_array; $index++) {            # Process each ine in array
             next if ( $sysmon_array[$index] !~ /^FS/ ) ;                # Skip Line if not FS Line
             split_fields($sysmon_array[$index]);                        # Split FS Line
@@ -1166,7 +1210,7 @@ sub check_for_new_filesystems  {
 
         # If filesystem was not found in sysmon_array, Insert new filesystem in @sysmon.array
         if ($found eq "N" ) {
-            $newcount++ ;                                   # Increment new filesystem counter
+            $newcount = $newcount + 1 ;                     # Increment new filesystem counter
             $SADM_RECORD->{SADM_ID}      = "FS" . "$fname"; # FileSystem Name ID
             $SADM_RECORD->{SADM_CURVAL}  = "00" ;           # Set FS Current Usage to 0
             $SADM_RECORD->{SADM_TEST}    = ">=";            # FS Test Greater or Equal
@@ -1187,17 +1231,17 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
             $SADM_RECORD->{SADM_QPAGE}   = "sadm";          # Alert Group when Error
             $SADM_RECORD->{SADM_EMAIL}   = "sadm";          # Email Group when Error
-            $SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_inc.sh"; # Script that execute to increase FS
-            #$SADM_RECORD->{SADM_SCRIPT}  = " ";
+            #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_inc.sh"; # Script that execute to increase FS
+            $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
             $index=@sysmon_array;                           # Get Nb of Item in Array
             $sysmon_array[$index] = combine_fields() ;      # Combine field and insert in array
         }
     }
     if ( $newcount > 0 ){
-        print " - %d new filesystem(s) added",$newcount;    # Show Nb Filesystems added to user
+        printf "\n%d new filesystem(s) monitored",$newcount;    # Show Nb Filesystems added to user
     }else{
-        print " No new filesystem detected";                # Show That no new filesystem were found
+        print "\nNo new filesystem detected";               # Show That no new filesystem were found
     }
     close DF_FILE;                                          # Close df output file
 }
@@ -1289,14 +1333,14 @@ sub check_multipath {
 # The error/warning line is then written to the SysMon Report File ($SADMIN/dat/rpt/`hostname`.rpt).
 #
 # Example of line that could be received by this function
-#   write_error_file($alert_type ,"SERVICE", "DAEMON", $ERR_MESS );
+#   write_rpt_file($alert_type ,"SERVICE", "DAEMON", $ERR_MESS );
 #
 # Example of Layout for SysMon Report file (`hostname`.rpt)
 #   Error;holmes;2018.05.11;12:00;SERVICE;DAEMON;Service syslogd not running !;sadm;sadm
 #   Error;holmes;2018.05.11;12:09;HTTP;WEBSITE;Web Site sysinfo.maison.ca isn't responding;sadm;sadm
 #   Warning;holmes;2018.05.11;12:09;linux;FILESYSTEM;Filesystem /usr at 81% > 80%;sadm;sadm
 #---------------------------------------------------------------------------------------------------
-sub write_error_file {
+sub write_rpt_file {
     my ($ERR_LEVEL,$ERR_SOFT,$ERR_SUBSYSTEM,$ERR_MESSAGE) = @_;         # Split Array Parameter Rcv.
     if ($SYSMON_DEBUG >= 6) {                                           # If Debug Level 6 and Up
         print "\nError Level      = $ERR_LEVEL";                        # Print Alert Type
@@ -1314,9 +1358,6 @@ sub write_error_file {
                  $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
                  $SADM_RECORD->{SADM_QPAGE},$SADM_RECORD->{SADM_EMAIL};
-   
-    # Set to "N" at beginning of SysMon - Set to "Y", so we know that at least 1 error is found,
-    $ERROR_FOUND = "Y";                                                 # At least 1 Error was found
 
     # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
@@ -1353,13 +1394,13 @@ sub write_error_file {
         print "\nCurrent Time   : $year $month $day $hour $min $sec";   # Print current time
         print "\nCurrent Epoch  : $epoch";                              # Print Epoch time
     }
-         
+
     # Is this the first time the script is run - Update Last Execution Data/Time in Array Line
     if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                             # If current date=0 in Array
          $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d",$year,$month,$day);  # Update SADM_DATE
          $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Update SADM_Time
     }
-                  
+    
     # Break last execution date and time from hostname.smon array - ready for epoch calculation 
     $wyear  = sprintf "%04d",substr($SADM_RECORD->{SADM_DATE},0,4);     # Extract Year from SADM_DATE
     $wmonth = sprintf "%02d",substr($SADM_RECORD->{SADM_DATE},4,2);     # Extract Mth from SADM_DATE
@@ -1380,9 +1421,9 @@ sub write_error_file {
         print "\nSo $epoch - $last_epoch = $elapse_second seconds";     # Print Elapsed seconds
     }
 
-    # Get Process Name
-    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;
-    $daemon_name = $dummy[1];
+    # Get Daemon Process Name
+    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split smon ID
+    $daemon_name = $dummy[1];                                           # Get Daemon Name
 
     # If Elapse seconds since last run time is greater than (86400Sec=1Day) what we decided
     if ( $elapse_second >= $SCRIPT_MIN_SEC_BETWEEN_EXEC ) {             # Elapsed Sec>= 86400 =  ok
@@ -1390,53 +1431,55 @@ sub write_error_file {
         $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); # Upd Last Exec DATE
         $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        # Upd Last Exec Time
         $SADM_RECORD->{SADM_MINUTES} = "001";                           # Reset Exec Counter to 1
-        if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-            print "\nScript selected for execution $SADM_RECORD->{SADM_SCRIPT}";
-        }
-        my $mail_message1 = "Daemon $daemon_name wasn't running on $HOSTNAME\n";
-        my $mail_message2 = "SADM Automatically executed restart script : $SADM_RECORD->{SADM_SCRIPT}";
+        print "\nScript selected for execution $SADM_RECORD->{SADM_SCRIPT}";
+        #
+        # Mail Message to SysAdmin
+        my $mail_message1 = "Daemon $daemon_name not running on $HOSTNAME\n";
+        my $mail_message2 = "SysMon Executed restart script : $SADM_RECORD->{SADM_SCRIPT}";
         my $mail_message3 = " to restart the service. \nThis is the first time I am restarting it.";
         my $mail_message  = "$mail_message1 $mail_message2 $mail_message3";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
-        system(@args) ;
-        if ( $? == -1 ) { 
-            print "\nCommand failed: $!"; 
-        }else{ 
-            printf "\nCommand exited with value %d", $? >> 8; 
+        system(@args) ;                                                 # Execute 
+        if ( $? == -1 ) {                                               # If Mail Command Fails
+            print "\nCommand failed: $!";                               # Show Error to users
+        }else{                                                          # If Mail Succeeded
+            printf "\nCommand succeeded - Return Code: %d", $? >> 8;    # Show Mail Return Code 
         }
-        $COMMAND = "$script_name >>${script_name}.log 2>&1";
-        print "\nCommand sent ${COMMAND}"; 
-        @args = ("$COMMAND");
-        system(@args) ;
-        if ( $? == -1 ) { print "\ncommand failed: $!"; }else{ printf "\ncommand exited with value %d", $? >> 8; }
+        $COMMAND = "$script_name >>${script_name}.log 2>&1";            # Build Script Exec. Command
+        print "\nCommand sent ${COMMAND}";                              # Show User command executed
+        @args = ("$COMMAND");                                           # Prepare to Execute
+        system(@args) ;                                                 # Execute Restart Script
+        if ( $? == -1 ) {                                               # Error Executing the script
+            print "\nCommand failed: $!";                               # Show User Error Message 
+        }else{                                                          # If Script Execution worked
+            printf "\nCommand Succeeded - Return Code :%d", $? >> 8;    # Command Succeeded SHow RC 
+        }
     }else{
-        if (($SADM_RECORD->{SADM_MINUTES} + 1) > $SCRIPT_MAX_RUN_PER_DAY){  # Exceed daily run limit
-            if ($SYSMON_DEBUG >= 5) {                                   # If DEBUG Activated
-                print "\nScript $SADM_RECORD->{SADM_SCRIPT} as ran $SADM_RECORD->{SADM_MINUTES} times in last 24 Hrs.";
-                print "\nWill therefore not be executed.";              # Inform user not done
-            }
-            @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;
-            $daemon_name = $dummy[1];
+        if (($SADM_RECORD->{SADM_MINUTES} + 1) > $SCRIPT_MAX_RUN_PER_DAY){ # Ran more than twice today
+            print "\nScript $SADM_RECORD->{SADM_SCRIPT} as ran ";       # This script already ran 
+            print "$SADM_RECORD->{SADM_MINUTES} times in last 24 Hrs."; # twice in the last 24hrs.
+            print "\nWill therefore not be executed.";                  # Inform user will not run
             $ERR_MESS = "Failed to restart daemon $daemon_name " ;      # Set up Error Message
-            $alert_type="E";
+            $alert_type="E";                                            # Now definitly an error now
             print SADMRPT $SADM_LINE;
         }else{
-            $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                   # Incr. Run script Counter
-            $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);       # Insert Cnt in Array
-            if ($SYSMON_DEBUG >= 5) {                                   # If DEBUG Activated
-                print "\nThe script $SADM_RECORD->{SADM_SCRIPT} ran $SADM_RECORD->{SADM_MINUTES} time(s) in last 24hrs.";
+            $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                   # Incr. Exec. script Counter
+            $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);       # Insert Counter in Array
+            print "\nScript $SADM_RECORD->{SADM_SCRIPT} ran ";          # This script already ran
+            print "$SADM_RECORD->{SADM_MINUTES} time(s) in last 24hrs.";# X times in the last 24hrs.
+            $COMMAND = "$script_name >>${script_name}.log 2>&1";        # Build Script Exec. Command
+            print "\nCommand sent ${COMMAND}";                          # Show User command executed
+            @args = ("$COMMAND");                                       # Prepare to Execute
+            system(@args) ;                                             # Execute Restart Script
+            if ( $? == -1 ) {                                           # Error Executing the script
+                print "\nCommand failed: $!";                           # Show User Error Message 
+            }else{                                                      # If Script Execution worked
+                printf "\nCommand Succeeded - Return Code :%d",$? >> 8; # Command Succeeded SHow RC 
             }
-            $COMMAND = "$script_name >>${script_name}.log 2>&1";
-            print "\nCommand sent ${COMMAND}"; 
-            @args = ("$COMMAND");
-            system(@args) ;
-            if ( $? == -1 ) { print "\ncommand failed: $!"; }else{ printf "\ncommand exited with value %d", $? >> 8; }
         }
-    }
-
-} 
-
+    } 
+}
 
 
 
@@ -1589,7 +1632,9 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^check_multipath/  ) {check_multipath ;}
         
         # Load Average
+        #if ($SYSMON_DEBUG >= 5) { print "\nBefore Processing line $sysmon_array[$index]"; }
         if ($SADM_RECORD->{SADM_ID} =~ /^load_average/ ) {check_load_average ; }
+        #if ($SYSMON_DEBUG >= 5) { print "\nAfter Processing line $sysmon_array[$index]"; }
         
         # Check CPU Usage
         if ($SADM_RECORD->{SADM_ID} =~ /^cpu_level/ ) {check_cpu_usage ;  }
@@ -1658,9 +1703,9 @@ sub end_of_sysmon {
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
     load_df_in_array;                               # Execute "df" command & store result in a array
     open (SADMRPT," >$SYSMON_RPT_FILE")  or die "Can't open $SYSMON_RPT_FILE: $!\n"; 
-    check_for_new_filesystems;                      # Check for new filesystem first
 
     # Main Process
+    check_for_new_filesystems;                      # Check for new filesystem first
     loop_through_array;                             # Loop through Sadm Array line by line
     
     # Ending SysMon
