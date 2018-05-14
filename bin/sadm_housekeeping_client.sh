@@ -21,6 +21,8 @@
 #   V1.8 - Remove deletion of release file on sadm client in /sadmin/cfg
 # 2018-01-02 J.Duplessis
 #   V1.9 - Delete file not needed anymore
+# 2018_05_14    JDuplessis
+#   V1.10 Correct problem on MacOS with change owner/group command
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -36,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.8'                             ; export SADM_VER            # Script Version
+SADM_VER='1.10'                            ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -95,8 +97,8 @@ set_dir()
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
-             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
-             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR 
+             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}:${VAL_GROUP}"
+             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
@@ -188,10 +190,10 @@ dir_housekeeping()
     if [ -d "$SADM_BASE_DIR/lost+found" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              if [ "$(sadm_get_ostype)" = "AIX" ]
-                then sadm_writelog "chown root.system $SADM_BASE_DIR/lost+found"   # Special Privilege
-                     chown root.system $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
-                else sadm_writelog "chown root.root $SADM_BASE_DIR/lost+found"     # Special Privilege
-                     chown root.root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
+                then sadm_writelog "chown root:system $SADM_BASE_DIR/lost+found"   # Special Privilege
+                     chown root:system $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
+                else sadm_writelog "chown root:root $SADM_BASE_DIR/lost+found"     # Special Privilege
+                     chown root:root   $SADM_BASE_DIR/lost+found >/dev/null 2>&1 # Lost+Found Priv
              fi
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -246,14 +248,14 @@ file_housekeeping()
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
         then chmod 664 ${SADM_BASE_DIR}/README.md
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
     fi
 
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
     if [ -d "$SADM_DAT_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -273,8 +275,8 @@ file_housekeeping()
     # Make sure LOG Directory $SADM_LOG_DIR Directory files is own by sadmin
     if [ -d "$SADM_LOG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -295,8 +297,8 @@ file_housekeeping()
     JACDIR="${SADM_BASE_DIR}/jac" 
     if [ -d "$JACDIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $JACDIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $JACDIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $JACDIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $JACDIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -325,8 +327,8 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -346,8 +348,8 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -367,8 +369,8 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -389,8 +391,8 @@ file_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_PKG_DIR -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
+             find $SADM_PKG_DIR -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

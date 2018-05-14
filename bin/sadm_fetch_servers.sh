@@ -369,7 +369,7 @@ process_servers()
     # Being root can update o/s update crontab - Can't while in web interface
     if [ -f ${SADM_CRON_FILE} ]                                         # If Web Interface Crontab
         then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                       # Put in place Final Crontab
-             chmod 600 $SADM_CRONTAB ; chown root.root ${SADM_CRONTAB}  # Set Permission on crontab
+             chmod 600 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set Permission on crontab
     fi
 
     # Gracefully Exit the script

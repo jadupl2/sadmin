@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_housekeeping.sh
-#   Synopsis : .Make some general housekeeping that we run once daily to get things running smoothly
+#   Synopsis :  Make some general housekeeping that we run once daily to get things running smoothly
 #   Version  :  1.0
 #   Date     :  19 December 2015
 #   Requires :  sh
@@ -22,6 +22,8 @@
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
 # V1.8 July 2017 - Code enhancement
+# 2018_05_14    JDuplessis
+#   V1.9 Correct problem on MacOS with change owner/group command
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -90,7 +92,7 @@ set_dir()
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
-             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR
+             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
@@ -123,8 +125,8 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
-             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -177,8 +179,8 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
 
-             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

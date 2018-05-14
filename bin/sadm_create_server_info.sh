@@ -251,7 +251,7 @@ create_command_output()
         else sadm_writelog "The command $SCMD_NAME is not available"
              write_file_header "$SCMD_NAME" "$SCMD_TXT"
     fi
-    chown ${SADM_USER}.${SADM_GROUP} ${SCMD_TXT}
+    chown ${SADM_USER}:${SADM_GROUP} ${SCMD_TXT}
 }
 
 

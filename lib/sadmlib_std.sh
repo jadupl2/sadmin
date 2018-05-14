@@ -1649,7 +1649,7 @@ sadm_start() {
 
     # If Package Directory doesn't exist, create it.
     [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
-    chmod 0775 $SADM_PKG_DIR && chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
+    chmod 0775 $SADM_PKG_DIR && chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
