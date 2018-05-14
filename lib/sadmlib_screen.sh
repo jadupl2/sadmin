@@ -9,6 +9,8 @@
 # 2016_07_07 JDuplessis - V1.0 Initial Version
 # 2017_09_01 JDuplessis - V1.1 Added Display of SADM Release Number on second line of menu
 # 2017_10_09 JDuplessis - V1.2 Change Menu Heading & Menu item display
+# 2018_05_14 JDuplessis 
+#   V1.3 Fix Display Problem under MacOS
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -18,7 +20,7 @@
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-lib_screen_ver=1.2                              ; export lib_screen_ver
+lib_screen_ver=1.3                              ; export lib_screen_ver
 # Screen related variables
 clreol=`tput el`                                ; export clreol         # Clr to end of lne
 clreos=`tput ed`                                ; export clreos         # Clr to end of scr
@@ -88,7 +90,9 @@ sadm_writexy()
     case "$(sadm_get_ostype)" in
         "LINUX")    echo -e "$3\c"                                      # -e enable interpretation  
                     ;;
-        "AIX")      echo "$3\c"                                         # Don't need the -e in AIX
+        "AIX")      echo "$3\c"                                         # Don't need the in AIX
+                    ;;      
+        "DARWIN")   echo -e "$3\c"                                      # Neeed the -e on MacOS
                     ;;
         *)          echo "$3\c"       
     esac
@@ -96,12 +100,10 @@ sadm_writexy()
 
 
 
-
 #---------------------------------------------------------------------------------------------------
 #  ASK A QUESTION AT LINE AND POSITION SPECIFIED - RETURN 0 FOR NO AND RETURN 1 IF ANSWERED "YES"
 #---------------------------------------------------------------------------------------------------
-sadm_messok()
-{
+sadm_messok() {
     wline=$1 ; wpos=$2 ; wmess="$3 [y,n] ? "                            # Line, Position and Mess. Rcv
     wreturn=0                                                           # Function Return Value Default
     sadm_writexy $1 $2 "                                                "
@@ -127,8 +129,7 @@ sadm_messok()
 #---------------------------------------------------------------------------------------------------
 # DISPLAY MESSAGE RECEIVE IN BOLD (AND SOUND BELL) AT LINE 22 & WAIT FOR RETURN
 #---------------------------------------------------------------------------------------------------
-sadm_mess()
-{
+sadm_mess() {
    sadm_writexy 22 01 "${clreos}${bold}${1}${reset}${bell}${bell}"      # Clr from lines 22 to EOS
    sadm_writexy 23 01 "Press [ENTER] to continue."                      # Ask user 2 press [RETURN]
    read sadm_dummy                                                      # Wait for  [RETURN]
@@ -141,8 +142,7 @@ sadm_mess()
 #---------------------------------------------------------------------------------------------------
 # DISPLAY MESSAGE ON LINE 22 WITH BELL SOUND
 #---------------------------------------------------------------------------------------------------
-sadm_display_message()
-{
+sadm_display_message() {
    sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
    sadm_writexy 22 01 "${bold}${1}${reset}${bell}"                      # Display Mess. on Line 22
 }
