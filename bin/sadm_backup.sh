@@ -46,6 +46,8 @@
 #       V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
 #           This exit code means that some files were changed while being archived and so 
 #           the resulting archive does not contain the exact copy of the file set.
+#   2018_05_15  JDuplessis
+#       V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
 #           
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -64,7 +66,10 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 SADM_VER='3.2'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
+SADM_LOG_FOOTER="Y"                        ; export SADM_LOG_FOOTER     # Show/Generate Log Footer
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
+SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Use Return Code History
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
@@ -97,12 +102,20 @@ CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Curren
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 
-# NFS Backup Parameters Values are taken from sadmin.cfg file
+LOCAL_MOUNT="/mnt/backup"           ; export LOCAL_MOUNT                # Local NFS Mount Point 
+ARCHIVE_DIR=""                      ; export ARCHIVE_DIR                # Will be filled by Script
+
+WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
+        "October" "November" "December")
+
+# These NFS Backup Parameters Values are taken from sadmin.cfg file
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 #SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
 #SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
 
-# LIST OF DIRECTORIES THAT WILL BE BACKUP (IF THEY EXIST OF COURSE)
+# LIST OF DIRECTORIES THAT YOU WANT  TO BACKUP 
+# IF DIRECTORY DOESN'T EXIST THEY WILL BE SKIPPED AND RECORDED AS SUCH IN THE SCRIPT LOG.
 # YOU NEED TO CHANGE THEM TO ADAPT TO YOUR ENVIRONMENT (Each line MUST end with a space)
 BACKUP_LIST="/cadmin /sadmin /home /storix /mystuff /sysadmin /sysinfo /aix_data /gitrepos /wiki "
 BACKUP_LIST="$BACKUP_LIST /os /www /scom /slam /install /linternux /useradmin /svn /stbackups "
@@ -111,16 +124,8 @@ BACKUP_LIST="$BACKUP_LIST /var/ftp /var/lib/mysql /var/spool/cron "
 export BACKUP_LIST
 #
 
-# List of Files to exclude from Backup
+# List of Files to exclude from Backup - Adapt it to your environment
 EXCLUDE_LIST="*.iso ./jacques/.thinclient_drives .cache/*" ; export EXCLUDE_LIST
-
-LOCAL_MOUNT="/mnt/backup"                       ; export LOCAL_MOUNT    # Local NFS Mount Point 
-ARCHIVE_DIR=""                                  ; export ARCHIVE_DIR    # Where Backup Stored
-#
-WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
-MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
-        "October" "November" "December")
-
 
 # Root Backup Directories
 DDIR="${LOCAL_MOUNT}/daily"             ; export DDIR                   # Root Dir. Daily Backup
