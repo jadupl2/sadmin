@@ -369,16 +369,30 @@ sub combine_fields {
 sub filesystem_increase {
     my ($FILESYSTEM) = @_;                                              # Filesystem name to enlarge
     print "\n\nFilesystem $FILESYSTEM selected for increase";           # Show User Filesystem Incr.
-
     my $FS_SCRIPT = "${SADM_BIN_DIR}/$SADM_RECORD->{SADM_SCRIPT}";      # Get FS Enlarge Script Name
+
+    # If no script specified - Return to caller
+    if ((length $FS_SCRIPT == 0 ) || ($FS_SCRIPT eq "-")) { 
+        print "\nNo Script specified for execution in sysmon.cfg";
+        print "\nNo Filesystem increase will happen";
+        return 0 ;
+    }
+
+    # Make sure script Exist and is executable - If not return to caller
+    if (( -e "$FS_SCRIPT" ) && ( ! -x "$FS_SCRIPT")) { 
+        print "\nScript $FS_SCRIPT doesn't exist or is not executable";
+        print "\nNo Filesystem increase will happen";
+        return 0 ;
+    }
+
     $FSCMD = "$FS_SCRIPT $FILESYSTEM >>${SADM_LOG_DIR}/$SADM_RECORD->{SADM_SCRIPT}.log 2>&1" ;
-    print "\n  - Command that will be executed: $FSCMD";                # SHow User CMD to Increase
+    print "\n  - Command executed: $FSCMD";                             # SHow User CMD to Increase
     @args = ("$FSCMD");                                                 # Build System Cmd
     $src = system(@args) ;                                              # Execute FS Increase Script
     if ( $src == -1 ) {                                                 # If FS Enlarge Failed
         print "\n  - [ERROR] Command failed: $!";                       # Advise USer
     }else{                                                              # If FS Enlarge Succeeded
-        printf "\n  - [OK] Filesystem increase succeeded - Return Code: %d", $? >> 8; 
+        printf "\n  - [OK] Return Code: %d", $? >> 8; 
     }
     return $src ;                                                       # Return Err. Code to Caller
 }
@@ -489,8 +503,7 @@ sub check_for_error {
       if ($SUBMODULE eq "LOAD") {                                       # Check Uptime Load Average
         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get Date,Time,Epoch Time
         if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-           print "\nActual Time : $year $month $day $hour $min $sec";   # Show Actual Time
-           print "\nActual Epoch: $epoch";                              # Show Actual Epoch Time
+           print "\nActual Time: $year $month $day $hour $min $sec - $epoch"; # Actual Time & Epoch
         }
         # If it is the first occurence of the Error - Save Current Date and Time in RECORD
         if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                  # No Prev.Date/Time
@@ -506,8 +519,7 @@ sub check_for_error {
         # Get Epoch Time of the last time we had a load exceeded
         $last_epoch = get_epoch("$wyear", "$wmonth", "$wday", "$whrs", "$wmin", "0"); 
         if ($SYSMON_DEBUG >= 5) { 
-            print "\nLoad Average Alert started at $wyear $wmonth $wday $whrs $wmin 00"; 
-            print "\nLoad Average Alert Started at this epoch time $last_epoch"; 
+            print "\nLoad Average Alert started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch"; 
         }
         # Calculate number of seconds before SADM report the error (Min * 60 sec)
         $elapse_second = $epoch - $last_epoch;                          # Cur. Epoch - $last_epoch
@@ -558,8 +570,7 @@ sub check_for_error {
          # Get Epoch Time of the last time we started to have an exceeding load
          $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); 
          if ($SYSMON_DEBUG >= 5) { 
-             print "\nLoad on cpu started at $wyear $wmonth $wday $whrs $wmin 00";
-             print "\nLoad on cpu started time in epoch time $last_epoch";
+             print "\nLoad on cpu started at $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
          }
          # Calculate number of seconds before SYSMON report the errors (Min * 60 sec)
          $elapse_second = $epoch - $last_epoch;                         # Nb Sec. Since Load Started
@@ -584,9 +595,8 @@ sub check_for_error {
 
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
          if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
-            print "\n\nFilesystem Increase: $WID at $ACTVAL%\n";        # FileSystem Incr. Entered
-            print "\nActual Time is $year $month $day $hour $min $sec"; # Print current time
-            print "\nActual epoch time is $epoch";                      # Print Epoch time
+            print "\n\nFilesystem Increase: $WID at $ACTVAL%";          # FileSystem Incr. Entered
+            print "\nActual Date and Time   : $year $month $day $hour $min $sec - $epoch";
          }
          # If it is the first occurence of the Error - Save Current Date and Time in RECORD
          if ( $SADM_RECORD->{SADM_DATE} == 0 ) {                                 # No Prev.Date/Time
@@ -601,13 +611,12 @@ sub check_for_error {
          $wmin   =sprintf "%02d",substr($SADM_RECORD->{SADM_TIME},2,2); # Extract Min Error Started
          $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); 
          if ($SYSMON_DEBUG >= 5) {                                      # If DEBUG if ON
-            print "\nLast series of filesystem increase started at $wyear $wmonth $wday $whrs $wmin";
-            print "\nElapsed time since last series of filesystem increase : $last_epoch"; 
+            print "\nLast increase attempt  : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
          }
          # Calculate the number of seconds since the last execution 
          $elapse_second = $epoch - $last_epoch;                          # Subs Act.epoch-Last epoch
          if ($SYSMON_DEBUG >= 5) {                                       # If DEBUG Activated
-            print "So $elapse_second seconds since last increase";       # Print Elapsed seconds
+            print "\nSo $elapse_second seconds since last increase";     # Print Elapsed seconds
          }
          # If nb. of Seconds since last increase is greater than 1 Day (86400 Sec) = OK RUN
          if ( $elapse_second >= $MINIMUM_SEC ) {                         # Elapsed Sec >= 86400 Sec.
@@ -616,7 +625,7 @@ sub check_for_error {
             $SADM_RECORD->{SADM_TIME} = sprintf("%02d%02d",$hour,$min,$sec);        
             $SADM_RECORD->{SADM_MINUTES} = "001";                        # First FS Increase Today
             if ($SYSMON_DEBUG >= 5) { print "\nFirst filesystem increase in last 24 Hours"; }
-            filesystem_increase($WID);                                   # Go Increase Filesystem
+                filesystem_increase($WID);                               # Go Increase Filesystem
          }else{
             if (($SADM_RECORD->{SADM_MINUTES} + 1) > $MAX_FS_INCR){      # If FS Incr Counter > 2
                if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
@@ -629,7 +638,7 @@ sub check_for_error {
                $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
                $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
                if ($SYSMON_DEBUG >= 5) {                                 # If DEBUG Activated
-                  print "Filesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
+                  print "\nFilesystem increase counter: $SADM_RECORD->{SADM_MINUTES} ";
                }
                filesystem_increase($WID);                                # Go Increase Filesystem
             }
@@ -702,7 +711,7 @@ sub check_http {
     # Returns the following 5 values if successful: 
     #   - ($content_type, $document_length, $modified_time, $expires, $server)
     # Returns an empty list if it fails. In scalar context returns TRUE if successful.
-    $ua->timeout(5);                                                    # Timeout if not responding
+    $ua->timeout(3);                                                    # Timeout if not responding
     if (! head($url)) { $http_status=0; }else{ $http_status=1; }        # Status based on response
     if ($http_status == 0) {                                            # If no response for URL
         printf "\n[ERROR] Web site not responding" ;                    # Show error to user
@@ -861,7 +870,14 @@ sub Today_and_Now {
 sub get_epoch {
     my ($eyear, $emonth, $eday, $ehrs, $emin, $esec) = @_;              # Split Array Received
     $emth=$emonth-1 ;                                                   # Substract 1 from month
-    $epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emonth,$eyear);    # Calc. Epoch Time
+    if ($SYSMON_DEBUG >= 7) {                                           # Debug Level >= 7
+        print "\n$epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emth,$eyear)";
+    }
+    #$epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emonth,$eyear);    # Calc. Epoch Time
+    $epoch_time = timelocal($esec,$emin,$ehrs,$eday,$emth,$eyear);    # Calc. Epoch Time
+    if ($SYSMON_DEBUG >= 7) {                                           # Debug Level >= 7
+        print "\nepoch_time = $epoch_time";
+    }
     return $epoch_time;                                                 # Return Epoch Time
 }
 
@@ -1124,8 +1140,10 @@ sub run_script {
     #(my $sfile_name, my $sfile_extension) = split /./, $sname ;        # Split name & extension
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
     print "\n\nExecution of script $sname is requested";                # Show User Script Name
-    print "\nFilename: $sfile_name - Extension: $sfile_extension";      # Show Splitted Name/Ext.
-   
+    if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
+        print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
+    }
+
     # If no script specified - Return to caller
     if ((length $sname == 0 ) || ($sname eq "-")) {                     # If No script specified
         $SADM_RECORD->{SADM_CURVAL}=1       ;                           # Set Return value to 1=Err
@@ -1231,7 +1249,7 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
             $SADM_RECORD->{SADM_QPAGE}   = "sadm";          # Alert Group when Error
             $SADM_RECORD->{SADM_EMAIL}   = "sadm";          # Email Group when Error
-            #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_inc.sh"; # Script that execute to increase FS
+            #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
             $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
             $index=@sysmon_array;                           # Get Nb of Item in Array
@@ -1295,7 +1313,8 @@ sub check_multipath {
     }
 
     # Get output of multipathd and analyse it 
-    open(FPATH, "echo 'show paths' | $CMD_MPATHD -k | grep -vEi 'cciss|multipath' | ") or die "Can't execute $CMD_MPATHD \n";
+    open(FPATH, "echo 'show paths' | $CMD_MPATHD -k 2>/dev/null| grep -vEi 'cciss|multipath' | ") 
+        or die "Can't execute $CMD_MPATHD \n";
 
     $SADM_RECORD->{SADM_CURVAL} = 1 ;                                   # Default Status is OK=1
     $INUSE = 0 ;                                                        # Multipath Not in Use=0
@@ -1411,8 +1430,7 @@ sub write_rpt_file {
     # Get epoch time of the last time script execution
     $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); # Epoch of last Exec.
     if ($SYSMON_DEBUG >= 5) {                                           # If DEBUG if ON
-        print "\nLast time $script_name script was executed : $wyear $wmonth $wday $whrs $wmin 00"; 
-        print "\nEpoch time of last execution : $last_epoch";           # Last execution epoch time
+        print "\nLast execution of $script_name: $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch"; 
     }
 
     # Calculate the number of seconds since the last execution in seconds
