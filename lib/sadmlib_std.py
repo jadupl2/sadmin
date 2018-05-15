@@ -38,7 +38,8 @@
 #   V2.10 Database User and Password are not read from .dbpass now (no longer from sadmin.cfg)
 # 2018_05_14 JDuplessis
 #   V2.11 Add Variable obj.use_rch, to use or not the Return Code History file (for interactice Pgm)
-# 
+# 2018_05_15 JDuplessis
+#   V2.12 Add Variable obj.log_header and obj.log_footer to produce or not the log header/footer.# 
 # ==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -70,7 +71,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.11"                                            # This Library Version
+libver              = "2.12"                                            # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 args                = len(sys.argv)                                     # Nb. argument receive
@@ -1018,20 +1019,20 @@ class sadmtools():
     
         
         # Write SADM Header to Script Log
-        self.writelog (dash)                                            # 80 = Lines 
-        wmess = "Starting %s " % (self.pn)                              # Script Name
-        wmess += "V%s " % (self.ver)                                    # Script Version
-        wmess += "- SADM Lib. V%s" % (libver)                           # SADMIN Library Version
-        self.writelog (wmess)                                           # Write Start line to Log
-        wmess = "Server Name: %s" % (self.get_fqdn())                   # FQDN Server Name
-        wmess += " - Type: %s" % (self.os_type.capitalize())            # O/S Type Linux/Aix
-        self.writelog (wmess)                                           # Write OS Info to Log Head
-        wmess  = "O/S: %s " % (self.get_osname().capitalize())          # O/S Distribution Name
-        wmess += " %s - Code Name:" % (self.get_osversion())            # O/S Distribution Version
-        wmess += " %s" % (self.get_oscodename().capitalize())           # O/S Dist. Code Name Alias
-        self.writelog (wmess)                                           # Write OS Info to Log Head
-        self.writelog (dash)                                            # 80 = Lines 
-        self.writelog (" ")                                             # Space Line in the LOG
+        if (self.log_header) :                                          # Want to Produce log Header
+            wmess = "Starting %s " % (self.pn)                          # Script Name
+            wmess += "V%s " % (self.ver)                                # Script Version
+            wmess += "- SADM Lib. V%s" % (libver)                       # SADMIN Library Version
+            self.writelog (wmess)                                       # Write Start line to Log
+            wmess = "Server Name: %s" % (self.get_fqdn())               # FQDN Server Name
+            wmess += " - Type: %s" % (self.os_type.capitalize())        # O/S Type Linux/Aix
+            self.writelog (wmess)                                       # Write OS Info to Log Head
+            wmess  = "O/S: %s " % (self.get_osname().capitalize())      # O/S Distribution Name
+            wmess += " %s - Code Name:" % (self.get_osversion())        # O/S Distribution Version
+            wmess += " %s" % (self.get_oscodename().capitalize())       # O/S Dist. Code Name Alias
+            self.writelog (wmess)                                       # Write OS Info to Log Head
+            self.writelog (dash)                                        # 80 = Lines 
+            self.writelog (" ")                                         # Space Line in the LOG
 
         # If the PID file already exist - Script is already Running
         if os.path.exists(self.pid_file) and self.multiple_exec == "N" :# PID Exist & No MultiRun
@@ -1067,15 +1068,15 @@ class sadmtools():
     def stop(self,return_code):
         global FH_LOG_FILE, start_time, start_epoch
 
-        self.exit_code = return_code                                         # Save Param.Recv Code
-        if self.exit_code is not 0 :                                         # If Return code is not 0
-            self.exit_code=1                                                 # Making Sure code is 1 or 0
+        self.exit_code = return_code                                    # Save Param.Recv Code
+        if self.exit_code is not 0 :                                    # If Return code is not 0
+            self.exit_code=1                                            # Making Sure code is 1 or 0
  
         # Write the Script Exit code of the script to the log
-        self.writelog (" ")                                             # Space Line in the LOG
-        self.writelog (dash)                                            # 80 = Lines 
-        self.writelog ("Script return code is " + str(self.exit_code))       # Script ExitCode to Log
-        #time.sleep(1)                                                  # Sleep 1 seconds
+        if (self.log_footer) :                                          # Want to Produce log Footer
+            self.writelog (" ")                                         # Space Line in the LOG
+            self.writelog (dash)                                        # 80 = Lines 
+            self.writelog ("Script return code: " + str(self.exit_code))# Script ExitCode to Log
 
     
         # Calculate the execution time, format it and write it to the log
@@ -1086,7 +1087,8 @@ class sadmtools():
         minutes = elapse_seconds//60                                    # Cal. Nb. Minutes
         seconds = elapse_seconds - 60*minutes                           # Subs. Min*60 from elapse
         elapse_time="%02d:%02d:%02d" % (hours,minutes,seconds)
-        self.writelog ("Script execution time is %02d:%02d:%02d" % (hours,minutes,seconds))
+        if (self.log_footer) :                                          # Want to Produce log Footer
+            self.writelog ("Script execution time is %02d:%02d:%02d" % (hours,minutes,seconds))
 
     
         # Update the [R]eturn [C]ode [H]istory File
@@ -1097,7 +1099,8 @@ class sadmtools():
             rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.exit_code)
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
-            self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
+            if (self.log_footer) :                                      # Want to Produce log Footer
+                self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
 
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
@@ -1106,13 +1109,13 @@ class sadmtools():
             MailMess="No mail is requested when script end - No mail sent" # Message User Email Choice
 
         if self.cfg_mail_type == 1 :                                    # Want Email on Error Only
-            if self.exit_code != 0 :                                         # If Script Failed = Email
+            if self.exit_code != 0 :                                    # If Script Failed = Email
                 MailMess="Mail requested if script fail - Mail sent"    # Message User Email Choice
             else :                                                      # Script Success = No Email
                 MailMess="Mail requested if script fail - No mail sent" # Message User Email Choice
 
         if self.cfg_mail_type == 2 :                                    # Email on Success Only
-            if not self.exit_code == 0 :                                     # If script is a Success
+            if not self.exit_code == 0 :                                # If script is a Success
                 MailMess="Mail requested on Success only - Mail sent"   # Message User Email Choice
             else :                                                      # If Script not a Success
                 MailMess="Mail requested on Success only - No mail sent"# Message User Email Choice
@@ -1120,38 +1123,42 @@ class sadmtools():
         if self.cfg_mail_type == 3 :                                    # User always Want email 
             MailMess="Mail requested on Success or Error - Mail sent"   # Message User Email Choice
     
-        if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :                # User Email Choice Invalid
+        if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :           # User Email Choice Invalid
             MailMess="SADM_MAIL_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
 
-        if self.mail == "" :                                                 # If Mail Program not found
-            MailMess="No Mail can be send - Until mail command is install"  # Message User Email Choice    
-        self.writelog ("%s" % (MailMess))                               # Write user choice to log
-    
+        if self.mail == "" :                                            # If Mail Program not found
+            MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice
+        if (self.log_footer) :                                          # Want to Produce log Footer
+            self.writelog ("%s" % (MailMess))                           # Write user choice to log
+
           
         # Advise user the Log will be trimm
-        self.writelog ("Trimming %s to %s lines." %  (self.log_file, str(self.cfg_max_logline)))
+        if (self.log_footer) :                                          # Want to Produce log Footer
+            self.writelog ("Trimming %s to %s lines." %  (self.log_file, str(self.cfg_max_logline)))
     
         # Write Script Log Footer
         now = time.strftime("%c")                                       # Get Current Date & Time
-        self.writelog (now + " - End of " + self.pn)                              # Write Final Footer to Log
-        self.writelog (dash)                                                 # 80 = Lines 
-        self.writelog (" ")                                                  # Space Line in the LOG
+        if (self.log_footer) :                                          # Want to Produce log Footer
+            self.writelog (now + " - End of " + self.pn)                # Write Final Footer to Log
+            self.writelog (dash)                                        # 80 = Lines 
+            self.writelog (" ")                                         # Space Line in the LOG
 
         # Inform UnixAdmin By Email based on his selected choice
         # Now that the user email choice is written to the log, let's send the email now, if needed
         # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
         wsubject=""                                                     # Clear Email Subject
-        wsub_success="SADM : SUCCESS of %s on %s" % (self.pn,self.hostname)       # Format Success Subject
-        wsub_error="SADM : ERROR of %s on %s" % (self.pn,self.hostname)           # Format Failed Subject
+        wsub_success="SADM : SUCCESS of %s on %s" % (self.pn,self.hostname) # Format Success Subject
+        wsub_error="SADM : ERROR of %s on %s" % (self.pn,self.hostname) # Format Failed Subject
     
-        if self.exit_code != 0 and (self.cfg_mail_type == 1 or self.cfg_mail_type == 3): # If Error & User want email
+        # If Error & User want email
+        if self.exit_code != 0 and (self.cfg_mail_type == 1 or self.cfg_mail_type == 3): 
             wsubject=wsub_error                                         # Build the Subject Line
            
-        if self.cfg_mail_type == 2 and self.exit_code == 0 :                 # Success & User Want Email
+        if self.cfg_mail_type == 2 and self.exit_code == 0 :            # Success & User Want Email
             wsubject=wsub_success                                       # Format Subject Line
 
         if self.cfg_mail_type == 3 :                                    # USer Always want Email
-            if self.exit_code == 0 :                                         # If Script is a Success
+            if self.exit_code == 0 :                                    # If Script is a Success
                 wsubject=wsub_success                                   # Build the Subject Line
             else :                                                      # If Script Failed 
                 wsubject=wsub_error                                     # Build the Subject Line
