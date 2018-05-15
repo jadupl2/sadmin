@@ -31,6 +31,8 @@
 #   v1.2 Check if root is running script before calling sadm tool library
 # 2018_05_14 JDuplessis
 #   v1.3 Add SADM_USE_RCH Variable to use or not the [R]eturn [C]ode [H]istory file
+# 2018_05_15 JDuplessis
+#   v1.4 Add SADM_LOG_FOOTER and SADM_LOG_HEADER global variable to produce or not log header/footer
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -45,11 +47,13 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
+SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
+SADM_LOG_FOOTER="Y"                        ; export SADM_LOG_FOOTER     # Show/Generate Log Footer
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Upd Record History File
+SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Use Return Code History
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
@@ -273,9 +277,9 @@ main_process()
     fi
 
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    # main_process                                                      # Main Process
+    main_process                                                      # Main Process
     # OR
-    process_servers                                                     # Process Active Servers
+    # process_servers                                                     # Process Active Servers
 
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
