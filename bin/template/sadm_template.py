@@ -24,7 +24,9 @@
 # 2017_12_01 JDuplessis 
 #   V1.0 Initial Version
 # 2018_05_14 JDuplessis 
-#   V1.1 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File
+#   V1.7 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File# 2018_05_14 JDuplessis 
+# 2018_05_15 JDuplessis 
+#   V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -140,11 +142,13 @@ def main():
 
     # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.6"                             # Indicate this script Version 
+    st.ver  = "1.8"                             # Indicate this script Version 
     st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
     st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
     st.log_append = True                        # True=Append existing log  False=start a new log
     st.use_rch = True                           # True=Produce/Use RCH File, False=Don't Use/Upd RCH
+    st.log_header = True                        # True=Produce Log Header - False=No Log Header
+    st.log_footer = True                        # True=Produce Log Footer - False=No Log Footer
     st.debug = 0                                # Debug level and verbosity (0-9)
     st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     st.usedb = True                             # True=Use Database  False=DB Not needed for script
@@ -158,7 +162,7 @@ def main():
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st.writelog ("Try sudo ./%s" % (st.pn))                          # Suggest to use 'sudo'
+       st.writelog ("Try sudo %s" % (st.pn))                            # Suggest to use 'sudo'
        st.writelog ("Process aborted")                                  # Process Aborted Msg
        st.stop (1)                                                      # Close and Trim Log/Email
        sys.exit(1)                                                      # Exit with Error Code
