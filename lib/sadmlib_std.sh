@@ -52,7 +52,7 @@
 # 2018_05_06 JDuplessis
 #   V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
 # 2018_05_14 JDuplessis
-#   V2.22 Add Option not to use RC File and don't abort if mysql is not install on server.
+#   V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -1716,19 +1716,22 @@ sadm_start() {
 
     # Feed the Return Code History File stating the script is starting
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
-    if [ $SADM_USE_RCH = "Y" ]                                          # If Want to use a RCH File
+    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Assign user/group to RCH
              echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     fi
+
     # Write Starting Info in the Log
-    sadm_writelog "${SADM_80_DASH}"
-    sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
-    sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
-    sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
-    sadm_writelog "${SADM_FIFTY_DASH}"
-    sadm_writelog " "
+    if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
+        then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
+             sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
+             sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
+             sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
+             sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
+             sadm_writelog " "                                          # Write Blank line
+    fi
 
     # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]
@@ -1766,21 +1769,27 @@ sadm_stop() {
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
  
     # Start Writing Log Footer
-    sadm_writelog " "                                                   # Blank Line
-    sadm_writelog "${SADM_FIFTY_DASH}"                                  # Dash Line
-    sadm_writelog "Script return code is $SADM_EXIT_CODE"               # Final Exit Code to log
-    
+    if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
+        then sadm_writelog " "                                          # Blank Line
+             sadm_writelog "${SADM_FIFTY_DASH}"                         # Dash Line
+             sadm_writelog "Script return code is $SADM_EXIT_CODE"      # Final Exit Code to log
+    fi
+
     # Get End time and Calculate Elapse Time
     sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_end_time  # Get & Format End Time
     sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
-    sadm_writelog "Script execution time is $sadm_elapse"               # Log the Elapse Time
+    if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
+        then sadm_writelog "Script execution time is $sadm_elapse"      # Write the Elapse Time
+    fi 
 
-    # Trim the RCH File based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
-    if [ $SADM_USE_RCH = "Y" ]                                          # Want to Produce RCH File
+    # Add Ending line in RCH File & Trim based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
+    if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE" # Format Part2 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
-             sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" # Advise of trim
+             if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]
+                then sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" 
+             fi
              sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
              chmod 664 ${SADM_RCHLOG}                                   # Writable by O/G Readable W
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
@@ -1788,39 +1797,39 @@ sadm_stop() {
 
     # Write email choice in the log footer
     if [ "$SADM_MAIL" = "" ] ; then SADM_MAIL_TYPE=4 ; fi               # Mail not Install - no Mail
-    case $SADM_MAIL_TYPE in
-      0)  sadm_writelog "User requested no mail when script end (Fail or Success)"
-          ;;
-      1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-             then sadm_writelog "User requested mail only if script fail - Will send mail"
-             else sadm_writelog "User requested mail only if script fail - Will not send mail"
-          fi
-          ;;
-      2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-             then sadm_writelog "User requested mail only on Success of script - Will send mail"
-             else sadm_writelog "User requested mail only on Success of script - Will not send mail"
-          fi 
-          ;;
-      3)  sadm_writelog "User requested mail either Success or Error of script - Will send mail"
-          ;;
-      4)  sadm_writelog "No Mail can be send until the mail command is install"
-          sadm_writelog "On CentOS/Red Hat/Fedora  - enter command 'yum -y mail'"
-          sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - use 'apt-get install mailutils'"
-          ;;
-      *)  sadm_writelog "The SADM_MAIL_TYPE is not set properly - Should be between 0 and 3"
-          sadm_writelog "It is now set to $SADM_MAIL_TYPE"
-          ;;
-    esac
+    if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
+        then case $SADM_MAIL_TYPE in
+                0)  sadm_writelog "User requested no mail when script end (Fail or Success)"
+                    ;;
+                1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
+                        then sadm_writelog "User requested mail only if script fail - Will send mail"
+                        else sadm_writelog "User requested mail only if script fail - Will not send mail"
+                    fi
+                    ;;
+                2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
+                        then sadm_writelog "User requested mail only on Success of script - Will send mail"
+                        else sadm_writelog "User requested mail only on Success of script - Will not send mail"
+                    fi 
+                    ;;
+                3)  sadm_writelog "User requested mail either Success or Error of script - Will send mail"
+                    ;;
+                4)  sadm_writelog "No Mail can be send until the mail command is install"
+                    sadm_writelog "On CentOS/Red Hat/Fedora  - enter command 'yum -y mail'"
+                    sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - use 'apt-get install mailutils'"
+                    ;;
+                *)  sadm_writelog "The SADM_MAIL_TYPE is not set properly - Should be between 0 and 3"
+                    sadm_writelog "It is now set to $SADM_MAIL_TYPE"
+                    ;;
+             esac
+             sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
+             sadm_writelog "`date` - End of ${SADM_PN}"                 # Write End Time To Log
+             sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dash Line
+             sadm_writelog " "                                          # Blank Line
+             sadm_writelog " "                                          # Blank Line
+             sadm_writelog " "                                          # Blank Line
+             sadm_writelog " "                                          # Blank Line
+    fi
 
-    sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
-    sadm_writelog "`date` - End of ${SADM_PN}"                          # Write End Time To Log
-    sadm_writelog "${SADM_80_DASH}"                                  # Write 80 Dash Line
-    sadm_writelog " "                                                   # Blank Line
-    sadm_writelog " "                                                   # Blank Line
-    sadm_writelog " "                                                   # Blank Line
-    sadm_writelog " "                                                   # Blank Line
-    
-    # Maintain Script log at a reasonnable size specified in ${SADM_MAX_LOGLINE}
     cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
