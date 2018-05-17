@@ -110,10 +110,12 @@ class sadmtools():
 
         # Set Default Values for Script Related Variables
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
+        self.log_append         = True                                  # Append to Existing Log ?
+        self.log_header         = True                                  # True = Produce Log Header
+        self.log_footer         = True                                  # True = Produce Log Footer
+        self.ver                = "1.0"                                 # Default Program Version
         self.multiple_exec      = "N"                                   # Default Run multiple copy
         self.use_rch            = True                                  # True=Use RCH File else No
-        self.log_append         = True                                  # Append to Existing Log ?
-        self.ver                = "1.0"                                 # Default Program Version
         self.pn                 = os.path.basename(sys.argv[0])         # Program name
         self.inst               = os.path.basename(sys.argv[0]).split('.')[0] # Pgm name without Ext
         self.tpid               = str(os.getpid())                      # Get Current Process ID.
