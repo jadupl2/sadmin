@@ -1,7 +1,7 @@
-#! /usr/bin/env sh
+    #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
-#   Title       :   sadm_fs_incr.sh
+#   Title       :   sadm_fs_incr.sh [filesystem-to-increase]
 #   Synopsis    :   Script designed to be called by SADM SYStem MONitor (sadm_sysmon.pl) to 
 #                   automatically increase filesystem.
 #                   When filesystem usage reach a level that is greater than the warning threshold 
@@ -15,17 +15,14 @@
 #                       4)  The script 'sadm_fs_incr.sh' must be present and executable in 
 #                           directory "$SADMIN/bin".
 #   Version     :   1.0
-#   Date        :   5 January 2018
-#   Requires    :   sh and SADMIN Filesystem Library
-#   Description :
-#
+#   Date        :   15 May 2018
+#   Requires    :   sh, lvm package and SADMIN Filesystem Library
 #   This code was originally written by Jacques Duplessis,
 #   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -50,13 +47,13 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.0'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
 SADM_LOG_FOOTER="Y"                        ; export SADM_LOG_FOOTER     # Show/Generate Log Footer
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Use Return Code History
+SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Update Return Code History
 #
 # DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
@@ -165,54 +162,6 @@ toupper() {
 }
 
 
-# -------------------------------------------------------------------------------------
-# Function called to display message and write it at the same time in the log
-# -------------------------------------------------------------------------------------
-write_log()
-{
-    WMESS=$1
-    WDATE=$(date "+%C%y.%m.%d %H:%M:%S")
-    echo -e "$WDATE - $WMESS" >> $SLAM_LOG
-}
-
-
-# -------------------------------------------------------------------------------------
-# This function create a file that contains a list of volume group on the system
-# -------------------------------------------------------------------------------------
-create_vglist()
-{
-    if [ "$OSNAME" = "linux" ]
-       then $VGS --noheadings --separator , |awk -F, '{ print $1 }'|tr -d ' '} >$VGLIST
-    fi
-}
-
-
-# -------------------------------------------------------------------------------------
-# This function verify if a volume group exist on the system
-# -------------------------------------------------------------------------------------
-vgexist()
-{
-   vg2check=$1
-   create_vglist
-   grep -i $vg2check $VGLIST > /dev/null 2>&1
-   vgrc=$?
-   return $vgrc
-}
-
-
-# -------------------------------------------------------------------------------------
-# This function verify if a logical volume exist on the system
-# -------------------------------------------------------------------------------------
-lvexist()
-{
-    lv2check=$1
-    if [ "$OSNAME" = "linux" ]
-       then grep -E "^\/dev" $FSTAB|awk '{ print $1 }'|awk -F/ '{ print $NF }'|grep "^${lv2check}$">/dev/null
-    fi
-    lvrc=$?
-    return $lvrc
-}
-
 
 # -------------------------------------------------------------------------------------
 # This function get the volume group information
@@ -232,17 +181,6 @@ getvg_info()
     return
 }
 
-
-# -------------------------------------------------------------------------------------
-# This function Check if mount point is already in /etc/fstab
-# -------------------------------------------------------------------------------------
-mntexist()
-{
-   mnt2check=$1
-   grep "^/dev/" $FSTAB | awk '{ printf "%s \n", $2 }' | grep "^${mnt2check} ">/dev/null
-   mntrc=$?
-   return $mntrc
-}
 
 
 # -------------------------------------------------------------------------------------

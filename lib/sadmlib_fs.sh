@@ -126,15 +126,15 @@ setlvm_path() {
 
 
 
-
-#---------------------------------------------------------------------------------------------------
-#   This function create a file that contains a list of volume group on the system
-#---------------------------------------------------------------------------------------------------
+#===================================================================================================
+# Function that create a file containing a list of volume group(s) on the system
+#===================================================================================================
 create_vglist()
 {
-   ls -1 $VGDIR | sort >  $VGLIST
+    if [ "$OSNAME" = "linux" ]
+       then $VGS --noheadings --separator , |awk -F, '{ print $1 }'|tr -d ' '} >$VGLIST
+    fi
 }
-
 
 
 #---------------------------------------------------------------------------------------------------
@@ -156,10 +156,8 @@ vgexist()
 lvexist()
 {
    lv2check=$1
-   #mess  "Checking Existance of $lv2check logical Volume" 
    grep -E "^\/dev" $FSTAB|awk '{ print $1 }'|awk -F/ '{ print $NF }'|grep "^${lv2check}$" >/dev/null
    lvrc=$?
-   #mess "Return code is $lvrc "
    return $lvrc
 }
 
