@@ -14,6 +14,8 @@
 #---------------------------------------------------------------------------------------------------
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #   2.1      Added support for XFS Filesystem
+# 2018_05_18 JDuplessis
+#   V2.2 Adapted to be used by Auto Filesystem Increase
 #===================================================================================================
 # 
 #
@@ -49,7 +51,7 @@ LVREMOVE=""                                 ; export LVREMOVE           # lvremo
 
 
 # --------------------------------------------------------------------------------------------------
-# THIS FUNCTION SETUP LVM ENVIRONMENT VARIABLES USED BY THIS SCRIPT 
+# FUNCTION SETUP LVM ENVIRONMENT VARIABLES  
 # WILL USE THESE ENVIRONMENT VARIABLE TO TEST IF COMMAND ARE AVAILABLE OR NOT.
 # --------------------------------------------------------------------------------------------------
 setlvm_path() {
@@ -162,24 +164,27 @@ lvexist()
 }
 
 
-#---------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # This function get the volume group information
-#---------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 getvg_info()
 {
-   vgsize=`$VGDISPLAY $VGNAME 2>/dev/null | grep -i free | awk '{ print $7 }'`
-   vgunit=`$VGDISPLAY $VGNAME 2>/dev/null | grep -i free | awk '{ print $8 }'`
-   if [ $vgunit = "GB" ] || [ $vgunit = "GiB" ]
-      then vgint=`echo "$vgsize * 1024" | /usr/bin/bc  | awk -F'.' '{ print $1 }'`
-      else vgint=$( echo $vgsize | awk -F'.' '{ print $1 }' )
+    WVGNAME=$1
+    vgexist $WVGNAME
+    VGEXIST=$?
+    if [ $VGEXIST -eq 0 ]
+        then VGSOPT="--noheadings --separator , --units m "
+             VGSIZE=`$VGS $VGSOPT $WVGNAME |awk -F, '{ print $6 }'|tr -d 'G' |awk -F\. '{ print $1 }'`
+             VGFREE=`$VGS $VGSOPT $WVGNAME |awk -F, '{ print $7 }'|tr -d 'G' |awk -F\. '{ print $1 }'`
+        else VGSIZE=0 ; VGFREE=0; 
+             sadm_writelog "VG ${WVGNAME} doesn't exist - process aborted"
     fi
-    VGFREE=$vgint
-
+    return
 }
 
 
 #---------------------------------------------------------------------------------------------------
-# This function Check if mount point is already in /etc/fstab
+# Check if mount point received exist in /etc/fstab 
 #---------------------------------------------------------------------------------------------------
 mntexist()
 {
