@@ -26,6 +26,8 @@
 #   V1.10 Added umount to make sure Storix USB Backup work
 # 2017_08_10 JDuplessis
 #   V1.11 Usage of USB External is an option now, based on USB_ATTACH Variable
+# 2018_05_20 JDuplessis
+#   V1.12 Fix /mnt/storix not unmounting at the end of clean up
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -42,7 +44,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.11'                             ; export SADM_VER            # Script Version
+SADM_VER='1.12'                            ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -128,8 +130,9 @@ clean_nfs_storix_dir()
           done
 
     # Umount THE NFS Mount of the Images
-    umount ${NFS_LOC_MOUNT} > /dev/null 2>&1
-
+    cd /
+    sadm_writelog "Unmounting $USB_LOC_MOUNT"
+    umount $USB_LOC_MOUNT >/dev/null 2>&1
     return 0
 }
 
