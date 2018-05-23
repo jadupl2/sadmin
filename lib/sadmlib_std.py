@@ -40,6 +40,8 @@
 #   V2.11 Add Variable obj.use_rch, to use or not the Return Code History file (for interactice Pgm)
 # 2018_05_15 JDuplessis
 #   V2.12 Add Variable obj.log_header and obj.log_footer to produce or not the log header/footer.# 
+# 2018_05_20 JDuplessis
+#   V2.13 Minor correction to make the log like the SADMIN Shell Library
 # ==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -71,9 +73,10 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.12"                                            # This Library Version
+libver              = "2.13"                                            # This Library Version
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
+fifty_dash          = "=" * 50                                          # Line of 50 dash
 args                = len(sys.argv)                                     # Nb. argument receive
 osname              = os.name                                           # OS name (nt,dos,posix,...)
 platform            = sys.platform                                      # Platform (darwin,linux)
@@ -152,11 +155,6 @@ class sadmtools():
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_net_dir        = self.www_dat_dir + '/' + self.hostname + '/net' # Web Data Net.Dir
-        self.www_rch_dir        = self.www_dat_dir + '/' + self.hostname + '/rch' # Web Data RCH Dir
-        self.www_dr_dir         = self.www_dat_dir + '/' + self.hostname + '/dr'  # Web Disaster Rec
-        self.www_nmon_dir       = self.www_dat_dir + '/' + self.hostname + '/nmon'# Web NMON Dir.
-        self.www_tmp_dir        = self.www_dat_dir + '/' + self.hostname + '/tmp' # Web tmp Dir.
-        self.www_log_dir        = self.www_dat_dir + '/' + self.hostname + '/log' # Web log Dir.
         
         # SADM Files Definition
         self.log_file           = self.log_dir + '/' + self.hostname + '_' + self.inst + '.log' 
@@ -281,7 +279,7 @@ class sadmtools():
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
         try:
-            if self.debug > 2 : print ("Closing Database %s" % (self.cfg_dbname)) 
+            if self.debug > 4 : print ("Closing Database %s" % (self.cfg_dbname)) 
             self.conn.close()
         except Exception as e: 
             print ("type e = ",type(e))
@@ -367,12 +365,10 @@ class sadmtools():
             if "SADM_MAX_RCHLINE"            in CFG_NAME:  self.cfg_max_rchline    = int(CFG_VALUE)
             #
             if "SADM_NMON_KEEPDAYS"          in CFG_NAME:  self.cfg_nmon_keepdays  = int(CFG_VALUE)
-            if "SADM_SAR_KEEPDAYS"           in CFG_NAME:  self.cfg_sar_keepdays   = int(CFG_VALUE)
             if "SADM_RCH_KEEPDAYS"           in CFG_NAME:  self.cfg_rch_keepdays   = int(CFG_VALUE)
             if "SADM_LOG_KEEPDAYS"           in CFG_NAME:  self.cfg_log_keepdays   = int(CFG_VALUE)
             #
             if "SADM_DBNAME"                 in CFG_NAME:  self.cfg_dbname         = CFG_VALUE
-            if "SADM_DBDIR"                  in CFG_NAME:  self.cfg_dbdir          = CFG_VALUE
             if "SADM_DBHOST"                 in CFG_NAME:  self.cfg_dbhost         = CFG_VALUE
             if "SADM_DBPORT"                 in CFG_NAME:  self.cfg_dbport         = int(CFG_VALUE)
             if "SADM_RW_DBUSER"              in CFG_NAME:  self.cfg_rw_dbuser      = CFG_VALUE
@@ -833,7 +829,7 @@ class sadmtools():
         # Debug Information
         if self.debug > 8 : 
             print ("Original Filename %s" % (fname))
-            print ("TmpFileName %s" % (tmpfile))
+            print ("TmpFileName %s" % (self.tmpfile))
             print ("Removing file %s" % (fname))
 
 
@@ -1022,6 +1018,7 @@ class sadmtools():
         
         # Write SADM Header to Script Log
         if (self.log_header) :                                          # Want to Produce log Header
+            self.writelog (dash)                                        # 80 = Lines 
             wmess = "Starting %s " % (self.pn)                          # Script Name
             wmess += "V%s " % (self.ver)                                # Script Version
             wmess += "- SADM Lib. V%s" % (libver)                       # SADMIN Library Version
@@ -1033,7 +1030,7 @@ class sadmtools():
             wmess += " %s - Code Name:" % (self.get_osversion())        # O/S Distribution Version
             wmess += " %s" % (self.get_oscodename().capitalize())       # O/S Dist. Code Name Alias
             self.writelog (wmess)                                       # Write OS Info to Log Head
-            self.writelog (dash)                                        # 80 = Lines 
+            self.writelog (fifty_dash)                                  # 50 '=' Lines 
             self.writelog (" ")                                         # Space Line in the LOG
 
         # If the PID file already exist - Script is already Running
@@ -1077,7 +1074,7 @@ class sadmtools():
         # Write the Script Exit code of the script to the log
         if (self.log_footer) :                                          # Want to Produce log Footer
             self.writelog (" ")                                         # Space Line in the LOG
-            self.writelog (dash)                                        # 80 = Lines 
+            self.writelog (fifty_dash)                                  # 50 = Lines 
             self.writelog ("Script return code: " + str(self.exit_code))# Script ExitCode to Log
 
     
@@ -1246,10 +1243,14 @@ class sadmtools():
         print("obj.username                             Current User Name                       : %s" % (self.username))
         print("obj.tpid                                 Current Process ID.                     : %s" % (self.tpid))
         print("obj.debug                                Current Debug Level [1-9]               : %s" % (str(self.debug)))
-        print("obj.log_type                             Set/Get Logtype(Both,Scr,Log)           : %s" % (self.log_type))
         print("obj.multiple_exec                        Allow Simultanious Execution            : %s" % (self.multiple_exec))
         print("obj.use_rch                              Produce/Upd. Return Code History file   : %s" % (self.use_rch))
+        print("obj.dbsilent                             Return Err.Code, Display or Not Err.Msg : %s" % (self.dbsilent))
+        print("obj.usedb                                Script is using or not Database (Open?) : %s" % (self.usedb))
+        print("obj.log_type                             Set/Get Logtype(Both,Scr,Log)           : %s" % (self.log_type))
         print("obj.log_append                           Open log in Append Mode                 : %s" % (self.log_append))
+        print("obj.log_header                           Show Header in Log and Screen           : %s" % (self.log_header))
+        print("obj.log_footer                           Show Footer in Log and Screen           : %s" % (self.log_footer))
 
         print(" ")                                                      # Space Line in the LOG
         print("SADM Client & Servers Directories Attribute")
