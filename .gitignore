@@ -1,4 +1,4 @@
-# V2.0a - 28 Jan 2018
+# V2.1 - 23 May 2018
 # JDuplessis - Git Ignore File
 #
 # It's better to unpack these files and commit the raw source
@@ -37,6 +37,9 @@ www/tmp/*
 !www/tmp/.gitkeep
 
 # SADMIN Directories Exclude
+usr/*
+!usr/bin
+!usr/lib
 jac/*
 !jac/bin
 .vscode/
