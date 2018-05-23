@@ -1,20 +1,19 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
-#   Title       :   sadm_XXXXXXXX.sh
-#   Synopsis    :   .
+#   Title       :   XXXXXXXX.sh
 #   Version     :   1.0
-#   Date        :   5 January 2018
+#   Date        :   DD/MM/YYYY
 #   Requires    :   sh and SADMIN Library
 #   Description :
-#
-#   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+# 
+#   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>.
+#   Developer Web Site : http://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
+#
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -24,72 +23,79 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
+#
 # 2017_07_07 JDuplessis V1.0 - Initial Version
 # 2018_02_08 JDuplessis
-#   v1.1   Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
+#   v1.1   Fix compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # 2018_05_14 JDuplessis
 #   v1.2 Check if root is running script before calling sadm tool library
 # 2018_05_14 JDuplessis
 #   v1.3 Add SADM_USE_RCH Variable to use or not the [R]eturn [C]ode [H]istory file
 # 2018_05_15 JDuplessis
 #   v1.4 Add SADM_LOG_FOOTER and SADM_LOG_HEADER global variable to produce or not log header/footer
+# 2018_05_19 JDuplessis
+#   v1.5 Make SADMIN Setup a Function, Minor fix and performance issue.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.4'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
-SADM_LOG_FOOTER="Y"                        ; export SADM_LOG_FOOTER     # Show/Generate Log Footer
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Use Return Code History
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
-#
-
-
-
-
-#===================================================================================================
-#                               Script environment variables
+# Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
 
+#===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
+setup_sadmin()
+{
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.4'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name (without domain name)
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    # An email can be sent at the end of the script depending on the ending status 
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+}
+
 
 
 #===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
+# Display help usage of this script
 #===================================================================================================
 help()
 {
@@ -101,65 +107,61 @@ help()
 }
 
 
+
 #===================================================================================================
-#                                   Process All Actives Servers 
+# Process all your active(s) server(s) in the Database (Used if want to process selected servers)
 #===================================================================================================
 process_servers()
 {
-    sadm_writelog "Processing All Actives Server(s)"
+    sadm_writelog "Processing All Active(s) Server(s)"                  # Enter Servers Processing
 
-    # Select Active Server From Database & output result in CSV Format to $SADM_TMP_FILE1 work file
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
+    # Put Rows you want in the select 
+    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    
+    # Build SQL to select active server(s) from Database & output result in CSV Format to work file.
     SQL="${SQL} from server"                                            # From the Server Table
     SQL="${SQL} where srv_active = True"                                # Select only Active Servers
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
     
-    CMDLINE1="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "        # MySQL & Use Read Only User  
-    CMDLINE2="-h $SADM_DBHOST $SADM_DBNAME -Ne '$SQL' |tr '/\t/' '/,/'" # Build CmdLine
-    if [ $DEBUG_LEVEL -gt 5 ]                                           # If Debug Level > 5 
-        then sadm_writelog "$CMDLINE1 $CMDLINE2"                        # Debug = Write SQL CMD Line
-    fi
-
-    # Execute SQL Query to Create CSV Work File - $SADM_TMP_FILE1
-    $CMDLINE1 -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
-
+    # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
+    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug Show Auth cmdline
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     # If File was not created or has a zero lenght then No Actives Servers were found
-    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_writelog "No Active Server were found."               # Not ACtive Server MSG
-             return 1                                                   # Return Error to Caller
+    if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
+        then sadm_writelog "No Active Server were found."               # Not Active Server MSG
+             return 0                                                   # Return Status to Caller
     fi 
     
-    xcount=0; ERROR_COUNT=0;                                            # Reset Server/Error Counter
-    while read wline                                                    # Then Read Line by Line
+    xcount=0; ERROR_COUNT=0;                                            # Set Server & Error Counter
+    while read wline                                                    # Read Tmp file Line by Line
         do
-        xcount=$(($xcount+1))                                           # Server Counter
+        xcount=$(($xcount+1))                                           # Increase Server Counter
         server_name=`    echo $wline|awk -F, '{ print $1 }'`            # Extract Server Name
-        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # Extract O/S (linux/aix)
+        server_os=`      echo $wline|awk -F, '{ print $2 }'`            # O/S (linux/aix/darwin)
         server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
-        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  t=True f=False
-        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
-        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
-        #
+        server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  1=True 0=False
+        server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic 1=True 0=False
+        fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         sadm_writelog " "                                               # Blank Line
-        sadm_writelog "${SADM_TEN_DASH}"                                # Ten Dashes Line    
-        sadm_writelog "Processing ($xcount) $fqdn_server"               # Show Current System 
-        
-        if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-            then if [ "$server_monitor" = "1" ]                        # Monitor Flag is at True
-                    then sadm_writelog "Monitoring is ON for $fqdn_server"
-                    else sadm_writelog "Monitoring is OFF for $fqdn_server"
+        sadm_writelog "`printf %10s |tr " " "-"`"                       # Ten Dashes Line    
+        sadm_writelog "Processing ($xcount) $fqdn_server"               # Server Count & FQDN Name 
+        if [ $DEBUG_LEVEL -gt 5 ]                                       # If Debug Activated
+            then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
+                    then sadm_writelog "$fqdn_server Monitoring ON"     # Show Monitor Status ON
+                    else sadm_writelog "$fqdn_server Monitoring OFF"    # Show Monitor Status OFF
                  fi
-                 if [ "$server_sporadic" = "1" ]                       # Sporadic Flag is at True
-                    then sadm_writelog "Sporadic system is ON for $fqdn_server"
-                    else sadm_writelog "Sporadic system is OFF for $fqdn_server"
+                 if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
+                    then sadm_writelog "$fqdn_server Sporadic ON"       # Show Server is Sporadic
+                    else sadm_writelog "$fqdn_server Sporadic OFF"      # Show Non Sporadic Server
                  fi
         fi
 
-        # If Server Name can't be resolved - Signal Error to user and continue with next system.
-        if ! host  $fqdn_server >/dev/null 2>&1
+        # Check if server name can be resolve - If not, we won't be able to SSH to it.
+        if ! host  $fqdn_server >/dev/null 2>&1                         # If hostname not resolvable
             then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
-                 sadm_writelog "$SMSG"                                  # Advise user
-                 echo "$SMSG" >> $SADM_ELOG                             # Log Err. to Email Log
+                 sadm_writelog "$SMSG"                                  # Advise user & Feed log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
                     then sadm_writelog "Total error(s) : $ERROR_COUNT"  # Show Total Error Count
@@ -169,106 +171,98 @@ process_servers()
 
         # Try a SSH to the Server
         if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "$SADM_SSH_CMD $fqdn_server date" ; fi 
-        $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1                # SSH to Server for date
-        RC=$?                                                           # Save Return Code Number
-        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "Return Code is $RC" ;fi 
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
+            then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server & Run 'date'
+                 RC=$?                                                  # Save Return Code Number
+            else RC=0                                                   # No SSH to SADMIN Server
+        fi
+        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "Return Code: $RC" ;fi # Show SSH Status
 
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
             then sadm_writelog "[ WARNING ] Can't SSH to sporadic system $fqdn_server"
-                 sadm_writelog "            Continuing with next system"
-                 continue                                               # Go process next system
+                 sadm_writelog "Continuing with next system"            # Not Error if Sporadic Srv. 
+                 continue                                               # Continue with next system
         fi
 
         # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                # SSH don't work/Monitor OFF
             then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF"
-                 sadm_writelog "            Continuing with next system"
-                 continue                                               # Go process next system
-        fi
-
-        # If SSH Failed - Retry 3 Times before declaring an Error
-        if [ $RC -ne 0 ] 
-            then RETRY=0                                                # Set Retry counter to zero
-                 while [ $RETRY -lt 3 ]                                 # Retry 3 times ?
-                    do
-                    RETRY=$(($RETRY+1))                                 # Increase Error Counter                                        # Increase Retry counter
-                    $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1    # SSH to Server for date
-                    RC=$?                                               # Save Error Number
-                    if [ $RC -ne 0 ] &&  [ $RETRY -gt 3 ] ;then break ;fi # Error More than 3 Times
-                    sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                    done
+                 sadm_writelog "Continuing with next system"            # Not Error if don't Monitor
+                 continue                                               # Continue with next system
         fi
 
         # If All SSH test failed, Issue Error Message and continue with next system
-        if [ $RC -ne 0 ]   
-            then SMSG="[ ERROR ] Can't SSH to system '${fqdn_server}'"  
-                 sadm_writelog "$SMSG"                                  # Display Error Msg
-                 echo "$SMSG" >> $SADM_ELOG                             # Log Err. to Email Log
-                 echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
-                 echo "----------" >> $SADM_ELOG
-                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Consider Error -Incr Cntr
+        if [ $RC -ne 0 ]                                                # If SSH to Server Failed
+            then SMSG="[ ERROR ] Can't SSH to system '${fqdn_server}'"  # Problem with SSH
+                 sadm_writelog "$SMSG"                                  # Show/Log Error Msg
+                 ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  continue                                               # Continue with next system
         fi
-        sadm_writelog "[ OK ] SSH to $fqdn_server work"                 # Good SSH Work
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
+            then sadm_writelog "[ OK ] SSH to $fqdn_server work"        # Good SSH Work on Client
+            else sadm_writelog "[ OK ] No SSH using 'root' on the SADMIN Server ($SADM_SERVER)"
+        fi
 
-        # PROCESS GOES HERE
+        # PROCESSING CAN BE PUT HERE
         # ........
         # ........
         done < $SADM_TMP_FILE1
-    return $ERROR_COUNT                                                 # Return Error Count
+    return $ERROR_COUNT                                                 # Return Err Count to caller
 }
 
 
 
-
-
-
 #===================================================================================================
-#                             S c r i p t    M a i n     P r o c e s s
+# Main Process (Used to run script on current server)
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Main Process as started ... "
-
-    return 0                                                            # Return No Error to Caller
+    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
+    
+    # PROCESSING CAN BE PUT HERE
+    # ........
+    # ........
+    
+    return $SADM_EXIT_CODE                                              # Return No Error to Caller
 }
 
 
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-    # User root you must be 
-    if ! [ $(id -u) -eq 0 ]                                             # Only ROOT can run Script
+    # If you want this script to be run only by 'root'.
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"   
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
              printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S
+             exit 1                                                     # Exit To O/S with error
     fi
-    sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    setup_sadmin                                                        # Setup Var. & Load SADM Lib
+    sadm_start                                                          # Init Env. Dir. & RCH/Log
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
-    # Include this 'if' when you wan this script to only be run on the SADMIN server.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
+    # Include this 'if' when you want this script to only be run on the SADMIN server.
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If not on SADMIN Server
         then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
+             sadm_writelog "Process aborted"                            # Abort, Advise User message
+             sadm_stop 1                                                # Close SADM and Trim Log
              exit 1                                                     # Exit To O/S
     fi
 
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
+    # Inspect Command Line Argument (Help Usage (-h) or Activate Debug Level (-d[1-9]) -------------------------------
     while getopts "hd:" opt ; do                                        # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # No stop after each page
+               ;;                                                       # 
             h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
+               sadm_stop 0                                              # Close SADM Tool
                exit 0                                                   # Back to shell
-               ;;
+               ;;                                                       #
            \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
                help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close the shop
-               exit 1                                                   # Exit with Error
+               sadm_stop 1                                              # Close SADM Tool
+               exit 1                                                   # Exit Script with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
@@ -277,10 +271,11 @@ main_process()
     fi
 
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    main_process                                                      # Main Process
-    # OR
-    # process_servers                                                     # Process Active Servers
+    main_process                                                        # Main Process
+    # OR                                                                # Use line below or above
+    #process_servers                                                    # Process All Active Servers
 
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)
+    sadm_stop $SADM_EXIT_CODE                                           # Close SADM Tool & Upd RCH
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    
