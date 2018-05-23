@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_template.sh
+#   Title    :  sadm_template_menu.sh
 #   Synopsis : .
 #   Version  :  1.0
 #   Date     :  14 November 2015
