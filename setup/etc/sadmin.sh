@@ -16,5 +16,5 @@ SADMIN=/sadmin
 export SADMIN
 #
 # Add SADMIN/bin to PATH
-export PATH=$PATH:${SADMIN}/bin:
+export PATH=$PATH:${SADMIN}/bin:${SADMIN}/usr/bin
 #
