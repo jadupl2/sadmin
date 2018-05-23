@@ -53,6 +53,8 @@
 #   V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
 # 2018_05_14 JDuplessis
 #   V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
+# 2018_05_23 JDuplessis
+#   V2.23 Remove some variables and logic modifications
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -71,7 +73,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.22"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.23"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -98,13 +100,8 @@ SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RR
 SADM_WWW_CFG_DIR="$SADM_WWW_DIR/cfg"                        ; export SADM_WWW_CFG_DIR  # www CFG Dir
 SADM_WWW_LIB_DIR="$SADM_WWW_DIR/lib"                        ; export SADM_WWW_LIB_DIR  # www Lib Dir
 SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IMG_DIR  # www Img Dir
-SADM_WWW_RCH_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rch"   ; export SADM_WWW_RCH_DIR  # web rch dir
-SADM_WWW_RPT_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/rpt"   ; export SADM_WWW_RPT_DIR  # web rpt dir
 SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NET_DIR  # web net dir
-SADM_WWW_DR_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/dr"     ; export SADM_WWW_DR_DIR   # web dr dir
-SADM_WWW_NMON_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/nmon" ; export SADM_WWW_NMON_DIR # web nmon dir
 SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                        ; export SADM_WWW_TMP_DIR  # web tmp dir
-SADM_WWW_LOG_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/log"   ; export SADM_WWW_LOG_DIR  # web log dir
 #
 #
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
@@ -150,11 +147,9 @@ SADM_WWW_GROUP="apache"                     ; export SADM_WWW_GROUP     # /sadmi
 SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG
 SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
 SADM_NMON_KEEPDAYS=60                       ; export SADM_NMON_KEEPDAYS # Days to keep old *.nmon
-SADM_SAR_KEEPDAYS=60                        ; export SADM_SAR_KEEPDAYS  # Days to keep old *.sar
 SADM_RCH_KEEPDAYS=60                        ; export SADM_RCH_KEEPDAYS  # Days to keep old *.rch
 SADM_LOG_KEEPDAYS=60                        ; export SADM_LOG_KEEPDAYS  # Days to keep old *.log
 SADM_DBNAME="sadmin"                        ; export SADM_DBNAME        # MySQL DataBase Name
-SADM_DBDIR=""                               ; export SADM_DBDIR         # Location of DB
 SADM_DBHOST="sadmin.maison.ca"              ; export SADM_DBHOST        # MySQL DataBase Host
 SADM_DBPORT=3306                            ; export SADM_DBPORT        # MySQL Listening Port
 SADM_RW_DBUSER=""                           ; export SADM_RW_DBUSER     # MySQL Read/Write User 
@@ -629,7 +624,7 @@ sadm_date_to_epoch() {
 #    Calculate elapse time between date1 (YYYY.MM.DD HH:MM:SS) and date2 (YYYY.MM.DD HH:MM:SS)
 #    Date 1 MUST be greater than date 2  (Date 1 = Like End time,  Date 2 = Start Time )
 # --------------------------------------------------------------------------------------------------
-sadm_elapse_time() {
+sadm_elapse() {
     if [ $# -ne 2 ]                                                     # Should have rcv 1 Param
         then sadm_writelog "Invalid number of parameter received by $FUNCNAME function"
              sadm_writelog "Please correct script please, script aborted" # Advise that will abort
@@ -1430,9 +1425,6 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_NMON_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_NMON_KEEPDAYS=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_SAR_KEEPDAYS" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_SAR_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
         echo "$wline" |grep -i "^SADM_RCH_KEEPDAYS" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_RCH_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1441,9 +1433,6 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_DBNAME" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_DBDIR" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBDIR=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_DBHOST" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -1554,11 +1543,8 @@ sadm_load_config_file() {
              sadm_writelog "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
              sadm_writelog "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
              sadm_writelog "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
-             sadm_writelog "  - SADM_SAR_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.sar
              sadm_writelog "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS"  # Days to keep old *.rch
-             sadm_writelog "  - SADM_LOG_KEEPDAYS=$SADM_SAR_KEEPDAYS"   # Days ro keep old *.log
              sadm_writelog "  - SADM_DBNAME=$SADM_DBNAME"               # MySQL DataBase Name
-             sadm_writelog "  - SADM_DBDIR=$SADM_DBDIR"                 # MySQL DataBase Dir.
              sadm_writelog "  - SADM_DBHOST=$SADM_DBHOST"               # MySQL DataBase Host
              sadm_writelog "  - SADM_DBPORT=$SADM_DBPORT"               # MySQL Listening Port
              sadm_writelog "  - SADM_RW_DBUSER=$SADM_RW_DBUSER"         # MySQL RW User
@@ -1734,14 +1720,15 @@ sadm_start() {
     fi
 
     # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]
-       then sadm_writelog "Script is already running ... "
-            sadm_writelog "PID File ${SADM_PID_FILE} exist ..."
-            sadm_writelog "Will not launch a second copy of this script"
-            DELETE_PID="N"                                              # No Dele PID Since running
-            sadm_stop 1 
-            exit 1
-       else echo "$TPID" > $SADM_PID_FILE
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
+       then sadm_writelog "Script is already running ... "              # Script already running
+            sadm_writelog "PID File ${SADM_PID_FILE} exist ..."         # Show PID File Name
+            sadm_writelog "Won't launch a second copy of this script."  # Only one copy can run
+            sadm_writelog "Unless you remove the PID File."             # Del PID File to override
+            DELETE_PID="N"                                              # No Del PID Since running
+            sadm_stop 1                                                 # Call SADM Close Function
+            exit 1                                                      # Exit with Error
+       else echo "$TPID" > $SADM_PID_FILE                               # Create the PID File
     fi
     return 0 
 }
@@ -1777,7 +1764,7 @@ sadm_stop() {
 
     # Get End time and Calculate Elapse Time
     sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_end_time  # Get & Format End Time
-    sadm_elapse=`sadm_elapse_time "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
+    sadm_elapse=`sadm_elapse "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then sadm_writelog "Script execution time is $sadm_elapse"      # Write the Elapse Time
     fi 
