@@ -99,12 +99,8 @@ define("SADM_WWW_DAT_DIR"  , SADM_WWW_DIR  . "/dat");                   # Web Se
 define("SADM_WWW_LIB_DIR"  , SADM_WWW_DIR  . "/lib");                   # Web Server Library Dir
 define("SADM_WWW_RRD_DIR"  , SADM_WWW_DIR  . "/rrd");                   # Web servers RRD Dir
 define("SADM_WWW_TMP_DIR"  , SADM_WWW_DIR  . "/tmp");                   # Web Server Temp Dir
-define("SADM_WWW_RCH_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/rch");    # Web rch dir
 define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web net dir
-define("SADM_WWW_DR_DIR"   , SADM_WWW_DAT_DIR . "/${HOSTNAME}/dr");     # Web Disaster Recovery Dir
-define("SADM_WWW_NMON_DIR" , SADM_WWW_DAT_DIR . "/${HOSTNAME}/nmon");   # Web nmon Dir
 #define("SADM_WWW_TMP_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/tmp");    # Web TMP Dir
-define("SADM_WWW_LOG_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/log");    # Web LOG Dir
 
 
 # SADMIN FILES DEFINITION
@@ -155,11 +151,9 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_MAX_LOGLINE")   { define("SADM_MAX_LOGLINE"   , trim($fvalue));}
           if (trim($fname) == "SADM_MAX_RCHLINE")   { define("SADM_MAX_RCHLINE"   , trim($fvalue));}
           if (trim($fname) == "SADM_NMON_KEEPDAYS") { define("SADM_NMON_KEEPDAYS" , trim($fvalue));}
-          if (trim($fname) == "SADM_SAR_KEEPDAYS")  { define("SADM_SAR_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_RCH_KEEPDAYS")  { define("SADM_RCH_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_LOG_KEEPDAYS")  { define("SADM_LOG_KEEPDAYS"  , trim($fvalue));}
           if (trim($fname) == "SADM_DBNAME")        { define("SADM_DBNAME"        , trim($fvalue));}
-          if (trim($fname) == "SADM_DBDIR")         { define("SADM_DBDIR"         , trim($fvalue));}
           if (trim($fname) == "SADM_DBHOST")        { define("SADM_DBHOST"        , trim($fvalue));}
           if (trim($fname) == "SADM_DBPORT")        { define("SADM_DBPORT"        , trim($fvalue));}
           if (trim($fname) == "SADM_SERVER")        { define("SADM_SERVER"        , trim($fvalue));}
