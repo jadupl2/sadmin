@@ -49,7 +49,7 @@ cur                 = ""                                                # Databa
 #
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+# Setup SADMIN Global Variables and Load SADMIN Python Library
 #===================================================================================================
 def setup_sadmin():
 
@@ -66,28 +66,27 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "1.8"                 # Current Script Version
+    st.ver              = "1.9"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
     st.use_rch          = True                  # Generate entry in Return Code History (.rch) 
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.debug            = 7                     # Debug level and verbosity (0-9)
+    st.debug            = 0                     # Debug level and verbosity (0-9)
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_mail_type    = 1                     # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    #st.cfg_mail_addr    = ""                    # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name     = ""                    # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 5000                  # When Script End Trim log file to 5000 Lines
-    #st.cfg_max_rchline = 100                    # When Script End Trim rch file to 100 Lines
+    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
+    #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
+    #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
     # Start SADMIN Tools - Initialize 
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    if st.debug > 6: st.display_env()           # Under Debug - Display All Env. Variables Available
     return(st)
 
 
