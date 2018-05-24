@@ -358,7 +358,6 @@ def main():
     #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    if st.debug > 4: st.display_env()           # Under Debug - Display All Env. Variables Available
 
 
     # Test if script is run by root (Optional Code)
