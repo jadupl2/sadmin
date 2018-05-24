@@ -203,7 +203,6 @@ def main():
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
         
-    if st.debug > 4: st.display_env()                                   # Display Env. Variables
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
