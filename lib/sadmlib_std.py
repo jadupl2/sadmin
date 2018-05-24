@@ -73,7 +73,7 @@ except ImportError as e:
 #===================================================================================================
 #                 Global Variables Shared among all SADM Libraries and Scripts
 #===================================================================================================
-libver              = "2.13"                                            # This Library Version
+
 dash                = "=" * 80                                          # Line of 80 dash
 ten_dash            = "=" * 10                                          # Line of 10 dash
 fifty_dash          = "=" * 50                                          # Line of 50 dash
@@ -112,6 +112,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
+        self.libver             = "2.13"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -1021,7 +1022,7 @@ class sadmtools():
             self.writelog (dash)                                        # 80 = Lines 
             wmess = "Starting %s " % (self.pn)                          # Script Name
             wmess += "V%s " % (self.ver)                                # Script Version
-            wmess += "- SADM Lib. V%s" % (libver)                       # SADMIN Library Version
+            wmess += "- SADM Lib. V%s" % (self.libver)                  # SADMIN Library Version
             self.writelog (wmess)                                       # Write Start line to Log
             wmess = "Server Name: %s" % (self.get_fqdn())               # FQDN Server Name
             wmess += " - Type: %s" % (self.os_type.capitalize())        # O/S Type Linux/Aix
@@ -1211,158 +1212,3 @@ class sadmtools():
         self.silentremove (self.tmp_file3)                              # Delete Temp file 3
         return self.exit_code
 
-
-    # ----------------------------------------------------------------------------------------------
-    # For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
-    # ----------------------------------------------------------------------------------------------
-    def display_env(self):
-        print ("Library V%s - Script V%s" % (libver,self.ver))    
-        print("-" * 100)                                                   
-        print("SADMIN Various Methods and Attributes")
-        print("-" * 100)                                                   
-        print ("obj.get_release()                        Release Number                          : %s" % (self.get_release()))
-        print("obj.get_ostype()                         O/S Type (Always Uppercase)             : %s" % (self.os_type))
-        print("obj.get_osversion()                      Return O/S Version                      : %s" % (self.get_osversion()))
-        print("obj.get_osmajorversion()                 Return Major O/S Version                : %s" % (self.get_osmajorversion()))
-        print("obj.get_osminorversion()                 Return Minor O/S Version                : %s" % (self.get_osminorversion()))
-        print("obj.get_osname()                         O/S Name                                : %s" % (self.get_osname()))  
-        print("obj.get_oscodename()                     Return O/S Code Name                    : %s" % (self.get_oscodename()))
-        print("obj.get_kernel_version()                 Return O/S Kernel Version               : %s" % (self.get_kernel_version()))
-        print("obj.get_kernel_bitmode()                 Return O/S Kernel Bit Mode              : %s" % (str(self.get_kernel_bitmode())))
-        print("obj.hostname                             Hostname without Domain                 : %s" % (self.hostname))
-        print("obj.get_host_ip()                        Return Hostname IP Address              : %s" % (self.get_host_ip()))
-        print("obj.get_domainname()                     Return Hostname Domain Name             : %s" % (self.get_domainname()))
-        print("obj.get_fqdn()                           Return FQDN Hostname                    : %s" % (self.get_fqdn()))
-        wepoch= self.get_epoch_time()
-        print("obj.get_epoch_time()                     Return Current Epoch Time               : %d" % (self.get_epoch_time()))
-        print("obj.epoch_to_date(%d)            Return Date/Time from Epoch             : %s" % (wepoch,self.epoch_to_date(wepoch)))
-        wd = self.epoch_to_date(wepoch)
-        print("obj.date_to_epoch(%s)   Convert Date/Time to Epoch              : %d" % (wd,self.date_to_epoch(wd)))
-        print("obj.elapse_time('2016.01.30 10:00:44','2016.01.30 10:00:03') Elapse vs 2 Dates   : %s" % (self.elapse_time('2016.01.30 10:00:44','2016.01.30 10:00:03'))) 
-        print("obj.inst                                 PN without extension                    : %s" % (self.inst))
-        print("obj.username                             Current User Name                       : %s" % (self.username))
-        print("obj.tpid                                 Current Process ID.                     : %s" % (self.tpid))
-        print("obj.debug                                Current Debug Level [1-9]               : %s" % (str(self.debug)))
-        print("obj.multiple_exec                        Allow Simultanious Execution            : %s" % (self.multiple_exec))
-        print("obj.use_rch                              Produce/Upd. Return Code History file   : %s" % (self.use_rch))
-        print("obj.dbsilent                             Return Err.Code, Display or Not Err.Msg : %s" % (self.dbsilent))
-        print("obj.usedb                                Script is using or not Database (Open?) : %s" % (self.usedb))
-        print("obj.log_type                             Set/Get Logtype(Both,Scr,Log)           : %s" % (self.log_type))
-        print("obj.log_append                           Open log in Append Mode                 : %s" % (self.log_append))
-        print("obj.log_header                           Show Header in Log and Screen           : %s" % (self.log_header))
-        print("obj.log_footer                           Show Footer in Log and Screen           : %s" % (self.log_footer))
-
-        print(" ")                                                      # Space Line in the LOG
-        print("SADM Client & Servers Directories Attribute")
-        print("-" * 100)                                                   
-        print("obj.base_dir             Root Dir. of SADMIN Tools     : %s" % (self.base_dir))
-        print("obj.tmp_dir              SADMIN Temp. Directory        : %s" % (self.tmp_dir))
-        print("obj.cfg_dir              SADMIN Configuration Dir.     : %s" % (self.cfg_dir))
-        print("obj.lib_dir              SADMIN Shell & Python Lib.    : %s" % (self.lib_dir))
-        print("obj.bin_dir              SADMIN Shell & Python Scripts : %s" % (self.bin_dir))
-        print("obj.log_dir              SADMIN Log Directory          : %s" % (self.log_dir))
-        print("obj.pkg_dir              Software Pkg use in SADMIN    : %s" % (self.pkg_dir))
-        print("obj.doc_dir              Documentation Directory       : %s" % (self.doc_dir))
-        print("obj.sys_dir              Host Scripts(Startup/Shutdown): %s" % (self.sys_dir))
-        print("obj.dat_dir              Host system Info Data Dir.    : %s" % (self.dat_dir))
-        print("obj.nmon_dir             Host nmon performance files   : %s" % (self.nmon_dir))
-        print("obj.rch_dir              Host Result Code History files: %s" % (self.rch_dir))
-        print("obj.dr_dir               Host Disaster Recovery files  : %s" % (self.dr_dir))
-
-        print(" ")                                                     
-        print("SADM Servers Only Directories Attribute")
-        print("-" * 100)                                                   
-        print("obj.www_dir              Web Root Dir. (On Server Only): %s" % (self.www_dir))
-        print("obj.www_dat_dir          Web Systems Info Dir  (Server): %s" % (self.www_dat_dir))
-        print("obj.www_lib_dir          Web Systems Lib Dir   (Server): %s" % (self.www_lib_dir))
-        print("obj.www_cfg_dir          Web Systems Config Dir(Server): %s" % (self.www_cfg_dir))
-        print("obj.www_net_dir          Web Systems Net Data  (Server): %s" % (self.www_net_dir))
-        print("obj.www_doc_dir          Web Documentation Dir.(Server): %s" % (self.www_doc_dir))
-
-        print(" ")                                                      # Space Line in the LOG
-        print("SADM Files Variables")                                   # Introduce Display Below
-        print("-" * 100)                                                   
-        print("obj.log_file             Cur. Script Log File          : %s" % (self.log_file))
-        print("obj.rch_file             Cur. Script Result Code File  : %s" % (self.rch_file))
-        print("obj.cfg_file             SADMIN Configuration File     : %s" % (self.cfg_file))
-        print("obj.pid_file             Current Process ID. File      : %s" % (self.pid_file))
-        print("obj.crontab_file         Crontab file for SADMIN       : %s" % (self.crontab_file))
-        print("obj.tmp_file1            Cur. Script Avail Tmp File 1  : %s" % (self.tmp_file1))
-        print("obj.tmp_file2            Cur. Script Avail Tmp File 2  : %s" % (self.tmp_file2))
-        print("obj.tmp_file3            Cur. Script Avail Tmp File 3  : %s" % (self.tmp_file3))
-
-        print(" ")                                                      
-        print("SADM O/S Executable Full Path (If they exist on Host)")    
-        print("-" * 100)                                                   
-        print("obj.which                Location of the executable    : %s" % (self.which))
-        print("obj.bc                   Location of the executable    : %s" % (self.bc))
-        print("obj.lsb_release          Location of the executable    : %s" % (self.lsb_release))
-        print("obj.dmidecode            Location of the executable    : %s" % (self.dmidecode))
-        print("obj.fdisk                Location of the executable    : %s" % (self.fdisk))
-        print("obj.facter               Location of the executable    : %s" % (self.facter))
-        print("obj.uname                Location of the executable    : %s" % (self.uname)) 
-        print("obj.perl                 Location of the executable    : %s" % (self.perl)) 
-        print("obj.ssh                  Location of the executable    : %s" % (self.ssh)) 
-        print("obj.mail                 Location of the executable    : %s" % (self.mail)) 
-        print("obj.ssh_cmd              Cmd used to connect client    : %s" % (self.ssh_cmd))
-
-        print(" ")                                                      # Space Line in the LOG
-        print("Global variables setting after reading the SADM Configuration file")
-        print("-" * 100)                                                   
-        print("obj.cfg_mail_addr        Send Mail Address             : %s" % (self.cfg_mail_addr))
-        print("obj.cfg_cie_name         Your Company Name             : %s" % (self.cfg_cie_name))
-        print("obj.cfg_mail_type        0=No 1=Error 2=Success 3=All  : %s" % (str(self.cfg_mail_type)))
-        print("obj.cfg_host_type        SADMIN [S]erver or [C]lient   : %s" % (self.cfg_host_type))
-        print("obj.cfg_server           SADMIN Server FQDN Name       : %s" % (self.cfg_server))
-        print("obj.cfg_domain           Your Default Domain           : %s" % (self.cfg_domain))
-        print("obj.cfg_user             Super User Name (sudo)        : %s" % (self.cfg_user))
-        print("obj.cfg_group            Super User Group              : %s" % (self.cfg_group))
-        print("obj.cfg_www_user         Web Server User (apache)      : %s" % (self.cfg_www_user))
-        print("obj.cfg_www_group        Web Server Group (apache)     : %s" % (self.cfg_www_group))
-        print("obj.cfg_max_logline      Max. Nb. of Lines in Log file : %s" % (str(self.cfg_max_logline)))
-        print("obj.cfg_max_rchline      Max. Nb. of Line in .rch file : %s" % (str(self.cfg_max_rchline)))
-        print("obj.cfg_nmon_keepdays    Nb. Days to keep .nmon files  : %s" % (str(self.cfg_nmon_keepdays)))
-        print("obj.cfg_sar_keepdays     Nb. Days to keep .sar files   : %s" % (str(self.cfg_sar_keepdays)))
-        print("obj.cfg_rch_keepdays     Nb. Days to keep .rch files   : %s" % (str(self.cfg_rch_keepdays)))
-        print("obj.cfg_log_keepdays     Nb. Days to keep .log files   : %s" % (str(self.cfg_log_keepdays)))
-        print("obj.cfg_dbname           SADMIN MySQL Database Name    : %s" % (self.cfg_dbname))
-        print("obj.cfg_dbhost           SADMIN MySQL Host Name        : %s" % (self.cfg_dbhost))
-        print("obj.cfg_dbdir            SADMIN MySQL Data Dir.        : %s" % (self.cfg_dbdir))
-        print("obj.cfg_dbport           SADMIN MySQL TCP/IP Port      : %s" % (str(self.cfg_dbport)))
-        print("obj.cfg_rw_dbuser        SADMIN MySQL Read/Write User  : %s" % (self.cfg_rw_dbuser))
-        print("obj.cfg_rw_dbpwd         SADMIN MySQL Read/Write Pwd   : %s" % (self.cfg_rw_dbpwd))
-        print("obj.cfg_ro_dbuser        SADMIN MySQL Read Only User   : %s" % (self.cfg_ro_dbuser))
-        print("obj.cfg_ro_dbpwd         SADMIN MySQL Read Only Pwd    : %s" % (self.cfg_ro_dbpwd))
-        print("obj.cfg_rrdtool          rrdtool location              : %s" % (self.cfg_rrdtool))
-        print("obj.cfg_ssh_port         SSH Port (Default 22)         : %s" % (str(self.cfg_ssh_port)))
-        print("obj.cfg_network1         Network 1 Scan for Info       : %s" % (self.cfg_network1))
-        print("obj.cfg_network2         Network 2 Scan for Info       : %s" % (self.cfg_network2))
-        print("obj.cfg_network3         Network 3 Scan for Info       : %s" % (self.cfg_network3))
-        print("obj.cfg_network4         Network 4 Scan for Info       : %s" % (self.cfg_network4))
-        print("obj.cfg_network5         Network 5 Scan for Info       : %s" % (self.cfg_network5))
-
-        print(" ")                                                      
-        print("SADMIN Backup Server Information (If Used)")    
-        print("-" * 100)                                                   
-        print("obj.cfg_backup_nfs_server       Backup NFS Server Name        : %s" % (self.cfg_backup_nfs_server))
-        print("obj.cfg_backup_nfs_mount_point  Backup NFS Mount Point        : %s" % (self.cfg_backup_nfs_mount_point))
-        print("obj.cfg_backup_nfs_to_keep      Nb. Of Backup to Keep         : %s" % (str(self.cfg_backup_nfs_to_keep)))
-        print("obj.cfg_rear_nfs_server         Rear NFS Backup Server        : %s" % (self.cfg_rear_nfs_server))
-        print("obj.cfg_rear_nfs_mount_point    Rear NFS Mount Point          : %s" % (self.cfg_rear_nfs_mount_point))
-        print("obj.cfg_rear_backup_to_keep     Rear Backup to Keep           : %s" % (str(self.cfg_rear_backup_to_keep)))
-        print("obj.cfg_storix_nfs_server       Storix NFS Server             : %s" % (self.cfg_storix_nfs_server))
-        print("obj.cfg_storix_nfs_mount_point  Storix NFS Mount Point        : %s" % (self.cfg_storix_nfs_mount_point))
-        print("obj.cfg_storix_backup_to_keep   Storix NFS Backup to Keep     : %s" % (str(self.cfg_storix_backup_to_keep)))
-        print("obj.cfg_mksysb_nfs_server       Aix mksysb NFS Backup Server  : %s" % (self.cfg_mksysb_nfs_server))
-        print("obj.cfg_mksysb_nfs_mount_point  Aix mksysb NFS Mount Point    : %s" % (self.cfg_mksysb_nfs_mount_point))
-        print("obj.cfg_mksysb_backup_to_keep   Aix mksysb NFS Backup to Keep : %s" % (str(self.cfg_mksysb_backup_to_keep)))
-
-        # When Really Wanted (Level 9) - Print O/S Environnement
-        if (self.debug > 8) :                                               
-            print(" ")                                                  
-            print("This is the O/S Environment")
-            print(dash)                                                 
-            for a in os.environ:
-                print('Var: ', a, 'Value: ', os.getenv(a))
-            print(dash)                                                 
-        return 0
