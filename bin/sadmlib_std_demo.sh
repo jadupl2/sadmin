@@ -29,7 +29,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 #
-
+lcount=0                                                                # Print Line Counter
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
@@ -80,8 +80,9 @@ setup_sadmin()
 #===================================================================================================
 printline()
 {
+    lcount=`expr $lcount + 1`                                           # Incr. Print Line Number
     p1=$1 ; p2=$2 ; p3=$3
-    printf "\n"
+    printf "\n[%03d] " $lcount                                          # Print Line Number
     if [ "$p1" != "" ] ; then printf "%-33s" "$p1"            ;fi
     if [ "$p2" != "" ] ; then printf "%-36s" "$p2"            ;fi  
     if [ "$p1" != "" ] && [ "$p2" != "" ] 
@@ -95,11 +96,12 @@ printline()
 #===================================================================================================
 printheader()
 {
+    lcount=0                                                            # Clear Print Line Number
     h1=$1
     h1=$1 ; h2=$2 ; h3=$3
     printf "\n\n\n`printf %100s |tr " " "="`"
     printf "\n$SADM_PN v$SADM_VER - Library v$SADM_LIB_VER"
-    printf "\n%-33s%-36s%-33s" "$h1" "$h2" "$h3" 
+    printf "\n%-39s%-36s%-33s" "$h1" "$h2" "$h3" 
     printf "\n`printf %100s |tr " " "="`"
 }
 
@@ -568,16 +570,16 @@ print_sadmin_cfg()
     presult="$SADM_RCH_KEEPDAYS"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_MAX_RCLINE"                                        # Directory Variable Name
-    pdesc="Trim rch file to this max. of lines"                         # Directory Description
-    presult="$SADM_MAX_RCLINE"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
     pexample="\$SADM_LOG_KEEPDAYS"                                      # Directory Variable Name
     pdesc="Nb. days to keep unmodified log file"                        # Directory Description
     presult="$SADM_LOG_KEEPDAYS"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
+    pexample="\$SADM_MAX_RCLINE"                                        # Directory Variable Name
+    pdesc="Trim rch file to this max. of lines"                         # Directory Description
+    presult="$SADM_MAX_RCLINE"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
     pexample="\$SADM_MAX_LOGLINE"                                       # Directory Variable Name
     pdesc="Trim log to this maximum of lines"                           # Directory Description
     presult="$SADM_MAX_LOGLINE"                                         # Actual Content of Variable
@@ -619,7 +621,7 @@ print_sadmin_cfg()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_MKSYSB_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="AIX MKSYSB NFS Backup to keep"                               # Directory Description
+    pdesc="AIX MKSYSB NFS Backup - Nb. to keep"                         # Directory Description
     presult="$SADM_MKSYSB_BACKUP_TO_KEEP"                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
@@ -634,7 +636,7 @@ print_sadmin_cfg()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_REAR_BACKUP_TO_KEEP"                               # Directory Variable Name
-    pdesc="Rear NFS Backup to keep"                                     # Directory Description
+    pdesc="Rear NFS Backup - Nb. to keep"                               # Directory Description
     presult="$SADM_REAR_BACKUP_TO_KEEP"                                 # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
@@ -649,12 +651,12 @@ print_sadmin_cfg()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_BACKUP_NFS_TO_KEEP"                                # Directory Variable Name
-    pdesc="NFS Backup to keep"                                          # Directory Description
+    pdesc="NFS Backup - Nb. to keep"                                    # Directory Description
     presult="$SADM_BACKUP_NFS_TO_KEEP"                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_STORIX_NFS_SERVER"                                 # Directory Variable Name
-    pdesc="Storix Server IP or Name"                                    # Directory Description
+    pdesc="Storix NFS Server IP or Name"                                # Directory Description
     presult="$SADM_STORIX_NFS_SERVER"                                   # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
@@ -664,7 +666,7 @@ print_sadmin_cfg()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_STORIX_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="Storix NFS Backup to Keep"                                   # Directory Description
+    pdesc="Storix NFS Backup - Nb. to Keep"                             # Directory Description
     presult="$SADM_STORIX_BACKUP_TO_KEEP"                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
@@ -786,7 +788,7 @@ print_start_stop()
     printf "        7) Trim the Log based on user selection in sadmin.cfg\n"
     printf "        8) Send Email to sysadmin (if user selected that option in sadmin.cfg)\n"
     printf "        9) Delete the PID File of the script (SADM_PID_FILE)\n"
-    printf "       10) Delete the Uers 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)\n"
+    printf "       10) Delete the User 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)\n"
     printf " \n"
 }
 

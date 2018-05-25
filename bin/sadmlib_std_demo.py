@@ -52,6 +52,7 @@ except ImportError as e:
 #===================================================================================================
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
+lcount              = 0                                                 # Print Line Counter
 #
 
 #===================================================================================================
@@ -100,6 +101,9 @@ def setup_sadmin():
 # Standardize Print Line Function 
 #===================================================================================================
 def printline(st,col1="",col2="",col3=""):
+    global lcount 
+    lcount += 1
+    print ("[%03d] " % lcount, end='')
     if col1 != "" : print ("%-33s" % (col1), end='')
     if col2 != "" : print ("%-36s" % (col2), end='')
     if col1 != "" and col2 != "" : print ("%-s%-s%-s" % (": .",col3,"."))
@@ -108,7 +112,10 @@ def printline(st,col1="",col2="",col3=""):
 #===================================================================================================
 # Standardize Print Header Function 
 #===================================================================================================
-def printheader(st,col1,col2,col3):
+def printheader(st,col1,col2,col3=" "):
+    global lcount
+
+    lcount = 0 
     print ("\n\n\n%s" % ("=" * 100))
     print ("%s v%s - Library v%s" % (st.pn,st.ver,st.libver))
     print ("%-33s%-36s%-33s" % (col1,col2,col3))
@@ -218,7 +225,7 @@ def print_functions(st):
 
     pexample="ins.username"                                             # Example Calling Function
     pdesc="Current User Name"                                           # Function Description
-    presult=st.username                                                     # Return Value(s)
+    presult=st.username                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.tpid"                                                 # Example Calling Function
@@ -268,117 +275,506 @@ def print_functions(st):
                        
     return(0)
 
+
+#===================================================================================================
+# Print Directories Variables Available to Users
+#===================================================================================================
+def print_client_directory(st):
+    printheader (st,"Client Directories Var. Avail.","Description","  Result")
+
+    pexample="ins.base_dir"                                             # Example Calling Function
+    pdesc="SADMIN Root Directory"                                       # Function Description
+    presult=st.base_dir                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.bin_dir"                                              # Example Calling Function
+    pdesc="SADMIN Scripts Directory"                                    # Function Description
+    presult=st.bin_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.tmp_dir"                                              # Example Calling Function
+    pdesc="SADMIN Temporary file(s) Directory"                          # Function Description
+    presult=st.tmp_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.lib_dir"                                              # Example Calling Function
+    pdesc="SADMIN Shell & Python Library Dir."                          # Function Description
+    presult=st.lib_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.log_dir"                                              # Example Calling Function
+    pdesc="SADMIN Script Log Directory"                                 # Function Description
+    presult=st.log_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.cfg_dir"                                              # Example Calling Function
+    pdesc="SADMIN Configuration Directory"                              # Function Description
+    presult=st.cfg_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.sys_dir"                                              # Example Calling Function
+    pdesc="Server Startup/Shutdown Script Dir."                         # Function Description
+    presult=st.sys_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.dat_dir"                                              # Example Calling Function
+    pdesc="Server Data Directory"                                       # Function Description
+    presult=st.dat_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.pkg_dir"                                              # Example Calling Function
+    pdesc="SADMIN Packages Directory"                                   # Function Description
+    presult=st.pkg_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.nmon_dir"                                             # Example Calling Function
+    pdesc="Server NMON - Data Collected Dir."                           # Function Description
+    presult=st.nmon_dir                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.dr_dir"                                               # Example Calling Function
+    pdesc="Server Disaster Recovery Info Dir."                          # Function Description
+    presult=st.dr_dir                                                   # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.rch_dir"                                              # Example Calling Function
+    pdesc="Server Return Code History Dir."                             # Function Description
+    presult=st.rch_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.net_dir"                                              # Example Calling Function
+    pdesc="Server Network Information Dir."                             # Function Description
+    presult=st.net_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.doc_dir"                                              # Example Calling Function
+    pdesc="SADMIN Documentation Directory"                              # Function Description
+    presult=st.doc_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+ 
+#===================================================================================================
+# Print Directories Variables Available to Users
+#===================================================================================================
+def print_server_directory(st):
+    printheader (st,"Server Directories Var. Avail.","Description","  Result")
+
+    pexample="ins.www_dir"                                              # Example Calling Function
+    pdesc="SADMIN Web Site Root Directory"                              # Function Description
+    presult=st.www_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+       
+    pexample="ins.www_doc_dir"                                          # Example Calling Function
+    pdesc="SADMIN Web Site Root Directory"                              # Function Description
+    presult=st.www_doc_dir                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+       
+    pexample="ins.www_dat_dir"                                          # Example Calling Function
+    pdesc="SADMIN Web Site Systems Data Dir."                           # Function Description
+    presult=st.www_dat_dir                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+       
+    pexample="ins.www_lib_dir"                                          # Example Calling Function
+    pdesc="SADMIN Web Site PHP Library Dir."                            # Function Description
+    presult=st.www_lib_dir                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+           
+    pexample="ins.www_tmp_dir"                                          # Example Calling Function
+    pdesc="SADMIN Web Temp Working Directory"                           # Function Description
+    presult=st.www_tmp_dir                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+       
+
+
+#===================================================================================================
+# Print Files Variables Available to Users
+#===================================================================================================
+def print_file(st):
+    printheader (st,"SADMIN FILES VARIABLES AVAIL.","Description","  Result")
+
+    pexample="ins.pid_file"                                             # Example Calling Function
+    pdesc="Current script PID file"                                     # Function Description
+    presult=st.pid_file                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_file"                                             # Example Calling Function
+    pdesc="SADMIN Configuration File"                                   # Function Description
+    presult=st.cfg_file                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_hidden"                                           # Example Calling Function
+    pdesc="SADMIN Initial Configuration File"                           # Function Description
+    presult=st.cfg_hidden                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.tmp_file1"                                            # Example Calling Function
+    pdesc="Usable Temp Work File 1"                                     # Function Description
+    presult=st.tmp_file1                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.tmp_file2"                                            # Example Calling Function
+    pdesc="Usable Temp Work File 2"                                     # Function Description
+    presult=st.tmp_file2                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.tmp_file3"                                            # Example Calling Function
+    pdesc="Usable Temp Work File 3"                                     # Function Description
+    presult=st.tmp_file3                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.log_file"                                             # Example Calling Function
+    pdesc="Script Log File"                                             # Function Description
+    presult=st.log_file                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.rch_file"                                             # Example Calling Function
+    pdesc="Script Return Code History File"                             # Function Description
+    presult=st.rch_file                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.dbpass_file"                                          # Example Calling Function
+    pdesc="SADMIN Database User Password File"                          # Function Description
+    presult=st.dbpass_file                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.crontab_file"                                         # Example Calling Function
+    pdesc="SADMIN Crontab File"                                         # Function Description
+    presult=st.crontab_file                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+#===================================================================================================
+# Print sadmin.cfg Variables available to users
+#===================================================================================================
+def print_sadmin_cfg(st):
+
+    printheader (st,"SADMIN CONFIG FILE VARIABLES","Description","  Result")
+
+    pexample="ins.cfg_server"                                           # Example Calling Function
+    pdesc="SADMIN SERVER NAME (FQDN)"                                   # Function Description
+    presult=st.cfg_server                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_host_type"                                        # Example Calling Function
+    pdesc="SADMIN [C]lient or [S]erver"                                 # Function Description
+    presult=st.cfg_host_type                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_mail_addr"                                        # Example Calling Function
+    pdesc="SADMIN Administrator Default Email"                          # Function Description
+    presult=st.cfg_mail_addr                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_mail_type"                                        # Example Calling Function
+    pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Function Description
+    presult=st.cfg_mail_type                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_cie_name"                                         # Example Calling Function
+    pdesc="Your Company Name"                                           # Function Description
+    presult=st.cfg_cie_name                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_domain"                                           # Example Calling Function
+    pdesc="Server Creation Default Domain"                              # Function Description
+    presult=st.cfg_domain                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_user"                                             # Example Calling Function
+    pdesc="SADMIN User Name"                                            # Function Description
+    presult=st.cfg_user                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_group"                                            # Example Calling Function
+    pdesc="SADMIN Group Name"                                           # Function Description
+    presult=st.cfg_group                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_www_user"                                         # Example Calling Function
+    pdesc="User that Run Apache Web Server"                             # Function Description
+    presult=st.cfg_www_user                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_www_group"                                        # Example Calling Function
+    pdesc="Group that Run Apache Web Server"                            # Function Description
+    presult=st.cfg_www_group                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_dbname"                                           # Example Calling Function
+    pdesc="SADMIN Database Name"                                        # Function Description
+    presult=st.cfg_dbname                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_dbhost"                                           # Example Calling Function
+    pdesc="SADMIN Database Host"                                        # Function Description
+    presult=st.cfg_dbhost                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_dbport"                                           # Example Calling Function
+    pdesc="SADMIN Database Host TCP Port"                               # Function Description
+    presult=st.cfg_dbport                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rw_dbuser"                                        # Example Calling Function
+    pdesc="SADMIN Database Read/Write User"                             # Function Description
+    presult=st.cfg_rw_dbuser                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rw_dbpwd"                                         # Example Calling Function
+    pdesc="SADMIN Database Read/Write User Pwd"                         # Function Description
+    presult=st.cfg_rw_dbpwd                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_ro_dbuser"                                        # Example Calling Function
+    pdesc="SADMIN Database Read Only User"                              # Function Description
+    presult=st.cfg_ro_dbuser                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_ro_dbpwd"                                         # Example Calling Function
+    pdesc="SADMIN Database Read Only User Pwd"                          # Function Description
+    presult=st.cfg_ro_dbpwd                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rrdtool"                                          # Example Calling Function
+    pdesc="RRDTOOL Binary Location"                                     # Function Description
+    presult=st.cfg_rrdtool                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_ssh_port"                                         # Example Calling Function
+    pdesc="SSH Port to communicate with client"                         # Function Description
+    presult=st.cfg_ssh_port                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_nmon_keepdays"                                    # Example Calling Function
+    pdesc="Nb. of days to keep nmon perf. file"                         # Function Description
+    presult=st.cfg_nmon_keepdays                                        # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rch_keepdays"                                     # Example Calling Function
+    pdesc="Nb. days to keep unmodified rch file"                        # Function Description
+    presult=st.cfg_rch_keepdays                                         # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_log_keepdays"                                     # Example Calling Function
+    pdesc="Nb. days to keep unmodified log file"                        # Function Description
+    presult=st.cfg_log_keepdays                                         # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_max_rchline"                                      # Example Calling Function
+    pdesc="Trim rch file to this max. of lines"                         # Function Description
+    presult=st.cfg_max_rchline                                          # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_max_logline"                                      # Example Calling Function
+    pdesc="Trim log to this maximum of lines"                           # Function Description
+    presult=st.cfg_max_logline                                          # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_network1"                                         # Example Calling Function
+    pdesc="Network/Netmask 1 inv. IP/Name/Mac"                          # Function Description
+    presult=st.cfg_network1                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_network2"                                         # Example Calling Function
+    pdesc="Network/Netmask 2 inv. IP/Name/Mac"                          # Function Description
+    presult=st.cfg_network2                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_network3"                                         # Example Calling Function
+    pdesc="Network/Netmask 3 inv. IP/Name/Mac"                          # Function Description
+    presult=st.cfg_network3                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_network4"                                         # Example Calling Function
+    pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          # Function Description
+    presult=st.cfg_network4                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_network5"                                         # Example Calling Function
+    pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Function Description
+    presult=st.cfg_network5                                             # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_mksysb_nfs_server"                                # Example Calling Function
+    pdesc="AIX MKSYSB NFS Server IP or Name"                            # Function Description
+    presult=st.cfg_mksysb_nfs_server                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_mksysb_nfs_mount_point"                           # Example Calling Function
+    pdesc="AIX MKSYSB NFS Mount Point"                                  # Function Description
+    presult=st.cfg_mksysb_nfs_mount_point                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_mksysb_backup_to_keep"                            # Example Calling Function
+    pdesc="AIX MKSYSB NFS Backup - Nb .to keep"                         # Function Description
+    presult=st.cfg_mksysb_backup_to_keep                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rear_nfs_server"                                  # Example Calling Function
+    pdesc="Rear NFS Server IP or Name"                                  # Function Description
+    presult=st.cfg_rear_nfs_server                                      # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rear_nfs_mount_point"                             # Example Calling Function
+    pdesc="Rear NFS Mount Point"                                        # Function Description
+    presult=st.cfg_rear_nfs_mount_point                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_rear_backup_to_keep"                              # Example Calling Function
+    pdesc="Rear NFS Backup - Nb. to keep"                               # Function Description
+    presult=st.cfg_rear_backup_to_keep                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_backup_nfs_server"                                # Example Calling Function
+    pdesc="NFS Backup IP or Server Name"                                # Function Description
+    presult=st.cfg_backup_nfs_server                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_backup_nfs_mount_point"                           # Example Calling Function
+    pdesc="NFS Backup Mount Point"                                      # Function Description
+    presult=st.cfg_backup_nfs_mount_point                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_backup_nfs_to_keep"                               # Example Calling Function
+    pdesc="NFS Backup - Nb. to keep"                                    # Function Description
+    presult=st.cfg_backup_nfs_to_keep                                   # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_storix_nfs_server"                                # Example Calling Function
+    pdesc="Storix NFS Server IP or Name"                                # Function Description
+    presult=st.cfg_storix_nfs_server                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_storix_nfs_mount_point"                           # Example Calling Function
+    pdesc="Storix NFS Mount Point"                                      # Function Description
+    presult=st.cfg_storix_nfs_mount_point                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_storix_backup_to_keep"                            # Example Calling Function
+    pdesc="Storix NFS Backup - Nb. to Keep"                             # Function Description
+    presult=st.cfg_storix_backup_to_keep                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+
+#===================================================================================================
+# Print Command Path Variables available to users
+#===================================================================================================
+def print_command_path(st):
+    
+    printheader (st,"COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  Result")
+
+    pexample="ins.lsb_release"                                          # Example Calling Function
+    pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Function Description
+    presult=st.lsb_release                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.dmidecode"                                            # Example Calling Function
+    pdesc="Cmd. 'dmidecode', Get model & type"                          # Function Description
+    presult=st.dmidecode                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.facter"                                               # Example Calling Function
+    pdesc="Cmd. 'facter', Get System Info"                              # Function Description
+    presult=st.facter                                                   # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.bc"                                                   # Example Calling Function
+    pdesc="Cmd. 'bc', Do some Math."                                    # Function Description
+    presult=st.bc                                                       # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.fdisk"                                                # Example Calling Function
+    pdesc="Cmd. 'fdisk', Get Partition Info"                            # Function Description
+    presult=st.fdisk                                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.which"                                                # Example Calling Function
+    pdesc="Cmd. 'which', Get Command location"                          # Function Description
+    presult=st.which                                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.perl"                                                 # Example Calling Function
+    pdesc="Cmd. 'perl', epoch time Calc."                               # Function Description
+    presult=st.perl                                                     # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.mail"                                                 # Example Calling Function
+    pdesc="Cmd. 'mail', Send SysAdmin Email"                            # Function Description
+    presult=st.mail                                                     # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.lscpu"                                                # Example Calling Function
+    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Function Description
+    presult=st.lscpu                                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.nmon"                                                 # Example Calling Function
+    pdesc="Cmd. 'nmon', Collect Perf Statistic"                         # Function Description
+    presult=st.nmon                                                     # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.parted"                                               # Example Calling Function
+    pdesc="Cmd. 'parted', Get Disk Real Size"                           # Function Description
+    presult=st.parted                                                   # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.ethtool"                                              # Example Calling Function
+    pdesc="Cmd. 'ethtool', Get System IP Info"                          # Function Description
+    presult=st.ethtool                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.ssh"                                                  # Example Calling Function
+    pdesc="Cmd. 'ssh', SSH to SADMIN client"                            # Function Description
+    presult=st.ssh                                                      # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.ssh_cmd"                                              # Example Calling Function
+    pdesc="Cmd. 'ssh', SSH to Connect to client"                        # Function Description
+    presult=st.ssh_cmd                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+
+#===================================================================================================
+# Print sadm_start and sadm_stop Function Used by SADMIN Tools
+#===================================================================================================
+def print_start_stop(st):
+    printheader (st,"Overview of ins.start() & ins.stop() function"," "," ")
+     
+    print ("")
+    print ("ins.start()")
+    print ("    Start and initialize sadm environment - Accept no Parameter")
+    print ("    If SADMIN root directory is not /sadmin, make sure the SADMIN Env. variable is set to proper dir.")
+    print ("    Please call this function when your script is starting")
+    print ("    What this function will do for us :") 
+    print ("        1) Make sure all directories & sub-directories exist and have proper permissions.")
+    print ("        2) Make sure log file exist with proper permission ($SADM_LOG)")
+    print ("        3) Make sure Return Code History (.rch) exist and have the right permission")
+    print ("        4) If PID file exist, show error message and abort.") 
+    print ("           Unless user allow more than one copy to run simultaniously (SADM_MULTIPLE_EXEC='Y')")
+    print ("        5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)")
+    print ("        6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)")
+    print ("")
+    print ("ins.stop()")
+    print ("    Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)")
+    print ("    Please call this function just before your script end")
+    print ("    What this function do.")
+    print ("        1) If Exit Code is not zero, change it to 1.")
+    print ("        2) Get Actual Time and Calculate the Execution Time.")
+    print ("        3) Writing the Script Footer in the Log (Script Return code, Execution Time, ...)")
+    print ("        4) Update the RCH File (Start/End/Elapse Time and the Result Code)")
+    print ("        5) Trim The RCH File Based on User choice in sadmin.cfg")
+    print ("        6) Write to Log the user mail alerting type choose by user (sadmin.cfg)")
+    print ("        7) Trim the Log based on user selection in sadmin.cfg")
+    print ("        8) Send Email to sysadmin (if user selected that option in sadmin.cfg)")
+    print ("        9) Delete the PID File of the script (SADM_PID_FILE)")
+    print ("       10) Delete the User 3 TMP Files (SADM_TMP_FILE1, SADM_TMP_FILE2, SADM_TMP_FILE3)")
+    print (" ")
+
+
 # ----------------------------------------------------------------------------------------------
 # For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
 # ----------------------------------------------------------------------------------------------
 def display_env(st):
 
-        print(" ")                                                      # Space Line in the LOG
-        print("SADM Client & Servers Directories Attribute")
-        print("-" * 100)                                                   
-        print("ins.base_dir             Root Dir. of SADMIN Tools     : %s" % (st.base_dir))
-        print("ins.tmp_dir              SADMIN Temp. Directory        : %s" % (st.tmp_dir))
-        print("ins.cfg_dir              SADMIN Configuration Dir.     : %s" % (st.cfg_dir))
-        print("ins.lib_dir              SADMIN Shell & Python Lib.    : %s" % (st.lib_dir))
-        print("ins.bin_dir              SADMIN Shell & Python Scripts : %s" % (st.bin_dir))
-        print("ins.log_dir              SADMIN Log Directory          : %s" % (st.log_dir))
-        print("ins.pkg_dir              Software Pkg use in SADMIN    : %s" % (st.pkg_dir))
-        print("ins.doc_dir              Documentation Directory       : %s" % (st.doc_dir))
-        print("ins.sys_dir              Host Scripts(Startup/Shutdown): %s" % (st.sys_dir))
-        print("ins.dat_dir              Host system Info Data Dir.    : %s" % (st.dat_dir))
-        print("ins.nmon_dir             Host nmon performance files   : %s" % (st.nmon_dir))
-        print("ins.rch_dir              Host Result Code History files: %s" % (st.rch_dir))
-        print("ins.dr_dir               Host Disaster Recovery files  : %s" % (st.dr_dir))
-
-        print(" ")                                                     
-        print("SADM Servers Only Directories Attribute")
-        print("-" * 100)                                                   
-        print("ins.www_dir              Web Root Dir. (On Server Only): %s" % (st.www_dir))
-        print("ins.www_dat_dir          Web Systems Info Dir  (Server): %s" % (st.www_dat_dir))
-        print("ins.www_lib_dir          Web Systems Lib Dir   (Server): %s" % (st.www_lib_dir))
-        print("ins.www_cfg_dir          Web Systems Config Dir(Server): %s" % (st.www_cfg_dir))
-        print("ins.www_net_dir          Web Systems Net Data  (Server): %s" % (st.www_net_dir))
-        print("ins.www_doc_dir          Web Documentation Dir.(Server): %s" % (st.www_doc_dir))
-
-        print(" ")                                                      # Space Line in the LOG
-        print("SADM Files Variables")                                   # Introduce Display Below
-        print("-" * 100)                                                   
-        print("ins.log_file             Cur. Script Log File          : %s" % (st.log_file))
-        print("ins.rch_file             Cur. Script Result Code File  : %s" % (st.rch_file))
-        print("ins.cfg_file             SADMIN Configuration File     : %s" % (st.cfg_file))
-        print("ins.pid_file             Current Process ID. File      : %s" % (st.pid_file))
-        print("ins.crontab_file         Crontab file for SADMIN       : %s" % (st.crontab_file))
-        print("ins.tmp_file1            Cur. Script Avail Tmp File 1  : %s" % (st.tmp_file1))
-        print("ins.tmp_file2            Cur. Script Avail Tmp File 2  : %s" % (st.tmp_file2))
-        print("ins.tmp_file3            Cur. Script Avail Tmp File 3  : %s" % (st.tmp_file3))
-
-        print(" ")                                                      
-        print("SADM O/S Executable Full Path (If they exist on Host)")    
-        print("-" * 100)                                                   
-        print("ins.which                Location of the executable    : %s" % (st.which))
-        print("ins.bc                   Location of the executable    : %s" % (st.bc))
-        print("ins.lsb_release          Location of the executable    : %s" % (st.lsb_release))
-        print("ins.dmidecode            Location of the executable    : %s" % (st.dmidecode))
-        print("ins.fdisk                Location of the executable    : %s" % (st.fdisk))
-        print("ins.facter               Location of the executable    : %s" % (st.facter))
-        print("ins.uname                Location of the executable    : %s" % (st.uname)) 
-        print("ins.perl                 Location of the executable    : %s" % (st.perl)) 
-        print("ins.ssh                  Location of the executable    : %s" % (st.ssh)) 
-        print("ins.mail                 Location of the executable    : %s" % (st.mail)) 
-        print("ins.ssh_cmd              Cmd used to connect client    : %s" % (st.ssh_cmd))
-
-        print(" ")                                                      # Space Line in the LOG
-        print("Global variables setting after reading the SADM Configuration file")
-        print("-" * 100)                                                   
-        print("ins.cfg_mail_addr        Send Mail Address             : %s" % (st.cfg_mail_addr))
-        print("ins.cfg_cie_name         Your Company Name             : %s" % (st.cfg_cie_name))
-        print("ins.cfg_mail_type        0=No 1=Error 2=Success 3=All  : %s" % (str(st.cfg_mail_type)))
-        print("ins.cfg_host_type        SADMIN [S]erver or [C]lient   : %s" % (st.cfg_host_type))
-        print("ins.cfg_server           SADMIN Server FQDN Name       : %s" % (st.cfg_server))
-        print("ins.cfg_domain           Your Default Domain           : %s" % (st.cfg_domain))
-        print("ins.cfg_user             Super User Name (sudo)        : %s" % (st.cfg_user))
-        print("ins.cfg_group            Super User Group              : %s" % (st.cfg_group))
-        print("ins.cfg_www_user         Web Server User (apache)      : %s" % (st.cfg_www_user))
-        print("ins.cfg_www_group        Web Server Group (apache)     : %s" % (st.cfg_www_group))
-        print("ins.cfg_max_logline      Max. Nb. of Lines in Log file : %s" % (str(st.cfg_max_logline)))
-        print("ins.cfg_max_rchline      Max. Nb. of Line in .rch file : %s" % (str(st.cfg_max_rchline)))
-        print("ins.cfg_nmon_keepdays    Nb. Days to keep .nmon files  : %s" % (str(st.cfg_nmon_keepdays)))
-        print("ins.cfg_sar_keepdays     Nb. Days to keep .sar files   : %s" % (str(st.cfg_sar_keepdays)))
-        print("ins.cfg_rch_keepdays     Nb. Days to keep .rch files   : %s" % (str(st.cfg_rch_keepdays)))
-        print("ins.cfg_log_keepdays     Nb. Days to keep .log files   : %s" % (str(st.cfg_log_keepdays)))
-        print("ins.cfg_dbname           SADMIN MySQL Database Name    : %s" % (st.cfg_dbname))
-        print("ins.cfg_dbhost           SADMIN MySQL Host Name        : %s" % (st.cfg_dbhost))
-        print("ins.cfg_dbdir            SADMIN MySQL Data Dir.        : %s" % (st.cfg_dbdir))
-        print("ins.cfg_dbport           SADMIN MySQL TCP/IP Port      : %s" % (str(st.cfg_dbport)))
-        print("ins.cfg_rw_dbuser        SADMIN MySQL Read/Write User  : %s" % (st.cfg_rw_dbuser))
-        print("ins.cfg_rw_dbpwd         SADMIN MySQL Read/Write Pwd   : %s" % (st.cfg_rw_dbpwd))
-        print("ins.cfg_ro_dbuser        SADMIN MySQL Read Only User   : %s" % (st.cfg_ro_dbuser))
-        print("ins.cfg_ro_dbpwd         SADMIN MySQL Read Only Pwd    : %s" % (st.cfg_ro_dbpwd))
-        print("ins.cfg_rrdtool          rrdtool location              : %s" % (st.cfg_rrdtool))
-        print("ins.cfg_ssh_port         SSH Port (Default 22)         : %s" % (str(st.cfg_ssh_port)))
-        print("ins.cfg_network1         Network 1 Scan for Info       : %s" % (st.cfg_network1))
-        print("ins.cfg_network2         Network 2 Scan for Info       : %s" % (st.cfg_network2))
-        print("ins.cfg_network3         Network 3 Scan for Info       : %s" % (st.cfg_network3))
-        print("ins.cfg_network4         Network 4 Scan for Info       : %s" % (st.cfg_network4))
-        print("ins.cfg_network5         Network 5 Scan for Info       : %s" % (st.cfg_network5))
-
-        print(" ")                                                      
-        print("SADMIN Backup Server Information (If Used)")    
-        print("-" * 100)                                                   
-        print("ins.cfg_backup_nfs_server       Backup NFS Server Name        : %s" % (st.cfg_backup_nfs_server))
-        print("ins.cfg_backup_nfs_mount_point  Backup NFS Mount Point        : %s" % (st.cfg_backup_nfs_mount_point))
-        print("ins.cfg_backup_nfs_to_keep      Nb. Of Backup to Keep         : %s" % (str(st.cfg_backup_nfs_to_keep)))
-        print("ins.cfg_rear_nfs_server         Rear NFS Backup Server        : %s" % (st.cfg_rear_nfs_server))
-        print("ins.cfg_rear_nfs_mount_point    Rear NFS Mount Point          : %s" % (st.cfg_rear_nfs_mount_point))
-        print("ins.cfg_rear_backup_to_keep     Rear Backup to Keep           : %s" % (str(st.cfg_rear_backup_to_keep)))
-        print("ins.cfg_storix_nfs_server       Storix NFS Server             : %s" % (st.cfg_storix_nfs_server))
-        print("ins.cfg_storix_nfs_mount_point  Storix NFS Mount Point        : %s" % (st.cfg_storix_nfs_mount_point))
-        print("ins.cfg_storix_backup_to_keep   Storix NFS Backup to Keep     : %s" % (str(st.cfg_storix_backup_to_keep)))
-        print("ins.cfg_mksysb_nfs_server       Aix mksysb NFS Backup Server  : %s" % (st.cfg_mksysb_nfs_server))
-        print("ins.cfg_mksysb_nfs_mount_point  Aix mksysb NFS Mount Point    : %s" % (st.cfg_mksysb_nfs_mount_point))
-        print("ins.cfg_mksysb_backup_to_keep   Aix mksysb NFS Backup to Keep : %s" % (str(st.cfg_mksysb_backup_to_keep)))
-
-        # When Really Wanted (Level 9) - Print O/S Environnement
         if (st.debug > 8) :                                               
             print(" ")                                                  
             print("This is the O/S Environment")
@@ -409,11 +805,23 @@ def main():
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
         st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
-        st.exit_code = print_functions(st)                              # Display Env. Variables
+        print_functions(st)                                             # Display Env. Variables
+        print_client_directory(st)                                      # Show Client Dir. Variables
+        print_server_directory(st)                                      # Show Server Dir. Variables
+        print_file(st)                                                  # Show Files Variables
+        print_sadmin_cfg(st)                                            # Show sadmin.cfg Variables
+        print_command_path(st)                                          # Show Command Path
+        #print_start_stop(st)                                            # Show Stop/Start Function
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
     else:                                                               # Script don't need Database
-        st.exit_code = print_function(st)                               # Display Env. Variables
+        print_function(st)                                              # Display Env. Variables
+        print_client_directory(st)                                      # Show Client Dir. Variables
+        print_server_directory(st)                                      # Show Server Dir. Variables
+        print_file(st)                                                  # Show Files Variables
+        print_sadmin_cfg(st)                                            # Show sadmin.cfg Variables
+        print_command_path(st)                                          # Show Command Path
+        #print_start_stop(st)                                            # Show Stop/Start Function
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
