@@ -93,7 +93,7 @@ rsync_storix_iso()
              exit 1                                                     # Exit To O/S
     fi
 
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log

@@ -379,7 +379,7 @@ ask_user()
     fi
 
     # OPTIONAL CODE - IF YOUR SCRIPT DOESN'T HAVE TO BE RUN BY THE ROOT USER, THEN YOU CAN REMOVE
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log

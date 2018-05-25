@@ -191,7 +191,7 @@ print_functions()
     
     pexample=""; pdesc=""; presult="";                                  # Clear Result Line
     WDATE=$(sadm_epoch_to_date $EPOCH_TIME)                             # Set Test Date
-    printline "WDATE='$WDATE'"                                          # Print Test Date
+    printf "\n      WDATE='$WDATE'"                                     # Print Test Date
     pexample="\$(sadm_date_to_epoch \"\$WDATE\")"                       # Example Calling Function
     pdesc="Convert Date to epoch time"                                  # Function Description
     presult=$(sadm_date_to_epoch "$WDATE")                              # Return Value(s)
@@ -199,29 +199,13 @@ print_functions()
         
     pexample=""; pdesc=""; presult="";                                  # Clear Result Line
     DATE1="2016.01.30 10:00:44" ; DATE2="2016.01.30 10:00:03"           # Set Date to Calc Elapse
-    printline "DATE1='$DATE1'"                                          # Print Date1 Used for Ex.
-    printline "DATE2='$DATE2'"                                          # Print Date2 Used for Ex.
+    printf "\n      DATE1='$DATE1'"                                     # Print Date1 Used for Ex.
+    printf "\n      DATE2='$DATE2'"                                     # Print Date2 Used for Ex.
     pexample="\$(sadm_elapse \"\$DATE1\" \"\$DATE2\")"                  # Example Calling Function
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=$(sadm_elapse "$DATE1" "$DATE2")                            # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-    
-    pexample="sadm_toupper string"                                      # Example Calling Function
-    pdesc="Return string uppercase"                                     # Function Description
-    presult=`sadm_toupper STRING`                                       # Return Value(s)
-    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-
-    pexample="sadm_tolower STRING"                                      # Example Calling Function
-    pdesc="Return string lowercase"                                     # Function Description
-    presult=`sadm_tolower STRING`                                       # Return Value(s)
-    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-    
-    if $(sadm_is_root) ; then wmess="true" ; else wmess="false" ;fi     # Test Current USer
-    pexample="\$(sadm_is_root)"                                         # Example Calling Function
-    pdesc="True if user is root else False"                             # Function Description
-    presult="$(sadm_is_root)"                                           # Return Value(s)
-    printline "$pexample" "$pdesc" "$wmess"                             # Print Example Line
-    
+        
     pexample="\$(sadm_server_type)"                                     # Example Calling Function
     pdesc="Host is Physical or Virtual (P/V)"                           # Function Description
     presult=$(sadm_server_type)                                         # Return Value(s)
@@ -292,14 +276,24 @@ print_functions()
     presult=$(sadm_server_ips)                                          # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
     
+    pexample="sadm_toupper string"                                      # Example Calling Function
+    pdesc="Return string uppercase"                                     # Function Description
+    presult=`sadm_toupper STRING`                                       # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+
+    pexample="sadm_tolower STRING"                                      # Example Calling Function
+    pdesc="Return string lowercase"                                     # Function Description
+    presult=`sadm_tolower STRING`                                       # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+    
 }
 
 
 
 #===================================================================================================
-# Print Directories Variables Available to Users
+# Print Client Directories Variables Available to Users
 #===================================================================================================
-print_directory()
+print_client_directory()
 {
     printheader "Directories Variable Avail." "Description" "  Result"
 
@@ -367,6 +361,16 @@ print_directory()
     pdesc="Server Network Info Dir."                                    # Directory Description
     presult="$SADM_NET_DIR"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+}
+
+
+
+#===================================================================================================
+# Print Client Directories Variables Available to Users
+#===================================================================================================
+print_server_directory()
+{
+    printheader "Server Directories Var. Avail." "Description" "  Result"
         
     pexample="\$SADM_WWW_DIR"                                           # Directory Variable Name
     pdesc="SADMIN Web Site Root Directory"                              # Directory Description
@@ -426,17 +430,17 @@ print_file()
     #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_TMP_FILE1"                                         # Directory Variable Name
-    pdesc="Usable Temp Work File 1"                                     # Directory Description
+    pdesc="User usable Temp Work File 1"                                # Directory Description
     presult="$SADM_TMP_FILE1"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
     pexample="\$SADM_TMP_FILE2"                                         # Directory Variable Name
-    pdesc="Usable Temp Work File 2"                                     # Directory Description
+    pdesc="User usable Temp Work File 2"                                # Directory Description
     presult="$SADM_TMP_FILE2"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
     pexample="\$SADM_TMP_FILE3"                                         # Directory Variable Name
-    pdesc="Usable Temp Work File 3"                                     # Directory Description
+    pdesc="User usable Temp Work File 3"                                # Directory Description
     presult="$SADM_TMP_FILE3"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
             
@@ -721,7 +725,7 @@ print_command_path()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
     pexample="\$SADM_LSCPU"                                             # Variable Name
-    pdesc="Cmd.'lscpu', Socket & thread info"                           # Command Location
+    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Command Location
     presult="$SADM_LSCPU"                                               # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
@@ -759,8 +763,15 @@ print_command_path()
 #===================================================================================================
 print_start_stop()
 {
-    printheader "Overview of sadm_start and sadm_stop function of sadmin standard library"
+    printheader "Overview of sadm_start and sadm_stop function"
 
+    printf "\nExample of utilisation:\n\n"
+    printf " sadm_start                                         # Init Env Dir & RC/Log File\n"
+    printf " if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
+    printf " main_process                                       # Main Process\n"
+    printf " SADM_EXIT_CODE=\$?                                  # Save Error Code\n"
+    printf " sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
+    printf " exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
     printf "\n"
     printf "sadm_start\n"
     printf "    Start and initialize sadm environment - Accept no Parameter\n"
@@ -809,10 +820,11 @@ print_start_stop()
     
     print_functions                                                     # List Functions of SADMIN
     print_start_stop                                                    # Help Start/Stop Function
-    print_command_path                                                  # List Command PAth
     print_sadmin_cfg                                                    # List Sadmin Cfg File Var.
-    print_directory                                                     # List Dir. Var. of SADMIN
+    print_client_directory                                              # List Client Dir. Var. 
+    print_server_directory                                              # List Server Dir. Var. 
     print_file                                                          # List Files Var. of SADMIN
+    print_command_path                                                  # List Command PAth
     printf "\n\n"                                                       # End of report Line Feeds
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log

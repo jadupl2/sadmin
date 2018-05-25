@@ -584,7 +584,7 @@ create_summary_file()
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sleep 5 

@@ -80,7 +80,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
              sadm_stop 0                                                # Close and Trim Log
              exit 0                                                     # Exit To O/S
     fi
-    if ! $(sadm_is_root)                                                # Only ROOT can run Script
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log

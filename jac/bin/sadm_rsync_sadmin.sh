@@ -324,7 +324,7 @@ process_servers()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    if ! $(sadm_is_root)                                                # Is it root running script?
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH

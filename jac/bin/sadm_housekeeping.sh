@@ -397,7 +397,7 @@ special_housekeeping()
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
     # Insure that this script can only be run by the user root
-    if ! $(sadm_is_root)                                                # Is it root running script?
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log

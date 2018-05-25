@@ -118,7 +118,7 @@ def printheader(st,col1,col2,col3=" "):
     lcount = 0 
     print ("\n\n\n%s" % ("=" * 100))
     print ("%s v%s - Library v%s" % (st.pn,st.ver,st.libver))
-    print ("%-33s%-36s%-33s" % (col1,col2,col3))
+    print ("%-39s%-36s%-33s" % (col1,col2,col3))
     print ("%s" % ("=" * 100))
 
 #===================================================================================================
@@ -204,15 +204,15 @@ def print_functions(st):
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     WDATE=st.epoch_to_date(wepoch)                                      # Set Test Date
-    print ("WDATE=%s" % (WDATE))                                        # Print Test Date    
+    print ("      WDATE=%s" % (WDATE))                                  # Print Test Date    
     pexample="ins.date_to_epoch(WDATE)"                                 # Example Calling Function
     pdesc="Convert Date to epoch time"                                  # Function Description
     presult=st.date_to_epoch(WDATE)                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     DATE1="2018.06.30 10:00:44" ; DATE2="2018.06.30 10:00:03"           # Set Date to Calc Elapse
-    print ("DATE1=%s" % (DATE1))                                        # Print Date1 Used for Ex.
-    print ("DATE2=%s" % (DATE2))                                        # Print Date2 Used for Ex.
+    print ("      DATE1=%s" % (DATE1))                                  # Print Date1 Used for Ex.
+    print ("      DATE2=%s" % (DATE2))                                  # Print Date2 Used for Ex.
     pexample="ins.elapse_time(DATE1,DATE2)"                             # Example Calling Function
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=st.elapse_time(DATE1,DATE2)                                 # Return Value(s)
@@ -408,17 +408,17 @@ def print_file(st):
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
     pexample="ins.tmp_file1"                                            # Example Calling Function
-    pdesc="Usable Temp Work File 1"                                     # Function Description
+    pdesc="User usable Temp Work File 1"                                # Function Description
     presult=st.tmp_file1                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
     pexample="ins.tmp_file2"                                            # Example Calling Function
-    pdesc="Usable Temp Work File 2"                                     # Function Description
+    pdesc="User usable Temp Work File 2"                                # Function Description
     presult=st.tmp_file2                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
     pexample="ins.tmp_file3"                                            # Example Calling Function
-    pdesc="Usable Temp Work File 3"                                     # Function Description
+    pdesc="User usable Temp Work File 3"                                # Function Description
     presult=st.tmp_file3                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
@@ -435,11 +435,6 @@ def print_file(st):
     pexample="ins.dbpass_file"                                          # Example Calling Function
     pdesc="SADMIN Database User Password File"                          # Function Description
     presult=st.dbpass_file                                              # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-    
-    pexample="ins.crontab_file"                                         # Example Calling Function
-    pdesc="SADMIN Crontab File"                                         # Function Description
-    presult=st.crontab_file                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
 #===================================================================================================
@@ -770,19 +765,16 @@ def print_start_stop(st):
     print (" ")
 
 
-# ----------------------------------------------------------------------------------------------
-# For Debugging Purpose - Display all Important Environment Variables used across SADM Libraries
-# ----------------------------------------------------------------------------------------------
-def display_env(st):
-
-        if (st.debug > 8) :                                               
-            print(" ")                                                  
-            print("This is the O/S Environment")
-            print(dash)                                                 
-            for a in os.environ:
-                print('Var: ', a, 'Value: ', os.getenv(a))
-            print(dash)                                                 
-        return 0
+#===================================================================================================
+# Show Environment Variables Defined
+#===================================================================================================
+def print_env(st):
+    printheader (st,"Environment Variables.","Description","  Result")
+    for a in os.environ:
+        pexample=a                                                          # Env. Var. Name
+        pdesc="Env.Var. %s" % (a)                                           # Env. Var. Name
+        presult=os.getenv(a)                                                # Return Value(s)
+        printline (st,pexample,pdesc,presult)                               # Print Env. Line
 
 
 
@@ -805,23 +797,19 @@ def main():
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
         st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
-        print_functions(st)                                             # Display Env. Variables
-        print_client_directory(st)                                      # Show Client Dir. Variables
-        print_server_directory(st)                                      # Show Server Dir. Variables
-        print_file(st)                                                  # Show Files Variables
-        print_sadmin_cfg(st)                                            # Show sadmin.cfg Variables
-        print_command_path(st)                                          # Show Command Path
-        #print_start_stop(st)                                            # Show Stop/Start Function
+    
+    print_functions(st)                                                 # Display Env. Variables
+    print_start_stop(st)                                                # Show Stop/Start Function
+    print_sadmin_cfg(st)                                                # Show sadmin.cfg Variables
+    print_client_directory(st)                                          # Show Client Dir. Variables
+    print_server_directory(st)                                          # Show Server Dir. Variables
+    print_file(st)                                                      # Show Files Variables
+    print_command_path(st)                                              # Show Command Path
+    print_env(st)                                                       # Show Env. Variables
+
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
-    else:                                                               # Script don't need Database
-        print_function(st)                                              # Display Env. Variables
-        print_client_directory(st)                                      # Show Client Dir. Variables
-        print_server_directory(st)                                      # Show Server Dir. Variables
-        print_file(st)                                                  # Show Files Variables
-        print_sadmin_cfg(st)                                            # Show sadmin.cfg Variables
-        print_command_path(st)                                          # Show Command Path
-        #print_start_stop(st)                                            # Show Stop/Start Function
     st.stop(st.exit_code)                                               # Close SADM Environment
 
 # This idiom means the below code only runs when executed from command line
