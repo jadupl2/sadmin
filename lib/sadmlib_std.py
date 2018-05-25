@@ -155,6 +155,7 @@ class sadmtools():
         self.www_cfg_dir        = os.path.join(self.www_dir,'cfg')      # SADM Web Site CFG Dir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
+        self.www_tmp_dir        = os.path.join(self.www_dir,'tmp')      # SADM Web Site Tmp Dir
         self.www_net_dir        = self.www_dat_dir + '/' + self.hostname + '/net' # Web Data Net.Dir
         
         # SADM Files Definition
@@ -186,11 +187,9 @@ class sadmtools():
         self.cfg_max_logline            = 5000                          # Max Nb. Lines in LOG )
         self.cfg_max_rchline            = 100                           # Max Nb. Lines in RCH file
         self.cfg_nmon_keepdays          = 60                            # Days to keep old *.nmon
-        self.cfg_sar_keepdays           = 60                            # Days to keep old *.sar
         self.cfg_rch_keepdays           = 60                            # Days to keep old *.rch
         self.cfg_log_keepdays           = 60                            # Days to keep old *.log
         self.cfg_dbname                 = ""                            # MySQL Database Name
-        self.cfg_dbdir                  = ""                            # MySQL Database Dir
         self.cfg_dbhost                 = ""                            # MySQL Database Host
         self.cfg_dbport                 = 3306                          # MySQL Database Port
         self.cfg_rw_dbuser              = ""                            # MySQL Read Write User
@@ -230,6 +229,8 @@ class sadmtools():
         self.ssh                = ""                                    # ssh command path       
         self.nmon               = ""                                    # nmon command path       
         self.lscpu              = ""                                    # lscpu command path       
+        self.parted             = ""                                    # parted command path       
+        self.ethtool            = ""                                    # ethtool command path       
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
@@ -882,7 +883,8 @@ class sadmtools():
     # It is recommended to install any missing command.
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
-        global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl,nmon,lscpu
+        global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl
+        global nmon,lscpu,ethtool,parted
     
         requisites_status=True                                          # Assume Requirement all Met
     
@@ -936,13 +938,23 @@ class sadmtools():
 
         # Get the location of nmon command
         if (self.os_type == "LINUX"):                                   # On Linux
-            self.perl =self.locate_command('nmon')                      # Locate the nmon command
-            if self.perl == "" : requisites_status=False                # if blank didn't find it
+            self.nmon =self.locate_command('nmon')                      # Locate the nmon command
+            if self.nmon == "" : requisites_status=False                # if blank didn't find it
+
+        # Get the location of parted command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.parted =self.locate_command('parted')                  # Locate the nmon command
+            if self.parted == "" : requisites_status=False              # if blank didn't find it
 
         # Get the location of lscpu command
         if (self.os_type == "LINUX"):                                   # On Linux
-            self.perl =self.locate_command('lscpu')                     # Locate the lscpu command
-            if self.perl == "" : requisites_status=False                # if blank didn't find it
+            self.lscpu =self.locate_command('lscpu')                    # Locate the lscpu command
+            if self.lscpu == "" : requisites_status=False               # if blank didn't find it
+
+        # Get the location of ethtool command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.ethtool =self.locate_command('ethtool')                # Locate the lscpu command
+            if self.ethtool == "" : requisites_status=False             # if blank didn't find it
 
         return requisites_status                                        # Requirement Met True/False
  
@@ -1008,6 +1020,7 @@ class sadmtools():
             if not os.path.exists(www_doc_dir)  : os.mkdir(www_doc_dir,0o0775)  # Create SADM HTML Dir.
             if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,0o0775)  # Create Web  DAT  Dir.
             if not os.path.exists(www_lib_dir)  : os.mkdir(www_lib_dir,0o0775)  # Create Web  DAT  Dir.
+            if not os.path.exists(www_tmp_dir)  : os.mkdir(www_tmp_dir,0o0775)  # Create Web  DAT  Dir.
             wuid = pwd.getpwnam(cfg_www_user).pw_uid                    # Get UID User of Wev User 
             wgid = grp.getgrnam(cfg_www_group).gr_gid                   # Get GID User of Web Group 
             os.chown(www_dir, wuid, wgid)                               # Change owner of log file
@@ -1015,6 +1028,7 @@ class sadmtools():
             os.chown(www_doc_dir, wuid, wgid)                           # Change owner of rch file
             os.chown(www_dat_dir, wuid, wgid)                           # Change owner of dat file
             os.chown(www_lib_dir, wuid, wgid)                           # Change owner of lib file
+            os.chown(www_tmp_dir, wuid, wgid)                           # Change owner of tmp file
     
         
         # Write SADM Header to Script Log

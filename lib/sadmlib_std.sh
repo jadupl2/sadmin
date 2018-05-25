@@ -63,7 +63,6 @@ trap 'exit 0' 2                                                         # Interc
 #                             V A R I A B L E S      D E F I N I T I O N S
 # --------------------------------------------------------------------------------------------------
 #
-HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Current Host name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
@@ -297,7 +296,7 @@ sadm_check_command_availibility() {
              return 0                                                   # Return 0 if cmd found
         else SADM_VAR1=""                                               # Clear Path of command
              #sadm_writelog " "                                            # Inform User 
-             #sadm_writelog "WARNING : The \"${SADM_CMD}\" command is not available on $HOSTNAME"
+             #sadm_writelog "WARNING : \"${SADM_CMD}\" command isn't available on $SADM_HOSTNAME"
              #sadm_writelog "To fully benefit the SADMIN Library & give you accurate information"
              #sadm_writelog "We will install the package that include the command \"${SADM_CMD}\""
              #sadm_writelog "SADMIN Will install it for you ... One moment"
