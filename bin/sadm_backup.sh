@@ -48,6 +48,8 @@
 #           the resulting archive does not contain the exact copy of the file set.
 #   2018_05_15  JDuplessis
 #       V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
+#   2018_05_25  JDuplessis
+#       V3.4 Fix Problem with Archive Directory Name
 #           
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -58,6 +60,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #                               Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                       ; export DEBUG_LEVEL                # 0=NoDebug Higher=+Verbose
+HOSTNAME=`hostname -s`              ; export HOSTNAME                   # Current Host name
 TOTAL_ERROR=0                       ; export TOTAL_ERROR                # Total Rsync Error
 CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
@@ -96,11 +99,11 @@ YDIR="${LOCAL_MOUNT}/yearly"            ; export YDIR                   # Root D
 LDIR="${LOCAL_MOUNT}/latest"            ; export LDIR                   # Root Dir. Latest Backup
 
 # Backup Directories for current backup
-DAILY_DIR="${DDIR}/${SADM_HOSTNAME}"    ; export DAILY_DIR              # Dir. For Daily Backup
-WEEKLY_DIR="${WDIR}/${SADM_HOSTNAME}"   ; export WEEKLY_DIR             # Dir. For Weekly Backup
-MONTHLY_DIR="${MDIR}/${SADM_HOSTNAME}"  ; export MONTHLY_DIR            # Dir. For Monthly Backup
-YEARLY_DIR="${YDIR}/${SADM_HOSTNAME}"   ; export YEARLY_DIR             # Dir. For Yearly Backup
-LATEST_DIR="${LDIR}/${SADM_HOSTNAME}"   ; export LATEST_DIR             # Latest Backup Directory
+DAILY_DIR="${DDIR}/${HOSTNAME}"         ; export DAILY_DIR              # Dir. For Daily Backup
+WEEKLY_DIR="${WDIR}/${HOSTNAME}"        ; export WEEKLY_DIR             # Dir. For Weekly Backup
+MONTHLY_DIR="${MDIR}/${HOSTNAME}"       ; export MONTHLY_DIR            # Dir. For Monthly Backup
+YEARLY_DIR="${YDIR}/${HOSTNAME}"        ; export YEARLY_DIR             # Dir. For Yearly Backup
+LATEST_DIR="${LDIR}/${HOSTNAME}"        ; export LATEST_DIR             # Latest Backup Directory
 
 # Number of backup to keep per backup type
 DAILY_BACKUP_TO_KEEP=3                  ; export DAILY_BACKUP_TO_KEEP   # Nb. Daily Backup to keep
@@ -131,7 +134,7 @@ setup_sadmin()
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.3'                               # Current Script Version
+    export SADM_VER='3.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -141,7 +144,6 @@ setup_sadmin()
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_HOSTNAME=`hostname -s`                  # Current Host name (without domain name)
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
@@ -328,19 +330,19 @@ backup_setup()
 
     # Determine the Directory where the backup will be created
     ARCHIVE_DIR="${DAILY_DIR}"                                          # Default goes in Daily Dir.
-    LINK_DIR="../../daily/${SADM_HOSTNAME}"                             # Latest Backup Link Dir.
+    LINK_DIR="../../daily/${HOSTNAME}"                                  # Latest Backup Link Dir.
     if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
         then ARCHIVE_DIR="${WEEKLY_DIR}"                                # Will be Weekly Backup Dir. 
-             LINK_DIR="../../weekly/${SADM_HOSTNAME}"                   # Latest Backup Link Dir.
+             LINK_DIR="../../weekly/${HOSTNAME}"                        # Latest Backup Link Dir.
     fi 
     if [ "$CUR_DATE_NUM" -eq "$MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
         then ARCHIVE_DIR="${MONTHLY_DIR}"                               # Will be Monthly Backup Dir
-             LINK_DIR="../../monthly/${SADM_HOSTNAME}"                  # Latest Backup Link Dir.
+             LINK_DIR="../../monthly/${HOSTNAME}"                       # Latest Backup Link Dir.
     fi 
     if [ "$CUR_DATE_NUM" -eq "$YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
         then if [ "$CUR_MTH_NUM" -eq "$YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
                 then ARCHIVE_DIR="${YEARLY_DIR}"                        # Will be Yearly Backup Dir
-                     LINK_DIR="../../yearly/${SADM_HOSTNAME}"           # Latest Backup Link Dir.
+                     LINK_DIR="../../yearly/${HOSTNAME}"                # Latest Backup Link Dir.
              fi
     fi 
     
@@ -416,11 +418,11 @@ create_backup()
                 if [ "$COMPRESS" == "ON" ] 
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
                          sadm_writelog "tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude ." 
-                         tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         #tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
                          RC=$?                                          # Save Return Code
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
                          sadm_writelog "tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude ." 
-                         tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         #tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
                          RC=$?                                          # Save Return Code
                 fi
                 if [ $RC -eq 1 ] ; then RC=0 ; fi                       # Change while backup is OK      
