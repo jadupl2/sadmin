@@ -247,7 +247,7 @@ def print_user_variables(st):
     printheader (st,"User Var. that affect SADMIN behavior","Description","  This System Result")
 
     pexample="ins.ver"                                                  # Example Calling Function
-    pdesc="Get/Set version number"                                      # Function Description
+    pdesc="Get/Set Script Version Number"                               # Function Description
     presult=st.ver                                                      # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
