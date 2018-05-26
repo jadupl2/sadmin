@@ -2,46 +2,29 @@
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadmlib_std.py
-#   Synopsis:   This is the Standard SADM Python Library 
+#   Synopsis:   This is the Standard SADMIN Python Library 
 #
 #===================================================================================================
 # Change Log
-# 2016_06_13 - JDuplessis
-#   V1.1 Added Flush before trimming file
-# 2017_09_03 - JDuplessis 
-#   V1.2 Rewritten Trimfile function (Caused error if exec in debug mode)
-# 2017_09_03 - JDuplessis 
-#   V1.3 Added db_dir and db_file for Sqlite3 Database
-# 2017_11_23 - JDuplessis
-#   V2.0 Major Redesign of the Library and switch to MySQL Database
-# 2017_12_07 - JDuplessis
-#   V2.1 Correct problem change group of rch and log file in the stop function
-# 2017_12_07 - JDuplessis
-#   V2.2 Revert Change Cause reading problem with apache 
-# 2017_12_26 - JDuplessis
-#   V2.2 Adapted to work on OSX and To Adapt to Python 3 
-# 2018_01_03 - JDuplessis
-#   V2.3 Added Check for facter command , if present use it get get hardware info
-# 2018_01_03 - JDuplessis
-#   V2.4 Add New arc Directory in $SADMIN/www for archiving
-# 2018_01_25 JDuplessis
-#   V2.5 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_14 JDuplessis
-#   V2.6 Add Documentation Directory
-# 2018_02_17 JDuplessis
-#   V2.7 Revision of the command requirements and message when missing
-# 2018_02_21 JDuplessis
-#   V2.8 Minor Changes
-# 2018_02_22 JDuplessis
-#   V2.9 Add Field SADM_HOST_TYPE in sadmin.cfg 
-# 2018_05_04 JDuplessis
-#   V2.10 Database User and Password are not read from .dbpass now (no longer from sadmin.cfg)
-# 2018_05_14 JDuplessis
-#   V2.11 Add Variable obj.use_rch, to use or not the Return Code History file (for interactice Pgm)
-# 2018_05_15 JDuplessis
-#   V2.12 Add Variable obj.log_header and obj.log_footer to produce or not the log header/footer.# 
-# 2018_05_20 JDuplessis
-#   V2.13 Minor correction to make the log like the SADMIN Shell Library
+# 2016_06_13    V1.1 Added Flush before trimming file
+# 2017_09_03    V1.2 Rewritten Trimfile function (Caused error if exec in debug mode)
+# 2017_09_03    V1.3 Added db_dir and db_file for Sqlite3 Database
+# 2017_11_23    V2.0 Major Redesign of the Library and switch to MySQL Database
+# 2017_12_07    V2.1 Correct problem change group of rch and log file in the stop function
+# 2017_12_07    V2.2 Revert Change Cause reading problem with apache 
+# 2017_12_26    V2.2 Adapted to work on OSX and To Adapt to Python 3 
+# 2018_01_03    V2.3 Added Check for facter command , if present use it get get hardware info
+# 2018_01_03    V2.4 Add New arc Directory in $SADMIN/www for archiving
+# 2018_01_25    V2.5 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_14    V2.6 Add Documentation Directory
+# 2018_02_17    V2.7 Revision of the command requirements and message when missing
+# 2018_02_21    V2.8 Minor Changes
+# 2018_02_22    V2.9 Add Field SADM_HOST_TYPE in sadmin.cfg 
+# 2018_05_04    V2.10 Database User and Password are now read from .dbpass (no longer sadmin.cfg)
+# 2018_05_14    V2.11 Add Var. obj.use_rch, to use or not the RCH file (for interactice Pgm)
+# 2018_05_15    V2.12 Add Var. obj.log_header & obj.log_footer to produce or not log header/footer
+# 2018_05_20    V2.13 Minor correction to make the log like the SADMIN Shell Library
+# 2018_05_26    V2.14 Add Param to writelog for Bold Attribute & Remove some unused Variables 
 # ==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -112,7 +95,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.13"                                # This Library Version
+        self.libver             = "2.14"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -130,7 +113,7 @@ class sadmtools():
 
         # O/S Info
         self.hostname           = socket.gethostname().split('.')[0]    # Get current hostname
-        self.os_type            = self.get_ostype()                     # O/S LINUX,AIX,DARWIN
+        self.os_type            = self.get_ostype()                     # Upper O/S LINUX,AIX,DARWIN
         self.username           = getpass.getuser()                     # Get Current User Name
 
         # SADM Sub Directories Definitions
@@ -148,11 +131,10 @@ class sadmtools():
         self.dr_dir             = os.path.join(self.dat_dir,'dr')       # SADM Disaster Recovery Dir
         self.net_dir            = os.path.join(self.dat_dir,'net')      # SADM Network/Subnet Dir 
         self.rpt_dir            = os.path.join(self.dat_dir,'rpt')      # SADM Sysmon Report Dir.
-        self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
 
         # SADM Web Site Directories Structure
+        self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
         self.www_dat_dir        = os.path.join(self.www_dir,'dat')      # SADM Web Site Data Dir
-        self.www_cfg_dir        = os.path.join(self.www_dir,'cfg')      # SADM Web Site CFG Dir
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_tmp_dir        = os.path.join(self.www_dir,'tmp')      # SADM Web Site Tmp Dir
@@ -161,14 +143,16 @@ class sadmtools():
         # SADM Files Definition
         self.log_file           = self.log_dir + '/' + self.hostname + '_' + self.inst + '.log' 
         self.rch_file           = self.rch_dir + '/' + self.hostname + '_' + self.inst + '.rch' 
+        self.rpt_file           = self.rpt_dir + '/' + self.hostname + '.rpt' 
         self.cfg_file           = self.cfg_dir + '/sadmin.cfg'          # Configuration Filename
         self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'         # Hidden Config Filename
-        self.crontab_work       = self.www_lib_dir + '/.crontab.txt'    # Work crontab
-        self.crontab_file       = '/etc/cron.d/sadmin'                  # Final crontab
+        #self.crontab_work       = self.www_lib_dir + '/.crontab.txt'   # Work crontab
+        #self.crontab_file       = '/etc/cron.d/sadmin'                 # Final crontab
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
         self.dbpass_file        = self.cfg_dir + '/.dbpass'             # SADMIN DB User/Pwd file
         self.pid_file           = "%s/%s.pid" % (self.tmp_dir, self.inst) # Process ID File
-        self.tmp_file_prefix    = self.tmp_dir + '/' + self.hostname + '_' + self.inst # TMP Prefix
+        #self.tmp_file_prefix    = self.tmp_dir + '/' + self.hostname + '_' + self.inst # TMP Prefix
+        self.tmp_file_prefix    = self.tmp_dir + '/' + self.inst        # TMP Prefix
         self.tmp_file1          = "%s_1.%s" % (self.tmp_file_prefix,self.tpid)  # Temp1 Filename
         self.tmp_file2          = "%s_2.%s" % (self.tmp_file_prefix,self.tpid)  # Temp2 Filename
         self.tmp_file3          = "%s_3.%s" % (self.tmp_file_prefix,self.tpid)  # Temp3 Filename
@@ -234,8 +218,7 @@ class sadmtools():
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
-
-        self.ssh_cmd = "%s -qnp %s " % (self.ssh,self.cfg_ssh_port)     # SSH Command we use
+        self.ssh_cmd = "%s -qnp %s " % (self.ssh,self.cfg_ssh_port)     # Build SSH Command we use
 
 
     #-----------------------------------------------------------------------------------------------
@@ -429,16 +412,29 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     #                         Write Log to Log File, Screen or Both
     # ----------------------------------------------------------------------------------------------
-    def writelog(self,sline):
+    def writelog(self,sline,stype="normal"):
         global FH_LOG_FILE
-
         now = datetime.datetime.now()
-        logLine = now.strftime("%Y.%m.%d %H:%M:%S") + " - %s" % (sline)
-        if self.log_type.upper() == "L" :  FH_LOG_FILE.write ("%s\n" % (logLine))
-        if self.log_type.upper() == "S" :  print ("%s" % logLine)
-        if self.log_type.upper() == "B" :  
+        part1 = now.strftime("%Y.%m.%d %H:%M:%S") + " - "
+        part2 = "%s" % (sline)
+        logLine = part1 + part2
+
+        # Record Line in Log
+        if (self.log_type.upper() == "L") or (self.log_type.upper() == "B") :
             FH_LOG_FILE.write ("%s\n" % (logLine))
-            print ("%s" % logLine) 
+
+        # Display Line on Screen
+        if (self.log_type.upper() == "S") or (self.log_type.upper() == "B") :
+            if (stype == "normal") : 
+                print ("%s" % logLine)  
+            if (stype == "nonl") : 
+                print ("%s" % logLine, end='')
+            if (stype == "bold") : 
+                class color:
+                    DARKCYAN    = '\033[36m'
+                    BOLD        = '\033[1m'
+                    END         = '\033[0m'
+                print ( part1 + color.DARKCYAN + color.BOLD + part2 + color.END)
 
 
     # ----------------------------------------------------------------------------------------------
@@ -468,18 +464,9 @@ class sadmtools():
             os.remove(filename)                                         # Remove selected file
         except OSError as e:                                            # If OSError
             if e.errno != errno.ENOENT :                                # errno.no such file or Dir.
-                raise                                                       # raise exception if diff.err
+                raise                                                   # raise exception if diff.err
 
   
-    # ----------------------------------------------------------------------------------------------
-    #                        CURRENT USER IS "ROOT" (True) OR NOT ? (False)
-    # ----------------------------------------------------------------------------------------------
-    def is_root(self) :
-        if not os.geteuid() == 0:                                       # If Current User not root
-            return False                                                # Return False
-        else :                                                          # If Current user is root
-            return True                                                 # Return True
-
 
     # ----------------------------------------------------------------------------------------------
     #                                 RETURN SADMIN RELEASE VERSION NUMBER
@@ -651,7 +638,7 @@ class sadmtools():
 
  
     # ----------------------------------------------------------------------------------------------
-#          RETURN CPU SERIAL Number (For the Raspberry - need to be check on other server)
+    #          RETURN CPU SERIAL Number (For the Raspberry - need to be check on other server)
     # ----------------------------------------------------------------------------------------------
     def get_serial(self):
         # Extract serial from cpuinfo file
@@ -1037,7 +1024,7 @@ class sadmtools():
             wmess = "Starting %s " % (self.pn)                          # Script Name
             wmess += "V%s " % (self.ver)                                # Script Version
             wmess += "- SADM Lib. V%s" % (self.libver)                  # SADMIN Library Version
-            self.writelog (wmess)                                       # Write Start line to Log
+            self.writelog (wmess,'bold')                                # Write Start line to Log
             wmess = "Server Name: %s" % (self.get_fqdn())               # FQDN Server Name
             wmess += " - Type: %s" % (self.os_type.capitalize())        # O/S Type Linux/Aix
             self.writelog (wmess)                                       # Write OS Info to Log Head
