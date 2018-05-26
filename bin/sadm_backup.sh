@@ -1,9 +1,9 @@
 #!/bin/bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
-#   Title:      Backup and Compress directories choosen in $BACKUP_LIST as tar files (tgz)
+#   Title:      Backup & Compress directories choosen in $BACKUP_LIST as tar files (tar or tgz)
 #   Date:       28 August 2015
-#   Synopsis:   This script is used to create a tgz file of all directories speciied in the 
+#   Synopsis:   This script is used to create a tgz file of all directories specifed in the 
 #               variable $BACKUP_LIST to NFS $ARCHIVE_DIR .
 #               Only the specified ($SADM_BACKUP_NFS_TO_KEEP) copies of each tgz files will be kept
 #               Can be Run Once a week or Once every couple of Day (As you choose)
@@ -13,7 +13,6 @@
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
-
 #   SADMIN Tools are distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 #   without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #   See the GNU General Public License for more details.
@@ -21,39 +20,71 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-#   1.6 - Jan 2-17 - Exclude *.iso added to tar command
-#   2017_10_02  JDuplessis
-#       V2.1 Added /wsadmin in the backup
-#   2017_12_27  JDuplessis
-#       V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
-#   2018_01_02  JDuplessis
-#       V2.3 Small Corrections and added comments
-#   2018_02_09  JDuplessis
-#       V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
-#   2018_02_09  JDuplessis
-#       V2.5 Fisrt Production Version 
-#   2018_02_10  JDuplessis
-#       V2.6 Switch to bash instead of sh (Problem with Dash and array)
-#       V2.7 Create Backup Link in the latest directory
-#       V2.8 Add Exclude File Variable
-#   2018_02_11  JDuplessis
-#       V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
-#   2018_02_14  JDuplessis
-#       V3.0 Removal of old backup according to policy are now working
-#   2018_02_16  JDuplessis
-#       V3.1 Minor Esthetics corrections
-#   2018_02_18  JDuplessis
-#       V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
-#           This exit code means that some files were changed while being archived and so 
-#           the resulting archive does not contain the exact copy of the file set.
-#   2018_05_15  JDuplessis
-#       V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
-#   2018_05_25  JDuplessis
-#       V3.4 Fix Problem with Archive Directory Name
-#           
+#   2017_01_02  V1.2 Exclude *.iso added to tar command
+#   2017_10_02  V2.1 Added /wsadmin in the backup
+#   2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
+#   2018_01_02  V2.3 Small Corrections and added comments
+#   2018_02_09  V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
+#   2018_02_09  V2.5 Fisrt Production Version 
+#   2018_02_10  V2.6 Switch to bash instead of sh (Problem with Dash and array)
+#               V2.7 Create Backup Link in the latest directory
+#               V2.8 Add Exclude File Variable
+#   2018_02_11  V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
+#   2018_02_14  V3.0 Removal of old backup according to policy are now working
+#   2018_02_16  V3.1 Minor Esthetics corrections
+#   2018_02_18  V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
+#                    This exit code means that some files were changed while being archived and so 
+#                    the resulting archive does not contain the exact copy of the file set.
+#   2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
+#   2018_05_25  V3.4 Fix Problem with Archive Directory Name
+#
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
+
+
+#===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -73,7 +104,7 @@ WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" 
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
         "October" "November" "December")
 
-# These NFS Backup Parameters Values are taken from sadmin.cfg file
+# These NFS Backup Values are taken from sadmin.cfg file
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 #SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
 #SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
@@ -117,49 +148,6 @@ MONTHLY_BACKUP_DATE=1                   ; export MONTHLY_BACKUP_DATE    # Monthl
 YEARLY_BACKUP_MONTH=12                  ; export YEARLY_BACKUP_MONTH    # Yearly Backup Month (1-12)
 YEARLY_BACKUP_DATE=31                   ; export YEARLY_BACKUP_DATE     # Yearly Backup Date (1-28)
 
-
-#===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-setup_sadmin()
-{
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
-             exit 1                                     # Exit to Shell with Error
-    fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
-        then echo "SADMIN Library can't be located"     # Without it, it won't work 
-             exit 1                                     # Exit to Shell with Error
-    fi
-
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
-
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
-    export SADM_PN=${0##*/}                             # Current Script name
-    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
-    export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
-    # Load SADMIN Standard Shell Library 
-    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    # An email can be sent at the end of the script depending on the ending status 
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
-    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-}
 
 # --------------------------------------------------------------------------------------------------
 #                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
@@ -553,7 +541,7 @@ umount_nfs()
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S with error
     fi
-    setup_sadmin                                                        # Setup Var. & Load SADM Lib
+
     sadm_start                                                          # Init Env. Dir. & RCH/Log
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
