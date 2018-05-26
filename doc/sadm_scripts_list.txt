@@ -1,0 +1,51 @@
+Link to script
+    sadm                    --->    sadm menu@
+    sadm_backup.sh          --->    
+    Script is use to create a tgz file of all directories you specified in the 
+    variable $BACKUP_LIST to NFS $ARCHIVE_DIR .
+    After the backup, the cleanup process purge old backup , in order to keep only
+    the specified number of copies ($SADM_BACKUP_NFS_TO_KEEP) of each tgz files.
+    Backup are kept in a daily,weekly,monthly, and yearly hierarchy.
+    
+     3	sadm_backupdb.sh*
+     4	sadm_client_sunset.sh*
+     5	sadm_create_cfg2html.sh*
+     6	sadm_create_mksysb.sh*
+     7	sadm_create_server_info.sh*
+     8	sadm_daily_data_collection.sh*
+     9	sadm_database_update.py*
+    10	sadm_df*
+    11	sadm_fetch_servers.sh*
+    12	sadm_fs_incr.sh*
+    13	sadm_fs_recreate.sh*
+    14	sadm_fs_save_info.sh*
+    15	sadm_housekeeping_client.sh*
+    16	sadm_housekeeping_server.sh*
+    17	sadm_nmon_rrd_update.sh*
+    18	sadm_nmon_watcher.sh*
+    19	sadm_osupdate_client.sh*
+    20	sadm_osupdate_server.sh*
+    21	sadm_rch_scr_summary.sh*
+    22	sadm_rear_backup.sh*
+    23	sadm_rear_initiator.sh*
+    24	sadm_server_sunrise.sh*
+    25	sadm_service_ctrl.sh*
+    26	sadm_subnet_lookup.py*
+    27	sadm_support_request.sh*
+    28	sadm_sysmon.pl*
+    29	sadm_sysmon/
+    30	sadm_sysmon_cli.sh*
+    31	sadm_sysmon_tui.pl*
+    32	sadm_template.py*
+    33	sadm_template.sh*
+    34	sadm_template_menus.sh*
+    35	sadm_ui.sh*
+    36	sadm_ui_fsmenu.sh*
+    37	sadm_ui_rpm.sh*
+    38	sadm_update_version.sh*
+    39	sadm_wrapper.sh*
+    40	sadmlib_std_demo.py*
+    41	sadmlib_std_demo.sh*
+    42	sdf@
+    43	smon@
+    44	srch@
