@@ -21,22 +21,15 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2017_07_07 JDuplessis 
-#   V1.7 Minor Code enhancement
-# 2017_07_31 JDuplessis 
-#   V1.8 Added Log Template to script
-# 2017_09_02 JDuplessis 
-#   V1.9 Add Command line switch 
-# 2017_09_02 JDuplessis
-#   V2.0 Rewritten Part of script for performance and flexibility
-# 2017_12_12 JDuplessis
-#   V2.1 Adapted to use MySQL instead of Postgres Database
-# 2017_12_23 JDuplessis
-#   V2.3 Changes for performance and flexibility
-# 2018_01_25 JDuplessis
-#   V2.4 Added Variable SADM_RRDTOOL to sadmin.cfg display
-# 2018_02_21 JDuplessis
-#   V2.5 Minor Changes 
+# 2017_07_07    V1.7 Minor Code enhancement
+# 2017_07_31    V1.8 Added Log Template to script
+# 2017_09_02    V1.9 Add Command line switch 
+# 2017_09_02    V2.0 Rewritten Part of script for performance and flexibility
+# 2017_12_12    V2.1 Adapted to use MySQL instead of Postgres Database
+# 2017_12_23    V2.3 Changes for performance and flexibility
+# 2018_01_25    V2.4 Added Variable SADM_RRDTOOL to sadmin.cfg display
+# 2018_02_21    V2.5 Minor Changes 
+# 2018_05_26    V2.6 Major Rewrite, Better Performance
 #===================================================================================================
 #
 try :
@@ -80,9 +73,9 @@ def setup_sadmin():
     st.use_rch          = False                 # Generate entry in Return Code History (.rch) 
     st.log_header       = False                 # Show/Generate Header in script log (.log)
     st.log_footer       = False                 # Show/Generate Footer in script log (.log)
-    st.debug            = 0                     # Debug level and verbosity (0-9)
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    st.exit_code        = 0                     # Script Exit Code for you to use
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
     #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
@@ -94,7 +87,7 @@ def setup_sadmin():
 
     # Start SADMIN Tools - Initialize 
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)
+    return(st)                                  # Return Instance Obj. To Caller
 
 
 #===================================================================================================
@@ -125,7 +118,7 @@ def printheader(st,col1,col2,col3=" "):
 # Print SADMIN Function available to Users
 #===================================================================================================
 def print_functions(st):
-    printheader (st,"Calling Functions","Description","  Result")
+    printheader (st,"Calling Functions","Description","  This System Result")
 
     pexample="ins.get_release()"                                        # Example Calling Function
     pdesc="SADMIN Release Number (XX.XX)"                               # Function Description
@@ -192,6 +185,11 @@ def print_functions(st):
     presult=st.get_fqdn()                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
+    #pexample="ins.get_serial()"                                         # Example Calling Function
+    #pdesc="Get System serial Number"                                    # Function Description
+    #presult=st.get_serial()                                             # Return Value(s)
+    #printline (st,pexample,pdesc,presult)                               # Print Example Line
+
     pexample="ins.get_epoch_time()"                                     # Example Calling Function
     pdesc="Get Current Epoch Time"                                      # Function Description
     presult=st.get_epoch_time()                                         # Return Value(s)
@@ -218,13 +216,53 @@ def print_functions(st):
     presult=st.elapse_time(DATE1,DATE2)                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
+
+
+#===================================================================================================
+# Print SADMIN Function available to Users
+#===================================================================================================
+def print_python_function(st):
+    printheader (st,"SADMIN Python specific functions","Description","  This System Result")
+
+    pexample="ins.silentremove('file')"                                 # Example Calling Function
+    pdesc="Silent File Del, No Err if not exist"                        # Function Description
+    presult=st.silentremove('file')                                     # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.writelog(msg,'nonl'|'bold')"                          # Example Calling Function
+    pdesc="Write Msg to Log or Screen or Both"                          # Function Description
+    st.log_type="L"
+    presult=st.writelog('Message','bold')                               # Return Value(s)
+    st.log_type="B"
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    print ('\nccode,cstdout,cstderr = ins.oscommand("%s" % (wcommand))')
+    print ('\nins.trimfile (file, maxline=500)')
+    print ('\npathname = ins.locate_command(wcommand)')
+
+#===================================================================================================
+# Print User Variables that affect SADMIN Tools Behavior
+#===================================================================================================
+def print_user_variables(st):
+    printheader (st,"User Var. that affect SADMIN behavior","Description","  This System Result")
+
+    pexample="ins.ver"                                                  # Example Calling Function
+    pdesc="Get/Set version number"                                      # Function Description
+    presult=st.ver                                                      # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.pn"                                                   # Example Calling Function
+    pdesc="Get script name"                                             # Function Description
+    presult=st.pn                                                       # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
     pexample="ins.inst"                                                 # Example Calling Function
-    pdesc="Get Script without extension"                                # Function Description
+    pdesc="Get script name without extension"                           # Function Description
     presult=st.inst                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.username"                                             # Example Calling Function
-    pdesc="Current User Name"                                           # Function Description
+    pdesc="Get current user name"                                       # Function Description
     presult=st.username                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
@@ -234,43 +272,53 @@ def print_functions(st):
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.multiple_exec"                                        # Example Calling Function
-    pdesc="Allow running simultaneous copy"                             # Function Description
+    pdesc="Get/Set Allow running multiple copy"                         # Function Description
     presult=st.multiple_exec                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.use_rch"                                              # Example Calling Function
-    pdesc="Generate entry in ReturnCodeHistory"                         # Function Description
+    pdesc="Get/Set Gen. entry in .rch file"                             # Function Description
     presult=st.use_rch                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
          
     pexample="ins.dbsilent"                                             # Example Calling Function
-    pdesc="No DB err.mess. only return error#"                          # Function Description
+    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
     presult=st.dbsilent                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
     pexample="ins.usedb"                                                # Example Calling Function
-    pdesc="Script need to use Database ?"                               # Function Description
+    pdesc="Set Script need Database ?"                                  # Function Description
     presult=st.usedb                                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
     pexample="ins.log_type"                                             # Example Calling Function
-    pdesc="Output to [S]creen [L]ogFile [B]oth"                         # Function Description
+    pdesc="Set Output to [S]creen [L]og [B]oth"                         # Function Description
     presult=st.log_type                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
     pexample="ins.log_append"                                           # Example Calling Function
-    pdesc="Append Log or Create New One"                                # Function Description
+    pdesc="Get/Set Append Log or Create New One"                        # Function Description
     presult=st.log_append                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
     pexample="ins.log_header"                                           # Example Calling Function
-    pdesc="Show/Generate Header in log "                                # Function Description
+    pdesc="Get/Set Generate Header in log"                              # Function Description
     presult=st.log_header                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
     pexample="ins.log_footer"                                           # Example Calling Function
-    pdesc="Show/Generate Footer in  log"                                # Function Description
+    pdesc="Get/Set Generate Footer in  log"                             # Function Description
     presult=st.log_footer                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+                 
+    pexample="ins.log_footer"                                           # Example Calling Function
+    pdesc="Get/Set Generate Footer in  log"                             # Function Description
+    presult=st.log_footer                                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+                       
+    pexample="ins.exit_code"                                            # Example Calling Function
+    pdesc="Get/Set Script Exit Return Code"                             # Function Description
+    presult=st.exit_code                                                # Current Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                        
     return(0)
@@ -280,7 +328,7 @@ def print_functions(st):
 # Print Directories Variables Available to Users
 #===================================================================================================
 def print_client_directory(st):
-    printheader (st,"Client Directories Var. Avail.","Description","  Result")
+    printheader (st,"Client Directories Var. Avail.","Description","  This System Result")
 
     pexample="ins.base_dir"                                             # Example Calling Function
     pdesc="SADMIN Root Directory"                                       # Function Description
@@ -316,10 +364,10 @@ def print_client_directory(st):
     pdesc="Server Startup/Shutdown Script Dir."                         # Function Description
     presult=st.sys_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
-        
-    pexample="ins.dat_dir"                                              # Example Calling Function
-    pdesc="Server Data Directory"                                       # Function Description
-    presult=st.dat_dir                                                  # Return Value(s)
+    
+    pexample="ins.doc_dir"                                              # Example Calling Function
+    pdesc="SADMIN Documentation Directory"                              # Function Description
+    presult=st.doc_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
     pexample="ins.pkg_dir"                                              # Example Calling Function
@@ -327,6 +375,11 @@ def print_client_directory(st):
     presult=st.pkg_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
+    pexample="ins.dat_dir"                                              # Example Calling Function
+    pdesc="Server Data Directory"                                       # Function Description
+    presult=st.dat_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
     pexample="ins.nmon_dir"                                             # Example Calling Function
     pdesc="Server NMON - Data Collected Dir."                           # Function Description
     presult=st.nmon_dir                                                 # Return Value(s)
@@ -346,10 +399,10 @@ def print_client_directory(st):
     pdesc="Server Network Information Dir."                             # Function Description
     presult=st.net_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
-    
-    pexample="ins.doc_dir"                                              # Example Calling Function
-    pdesc="SADMIN Documentation Directory"                              # Function Description
-    presult=st.doc_dir                                                  # Return Value(s)
+        
+    pexample="ins.rpt_dir"                                              # Example Calling Function
+    pdesc="SYStem MONitor Report Directory"                             # Function Description
+    presult=st.rpt_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
  
@@ -357,7 +410,7 @@ def print_client_directory(st):
 # Print Directories Variables Available to Users
 #===================================================================================================
 def print_server_directory(st):
-    printheader (st,"Server Directories Var. Avail.","Description","  Result")
+    printheader (st,"Server Directories Var. Avail.","Description","  This System Result")
 
     pexample="ins.www_dir"                                              # Example Calling Function
     pdesc="SADMIN Web Site Root Directory"                              # Function Description
@@ -390,7 +443,7 @@ def print_server_directory(st):
 # Print Files Variables Available to Users
 #===================================================================================================
 def print_file(st):
-    printheader (st,"SADMIN FILES VARIABLES AVAIL.","Description","  Result")
+    printheader (st,"SADMIN FILES VARIABLES AVAIL.","Description","  This System Result")
 
     pexample="ins.pid_file"                                             # Example Calling Function
     pdesc="Current script PID file"                                     # Function Description
@@ -436,13 +489,18 @@ def print_file(st):
     pdesc="SADMIN Database User Password File"                          # Function Description
     presult=st.dbpass_file                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="ins.rpt_file"                                             # Example Calling Function
+    pdesc="SYStem MONitor report file"                                  # Function Description
+    presult=st.rpt_file                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
 
 #===================================================================================================
 # Print sadmin.cfg Variables available to users
 #===================================================================================================
 def print_sadmin_cfg(st):
 
-    printheader (st,"SADMIN CONFIG FILE VARIABLES","Description","  Result")
+    printheader (st,"SADMIN CONFIG FILE VARIABLES","Description","  This System Result")
 
     pexample="ins.cfg_server"                                           # Example Calling Function
     pdesc="SADMIN SERVER NAME (FQDN)"                                   # Function Description
@@ -655,7 +713,7 @@ def print_sadmin_cfg(st):
 #===================================================================================================
 def print_command_path(st):
     
-    printheader (st,"COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  Result")
+    printheader (st,"COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  This System Result")
 
     pexample="ins.lsb_release"                                          # Example Calling Function
     pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Function Description
@@ -735,9 +793,11 @@ def print_start_stop(st):
     printheader (st,"Overview of ins.start() & ins.stop() function"," "," ")
      
     print ("")
-    print ("Setup SADMIN")
-    print ("Example: st = setup_sadmin()          # Setup Var. & Load SADM Lib\n")
-    print ("    Start and initialize sadm environment - (No Parameter, Return the instance object")
+    print ("----------")
+    print ("ins = setup_sadmin()")
+    print ("Example : ins = setup_sadmin()    # Setup Var,Load Lib,Create Instance,Call ins.start()")
+    print ("----------")
+    print ("    Setup User Var., Load Module, Create Instance, call ins.start() and return instance object")
     print ("    If SADMIN root directory is not /sadmin, make sure the SADMIN Env. variable is set to proper dir.")
     print ("    Please call this function when your script is starting")
     print ("    What this function will do for us :") 
@@ -749,10 +809,11 @@ def print_start_stop(st):
     print ("        5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)")
     print ("        6) Write HostName - Script name and version - O/S Name and version to the Log file (SADM_LOG)")
     print ("")
+    print ("----------")
     print ("ins.stop()")
-    print ("Example : st.stop(st.exit_code)        # Close SADM Environment\n")
-    print ("          sys.exit(st.exit_code)       # Exit To O/S\n")
-    print ("")
+    print ("Example : st.stop(st.exit_code)   # Close SADM Environment")
+    print ("          sys.exit(st.exit_code)  # Exit To O/S")
+    print ("----------")
     print ("    Accept one parameter - Either 0 (Successfull) or non-zero (Error Encountered)")
     print ("    Please call this function just before your script end")
     print ("    What this function do.")
@@ -773,7 +834,7 @@ def print_start_stop(st):
 # Show Environment Variables Defined
 #===================================================================================================
 def print_env(st):
-    printheader (st,"Environment Variables.","Description","  Result")
+    printheader (st,"Environment Variables.","Description","  This System Result")
     for a in os.environ:
         pexample=a                                                          # Env. Var. Name
         pdesc="Env.Var. %s" % (a)                                           # Env. Var. Name
@@ -802,19 +863,25 @@ def main():
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
         st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
     
+    # Print All Demo Informations
+    print_user_variables(st)                                            # Show User Avail. Variables
+    print_python_function(st)                                           # Show Python Specific func.
     print_functions(st)                                                 # Display Env. Variables
+
     print_start_stop(st)                                                # Show Stop/Start Function
     print_sadmin_cfg(st)                                                # Show sadmin.cfg Variables
     print_client_directory(st)                                          # Show Client Dir. Variables
     print_server_directory(st)                                          # Show Server Dir. Variables
     print_file(st)                                                      # Show Files Variables
     print_command_path(st)                                              # Show Command Path
-    print_env(st)                                                       # Show Env. Variables
+    #print_env(st)                                                       # Show Env. Variables
 
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        st.writelog (" ")                                               # Blank Line
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
+    sys.exit(st.exit_code)                                              # Exit To O/S
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
