@@ -86,15 +86,15 @@ function setup_table() {
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th>Description</th>\n";
+    #echo "<th>Description</th>\n";
     echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot after Update</th>\n";
+    echo "<th class='text-center'>Reboot After</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Date Last Update</th>\n";
+    echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
@@ -104,15 +104,15 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th>Description</th>\n";
+    #echo "<th>Description</th>\n";
     echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot after Update</th>\n";
+    echo "<th class='text-center'>Reboot After</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Date Last Update</th>\n";
+    echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
@@ -142,7 +142,7 @@ function display_data($count, $row) {
     echo $row['srv_name']  . "</a></td>\n";
 
     # Description of Server
-    echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
+    #echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
     # Category de Serveur
     echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
@@ -240,7 +240,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
     if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name " ;
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name ;
         echo " title='View Update Log'>Log</a>";
     }else{
         echo "N/A";
