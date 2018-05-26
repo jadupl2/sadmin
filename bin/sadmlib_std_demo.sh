@@ -446,7 +446,7 @@ print_client_directory()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
     pexample="\$SADM_RPT_DIR"                                           # Directory Variable Name
-    pdesc="SYStemMONitor Report Directory"                              # Directory Description
+    pdesc="SYStem MONitor Report Directory"                             # Directory Description
     presult="$SADM_RPT_DIR"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
@@ -859,12 +859,12 @@ print_start_stop()
     printheader "Overview of sadm_start and sadm_stop function"
 
     printf "\nExample of utilisation:\n\n"
-    printf " sadm_start                                         # Init Env Dir & RC/Log File\n"
-    printf " if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
-    printf " main_process                                       # Main Process\n"
-    printf " SADM_EXIT_CODE=\$?                                  # Save Error Code\n"
-    printf " sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
-    printf " exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
+    printf " # sadm_start                                          # Init Env Dir & RC/Log File\n"
+    printf " # if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
+    printf " # main_process                                        # Main Process\n"
+    printf " # SADM_EXIT_CODE=\$?                                  # Save Error Code\n"
+    printf " # sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
+    printf " # exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
     printf "\n"
     printf "sadm_start\n"
     printf "    Start and initialize sadm environment - Accept no Parameter\n"
