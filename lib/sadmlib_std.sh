@@ -10,51 +10,33 @@
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2.0 Create log file earlier to prevent error message - 18 Jan - J.Duplessis
-# 2.1 Added Support for Linux Mint - April 2017 - J.D.
-# 2.2 Minor Modifications concerning Trimming the Log File
-# 2.3 July 2017 - Jacques Duplessis
-#       - Cosmetic change (Use only 50 Dash line at start & end of script)
-# V2.4 Added SADM_ELOG (Email Log) to store error message encounter to send to user if requested
-#      Split Second line of log header into two lines/ Change Timming Line
-# 2017_08_12 JDuplessis
-#   V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
-# 2017_08_27 JDuplessis
-#   V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
-# 2017_09_23 JDuplessis
-#   V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
-# 2017_09_29 JDuplessis
-#   V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
-# 2017_12_18 JDuplessis
-#   V2.9 Function were changed to run on MacOS and Some Restructuration was done
-# 2017_12_23 JDuplessis
-#   V2.10 SSH Command line construction added at the end of script
-# 2017_12_30 JDuplessis
-#   V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
-# 2018_01_03 JDuplessis
-#   V2.12 Added Check for facter command , if present use it get get hardware info
-# 2018_01_05 JDuplessis
-#   V2.13 Remove Warning when command can't be found for compatibility
-# 2018_01_23 JDuplessis
-#   V2.14 Add arc directory in $SADMIN/www for archiving purpose
-# 2018_01_25 JDuplessis
-#   V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_07 JDuplessis
-#   V2.16 Bug Fix when determining if server is a virtual or physical
-# 2018_02_08 JDuplessis
-#   V2.17 Correct 'if' statement compatibility problem with 'dash' shell
-# 2018_02_14 JDuplessis
-#   V2.18 Add Documentation Directory
-# 2018_02_22 JDuplessis
-#   V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
-# 2018_05_03 JDuplessis
-#   V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
-# 2018_05_06 JDuplessis
-#   V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
-# 2018_05_14 JDuplessis
-#   V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
-# 2018_05_23 JDuplessis
-#   V2.23 Remove some variables and logic modifications
+# 2016_11_05    V2.0 Create log file earlier to prevent error message
+# 2016_04_17    V2.1 Added Support for Linux Mint
+# 2016_04_19    V2.2 Minor Modifications concerning Trimming the Log File
+# 2017_07_03    V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
+# 2017_07_17    V2.4 Added SADM_ELOG to store error message encounter to send to user if requested
+#                    Split Second line of log header into two lines/ Change Timming Line
+# 2017_08_12    V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
+# 2017_08_27    V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
+# 2017_09_23    V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
+# 2017_09_29    V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
+# 2017_12_18    V2.9 Function were changed to run on MacOS and Some Restructuration was done
+# 2017_12_23    V2.10 SSH Command line construction added at the end of script
+# 2017_12_30    V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2018_01_03    V2.12 Added Check for facter command , if present use it get get hardware info
+# 2018_01_05    V2.13 Remove Warning when command can't be found for compatibility
+# 2018_01_23    V2.14 Add arc directory in $SADMIN/www for archiving purpose
+# 2018_01_25    V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_07    V2.16 Bug Fix when determining if server is a virtual or physical
+# 2018_02_08    V2.17 Correct 'if' statement compatibility problem with 'dash' shell
+# 2018_02_14    V2.18 Add Documentation Directory
+# 2018_02_22    V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
+# 2018_05_03    V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
+# 2018_05_06    V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
+# 2018_05_14    V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
+# 2018_05_23    V2.23 Remove some variables and logic modifications
+# 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
+#
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -72,7 +54,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.23"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.24"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -116,6 +98,7 @@ SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FI
 SADM_ELOG="${SADM_TMP_DIR}/${SADM_INST}_E.log"              ; export SADM_ELOG       # Email Log Tmp 
 SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"    ; export LOG         # Output LOG 
 SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch" ; export SADM_RCHLOG # Return Code 
+SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"        ; export SADM_RPT_FILE   # RPT FileName 
 #
 # COMMAND PATH REQUIRE TO RUN SADM
 SADM_LSB_RELEASE=""                         ; export SADM_LSB_RELEASE   # Command lsb_release Path
@@ -1856,6 +1839,6 @@ sadm_stop() {
     sadm_check_requirements                                             # Check Lib Requirements
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
 
-    # SSH Command to Access Farm
-    SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}" ;export SADM_SSH_CMD  
+    export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
+    export SADM_USERNAME=$(whoami)                                      # Current User Name
 
