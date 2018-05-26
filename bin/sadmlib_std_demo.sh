@@ -361,6 +361,11 @@ print_client_directory()
     pdesc="Server Network Info Dir."                                    # Directory Description
     presult="$SADM_NET_DIR"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_DOC_DIR"                                           # Directory Variable Name
+    pdesc="SADMIN Documentation Directory"                              # Directory Description
+    presult="$SADM_DOC_DIR"                                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
 
 

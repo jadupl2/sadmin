@@ -55,12 +55,12 @@ def setup_sadmin():
 
     # Load SADMIN Standard Python Library
     try :
-        SADM = os.environ.get('SADMIN')         # Getting SADMIN Root Dir.
+        SADM = os.environ.get('SADMIN')                     # Getting SADMIN Root Dir.
         sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
-        import sadmlib_std as sadm              # Import SADMIN Python Libr.
-    except ImportError as e:                    # If Error importing SADMIN 
+        import sadmlib_std as sadm                          # Import SADMIN Python Libr.
+    except ImportError as e:                                # If Error importing SADMIN 
         print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
-        sys.exit(1)                             # Go Back to O/S with Error
+        sys.exit(1)                                         # Go Back to O/S with Error
     
     # Create Instance of SADMIN Tool
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
