@@ -21,14 +21,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2017_12_01 JDuplessis 
-#   V1.0 Initial Version
-# 2018_05_14 JDuplessis 
-#   V1.7 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File# 2018_05_14 JDuplessis 
-# 2018_05_15 JDuplessis 
-#   V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
-# 2018_05_20 JDuplessis 
-#   V1.9 Restructure the code and added comments
+# 2017_12_01 V1.0 Initial Version
+# 2018_05_14 V1.7 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File
+# 2018_05_15 V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
+# 2018_05_20 V1.9 Restructure the code and added comments
+# 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -46,6 +43,7 @@ except ImportError as e:                                            # Trap Impor
 #===================================================================================================
 conn                = ""                                                # Database Connector
 cur                 = ""                                                # Database Cursor
+debug               = 0                                                 # Debug verbosity (0-9)
 #
 
 #===================================================================================================
@@ -66,16 +64,16 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "1.9"                 # Current Script Version
+    st.ver              = "2.0"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
     st.use_rch          = True                  # Generate entry in Return Code History (.rch) 
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.debug            = 0                     # Debug level and verbosity (0-9)
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    st.exit_code        = 0                     # Script Exit Code for you to use
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
     #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
@@ -87,7 +85,7 @@ def setup_sadmin():
 
     # Start SADMIN Tools - Initialize 
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-    return(st)
+    return(st)                                  # Return Instance Obj. To Caller
 
 
 
@@ -131,7 +129,7 @@ def process_servers(wconn,wcur,st):
         st.writelog ("Processing (%d) %-15s - %s %s" % (lineno,wfqdn,wos,wosversion)) # Server Info
 
         # If Debug is activated - Display Monitoring & Sporadic Status of Server.
-        if st.debug > 4 :                                               # If Debug Activated
+        if debug > 4 :                                                  # If Debug Level > 4 
             if wmonitor :                                               # Monitor Collumn is at True
                 st.writelog ("Monitoring is ON for %s" % (wfqdn))       # Show That Monitoring is ON
             else :
