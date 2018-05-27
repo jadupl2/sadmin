@@ -7,16 +7,12 @@
 #   Date     :  15 Janvier 2016
 #   Requires :  sh
 #===================================================================================================
-# 2017_12_30 JDuplessis
-#   V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
-# 2017_12_30 JDuplessis
-#   V2.8 Change name of template file from sysmon.std to template.smon
-# 2017_12_30 JDuplessis
-#   V2.9 Change Message Sent to user when host.cfg file not there and using template file
-# 2018_05_07 JDuplessis
-#   V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file 
-# 2018_05_14 JDuplessis
-#   V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement 
+# 2017_12_30    V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
+# 2017_12_30    V2.8 Change name of template file from sysmon.std to template.smon
+# 2017_12_30    V2.9 Change Message Sent to user when host.cfg file not there and using template file
+# 2018_05_07    V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file 
+# 2018_05_14    V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement 
+# 2018_05_27    v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
 #===================================================================================================
 #
 use English;
@@ -32,7 +28,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.11";                                       # Version Number
+my $VERSION_NUMBER      = "2.12";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -56,13 +52,14 @@ my $LOCKFILE_MAX_SEC    = 1800 ;                                        # Max Nb
 # SADMIN DIRECTORY STRUCTURE DEFINITION
 my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN Root Dir.
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
+my $SADM_USR_DIR        = "$SADM_BASE_DIR/usr";                         # SADMIN usr Directory
 my $SADM_TMP_DIR        = "$SADM_BASE_DIR/tmp";                         # SADMIN Temp Directory
 my $SADM_LOG_DIR        = "$SADM_BASE_DIR/log";                         # SADMIN LOG Directory
 my $SADM_DAT_DIR        = "$SADM_BASE_DIR/dat";                         # SADMIN Data Directory
 my $SADM_RPT_DIR        = "$SADM_DAT_DIR/rpt";                          # SADMIN Aleret Report File
 my $SADM_CFG_DIR        = "$SADM_BASE_DIR/cfg";                         # SADMIN Configuration Dir.
 my $SADM_RCH_DIR        = "$SADM_DAT_DIR/rch";                          # SADMIN Result Code History
-my $SADM_SCR_DIR        = "$SADM_BIN_DIR/sadm_sysmon";                  # SADMIN Monitoring Scripts
+my $SADM_SCR_DIR        = "$SADM_USR_DIR/sysmon_scripts";               # SADMIN Monitoring Scripts
 
 # SYSMON FILES DEFINITION
 my $PSFILE1             = "$SADM_TMP_DIR/PSFILE1.$$";                   # Result of ps command file1
