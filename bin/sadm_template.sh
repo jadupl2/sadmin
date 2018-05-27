@@ -32,24 +32,15 @@
 # 2018_05_19    v1.5 Make SADMIN Setup a Function, Minor fix and performance issue.
 #               v1.5a Remove SADM_HOSTNAME DEFINITION from script (Done in sadmlib)
 # 2018_05_26    v1.6 Added SADM_EXIT_CODE for User to use
+# 2018_05_27    v1.7 Replace setup_sadmin Function by putting code at the beginning of source.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
 #===================================================================================================
-# Scripts Variables 
-#===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-
-
-
-
-#===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
-#===================================================================================================
-setup_sadmin()
-{
+#
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
         then echo "Please set 'SADMIN' Environment Variable to install directory." 
@@ -61,32 +52,37 @@ setup_sadmin()
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_VER='1.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
-    
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
     # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    # An email can be sent at the end of the script depending on the ending status 
     #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
-}
+#===================================================================================================
+
+
+#===================================================================================================
+# Scripts Variables 
+#===================================================================================================
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
@@ -227,6 +223,7 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
+    
     # If you want this script to be run only by 'root'.
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then printf "\nThis script must be run by the 'root' user"      # Advise User Message
@@ -234,17 +231,18 @@ main_process()
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S with error
     fi
-    setup_sadmin                                                        # Setup Var. & Load SADM Lib
+    
+    # Start Using SADM Tools
     sadm_start                                                          # Init Env. Dir. & RCH/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
     # Include this 'if' when you want this script to only be run on the SADMIN server.
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-        then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort, Advise User message
-             sadm_stop 1                                                # Close SADM and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
+    #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If not on SADMIN Server
+    #    then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
+    #         sadm_writelog "Process aborted"                            # Abort, Advise User message
+    #         sadm_stop 1                                                # Close SADM and Trim Log
+    #         exit 1                                                     # Exit To O/S
+    #fi
 
     # Inspect Command Line Argument (Help Usage (-h) or Activate Debug Level (-d[1-9]) -------------------------------
     while getopts "hd:" opt ; do                                        # Loop to process Switch
