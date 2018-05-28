@@ -37,6 +37,7 @@
 # 2018_05_23    V2.23 Remove some variables and logic modifications
 # 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
 # 2018_05_27    V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
+# 2018_05_28    V2.26 Added Loading of backup parameters coming from sadmin.cfg
 #
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
@@ -55,7 +56,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.25"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.26"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -150,15 +151,30 @@ DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL 
 SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_RRDTOOL=""                             ; export SADM_RRDTOOL       # RRDTool Location
+#
 SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER
 SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT
 SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP   
+#
 SADM_STORIX_NFS_SERVER=""                   ; export SADM_STORIX_NFS_SERVER
 SADM_STORIX_NFS_MOUNT_POINT=""              ; export SADM_STORIX_NFS_MOUNT_POINT
 SADM_STORIX_BACKUP_TO_KEEP=3                ; export SADM_STORIX_BACKUP_TO_KEEP
+#
 SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
-SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
+SADM_DAILY_BACKUP_TO_KEEP=3                 ; export SADM_DAILY_BACKUP_TO_KEEP
+SADM_WEEKLY_BACKUP_TO_KEEP=3                ; export SADM_WEEKLY_BACKUP_TO_KEEP
+SADM_MONTHLY_BACKUP_TO_KEEP=2               ; export SADM_MONTHLY_BACKUP_TO_KEEP
+SADM_YEARLY_BACKUP_TO_KEEP=1                ; export SADM_YEARLY_BACKUP_TO_KEEP
+# Day of the week to do a weekly backup (1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat,7=Sun)
+SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY 
+# Date in the month to do a Monthly Backup Date (1-28)             
+SADM_MONTHLY_BACKUP_DATE=1                  ; export SADM_MONTHLY_BACKUP_DATE
+# Month and Date When to do a Yearly Backup Month
+SADM_YEARLY_BACKUP_MONTH=12                 ; export SADM_YEARLY_BACKUP_MONTH
+SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE
+#
+#
 SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER
 SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT
 SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP
@@ -1343,10 +1359,10 @@ sadm_load_config_file() {
                      echo "****************************************************************"
                      sadm_stop 1
                 else echo "****************************************************************"
-                     echo "The configuration file $SADM_CFG_FILE do not exist."
+                     echo "SADMIN  configuration file $SADM_CFG_FILE doesn't exist."
                      echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
-                     echo "Please review the configuration file."
-                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"   # Install Default cfg  file
+                     echo "Please review the configuration file ($SADM_CFG_FILE)."
+                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"          # Install Initial cfg  file
                      cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg  file
                      echo "****************************************************************"
              fi
@@ -1438,8 +1454,29 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_MOUNT_POINT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_BACKUP_NFS_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_DAILY_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_DAILY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_TO_KEEP" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_DAY" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_DAY=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_DATE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_MONTH" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_MONTH=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         #
         echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
@@ -1534,7 +1571,7 @@ sadm_load_config_file() {
              sadm_writelog "  - SADM_STORIX_BACKUP_TO_KEEP=$SADM_STORIX_BACKUP_TO_KEEP" 
              sadm_writelog "  - SADM_BACKUP_NFS_SERVER=$SADM_BACKUP_NFS_SERVER" 
              sadm_writelog "  - SADM_BACKUP_NFS_MOUNT_POINT=$SADM_BACKUP_NFS_MOUNT_POINT" 
-             sadm_writelog "  - SADM_BACKUP_NFS_TO_KEEP=$SADM_BACKUP_NFS_TO_KEEP" 
+             sadm_writelog "  - SADM_DAILY_BACKUP_TO_KEEP=$SADM_DAILY_BACKUP_TO_KEEP" 
              sadm_writelog "  - SADM_MKSYSB_NFS_SERVER=$SADM_MKSYSB_NFS_SERVER" 
              sadm_writelog "  - SADM_MKSYSB_NFS_MOUNT_POINT=$SADM_MKSYSB_NFS_MOUNT_POINT" 
              sadm_writelog "  - SADM_MKSYSB_NFS_TO_KEEP=$SADM_MKSYSB_NFS_TO_KEEP" 
