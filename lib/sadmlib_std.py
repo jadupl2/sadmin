@@ -25,6 +25,7 @@
 # 2018_05_15    V2.12 Add Var. obj.log_header & obj.log_footer to produce or not log header/footer
 # 2018_05_20    V2.13 Minor correction to make the log like the SADMIN Shell Library
 # 2018_05_26    V2.14 Add Param to writelog for Bold Attribute & Remove some unused Variables 
+# 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # ==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -95,7 +96,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.14"                                # This Library Version
+        self.libver             = "2.15"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -184,7 +185,14 @@ class sadmtools():
         self.cfg_rrdtool                = ""                            # RRDTool location
         self.cfg_backup_nfs_server      = ""                            # Backup NFS Server
         self.cfg_backup_nfs_mount_point = ""                            # Backup Mount Point
-        self.cfg_backup_nfs_to_keep     = 3                             # Nb of NFS backup to Keep
+        self.cfg_daily_backup_to_keep   = 3                             # Nb Daily Backup to keep
+        self.cfg_weekly_backup_to_keep  = 3                             # Nb Weekly Backup to keep
+        self.cfg_monthly_backup_to_keep = 3                             # Nb Monthly Backup to keep
+        self.cfg_yearly_backup_to_keep  = 3                             # Nb Yearly Backup to keep
+        self.cfg_weekly_backup_day      = 5                             # Weekly Backup Day (1=Mon.)
+        self.cfg_monthly_backup_date    = 1                             # Monthly Backup Date (1-28)
+        self.cfg_yearly_backup_month    = 12                            # Yearly Backup Month (1-12)
+        self.cfg_yearly_backup_date     = 31                            # Yearly Backup Date(1-31)
         self.cfg_rear_nfs_server        = ""                            # Rear NFS Server
         self.cfg_rear_nfs_mount_point   = ""                            # Rear NFS Mount Point
         self.cfg_rear_backup_to_keep    = 3                             # Nb of Rear Backup to keep
@@ -363,7 +371,14 @@ class sadmtools():
             #
             if "SADM_BACKUP_NFS_SERVER"      in CFG_NAME: self.cfg_backup_nfs_server     = CFG_VALUE
             if "SADM_BACKUP_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_backup_nfs_mount_point= CFG_VALUE
-            if "SADM_BACKUP_NFS_TO_KEEP"     in CFG_NAME: self.cfg_backup_nfs_to_keep    = int(CFG_VALUE)
+            if "SADM_DAILY_BACKUP_TO_KEEP"   in CFG_NAME: self.cfg_daily_backup_to_keep  = int(CFG_VALUE)
+            if "SADM_WEEKLY_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_weekly_backup_to_keep = int(CFG_VALUE)
+            if "SADM_MONTHLY_BACKUP_TO_KEEP" in CFG_NAME: self.cfg_monthly_backup_to_keep= int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_TO_KEEP"  in CFG_NAME: self.cfg_yearly_backup_to_keep = int(CFG_VALUE)
+            if "SADM_WEEKLY_BACKUP_DAY"      in CFG_NAME: self.cfg_weekly_backup_day     = int(CFG_VALUE)
+            if "SADM_MONTHLY_BACKUP_DATE"    in CFG_NAME: self.cfg_monthly_backup_date   = int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_MONTH"    in CFG_NAME: self.cfg_yearly_backup_month   = int(CFG_VALUE)
+            if "SADM_YEARLY_BACKUP_DATE"     in CFG_NAME: self.cfg_yearly_backup_date    = int(CFG_VALUE)
             #
             if "SADM_REAR_NFS_SERVER"        in CFG_NAME: self.cfg_rear_nfs_server       = CFG_VALUE
             if "SADM_REAR_NFS_MOUNT_POINT"   in CFG_NAME: self.cfg_rear_nfs_mount_point  = CFG_VALUE
