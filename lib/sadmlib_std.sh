@@ -36,6 +36,7 @@
 # 2018_05_14    V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
 # 2018_05_23    V2.23 Remove some variables and logic modifications
 # 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
+# 2018_05_27    V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
 #
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
@@ -54,7 +55,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.24"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.25"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1488,11 +1489,13 @@ sadm_load_config_file() {
         #
         done < $SADM_CFG_FILE
 
-    # Set User 'sadmin' and 'squery' and set password for these users.
-    SADM_RW_DBUSER="sadmin"                                             # DB R/W Admin User Name
-    SADM_RW_DBPWD=`grep "^sadmin," $DBPASSFILE |awk -F, '{ print $2 }'` # DB R/W Admin User Password
-    SADM_RO_DBUSER="squery"                                             # DB R/O Query User Name 
-    SADM_RO_DBPWD=`grep "^squery," $DBPASSFILE |awk -F, '{ print $2 }'` # DB R/O Query User Password
+    # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] 
+        then SADM_RW_DBPWD=`grep "^${SADM_RW_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RW PWD
+             SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
+        else SADM_RW_DBPWD="" 
+             SADM_RO_DBPWD=""
+    fi
 
     # For Debugging Purpose - Display Final Value of configuration file
     if [ "$SADM_DEBUG_LEVEL" -gt 8 ]
