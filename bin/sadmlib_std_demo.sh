@@ -17,6 +17,7 @@
 # 2018_05_22    V2.9 Change name to sadmlib_std_demo.sh and completly rewritten 
 # 2018_05_26    V3.0 Final Test - Added Lot of Variable and code 
 # 2018_05_27    v3.1 Replace setup_sadmin Function by putting code at the beginning of source.
+# 2018_05_28    v3.2 Add Backup Parameters that come from sadmin.cfg from now on.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -37,7 +38,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Current Script Version
+    export SADM_VER='3.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -751,11 +752,46 @@ print_sadmin_cfg()
     presult="$SADM_BACKUP_NFS_MOUNT_POINT"                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_BACKUP_NFS_TO_KEEP"                                # Directory Variable Name
-    pdesc="NFS Backup - Nb. to keep"                                    # Directory Description
-    presult="$SADM_BACKUP_NFS_TO_KEEP"                                  # Actual Content of Variable
+    pexample="\$SADM_DAILY_BACKUP_TO_KEEP"                              # Directory Variable Name
+    pdesc="Nb. of Daily Backup to keep"                                 # Directory Description
+    presult="$SADM_DAILY_BACKUP_TO_KEEP"                                # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
+    pexample="\$SADM_WEEKLY_BACKUP_TO_KEEP"                             # Directory Variable Name
+    pdesc="Nb. of Weekly Backup to keep"                                # Directory Description
+    presult="$SADM_WEEKLY_BACKUP_TO_KEEP"                               # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_MONTHLY_BACKUP_TO_KEEP"                            # Directory Variable Name
+    pdesc="Nb. of Monthly Backup to keep"                               # Directory Description
+    presult="$SADM_MONTHLY_BACKUP_TO_KEEP"                              # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_YEARLY_BACKUP_TO_KEEP"                             # Directory Variable Name
+    pdesc="Nb. of Yearly Backup to keep"                                # Directory Description
+    presult="$SADM_YEARLY_BACKUP_TO_KEEP"                               # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_WEEKLY_BACKUP_DAY"                                 # Directory Variable Name
+    pdesc="Weekly Backup Day (1=Mon,...,7=Sun)"                         # Directory Description
+    presult="$SADM_WEEKLY_BACKUP_DAY"                                   # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_MONTHLY_BACKUP_DATE"                               # Directory Variable Name
+    pdesc="Monthly Backup Date (1-28)"                                  # Directory Description
+    presult="$SADM_MONTHLY_BACKUP_DATE"                                 # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_YEARLY_BACKUP_MONTH"                               # Directory Variable Name
+    pdesc="Month to take Yearly Backup (1-12)"                          # Directory Description
+    presult="$SADM_YEARLY_BACKUP_MONTH"                                 # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_YEARLY_BACKUP_DATE"                                # Directory Variable Name
+    pdesc="Date to do Yearly Backup(1-DayInMth)"                         # Directory Description
+    presult="$SADM_YEARLY_BACKUP_DATE"                                  # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
     pexample="\$SADM_STORIX_NFS_SERVER"                                 # Directory Variable Name
     pdesc="Storix NFS Server IP or Name"                                # Directory Description
     presult="$SADM_STORIX_NFS_SERVER"                                   # Actual Content of Variable
@@ -863,9 +899,9 @@ print_start_stop()
     printheader "Overview of sadm_start and sadm_stop function"
 
     printf "\nExample of utilisation:\n\n"
-    printf " # sadm_start                                          # Init Env Dir & RC/Log File\n"
+    printf " # sadm_start                                         # Init Env Dir & RC/Log File\n"
     printf " # if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
-    printf " # main_process                                        # Main Process\n"
+    printf " # main_process                                       # Main Process\n"
     printf " # SADM_EXIT_CODE=\$?                                  # Save Error Code\n"
     printf " # sadm_stop \$SADM_EXIT_CODE                          # Close SADM Tool & Upd RCH\n"
     printf " # exit \$SADM_EXIT_CODE                               # Exit With Global Err (0/1)\n"
