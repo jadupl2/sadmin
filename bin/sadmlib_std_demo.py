@@ -30,6 +30,7 @@
 # 2018_01_25    V2.4 Added Variable SADM_RRDTOOL to sadmin.cfg display
 # 2018_02_21    V2.5 Minor Changes 
 # 2018_05_26    V2.6 Major Rewrite, Better Performance
+# 2018_05_28    V2.7 Add Backup Parameters now in sadmin.cfg
 #===================================================================================================
 #
 try :
@@ -66,7 +67,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.6"                 # Current Script Version
+    st.ver              = "2.7"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -687,9 +688,44 @@ def print_sadmin_cfg(st):
     presult=st.cfg_backup_nfs_mount_point                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="ins.cfg_backup_nfs_to_keep"                               # Example Calling Function
-    pdesc="NFS Backup - Nb. to keep"                                    # Function Description
-    presult=st.cfg_backup_nfs_to_keep                                   # Return Value(s)
+    pexample="ins.cfg_daily_backup_to_keep"                             # Example Calling Function
+    pdesc="Daily Backup to Keep"                                        # Function Description
+    presult=st.cfg_daily_backup_to_keep                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_weekly_backup_to_keep"                            # Example Calling Function
+    pdesc="Weekly Backup to Keep"                                       # Function Description
+    presult=st.cfg_weekly_backup_to_keep                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_monthly_backup_to_keep"                           # Example Calling Function
+    pdesc="Monthly Backup to Keep"                                      # Function Description
+    presult=st.cfg_monthly_backup_to_keep                               # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_yearly_backup_to_keep"                            # Example Calling Function
+    pdesc="Yearly Backup to keep"                                       # Function Description
+    presult=st.cfg_yearly_backup_to_keep                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_weekly_backup_day"                                # Example Calling Function
+    pdesc="Weekly Backup Day (1=Mon,7=Sun)"                             # Function Description
+    presult=st.cfg_weekly_backup_day                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_monthly_backup_date"                              # Example Calling Function
+    pdesc="Monthly Backup Date (1-28)"                                  # Function Description
+    presult=st.cfg_monthly_backup_date                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_yearly_backup_month"                              # Example Calling Function
+    pdesc="Yearly Backup Month (1-12)"                                  # Function Description
+    presult=st.cfg_yearly_backup_month                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="ins.cfg_yearly_backup_date"                               # Example Calling Function
+    pdesc="Yearly Backup Date (1-31)"                                   # Function Description
+    presult=st.cfg_yearly_backup_date                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.cfg_storix_nfs_server"                                # Example Calling Function
