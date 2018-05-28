@@ -10,22 +10,15 @@
 #   SCCS-Id. :  @(#) template.sh 1.0 2015/08/14
 # --------------------------------------------------------------------------------------------------
 # Change Log
-#   2017_11_111 JDuplessis
-#       V2.1 Switching from PostGres to MySQL
-#   2017_12_31 JDuplessis
-#       V2.2 Define New Variable loaded from sadmin.cfg 
-#   2018_01_10 JDuplessis
-#       V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
-#   2018_01_25 JDuplessis
-#       V2.4 Add RRD Tools Variable 
-#   2018_03_13 JDuplessis
-#       V2.5 Get Root directory of SADMIN from /etc/environment
-#   2018_04_02 JDuplessis
-#       V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
-#   2018_04_04 JDuplessis
-#       V2.8 Message when error while reading sadmin.cfg and sadmin.sh
-#   2018_05_04 JDuplessis
-#       V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
+#   2017_11_11  V2.1 Switching from PostGres to MySQL
+#   2017_12_31  V2.2 Define New Variable loaded from sadmin.cfg 
+#   2018_01_10  V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
+#   2018_01_25  V2.4 Add RRD Tools Variable 
+#   2018_03_13  V2.5 Get Root directory of SADMIN from /etc/environment
+#   2018_04_02  V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
+#   2018_04_04  V2.8 Message when error while reading sadmin.cfg and sadmin.sh
+#   2018_05_04  V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
+#   2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -167,7 +160,14 @@ if ($handle) {                                                          # If Suc
           if (trim($fname) == "SADM_RRDTOOL")       { define("SADM_RRDTOOL"       , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_SERVER")      { define("SADM_BACKUP_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_BACKUP_NFS_MOUNT_POINT") { define("SADM_BACKUP_NFS_MOUNT_POINT" , trim($fvalue));}
-          if (trim($fname) == "SADM_BACKUP_NFS_TO_KEEP")     { define("SADM_BACKUP_NFS_TO_KEEP"     , trim($fvalue));}
+          if (trim($fname) == "SADM_DAILY_BACKUP_TO_KEEP")   { define("SADM_DAILY_BACKUP_TO_KEEP"   , trim($fvalue));}
+          if (trim($fname) == "SADM_WEEKLY_BACKUP_TO_KEEP")  { define("SADM_WEEKLY_BACKUP_TO_KEEP"  , trim($fvalue));}
+          if (trim($fname) == "SADM_MONTHLY_BACKUP_TO_KEEP") { define("SADM_MONTHLY_BACKUP_TO_KEEP" , trim($fvalue));}
+          if (trim($fname) == "SADM_YEARLY_BACKUP_TO_KEEP")  { define("SADM_YEARLY_BACKUP_TO_KEEP"  , trim($fvalue));}
+          if (trim($fname) == "SADM_WEEKLY_BACKUP_DAY")      { define("SADM_WEEKLY_BACKUP_DAY"      , trim($fvalue));}
+          if (trim($fname) == "SADM_MONTHLY_BACKUP_DATE")    { define("SADM_MONTHLY_BACKUP_DATE"    , trim($fvalue));}
+          if (trim($fname) == "SADM_YEARLY_BACKUP_MONTH")    { define("SADM_YEARLY_BACKUP_MONTH"    , trim($fvalue));}
+          if (trim($fname) == "SADM_YEARLY_BACKUP_DATE")     { define("SADM_YEARLY_BACKUP_DATE"     , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_SERVER")      { define("SADM_MKSYSB_NFS_SERVER"      , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_MOUNT_POINT") { define("SADM_MKSYSB_NFS_MOUNT_POINT" , trim($fvalue));}
           if (trim($fname) == "SADM_MKSYSB_NFS_TO_KEEP")     { define("SADM_MKSYSB_NFS_TO_KEEP"     , trim($fvalue));}
