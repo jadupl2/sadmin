@@ -91,6 +91,8 @@ cfg/*
 !cfg/.release
 !cfg/.version
 !cfg/.versum
+!cfg/backup_list.txt
+
 
 # SADMIN Setup Directory
 setup/jac/*
