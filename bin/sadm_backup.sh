@@ -37,6 +37,7 @@
 #                    the resulting archive does not contain the exact copy of the file set.
 #   2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
 #   2018_05_25  V3.4 Fix Problem with Archive Directory Name
+#   2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage 
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_VER='3.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -96,9 +97,10 @@ TOTAL_ERROR=0                       ; export TOTAL_ERROR                # Total 
 CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Current Day in Week 1=Mon
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
-
+CUR_DATE=`date "+%C%y_%m_%d"`       ; export CUR_DATE                   # Date Format 2018_05_27 
 LOCAL_MOUNT="/mnt/backup"           ; export LOCAL_MOUNT                # Local NFS Mount Point 
 ARCHIVE_DIR=""                      ; export ARCHIVE_DIR                # Will be filled by Script
+BACKUP_DIR=""                       ; export BACKUP_DIR                 # Will be Final Backup Dir.
 
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
@@ -108,6 +110,7 @@ MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "Aug
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 #SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
 #SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
+#SADM_BACKUP_LIST=$SADM_CFG_DIR}/sadm_backup_list.txt
 
 # LIST OF DIRECTORIES THAT YOU WANT  TO BACKUP 
 # IF DIRECTORY DOESN'T EXIST THEY WILL BE SKIPPED AND RECORDED AS SUCH IN THE SCRIPT LOG.
@@ -318,19 +321,19 @@ backup_setup()
 
     # Determine the Directory where the backup will be created
     ARCHIVE_DIR="${DAILY_DIR}"                                          # Default goes in Daily Dir.
-    LINK_DIR="../../daily/${HOSTNAME}"                                  # Latest Backup Link Dir.
+    LINK_DIR="../../daily/${HOSTNAME}/${CUR_DATE}"                      # Latest Backup Link Dir.
     if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
         then ARCHIVE_DIR="${WEEKLY_DIR}"                                # Will be Weekly Backup Dir. 
-             LINK_DIR="../../weekly/${HOSTNAME}"                        # Latest Backup Link Dir.
+             LINK_DIR="../../weekly/${HOSTNAME}/${CUR_DATE}"            # Latest Backup Link Dir.
     fi 
     if [ "$CUR_DATE_NUM" -eq "$MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
         then ARCHIVE_DIR="${MONTHLY_DIR}"                               # Will be Monthly Backup Dir
-             LINK_DIR="../../monthly/${HOSTNAME}"                       # Latest Backup Link Dir.
+             LINK_DIR="../../monthly/${HOSTNAME}/${CUR_DATE}"           # Latest Backup Link Dir.
     fi 
     if [ "$CUR_DATE_NUM" -eq "$YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
         then if [ "$CUR_MTH_NUM" -eq "$YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
                 then ARCHIVE_DIR="${YEARLY_DIR}"                        # Will be Yearly Backup Dir
-                     LINK_DIR="../../yearly/${HOSTNAME}"                # Latest Backup Link Dir.
+                     LINK_DIR="../../yearly/${HOSTNAME}/${CUR_DATE}"    # Latest Backup Link Dir.
              fi
     fi 
     
@@ -346,7 +349,20 @@ backup_setup()
              chown ${SADM_USER}:${SADM_GROUP} $ARCHIVE_DIR              # Assign it SADM USer&Group
              chmod 775 $ARCHIVE_DIR                                     # Assign Protection
     fi
-
+    
+    # Make sure the Server Backup Directory With Today's Date exist on NFS Drive -------------------
+    BACKUP_DIR="${ARCHIVE_DIR}/${CUR_DATE}"                             # Set Backup Directory
+    if [ ! -d ${BACKUP_DIR} ]                                           # Check if Server Dir Exist
+        then sadm_writelog "Making Today backup directory $BACKUP_DIR"
+             mkdir ${BACKUP_DIR}                                        # If Not Create it
+             if [ $? -ne 0 ]                                            # If Error trying to mount
+                then sadm_writelog "[ERROR] Creating Directory ${BACKUP_DIR}"
+                     sadm_writelog "        On the NFS Server ${SADM_BACKUP_NFS_SERVER}"
+                     return 1                                           # End Function with error
+             fi
+             chown ${SADM_USER}.${SADM_GROUP} ${BACKUP_DIR}             # Assign it SADM USer&Group
+             chmod 775 ${BACKUP_DIR}                                    # Assign Protection
+    fi
 
     # Show Backup Preferences
     sadm_writelog " " 
@@ -355,7 +371,7 @@ backup_setup()
         then sadm_writelog " - Compress the backup file" 
         else sadm_writelog " - Not compress the backup"
     fi
-    sadm_writelog " - Backup Directory is ${ARCHIVE_DIR}"
+    sadm_writelog " - Backup Directory is ${BACKUP_DIR}"
     sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
     sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
     sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
@@ -387,7 +403,7 @@ create_backup()
             
                 # Construct Backup File Name (Dir+Date_Time_tgz)
                 BASE_NAME=`echo "$WDIR" | sed -e 's/^\///'| sed -e 's#/$##'| tr -s '/' '_' `
-                TIME_STAMP=`date "+%C%y_%m_%d-%H_%M_%S"`                # Date & Time
+                TIME_STAMP=`date "+%C%y_%m_%d-%H_%M_%S"`                # Current Date & Time
                 sadm_writelog "${SADM_TEN_DASH}"                        # Line of 10 Dash in Log
                 sadm_writelog "Current directory is `pwd`"              # Print Current Dir.
 
@@ -405,12 +421,12 @@ create_backup()
                 # Perform the Backup using tar command
                 if [ "$COMPRESS" == "ON" ] 
                     then BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tgz"     # Final tgz Backup file name
-                         sadm_writelog "tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude ." 
-                         #tar -cvzf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         sadm_writelog "tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude ." 
+                         tar -cvzf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
                          RC=$?                                          # Save Return Code
                     else BACK_FILE="${TIME_STAMP}_${BASE_NAME}.tar"     # Final tar Backup file name
-                         sadm_writelog "tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude ." 
-                         #tar -cvf ${ARCHIVE_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
+                         sadm_writelog "tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude ." 
+                         tar -cvf ${BACKUP_DIR}/${BACK_FILE} -X /tmp/exclude . >/dev/null 2>>$SADM_LOG
                          RC=$?                                          # Save Return Code
                 fi
                 if [ $RC -eq 1 ] ; then RC=0 ; fi                       # Change while backup is OK      
@@ -567,6 +583,7 @@ umount_nfs()
         then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
              sadm_writelog "Backup compression is $COMPRESS"            # Show Status of compression
     fi
+    
     mount_nfs                                                           # Mount NFS Dir.
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     backup_setup                                                        # Create Necessary Dir.
@@ -576,5 +593,6 @@ umount_nfs()
     clean_backup_dir                                                    # Delete Old Backup
     if [ $? -ne 0 ] ; then umount_nfs ; sadm_stop 1 ; exit 1 ; fi       # If Error While Mount NFS
     umount_nfs                                                          # Umounting NFS Drive
+    
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
