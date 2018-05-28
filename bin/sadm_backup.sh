@@ -5,7 +5,7 @@
 #   Date:       28 August 2015
 #   Synopsis:   This script is used to create a tgz file of all directories specifed in the 
 #               variable $BACKUP_LIST to NFS $ARCHIVE_DIR .
-#               Only the specified ($SADM_BACKUP_NFS_TO_KEEP) copies of each tgz files will be kept
+#               Only the specified ($SADM_DAILY_BACKUP_TO_KEEP) copies of each tgz files will be kept
 #               Can be Run Once a week or Once every couple of Day (As you choose)
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -38,6 +38,7 @@
 #   2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
 #   2018_05_25  V3.4 Fix Problem with Archive Directory Name
 #   2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
+#   2018_05_28  V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -58,7 +59,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.5'                               # Current Script Version
+    export SADM_VER='3.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -109,7 +110,7 @@ MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "Aug
 # These NFS Backup Values are taken from sadmin.cfg file
 #SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
 #SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
-#SADM_BACKUP_NFS_TO_KEEP=3                   ; export SADM_BACKUP_NFS_TO_KEEP
+#SADM_DAILY_BACKUP_TO_KEEP=3                   ; export SADM_DAILY_BACKUP_TO_KEEP
 #SADM_BACKUP_LIST=$SADM_CFG_DIR}/sadm_backup_list.txt
 
 # LIST OF DIRECTORIES THAT YOU WANT  TO BACKUP 
@@ -138,18 +139,6 @@ WEEKLY_DIR="${WDIR}/${HOSTNAME}"        ; export WEEKLY_DIR             # Dir. F
 MONTHLY_DIR="${MDIR}/${HOSTNAME}"       ; export MONTHLY_DIR            # Dir. For Monthly Backup
 YEARLY_DIR="${YDIR}/${HOSTNAME}"        ; export YEARLY_DIR             # Dir. For Yearly Backup
 LATEST_DIR="${LDIR}/${HOSTNAME}"        ; export LATEST_DIR             # Latest Backup Directory
-
-# Number of backup to keep per backup type
-DAILY_BACKUP_TO_KEEP=3                  ; export DAILY_BACKUP_TO_KEEP   # Nb. Daily Backup to keep
-WEEKLY_BACKUP_TO_KEEP=3                 ; export WEEKLY_BACKUP_TO_KEEP  # Nb. Weekly Backup to keep
-MONTHLY_BACKUP_TO_KEEP=2                ; export MONTHLY_BACKUP_TO_KEEP # Nb. Monthly Backup to keep
-YEARLY_BACKUP_TO_KEEP=1                 ; export YEARLY_BACKUP_TO_KEEP  # Nb. Yearly Backup to keep
-
-# Trigger per backup type (When to do a weekly, monthly and Yearly Backup)
-WEEKLY_BACKUP_DAY=5                     ; export WEEKLY_BACKUP_DAY      # Day Week Backup 1=Mon7=Sun
-MONTHLY_BACKUP_DATE=1                   ; export MONTHLY_BACKUP_DATE    # Monthly Backup Date (1-28)
-YEARLY_BACKUP_MONTH=12                  ; export YEARLY_BACKUP_MONTH    # Yearly Backup Month (1-12)
-YEARLY_BACKUP_DATE=31                   ; export YEARLY_BACKUP_DATE     # Yearly Backup Date (1-28)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -322,16 +311,16 @@ backup_setup()
     # Determine the Directory where the backup will be created
     ARCHIVE_DIR="${DAILY_DIR}"                                          # Default goes in Daily Dir.
     LINK_DIR="../../daily/${HOSTNAME}/${CUR_DATE}"                      # Latest Backup Link Dir.
-    if [ "${CUR_DAY_NUM}" -eq "$WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
+    if [ "${CUR_DAY_NUM}" -eq "$SADM_WEEKLY_BACKUP_DAY" ]                    # It's the Weekly Backup Day
         then ARCHIVE_DIR="${WEEKLY_DIR}"                                # Will be Weekly Backup Dir. 
              LINK_DIR="../../weekly/${HOSTNAME}/${CUR_DATE}"            # Latest Backup Link Dir.
     fi 
-    if [ "$CUR_DATE_NUM" -eq "$MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
+    if [ "$CUR_DATE_NUM" -eq "$SADM_MONTHLY_BACKUP_DATE" ]                   # It's Monthly Backup Date ?
         then ARCHIVE_DIR="${MONTHLY_DIR}"                               # Will be Monthly Backup Dir
              LINK_DIR="../../monthly/${HOSTNAME}/${CUR_DATE}"           # Latest Backup Link Dir.
     fi 
-    if [ "$CUR_DATE_NUM" -eq "$YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
-        then if [ "$CUR_MTH_NUM" -eq "$YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
+    if [ "$CUR_DATE_NUM" -eq "$SADM_YEARLY_BACKUP_DATE" ]                    # It's Year Backup Date ?
+        then if [ "$CUR_MTH_NUM" -eq "$SADM_YEARLY_BACKUP_MONTH" ]           # And It's Year Backup Mth ?
                 then ARCHIVE_DIR="${YEARLY_DIR}"                        # Will be Yearly Backup Dir
                      LINK_DIR="../../yearly/${HOSTNAME}/${CUR_DATE}"    # Latest Backup Link Dir.
              fi
@@ -372,13 +361,13 @@ backup_setup()
         else sadm_writelog " - Not compress the backup"
     fi
     sadm_writelog " - Backup Directory is ${BACKUP_DIR}"
-    sadm_writelog " - Keep $DAILY_BACKUP_TO_KEEP daily backups"
-    sadm_writelog " - Keep $WEEKLY_BACKUP_TO_KEEP weekly backups"
-    sadm_writelog " - Keep $MONTHLY_BACKUP_TO_KEEP monthly backups"
-    sadm_writelog " - Keep $YEARLY_BACKUP_TO_KEEP yearly backups"
-    sadm_writelog " - Do the weekly backup on ${WEEKDAY[$WEEKLY_BACKUP_DAY]}"
-    sadm_writelog " - Do the monthy backup on the $MONTHLY_BACKUP_DATE of every month"
-    sadm_writelog " - Do the yearly backup on the $YEARLY_BACKUP_DATE of ${MTH_NAME[$YEARLY_BACKUP_MONTH]} every year"
+    sadm_writelog " - Keep $SADM_DAILY_BACKUP_TO_KEEP daily backups"
+    sadm_writelog " - Keep $SADM_WEEKLY_BACKUP_TO_KEEP weekly backups"
+    sadm_writelog " - Keep $SADM_MONTHLY_BACKUP_TO_KEEP monthly backups"
+    sadm_writelog " - Keep $SADM_YEARLY_BACKUP_TO_KEEP yearly backups"
+    sadm_writelog " - Do the weekly backup on ${WEEKDAY[$SADM_WEEKLY_BACKUP_DAY]}"
+    sadm_writelog " - Do the monthy backup on the $SADM_MONTHLY_BACKUP_DATE of every month"
+    sadm_writelog " - Do the yearly backup on the $SADM_YEARLY_BACKUP_DATE of ${MTH_NAME[$SADM_YEARLY_BACKUP_MONTH]} every year"
     return 0
 }
 
@@ -466,7 +455,7 @@ create_backup()
 
 
 # --------------------------------------------------------------------------------------------------
-#               Keep only the number of backup copies specied in $SADM_BACKUP_NFS_TO_KEEP
+#               Keep only the number of backup copies specied in $SADM_DAILY_BACKUP_TO_KEEP
 # --------------------------------------------------------------------------------------------------
 clean_backup_dir()
 {
@@ -477,19 +466,19 @@ clean_backup_dir()
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
 
     # Enter Server Backup Directory
-    # May need to delete some backup if more than $SADM_BACKUP_NFS_TO_KEEP copies
+    # May need to delete some backup if more than $SADM_DAILY_BACKUP_TO_KEEP copies
     cd ${ARCHIVE_DIR}                                                   # Change Dir. To Backup Dir.
 
     # List Current backup days we have and Count Nb. how many we need to delete
     sadm_writelog "List of backup currently on disk:"
     ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
     backup_count=`ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |wc -l` # Calc. Nb. Days of backup
-    day2del=$(($backup_count-$SADM_BACKUP_NFS_TO_KEEP))                 # Calc. Nb. Days to remove
-    sadm_writelog "Keep only the last $SADM_BACKUP_NFS_TO_KEEP days of each backup."
+    day2del=$(($backup_count-$SADM_DAILY_BACKUP_TO_KEEP))                 # Calc. Nb. Days to remove
+    sadm_writelog "Keep only the last $SADM_DAILY_BACKUP_TO_KEEP days of each backup."
     sadm_writelog "We now have $backup_count days of backup(s)."        # Show Nb. Backup Days
 
     # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
-    if [ "$backup_count" -gt "$SADM_BACKUP_NFS_TO_KEEP" ] 
+    if [ "$backup_count" -gt "$SADM_DAILY_BACKUP_TO_KEEP" ] 
         then sadm_writelog "So we need to delete $day2del day(s) of backup." 
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
              cat $SADM_TMP_FILE3 |while read ln ;do sadm_writelog "Deleting $ln" ;rm -fr ${ln}* ;done
