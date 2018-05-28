@@ -20,12 +20,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2017_09_06 JDuplessis 
-#   V1.0 Initial Version
-# 2018_04_06 JDuplessis 
-#   V1.1 Rewritten using template 
-# 2018_04_07 JDuplessis 
-#   V1.2 Simplify code
+# 2017_09_06    V1.0 Initial Version
+# 2018_04_06    V1.1 Rewritten using template 
+# 2018_04_07    V1.2 Simplify code
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3

@@ -4,7 +4,7 @@ Link to script
     Script is use to create a tgz file of all directories you specified in the 
     variable $BACKUP_LIST to NFS $ARCHIVE_DIR .
     After the backup, the cleanup process purge old backup , in order to keep only
-    the specified number of copies ($SADM_BACKUP_NFS_TO_KEEP) of each tgz files.
+    the specified number of copies ($SADM_DAILY_BACKUP_TO_KEEP) of each tgz files.
     Backup are kept in a daily,weekly,monthly, and yearly hierarchy.
     
      3	sadm_backupdb.sh*
