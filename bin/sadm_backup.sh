@@ -37,7 +37,7 @@
 #                    the resulting archive does not contain the exact copy of the file set.
 #   2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
 #   2018_05_25  V3.4 Fix Problem with Archive Directory Name
-#   2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage 
+#   2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -492,7 +492,7 @@ clean_backup_dir()
     if [ "$backup_count" -gt "$SADM_BACKUP_NFS_TO_KEEP" ] 
         then sadm_writelog "So we need to delete $day2del day(s) of backup." 
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |tail -$day2del > $SADM_TMP_FILE3
-             cat $SADM_TMP_FILE3 | while read ln ;do sadm_writelog "Deleting $ln" ;rm -f ${ln}* ;done
+             cat $SADM_TMP_FILE3 |while read ln ;do sadm_writelog "Deleting $ln" ;rm -fr ${ln}* ;done
              sadm_writelog " "
              sadm_writelog "List of backup currently on disk:"
              ls -1|awk -F'-' '{ print $1 }' |sort -r |uniq |while read ln ;do sadm_writelog "$ln" ;done
