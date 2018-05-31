@@ -23,18 +23,15 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# 2017_02_04  Jacques Duplessis - 
-#   V1.8 Don't rsync /sadmin/cfg entirely just template.smon file for now    
-# 2017_06_03  Jacques Duplessis
-#   V1.9 Added the /sadmin/sys to rsync processing
-# 2017_09_23  Jacques Duplessis
-#   V2.0 All rewritten for performance/flexibility improvement and command line Switch for debug
-# 2017_12_30  Jacques Duplessis
-#   V2.1 Change name of sysmon.std to template.smon (System Monitor Template)
-# 2018_01_20  Jacques Duplessis
-#   V2.2 Minor Adjustments
-# 2018_02_10  Jacques Duplessis
-#   V2.3 Change SQL Statement to remove SADMIN server from rsync process
+#
+# Change Log
+# 2017_02_04  V1.8 Don't rsync /sadmin/cfg entirely just template.smon file for now    
+# 2017_06_03  V1.9 Added the /sadmin/sys to rsync processing
+# 2017_09_23  V2.0 All rewritten for performance/flexibility improvement and command line Switch for debug
+# 2017_12_30  V2.1 Change name of sysmon.std to template.smon (System Monitor Template)
+# 2018_01_20  V2.2 Minor Adjustments
+# 2018_02_10  V2.3 Change SQL Statement to remove SADMIN server from rsync process
+# 2018_05_31  V2.4 Added ".backup_list.txt" & ".backup_exclude.txt" to rsync list 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -50,7 +47,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -93,8 +90,9 @@ rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_BASE_DIR}/jac/bin"
                    ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
 
 # Array of Files to rsync to SADM client
-rem_files_to_rsync=( "${SADM_CFG_DIR}/.template.smon" "${SADM_CFG_DIR}/sadmin.cfg"
-                     "${SADM_CFG_DIR}/.release"      "${SADM_CFG_DIR}/.sadmin.cfg" ) 
+rem_files_to_rsync=( "${SADM_CFG_DIR}/.template.smon"       "${SADM_CFG_DIR}/sadmin.cfg"
+                     "${SADM_CFG_DIR}/.release"             "${SADM_CFG_DIR}/.sadmin.cfg"  
+                     "${SADM_CFG_DIR}/.backup_exclude.txt"  "${SADM_CFG_DIR}/.backup_list.txt" ) 
 
 
 
