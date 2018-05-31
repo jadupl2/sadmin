@@ -1,8 +1,27 @@
-/cadmin
-/sadmin 
+# V1.1 Initial Backup List 
+#  Notes :
+#   - Socket Files are automatically excluded
+#
 /home 
-/storix 
+/etc 
+/root
+/etc/profile.d/sadmin.sh
+/var/adsmlog 
+/var/named 
+/var/www 
+/var/ftp 
+/var/lib/mysql 
+/var/spool/cron
+/sadmin 
+#
+/cadmin
+/wsadmin 
+/psadmin 
+#
 /mystuff 
+/install 
+#
+/storix 
 /sysadmin 
 /sysinfo 
 /aix_data 
@@ -12,17 +31,7 @@
 /www 
 /scom 
 /slam 
-/install 
 /linternux 
 /useradmin 
 /svn 
 /stbackups
-/etc 
-/var/adsmlog 
-/var/named 
-/var/www 
-/wsadmin 
-/psadmin 
-/var/ftp 
-/var/lib/mysql 
-/var/spool/cron

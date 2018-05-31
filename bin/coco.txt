@@ -1,5 +1,0 @@
-/var/ftp 
-# Comment
-   /var/lib/mysql    
-
-/var/spool/cron
