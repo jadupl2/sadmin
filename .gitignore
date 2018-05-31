@@ -1,4 +1,4 @@
-# V2.3 - 27 May 2018
+# V2.4 - 31 May 2018
 # JDuplessis - Git Ignore File
 #
 # It's better to unpack these files and commit the raw source
@@ -92,6 +92,7 @@ cfg/*
 !cfg/.version
 !cfg/.versum
 !cfg/.backup_list.txt
+!cfg/.backup_exclude_list.txt
 
 # SADMIN Setup Directory
 setup/jac/*
