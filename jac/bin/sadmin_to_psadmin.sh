@@ -24,52 +24,58 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2017_04_20 JDuplessis 
-#   V1.0 - Initial Version
-# 2017_04_20 JDuplessis 
-#   V1.2 - First Production Release
-# 2017_04_24 JDuplessis 
-#   V1.3 - Exclude __pycache__ file from update - Setup msg Directory Added
-# 2017_05_01 JDuplessis 
-#   V1.4 - Test if not root at beginning
+# 2017_04_20    V1.0 - Initial Version
+# 2017_04_20    V1.2 - First Production Release
+# 2017_04_24    V1.3 - Exclude __pycache__ file from update - Setup msg Directory Added
+# 2017_05_01    V1.4 - Test if not root at beginning
+# 2017_06_03    V1.5 - Added usr directory and .backup file in cfg Dir.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.3'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
 
 
 
@@ -249,8 +255,14 @@ main_process()
     create_dir "tmp"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "sys"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "lib"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "doc"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "log"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "cfg"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "usr"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "usr/bin"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "usr/lib"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "usr/mon"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
+    create_dir "usr/doc"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup"      ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup/etc"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
     create_dir "setup/msg"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
@@ -414,6 +426,14 @@ main_process()
     run_oscommand "cp ${SADMIN}/cfg/.template.smon ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.template.smon"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.template.smon"
+    #
+    run_oscommand "cp ${SADMIN}/cfg/.backup_list.txt ${PSCFG}"
+    run_oscommand "chmod 644 ${PSCFG}/.backup_list.txt"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_list.txt"
+    #
+    run_oscommand "cp ${SADMIN}/cfg/.backup_exclude.txt ${PSCFG}"
+    run_oscommand "chmod 644 ${PSCFG}/.backup_exclude.txt"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_exclude.txt"
 
     # COPY SADMIN LICENCE / README FILE------------------------------------------------------------
     sadm_writelog " "
