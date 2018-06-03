@@ -22,8 +22,8 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Enhancements/Corrections Version Log
-# 1.1   
+# Change Log
+# 2018_06_03    v1.1 Add usr Directories
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -39,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # These variables need to be defined prior to load the SADMIN function Libraries
 # --------------------------------------------------------------------------------------------------
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.0'                             ; export SADM_VER            # Script Version
+SADM_VER='1.1'                             ; export SADM_VER            # Script Version
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
 SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
 SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
@@ -86,21 +86,28 @@ main_process()
     mkdir -p $DST/bin       > /dev/null 2>&1
     mkdir -p $DST/cfg       > /dev/null 2>&1
     mkdir -p $DST/lib       > /dev/null 2>&1
+    mkdir -p $DST/doc       > /dev/null 2>&1
     mkdir -p $DST/pkg       > /dev/null 2>&1
     mkdir -p $DST/sys       > /dev/null 2>&1
     mkdir -p $DST/log       > /dev/null 2>&1
     mkdir -p $DST/tmp       > /dev/null 2>&1
-    mkdir -p $DST/jac/bin   > /dev/null 2>&1
-    mkdir -p $DST/dat/rch   > /dev/null 2>&1
+    mkdir -p $DST/usr/bin   > /dev/null 2>&1
+    mkdir -p $DST/usr/lib   > /dev/null 2>&1
+    mkdir -p $DST/usr/doc   > /dev/null 2>&1
+    mkdir -p $DST/dat/mon   > /dev/null 2>&1
 
     # Syncing Content of master sadmin with installation directories
     sadm_writelog "Sync between $SRC and $DEST in progress"
     rsync -var --delete $SRC/bin/       $DEST/bin/      >/dev/null 2>&1
     rsync -var --delete $SRC/cfg/       $DEST/cfg/      >/dev/null 2>&1
     rsync -var --delete $SRC/lib/       $DEST/lib/      >/dev/null 2>&1
+    rsync -var --delete $SRC/doc/       $DEST/doc/      >/dev/null 2>&1
     rsync -var --delete $SRC/pkg/       $DEST/pkg/      >/dev/null 2>&1
     rsync -var --delete $SRC/sys/       $DEST/sys/      >/dev/null 2>&1
-    rsync -var --delete $SRC/jac/bin/   $DEST/jac/bin/  >/dev/null 2>&1
+    rsync -var --delete $SRC/usr/bin/   $DEST/usr/bin/  >/dev/null 2>&1
+    rsync -var --delete $SRC/usr/lib/   $DEST/usr/lib/  >/dev/null 2>&1
+    rsync -var --delete $SRC/usr/doc/   $DEST/usr/doc/  >/dev/null 2>&1
+    rsync -var --delete $SRC/usr/mon/   $DEST/usr/mon/  >/dev/null 2>&1
 
     # Remove Server files
     rm -f $DEST/cfg/.pgpass > /dev/null 
