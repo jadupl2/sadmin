@@ -12,62 +12,121 @@
 # 2.3 When running from SADMIN server the rename of output file wasn't working (Nov 2016)
 # 2.4 Install cfg2html from local copy is not present (Jan 2017)
 # 2.5 Added support for LinuxMint (April 2017)
-# 2018_01_03 JDuplessis
-#   2.8 Add message to user stating that script is not supported on MacOS
-# 2018_05_01 JDuplessis
-#   2.9 On Fedora 27 and Up - cfg2html hang - So in will not run when Fedora 27 and Up
+# 2018_01_03    v2.8 Add message to user stating that script is not supported on MacOS
+# 2018_05_01    v2.9 On Fedora 27 and Up - cfg2html hang - So in will not run when Fedora 27 and Up
+# 2018_06_03    v3.0 Adapt to new Shell Library, small corrections
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
+
 #===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.9'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='3.0'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                               This Script environment variables
-# --------------------------------------------------------------------------------------------------
-#
+#===================================================================================================
+# Scripts Variables 
+#===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
-#
+
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
+
+
 
 #===================================================================================================
 #                                Script Start HERE
 #===================================================================================================
+    
+    # If you want this script to be run only by 'root'.
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+    # Switch for Help Usage (-h), Show Script Version (-v) or Activate Debug Level (-d[1-9])
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
+    
     sadm_start                                                          # Init Env. Dir & RC/Log File
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
        then sadm_writelog "This script is not supported on MacOS"       # Advise User
@@ -79,12 +138,6 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
        then sadm_writelog "This script is not supported on Fedora higher than 26"  # Advise User
              sadm_stop 0                                                # Close and Trim Log
              exit 0                                                     # Exit To O/S
-    fi
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
     fi
 
     # Make sure that cfg2html is accessible on the server
