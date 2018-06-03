@@ -63,7 +63,7 @@ usr/*
 !usr/bin
 !usr/doc
 !usr/lib
-!usr/sysmon_scripts
+!usr/mon
 
 # Exclude $SADMIN/jac, except $SADMIN/jac/bin directory
 jac/*
