@@ -33,9 +33,11 @@
 #               v1.5a Remove SADM_HOSTNAME DEFINITION from script (Done in sadmlib)
 # 2018_05_26    v1.6 Added SADM_EXIT_CODE for User to use
 # 2018_05_27    v1.7 Replace setup_sadmin Function by putting code at the beginning of source.
+# 2018_06_03    v1.8 Small Ameliorations and corrections
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
+
 
 
 #===================================================================================================
@@ -52,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Current Script Version
+    export SADM_VER='1.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -79,6 +81,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 
 
+
+
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
@@ -86,17 +90,27 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 
 
 
-#===================================================================================================
-# Display help usage of this script
-#===================================================================================================
-help()
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "${SADM_PN} usage :"
-    echo "             -d   (Debug Level [0-9])"
-    echo "             -h   (Display this help message)"
-    echo " "
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
 }
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
 
 
 
@@ -231,44 +245,33 @@ main_process()
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S with error
     fi
-    
-    # Start Using SADM Tools
-    sadm_start                                                          # Init Env. Dir. & RCH/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
-    # Include this 'if' when you want this script to only be run on the SADMIN server.
-    #if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # If not on SADMIN Server
-    #    then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
-    #         sadm_writelog "Process aborted"                            # Abort, Advise User message
-    #         sadm_stop 1                                                # Close SADM and Trim Log
-    #         exit 1                                                     # Exit To O/S
-    #fi
-
-    # Inspect Command Line Argument (Help Usage (-h) or Activate Debug Level (-d[1-9]) -------------------------------
-    while getopts "hd:" opt ; do                                        # Loop to process Switch
+    # Switch for Help Usage (-h), Show Script Version (-v) or Activate Debug Level (-d[1-9])
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # 
-            h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close SADM Tool
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
-               ;;                                                       #
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
-               help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close SADM Tool
-               exit 1                                                   # Exit Script with Error
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
-    fi
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
+    
 
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
     main_process                                                        # Main Process
     # OR                                                                # Use line below or above
     #process_servers                                                    # Process All Active Servers
-
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     sadm_stop $SADM_EXIT_CODE                                           # Close SADM Tool & Upd RCH
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
