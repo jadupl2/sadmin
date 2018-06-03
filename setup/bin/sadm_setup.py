@@ -20,23 +20,16 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2018_01_18 JDuplessis 
-#   V1.0 Initial Version
-# 2018_04_06 JDuplessis
-#   V1.6 Running SADM Scripts at the end of setup to feed DN and Web Interface
-# 2018_04_14 JDuplessis
-#   V1.7 Commands fping and arp-scan are now part of server requirement for web network report page
-# 2018_04_24 JDuplessis
-#   V1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
-# 2018_04_27 JDuplessis
-#   V1.9 Tested on Ubuntu 18.04 Server - Minor fix 
-# 2018_04_30 JDuplessis
-#   V2.1 Enhance user experience, re-tested Ubuntu 18.04,16.04 Server/Desktop,RedHat/CentOS7,Debian9 
-# 2018_05_01 JDuplessis
-#   V2.2 Fix Bugs after Testing on Fedora 27
-# 2018_05_03 JDuplessis
-#   V2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
-#   V2.4 Database Standard User Password are recorded now in .dbpass
+# 2018_01_18    v1.0 Initial Version
+# 2018_04_06    v1.6 Running SADM Scripts at the end of setup to feed DN and Web Interface
+# 2018_04_14    v1.7 Commands fping and arp-scan are now part of requirement for web network report page
+# 2018_04_24    v1.8 Ubuntu 16.04 Server - Missing Apache2 Lib,Network Collection Added,Install Non-Interactive
+# 2018_04_27    v1.9 Tested on Ubuntu 18.04 Server - Minor fix 
+# 2018_04_30    v2.1 Enhance user experience, re-tested Ubuntu 18.04,16.04 Server/Desktop,RedHat/CentOS7,Debian9 
+# 2018_05_01    v2.2 Fix Bugs after Testing on Fedora 27
+# 2018_05_03    v2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
+# 2018_05_05    v2.4 Database Standard User Password are now recorded in .dbpass
+# 2018_06_)3    v2.5 Put Backup in comment in client crontab
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -52,7 +45,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.4"                                             # Setup Version Number
+sver                = "2.5"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -310,7 +303,7 @@ def update_client_crontab_file(logfile) :
     hcron.write ("*/11 * * * * sadmin sudo ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Daily backup of importants Files & Dir.\n")
-    hcron.write ("47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
+    hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Run SADM System Monitoring every 6 minutes\n")
     hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >/dev/null/sysmon.log 2>&1\n")
