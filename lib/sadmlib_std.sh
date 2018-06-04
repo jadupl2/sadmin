@@ -75,6 +75,7 @@ SADM_DR_DIR="$SADM_DAT_DIR/dr"              ; export SADM_DR_DIR        # Disast
 SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result Code History Dir
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
+SADM_DBB_DIR="$SADM_DAT_DIR/dbb"            ; export SADM_DBB_DIR       # Database Backup Directory
 SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
 #
 SADM_USR_DIR="$SADM_BASE_DIR/usr"           ; export SADM_USR_DIR       # Script User directory
@@ -1711,10 +1712,15 @@ sadm_start() {
     chmod 0775 $SADM_NET_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
 
-    #If SADM Sysmon Report Directory doesn't exist, create it.
+    # If SADM Sysmon Report Directory doesn't exist, create it.
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
     chmod 0775 $SADM_RPT_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
+
+    # If SADM Database Backup Directory doesn't exist, create it.
+    [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
+    chmod 0775 $SADM_DBB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
 
     # If Return Code History Directory doesn't exist, create it.
     [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
