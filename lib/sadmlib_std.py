@@ -28,7 +28,7 @@
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
 #
-# # ==================================================================================================
+#==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
     from subprocess import Popen, PIPE
