@@ -18,6 +18,7 @@
 # 2018_05_26    V3.0 Final Test - Added Lot of Variable and code 
 # 2018_05_27    v3.1 Replace setup_sadmin Function by putting code at the beginning of source.
 # 2018_05_28    v3.2 Add Backup Parameters that come from sadmin.cfg from now on.
+# 2018_06_04    v3.3 Added User Directory Environment Variables in SADMIN Client Section
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -38,7 +39,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.2'                               # Current Script Version
+    export SADM_VER='3.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -453,6 +454,31 @@ print_client_directory()
     pexample="\$SADM_RPT_DIR"                                           # Directory Variable Name
     pdesc="SYStem MONitor Report Directory"                             # Directory Description
     presult="$SADM_RPT_DIR"                                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_USR_DIR"                                           # Directory Variable Name
+    pdesc="User/System specific directory "                             # Directory Description
+    presult="$SADM_USR_DIR"                                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_UBIN_DIR"                                          # Directory Variable Name
+    pdesc="User/System specific bin/script Dir."                        # Directory Description
+    presult="$SADM_UBIN_DIR"                                            # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_ULIB_DIR"                                          # Directory Variable Name
+    pdesc="User/System specific library Dir."                           # Directory Description
+    presult="$SADM_ULIB_DIR"                                            # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_UDOC_DIR"                                          # Directory Variable Name
+    pdesc="User/System specific documentation"                          # Directory Description
+    presult="$SADM_UDOC_DIR"                                            # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
+    pexample="\$SADM_UMON_DIR"                                          # Directory Variable Name
+    pdesc="User/System specific SysMon Scripts"                         # Directory Description
+    presult="$SADM_UMON_DIR"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 }
 
