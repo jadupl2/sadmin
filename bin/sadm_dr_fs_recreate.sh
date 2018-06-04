@@ -30,14 +30,14 @@
 #
 #    - This file "$SADMIN_BASE_DIR/dat/dr/HOSTNAME_VGNAME.savevg" is the restore input filename 
 #      (savevg backup), that will be produce every night by running the script 
-#      "sadm_fs_save_info.sh" (should be in cron) normally located in /sadmin/bin. 
+#      "sadm_dr_fs_save_info.sh" (should be in cron) normally located in /sadmin/bin. 
 #      File is in backup/restore format.
 #            root@aixb50(/sadmin/dat/dr)# file aixb50_datavg.savevg
 #                     aixb50_datavg.savevg: backup/restore format file
 #  
 #    - The restore of the VG will be created on the disks specified in
 #      "$SADMIN_BASE_DIR/HOSTNAME_VGNAME_restvg_disks.txt" file. This file contain the disks 
-#      that the VG was using last night and was created by the script "sadm_fs_save_info.sh.
+#      that the VG was using last night and was created by the script "sadm_dr_fs_save_info.sh.
 #      This file can be modify prior to running this script. 
 #      If you want te recreate the VG on different disks then you should modify it.
 #
