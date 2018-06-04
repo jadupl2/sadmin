@@ -15,7 +15,7 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 # 2018_05_10 JDuplessis V1.0 - Initial Version
-#   v1.0 Initail Version - Script example that we can run from sadm system monitor (sadm_sysmon.pl)
+#   v1.0 Initial Version - Script example that we can run from sadm system monitor (sadm_sysmon.pl)
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                         # INTERCEPT The Control-C
 #set -x
