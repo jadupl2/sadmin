@@ -26,7 +26,9 @@
 # 2018_05_20    V2.13 Minor correction to make the log like the SADMIN Shell Library
 # 2018_05_26    V2.14 Add Param to writelog for Bold Attribute & Remove some unused Variables 
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
-# ==================================================================================================
+# 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
+#
+# # ==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
     from subprocess import Popen, PIPE
@@ -96,7 +98,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.15"                                # This Library Version
+        self.libver             = "2.16"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -132,6 +134,15 @@ class sadmtools():
         self.dr_dir             = os.path.join(self.dat_dir,'dr')       # SADM Disaster Recovery Dir
         self.net_dir            = os.path.join(self.dat_dir,'net')      # SADM Network/Subnet Dir 
         self.rpt_dir            = os.path.join(self.dat_dir,'rpt')      # SADM Sysmon Report Dir.
+        self.dbb_dir            = os.path.join(self.dat_dir,'dbb')      # SADM Database Backup Dir.
+        self.setup_dir          = os.path.join(self.base_dir,'setup')   # SADM Setup Directory
+
+        # SADM User Directories Structure
+        self.usr_dir            = os.path.join(self.base_dir,'usr')     # SADM User Directory
+        self.ubin_dir           = os.path.join(self.usr_dir,'bin')      # SADM User Bin Dir.
+        self.ulib_dir           = os.path.join(self.usr_dir,'lib')      # SADM User Lib Dir.
+        self.udoc_dir           = os.path.join(self.usr_dir,'doc')      # SADM User Doc Dir.
+        self.umon_dir           = os.path.join(self.usr_dir,'mon')      # SADM Usr SysMon Script Dir
 
         # SADM Web Site Directories Structure
         self.www_dir            = os.path.join(self.base_dir,'www')     # SADM WebSite Dir Structure
@@ -760,7 +771,7 @@ class sadmtools():
     #         SEND AN EMAIL TO SYSADMIN DEFINE IN SADMIN.CFG WITH SUBJECT AND BODY RECEIVED
     # ----------------------------------------------------------------------------------------------
     def sendmail(self,wserver,wport,wuser,wpwd,wsub,wbody) :
-        wfrom = cfg_user + "@" + cfg_server
+        wfrom = self.cfg_user + "@" + self.cfg_server
         #pdb.set_trace() 
 
         try :
@@ -994,43 +1005,62 @@ class sadmtools():
             sys.exit(1)                                                 # Exit with Error
 
     
+        # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
+        uid = pwd.getpwnam(self.cfg_user).pw_uid                        # Get UID User in sadmin.cfg 
+        gid = grp.getgrnam(self.cfg_group).gr_gid                       # Get GID User in sadmin.cfg 
+
         # Make sure all SADM Directories structure exist
-        if not os.path.exists(self.cfg_dir)  : os.mkdir(self.cfg_dir,0o0775)# Create Configuration Dir
-        if not os.path.exists(self.tmp_dir)  : os.mkdir(self.tmp_dir,0o1777)# Create SADM Temp Dir.
-        if not os.path.exists(self.dat_dir)  : os.mkdir(self.dat_dir,0o0775)# Create SADM Data Dir.
-        if not os.path.exists(self.bin_dir)  : os.mkdir(self.bin_dir,0o0775)# Create SADM Bin Dir.
-        if not os.path.exists(self.log_dir)  : os.mkdir(self.log_dir,0o0775)# Create SADM Log Dir.
-        if not os.path.exists(self.lib_dir)  : os.mkdir(self.lib_dir,0o0775)# Create SADM Lib Dir.
-        if not os.path.exists(self.sys_dir)  : os.mkdir(self.sys_dir,0o0775)# Create SADM Sys Dir.
-        if not os.path.exists(self.doc_dir)  : os.mkdir(self.doc_dir,0o0775)# Create SADM Sys Dir.
-        if not os.path.exists(self.nmon_dir) : os.mkdir(self.nmon_dir,0o0775) # Create SADM nmon Dir.
-        if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
-        if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775) # Create SADM DR Dir.
-        if not os.path.exists(self.rch_dir)  : os.mkdir(self.rch_dir,0o0775)# Create SADM RCH Dir.
-        if not os.path.exists(self.net_dir)  : os.mkdir(self.net_dir,0o0775)# Create SADM RCH Dir.
-        if not os.path.exists(self.rpt_dir)  : os.mkdir(self.rpt_dir,0o0775)# Create SADM RCH Dir.
+        if not os.path.exists(self.bin_dir)  : os.mkdir(self.bin_dir,0o0775)    # bin Dir.
+        if not os.path.exists(self.cfg_dir)  : os.mkdir(self.cfg_dir,0o0775)    # cfg Dir
+        if not os.path.exists(self.dat_dir)  : os.mkdir(self.dat_dir,0o0775)    # dat Dir.
+        if not os.path.exists(self.doc_dir)  : os.mkdir(self.doc_dir,0o0775)    # doc Dir.
+        if not os.path.exists(self.lib_dir)  : os.mkdir(self.lib_dir,0o0775)    # lib Dir.
+        if not os.path.exists(self.log_dir)  : os.mkdir(self.log_dir,0o0775)    # log Dir.
+        if not os.path.exists(self.pkg_dir)  : os.mkdir(self.pkg_dir,0o0775)    # pkg Dir.
+        if not os.path.exists(self.setup_dir): os.mkdir(self.setup_dir,0o0775)  # setup Dir.
+        if not os.path.exists(self.sys_dir)  : os.mkdir(self.sys_dir,0o0775)    # sys Dir.
+        if not os.path.exists(self.tmp_dir)  : os.mkdir(self.tmp_dir,0o1777)    # tmp Dir.
+        if not os.path.exists(self.nmon_dir) : os.mkdir(self.nmon_dir,0o0775)   # dat/nmon Dir.
+        if not os.path.exists(self.dr_dir)   : os.mkdir(self.dr_dir,0o0775)     # dat/dr Dir.
+        if not os.path.exists(self.rch_dir)  : os.mkdir(self.rch_dir,0o0775)    # dat/rch Dir.
+        if not os.path.exists(self.net_dir)  : os.mkdir(self.net_dir,0o0775)    # dat/net Dir.
+        if not os.path.exists(self.rpt_dir)  : os.mkdir(self.rpt_dir,0o0775)    # dat/rpt Dir.
+        if not os.path.exists(self.dbb_dir)  : os.mkdir(self.dbb_dir,0o0775)    # dat/dbb Dir.
 
-        # These Directories are only created on the SADM Server (Data Base and Web Directories)
+        # Make sure all SADM User Directories Exist
+        if not os.path.exists(self.usr_dir)  : os.mkdir(self.usr_dir,0o0775)    # User Dir.
+        os.chown(self.usr_dir, uid, gid)                                        # Change owner/group
+        if not os.path.exists(self.ubin_dir) : os.mkdir(self.ubin_dir,0o0775)   # User Bin Dir.
+        os.chown(self.ubin_dir,uid,gid)                                         # Change owner/group
+        if not os.path.exists(self.ulib_dir) : os.mkdir(self.ulib_dir,0o0775)   # User Libr Dir.
+        os.chown(self.ulib_dir,uid,gid)                                         # Change owner/group
+        if not os.path.exists(self.udoc_dir) : os.mkdir(self.udoc_dir,0o0775)   # User Doc. Dir.
+        os.chown(self.udoc_dir, uid, gid)                                       # Change owner/group
+        if not os.path.exists(self.umon_dir) : os.mkdir(self.umon_dir,0o0775)   # SysMon Scripts Dir
+        os.chown(self.umon_dir, uid, gid)                                       # Change owner/group
+        
+        # These Directories are only created on the SADM Server (Web Directories)
         if self.hostname == self.cfg_server :
-            if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web  Network  Dir.
-
-            # Get the userid and groupid chosen in sadmin.cfg (SADM_USER/SADM_GROUP)
-            uid = pwd.getpwnam(cfg_user).pw_uid                         # Get UID User in sadmin.cfg 
-            gid = grp.getgrnam(cfg_group).gr_gid                        # Get GID User in sadmin.cfg 
-
-            if not os.path.exists(www_dir)      : os.mkdir(www_dir,0o0775)      # Create SADM WWW Dir.
-            if not os.path.exists(www_doc_dir)  : os.mkdir(www_doc_dir,0o0775)  # Create SADM HTML Dir.
-            if not os.path.exists(www_dat_dir)  : os.mkdir(www_dat_dir,0o0775)  # Create Web  DAT  Dir.
-            if not os.path.exists(www_lib_dir)  : os.mkdir(www_lib_dir,0o0775)  # Create Web  DAT  Dir.
-            if not os.path.exists(www_tmp_dir)  : os.mkdir(www_tmp_dir,0o0775)  # Create Web  DAT  Dir.
-            wuid = pwd.getpwnam(cfg_www_user).pw_uid                    # Get UID User of Wev User 
-            wgid = grp.getgrnam(cfg_www_group).gr_gid                   # Get GID User of Web Group 
-            os.chown(www_dir, wuid, wgid)                               # Change owner of log file
-            os.chown(www_dat_net_dir, wuid, wgid)                       # Change owner of Net Dir
-            os.chown(www_doc_dir, wuid, wgid)                           # Change owner of rch file
-            os.chown(www_dat_dir, wuid, wgid)                           # Change owner of dat file
-            os.chown(www_lib_dir, wuid, wgid)                           # Change owner of lib file
-            os.chown(www_tmp_dir, wuid, wgid)                           # Change owner of tmp file
+            wgid = grp.getgrnam(self.cfg_www_group).gr_gid              # Get GID User of Web Group 
+            wuid = pwd.getpwnam(self.cfg_www_user).pw_uid               # Get UID User of Web User 
+            #
+            if not os.path.exists(www_dat_net_dir) : os.mkdir(www_dat_net_dir,0o0775) # Web Net Dir.
+            os.chown(self.www_dat_net_dir, wuid, wgid)                  # Change owner of Net Dir
+            #
+            if not os.path.exists(self.www_dir)      : os.mkdir(self.www_dir,0o0775)     # WWW  Dir.
+            os.chown(self.www_dir, wuid, wgid)                          # Change owner of log file
+            #
+            if not os.path.exists(self.www_doc_dir)  : os.mkdir(self.www_doc_dir,0o0775) # HTML Dir.
+            os.chown(self.www_doc_dir, wuid, wgid)                      # Change owner of rch file
+            #
+            if not os.path.exists(self.www_dat_dir)  : os.mkdir(self.www_dat_dir,0o0775) # DAT  Dir.
+            os.chown(self.www_dat_dir, wuid, wgid)                      # Change owner of dat file
+            #
+            if not os.path.exists(self.www_lib_dir)  : os.mkdir(self.www_lib_dir,0o0775) # Lib  Dir.
+            os.chown(self.www_lib_dir, wuid, wgid)                      # Change owner of lib file
+            #
+            if not os.path.exists(self.www_tmp_dir)  : os.mkdir(self.www_tmp_dir,0o0775) # Tmp  Dir.
+            os.chown(self.www_tmp_dir, wuid, wgid)                      # Change owner of tmp file
     
         
         # Write SADM Header to Script Log
