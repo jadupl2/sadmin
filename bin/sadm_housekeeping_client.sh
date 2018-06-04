@@ -16,46 +16,62 @@
 #   See the GNU General Public License for more details.
 #
 # --------------------------------------------------------------------------------------------------
-# 1.7  Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
-# 2017-10-10 J.Duplessis
-#   V1.8 - Remove deletion of release file on sadm client in /sadmin/cfg
-# 2018-01-02 J.Duplessis
-#   V1.9 - Delete file not needed anymore
-# 2018_05_14    JDuplessis
-#   V1.10 Correct problem on MacOS with change owner/group command
+# 2017_08_08    v1.7 Add /sadmin/jac in the housekeeping and change 600 to 644 for configuration file
+# 2017-10-10    v1.8 Remove deletion of release file on sadm client in /sadmin/cfg
+# 2018-01-02    v1.9 Delete file not needed anymore
+# 2018_05_14    v1.10 Correct problem on MacOS with change owner/group command
+# 2018_06_04    v1.11 Add User Directories, Database Backup Directory, New Backup Cfg Files 
+#
 # --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-#===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.10'                            ; export SADM_VER            # Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     
 
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis 
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.11'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
+
+
 
 
 
@@ -137,6 +153,10 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
+    set_dir "$SADM_DOC_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
     set_dir "$SADM_TMP_DIR"       "1777" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN TMP Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
@@ -165,23 +185,39 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DR Dir
+    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Disaster Recovery Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN RCH Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    set_dir "$SADM_DBB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # Database Backup Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_BASE_DIR/jac"  "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN RCH Dir
+    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN Network Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
-    set_dir "$SADM_BASE_DIR/jac/bin" "0775" "$SADM_USER" "$SADM_GROUP"  # set Priv SADMIN RCH Dir
+    set_dir "$SADM_USR_DIR"  "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User  Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_UBIN_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User bin Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_ULIB_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User lib Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_UDOC_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User Doc Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+
+    set_dir "$SADM_UMON_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set SysMon Script User Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
 
@@ -239,6 +275,27 @@ file_housekeeping()
     chmod 0644 $SADM_CFG_HIDDEN
     ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
 
+    # Make Sysmon Template is 644 
+    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.template.smon" 
+    chmod 0644 ${SADM_CFG_DIR}/.template.smon
+    ls -l ${SADM_CFG_DIR}/.template.smon | tee -a $SADM_LOG
+
+    # Make sure backup files list are 644 
+    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_list.txt" 
+    chmod 0644 ${SADM_CFG_DIR}/backup_list.txt
+    ls -l ${SADM_CFG_DIR}/backup_list.txt | tee -a $SADM_LOG
+    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt" 
+    chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt
+    ls -l ${SADM_CFG_DIR}/.backup_list.txt | tee -a $SADM_LOG
+
+    # Make sure backup exclude files list are 644 
+    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt" 
+    chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt
+    ls -l ${SADM_CFG_DIR}/backup_exclude.txt | tee -a $SADM_LOG
+    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt" 
+    chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt
+    ls -l ${SADM_CFG_DIR}/.backup_exclude.txt | tee -a $SADM_LOG
+
     if [ -f $SADM_WWW_LIB_DIR/.crontab.txt ] 
         then sadm_writelog "chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt" 
              chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt
@@ -293,8 +350,8 @@ file_housekeeping()
              fi
     fi
 
-    # Make sure JAC (Use for Development) Directory have proper permission
-    JACDIR="${SADM_BASE_DIR}/jac" 
+    # Make sure User (Use for Development) Directory have proper permission
+    JACDIR="${SADM_BASE_DIR}/usr" 
     if [ -d "$JACDIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $JACDIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
@@ -478,48 +535,43 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init SADM Env. RC/Log File
 
-    # Script can be run only by root user
+    # If you want this script to be run only by 'root'.
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script must be run by ROOT user"            # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
     fi
+
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
     # Check if 'sadmin' group exist - If not create it.
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
         then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
-             sadm_writelog "Creating the ${SADM_GROUP} group"           # Advise user will create
-             groupadd ${SADM_GROUP}                                     # Create SADM_GROUP
-             if [ $? -ne 0 ]                                            # Error creating Group 
-                then sadm_writelog "Error when creating group ${SADM_GROUP}"
+             #sadm_writelog "Creating the ${SADM_GROUP} group"           # Advise user will create
+             #groupadd ${SADM_GROUP}                                     # Create SADM_GROUP
+             #if [ $? -ne 0 ]                                            # Error creating Group 
+             #   then sadm_writelog "Error when creating group ${SADM_GROUP}"
                      sadm_writelog "Process Aborted"                    # Abort got be created
                      sadm_stop 1                                        # Terminate Gracefully
-             fi
+             #fi
     fi
     
     # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
         then sadm_writelog "User $SADM_USER not present"                # Advise user will create
-             sadm_writelog "The user will now be created"               # Advise user will create
-             useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
-             if [ $? -ne 0 ]                                            # Error creating user 
-                then sadm_writelog "Error when creating user ${SADM_USER}"
+             #sadm_writelog "The user will now be created"               # Advise user will create
+             #useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
+             #if [ $? -ne 0 ]                                            # Error creating user 
+             #   then sadm_writelog "Error when creating user ${SADM_USER}"
                      sadm_writelog "Process Aborted"                    # Abort got be created
                      sadm_stop 1                                        # Terminate Gracefully
-             fi
+             #fi
     fi
-
-    # Delete files not used anymore
-    if [ -r "${SADM_CFG_DIR}/${SADM_HOSTNAME}.cfg" ] 
-        then rm -f "${SADM_CFG_DIR}/${SADM_HOSTNAME}.cfg" 
-    fi
-    if [ -r "${SADM_CFG_DIR}/sysmon.std" ] ; then rm -f "${SADM_CFG_DIR}/sysmon.std" ;fi 
-    
 
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
