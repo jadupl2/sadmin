@@ -38,7 +38,7 @@
 # 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
 # 2018_05_27    V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
 # 2018_05_28    V2.26 Added Loading of backup parameters coming from sadmin.cfg
-# 2018_06_04    V2.27 Add User Dir. & Sub-Directory creation . 
+# 2018_06_04    V2.27 Add dat/dbb and User Dir. & Sub-Directory creation . 
 #
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
