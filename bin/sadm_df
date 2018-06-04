@@ -41,7 +41,7 @@
 # Scripts Variables 
 #===================================================================================================
 export SADM_VER='1.1'                                       # Current Script Version
-SADM_80DASH=`printf %100s |tr " " "="`                      # 100 equals sign line
+SADM_DASH=`printf %100s |tr " " "="`                        # 100 equals sign line
 DEBUG_LEVEL=0                                               # 0=NoDebug Higher=+Verbose
 file="/tmp/sdf_tmp1.$$"                                     # File Contain Result of df
 data="/tmp/sdf_tmp2.$$"                                     # Contain df data (No Heading, no Total)
@@ -53,36 +53,29 @@ export SADM_PN=${0##*/}                                     # Current Script nam
 #                                       Script Start HERE
 #===================================================================================================
     
-# Display Filesystem Disk Space Usage in Human output and in a column fashion
-df -ThP --total |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-30s\n", $1, $2, $3, $4, $5, $6, $7'}> $file
-lines=`wc -l $file | awk '{print $1}'`                      # Total Lines in file
-ntail=`expr $lines - 1`                                     # Calc. tail Number to use
-nhead=`expr $ntail - 1`                                     # Calc. head Number to use
-title=`head -1 $file`                                       # Save 'df' Title Line
-total=`tail -1 $file`                                       # Save 'df' Total Line
-tail -${ntail} $file | head -${nhead}|sort -k7 > $data      # Sort by MntPoint 
+# Run df command and output to file
+df -ThP --total |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-30s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
 
-tput clear
-if [ "$DEBUG_LEVEL" -gt 0 ] 
-    then echo "Number of lines      : $lines"
-         echo "Number of tail       : $ntail"
-         echo "Number of head       : $nhead"
-         echo "Title Line           : $title"
-         echo "Total Line           : $total"
-         echo "Full df result file  : $file"
-         echo "Data Part of df      : $data"
-         echo "Data part of df      :"
-         cat $data
-fi
-printf "${SADM_PN} - v${SADM_VER}\n"
-printf "${SADM_80DASH}\n"
-printf "%s\n" "$title"
-printf "${SADM_80DASH}\n"
-cat ${data}
-printf "${SADM_80DASH}\n"
-printf "%s\n" "$total"
+
+# Work on df result file - getting ready to output
+lines=`wc -l $file | awk '{print $1}'`                                  # Total Lines in file
+ntail=`expr $lines - 1`                                                 # Calc. tail Number to use
+nhead=`expr $ntail - 1`                                                 # Calc. head Number to use
+title=`head -1 $file`                                                   # Save 'df' Title Line
+total=`tail -1 $file`                                                   # Save 'df' Total Line
+tail -${ntail} $file | head -${nhead}|sort -k7 > $data                  # Sort by MntPoint 
+
+# Print DF Information
+tput clear                                                              # Clear Screen
+printf "${SADM_PN} - v${SADM_VER}\n"                                    # Print Script Name & Ver.
+printf "${SADM_DASH}\n"                                                 # Print dash line
+printf "%s\n" "$title"                                                  # Print title line
+printf "${SADM_DASH}\n"                                                 # Print dash line
+cat ${data}                                                             # Output df sort by MntPoint
+printf "${SADM_DASH}\n"                                                 # Print dash line
+printf "%s\n" "$total"                                                  # Print total line
 
 # Remove work files
-rm -f $file >/dev/null 2>&1
-rm -f $data >/dev/null 2>&1
+rm -f $file >/dev/null 2>&1                                             # Remove tmp full df file
+rm -f $data >/dev/null 2>&1                                             # Remove tmp formated file
 
