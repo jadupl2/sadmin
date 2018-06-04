@@ -456,6 +456,11 @@ print_client_directory()
     presult="$SADM_RPT_DIR"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
+    pexample="\$SADM_DBB_DIR"                                           # Directory Variable Name
+    pdesc="Database Backup Directory"                                   # Directory Description
+    presult="$SADM_DBB_DIR"                                             # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
     pexample="\$SADM_USR_DIR"                                           # Directory Variable Name
     pdesc="User/System specific directory "                             # Directory Description
     presult="$SADM_USR_DIR"                                             # Actual Content of Variable
