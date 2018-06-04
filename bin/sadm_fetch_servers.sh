@@ -2,33 +2,28 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_fetch_servers.sh
-#   Synopsis :  Rsync all rch/log/rpt files from servers farm to SADMIN Server
+#   Synopsis :  Rsync all *.rch/*.log/*.rpt files from all active SADMIN client to the SADMIN Server
 #   Version  :  1.0
 #   Date     :  December 2015
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_fetch_servers.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
-#  History
-#   V1.6  Dec 2016    Major changes to include ssh test to each server and alert when not working
-#                       Logic was redone , almost rewritten
-#                       now include -d[1-9] switch to be more verbose during execution
-#   V1.8  Feb 2017    Change Script name and change SADM server default crontab
-#   V1.9  April 2017  Cosmetic - Remove blank lines inside processing servers
-#   V2.0  July 2017   Remove Ping before doing the SSH to each server (Not really needed)
-#   V2.1  July 2017   When Error Detected - The Error is included at the top of Email (Simplify Diag)
-#   2017_08_03 JDuplessis - V2.2 Minor Bug Fix
-#   2017_08_24 JDuplessis - V2.3 Rewrote section of code & Message more concise
-#   2017_08_29 JDuplessis - V2.4 Bug Fix - Corrected problem when retrying rsync when failed
-#   2017_08_30 JDuplessis - V2.5 If SSH test to server fail, try a second time (Prevent false Error)
-#   2017_12_17 JDuplessis - V2.6 Modify to use MySQL instead of PostGres
-#   2018_02_08 JDuplessis 
-#       V2.8 Fix compatibility problem with 'dash' shell
-#   2018_02_10 JDuplessis 
-#       V2.9 Rsync on SADMIN server (locally) is not using ssh
-#   2018_04_05 JDuplessis 
-#       V2.10 Do not copy web Interface crontab from backup unless file exist
-#   2018_05_06 JDuplessis 
-#       V2.11 Remove URL from Email when Error are detecting while fetching data
+#  Change Log
+#   2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
+#   2017_02_09  v1.8 Change Script name and change SADM server default crontab
+#   2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
+#   2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
+#   2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
+#   2017_08_03  v2.2 Minor Bug Fix
+#   2017_08_24  v2.3 Rewrote section of code & Message more concise
+#   2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
+#   2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
+#   2017_12_17  v2.6 Modify to use MySQL instead of PostGres
+#   2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
+#   2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
+#   2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
+#   2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
+#   2018_05_06  v2.12 Small Modification for New Libr Version
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -49,56 +44,76 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #set -x
 
 
+
 #===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.11'                            ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.12'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
 
 
-# --------------------------------------------------------------------------------------------------
-#                               This Script environment variables
-# --------------------------------------------------------------------------------------------------
+
+#===================================================================================================
+# Scripts Variables 
+#===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
-#===================================================================================================
-help_usage()
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    sadm_writelog "${SADM_PN} usage : "
-    sadm_writelog "    -d [Debug Level]"
-    sadm_writelog "    -h Help usage"
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
 }
 
 
@@ -298,32 +313,37 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir. & RC/Log
+    # If you want this script to be run only by 'root'.
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
         then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User should be root
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
-    fi
 
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
-    while getopts "hd:" opt ; do                                        # Loop to process Switch
+    while getopts "vhd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
-            h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
+            h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
-               help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close the shop
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
@@ -353,7 +373,7 @@ process_servers()
     sadm_writelog "Total Linux error(s)  : ${LINUX_ERROR}"              # Display Total Linux Errors
     sadm_writelog "Total Aix error(s)    : ${AIX_ERROR}"                # Display Total Aix Errors
     sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
 
     if [ "$SADM_EXIT_CODE" -ne 0 ]
