@@ -29,7 +29,7 @@
 # 2018_05_01    v2.2 Fix Bugs after Testing on Fedora 27
 # 2018_05_03    v2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
 # 2018_05_05    v2.4 Database Standard User Password are now recorded in .dbpass
-# 2018_06_)3    v2.5 Put Backup in comment in client crontab
+# 2018_06_03    v2.5 Change name of sadm_dr_fs_save_info.sh ,Put Backup in comment in client crontab
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -1724,7 +1724,7 @@ def main():
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
     run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
-    run_script(sroot,"sadm_fs_save_info.sh")                            # Client Save LVM FS Info
+    run_script(sroot,"sadm_dr_fs_save_info.sh")                            # Client Save LVM FS Info
     run_script(sroot,"sadm_create_cfg2html.sh")                         # Produce cfg2html html file
     run_script(sroot,"sadm_nmon_watcher.sh")                            # Make sure nmon running
     run_script(sroot,"sadm_sysmon.pl")                                  # Run SADM System MOnitor
