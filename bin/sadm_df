@@ -5,7 +5,7 @@
 #   Version     :   1.0
 #   Date        :   05/05/2016
 #   Requires    :   sh 
-#   Description :   Display Disk Usage (df) with a more formatted output
+#   Description :   Display Disk Usage (df) with filesystem type, sorted by mount point.
 #
 #   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
 #                   a 100 characters per line. Comments in script always begin at column 73. You 
@@ -30,8 +30,8 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 #
-# 2016_05_05    V1.0 Initial Version
-# 2018_06_04    V1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
+# 2016_05_05    v1.0 Initial Version
+# 2018_06_04    v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
 #
 # --------------------------------------------------------------------------------------------------
 
