@@ -1,7 +1,7 @@
 #! /bin/sh
 #===================================================================================================
-# Shellscript   :  sadm_fs_save_info.sh - 
-# Description   :  Collect Info in order to Recreate filesystem in case of Disaster
+# Shellscript   :  sadm_dr_fs_save_info.sh - 
+# Description   :  Collect Filesystem & VG Info in order to Recreate filesystem in case of Disaster
 # Version       :  1.0
 # Author        :  jacques duplessis
 # Date          :  2015-10-09
@@ -23,21 +23,21 @@
 #
 #       2- Run the LVSCAN command and process each line , one by one.
 #           Gather all info needed to recreate the filesystem (or swap) needed in case of disaster
-#           Create file sadm_fs_save_info.dat that will contain all info needed. to recreate FS.
+#           Create file sadm_dr_fs_save_info.dat that will contain all info needed. to recreate FS.
 #           File is in order of mount point lenght (So that /abc if created before /abc/123).
 #
 #           The output of the script is a text file named : 
 #           SADM_BASE_DIR/dat/dr/HOSTNAME_sadm_fs_save_info.dat
-#           This output file can then be use by "sadm_fs_recreate.sh" script to recreate all 
+#           This output file can then be use by "sadm_dr_fs_recreate.sh" script to recreate all 
 #           filesystems of the specified VG, with the proper Persmission.
 #           Note the VG MUST be created with proper size prior to run the recreate fs script
 #
 #           EXAMPLE FOR FILE PRODUCED :
 #                 root@holmes:/sadmin/dat/dr# cat holmes_fs_save_info.dat
 #                       # SADMIN - Filesystem Info. for system holmes.maison.ca
-#                        # File was created by sadm_fs_save_info.sh on Thu Dec  1 05:02:03 EST 2016
+#                        # File was created by sadm_dr_fs_save_info.sh on Thu Dec  1 05:02:03 EST 2016
 #                        # This file is use in a Disaster Recovery situation
-#                        # The data below is use by sadm_fs_recreate.sh to recreate filesystems
+#                        # The data below is use by sadm_dr_fs_recreate.sh to recreate filesystems
 #                        # ---------------------------------------------------------------------
 #                        # 
 #                        rootvg::swap00:swap:3072:::0000
@@ -83,55 +83,61 @@
 #
 #===================================================================================================
 #
-# 2015_10 - 1.5 - Modify to create a copy of previous data into $SADMIN/sadm_fs_save_info.prev 
+# 2015_10 - 1.5 - Modify to create a copy of previous data into $SADMIN/sadm_dr_fs_save_info.prev 
 # 2015_11 - 1.6 - Remove RHEL3 Support - Now Support RHEL 4, 5, 6 and 7.
 # 2015_12 - 1.7 - Corrected bug with Swap Space
 # 2016_11 - 2.0 - Aix is now supported by the script - All VG Structure are store in *.savevg 
 #                 file under ${SADM_BASE_DIR}/dat/dr Directory 
+# 2018_06_04    v2.1 Change to Adapt to SADMIN New Libr (Support xfs)
 #
 #===================================================================================================
+trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-#
+
 #===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='2.0'                             ; export SADM_VER            # This Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh     
-
-# --------------------------------------------------------------------------------------------------
-# These Global Variables, get their default from the sadmin.cfg file, but can be overridden here
-# --------------------------------------------------------------------------------------------------
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export ADM_MAIL_ADDR        # Default is in sadmin.cfg
-SADM_MAIL_TYPE=1                          ; export SADM_MAIL_TYPE       # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"         ; export SADM_CIE_NAME        # Company Name
- 
-# --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
-#===================================================================================================
-#
 
 
-#
 
 
 
@@ -325,9 +331,9 @@ save_lvm_info()
     fi 
     
     echo "# SADMIN - Filesystem Info. for system $(sadm_get_hostname).$(sadm_get_domainname)"  > $DRFILE
-    echo "# File was created by sadm_fs_save_info.sh on `date`"                       >> $DRFILE
+    echo "# File was created by sadm_dr_fs_save_info.sh on `date`"                       >> $DRFILE
     echo "# This file is use in a Disaster Recovery situation"                        >> $DRFILE
-    echo "# The data below is use by sadm_fs_recreate.sh to recreate filesystems"     >> $DRFILE
+    echo "# The data below is use by sadm_dr_fs_recreate.sh to recreate filesystems"     >> $DRFILE
     echo "# ---------------------------------------------------------------------"    >> $DRFILE
     echo "# " >> $DRFILE
     cat  $SADM_TMP_FILE2 >> $DRFILE
@@ -414,13 +420,16 @@ save_aix_info()
 # --------------------------------------------------------------------------------------------------
 #                                     Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env Dir & RC/Log File
+    # If you want this script to be run only by 'root'.
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
     fi
+
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
     if [ $(sadm_get_ostype) = "AIX" ]                                   # For AIX O/S Save all VGs
         then save_aix_info                                              # Save All VGs Information
