@@ -31,6 +31,8 @@
 # 2018_02_21    V2.5 Minor Changes 
 # 2018_05_26    V2.6 Major Rewrite, Better Performance
 # 2018_05_28    V2.7 Add Backup Parameters now in sadmin.cfg
+# 2018_06_04    v2.8 Added User Directory Environment Variables in SADMIN Client Section
+#
 #===================================================================================================
 #
 try :
@@ -67,7 +69,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.7"                 # Current Script Version
+    st.ver              = "2.8"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -404,6 +406,36 @@ def print_client_directory(st):
     pexample="ins.rpt_dir"                                              # Example Calling Function
     pdesc="SYStem MONitor Report Directory"                             # Function Description
     presult=st.rpt_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.dbb_dir"                                              # Example Calling Function
+    pdesc="Database Backup Directory"                                   # Function Description
+    presult=st.dbb_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.usr_dir"                                              # Example Calling Function
+    pdesc="User/System specific directory"                              # Function Description
+    presult=st.usr_dir                                                  # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.ubin_dir"                                             # Example Calling Function
+    pdesc="User/System specific bin/script Dir."                        # Function Description
+    presult=st.ubin_dir                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.ulib_dir"                                             # Example Calling Function
+    pdesc="User/System specific library Dir."                           # Function Description
+    presult=st.ulib_dir                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.udoc_dir"                                             # Example Calling Function
+    pdesc="User/System specific documentation"                          # Function Description
+    presult=st.udoc_dir                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
+    pexample="ins.umon_dir"                                             # Example Calling Function
+    pdesc="User/System specific SysMon Scripts"                         # Function Description
+    presult=st.umon_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
  
