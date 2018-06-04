@@ -38,6 +38,7 @@
 # 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
 # 2018_05_27    V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
 # 2018_05_28    V2.26 Added Loading of backup parameters coming from sadmin.cfg
+# 2018_06_04    V2.27 Add User Dir. & Sub-Directory creation . 
 #
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
@@ -56,7 +57,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.26"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.27"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -75,6 +76,12 @@ SADM_RCH_DIR="$SADM_DAT_DIR/rch"            ; export SADM_RCH_DIR       # Result
 SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Network SubNet Info Dir
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
+#
+SADM_USR_DIR="$SADM_BASE_DIR/usr"           ; export SADM_USR_DIR       # Script User directory
+SADM_UBIN_DIR="$SADM_USR_DIR/bin"           ; export SADM_UBIN_DIR      # Script User Bin Dir.
+SADM_ULIB_DIR="$SADM_USR_DIR/lib"           ; export SADM_ULIB_DIR      # Script User Lib Dir.
+SADM_UDOC_DIR="$SADM_USR_DIR/doc"           ; export SADM_UDOC_DIR      # Script User Doc. Dir.
+SADM_UMON_DIR="$SADM_USR_DIR/mon"           ; export SADM_UMON_DIR      # Script User SysMon Scripts
 #
 # SADMIN WEB SITE DIRECTORIES DEFINITION
 SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DOC_DIR  # www Doc Dir
@@ -1625,6 +1632,11 @@ sadm_start() {
     chmod 0775 $SADM_LIB_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
 
+    # If User Directory doesn't exist, create it.
+    [ ! -d "$SADM_USR_DIR" ] && mkdir -p $SADM_USR_DIR
+    chmod 0775 $SADM_USR_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
+
     # If Custom Configuration Directory doesn't exist, create it.
     [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
     chmod 0775 $SADM_CFG_DIR
@@ -1708,6 +1720,26 @@ sadm_start() {
     [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
     chmod 0775 $SADM_RCH_DIR
     chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
+
+    # If User Bin Dir doesn't exist, create it.
+    [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
+    chmod 0775 $SADM_UBIN_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR
+
+    # If User Lib Dir doesn't exist, create it.
+    [ ! -d "$SADM_ULIB_DIR" ] && mkdir -p $SADM_ULIB_DIR
+    chmod 0775 $SADM_ULIB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR
+
+    # If User Doc Directory doesn't exist, create it.
+    [ ! -d "$SADM_UDOC_DIR" ] && mkdir -p $SADM_UDOC_DIR
+    chmod 0775 $SADM_UDOC_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR
+
+    # If User SysMon Scripts Directory doesn't exist, create it.
+    [ ! -d "$SADM_UMON_DIR" ] && mkdir -p $SADM_UMON_DIR
+    chmod 0775 $SADM_UMON_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
     if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
