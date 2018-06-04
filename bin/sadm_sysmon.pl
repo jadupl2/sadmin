@@ -13,6 +13,7 @@
 # 2018_05_07    V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file 
 # 2018_05_14    V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement 
 # 2018_05_27    v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
+# 2018_06_03    v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
 #===================================================================================================
 #
 use English;
@@ -28,7 +29,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.12";                                       # Version Number
+my $VERSION_NUMBER      = "2.13";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -59,7 +60,7 @@ my $SADM_DAT_DIR        = "$SADM_BASE_DIR/dat";                         # SADMIN
 my $SADM_RPT_DIR        = "$SADM_DAT_DIR/rpt";                          # SADMIN Aleret Report File
 my $SADM_CFG_DIR        = "$SADM_BASE_DIR/cfg";                         # SADMIN Configuration Dir.
 my $SADM_RCH_DIR        = "$SADM_DAT_DIR/rch";                          # SADMIN Result Code History
-my $SADM_SCR_DIR        = "$SADM_USR_DIR/sysmon_scripts";               # SADMIN Monitoring Scripts
+my $SADM_SCR_DIR        = "$SADM_USR_DIR/mon";                          # SADMIN Monitoring Scripts
 
 # SYSMON FILES DEFINITION
 my $PSFILE1             = "$SADM_TMP_DIR/PSFILE1.$$";                   # Result of ps command file1
