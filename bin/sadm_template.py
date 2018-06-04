@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-# ==================================================================================================
-#   Author      :   Jacques Duplessis
-#   Date        :   2017-09-09
-#   Name        :   sadm_template_servers.py
-#   Synopsis    :
-#   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
-#                   License, v.2 or above.
-# ==================================================================================================
-#   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
+# --------------------------------------------------------------------------------------------------
+#   Author      :   Your Name
+#   Script Name :   XXXXXXXX.py
+#   Date        :   YYYY/MM/DD
+#   Requires    :   python3 and SADMIN Python Library
+#   Description :
+#
+#   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
+#                   a 100 characters per line. Comments in script always begin at column 73. You 
+#                   will have a better experience, if you set screen width to have at least 100 Chr.
+# 
+# --------------------------------------------------------------------------------------------------
 #
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -19,14 +22,16 @@
 #
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
+# 
 # --------------------------------------------------------------------------------------------------
-# CHANGE LOG
+# Version Change Log 
 # 2017_12_01 V1.0 Initial Version
 # 2018_05_14 V1.7 Add USE_RCH Variabe to use or not the [R]eturn [C]ode [H]istory File
 # 2018_05_15 V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
 # 2018_05_20 V1.9 Restructure the code and added comments
 # 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
-#===================================================================================================
+# 
+# --------------------------------------------------------------------------------------------------
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :

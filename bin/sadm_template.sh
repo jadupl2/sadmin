@@ -1,12 +1,17 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
-#   Title       :   XXXXXXXX.sh
-#   Version     :   1.0
-#   Date        :   DD/MM/YYYY
-#   Requires    :   sh and SADMIN Library
+#   Script Name :   XXXXXXXX.sh
+#   Date        :   YYYY/MM/DD
+#   Requires    :   sh and SADMIN Shell Library
 #   Description :
+#
+#   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
+#                   a 100 characters per line. Comments in script always begin at column 73. You 
+#                   will have a better experience, if you set screen width to have at least 100 Chr.
 # 
+# --------------------------------------------------------------------------------------------------
+#
 #   This code was originally written by Jacques Duplessis <jacques.duplessis@sadmin.ca>.
 #   Developer Web Site : http://www.sadmin.ca
 #
@@ -22,7 +27,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 # --------------------------------------------------------------------------------------------------
-# CHANGELOG
+# Version Change Log 
 #
 # 2017_07_07    V1.0 Initial Version
 # 2018_02_08    v1.1 Fix compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
