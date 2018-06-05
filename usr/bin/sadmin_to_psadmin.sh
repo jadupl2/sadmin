@@ -29,6 +29,7 @@
 # 2017_04_24    V1.3 - Exclude __pycache__ file from update - Setup msg Directory Added
 # 2017_05_01    V1.4 - Test if not root at beginning
 # 2017_06_03    V1.5 - Added usr directory and .backup file in cfg Dir.
+# 2017_06_04    V1.6 - Added usr directory and .backup file in cfg Dir.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='1.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -74,7 +75,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-
 
 
 
@@ -186,7 +186,7 @@ create_release_file()
 {
     wreturn=0                                                           # Return Default Value
 #
-    REL=`cat /sadmin/cfg/.release`                   ; export REL       # Save Release Number
+    REL=`cat ${SADM_CFG_DIR}/.release`               ; export REL       # Save Release Number
     EPOCH=`date +%s`                                 ; export EPOCH     # Current EPOCH Time
     WSADMIN="/wsadmin"                               ; export WSADMIN   # Root Dir of Web Site
 
@@ -241,7 +241,7 @@ main_process()
              return 1
     fi
     cd ${PSADMIN} 
-    if [ "`pwd`" != "/psadmin" ]
+    if [ "`pwd`" != "${PSADMIN}" ]
        then sadm_writelog "Could not cd to ${PSADMIN}, please check that - Abort Process" 
             return 1
     fi
@@ -291,7 +291,7 @@ main_process()
 
     # Rsync Script Directory -----------------------------------------------------------------------
     sadm_writelog " "
-    SDIR="${SADMIN}/bin" ; DDIR="${PSADMIN}/bin"                        # Source & Destination Dir.
+    SDIR="$SADM_BIN_DIR" ; DDIR="${PSADMIN}/bin"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
@@ -299,7 +299,7 @@ main_process()
 
     # Rsync Package Directories --------------------------------------------------------------------
     sadm_writelog " "
-    SDIR="${SADMIN}/pkg" ; DDIR="${PSADMIN}/pkg"                        # Source & Destination Dir.
+    SDIR="$SADM_PKG_DIR" ; DDIR="${PSADMIN}/pkg"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
@@ -307,7 +307,7 @@ main_process()
 
     # Rsync Library Directories --------------------------------------------------------------------
     sadm_writelog " "
-    SDIR="${SADMIN}/lib" ; DDIR="${PSADMIN}/lib"                        # Source & Destination Dir.
+    SDIR="$SADM_LIB_DIR" ; DDIR="${PSADMIN}/lib"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
@@ -344,7 +344,7 @@ main_process()
 
     # Rsync System Directories ---------------------------------------------------------------------
     sadm_writelog " "
-    SDIR="${SADMIN}/sys" ; DDIR="${PSADMIN}/sys"                        # Source & Destination Dir.
+    SDIR="$SADM_SYS_DIR" ; DDIR="${PSADMIN}/sys"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
@@ -410,28 +410,28 @@ main_process()
 
     # COPY $SADMIN/cfg to /psadmin/cfg -------------------------------------------------------------
     sadm_writelog " "
-    sadm_writelog "Syncing cfg directory ${SADMIN}/cfg to ${PSCFG}"
-    run_oscommand "cp ${SADMIN}/cfg/.dbpass ${PSCFG}"
+    sadm_writelog "Syncing cfg directory $SADM_CFG_DIR to ${PSCFG}"
+    run_oscommand "cp $DBPASSFILE ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.dbpass"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.dbpass"
     #
-    run_oscommand "cp ${SADMIN}/cfg/.release ${PSCFG}"
+    run_oscommand "cp ${SADM_CFG_DIR}/.release ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.release"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.release"
     #
-    run_oscommand "cp ${SADMIN}/cfg/.sadmin.cfg ${PSCFG}"
+    run_oscommand "cp ${SADM_CFG_DIR}/.sadmin.cfg ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.sadmin.cfg"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.sadmin.cfg"
     #
-    run_oscommand "cp ${SADMIN}/cfg/.template.smon ${PSCFG}"
+    run_oscommand "cp ${SADM_CFG_DIR}/.template.smon ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.template.smon"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.template.smon"
     #
-    run_oscommand "cp ${SADMIN}/cfg/.backup_list.txt ${PSCFG}"
+    run_oscommand "cp ${SADM_CFG_DIR}/.backup_list.txt ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.backup_list.txt"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_list.txt"
     #
-    run_oscommand "cp ${SADMIN}/cfg/.backup_exclude.txt ${PSCFG}"
+    run_oscommand "cp ${SADM_CFG_DIR}/.backup_exclude.txt ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.backup_exclude.txt"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_exclude.txt"
 
