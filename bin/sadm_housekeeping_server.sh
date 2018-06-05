@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_housekeeping.sh
-#   Synopsis :  Make some general housekeeping that we run once daily to get things running smoothly
+#   Synopsis :  Set Owner/Group, Priv/Protection on www sub-directories and cleanup www/tmp/perf dir.
 #   Version  :  1.0
 #   Date     :  19 December 2015
 #   Requires :  sh
@@ -21,42 +21,55 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Enhancements/Corrections Version Log
-# V1.8 July 2017 - Code enhancement
-# 2018_05_14    JDuplessis
-#   V1.9 Correct problem on MacOS with change owner/group command
+# 2017_07_07    v1.8 Code enhancement
+# 2018_05_14    v1.9 Correct problem on MacOS with change owner/group command
+# 2018_06_05    v2.0 Added www/tmp/perf removal of *.png files older than 5 days.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
-#===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='1.8'                             ; export SADM_VER            # Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh
 
-# These variables are defined in sadmin.cfg file - You can override them on a per script basis
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ;export SADM_SSH_CMD   # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                             ; export SADM_MAIL_TYPE    # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR     # Email Address of owner
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
 
 
 
@@ -92,7 +105,7 @@ set_dir()
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
-             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
+             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
@@ -114,7 +127,7 @@ dir_housekeeping()
     sadm_writelog "Server Directories HouseKeeping Starting"
     sadm_writelog " "
 
-    # Reset privilege on SADMIN Bin Directory files
+    # Reset privilege on WWW Directory files
     if [ -d "$SADM_WWW_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_WWW_DIR -exec chmod -R 775 {} \;"
@@ -123,19 +136,19 @@ dir_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
-
+    # Set Protection and privilege on www/images directory
     if [ -d "$SADM_WWW_IMG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_WWW_IMG_DIR -exec chmod -R 775 {} \;"
@@ -144,7 +157,7 @@ dir_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "find $SADM_WWW_IMG_DIR -name *.ico -exec chmod 664 {} \;"
              find $SADM_WWW_IMG_DIR -name *.ico -exec chmod 664 {} \; >/dev/null 2>&1
@@ -152,7 +165,7 @@ dir_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "find $SADM_WWW_IMG_DIR -name *.png -exec chmod 664 {} \;"
              find $SADM_WWW_IMG_DIR -name *.png -exec chmod 664 {} \; >/dev/null 2>&1
@@ -160,15 +173,15 @@ dir_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-              sadm_writelog "find $SADM_WWW_IMG_DIR -name *.jpg -exec chmod 664 {} \;"
+             sadm_writelog "find $SADM_WWW_IMG_DIR -name *.jpg -exec chmod 664 {} \;"
              find $SADM_WWW_IMG_DIR -name *.jpg -exec chmod 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "find $SADM_WWW_IMG_DIR -name *.gif -exec chmod 664 {} \;"
              find $SADM_WWW_IMG_DIR -name *.gif -exec chmod 664 {} \; >/dev/null 2>&1
@@ -176,18 +189,19 @@ dir_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
 
-             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
+
     return $ERROR_COUNT
 }
 
@@ -201,16 +215,19 @@ file_housekeeping()
     sadm_writelog "Server Files HouseKeeping Starting"
     sadm_writelog " "
 
-    # Delete old RCH Files in /sadmin/www/dat based on number of day specify in sadmin.cfg
-    if [ -d "${SADM_WWW_DIR}/dat" ]
-        then sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DIR}/dat and delete them"
-             find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
-             find ${SADM_WWW_DIR}/dat -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
+    # Delete performance graph (*.png) generated by web interface
+    if [ -d "$SADM_WWW_PERF_DIR" ]
+        then sadm_writelog " " 
+             sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Find any *.png file older than 5 days in $SADM_WWW_PERF_DIR and delete them"
+             sadm_writelog "List of files that will be remove."
+             find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec ls -l {} \; | tee -a $SADM_LOG
+             find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
+                then sadm_writelog "Error occured on remove process."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
@@ -222,7 +239,9 @@ file_housekeeping()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
     # Insure that this script only run on the sadmin server
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN
