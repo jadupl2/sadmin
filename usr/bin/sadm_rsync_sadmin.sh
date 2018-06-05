@@ -145,11 +145,12 @@ create_remote_dir()
 
     # If SSH Connection is OK and BUT Directory doesn't exist on server, then create it
     if [ $RC -eq 2 ]
-        then ssh ${REM_SERVER} mkdir -p ${REM_DIR} >/dev/null 2>&1
-             if [ $RC -eq 0 ] 
+        then ssh ${REM_SERVER} "mkdir -p ${REM_DIR}" >/dev/null 2>&1
+             if [ $RC -eq 0 ] || [ $RC -eq 2 ]
                 then sadm_writelog "[ OK ] Directory ${REM_DIR} exist on ${REM_SERVER}"
+                     RC=0
                      return 0
-                else sadm_writelog "[ ERROR ] Couldn't create directory ${REM_DIR} on ${REM_SERVER}"
+                else sadm_writelog "[ ERROR $RC ] Couldn't create directory ${REM_DIR} on ${REM_SERVER}"
                      return 1
              fi
     fi 
@@ -268,7 +269,7 @@ process_servers()
               for WDIR in "${rem_dir_to_create[@]}"
                 do
     	        create_remote_dir "${server_fqdn}" "${WDIR}"            # If ! Exist create Rem Dir.
-                if [ $RC -ne 0 ]                                        # If were not able
+                if [ $? -ne 0 ]                                         # If were not able
                    then sadm_writelog "[ ERROR ] Creating Dir. ${WDIR} on ${server_fqdn}"
                 fi
                 done             
