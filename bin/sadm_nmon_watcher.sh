@@ -2,70 +2,72 @@
 # --------------------------------------------------------------------------------------------------
 #   Title    : sadm_nmon_watcher.sh 
 #   Author   : Jacques Duplessis 
-#   Synopsis : Restart then nmon daemon, if it's not already running at midnight
+#   Synopsis : Restart nmon daemon, if it's not already running (with end time at 23:58:58)
 #   Version  : 1.5
 #   Date     : November 2015 
 #   Requires : sh
 # --------------------------------------------------------------------------------------------------
-# 1.7   Modification making sure that nmon is available on the server.
-#       If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon.
-# 1.8   Nov 2016
-#       Enhance checking for nmon existence and add some message for user.
-#       ReTested in AIX
-# 1.9   Dec 2016
-#       Change to run on Aix 7.x and minor corrections
-# 2017_12_29 J.Duplessis 
-#       V2.0 Add Warning message stating that nmon not available on MacOS
-# 2017_01_27 J.Duplessis 
-#       V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comments
-# 2017_02_02 J.Duplessis 
-#       V2.2 Show number of nmon running only once, if nmon is already running
-# 2017_02_04 J.Duplessis 
-#       V2.3 Snapshot will be taken every 2 minutes instead of 5.
-# 2017_02_08 J.Duplessis 
-#       V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
+# Change log
+#
+# 2016_10_10    v1.7 Modification making sure that nmon is available on the server.
+#               If not found a copy in /sadmin/pkg/nmon/aix in used to create the link /usr/bin/nmon
+# 2016_11_11    v1.8 Enhance checking for nmon existence and add some message for user, ReTested AIX
+# 2016_12_20    v1.9 Change to run on Aix 7.x and minor corrections
+# 2017_12_29    v2.0 Add Warning message stating that nmon not available on MacOS
+# 2017_01_27    V2.1 Now list two newest nmon files in $SADMIN/dat/nmon & Fix minor Bug & add comment
+# 2017_02_02    V2.2 Show number of nmon running only once, if nmon is already running
+# 2017_02_04    V2.3 Snapshot will be taken every 2 minutes instead of 5.
+# 2017_02_08    V2.4 Fix Compatibility problem with 'sadh' shell (If statement) 
+# 2018_06_04    V2.5 Adapt to new Libr.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
+
+
 #===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $sadmin/lib/sadmlib_test.sh for viewing functions and informations avail. to you .
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to SADMIN directory" ;exit 1 ;fi
-wlib="${SADMIN}/lib/sadmlib_std.sh"                                     # SADMIN Library Location
-if [ ! -f $wlib ] ;then echo "SADMIN Library ($wlib) Not Found" ;exit 1 ;fi
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
-# These are Global variables used by SADMIN Libraries - Some influence the behavior of some function
-# These variables need to be defined prior to loading the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_VER='2.4'                             ; export SADM_VER            # Your Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# Load SADMIN Libraries
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]    && . ${SADMIN}/lib/sadmlib_std.sh
-#
-# These variables are defined in sadmin.cfg file - You can override them here on a per script basis
-# --------------------------------------------------------------------------------------------------
-#SADM_MAX_LOGLINE=5000                     ; export SADM_MAX_LOGLINE  # Max Nb. Lines in LOG file
-#SADM_MAX_RCLINE=100                       ; export SADM_MAX_RCLINE   # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR    # Email Address to send status
-#
-# An email can be sent at the end of the script depending on the ending status
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=OnErr 2=Success 3=All
-#
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
-#
+
+
 
 
 
