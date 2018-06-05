@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_housekeeping.sh
-#   Synopsis : .Make some general housekeeping that we run once daily to get things running smoothly
+#   Synopsis :  Verify existence of SADMIN Dir. along with their Prot/Priv and purge old log,rch,nmon.
 #   Version  :  1.0
 #   Date     :  19 December 2015
 #   Requires :  sh
@@ -21,6 +21,7 @@
 # 2018-01-02    v1.9 Delete file not needed anymore
 # 2018_05_14    v1.10 Correct problem on MacOS with change owner/group command
 # 2018_06_04    v1.11 Add User Directories, Database Backup Directory, New Backup Cfg Files 
+# 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -43,7 +44,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.11'                              # Current Script Version
+    export SADM_VER='1.12'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -113,14 +114,15 @@ set_dir()
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
-             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}:${VAL_GROUP}"
-             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR 
+             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
+             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
-             ls -ld $VAL_DIR | tee -a $SADM_LOG
+             lsline=`ls -ld $VAL_DIR` 
+             sadm_writelog "$lsline"
              if [ $RETURN_CODE = 0 ] ; then sadm_writelog "OK" ; fi
     fi
     return $RETURN_CODE    
@@ -131,6 +133,8 @@ set_dir()
 # --------------------------------------------------------------------------------------------------
 dir_housekeeping()
 {
+    sadm_writelog " "
+    sadm_writelog "$SADM_80_DASH"
     sadm_writelog "CLIENT DIRECTORIES HOUSEKEEPING STARTING"
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
@@ -138,89 +142,88 @@ dir_housekeeping()
       
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    sadm_writelog "chmod g-s $SADM_BASE_DIR"                            # Show User what is done
-    chmod g-s $SADM_BASE_DIR                                            # No Sticky Bit on Base Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_BIN_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN BIN Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_LIB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_DOC_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_TMP_DIR"       "1777" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN TMP Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_LOG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LOG Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_CFG_DIR"       "0755" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_SYS_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SYS Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_DAT_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN DAT Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_DOC_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_LIB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LIB Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_LOG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN LOG Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_PKG_DIR"        "775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN PKG Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
-    set_dir "$SADM_NMON_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN NMON Dir
+    set_dir "$SADM_SETUP_DIR"        "775" "$SADM_USER" "$SADM_GROUP"   # set Priv on setup Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
-    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Disaster Recovery Dir
+    set_dir "$SADM_SYS_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN SYS Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
-    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN RCH Dir
+    set_dir "$SADM_TMP_DIR"       "1777" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN TMP Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_DBB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # Database Backup Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
-
-    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN Network Dir
-    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_USR_DIR"  "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User  Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_UBIN_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User bin Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_ULIB_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User lib Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_UDOC_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set Priv User Doc Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     set_dir "$SADM_UMON_DIR" "0775" "$SADM_USER" "$SADM_GROUP"          # set SysMon Script User Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
-    sadm_writelog "Total Error Count at $ERROR_COUNT"                   # Display Error Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
+    # Subdirectories of $SADMIN/dat
+    set_dir "$SADM_NMON_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN NMON Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_DR_DIR"        "0775" "$SADM_USER" "$SADM_GROUP"     # set Disaster Recovery Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_RCH_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN RCH Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_DBB_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # Database Backup Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
+
+    set_dir "$SADM_NET_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set SADMIN Network Dir
+    ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
+    if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
     # $SADM_BASE_DIR is a filesystem - Put back lost+found to root
     if [ -d "$SADM_BASE_DIR/lost+found" ]
@@ -249,12 +252,14 @@ file_housekeeping()
 {
     sadm_writelog " " 
     sadm_writelog " " 
+    sadm_writelog " "
+    sadm_writelog "$SADM_80_DASH"
     sadm_writelog "CLIENT FILES HOUSEKEEPING STARTING"
     sadm_writelog " "
     sadm_writelog "${SADM_TEN_DASH}"
 
 
-    # If we are not of the SADMIN Server, remove some server files
+    # Remove files that shopuld be there (Only the SADMIN Server not the client)
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
        then sadm_writelog "Remove useless files on client"
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
@@ -269,55 +274,79 @@ file_housekeeping()
     # Make sure the configuration file is at 644
     sadm_writelog "chmod 0644 $SADM_CFG_FILE" 
     chmod 0644 $SADM_CFG_FILE
-    ls -l $SADM_CFG_FILE | tee -a $SADM_LOG
+    lsline=`ls -l $SADM_CFG_FILE`
+    sadm_writelog "$lsline"
 
     sadm_writelog "chmod 0644 $SADM_CFG_HIDDEN" 
     chmod 0644 $SADM_CFG_HIDDEN
-    ls -l $SADM_CFG_HIDDEN | tee -a $SADM_LOG
+    lsline=`ls -l $SADM_CFG_HIDDEN`
+    sadm_writelog "$lsline"
 
     # Make Sysmon Template is 644 
     sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.template.smon" 
     chmod 0644 ${SADM_CFG_DIR}/.template.smon
-    ls -l ${SADM_CFG_DIR}/.template.smon | tee -a $SADM_LOG
+    lsline=`ls -l ${SADM_CFG_DIR}/.template.smon` 
+    sadm_writelog "$lsline"
 
     # Make sure backup files list are 644 
     sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_list.txt" 
     chmod 0644 ${SADM_CFG_DIR}/backup_list.txt
-    ls -l ${SADM_CFG_DIR}/backup_list.txt | tee -a $SADM_LOG
+    lsline=`ls -l ${SADM_CFG_DIR}/backup_list.txt` 
+    sadm_writelog "$lsline"
+    #
     sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt" 
     chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt
-    ls -l ${SADM_CFG_DIR}/.backup_list.txt | tee -a $SADM_LOG
+    lsline=`ls -l ${SADM_CFG_DIR}/.backup_list.txt` 
+    sadm_writelog "$lsline"
 
     # Make sure backup exclude files list are 644 
     sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt" 
     chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt
-    ls -l ${SADM_CFG_DIR}/backup_exclude.txt | tee -a $SADM_LOG
+    lsline=`ls -l ${SADM_CFG_DIR}/backup_exclude.txt` 
+    sadm_writelog "$lsline" 
+    #
     sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt" 
     chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt
-    ls -l ${SADM_CFG_DIR}/.backup_exclude.txt | tee -a $SADM_LOG
+    lsline=`ls -l ${SADM_CFG_DIR}/.backup_exclude.txt` 
+    sadm_writelog "$lsline" 
 
     if [ -f $SADM_WWW_LIB_DIR/.crontab.txt ] 
         then sadm_writelog "chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt" 
              chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt
-             ls -l $SADM_WWW_LIB_DIR/.crontab.txt | tee -a $SADM_LOG
+             lsline=`ls -l $SADM_WWW_LIB_DIR/.crontab.txt` 
+             sadm_writelog "$lsline" 
     fi
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
-        then chmod 664 ${SADM_BASE_DIR}/README.md
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+        then sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md" 
+             chmod 664 ${SADM_BASE_DIR}/README.md
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+             lsline=`ls -l ${SADM_BASE_DIR}/README.md` 
+             sadm_writelog "$lsline" 
     fi
+
+    # Set Owner and Permission for license file
+    if [ -f ${SADM_BASE_DIR}/LICENSE ]
+        then sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/LICENSE" 
+             chmod 664 ${SADM_BASE_DIR}/LICENSE
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_BASE_DIR}/LICENSE
+             lsline=`ls -l ${SADM_BASE_DIR}/LICENSE` 
+             sadm_writelog "$lsline" 
+    fi
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
 
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
     if [ -d "$SADM_DAT_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_DAT_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "find $SADM_DAT_DIR -type f -exec chmod 664 {} \;"
              find $SADM_DAT_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1 
@@ -325,20 +354,20 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
     # Make sure LOG Directory $SADM_LOG_DIR Directory files is own by sadmin
     if [ -d "$SADM_LOG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_LOG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "find $SADM_LOG_DIR -type f -exec chmod 664 {} \;"
              find $SADM_LOG_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1 
@@ -346,29 +375,44 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
     # Make sure User (Use for Development) Directory have proper permission
-    JACDIR="${SADM_BASE_DIR}/usr" 
-    if [ -d "$JACDIR" ]
+    if [ -d "${SADM_USR_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $JACDIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $JACDIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $JACDIR -type f -exec chmod 664 {} \;"
-             find $JACDIR -type f -exec chmod 775 {} \; >/dev/null 2>&1 
+             sadm_writelog "find ${SADM_USR_DIR} -type f -exec chmod 664 {} \;"
+             find ${SADM_USR_DIR} -type f -exec chmod 664 {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+             sadm_writelog "find ${SADM_UBIN_DIR} -type f -exec chmod 775 {} \;"
+             find ${SADM_UBIN_DIR} -type f -exec chmod 775 {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+             sadm_writelog "find ${SADM_UMON_DIR} -type f -exec chmod 775 {} \;"
+             find ${SADM_UMON_DIR} -type f -exec chmod 775 {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
@@ -382,15 +426,15 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_SYS_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
       
@@ -403,15 +447,15 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_BIN_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
@@ -424,15 +468,15 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_LIB_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
@@ -446,15 +490,15 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_PKG_DIR -exec chown ${SADM_USER}:${SADM_GROUP} {} \;"
-             find $SADM_PKG_DIR -exec chown ${SADM_USER}:${SADM_GROUP} {} \; >/dev/null 2>&1 
+             sadm_writelog "find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_PKG_DIR -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
@@ -470,7 +514,7 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "Delete pid files once a day - To prevent cause script not to run"
@@ -482,8 +526,9 @@ file_housekeeping()
     # Remove *.rch (Return Code History) files older than ${SADM_RCH_KEEPDAYS} days in SADMIN/DAT/RCH Dir.
     if [ -d "${SADM_RCH_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Keep rch files for ${SADM_RCH_KEEPDAYS} days"
+             sadm_writelog "You have chosen to keep *.rch files for ${SADM_RCH_KEEPDAYS} days (sadmin.cfg)."
              sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR} and delete them"
+             sadm_writelog "List of rch file that will be deleted"
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;" 
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
@@ -491,15 +536,16 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
     # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Keep log files for ${SADM_LOG_KEEPDAYS} days"
+             sadm_writelog "You have chosen to keep *.log files for ${SADM_LOG_KEEPDAYS} days (sadmin.cfg)."
              sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR} and delete them"
+             sadm_writelog "List of log file that will be deleted"
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;" 
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
@@ -507,14 +553,14 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
     # Delete old nmon files - As defined in the sadmin.cfg file
     if [ -d "${SADM_NMON_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Keep nmon files for $SADM_NMON_KEEPDAYS days"
+             sadm_writelog "You have chosen to keep *.nmon files for $SADM_NMON_KEEPDAYS days (sadmin.cfg)."
              sadm_writelog "List of nmon file that will be deleted"
              sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;"
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
@@ -524,7 +570,7 @@ file_housekeeping()
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
     fi
 
