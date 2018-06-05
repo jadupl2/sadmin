@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis 
 #   Title       :   sadm_nmon_rrd_update.sh
-#   Synopsis    :   Script to Update the RRD (Roud Robin Database) Stat. file from nmon output file.
+#   Synopsis    :   Script that Create/Update RRD (Round Robin Database) file from nmon output file.
 #                   This script Read the nmon file (ex: server1_130324_0000.nmon) and update the
 #                   statistic in the Proper RRD File.
 #                   When the server RRD file is not found, it is created, then updated.
@@ -25,68 +25,70 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_01_13 JDuplessis V1.0b - Initial Version
-# 2018_01_20 JDuplessis V1.0c - Work in Progress
-# 2018_01_21 JDuplessis V1.0d - Work in Progress
-# 2018_01_22 JDuplessis V1.0e - Work in Progress
-# 2018_01_23 JDuplessis V1.0f - First woking Version
-# 2018_01_24 JDuplessis V1.1  - Add Sub and Total for Error and Success After RRD Update
-# 2018_01_25 JDuplessis 
-#   V1.2 - Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
-#   V1.2a - Added removal on work temp. file at the end
-# 2018_01_28 JDuplessis 
-#   V1.3 - Add nmon file counter during process & bug fix
-# 2018_02_04 JDuplessis 
-#   V1.4 - List of all nmon files this script will process before update rrd begin.
-# 2018_02_07 JDuplessis 
-#   V1.5 - Remove some log entry not needed
-# 2018_02_08 JDuplessis 
-#   V1.6 - Fix Compatibility Problem with 'dash' shell (if statement)
-# 2018_02_08 JDuplessis 
-#   V1.7 - Fix Minor Problem with Netdev Counter
-# 2018_02_11 JDuplessis 
-#   V1.8 - Small Message Change
-# 2018_02_12 JDuplessis 
-#   V1.9 - Add RRD Update Warning Total after each file processed.
+# 2018_01_13    V1.0b Initial Version
+# 2018_01_20    V1.0c Work in Progress
+# 2018_01_21    V1.0d Work in Progress
+# 2018_01_22    V1.0e Work in Progress
+# 2018_01_23    V1.0f First woking Version
+# 2018_01_24    V1.1 Add Sub and Total for Error and Success After RRD Update
+# 2018_01_25    V1.2 Check if epoch time is less than last rrd epoch before rrdupdate & show friendly message
+#               V1.2a Added removal on work temp. file at the end
+# 2018_01_28    V1.3 Add nmon file counter during process & bug fix
+# 2018_02_04    V1.4 List of all nmon files this script will process before update rrd begin.
+# 2018_02_07    V1.5 Remove some log entry not needed
+# 2018_02_08    V1.6 Fix Compatibility Problem with 'dash' shell (if statement)
+# 2018_02_08    V1.7 Fix Minor Problem with Netdev Counter
+# 2018_02_11    V1.8 Small Message Change
+# 2018_02_12    V1.9 Add RRD Update Warning Total after each file processed.
+# 2018_06_04    v2.0 Adapt to new SADMIN Libr.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.9'                             ; export SADM_VER           # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-SADM_MAX_LOGLINE=29000                     ; export SADM_MAX_LOGLINE    # Max Nb. Lines in LOG 
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+
+
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
 
 
 
