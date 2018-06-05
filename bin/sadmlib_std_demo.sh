@@ -19,7 +19,7 @@
 # 2018_05_27    v3.1 Replace setup_sadmin Function by putting code at the beginning of source.
 # 2018_05_28    v3.2 Add Backup Parameters that come from sadmin.cfg from now on.
 # 2018_06_04    v3.3 Added User Directory Environment Variables in SADMIN Client Section
-#
+# 2018_06_05    v3.4 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf Display
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -39,13 +39,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.3'                               # Current Script Version
+    export SADM_VER='3.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="N"                             # Generate entry in Return Code History .rch
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -461,6 +461,11 @@ print_client_directory()
     presult="$SADM_DBB_DIR"                                             # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
         
+    pexample="\$SADM_SETUP_DIR"                                         # Directory Variable Name
+    pdesc="SADMIN Installation/Update Dir."                             # Directory Description
+    presult="$SADM_SETUP_DIR"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+        
     pexample="\$SADM_USR_DIR"                                           # Directory Variable Name
     pdesc="User/System specific directory "                             # Directory Description
     presult="$SADM_USR_DIR"                                             # Actual Content of Variable
@@ -519,6 +524,11 @@ print_server_directory()
     pexample="\$SADM_WWW_TMP_DIR"                                       # Directory Variable Name
     pdesc="SADMIN Web Temp Working Directory"                           # Directory Description
     presult="$SADM_WWW_TMP_DIR"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+            
+    pexample="\$SADM_WWW_PERF_DIR"                                      # Directory Variable Name
+    pdesc="SADMIN Web Performance Graph Dir."                           # Directory Description
+    presult="$SADM_WWW_PERF_DIR"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
 }
