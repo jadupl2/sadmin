@@ -7,58 +7,70 @@
 #   Update  :   March 2015 -  J.Duplessis
 #
 # --------------------------------------------------------------------------------------------------
-# Version 2.6 - Nov 2016
-#       Insert Logic to Reboot the server after a successfull update
-#        (If Specified in Server information in the Database)
-#        The script receive a Y or N (Uppercase) as the first command line parameter to
-#        indicate if a reboot is requested.
-# Version 2.7 - Nov 2016
-#       Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected when checking
-#       if update were available. Now Script return an error (1) when checking for update.
-# Version 2.8 - Dec 2016
-#       Correction minor bug with shutdown reboot command on Raspberry Pi
-#       Now Checking if Script is running of SADMIN server at the beginning
-#           - No automatic reboot on the SADMIN server while it is use to start update on client
-# Version 2.9 - April 2017
-#       Added Support for Linux Mint
-# Version 3.0 - April 2017
-#       Not detecting Error correctly on Debian Family update
-#       Add Error Message in the Log
-# Version 3.2 - July 2017 
-#       Now using DNF instead of yum for updating Fedora 25 and beyong.
-# Version 3.3 - December 2017 
-#       No longer Support Redhat/CentOS 3 and 4
+# 2016_11_06    V2.6 Insert Logic to Reboot the server after a successfull update
+#                    (If Specified in Server information in the Database)
+#                    The script receive a Y or N (Uppercase) as the first command line parameter to
+#                    indicate if a reboot is requested.
+# 2016_11_10    v2.7 Script Return code (SADM_EXIT_CODE) was set to 0 even if Error were detected 
+#                    when checking if update were available. 
+#                    Now Script return an error (1) when checking for update.
+# 2016_12_12    v2.8 Correction minor bug with shutdown reboot command on Raspberry Pi
+#                    Now Checking if Script is running of SADMIN server at the beginning
+#                    No automatic reboot on SADMIN server while it is use to start update on client
+# 2017_04_09    v2.9 Added Support for Linux Mint
+# 2017_04_10    v3.0 Not detecting Error correctly on Debian Family update, Add Error Message in Log
+# 2017_07_08    v3.2 Now using DNF instead of yum for updating Fedora 25 and beyong.
+# 2017_12_10    v3.4 No longer Support Redhat/CentOS 3 and 4
+# 2018_06_05    v3.5 Adapt to new SADMIN Libr.
 # --------------------------------------------------------------------------------------------------
-#
-
 #set -x
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Current Script name
-SADM_VER='3.3'                             ; export SADM_VER            # This Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Error Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Directory
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
 
-# --------------------------------------------------------------------------------------------------
-# Define SADMIN Tool Library location and Load them in memory, so they are ready to be used
-# --------------------------------------------------------------------------------------------------
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh
 
-#
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Default is in sadmin.cfg
-SADM_MAIL_TYPE=3                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
-#SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
+
+
 
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    export SADM_MAIL_TYPE=3                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
+
 
 # --------------------------------------------------------------------------------------------------
 #                               Script Variables definition
