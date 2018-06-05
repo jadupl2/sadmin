@@ -27,6 +27,7 @@
 # 2018_05_26    V2.14 Add Param to writelog for Bold Attribute & Remove some unused Variables 
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
+# 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
 #
 #==================================================================================================
 try :
@@ -98,7 +99,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.16"                                # This Library Version
+        self.libver             = "2.17"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -150,6 +151,7 @@ class sadmtools():
         self.www_doc_dir        = os.path.join(self.www_dir,'doc')      # SADM Web Site Doc Dir
         self.www_lib_dir        = os.path.join(self.www_dir,'lib')      # SADM Web Site Lib Dir
         self.www_tmp_dir        = os.path.join(self.www_dir,'tmp')      # SADM Web Site Tmp Dir
+        self.www_perf_dir       = os.path.join(self.www_tmp_dir,'perf') # SADM Web Perf. Graph Dir
         self.www_net_dir        = self.www_dat_dir + '/' + self.hostname + '/net' # Web Data Net.Dir
         
         # SADM Files Definition
@@ -1061,6 +1063,9 @@ class sadmtools():
             #
             if not os.path.exists(self.www_tmp_dir)  : os.mkdir(self.www_tmp_dir,0o0775) # Tmp  Dir.
             os.chown(self.www_tmp_dir, wuid, wgid)                      # Change owner of tmp file
+            #
+            if not os.path.exists(self.www_perf_dir)  : os.mkdir(self.www_perf_dir,0o0775) # Tmp  Dir.
+            os.chown(self.www_perf_dir, wuid, wgid)                     # Owner/Group for Perf.Graph
     
         
         # Write SADM Header to Script Log
