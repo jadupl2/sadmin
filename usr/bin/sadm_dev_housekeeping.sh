@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_housekeeping.sh
+#   Title    :  sadm_dev_housekeeping.sh
 #   Synopsis : .Make some general housekeeping that we run once daily to get things running smoothly
 #   Version  :  1.0
 #   Date     :  19 December 2015
@@ -16,45 +16,58 @@
 #   See the GNU General Public License for more details.
 #
 # --------------------------------------------------------------------------------------------------
-# 1.6 - 2017_01_27 - Cosmetic Changes to improve log Details
-
-# 2017_10_02 - JDuplessis
-#   V1.7 Added housekeeping for sadmin.ca web site under wsadmin directory
-
+# 2017_01_27    v1.6 Cosmetic Changes to improve log Details
+# 2017_10_02    v1.7 Added housekeeping for sadmin.ca web site under wsadmin directory
+# 2018_06_04    v1.8 Change $SADMIN/jac sub-directory to $SADMIN/usr
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-#===================================================================================================
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-#   Please refer to the file $sadm_base_dir/lib/sadm_lib_std.txt for a description of each
-#   variables and functions available to you when using the SADMIN functions Library
-# --------------------------------------------------------------------------------------------------
-# Global variables used by the SADMIN Libraries - Some influence the behavior of function in Library
-# These variables need to be defined prior to load the SADMIN function Libraries
-# --------------------------------------------------------------------------------------------------
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_VER='1.7'                             ; export SADM_VER            # Script Version
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # 4Logger S=Scr L=Log B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-[ -f ${SADM_BASE_DIR}/lib/sadmlib_std.sh ]    && . ${SADM_BASE_DIR}/lib/sadmlib_std.sh
 
-
-# These variables are defined in sadmin.cfg file - You can also change them on a per script basis
-SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT}" ; export SADM_SSH_CMD  # SSH Command to Access Farm
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=Err 2=Succes 3=All
-#SADM_MAX_LOGLINE=5000                       ; export SADM_MAX_LOGLINE   # Max Nb. Lines in LOG )
-#SADM_MAX_RCLINE=100                         ; export SADM_MAX_RCLINE    # Max Nb. Lines in RCH file
-#SADM_MAIL_ADDR="your_email@domain.com"      ; export ADM_MAIL_ADDR      # Email Address of owner
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
+
+
 
 
 
@@ -172,7 +185,7 @@ dir_housekeeping()
 
     if [ -d "/wsadmin" ]
         then sadm_writelog " "
-             sadm_writelog "/wsadmin - sadmin.ca development web site " "
+             sadm_writelog "/wsadmin - sadmin.ca development web site " 
              sadm_writelog "find /wsadmin -exec chown apache.apache {} \;"
              find /wsadmin -exec chown apache.apache {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
@@ -213,12 +226,12 @@ dir_housekeeping()
     fi
 
 
-    # Make sure directory exist - Contains Storix Custom Scripts Distributed by sadm_rsync_sadmin.sh
-    if [ -d "/sadmin/jac" ]
+    # Make sure ${SADM_USR_DIR} directory exist 
+    if [ -d "$SADM_USR_DIR" ]
         then sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right owner"
-             sadm_writelog "chown ${SADM_USER}.${SADM_GROUP} /sadmin/jac"
-             chown ${SADM_USER}.${SADM_GROUP} /sadmin/jac
+             sadm_writelog "Make sure ${SADM_USR_DIR} have right owner"
+             sadm_writelog "chown ${SADM_USER}.${SADM_GROUP} ${SADM_USR_DIR}"
+             chown ${SADM_USER}.${SADM_GROUP} ${SADM_USR_DIR}
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -226,9 +239,9 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
               fi
              sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right permission"
-             sadm_writelog "chmod 0775 /sadmin/jac"
-             chmod 0775 /sadmin/jac
+             sadm_writelog "Make sure ${SADM_USR_DIR} have right permission"
+             sadm_writelog "chmod 0775 ${SADM_USR_DIR}"
+             chmod 0775 ${SADM_USR_DIR}
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -236,8 +249,8 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog " "
-             sadm_writelog "Make sure /sadmin/jac have right permission"
-             sadm_writelog "chmod g-s /sadmin/jac"
+             sadm_writelog "Make sure ${SADM_USR_DIR} have right permission"
+             sadm_writelog "chmod g-s ${SADM_USR_DIR}"
              chmod g-s /sadmin/jac
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -247,11 +260,11 @@ dir_housekeeping()
              fi
     fi
 
-     # Reset privilege on directory in /sadmin/jac
-    if [ -d "$SADM_BASE_DIR/jac" ]
+     # Reset privilege on directory in ${SADM_USR_DIR}
+    if [ -d "${SADM_USR_DIR}" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"       # Change Dir.
-             find $SADM_BASE_DIR/jac -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1     # Change Dir.
+             sadm_writelog "find ${SADM_USR_DIR} -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find ${SADM_USR_DIR} -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -259,8 +272,8 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
              sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \;"       # Change Dir.
-             find $SADM_BASE_DIR/jac -type d -exec chmod 775 {} \; >/dev/null 2>&1     # Change Dir.
+             sadm_writelog "find ${SADM_USR_DIR} -type d -exec chmod 775 {} \;"       # Change Dir.
+             find ${SADM_USR_DIR} -type d -exec chmod 775 {} \; >/dev/null 2>&1     # Change Dir.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -284,10 +297,10 @@ file_housekeeping()
     sadm_writelog "${SADM_TEN_DASH}"
 
     # Reset privilege on directory /sadmin/jac
-    if [ -d "$SADM_BASE_DIR/jac" ]
+    if [ -d "${SADM_USR_DIR}" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
-             find $SADM_BASE_DIR/jac -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -298,10 +311,10 @@ file_housekeeping()
 
 
     # Reset privilege on notes directories
-    if [ -d "$SADM_BASE_DIR/jac/notes" ]
+    if [ -d "${SADM_USR_DIR}/notes" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \;"
-             find $SADM_BASE_DIR/jac/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
+             sadm_writelog "find ${SADM_USR_DIR}/notes -type f -exec chmod -R 664 {} \;"
+             find ${SADM_USR_DIR}/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -311,10 +324,10 @@ file_housekeeping()
     fi
 
     # Reset privilege on /sadmin/jac/cfg directories
-    if [ -d "$SADM_BASE_DIR/jac/cfg" ]
+    if [ -d "${SADM_USR_DIR}/cfg" ]
         then sadm_writelog " "
-             sadm_writelog "find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \;"
-             find $SADM_BASE_DIR/jac/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
+             sadm_writelog "find ${SADM_USR_DIR}/cfg -type f -exec chmod -R 664 {} \;"
+             find ${SADM_USR_DIR}/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -324,10 +337,10 @@ file_housekeeping()
     fi
 
     # Reset privilege on /sadmin files
-    if [ -d "${SADM_BASE_DIR}/jac/bin" ]
+    if [ -d "${SADM_UBIN_DIR}" ]
         then sadm_writelog " "
-             sadm_writelog "find ${SADM_BASE_DIR}/jac/bin -type f -exec chmod -R 770 {} \;"    # Advise user
-             find ${SADM_BASE_DIR}/jac/bin -type f -exec chmod -R 774 {} \; >/dev/null 2>&1  # Script Priv.
+             sadm_writelog "find ${SADM_UBIN_DIR} -type f -exec chmod -R 770 {} \;"    # Advise user
+             find ${SADM_UBIN_DIR} -type f -exec chmod -R 774 {} \; >/dev/null 2>&1  # Script Priv.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -396,13 +409,15 @@ special_housekeeping()
 # --------------------------------------------------------------------------------------------------
     sadm_start                                                          # Init Env. Dir & RC/Log File
 
-    # Insure that this script can only be run by the user root
+    
+    # If you want this script to be run only by 'root'.
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
     fi
+
 
     # If jacques user is not created - Let's created it and put user is sadmin group
     grep "^jacques:" /etc/passwd >/dev/null 2>&1                        # jacques User Defined ?

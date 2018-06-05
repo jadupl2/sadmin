@@ -2,7 +2,7 @@
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_pssh_create_file.py
-#   Synopsis:   Create *.txt file use by pssh in $SADMIN/jac/cfg/pssh
+#   Synopsis:   Create *.txt file use by pssh in $SADMIN/usr/cfg/pssh
 #===================================================================================================
 # Description
 #
@@ -110,9 +110,9 @@ def initSADM():
 def process_servers(wconn,wcur,st):
     """process_servers function(wconn,wcur,st) """
 
-    pssh_aix      = st.base_dir + '/jac/cfg/pssh/pssh_aix.txt'          # File List of aix servers  
-    pssh_linux    = st.base_dir + '/jac/cfg/pssh/pssh_linux.txt'        # File List of linux servers  
-    pssh_servers  = st.base_dir + '/jac/cfg/pssh/pssh_servers.txt'      # File List of ALL servers
+    pssh_aix      = st.usr_dir + '/cfg/pssh/pssh_aix.txt'               # File List of aix servers  
+    pssh_linux    = st.usr_dir + '/cfg/pssh/pssh_linux.txt'             # File List of linux servers  
+    pssh_servers  = st.usr_dir + '/cfg/pssh/pssh_servers.txt'           # File List of ALL servers
 
     # Read All Actives Servers
     sql  = "SELECT srv_name,srv_ostype,srv_domain,srv_active "
@@ -172,14 +172,6 @@ def process_servers(wconn,wcur,st):
     return 0
    
 
-#===================================================================================================
-#                                   Script Main Process Function
-#===================================================================================================
-def main_process(wconn,wcur,st):
-    pass 
-    return (0)                                                       # Return Error Code To Caller
-
-
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
@@ -190,11 +182,11 @@ def main():
 
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
-       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
-       st.writelog ("Try sudo ./%s" % (st.pn))                          # Suggest to use 'sudo'
-       st.writelog ("Process aborted")                                  # Process Aborted Msg
-       st.stop (1)                                                      # Close and Trim Log/Email
-       sys.exit(1)                                                      # Exit with Error Code
+        st.writelog ("This script must be run by the 'root' user")      # Advise User Message / Log
+        st.writelog ("Try sudo ./%s" % (st.pn))                         # Suggest to use 'sudo'
+        st.writelog ("Process aborted")                                 # Process Aborted Msg
+        st.stop (1)                                                     # Close and Trim Log/Email
+        sys.exit(1)                                                     # Exit with Error Code
     
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
@@ -206,7 +198,6 @@ def main():
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
-    #st.exit_code = main_process(conn,cur,st)                           # Process Unrelated 2 server 
     if st.get_fqdn() == st.cfg_server:                                  # If Run on SADMIN Server
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment

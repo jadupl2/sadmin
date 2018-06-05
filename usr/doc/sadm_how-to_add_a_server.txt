@@ -1,0 +1,149 @@
+root@raspi4:~# ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa):
+Created directory '/root/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+9c:bf:2d:be:3b:ce:4d:bf:72:c4:d4:4d:41:cc:57:25 root@raspi4
+The key's randomart image is:
++---[RSA 2048]----+
+|              Eo*|
+|               +o|
+|               oo|
+|       . .    . o|
+|        S    o   |
+|         .    o  |
+|          . ..   |
+|         .o=...  |
+|         oB=ooo. |
++-----------------+
+root@raspi4:~# ls -al
+total 24
+drwx------  3 root root 4096 May 18 20:33 .
+drwxr-xr-x 21 root root 4096 May 10 23:50 ..
+-rw-------  1 root root   49 May 15 23:05 .bash_history
+-rw-r--r--  1 root root  570 Jan 31  2010 .bashrc
+-rw-r--r--  1 root root  140 Nov 19  2007 .profile
+drwx------  2 root root 4096 May 18 20:33 .ssh
+
+
+root@raspi4:~# mkdir /sadmin
+root@raspi4:~# mkdir /sadmin/bin
+root@raspi4:~# mkdir /sadmin/lib
+root@raspi4:~# mkdir /sadmin/cfg
+root@raspi4:~# mkdir /sadmin/pkg
+root@raspi4:~# mkdir -p /sadmin/jac/bin
+
+root@holmes:~/.ssh# scp holmes_ssh.pub raspi4:/root/.ssh
+root@raspi4's password:
+holmes_ssh.pub                                       100%  403     0.4KB/s   00:00
+root@holmes:~/.ssh#
+
+root@raspi4:~/.ssh# pwd
+/root/.ssh
+root@raspi4:~/.ssh# ls -l
+total 12
+-rw-r--r-- 1 root root  403 May 18 20:45 holmes_ssh.pub
+-rw------- 1 root root 1679 May 18 20:33 id_rsa
+-rw-r--r-- 1 root root  393 May 18 20:33 id_rsa.pub
+root@raspi4:~/.ssh# cp holmes_ssh.pub authorized_keys
+root@raspi4:~/.ssh# ls -l
+total 16
+-rw-r--r-- 1 root root  403 May 18 20:51 authorized_keys
+-rw-r--r-- 1 root root  403 May 18 20:45 holmes_ssh.pub
+-rw------- 1 root root 1679 May 18 20:33 id_rsa
+-rw-r--r-- 1 root root  393 May 18 20:33 id_rsa.pub
+root@raspi4:~/.ssh#
+
+
+Test Connexion from sadmin server
+root@holmes:~/.ssh# ssh raspi4
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Wed May 18 20:46:04 2016 from holmes.maison.ca
+root@raspi4:~#
+
+
+root@raspi4:~#
+root@raspi4:~# crontab -l
+# Edit this file to introduce tasks to be run by cron.
+#
+# Each task to run has to be defined through a single line
+# indicating with different fields when the task will be run
+# and what command to run for the task
+#
+# To define the time you can provide concrete values for
+# minute (m), hour (h), day of month (dom), month (mon),
+# and day of week (dow) or use '*' in these fields (for 'any').#
+# Notice that tasks will be started based on the cron's system
+# daemon's notion of time and timezones.
+#
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+#
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+#
+# For more information see the manual pages of crontab(5) and cron(8)
+#
+# m h  dom mon dow   command
+# Cron does not get a Path when it is run - So We put a standard PATH here
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+#
+#
+# ==========================================================================
+#        S A D M I N    C L I E N T    T O O L S    S E C T I O N
+# ==========================================================================
+#
+# Save filesystems Info in case of disaster  (Collect by sadmin server)
+02 05 * * * /sadmin/bin/sadm_fs_save_info.sh >/dev/null 2>&1
+#
+# Produce html page containing configuration (Collect by sadmin server)
+04 05 * * * /sadmin/bin/sadm_create_cfg2html.sh >/dev/null 2>&1
+#
+# Generate System Configuration for this server (Collect by sadmin server)
+06 05 * * * /sadmin/bin/sadm_create_server_info.sh >/dev/null 2>&1
+#
+# Once a day just before midnight - Create daily Linux performance data file
+55 23 * * * /sadmin/bin/sadm_create_sar_perfdata.sh > /dev/null 2>&1
+#
+# Once a day - Delete old rch and log files & chown+chmod on SADMIN client
+00 21 * * * /sadmin/bin/sadm_housekeeping_client.sh >/dev/null 2>&1
+#
+# At midnight Kill nmon & restart nmon - Prune log to keep 90 days of logs
+0 0 * * *    /sadmin/bin/sadm_nmon_midnight_restart.sh >/dev/null 2>&1
+#
+# Every 20 min. verify if daemon is running
+#  - If not running start it with proper parameters so it finish at 23:55
+*/20 * * * * /sadmin/bin/sadm_nmon_watcher.sh >/dev/null 2>&1
+#
+#
+#
+#
+# ==========================================================================
+#      J A C K    S E R V E R    M A I N T E N A N C E    S C R I P T S
+# ==========================================================================
+#
+# Once a day - Delete old rch and log files & chown+chmod in SADMIN
+15 16 * * *  /sadmin/jac/bin/sadm_housekeeping.sh >/dev/null 2>&1
+#
+
+root@raspi4:~#
+
+
+
+
+
+
+
+
+

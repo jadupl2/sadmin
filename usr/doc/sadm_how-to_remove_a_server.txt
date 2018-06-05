@@ -1,0 +1,104 @@
+====================================================================================================
+HOW-TO - DELETE A SERVER FROM SADMIN
+(IN THIS EXAMPLE WE DELETE A SERVER NAMED 'gandhi')
+====================================================================================================
+
+
+LOG IN AS 'sadmin' user
+====================================================================================================
+root@holmes:/sadmin/jac/notes# su - sadmin
+[sadmin@holmes ~]$ 
+
+
+[sadmin@holmes ~]$ psql sadmin
+psql (9.2.15)
+Type "help" for help.
+
+sadmin=# 
+sadmin=# select srv_name, srv_desc FROM sadm.server;
+  srv_name   |        srv_desc
+-------------+------------------------
+ gumby       | Old Management Server
+ rhel3       | Red Hat Enterprise V3
+ gollum      | Linux Cluster Node
+ yoda        | Laptop CentOS 7
+ aixb50      | Dev Server Aix 5.3
+ ubuntu1204  | Ubuntu 12.04 Server
+ rhel4       | Red Hat Enterprise V4
+ gandhiw     | Laptop Ubuntu 16.06
+ centos5     | CentOS V5 Server
+ holmes      | SADMIN Server
+ nano        | Laptop Acer Aspire One
+ raspberrypi | Raspberry Pi V1
+ nomad       | DNS, Sysinfo Server
+ centos7     | CentOS V7 Server
+ gandalf     | Linux Cluster Node
+ batman      | Aix 7.1 NIM Server
+ raspi3w     | Raspberry Pi V3
+ puppet      | Puppet Server
+ gandhi      |                         <----- Server to delete
+ fedora23    | Fedora 23 Server
+ gotham      | Test Server
+ bilbo       | Linux Cluster Node
+ centos6     | CentOS V6 Server
+(23 rows)
+
+sadmin=#
+sadmin=# select srv_name, srv_desc FROM sadm.server where srv_name = 'gandhi' ;
+ srv_name | srv_desc
+----------+----------
+ gandhi   |
+(1 row)
+
+sadmin=# delete FROM sadm.server where srv_name = 'gandhi' ;
+DELETE 1
+sadmin=# select srv_name, srv_desc FROM sadm.server where srv_name = 'gandhi' ;
+ srv_name | srv_desc
+----------+----------
+(0 rows)
+
+sadmin=#
+sadmin=# select srv_name, srv_desc FROM sadm.server;
+  srv_name   |        srv_desc
+-------------+------------------------
+ gumby       | Old Management Server
+ rhel3       | Red Hat Enterprise V3
+ gollum      | Linux Cluster Node
+ yoda        | Laptop CentOS 7
+ aixb50      | Dev Server Aix 5.3
+ ubuntu1204  | Ubuntu 12.04 Server
+ rhel4       | Red Hat Enterprise V4
+ gandhiw     | Laptop Ubuntu 16.06
+ centos5     | CentOS V5 Server
+ holmes      | SADMIN Server
+ nano        | Laptop Acer Aspire One
+ raspberrypi | Raspberry Pi V1
+ nomad       | DNS, Sysinfo Server
+ centos7     | CentOS V7 Server
+ gandalf     | Linux Cluster Node
+ batman      | Aix 7.1 NIM Server
+ raspi3w     | Raspberry Pi V3
+ puppet      | Puppet Server
+ fedora23    | Fedora 23 Server
+ gotham      | Test Server
+ bilbo       | Linux Cluster Node
+ centos6     | CentOS V6 Server
+(22 rows)
+
+sadmin=#
+====================================================================================================
+root@holmes:/sadmin/jac/notes# cd /sadmin/www/dat
+root@holmes:/sadmin/www/dat# ls
+aixb50  bilbo    centos6  fedora23  gandhi   gollum  gumby   nano   puppet       raspi3w  rhel4       yoda
+batman  centos5  centos7  gandalf   gandhiw  gotham  holmes  nomad  raspberrypi  rhel3    ubuntu1204
+root@holmes:/sadmin/www/dat#
+root@holmes:/sadmin/www/dat#
+root@holmes:/sadmin/www/dat#
+root@holmes:/sadmin/www/dat# rm -fr gandhi
+root@holmes:/sadmin/www/dat# ls
+aixb50  bilbo    centos6  fedora23  gandhiw  gotham  holmes  nomad   raspberrypi  rhel3  ubuntu1204
+batman  centos5  centos7  gandalf   gollum   gumby   nano    puppet  raspi3w      rhel4  yoda
+root@holmes:/sadmin/www/dat#
+
+====================================================================================================
+

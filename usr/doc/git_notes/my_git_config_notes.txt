@@ -1,0 +1,1816 @@
+GIT CONFIG COMMANDS
+
+Command line user configuration exmaple
+# git config --global user.name "John Doe"
+# git config --global user.email johndoe@example.com
+# git config --global core.editor emacs
+# git config --global merge.tool vimdiff
+# git config --global color.ui color    (Important message or heading in color)
+# git config --global commit.template $HOME/.gitmessage.txt
+
+Level of configuration
+# git config --system. /etc/gitconfig     	# System Global setting
+# git config --global ~/.gitconfig		    # User Setting
+# git config .git/config				    # Repository Setting
+
+Listing configuration
+# git config --list
+
+$ cat ˜.gitconfig
+[user]
+	name = Jacques Duplessis
+	mail = duplessis.jacques@gmail.com
+[color]
+	ui = color
+
+
+GIT SERVER CONFIGURATION
+
+--------------------------------------------------------------------------------------------------------------- 16:30:03
+root@nomad:/etc/init.d# yum install git-daemon git-gui
+--------------------------------------------------------------------------------------------------------------- 13:47:26
+root@nomad:/sadmin# cd /gitrepo/
+--------------------------------------------------------------------------------------------------------------- 13:47:41
+root@nomad:/gitrepo# pwd
+/gitrepo
+--------------------------------------------------------------------------------------------------------------- 13:47:44
+root@nomad:/gitrepo# ls -ax
+.  ..  lost+found
+--------------------------------------------------------------------------------------------------------------- 13:47:46
+root@nomad:/gitrepo# df -h .
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/rootvg-gitrep
+                      108M   52K  102M   1% /gitrepo
+--------------------------------------------------------------------------------------------------------------- 13:47:55
+
+root@nomad:~# useradd git -g apache
+--------------------------------------------------------------------------------------------------------------- 16:18:42
+root@nomad:~# passwd git
+Changing password for user git.
+New password:
+BAD PASSWORD: is too simple
+Retype new password:
+passwd: all authentication tokens updated successfully.
+--------------------------------------------------------------------------------------------------------------- 16:18:55
+root@nomad:~# grep git /etc/passwd
+git:x:670:48::/home/git:/bin/bash
+--------------------------------------------------------------------------------------------------------------- 16:20:36
+root@nomad:~# usermod -d /gitrepo  git
+--------------------------------------------------------------------------------------------------------------- 16:20:51
+root@nomad:~# grep git /etc/passwd
+git:x:670:48::/gitrepo:/bin/bash
+--------------------------------------------------------------------------------------------------------------- 16:21:24
+root@nomad:~# id git
+uid=670(git) gid=48(apache) groups=48(apache)
+
+root@nomad:/sadmin# su - git
+-bash-4.1$ pwd
+/gitrepo
+-bash-4.1$ ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/gitrepo/.ssh/id_rsa):
+Created directory '/gitrepo/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /gitrepo/.ssh/id_rsa.
+Your public key has been saved in /gitrepo/.ssh/id_rsa.pub.
+The key fingerprint is:
+cd:8e:3a:f9:c3:50:e7:33:e6:8a:a2:b1:d3:34:04:8b git@nomad.maison.ca
+The key's randomart image is:
++--[ RSA 2048]----+
+|                 |
+|  .              |
+| . o             |
+|E . .   .o.      |
+|   .   .Soo      |
+|    o .  o=      |
+|  .o . +.o.o     |
+|  .oo ooo .      |
+|  oo .oooo       |
++-----------------+
+-bash-4.1$ pwd
+/gitrepo
+-bash-4.1$ ls -l .ssh
+total 8
+-rw------- 1 git apache 1675 Apr  4 20:21 id_rsa
+-rw-r--r-- 1 git apache  401 Apr  4 20:21 id_rsa.pub
+-bash-4.1$ cd .ssh
+-bash-4.1$ cp id_rsa.pub gitserver.pub
+-bash-4.1$ ls -l
+total 12
+-rw-r--r-- 1 git apache  401 Apr  4 20:22 gitserver.pub
+-rw------- 1 git apache 1675 Apr  4 20:21 id_rsa
+-rw-r--r-- 1 git apache  401 Apr  4 20:21 id_rsa.pub
+-bash-4.1$
+
+
+
+
+--------------------------------------------------------------------------------------------------------------- 16:21:27
+root@nomad:~#
+As an extra precaution, you can easily restrict the 'git' user to only doing Git activities with a limited shell tool called git-shell that comes with Git.
+------------------------------------------------------------------------------------------------------------------- 20:17:45
+root@nomad:/sadmin# usermod -s /usr/bin/git-shell git
+------------------------------------------------------------------------------------------------------------------- 20:17:49
+root@nomad:/sadmin# grep git /etc/passwd
+git:x:670:48::/gitrepo:/usr/bin/git-shell
+------------------------------------------------------------------------------------------------------------------- 20:17:52
+root@nomad:/sadmin#
+------------------------------------------------------------------------------------------------------------------- 20:17:52
+root@nomad:/sadmin# su - git
+fatal: What do you think I am? A shell?
+------------------------------------------------------------------------------------------------------------------- 20:19:33
+root@nomad:/sadmin#
+
+--------------------------------------------------------------------------------------------------------------- 16:26:02
+root@nomad:/gitrepo# ls -l
+total 20
+drwx------ 2 root root 16384 Mar 30 18:43 lost+found
+drwxr-xr-x 2 root root  4096 Apr  4 14:04 sadmin.git
+--------------------------------------------------------------------------------------------------------------- 16:26:04
+root@nomad:/gitrepo# chown git.apache /gitrepo/
+--------------------------------------------------------------------------------------------------------------- 16:26:16
+root@nomad:/gitrepo# chown git.apache /gitrepo/sadmin.git/
+--------------------------------------------------------------------------------------------------------------- 16:26:24
+root@nomad:/gitrepo# chmod 2775 /gitrepo/
+--------------------------------------------------------------------------------------------------------------- 16:26:34
+root@nomad:/gitrepo# chmod 2775 /gitrepo/sadmin.git/
+--------------------------------------------------------------------------------------------------------------- 16:26:39
+root@nomad:/gitrepo# ls -ltr
+total 20
+drwx------ 2 root root   16384 Mar 30 18:43 lost+found
+drwxrwsr-x 2 git  apache  4096 Apr  4 14:04 sadmin.git
+--------------------------------------------------------------------------------------------------------------- 16:26:43
+root@nomad:/gitrepo#
+
+--------------------------------------------------------------------------------------------------------------- 18:20:54
+root@nomad:/gitrepo/sadmin.git# git init --bare --shared
+Initialized empty shared Git repository in /gitrepo/sadmin.git/
+--------------------------------------------------------------------------------------------------------------- 18:21:00
+root@nomad:/gitrepo/sadmin.git# ls -l
+total 32
+drwxrwsr-x 2 root apache 4096 Apr  4 18:21 branches
+-rw-rw-r-- 1 root apache  126 Apr  4 18:21 config
+-rw-rw-r-- 1 root apache   73 Apr  4 18:21 description
+-rw-rw-r-- 1 root apache   23 Apr  4 18:21 HEAD
+drwxrwsr-x 2 root apache 4096 Apr  4 18:21 hooks
+drwxrwsr-x 2 root apache 4096 Apr  4 18:21 info
+drwxrwsr-x 4 root apache 4096 Apr  4 18:21 objects
+drwxrwsr-x 4 root apache 4096 Apr  4 18:21 refs
+--------------------------------------------------------------------------------------------------------------- 18:21:06
+root@nomad:/gitrepo/sadmin.git#
+--------------------------------------------------------------------------------------------------------------- 19:23:06
+root@nomad:/sadmin# git remote add origin git@gitserver:/gitrepo/sadmin.git
+--------------------------------------------------------------------------------------------------------------- 19:23:18
+root@nomad:/sadmin
+--------------------------------------------------------------------------------------------------------------- 19:23:18
+root@nomad:/sadmin# git push origin master
+The authenticity of host '[gitserver]:32 ([192.168.1.66]:32)' can't be established.
+RSA key fingerprint is 13:c6:6b:a6:0e:1c:3a:d5:0b:27:2e:8f:96:db:ef:10.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[gitserver]:32' (RSA) to the list of known hosts.
+git@gitserver's password:
+Counting objects: 112, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (97/97), done.
+Writing objects: 100% (112/112), 197.79 KiB, done.
+Total 112 (delta 25), reused 0 (delta 0)
+To git@gitserver:/gitrepo/sadmin.git
+ * [new branch]      master -> master
+--------------------------------------------------------------------------------------------------------------- 19:25:23
+root@nomad:/sadmin#
+
+
+
+GET REPO FROM OTHER NODE
+[root@centos7 /]# pwd
+/
+[root@centos7 /]# ls
+bin   dev  home  lib64       media  opt   root  sadmin.org  srv  sysadmin  usr
+boot  etc  lib   lost+found  mnt    proc  run   sbin        sys  tmp       var
+[root@centos7 /]# git clone git@gitserver:/gitrepo/sadmin.git
+Cloning into 'sadmin'...
+git@gitserver's password:
+remote: Counting objects: 112, done.
+remote: Compressing objects: 100% (72/72), done.
+remote: Total 112 (delta 25), reused 112 (delta 25)
+Receiving objects: 100% (112/112), 197.79 KiB | 0 bytes/s, done.
+Resolving deltas: 100% (25/25), done.
+[root@centos7 /]# ls
+bin   dev  home  lib64       media  opt   root  sadmin      sbin  sys       tmp  var
+boot  etc  lib   lost+found  mnt    proc  run   sadmin.org  srv   sysadmin  usr
+[root@centos7 /]# cd /sadmin
+[root@centos7 sadmin]# ls -l
+total 16
+drwxr-xr-x. 3 root root 4096 Apr  4 19:40 bin
+drwxr-xr-x. 2 root root 4096 Apr  4 19:40 cfg
+drwxr-xr-x. 2 root root 4096 Apr  4 19:40 log
+drwxr-xr-x. 4 root root 4096 Apr  4 19:40 sam
+[root@centos7 sadmin]#
+
+[root@centos7 /]# rm -fr /sadmin
+[root@centos7 /]# git clone git@gitserver:/gitrepo/sadmin.git
+Cloning into 'sadmin'...
+git@gitserver's password:
+remote: Counting objects: 137, done.
+remote: Compressing objects: 100% (94/94), done.
+remote: Total 137 (delta 36), reused 111 (delta 25)
+Receiving objects: 100% (137/137), 208.87 KiB | 0 bytes/s, done.
+Resolving deltas: 100% (36/36), done.
+[root@centos7 /]# ls -l /sadmin
+total 16
+drwxr-xr-x. 3 root root 4096 Apr  4 19:51 bin
+drwxr-xr-x. 2 root root 4096 Apr  4 19:51 cfg
+drwxr-xr-x. 2 root root 4096 Apr  4 19:51 lib
+drwxr-xr-x. 4 root root 4096 Apr  4 19:51 sam
+[root@centos7 /]#
+
+[root@centos7 /]# git remote -v
+fatal: Not a git repository (or any of the parent directories): .git
+[root@centos7 /]# cd /sadmin
+[root@centos7 sadmin]# git remote -v
+origin	git@gitserver:/gitrepo/sadmin.git (fetch)
+origin	git@gitserver:/gitrepo/sadmin.git (push)
+[root@centos7 sadmin]#
+
+jadupl2@lxmq0007:~$ mkdir git_testing
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:55:27
+
+jadupl2@lxmq0007:~$ cd git_testing/
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:55:31
+
+jadupl2@lxmq0007:~/git_testing$ mkdir bin log tmp txt
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:56:10
+
+jadupl2@lxmq0007:~/git_testing$ touch bin/file1.sh bin/file2.sh bin/file3.sh
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:57:07
+
+jadupl2@lxmq0007:~/git_testing$ touch log/log1.log log/log2.log log/log3.log
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:57:33
+
+jadupl2@lxmq0007:~/git_testing$ touch tmp/tmp1.tmp tmp/tmp2.tmp tmp/tmp3.tmp
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:58:13
+
+jadupl2@lxmq0007:~/git_testing$ touch txt/notes1.txt txt/notes2.txt txt/notes3.txt
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 15:58:55
+
+jadupl2@lxmq0007:~/git_testing$ tree
+
+.
+
+|-- bin
+
+|   |-- file1.sh
+
+|   |-- file2.sh
+
+|   `-- file3.sh
+
+|-- log
+
+|   |-- log1.log
+
+|   |-- log2.log
+
+|   `-- log3.log
+
+|-- tmp
+
+|   |-- tmp1.tmp
+
+|   |-- tmp2.tmp
+
+|   `-- tmp3.tmp
+
+`-- txt
+
+    |-- notes1.txt
+
+    |-- notes2.txt
+
+    `-- notes3.txt
+
+
+
+4 directories, 12 files
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:00:02
+
+jadupl2@lxmq0007:~/git_testing$ pwd
+
+/home/jadupl2/git_testing
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:00:31
+
+jadupl2@lxmq0007:~/git_testing$ git init
+
+Initialized empty Git repository in /home/jadupl2/git_testing/.git/
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:00:39
+
+jadupl2@lxmq0007:~/git_testing$
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+#
+
+# Initial commit
+
+#
+
+# Untracked files:
+
+#   (use "git add <file>..." to include in what will be committed)
+
+#
+
+#       bin/
+
+#       log/
+
+#       tmp.tmp3.tmp
+
+#       tmp/
+
+#       txt/
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:01:54
+
+jadupl2@lxmq0007:~/git_testing$ git add .
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:01:59
+
+jadupl2@lxmq0007:~/git_testing$
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+#
+
+# Initial commit
+
+#
+
+# Changes to be committed:
+
+#   (use "git rm --cached <file>..." to unstage)
+
+#
+
+#       new file:   bin/file1.sh
+
+#       new file:   bin/file2.sh
+
+#       new file:   bin/file3.sh
+
+#       new file:   log/log1.log
+
+#       new file:   log/log2.log
+
+#       new file:   log/log3.log
+
+#       new file:   tmp.tmp3.tmp
+
+#       new file:   tmp/tmp1.tmp
+
+#       new file:   tmp/tmp2.tmp
+
+#       new file:   txt/notes1.txt
+
+#       new file:   txt/notes2.txt
+
+#       new file:   txt/notes3.txt
+
+#
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:02:17
+
+
+
+jadupl2@lxmq0007:~/git_testing$ git commit -m "Initial Commit"
+
+[master (root-commit) 88a341d] Initial Commit
+
+Committer: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Your name and email address were configured automatically based
+
+on your username and hostname. Please check that they are accurate.
+
+You can suppress this message by setting them explicitly:
+
+
+
+    git config --global user.name "Your Name"
+
+    git config --global user.email you@example.com
+
+
+
+After doing this, you may fix the identity used for this commit with:
+
+
+
+    git commit --amend --reset-author
+
+
+
+12 files changed, 0 insertions(+), 0 deletions(-)
+
+create mode 100644 bin/file1.sh
+
+create mode 100644 bin/file2.sh
+
+create mode 100644 bin/file3.sh
+
+create mode 100644 log/log1.log
+
+create mode 100644 log/log2.log
+
+create mode 100644 log/log3.log
+
+create mode 100644 tmp.tmp3.tmp
+
+create mode 100644 tmp/tmp1.tmp
+
+create mode 100644 tmp/tmp2.tmp
+
+create mode 100644 txt/notes1.txt
+
+create mode 100644 txt/notes2.txt
+
+create mode 100644 txt/notes3.txt
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:02:59
+
+jadupl2@lxmq0007:~/git_testing$ git config --global user.name "Jacques Duplessis"
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:03:22
+
+jadupl2@lxmq0007:~/git_testing$ git config --global user.email "jack.duplessis@standardlife.ca"
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:03:42
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+----------------------------------------------------------------------------------------------------------------------------------------------- 16:04:02
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:12:25
+
+jadupl2@lxmq0007:~/git_testing/bin$ cat .gitignore
+
+log/
+
+tmp/
+
+*.txt
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:12:29
+
+jadupl2@lxmq0007:~/git_testing/bin$
+
+7
+
+jadupl2@lxmq0007:~/git_testing/bin$ git rm -f ../tmp/tmp3.tmp
+
+rm 'tmp/tmp3.tmp'
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:16:12
+
+jadupl2@lxmq0007:~/git_testing/bin$ git status
+
+# On branch master
+
+# Changes to be committed:
+
+#   (use "git reset HEAD <file>..." to unstage)
+
+#
+
+#       new file:   .gitignore
+
+#
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:16:16
+
+jadupl2@lxmq0007:~/git_testing/bin$ git commit -m "OK let's begin"
+
+[master 9a06c4a] OK let's begin
+
+1 file changed, 3 insertions(+)
+
+create mode 100644 bin/.gitignore
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:16:29
+
+jadupl2@lxmq0007:~/git_testing/bin$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:16:31
+
+jadupl2@lxmq0007:~/git_testing/bin$
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:17:11
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------- 16:17:28
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+jadupl2@lxmq0007:~/git_testing$
+
+------------------------------------------------------------------------------------------------------------------ 14:10:49
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+------------------------------------------------------------------------------------------------------------------ 14:10:52
+
+jadupl2@lxmq0007:~/git_testing$ echo "First Line"  > bin/file1.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:11:32
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file1.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+------------------------------------------------------------------------------------------------------------------ 14:11:38
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "add first line in file1.sh"
+
+[master f4b956a] add first line in file1.sh
+
+1 file changed, 1 insertion(+)
+
+------------------------------------------------------------------------------------------------------------------ 14:12:34
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+------------------------------------------------------------------------------------------------------------------ 14:12:37
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+jadupl2@lxmq0007:~/git_testing$
+
+------------------------------------------------------------------------------------------------------------------ 14:13:04
+
+jadupl2@lxmq0007:~/git_testing$ echo "Second Line"  >> bin/file1.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:13:21
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file1.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+------------------------------------------------------------------------------------------------------------------ 14:13:26
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "add second line in file1.sh"
+
+[master 8cb6cda] add second line in file1.sh
+
+1 file changed, 1 insertion(+)
+
+------------------------------------------------------------------------------------------------------------------ 14:13:35
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+------------------------------------------------------------------------------------------------------------------ 14:13:37
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+------------------------------------------------------------------------------------------------------------------ 14:13:53
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:13:35 2015 -0400
+
+
+
+    add second line in file1.sh
+
+
+
+commit f4b956a522a28214b17ecc657b3ef6e2a8355bbb
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:12:34 2015 -0400
+
+
+
+    add first line in file1.sh
+
+
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+------------------------------------------------------------------------------------------------------------------ 14:13:58
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+------------------------------------------------------------------------------------------------------------------ 14:17:24
+
+jadupl2@lxmq0007:~/git_testing$ echo "Third Line"  >> bin/file1.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:17:58
+
+jadupl2@lxmq0007:~/git_testing$
+
+------------------------------------------------------------------------------------------------------------------ 14:17:59
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+------------------------------------------------------------------------------------------------------------------ 14:18:47
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+------------------------------------------------------------------------------------------------------------------ 14:18:49
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file1.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+------------------------------------------------------------------------------------------------------------------ 14:18:53
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "add Third line in file1.sh"
+
+[master 9bfbba8] add Third line in file1.sh
+
+1 file changed, 1 insertion(+)
+
+------------------------------------------------------------------------------------------------------------------ 14:19:34
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+------------------------------------------------------------------------------------------------------------------ 14:19:37
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+------------------------------------------------------------------------------------------------------------------ 14:19:40
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+------------------------------------------------------------------------------------------------------------------ 14:20:28
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit 9bfbba8528fe9a2605da65c93d86cfe412951762
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:19:34 2015 -0400
+
+
+
+    add Third line in file1.sh
+
+
+
+commit 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:13:35 2015 -0400
+
+
+
+    add second line in file1.sh
+
+
+
+commit f4b956a522a28214b17ecc657b3ef6e2a8355bbb
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:12:34 2015 -0400
+
+
+
+    add first line in file1.sh
+
+
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+------------------------------------------------------------------------------------------------------------------ 14:20:41
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+jadupl2@lxmq0007:~/git_testing$
+
+------------------------------------------------------------------------------------------------------------------ 14:20:58
+
+jadupl2@lxmq0007:~/git_testing$ git checkout f4b956a522a2821
+
+Note: checking out 'f4b956a522a2821'.
+
+
+
+You are in 'detached HEAD' state. You can look around, make experimental
+
+changes and commit them, and you can discard any commits you make in this
+
+state without impacting any branches by performing another checkout.
+
+
+
+If you want to create a new branch to retain commits you create, you may
+
+do so (now or later) by using -b with the checkout command again. Example:
+
+
+
+  git checkout -b new_branch_name
+
+
+
+HEAD is now at f4b956a... add first line in file1.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:22:35
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+------------------------------------------------------------------------------------------------------------------ 14:22:47
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+------------------------------------------------------------------------------------------------------------------ 14:22:47
+
+jadupl2@lxmq0007:~/git_testing$ echo "file2 - Line 1 "  > bin/file2.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:24:55
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file2.sh
+
+file2 - Line 1
+
+------------------------------------------------------------------------------------------------------------------ 14:25:02
+
+jadupl2@lxmq0007:~/git_testing$ git checkout  9bfbba8528fe
+
+M       bin/file2.sh
+
+Previous HEAD position was f4b956a... add first line in file1.sh
+
+HEAD is now at 9bfbba8... add Third line in file1.sh
+
+------------------------------------------------------------------------------------------------------------------ 14:25:43
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file2.sh
+
+file2 - Line 1
+
+------------------------------------------------------------------------------------------------------------------ 14:25:49
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+------------------------------------------------------------------------------------------------------------------ 14:25:54
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:30:16
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:32:13
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file2.sh
+
+file2 - Line 1
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:32:18
+
+jadupl2@lxmq0007:~/git_testing$ echo "File 3 Fisrt line" > bin/file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:33:29
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file3.sh
+
+File 3 Fisrt line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:33:41
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# Not currently on any branch.
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file2.sh
+
+#       modified:   bin/file3.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:34:01
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "File3 first line"
+
+[detached HEAD 9f8dd52] File3 first line
+
+2 files changed, 2 insertions(+)
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:35:06
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 14:35:32
+
+jadupl2@lxmq0007:~/git_testing$ echo "File 3 Third line" > bin/file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:02:09
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# Not currently on any branch.
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file3.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:02:53
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:03:29
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file3.sh
+
+File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:03:54
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:03:54
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "File3 third line"
+
+[detached HEAD 50c4160] File3 third line
+
+1 file changed, 1 insertion(+), 1 deletion(-)
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:06:18
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# Not currently on any branch.
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:06:21
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:19:37
+
+jadupl2@lxmq0007:~/git_testing$ ls -lRt bin
+
+bin:
+
+total 2
+
+-rw-r--r-- 1 jadupl2 glx-admin-ao 18 Apr 17 15:10 file3.sh
+
+-rw-r--r-- 1 jadupl2 glx-admin-ao  0 Apr 17 15:10 file2.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 34 Apr 17 14:25 file1.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:19:44
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:20:03
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file3.sh
+
+File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:20:10
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:20:54
+
+jadupl2@lxmq0007:~/git_testing$ echo "file2 first line" > bin/file2.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:21:25
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file2.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:21:30
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "File2 first line"
+
+[master c5f4e1a] File2 first line
+
+1 file changed, 1 insertion(+)
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:21:47
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:21:49
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:24:11
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit c5f4e1a07a5a9c5317499098e2bf024a862b7ee5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 15:21:47 2015 -0400
+
+
+
+    File2 first line
+
+
+
+commit 1243e3851a1c2a51925590159afdd619b308b148
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 15:10:40 2015 -0400
+
+
+
+    File3 third line
+
+
+
+commit 9bfbba8528fe9a2605da65c93d86cfe412951762
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:19:34 2015 -0400
+
+
+
+    add Third line in file1.sh
+
+
+
+commit 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:13:35 2015 -0400
+
+
+
+    add second line in file1.sh
+
+
+
+commit f4b956a522a28214b17ecc657b3ef6e2a8355bbb
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:12:34 2015 -0400
+
+
+
+    add first line in file1.sh
+
+
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:24:12
+
+jadupl2@lxmq0007:~/git_testing$
+
+jadupl2@lxmq0007:~/git_testing$ git checkout 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Note: checking out '8cb6cda1f163e02da6a0e49ce8eff9341c254e1a'.
+
+
+
+You are in 'detached HEAD' state. You can look around, make experimental
+
+changes and commit them, and you can discard any commits you make in this
+
+state without impacting any branches by performing another checkout.
+
+
+
+If you want to create a new branch to retain commits you create, you may
+
+do so (now or later) by using -b with the checkout command again. Example:
+
+
+
+  git checkout -b new_branch_name
+
+
+
+HEAD is now at 8cb6cda... add second line in file1.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:26:02
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:26:18
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file2.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:26:24
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:26:28
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+jadupl2@lxmq0007:~/git_testing$ ls -l bin
+
+total 1
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 23 Apr 17 15:26 file1.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao  0 Apr 17 15:26 file2.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao  0 Apr 17 15:26 file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:27:03
+
+jadupl2@lxmq0007:~/git_testing$
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:28:03
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:13:35 2015 -0400
+
+
+
+    add second line in file1.sh
+
+
+
+commit f4b956a522a28214b17ecc657b3ef6e2a8355bbb
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:12:34 2015 -0400
+
+
+
+    add first line in file1.sh
+
+
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:28:09
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:28:09
+
+jadupl2@lxmq0007:~/git_testing$ git checkout c5f4e1a07a5a9c5317499098e2bf024a862b7ee5
+
+Previous HEAD position was 8cb6cda... add second line in file1.sh
+
+HEAD is now at c5f4e1a... File2 first line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:31:08
+
+jadupl2@lxmq0007:~/git_testing$ ls -l bin
+
+total 3
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 34 Apr 17 15:31 file1.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 17 Apr 17 15:31 file2.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 18 Apr 17 15:31 file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:31:21
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file1.sh
+
+First Line
+
+Second Line
+
+Third Line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:31:26
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file2.sh
+
+file2 first line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:31:30
+
+jadupl2@lxmq0007:~/git_testing$ cat bin/file3.sh
+
+File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:31:33
+
+jadupl2@lxmq0007:~/git_testing$
+
+jadupl2@lxmq0007:~/git_testing$ git log
+
+commit c5f4e1a07a5a9c5317499098e2bf024a862b7ee5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 15:21:47 2015 -0400
+
+
+
+    File2 first line
+
+
+
+commit 1243e3851a1c2a51925590159afdd619b308b148
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 15:10:40 2015 -0400
+
+
+
+    File3 third line
+
+
+
+commit 9bfbba8528fe9a2605da65c93d86cfe412951762
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:19:34 2015 -0400
+
+
+
+    add Third line in file1.sh
+
+
+
+commit 8cb6cda1f163e02da6a0e49ce8eff9341c254e1a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:13:35 2015 -0400
+
+
+
+    add second line in file1.sh
+
+
+
+commit f4b956a522a28214b17ecc657b3ef6e2a8355bbb
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Fri Apr 17 14:12:34 2015 -0400
+
+
+
+    add first line in file1.sh
+
+
+
+commit 9a06c4abfbaaa5d32f1053726604e5c2f3e78d2a
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:16:29 2015 -0400
+
+
+
+    OK let's begin
+
+
+
+commit 9891e82944ccd2a99f720b45c621894dc2c8a0f5
+
+Author: Jacques Duplessis <jack.duplessis@standardlife.ca>
+
+Date:   Wed Mar 18 16:13:24 2015 -0400
+
+
+
+    Initial Setup completed
+
+
+
+commit 88a341dccc67710b880bc7adf9bd4a50a0ed4fe0
+
+Author: Jacques Duplessis <jadupl2@lxmq0007.slac.ca>
+
+Date:   Thu Mar 12 16:02:59 2015 -0400
+
+
+
+    Initial Commit
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:33:36
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:33:58
+
+jadupl2@lxmq0007:~/git_testing$ git diff 9bfbba8528fe9a2605da65c93d86cfe412951762
+
+diff --git a/bin/file2.sh b/bin/file2.sh
+
+index e69de29..cd945c0 100644
+
+--- a/bin/file2.sh
+
++++ b/bin/file2.sh
+
+@@ -0,0 +1 @@
+
++file2 first line
+
+diff --git a/bin/file3.sh b/bin/file3.sh
+
+index e69de29..10ef30e 100644
+
+--- a/bin/file3.sh
+
++++ b/bin/file3.sh
+
+@@ -0,0 +1 @@
+
++File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:35:01
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+
+
+List of files git is tracking
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:36:38
+
+jadupl2@lxmq0007:~/git_testing$ git ls-files
+
+bin/.gitignore
+
+bin/file1.sh
+
+bin/file2.sh
+
+bin/file3.sh
+
+log/log1.log
+
+log/log2.log
+
+log/log3.log
+
+tmp/tmp1.tmp
+
+tmp/tmp2.tmp
+
+txt/notes1.txt
+
+txt/notes2.txt
+
+txt/notes3.txt
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:36:44
+
+jadupl2@lxmq0007:~/git_testing$
+
+
+
+jadupl2@lxmq0007:~/git_testing$
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:37:13
+
+jadupl2@lxmq0007:~/git_testing$ git branch
+
+* (no branch)
+
+  master
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:38:19
+
+jadupl2@lxmq0007:~/git_testing$ ls -l bin
+
+total 3
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 34 Apr 17 15:31 file1.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 17 Apr 17 15:31 file2.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 18 Apr 17 15:31 file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:38:31
+
+jadupl2@lxmq0007:~/git_testing$ git branch new
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:42:33
+
+jadupl2@lxmq0007:~/git_testing$ git checkout new
+
+Switched to branch 'new'
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:42:42
+
+jadupl2@lxmq0007:~/git_testing$ ls -l bin
+
+total 3
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 34 Apr 17 15:31 file1.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 17 Apr 17 15:31 file2.sh
+
+-rw-rw-r-- 1 jadupl2 glx-admin-ao 18 Apr 17 15:31 file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:42:47
+
+jadupl2@lxmq0007:~/git_testing$ echo "NEW BRANCH LINE"  >> bin/file3.sh
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:43:06
+
+jadupl2@lxmq0007:~/git_testing$ cat  bin/file3.sh
+
+File 3 Third line
+
+NEW BRANCH LINE
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:43:16
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch new
+
+# Changes not staged for commit:
+
+#   (use "git add <file>..." to update what will be committed)
+
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+
+#
+
+#       modified:   bin/file3.sh
+
+#
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:06
+
+jadupl2@lxmq0007:~/git_testing$ git commit -a -m "Initial new project"
+
+[new 8ae439e] Initial new project
+
+1 file changed, 1 insertion(+)
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:34
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch new
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:36
+
+jadupl2@lxmq0007:~/git_testing$ git branch
+
+  master
+
+* new
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:40
+
+jadupl2@lxmq0007:~/git_testing$ cat  bin/file3.sh
+
+File 3 Third line
+
+NEW BRANCH LINE
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:47
+
+jadupl2@lxmq0007:~/git_testing$ git branch master
+
+fatal: A branch named 'master' already exists.
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:47:55
+
+jadupl2@lxmq0007:~/git_testing$ git checkout master
+
+Switched to branch 'master'
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:05
+
+jadupl2@lxmq0007:~/git_testing$ cat  bin/file3.sh
+
+File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:11
+
+jadupl2@lxmq0007:~/git_testing$ git checkout new
+
+Switched to branch 'new'
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:35
+
+jadupl2@lxmq0007:~/git_testing$ cat  bin/file3.sh
+
+File 3 Third line
+
+NEW BRANCH LINE
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:38
+
+jadupl2@lxmq0007:~/git_testing$ git checkout master
+
+Switched to branch 'master'
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:44
+
+jadupl2@lxmq0007:~/git_testing$ cat  bin/file3.sh
+
+File 3 Third line
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:45
+
+jadupl2@lxmq0007:~/git_testing$ git status
+
+# On branch master
+
+nothing to commit, working directory clean
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:48:51
+
+jadupl2@lxmq0007:~/git_testing$ git branch
+
+* master
+
+  new
+
+---------------------------------------------------------------------------------------------------------------------------------------- 15:49:14
+
+jadupl2@lxmq0007:~/git_testing$
