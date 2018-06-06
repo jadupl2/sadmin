@@ -2,9 +2,9 @@
 #===================================================================================================
 #   Author:     Jacques Duplessis
 #   Title:      sadm_subnet_lookup.py
-#   Synopsis:   arp-scan, dns lookup of all IP specify in sadmin.cfg and produce file use by web 
-#               interface
-#===================================================================================================
+#   Synopsis:   Produce Web Network Page That List IP, Name and Mac usage for subnet you specify
+#
+# #===================================================================================================
 # Description
 #  This script ping and do a nslookup for every IP specify in the "SUBNET" Variable.
 #  Result of each subnet is recorded in their own file ${SADM_BASE_DIR}/dat/net/subnet_SUBNET.txt
@@ -13,18 +13,13 @@
 #  It is run once a day from the crontab.
 #
 # --------------------------------------------------------------------------------------------------
-# 8 April 2018
-#   V1.0 Initial Beta version
-# 11 April 2018
-#   V1.1 Output File include MAC,Manufacturer
-# 13 April 2018
-#   V1.3 Manufacturer Info Expanded and use fping to check if host is up
-# 2018-04-17 JDuplessis
-#   V1.4 Added update to server_network table in Mariadb
-# 2018-04-18 JDuplessis
-#   V1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
-# 2018-04-26 JDuplessis
-#   V1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
+# 2018_04_08    v1.0 Initial Beta version
+# 2018_04_11    v1.1 Output File include MAC,Manufacturer
+# 2018_04_13    v1.3 Manufacturer Info Expanded and use fping to check if host is up
+# 2018-04-17    v1.4 Added update to server_network table in Mariadb
+# 2018-04-18    v1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
+# 2018-04-26    v1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
+# 2018-06_06    v1.8 Small Corrections 
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -44,6 +39,48 @@ except ImportError as e:
 #
 DEBUG = False                                                            # Activate Debug (Verbosity)
 netdict = {}                                                            # Network Work Dictionnary
+
+
+#===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Python Library
+#===================================================================================================
+def setup_sadmin():
+
+    # Load SADMIN Standard Python Library
+    try :
+        SADM = os.environ.get('SADMIN')                     # Getting SADMIN Root Dir.
+        sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
+        import sadmlib_std as sadm                          # Import SADMIN Python Libr.
+    except ImportError as e:                                # If Error importing SADMIN 
+        print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
+        sys.exit(1)                                         # Go Back to O/S with Error
+    
+    # Create Instance of SADMIN Tool
+    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
+
+    # Change these values to your script needs.
+    st.ver              = "1.8"                 # Current Script Version
+    st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
+    st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
+    st.log_append       = True                  # Append Existing Log or Create New One
+    st.use_rch          = True                  # Generate entry in Return Code History (.rch) 
+    st.log_header       = True                  # Show/Generate Header in script log (.log)
+    st.log_footer       = True                  # Show/Generate Footer in script log (.log)
+    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
+    st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
+    st.exit_code        = 0                     # Script Exit Code for you to use
+
+    # Override Default define in $SADMIN/cfg/sadmin.cfg
+    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
+    #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
+    #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
+    #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
+    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
+
+    # Start SADMIN Tools - Initialize 
+    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
+    return(st)                                  # Return Instance Obj. To Caller
 
 
 #===================================================================================================
@@ -375,21 +412,9 @@ def main_process(wconn,wcur,st):
 #===================================================================================================
 #
 def main():
-    # SADMIN TOOLS - Create SADMIN instance & setup variables specific to your program -------------
-    st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.)
-    st.ver  = "1.7"                             # Indicate this script Version 
-    st.multiple_exec = "N"                      # Allow to run Multiple instance of this script ?
-    st.log_type = 'B'                           # Log Type  (L=Log file only  S=stdout only  B=Both)
-    st.log_append = True                        # True=Append existing log  False=start a new log
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
-    st.usedb = False                            # True=Use Database  False=DB Not needed for script
-    st.dbsilent = False                         # Return Error Code & False=ShowErrMsg True=NoErrMsg
-    #st.cfg_mail_addr = ""                      # This Override Default Email Address in sadmin.cfg
-    #st.cfg_cie_name  = ""                      # This Override Company Name specify in sadmin.cfg
-    st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
-
-
-    
+    # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.  
+    st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
+        
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
