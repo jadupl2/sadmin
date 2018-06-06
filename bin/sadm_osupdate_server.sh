@@ -35,7 +35,7 @@
 #   2017_12_10  v3.2 Adapt program to use MySQL instead of PostGres 
 #   2017_12_12  V3.3 Correct Problem connecting to Database
 #   2018_02_08  V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
-#   2018_06_05  v3.5 Adapt to New SADMIN Libr.
+#   2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -49,15 +49,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+    if [ -z "${SADMIN}" ]                               # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory.." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
     fi
-
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='3.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
@@ -103,17 +102,25 @@ ONE_SERVER=""                               ; export ONE_SERVER         # Name I
 USCRIPT="${SADM_BIN_DIR}/sadm_osupdate_client.sh" ; export USCRIPT      # Script to execute on nodes
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
-#===================================================================================================
-help()
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "sadm_osupdate_server.sh usage :"
-    echo "             -d [Debug Level (1-9)]"
-    echo "             -s [ServerName]"
-    echo "             -h help"
-    echo " "
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-s   [ServerName]"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
 }
 
 
@@ -255,8 +262,39 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env Dir & RC/Log File
     
+    # If you want this script to be run only by 'root'.
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
+             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
+             printf "\nProcess aborted\n\n"                             # Abort advise message
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+    ONE_SERVER=""                                                       # Set Switch Default Value
+    while getopts "hvd:s:" opt ; do                                     # Loop to process Switch
+        case $opt in
+            s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
+               ;;
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page               
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+        done             
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
+
+    sadm_start                                                          # Start Using SADM Tools
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+
     # RUN ON THE SADMIN MAIN SERVER ONLY
     if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ] # Only run on SADMIN 
         then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
@@ -264,34 +302,6 @@ process_servers()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
-
-    # TO BE RUN BY THE ROOT USER
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "This script must be run by the ROOT user"   # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    ONE_SERVER=""                                                       # Set Switch Default Value
-    while getopts "hd:s:" opt ; do                                      # Loop to process Switch
-        case $opt in
-            s) ONE_SERVER="$OPTARG"                                     # Display Only Server Name
-               ;;
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               ;;                                                       # No stop after each page               
-            h) help                                                     # Display Help Usage
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
-               ;;
-           \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
-               help                                                     # Display Help Usage
-               sadm_stop 1                                              # Upd. RCH File & Trim Log 
-               exit 1                                                   # Exit With Global Err (0/1)
-               ;;
-        esac                                                            # End of case
-        done             
-
     process_servers                                                     # Go Update Servers
     SADM_EXIT_CODE=$?                                                   # Save Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
