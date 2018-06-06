@@ -197,17 +197,17 @@ def main_process(st):
 #===================================================================================================
 #
 def main():
-
-    # Script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not root
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo %s" % (os.path.basename(sys.argv[0])))          # Suggest to use 'sudo'
-       print ("Process aborted")                                        # Process Aborted Msg
-       sys.exit(1)                                                      # Exit with Error Code
-
     # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.  
     st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
-
+    
+    # Insure that this script can only be run by the user root (Optional Code)
+    if not os.getuid() == 0:                                            # UID of user is not zero
+       st.writelog ("This script must be run by the 'root' user")       # Advise User Message / Log
+       st_writelog ("Try sudo %s" % (os.path.basename(sys.argv[0])))    # Suggest to use 'sudo'
+       st.writelog ("Process aborted")                                  # Process Aborted Msg
+       st.stop (1)                                                      # Close and Trim Log/Email
+       sys.exit(1)                                                      # Exit with Error Code
+    
     # Test if script is running on the SADMIN Server, If not abort script (Optional code)
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
         st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
