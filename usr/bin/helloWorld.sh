@@ -62,8 +62,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_VER='1.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
 
@@ -229,8 +229,10 @@ process_servers()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
-    
+    #sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
+    #"Hello World" 
+    sadm_writelog "Hello World"
+
     # PROCESSING CAN BE PUT HERE
     # If Error occured, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
     # ........
