@@ -19,7 +19,13 @@
 # 2017_01_27    v1.6 Cosmetic Changes to improve log Details
 # 2017_10_02    v1.7 Added housekeeping for sadmin.ca web site under wsadmin directory
 # 2018_06_04    v1.8 Change $SADMIN/jac sub-directory to $SADMIN/usr
-# --------------------------------------------------------------------------------------------------
+# 2018_06_07    v1.9 Remove some chrome files left over when chrome die unexpectedly
+#                   Give chown error
+#                   http://www.eupcs.org/wiki/Google_Chrome
+#                   rm -f ~/.config/google-chrome/SingletonCookie > /dev/null 2>&1
+#                   rm -f ~/.config/google-chrome/SingletonLock >/dev/null 2>&1
+#                   rm -f ~/.config/google-chrome/SingletonSocket  > /dev/null 2>&1
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +46,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='1.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -125,15 +131,21 @@ dir_housekeeping()
 
     if [ -d "/home/jacques" ]
         then sadm_writelog " "
+             # Remove these files when Chrome is closed unexpectedly - Give backup error
+             # http://www.eupcs.org/wiki/Google_Chrome
+             rm -f ~/.config/google-chrome/SingletonCookie > /dev/null 2>&1
+             rm -f ~/.config/google-chrome/SingletonLock >/dev/null 2>&1
+             rm -f ~/.config/google-chrome/SingletonSocket  > /dev/null 2>&1
              sadm_writelog "Jacques Home Directory"
              sadm_writelog "find /home/jacques -exec chown jacques.${jgroup} {} \;"
              find /home/jacques -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
-            fi
+             # Ignore chown error for my home dir.
+             #if [ $? -ne 0 ]
+             #   then sadm_writelog "Error occured on the last operation."
+             #        ERROR_COUNT=$(($ERROR_COUNT+1))
+             #   else sadm_writelog "OK"
+             #        sadm_writelog "Total Error Count at $ERROR_COUNT"
+             #fi
     fi
 
     if [ -d "/install" ]
