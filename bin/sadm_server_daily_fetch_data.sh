@@ -1,6 +1,6 @@
 #! /bin/sh
 ####################################################################################################
-# Title      :  sadm_daily_data_collection.sh
+# Title      :  sadm_server_daily_fetch_data.sh
 # Description:  Get Hardware/Software/Performance Info Data from all actives servers
 # Version    :  1.8
 # Author     :  Jacques Duplessis
@@ -23,6 +23,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
+#
 # 2015_10_10    v1.9 Restructure and redesign for modularity
 # 2017_12_17    v2.0 Restructure for combining Aix and Linux
 # 2017_12_23    v2.1 Modifications for using MySQL and logic Enhancements
@@ -32,7 +33,9 @@
 # 2018_02_11    v2.5 Rsync locally for SADMN Server
 # 2018_05_01    v2.6 Don't return an error if no active server are found & remove unnecessary message
 # 2018_06_03    v2.7 Minor Corrections & Adapt to New SADM Shell Library.
-######################################################################################&&&&&&&#######
+# 2018_06_09    v2.8 Change Script Name & Add Help and Version Function & Change Startup Order
+#
+# --------------------------------------------------------------------------------------------------
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -53,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
+    export SADM_VER='2.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -92,6 +95,29 @@ TOTAL_AIX=0                                      ; export TOTAL_AIX     # Nb Err
 TOTAL_LINUX=0                                    ; export TOTAL_LINUX   # Nb Error in Linux Function
 SADM_STAR=`printf %80s |tr " " "*"`              ; export SADM_STAR     # 80 * line
 DEBUG_LEVEL=0                                    ; export DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -261,28 +287,53 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 #                           S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
-    
-    # If you want this script to be run only by 'root'.
+
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+# Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+# If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
              exit 1                                                     # Exit To O/S with error
     fi
 
-    sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-    
-    # This Script should only be run on the SADMIN Server
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ] # Only run on SADM Server
-        then sadm_writelog "Script can be run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
 
-    # Get Statistics and Configuration files from AIX and Linux Servers
+# Get Statistics and Configuration files from AIX and Linux Servers
     process_servers                                                     # Collect Files from Servers
     SADM_EXIT_CODE=$?                                                   # Return Code = Exit Code
-    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
-    exit $SADM_EXIT_CODE                                                # Exit With Error code (0/1)
+
+# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    
