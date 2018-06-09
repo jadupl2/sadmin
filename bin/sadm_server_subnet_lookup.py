@@ -1,7 +1,7 @@
 #!/usr/bin/env python3  
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      sadm_subnet_lookup.py
+#   Title:      sadm_server_subnet_lookup.py
 #   Synopsis:   Produce Web Network Page That List IP, Name and Mac usage for subnet you specify
 #
 # #===================================================================================================
@@ -20,6 +20,7 @@
 # 2018-04-18    v1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
 # 2018-04-26    v1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # 2018-06_06    v1.8 Small Corrections 
+# 2018-06_09    v1.9 Change Script name to sadm_server_subnet_lookup
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -59,7 +60,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "1.8"                 # Current Script Version
+    st.ver              = "1.9"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
