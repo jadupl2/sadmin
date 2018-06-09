@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
-#   Title       :   sadm_backupdb.sh
+#   Title       :   sadm_server_backupdb.sh
 #   Synopsis    :   MySQL SADMIN Database Backup
 #   Version     :   1.0
 #   Date        :   4 January 2018
