@@ -1,7 +1,7 @@
 #!/bin/sh
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
-#   Title:      Linux O/S Update script
+#   Title:      sadm_client_osupdate.sh _ Linux O/S Update script
 #   Synopsis:   This script is used to update the Linux OS Platform
 #               Support Redhat/Centos v3,4,5,6,7 - Ubuntu - Debian V7,8 - Raspbian V7,8 - Fedora
 #   Update  :   March 2015 -  J.Duplessis
@@ -22,6 +22,7 @@
 # 2017_07_08    v3.2 Now using DNF instead of yum for updating Fedora 25 and beyong.
 # 2017_12_10    v3.4 No longer Support Redhat/CentOS 3 and 4
 # 2018_06_05    v3.5 Adapt to new SADMIN Libr.
+# 2018_06_09    v3.6 Change name of this script from sadm_osupdate_client to sadm_client_osupdate
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -43,7 +44,7 @@
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_VER='3.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
