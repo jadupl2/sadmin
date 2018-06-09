@@ -99,16 +99,9 @@ show_version()
 #===================================================================================================
 #                                Script Start HERE
 #===================================================================================================
-    
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
 
-    # Switch for Help Usage (-h), Show Script Version (-v) or Activate Debug Level (-d[1-9])
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
@@ -125,24 +118,37 @@ show_version()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
-    
-    sadm_start                                                          # Init Env. Dir & RC/Log File
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+# Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi    
+
+# Script not supported on MacOS
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
        then sadm_writelog "This script is not supported on MacOS"       # Advise User
              sadm_stop 0                                                # Close and Trim Log
              exit 0                                                     # Exit To O/S
     fi
-    # Bug - Hang on Fedora 27 and Up - Skip Execution
+
+# Bug - Hang on Fedora 27 and Up - Skip Execution
     if [ "$(sadm_get_osname)" = "FEDORA" ] && [ "$(sadm_get_osmajorversion)" > "26" ] 
        then sadm_writelog "This script is not supported on Fedora higher than 26"  # Advise User
              sadm_stop 0                                                # Close and Trim Log
              exit 0                                                     # Exit To O/S
     fi
 
-    # Make sure that cfg2html is accessible on the server
-    # If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
-    # ----------------------------------------------------------------------------------------------
+# Make sure that cfg2html is accessible on the server
+# If package not installed then used the SADMIN version located in $SADMIN_BASE_DIR/pkg
+# ----------------------------------------------------------------------------------------------
     CFG2HTML=`which cfg2html >/dev/null 2>&1`                           # Locate cfg2html
     if [ $? -ne 0 ]                                                     # if found
        then if [ "$(sadm_get_osname)" = "AIX" ]                         # If on AIX & Not Found
