@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      sadm_database_update.py
+#   Title:      sadm_server_database_update.py
 #   Synopsis:   Read Hardware/Software/Performance data collected from servers & update database
 #===================================================================================================
 # Description
@@ -27,6 +27,7 @@
 # 2018_02_08    v2.8 Bug Fix with test for physical/virtual server
 # 2018_02_21    v2.9 Adjust to new calling sadmin lib method#
 # 2018_06_03    v3.0 Adapt to new SADMIN Python Library
+# 2018_06_09    v3.1 Last O/S Update Data & Status Taken from sysinfo.txt file in dr Dir.to Upd DB.
 #
 #===================================================================================================
 #
@@ -68,7 +69,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.0"                 # Current Script Version
+    st.ver              = "3.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -115,6 +116,8 @@ def update_row(st,wconn, wcur, wdict):
                 srv_nb_socket='%d',         srv_core_per_socket='%d', \
                 srv_thread_per_core='%d',   srv_ip='%s', \
                 srv_ips_info='%s',          srv_disks_info='%s', \
+                srv_date_osupdate='%s',     srv_update_status='%s', \
+                srv_sadmin_dir='%s',      \
                 srv_vgs_info='%s',          srv_date_update='%s' \
                 where srv_name='%s' " %  \
                 (wdict['srv_ostype'],           wdict['srv_osname'], \
@@ -128,6 +131,8 @@ def update_row(st,wconn, wcur, wdict):
                 wdict['srv_nb_socket'],         wdict['srv_core_per_socket'],\
                 wdict['srv_thread_per_core'],   wdict['srv_ip'], \
                 wdict['srv_ips_info'],          wdict['srv_disks_info'], \
+                wdict['srv_date_osupdate'],     wdict['srv_update_status'], \
+                wdict['srv_sadmin_dir'],        \
                 wdict['srv_vgs_info'],          wdict['srv_date_update'], \
                 wdict['srv_name'])
     except (TypeError, ValueError, IndexError) as error:                # Mismatch Between Num & Str
@@ -172,7 +177,8 @@ def process_servers(wconn,wcur,st):
     #st.writelog (" ")
 
     # Read All Actives Servers
-    sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname "
+#    sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname, srv_sadmin_dir "
+    sql  = "SELECT srv_name, srv_desc, srv_domain, srv_osname  "
     sql += " FROM server WHERE srv_active = %s " % ('True')
     sql += " order by srv_name;"
     try :
@@ -188,10 +194,11 @@ def process_servers(wconn,wcur,st):
     total_error = 0 
     for row in rows:
         #st.writelog ("%02d %s" % (lineno, row))
-        wname   = row[0]                                                # Extract Server Name
-        wdesc   = row[1]                                                # Extract Server Desc.
-        wdomain = row[2]                                                # Extract Server Domain Name
-        wos     = row[3]                                                # Extract Server O/S Name
+        wname       = row[0]                                            # Extract Server Name
+        wdesc       = row[1]                                            # Extract Server Desc.
+        wdomain     = row[2]                                            # Extract Server Domain Name
+        wos         = row[3]                                            # Extract Server O/S Name
+        #wsadmin_dir = row[4]                                            # Extract SADMIN Root Dir.
         st.writelog("")                                                 # Insert Blank Line
         st.writelog (('-' * 40))                                        # Insert Dash Line
         st.writelog ("Processing (%d) %-15s - os:%s" % (lineno,wname+"."+wdomain,wos))
@@ -218,7 +225,10 @@ def process_servers(wconn,wcur,st):
         # Process the content of the sysinfo.txt file ----------------------------------------------
         if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg
         wdict = {}                                                      # Create an empty Dictionary
-        wdict['srv_date_update'] = "None"                               # Default Value Upd.Date
+        wdict['srv_date_update']   = "None"                             # Default Value Upd.Date
+        wdict['srv_sadmin_dir']    = "/opt/sadmin"                      # Set Def. SADMIN Root Dir
+        wdict['srv_date_osupdate'] = "0000-00-00 00:00:00"              # Def. O/S Update Date
+        wdict['srv_update_status'] = "U"                                # Def. O/S Update Status
         for cfg_line in FH:                                             # Loop until all lines parse
             wline = cfg_line.strip()                                    # Strip CR/LF/Trailing space
             if '#' in wline or len(wline) == 0:                         # If comment or blank line
@@ -253,6 +263,9 @@ def process_servers(wconn,wcur,st):
                 if "SADM_SERVER_SERIAL"     in CFG_NAME: wdict['srv_serial']            = CFG_VALUE
                 if "SADM_SERVER_IPS"        in CFG_NAME: wdict['srv_ips_info']          = CFG_VALUE
                 if "SADM_UPDATE_DATE"       in CFG_NAME: wdict['srv_date_update']       = CFG_VALUE
+                if "SADM_OSUPDATE_DATE"     in CFG_NAME: wdict['srv_date_osupdate']     = CFG_VALUE
+                if "SADM_OSUPDATE_STATUS"   in CFG_NAME: wdict['srv_update_status']     = CFG_VALUE
+                if "SADM_ROOT_DIRECTORY"    in CFG_NAME: wdict['srv_sadmin_dir']        = CFG_VALUE
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
@@ -261,7 +274,7 @@ def process_servers(wconn,wcur,st):
                     else:
                         wdict['srv_vm'] = 1
 
-                 # RUNNING KERNEL IS 32 OR 64 BITS (IF ERROR SET VALUE TO ZERO - TO SPOT ERROR)
+                 # RUNNING KERNEL IS 32 OR 64 BITS                srv_date_osupdate='%s',     srv_update_status='%s', \         ZERO - TO SPOT ERROR)
                 try:
                     if "SADM_KERNEL_BITMODE" in CFG_NAME: wdict['srv_kernel_bitmode'] = int(CFG_VALUE)
                 except ValueError as e:
