@@ -25,6 +25,7 @@
 #                   rm -f ~/.config/google-chrome/SingletonCookie > /dev/null 2>&1
 #                   rm -f ~/.config/google-chrome/SingletonLock >/dev/null 2>&1
 #                   rm -f ~/.config/google-chrome/SingletonSocket  > /dev/null 2>&1
+# 2018_06_08    v2.0 Don't show error counter when zero and small corrections
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -46,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Current Script Version
+    export SADM_VER='2.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -83,13 +84,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 # This is a counter that is incremented each time an error occured
-ERROR_COUNT=0                               ; export ERROR_COUNT        # Error Counter
+ERROR=0                               ; export ERROR        # Error Counter
 
 # Number of days to keep unmodified *.rch and *.log file - After that time they are deleted
 LIMIT_DAYS=60                               ; export LIMIT_DAYS         # RCH+LOG Delete after
 
 # Development Local sadmin.ca Web Site Directory 
-WSADMIN = "/wsadmin" 
+WSADMIN="/wsadmin" 
 
 
 
@@ -110,9 +111,9 @@ dir_housekeeping()
              find /stbackups -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR";fi
             fi
     fi
 
@@ -123,9 +124,9 @@ dir_housekeeping()
              find /mystuff -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR";fi
             fi
     fi
 
@@ -142,9 +143,9 @@ dir_housekeeping()
              # Ignore chown error for my home dir.
              #if [ $? -ne 0 ]
              #   then sadm_writelog "Error occured on the last operation."
-             #        ERROR_COUNT=$(($ERROR_COUNT+1))
+             #        ERROR=$(($ERROR+1))
              #   else sadm_writelog "OK"
-             #        sadm_writelog "Total Error Count at $ERROR_COUNT"
+             #        sadm_writelog "Total Error Count at $ERROR"
              #fi
     fi
 
@@ -155,9 +156,9 @@ dir_housekeeping()
              find /install -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
             fi
     fi
 
@@ -168,17 +169,17 @@ dir_housekeeping()
              find /os -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
              sadm_writelog "find /os -exec chmod 775 {} \;"
              find /os -exec chmod 775 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                  then sadm_writelog "Error occured on the last operation."
-                      ERROR_COUNT=$(($ERROR_COUNT+1))
+                      ERROR=$(($ERROR+1))
                  else sadm_writelog "OK"
-                      sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
@@ -189,9 +190,9 @@ dir_housekeeping()
              find /sysadmin -exec chown jacques.${jgroup} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
@@ -202,9 +203,9 @@ dir_housekeeping()
              find /wsadmin -exec chown apache.apache {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
@@ -216,9 +217,9 @@ dir_housekeeping()
              find /var/lib/puppet/reports -type f -mtime +60 -name "*.yaml" -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR";fi
              fi
     fi
 
@@ -231,24 +232,24 @@ dir_housekeeping()
              mkdir -p /storix/custom > /dev/null
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR";fi
              fi
     fi
 
 
-    # Make sure ${SADM_USR_DIR} directory exist 
+    # Make sure ${SADM_USR_DIR} directory have right permission and privilege
     if [ -d "$SADM_USR_DIR" ]
         then sadm_writelog " "
              sadm_writelog "Make sure ${SADM_USR_DIR} have right owner"
              sadm_writelog "chown ${SADM_USER}.${SADM_GROUP} ${SADM_USR_DIR}"
              chown ${SADM_USER}.${SADM_GROUP} ${SADM_USR_DIR}
              if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                then sadm_writelog "Error occured on chown ${SADM_USR_DIR}"
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR";fi
               fi
              sadm_writelog " "
              sadm_writelog "Make sure ${SADM_USR_DIR} have right permission"
@@ -256,44 +257,34 @@ dir_housekeeping()
              chmod 0775 ${SADM_USR_DIR}
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
-             fi
-             sadm_writelog " "
-             sadm_writelog "Make sure ${SADM_USR_DIR} have right permission"
-             sadm_writelog "chmod g-s ${SADM_USR_DIR}"
-             chmod g-s /sadmin/jac
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
-     # Reset privilege on directory in ${SADM_USR_DIR}
+    # Set Privilege and Permission on /sadmin/usr ${SADM_USR_DIR} subdirectories
     if [ -d "${SADM_USR_DIR}" ]
         then sadm_writelog " "
              sadm_writelog "find ${SADM_USR_DIR} -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
              find ${SADM_USR_DIR} -type d -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
              sadm_writelog " "
              sadm_writelog "find ${SADM_USR_DIR} -type d -exec chmod 775 {} \;"       # Change Dir.
              find ${SADM_USR_DIR} -type d -exec chmod 775 {} \; >/dev/null 2>&1     # Change Dir.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
-    return $ERROR_COUNT
+    return $ERROR
 }
 
 
@@ -305,59 +296,45 @@ file_housekeeping()
 {
     sadm_writelog " " ;
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "MY FILES HOUSEKEEPING STARTING"
+    sadm_writelog "FILES HOUSEKEEPING STARTING"
     sadm_writelog "${SADM_TEN_DASH}"
 
-    # Reset privilege on directory /sadmin/jac
+    # Set Owner and Group on directory /sadmin/usr ${SADM_USR_DIR} 
     if [ -d "${SADM_USR_DIR}" ]
         then sadm_writelog " "
              sadm_writelog "find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
              find ${SADM_USR_DIR} -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
-
-    # Reset privilege on notes directories
-    if [ -d "${SADM_USR_DIR}/notes" ]
-        then sadm_writelog " "
-             sadm_writelog "find ${SADM_USR_DIR}/notes -type f -exec chmod -R 664 {} \;"
-             find ${SADM_USR_DIR}/notes -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
-                else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
-             fi
-    fi
-
-    # Reset privilege on /sadmin/jac/cfg directories
+    # Set Permission on /sadmin/usr/cfg directories
     if [ -d "${SADM_USR_DIR}/cfg" ]
         then sadm_writelog " "
              sadm_writelog "find ${SADM_USR_DIR}/cfg -type f -exec chmod -R 664 {} \;"
              find ${SADM_USR_DIR}/cfg -type f -exec chmod -R 664 {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
-    # Reset privilege on /sadmin files
+    # Set privilege on /sadmin/usr/bin files
     if [ -d "${SADM_UBIN_DIR}" ]
         then sadm_writelog " "
              sadm_writelog "find ${SADM_UBIN_DIR} -type f -exec chmod -R 770 {} \;"    # Advise user
              find ${SADM_UBIN_DIR} -type f -exec chmod -R 774 {} \; >/dev/null 2>&1  # Script Priv.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
              fi
     fi
 
@@ -368,9 +345,9 @@ file_housekeeping()
             rm -f /etc/cron.daily/0logwatch >/dev/null 2>&1             # Red Hat / CentOS 5 an Up
             if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
             fi
     fi
 
@@ -381,13 +358,13 @@ file_housekeeping()
             rm -f /etc/cron.daily/00-logwatch >/dev/null 2>&1           # Red Hat 4 and below
             if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
-                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                     ERROR=$(($ERROR+1))
                 else sadm_writelog "OK"
-                     sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
             fi
     fi
 
-    return $ERROR_COUNT
+    return $ERROR
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -404,14 +381,14 @@ special_housekeeping()
 
     # Once a day - Delete files in /tmp that have not been modified for 35 days
     sadm_writelog " "
-    sadm_writelog "Once a day - Delete files in /tmp that have not been modified for 35 days"
+    sadm_writelog "Delete files in /tmp that have not been modified for 35 days"
     sadm_writelog "find /tmp -type f -mtime +35 -exec rm -f {} \\;"
     find /tmp -type f -mtime +35 -exec rm -f {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
         then sadm_writelog "Error occured on the last operation."
-             ERROR_COUNT=$(($ERROR_COUNT+1))
+             ERROR=$(($ERROR+1))
         else sadm_writelog "OK"
-             sadm_writelog "Total Error Count at $ERROR_COUNT"
+                     if [ "$ERROR" -ne 0 ] ;then sadm_writelog "Total Error at $ERROR" ;fi
     fi
 }
 
@@ -454,6 +431,6 @@ special_housekeeping()
     # On time shot housekeeping or Special HouseKeeping
     special_housekeeping                                                # Correct Historical Change
 
-    SADM_EXIT_CODE=$ERROR_COUNT                                         # Error COunt = Exit Code
+    SADM_EXIT_CODE=$ERROR                                         # Error COunt = Exit Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
