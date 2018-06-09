@@ -1,12 +1,20 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_create_server_info.sh
+#   Title    :  sadm_client_create_system_info.sh
 #   Synopsis : .Run once a day to collect hardware & some software info of system (Use for DR)
 #   Version  :  1.5
 #   Date     :  13 November 2015
 #   Requires :  sh 
+#
+#
+#   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
+#                   a 100 characters per line. Comments in script always begin at column 73. You 
+#                   will have a better experience, if you set screen width to have at least 100 Chr.
+# 
 # --------------------------------------------------------------------------------------------------
+# Change Log
+#
 # 2016_08_08    v1.8 Added lsblk output to script
 # 2016_12_03    v1.9 Replace lsblk by parted to output disk name and size
 # 2016_12_09    v2.0 Added lsdev to PVS_FILE in Aix 
@@ -15,10 +23,10 @@
 # 2018_01_02    v2.3 Now put information in less files (disks, lvm and network file) 
 # 2018_01_03    v2.4 Added New system file output & add OSX Commands for Network,System & Disk Info.
 # 2018_06_03    v2.5 Revisited and adapt to new Libr.
+# 2018_06_09    v2.6 Add SADMIN root dir & Date/Status of last O/S Update in ${HOSTNAME}_sysinfo.txt
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
-
 
 
 #===================================================================================================
@@ -35,7 +43,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -64,13 +72,10 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
-
-# --------------------------------------------------------------------------------------------------
-#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
-# --------------------------------------------------------------------------------------------------
-#
-Debug=true                                      ; export Debug          # Debug increase Verbose
+#===================================================================================================
+# Scripts Variables 
+#===================================================================================================
+DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 # Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
@@ -113,7 +118,30 @@ IPCONFIG=""                                     ; export IPCONFIG       # OSX ip
 LSHW=""                                         ; export LSHW           # Linux List Hardware (lshw)
 NMCLI=""                                        ; export NMCLI          # Linux Network Manager CLI
 HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux HostNameCTL Command 
+OSUPDATE_DATE=""                                ; export OSUPDATE_DATE  # Date of Last O/S Update 
+OSUPDATE_STATUS=""                              ; export OSUPDATE_STATUS # Status (S,F,R) O/S Update 
 #
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
 
 
 
@@ -146,9 +174,9 @@ command_available()
     fi
     export SADM_CPATH
 
-    # If Debug is activated then display Package Name and Full path to it
+    # If DEBUG_LEVEL is activated then display Package Name and Full path to it
     #-----------------------------------------------------------------------------------------------
-    if [ $Debug ]
+    if [ $DEBUG_LEVEL -gt 0 ]
         then if [ ! -z $SADM_CPATH ]
                 then SADM_MSG=`printf "%-10s %-15s : %-30s" "[OK]" "$SADM_PKG" "$SADM_CPATH"`
                 else SADM_MSG=`printf "%-10s %-15s : %-30s" "[NA]" "$SADM_PKG" "Not Found"`
@@ -262,6 +290,44 @@ create_command_output()
     chown ${SADM_USER}:${SADM_GROUP} ${SCMD_TXT}
 }
 
+
+# ==================================================================================================
+#       This function get the last o/s update date and status from the rch file
+# ==================================================================================================
+# Example of content for input file :
+#   ubuntu1604 2018.06.08 12:27:20 .......... ........ ........ sadm_osupdate_client 2
+#   ubuntu1604 2018.06.08 12:27:20 2018.06.08 12:29:58 00:02:38 sadm_osupdate_client 0
+# ==================================================================================================
+set_last_osupdate_date()
+{
+
+    # Verify if the o/s update rch file exist
+    RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_client_osupdate.rch" 
+    if [ ! -r "$RCHFILE" ]
+        then sadm_writelog "Can't read the O/S Update RCH file ($RCHFILE)"
+             sadm_writelog "May be no update ran yet ?"
+             sadm_writelog "Field SADM_OSUPDATE_DATE & SADM_OSUPDATE_STATUS can't be establish"
+             OSUPDATE_DATE=""
+             OSUPDATE_STATUS="U"
+             return 1
+    fi
+
+    # Get Last Update Date from Return History File
+    OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
+
+    # Get the Status of the last O/S update
+    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $8}'`
+    case "$RCH_CODE" in 
+        0)  OSUPDATE_STATUS="S" 
+            ;;
+        1)  OSUPDATE_STATUS="F"
+            ;;
+        2)  OSUPDATE_STATUS="R"
+            ;;
+      "*")  OSUPDATE_STATUS="U"
+            ;;
+    esac
+}
 
 
 # ==================================================================================================
@@ -555,6 +621,8 @@ create_aix_config_files()
 # ==================================================================================================
 create_summary_file()
 {
+    set_last_osupdate_date                                              # Get Last O/S Update Date
+
     sadm_writelog "Creating $HWD_FILE ..."
     sadm_writelog " "
     echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
@@ -584,28 +652,48 @@ create_summary_file()
     echo "SADM_SERVER_IPS                       = $(sadm_server_ips)"                >> $HWD_FILE
     echo "SADM_SERVER_DISKS (Size in MB)        = $(sadm_server_disks)"              >> $HWD_FILE
     echo "SADM_SERVER_VG(s) (Size in MB)        = $(sadm_server_vg)"                 >> $HWD_FILE
+    echo "SADM_OSUPDATE_DATE                    = ${OSUPDATE_DATE}"                  >> $HWD_FILE
+    echo "SADM_OSUPDATE_STATUS                  = ${OSUPDATE_STATUS}"                >> $HWD_FILE
+    echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
 }
 
 
-
-# --------------------------------------------------------------------------------------------------
-#                                     Script Start HERE
-# --------------------------------------------------------------------------------------------------
+#===================================================================================================
+#                                       Script Start HERE
+#===================================================================================================
 #
-    
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
+    # Evaluate Command Line Switch Options Upfront
+    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+    
     pre_validation                                                      # Input File > Cmd present ?
     SADM_EXIT_CODE=$?                                                   # Save Function Return code
-    if [ $SADM_EXIT_CODE -ne 0 ]                                        # Cmd|File missing = exit
+    if [ $SADM_EXIT_CODE -ne 0 ]                                        # Which Command missing
         then sadm_stop $SADM_EXIT_CODE                                  # Upd. RC & Trim Log & Set RC
              exit 1
     fi
