@@ -128,7 +128,7 @@ process_servers()
 
     # Put Rows you want in the select 
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active" 
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir" 
     
     # Build SQL to select active server(s) from Database & output result in CSV Format to work file.
     SQL="${SQL} from server"                                            # From the Server Table
@@ -154,6 +154,7 @@ process_servers()
         server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
         server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor  1=True 0=False
         server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic 1=True 0=False
+        server_rootdir=` echo $wline|awk -F, '{ print $7 }'`            # Client SADMIN Root Dir.
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQDN Server Name
         sadm_writelog " "                                               # Blank Line
         sadm_writelog "`printf %10s |tr " " "-"`"                       # Ten Dashes Line    
@@ -167,6 +168,7 @@ process_servers()
                     then sadm_writelog "$fqdn_server Sporadic ON"       # Show Server is Sporadic
                     else sadm_writelog "$fqdn_server Sporadic OFF"      # Show Non Sporadic Server
                  fi
+                 sadm_writelog "SADMIN Root Dir. is $server_rootdir"    # Show SADMIN Root Dir.
         fi
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
@@ -243,28 +245,18 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-#
-    sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with error
-    fi
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S with Error
-    fi
-
-    # Command Line Switch Options- 
-    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -278,13 +270,35 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
-    
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+# Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+# Your Main process procedure
     main_process                                                        # Main Process
     # OR                                                                # Use line below or above
     #process_servers                                                    # Process All Active Servers
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
 
-    sadm_stop $SADM_EXIT_CODE                                           # Close SADM Tool & Upd RCH
+# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
