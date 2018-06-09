@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis 
-#   Title       :   sadm_nmon_rrd_update.sh
+#   Title       :   sadm_server_nmon_rrd_update.sh
 #   Synopsis    :   Script that Create/Update RRD (Round Robin Database) file from nmon output file.
 #                   This script Read the nmon file (ex: server1_130324_0000.nmon) and update the
 #                   statistic in the Proper RRD File.
@@ -24,7 +24,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # 
 # --------------------------------------------------------------------------------------------------
-# CHANGELOG
+# Change Log
+#
 # 2018_01_13    V1.0b Initial Version
 # 2018_01_20    V1.0c Work in Progress
 # 2018_01_21    V1.0d Work in Progress
@@ -41,6 +42,8 @@
 # 2018_02_11    V1.8 Small Message Change
 # 2018_02_12    V1.9 Add RRD Update Warning Total after each file processed.
 # 2018_06_04    v2.0 Adapt to new SADMIN Libr.
+# 2018_06_09    v2.1 Change Help and Version Function, Change Script Name, Change Startup Order
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -62,7 +65,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_VER='2.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -113,18 +116,28 @@ RRD_FILE="Will be set later on"             ; export RRD_FILE           # RRD Fi
 
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
-#===================================================================================================
-help_usage()
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "${SADM_PN} usage :"
-    echo "             -d   (Debug Level [0-9])"
-    echo "             -f   nmon file  (to process only one nmon file)"
-    echo "             -h   (Display this help message)"
-    echo " "
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-f   nmon file  (to process only one nmon file)"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
 }
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
 
 #===================================================================================================
 #                   Get Info about nmon file before we start processing it.
@@ -1153,24 +1166,63 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-    sadm_start                                                          # Init Env. Dir. & RC/Log
+
+
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:f:" opt ; do                                     # Loop to process Switch
+        case $opt in
+            f) CMD_FILE=$OPTARG                                         # Get nmon Filename Specify
+               if [ ! -r "$CMD_FILE" ]                                  # If file not readable
+                    then sadm_writelog "Nmon File $CMD_FILE not found"  # Show User Error 
+                         sadm_stop 0
+                         exit 0
+               fi
+               ;;                                                       # No stop after each page
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` #
+               if [ "$num" = "" ] 
+                  then printf "\nDebug Level specified is invalid\n" 
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+# Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
+# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
              sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
+             exit 1                                                     # Exit To O/S with Error
     fi
 
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then sadm_writelog "Script can only be run user 'root'"         # Advise User should be root
+# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
              sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Upd. RCH
-             exit 1                                                     # Exit To O/S
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
     fi
 
-    # Check Availibilty of rrdupdate and cut command
+
+# Check Availibilty of rrdupdate and cut command
     RRDUPDATE=`which rrdupdate 2>/dev/null` ; export RRDUPDATE          # Get Location of rrdupdate
     if [ $? -ne 0 ]                                                     # Command rrdupdate Not Avail.
         then sadm_writelog "Script aborted : rrdupdate command not found" # Show User Error
@@ -1190,42 +1242,10 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    # Switch for Help Usage (-h), Activate Debug Level (-d[1-9]), -f [nmon-file] -------------------
-    CMD_FILE=""                                                         # Cmd Line FileName Specify
-    while getopts "hd:f:" opt ; do                                      # Loop to process Switch
-        case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$`
-               if [ "$num" = "" ] 
-                  then sadm_writelog "Debug Level not specified" 
-                       help_usage                                       # Display Help Usage
-                       sadm_stop 0
-                       exit 0
-               fi
-               ;;                                                       # No stop after each page
-            f) CMD_FILE=$OPTARG                                         # Get nmon Filename Specify
-               if [ ! -r "$CMD_FILE" ]                                  # If file not readable
-                    then sadm_writelog "Nmon File $CMD_FILE not found"  # Show User Error 
-                         sadm_stop 0
-                         exit 0
-               fi
-               ;;                                                       # No stop after each page
-            h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell
-               ;;
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
-               help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close the shop
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
-    fi
-
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
+
+# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
+    
