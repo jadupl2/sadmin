@@ -33,6 +33,7 @@
 # 2018_02_04    v2.0 Remove MySql Backup & Change Script name from sadm_eod_client.sh to sadm_client_sunset.sh
 # 2018_04_05    v2.1 Remove execution of sadm_create_sar_perfdata.sh not neede anymmore
 # 2018_06_03    v2.2 Adapt to new version of Shell Library and small ameliorations
+# 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Current Script Version
+    export SADM_VER='2.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -150,19 +151,19 @@ main_process()
     SADM_EXIT_CODE=0                                                    # Reset Error counter
 
     # On Every Client (including SADMIN Server) we prune some files & check file owner & Permission
-    run_command "sadm_housekeeping_client.sh"                           # Client HouseKeeping Script
+    run_command "sadm_client_housekeeping.sh"                           # Client HouseKeeping Script
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
-    run_command "sadm_dr_fs_save_info.sh"                                  # Client Save LVM FS Info
+    run_command "sadm_client_dr_savefs.sh"                              # Client Save LVM FS Info
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)
-    run_command "sadm_create_server_info.sh"                            # Create Client Sysinfo file
+    run_command "sadm_client_create_system_info.sh"                     # Create Client Sysinfo file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Create HTML file containing System Info.(files,hardware,software) $SADMIN/dat/dr/hostname.html
-    run_command "sadm_create_cfg2html.sh"                               # Produce cfg2html html file
+    run_command "sadm_client_cfg2html.sh"                               # Produce cfg2html html file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     return $SADM_EXIT_CODE                                              # Return No Error to Caller
@@ -173,16 +174,9 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #                                Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
 
-    # Switch for Help Usage (-h), Show Script Version (-v) or Activate Debug Level (-d[1-9])
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
@@ -199,11 +193,23 @@ main_process()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
-    
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+# Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+    
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-    sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
-    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)  
+
+# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+    sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
+    exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
