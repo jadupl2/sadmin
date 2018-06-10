@@ -1,0 +1,97 @@
+-----
+Sat 19 Dec 2015 08:14:29 AM EST 
+
+root@ubuntu1204:/sadmin# mail
+The program 'mail' is currently not installed.  You can install it by typing:
+apt-get install mailutils
+root@ubuntu1204:/sadmin# 
+
+NCURSE GUI IS STARTED DURING INSTALLATION TO CONGIGURE SMART RELAY
+
+root@ubuntu1204:/sadmin# apt-get install mailutils
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following extra packages will be installed:
+  libgsasl7 libmailutils2 libntlm0 postfix
+Suggested packages:
+  mailutils-mh procmail postfix-mysql postfix-pgsql postfix-ldap postfix-pcre sasl2-bin dovecot-common
+  postfix-cdb postfix-doc
+The following NEW packages will be installed:
+  libgsasl7 libmailutils2 libntlm0 mailutils postfix
+0 upgraded, 5 newly installed, 0 to remove and 66 not upgraded.
+Need to get 2,698 kB of archives.
+After this operation, 7,797 kB of additional disk space will be used.
+Do you want to continue [Y/n]? y
+Get:1 http://ca.archive.ubuntu.com/ubuntu/ precise/universe libntlm0 i386 1.2-1 [18.4 kB]
+Get:2 http://ca.archive.ubuntu.com/ubuntu/ precise/universe libgsasl7 i386 1.6.1-1 [133 kB]
+Get:3 http://ca.archive.ubuntu.com/ubuntu/ precise/universe libmailutils2 i386 1:2.2+dfsg1-5 [872 kB]
+Get:4 http://ca.archive.ubuntu.com/ubuntu/ precise-updates/main postfix i386 2.9.6-1~12.04.3 [1,273 kB]       
+Get:5 http://ca.archive.ubuntu.com/ubuntu/ precise/universe mailutils i386 1:2.2+dfsg1-5 [401 kB]             
+Fetched 2,698 kB in 11s (233 kB/s)                                                                            
+Preconfiguring packages ...
+Selecting previously unselected package libntlm0.
+(Reading database ... 152373 files and directories currently installed.)
+Unpacking libntlm0 (from .../libntlm0_1.2-1_i386.deb) ...
+Selecting previously unselected package libgsasl7.
+Unpacking libgsasl7 (from .../libgsasl7_1.6.1-1_i386.deb) ...
+Selecting previously unselected package libmailutils2.
+Unpacking libmailutils2 (from .../libmailutils2_1%3a2.2+dfsg1-5_i386.deb) ...
+Selecting previously unselected package postfix.
+Unpacking postfix (from .../postfix_2.9.6-1~12.04.3_i386.deb) ...
+Selecting previously unselected package mailutils.
+Unpacking mailutils (from .../mailutils_1%3a2.2+dfsg1-5_i386.deb) ...
+Processing triggers for man-db ...
+Processing triggers for ureadahead ...
+Processing triggers for ufw ...
+Setting up libntlm0 (1.2-1) ...
+Setting up libgsasl7 (1.6.1-1) ...
+Setting up libmailutils2 (1:2.2+dfsg1-5) ...
+Setting up postfix (2.9.6-1~12.04.3) ...
+Adding group `postfix' (GID 126) ...
+Done.
+Adding system user `postfix' (UID 116) ...
+Adding new user `postfix' (UID 116) with group `postfix' ...
+Not creating home directory `/var/spool/postfix'.
+Creating /etc/postfix/dynamicmaps.cf
+Adding tcp map entry to /etc/postfix/dynamicmaps.cf
+Adding sqlite map entry to /etc/postfix/dynamicmaps.cf
+Adding group `postdrop' (GID 127) ...
+Done.
+setting myhostname: ubuntu1204.maison.ca
+setting alias maps
+setting alias database
+changing /etc/mailname to ubuntu1204.maison.ca
+setting myorigin
+setting destinations: ubuntu1204.maison.ca, localhost.maison.ca, localhost
+setting relayhost: relais.videotron.ca
+setting mynetworks: 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+setting mailbox_size_limit: 0
+setting recipient_delimiter: +
+setting inet_interfaces: loopback-only
+setting inet_protocols: all
+/etc/aliases does not exist, creating it.
+WARNING: /etc/aliases exists, but does not have a root alias.
+
+Postfix is now set up with a default configuration.  If you need to make 
+changes, edit
+/etc/postfix/main.cf (and others) as needed.  To view Postfix configuration
+values, see postconf(1).
+
+After modifying main.cf, be sure to run '/etc/init.d/postfix reload'.
+
+Running newaliases
+ * Stopping Postfix Mail Transport Agent postfix                                                        [ OK ] 
+ * Starting Postfix Mail Transport Agent postfix                                                        [ OK ] 
+Setting up mailutils (1:2.2+dfsg1-5) ...
+update-alternatives: using /usr/bin/frm.mailutils to provide /usr/bin/frm (frm) in auto mode.
+update-alternatives: using /usr/bin/from.mailutils to provide /usr/bin/from (from) in auto mode.
+update-alternatives: using /usr/bin/messages.mailutils to provide /usr/bin/messages (messages) in auto mode.
+update-alternatives: using /usr/bin/movemail.mailutils to provide /usr/bin/movemail (movemail) in auto mode.
+update-alternatives: using /usr/bin/readmsg.mailutils to provide /usr/bin/readmsg (readmsg) in auto mode.
+update-alternatives: using /usr/bin/dotlock.mailutils to provide /usr/bin/dotlock (dotlock) in auto mode.
+update-alternatives: using /usr/bin/mail.mailutils to provide /usr/bin/mailx (mailx) in auto mode.
+Processing triggers for libc-bin ...
+ldconfig deferred processing now taking place
+root@ubuntu1204:/sadmin# 
+

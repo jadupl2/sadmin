@@ -32,6 +32,7 @@
 # 2018_05_26    V2.6 Major Rewrite, Better Performance
 # 2018_05_28    V2.7 Add Backup Parameters now in sadmin.cfg
 # 2018_06_04    v2.8 Added User Directory Environment Variables in SADMIN Client Section
+# 2018_06_05    v2.9 Added setup, www/tmp/perf Directory Environment Variables 
 #
 #===================================================================================================
 #
@@ -69,7 +70,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.8"                 # Current Script Version
+    st.ver              = "2.9"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -413,6 +414,11 @@ def print_client_directory(st):
     presult=st.dbb_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
+    pexample="ins.setup_dir"                                            # Example Calling Function
+    pdesc="SADMIN Installation/Update Setup Dir."                       # Function Description
+    presult=st.setup_dir                                                # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        
     pexample="ins.usr_dir"                                              # Example Calling Function
     pdesc="User/System specific directory"                              # Function Description
     presult=st.usr_dir                                                  # Return Value(s)
@@ -468,6 +474,11 @@ def print_server_directory(st):
     pexample="ins.www_tmp_dir"                                          # Example Calling Function
     pdesc="SADMIN Web Temp Working Directory"                           # Function Description
     presult=st.www_tmp_dir                                              # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+       
+    pexample="ins.www_perf_dir"                                         # Example Calling Function
+    pdesc="Web Performance Server Graph Dir."                           # Function Description
+    presult=st.www_perf_dir                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
        
 
@@ -926,11 +937,6 @@ def main():
 
     st = setup_sadmin()                                                 # Setup SADMIN Tool Instance
     
-    # If on SADMIN Server and decided to use Database
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-        st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
-    
     # Print All Demo Informations
     print_user_variables(st)                                            # Show User Avail. Variables
     print_python_function(st)                                           # Show Python Specific func.
@@ -944,10 +950,16 @@ def main():
     print_command_path(st)                                              # Show Command Path
     #print_env(st)                                                       # Show Env. Variables
 
+    # Test Database Connection
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+        printheader (st,"Database Connection Test","Description","  This System Result")        
+        st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
         st.writelog (" ")                                               # Blank Line
         st.writelog ("Closing Database connection")                     # Show we are closing DB
         st.dbclose()                                                    # Close the Database
+        st.writelog (" ")                                               # Blank Line
+
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
 

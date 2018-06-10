@@ -22,14 +22,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # February 2017 - Jacques DUplessis
-#       1.0 Added options for editing server from that page
-#           Added O/S Icons
-#           Added VM or Physical Server
-# December 2017 - Jacques DUplessis
-#       2.0 Adapted for MySQL and various look enhancement
-# 2018_05_06    JDuplessis
-#       2.1 Use Standard view file web page instead of custom vie log pageAdapted for MySQL and various look enhancement
-#   
+# 2016_02_02    v1.0 Added options to edit server from that page, Added O/S Icons, Added VM or Phys
+# 2017_12_12    v2.0 Adapted for MySQL and various look enhancement
+# 2018_05_06    v2.1 Use Standard view file web page instead of custom vie log pageAdapted 
+#                    for MySQL and various look enhancement
+# 2018_06_06    v2.2 Correct problem with link to view the update log 
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,7 +56,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.1" ;                                                # Current version number
+$WVER          = "2.2" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -240,7 +237,7 @@ function display_data($count, $row) {
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
     if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name ;
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
         echo " title='View Update Log'>Log</a>";
     }else{
         echo "N/A";

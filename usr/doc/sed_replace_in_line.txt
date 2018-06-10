@@ -1,0 +1,28 @@
+root@centos5:/etc/cron.d# cat nmon-script 
+0 0 * * * nobody /usr/bin/nmon-script
+---------------------------------------------------------------------------------------------------------------------- 11:28:44
+root@centos5:/etc/cron.d# sed -i -e 's/^/#/' /etc/cron.d/nmon-script 
+---------------------------------------------------------------------------------------------------------------------- 11:28:51
+root@centos5:/etc/cron.d# cat nmon-script 
+#0 0 * * * nobody /usr/bin/nmon-script
+---------------------------------------------------------------------------------------------------------------------- 11:28:54
+root@centos5:/etc/cron.d# sed -i -e 's/^//' /etc/cron.d/nmon-script 
+---------------------------------------------------------------------------------------------------------------------- 11:29:50
+root@centos5:/etc/cron.d# cat nmon-script 
+#0 0 * * * nobody /usr/bin/nmon-script
+---------------------------------------------------------------------------------------------------------------------- 11:29:51
+root@centos5:/etc/cron.d# sed -i -e 's/^#//' /etc/cron.d/nmon-script 
+---------------------------------------------------------------------------------------------------------------------- 11:29:58
+root@centos5:/etc/cron.d# cat nmon-script 
+0 0 * * * nobody /usr/bin/nmon-script
+---------------------------------------------------------------------------------------------------------------------- 11:30:00
+root@centos5:/etc/cron.d# 
+
+    # What to make sure that only one nmon is running and is the one controlled by this script
+    nmon_cron='/etc/cron.d/nmon-script'                                 # Name of the nmon cron file
+    if [ -r "$nmon_cron" ]                                              # nmon cron file exist ?
+       then commented=`grep 'nmon-script' ${nmon_cron} |cut -d' ' -f1`  # Get 1st Char Of nmon line
+            if [ "$commented" -eq "0" ]                                 # Cron Line not in commented
+                then sed -i -e 's/^/#/' $nmon_cron                      # Then Put line in comment
+            fi
+    fi 

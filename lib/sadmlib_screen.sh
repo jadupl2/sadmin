@@ -6,11 +6,10 @@
 #  Synopsis:  Screen Oriented functions - Library of screen related functions.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_07_07 JDuplessis - V1.0 Initial Version
-# 2017_09_01 JDuplessis - V1.1 Added Display of SADM Release Number on second line of menu
-# 2017_10_09 JDuplessis - V1.2 Change Menu Heading & Menu item display
-# 2018_05_14 JDuplessis 
-#   V1.3 Fix Display Problem under MacOS
+# 2016_07_07    v1.0 Initial Version
+# 2017_09_01    v1.1 Added Display of SADM Release Number on second line of menu
+# 2017_10_09    v1.2 Change Menu Heading & Menu item display
+# 2018_05_14    v1.3 Fix Display Problem under MacOS
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 

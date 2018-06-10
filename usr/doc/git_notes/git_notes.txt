@@ -1,0 +1,231 @@
+Create a new project repository
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git init
+Initialized empty Git repository in /sysadmin/sam/.git/
+
+root@lxmq0007(/home/jadupl2)# git config --global user.name "jadupl2"
+root@lxmq0007(/home/jadupl2)# git config --global user.email "jack.duplessis@standardlife.ca"
+
+root@lxmq0007(/home/jadupl2)# git config --list
+user.name=jadupl2
+user.email=jack.duplessis@standardlife.ca
+root@lxmq0007(/home/jadupl2)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git add .
+root@lxmq0007(/sysadmin/sam)#
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git status
+# On branch master
+#
+# Initial commit
+#
+# Changes to be committed:
+#   (use "git rm --cached <file>..." to unstage)
+#
+#       new file:   dr_makefs
+#       new file:   dr_savefs
+#       new file:   drcreatefs.sh
+#       new file:   drrest_template.sh
+#       new file:   drrestvg.sh
+#       new file:   drsavevg.dat
+#       new file:   drsavevg.prev
+#       new file:   drsavevg.sh
+#       new file:   drsavevg.srt
+#       new file:   exfsauto_wrap
+#       new file:   files/sam_cie.seq
+#       new file:   files/sam_daily.seq
+#       new file:   files/sam_fs.seq
+#       new file:   files/sam_lang.seq
+#       new file:   files/sam_lvm.seq
+#       new file:   files/sam_tape.seq
+#       new file:   files/sam_vg.seq
+#       new file:   files/sam_weekly.seq
+#       new file:   movevg_createfs.sh
+#       new file:   sam
+#       new file:   sam.init
+#       new file:   sam.log
+#       new file:   sam.sh
+#       new file:   sam_create_group.sh
+#       new file:   sam_exfs
+#       new file:   sam_exfsauto
+#       new file:   sam_exfsauto.dat
+#       new file:   sam_exfsauto.dat.last
+#       new file:   sam_fs.sh
+#       new file:   sam_fs_functions.sh
+#       new file:   sam_gfs.sh
+#       new file:   sam_gfs_functions.sh
+#       new file:   sam_mkfs
+#       new file:   sam_rmfs
+#       new file:   sam_rpm_tools.sh
+#       new file:   sam_sched_incr.dat
+#       new file:   sam_sched_incr.sh
+#       new file:   tmp/fstab.wrk
+#       new file:   tmp/stderr.20787
+#       new file:   tmp/stderr.24881
+#       new file:   tmp/stderr.29244
+#       new file:   tmp/stdout.20787
+#       new file:   tmp/stdout.24881
+#       new file:   tmp/stdout.29244
+#       new file:   tmp/vglist.20787
+#       new file:   tmp/vglist.24881
+#       new file:   tmp/vglist.29244
+#
+root@lxmq0007(/sysadmin/sam)#
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git commit -m "Initial commit"
+[master (root-commit) 12d25ee] Initial commit
+ 47 files changed, 11034 insertions(+)
+ create mode 100755 dr_makefs
+ create mode 100755 dr_savefs
+ create mode 100755 drcreatefs.sh
+ create mode 100755 drrest_template.sh
+ create mode 100755 drrestvg.sh
+ create mode 100644 drsavevg.dat
+ create mode 100644 drsavevg.prev
+ create mode 100755 drsavevg.sh
+ create mode 100755 drsavevg.srt
+ create mode 120000 exfsauto_wrap
+ create mode 100755 files/sam_cie.seq
+ create mode 100755 files/sam_daily.seq
+ create mode 100755 files/sam_fs.seq
+ create mode 100755 files/sam_lang.seq
+ create mode 100755 files/sam_lvm.seq
+ create mode 100755 files/sam_tape.seq
+ create mode 100755 files/sam_vg.seq
+ create mode 100755 files/sam_weekly.seq
+ create mode 100755 movevg_createfs.sh
+ create mode 100755 sam
+ create mode 100755 sam.init
+ create mode 100755 sam.log
+ create mode 100755 sam.sh
+ create mode 100755 sam_create_group.sh
+ create mode 100755 sam_exfs
+ create mode 100755 sam_exfsauto
+ create mode 100755 sam_exfsauto.dat
+ create mode 100755 sam_exfsauto.dat.last
+ create mode 100755 sam_fs.sh
+ create mode 100755 sam_fs_functions.sh
+ create mode 100755 sam_gfs.sh
+ create mode 100755 sam_gfs_functions.sh
+ create mode 100755 sam_mkfs
+ create mode 100755 sam_rmfs
+ create mode 100755 sam_rpm_tools.sh
+ create mode 100755 sam_sched_incr.dat
+ create mode 100755 sam_sched_incr.sh
+ create mode 100644 tmp/fstab.wrk
+ create mode 100644 tmp/stderr.20787
+ create mode 100644 tmp/stderr.24881
+ create mode 100644 tmp/stderr.29244
+ create mode 100644 tmp/stdout.20787
+ create mode 100644 tmp/stdout.24881
+ create mode 100644 tmp/stdout.29244
+ create mode 100644 tmp/vglist.20787
+ create mode 100644 tmp/vglist.24881
+ create mode 100644 tmp/vglist.29244
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)#
+root@lxmq0007(/sysadmin/sam)# git status
+# On branch master
+nothing to commit, working directory clean
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)#
+root@lxmq0007(/sysadmin/sam)# vi sam.init
+root@lxmq0007(/sysadmin/sam)#
+root@lxmq0007(/sysadmin/sam)# git status
+# On branch master
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#       modified:   sam.init
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git add sam.init
+root@lxmq0007(/sysadmin/sam)# git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#       modified:   sam.init
+#
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git commit sam.init -m "Updated Comment"
+[master 385da5d] Updated Comment
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+root@lxmq0007(/sysadmin/sam)# git status
+# On branch master
+nothing to commit, working directory clean
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+root@lxmq0007(/sysadmin/sam)# git remote add origin git@sysinfo:/sysinfo/www/data/git/sam.git
+root@lxmq0007(/sysadmin/sam)#
+
+-------------------------------------------
+
+root@lxmq0007(/sysadmin/sam)# git push origin master
+Password:
+/usr/bin/xauth:  creating new authority file /sysinfo/www/data/git/.Xauthority
+Counting objects: 48, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (34/34), done.
+Writing objects: 100% (48/48), 69.47 KiB, done.
+Total 48 (delta 12), reused 0 (delta 0)
+To git@sysinfo:/sysinfo/www/data/git/sam.git
+ * [new branch]      master -> master
+root@lxmq0007(/sysadmin/sam)#
+
+
+-------------------------------------------
+-------------------------------------------
+SERVER PREPARATION
+
+root@lxmq0007(/sysinfo/www/data)# mkdir git
+root@lxmq0007(/sysinfo/www/data)# cd git
+root@lxmq0007(/sysinfo/www/data/git)# mkdir sam.git
+root@lxmq0007(/sysinfo/www/data/git)# cd sam.git
+root@lxmq0007(/sysinfo/www/data/git/sam.git)# git --bare init
+Initialized empty Git repository in /sysinfo/www/data/git/sam.git/
+
+root@lxmq0007(/sysinfo/www/data)# chown -R git.apache git
+root@lxmq0007(/sysinfo/www/data)# chmod 6775 git
+root@lxmq0007(/sysinfo/www/data)# ls -ld git
+drwsrwsr-x 3 git apache 4096 Jan 20 14:32 git
+root@lxmq0007(/sysinfo/www/data)#
+
+root@lxmq0007(/sysinfo/www/data/git/sam.git)# su - git
+-bash-3.2$ id
+uid=9566(git) gid=48(apache) groups=48(apache)
+-bash-3.2$ pwd
+/sysinfo/www/data/git
+-bash-3.2$ touch coco.txt
+-bash-3.2$ rm coco.txt
+-bash-3.2$
+
+
+
+root@lxmq0007(/sysinfo/www/data/git/sam.git)#
+root@lxmq0007(/sysinfo/www/data/git/sam.git)# passwd git
+Changing password for user git.
+New security password:
+Retype new security password:
+passwd: all authentication tokens updated successfully.
+root@lxmq0007(/sysinfo/www/data/git/sam.git)#

@@ -6,18 +6,20 @@
 #   Date     :  7 Juin 2017
 #   Requires :  sh
 #   Synopsis :  Script to enable/disable/status SADM Service
-#                   If SADM Service is enable, at system startup/shutdown above scripts are executed
-#                       At System startup  : $SADMIN/sys/sadm_startup.sh
-#                       At System shutdown : $SADMIN/sys/sadm_shutdown.sh 
-#                   When disable these scripts are not executed.
-#                   You can get the status of SADMIN service
-#           
+#               If SADM Service is enable, at system startup/shutdown above scripts are executed
+#                   - At System startup  : $SADMIN/sys/sadm_startup.sh
+#                   - At System shutdown : $SADMIN/sys/sadm_shutdown.sh 
+#               When disable these scripts are not executed.
+#               You can get the status of SADMIN service
+# 
 #               sadm_service.sh usage :"
 #                   -e   (Enable SADM Service)
 #                   -d   (Disable SADM Service)
 #                   -s   (Display Status of SADM Service)
-#                   -h   (Display this help message)"
+#                   -h   (Display this help message)
+#                   -v   (Show Script and Library Version)
 #
+# --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
@@ -31,54 +33,63 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-# Enhancements/Corrections Version Log
-# V1.6 June 2017 - Initial Version
-# V1.7 June 2017 - Corrections for System V service
-# V1.8 July 2017 - Add '-s' switch to display sadmin service status
-# V1.9 July 2017 - Modify Help Message
-# 2017_08_03 JDuplessis - v1.10 Added a Stop Service beore the start (eliminate problem)
-# 2018_01_12 JDuplessis
-#   v1.11   Add Synopsis - Update SADM Tools section
-# 2018_02_08 JDuplessis
-#   v1.12   Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
+# Change Log
+#
+# 2017_06_06    v1.6 Initial Version
+# 2017_07_07    v1.7 Corrections for System V service
+# 2017_07_08    v1.8 Add '-s' switch to display sadmin service status
+# 2017_07_09    v1.9 Modify Help Message
+# 2017_08_03    v1.10 Added a Stop Service beore the start (eliminate problem)
+# 2018_01_12    v1.11 Add Synopsis - Update SADM Tools section
+# 2018_02_08    v1.12 Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
+# 2018_06_06    v2.0 Restructure Code & Adapt to new SADMIN Shell Libr.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
  
 
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.12'                            ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+
 #===================================================================================================
+# Setup SADMIN Global Variables and Load SADMIN Shell Library
 #
+    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+
+    # Load SADMIN Standard Shell Library 
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But some can overriden here on a per script basis.
+    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
+    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#===================================================================================================
+
 
 
 
@@ -100,18 +111,30 @@ SADM_INI_IFILE="${SADM_SYS_DIR}/sadmin.rc"          ; export SADM_INI_IFILE  # I
 SADM_INI_OFILE="/etc/init.d/sadmin"                 ; export SADM_INI_OFILE  # Output Dest. Srv File
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
-#===================================================================================================
-help()
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "sadm_service.sh usage :"
-    echo "             -e   (Enable SADM Service)"
-    echo "             -d   (Disable SADM Service)"
-    echo "             -s   (Display Status of SADM Service)"
-    echo "             -h   (Display this help message)"
-    echo " "
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-e   (Enable SADM Service)"
+    printf "\n\t-d   (Disable SADM Service)"
+    printf "\n\t-s   (Display Status of SADM Service)"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
 }
 
 
@@ -234,7 +257,7 @@ service_start()
 
     # Optional Command line switches    
     P_DISABLE="OFF" ; P_ENABLE="OFF"                                    # Set Switch Default Value
-    while getopts "desh " opt ; do                                      # Loop to process Switch
+    while getopts "devsh " opt ; do                                     # Loop to process Switch
         case $opt in
             d) P_DISABLE="ON"                                           # Disable SADM Service 
                service_stop    sadmin                                   # Stop sadmin Service
@@ -255,19 +278,23 @@ service_start()
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
-            h) help                                                     # Display Help Usage
+            h) show_usage                                               # Display Help Usage
+               sadm_stop 0                                              # Close the shop
+               exit 0                                                   # Back to shell 
+               ;;
+            v) show_version                                             # Display Script Version
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
-               help                                                     # Display Help Usage
+               show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done  
 
     if [ "$P_DISABLE" = "OFF" ] && [ "$P_ENABLE" = "OFF" ]              # Set Switch Default Value
-       then help
+       then show_usage
             sadm_stop 0                                                 # Close the shop
             exit 0                                                      # Back to shell 
     fi 
@@ -275,4 +302,3 @@ service_start()
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
-  

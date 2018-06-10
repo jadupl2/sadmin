@@ -1,8 +1,8 @@
 #----------------------------------------------------------------------------------------------------------------------------------------
 # UPDATED FOR VERSION 2.1
-# SADM SYSMON Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.smon
-# This file is read and updated by SADM SYSMON every time it run.
-# New Filesystem line will be added automatically to this file when Detected.
+# SADM SYStem MONitor  Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.cfg
+# This file is read and updated by SADM SYSMON (sadm_sysmon.pl) every time it run.
+# New Filesystem line will be added automatically to this file when detected.
 #----------------------------------------------------------------------------------------------------------------------------------------
 # This file contains all the verifications made on the node and the actual value for each test
 # Comments lines must always begin with a "#".
@@ -34,7 +34,8 @@
 #----------------------------------------------------------------------------------------------------------------------------------------
 #
 #---------- Run specific scripts, check return code and issue a warning or error based on threshold
-#script:name                      1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
+script:sysmon_template.sh        1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
+script:sadm_nmon_watcher.sh      1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
 #
 #---------- Aix/Linux CPU Load, Server Load Average and Swap Space usage Monitoring
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -

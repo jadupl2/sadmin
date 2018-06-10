@@ -1,0 +1,10 @@
+-----
+Sat 19 Dec 2015 08:03:15 AM EST 
+aks@aks-K55VD:~$ lsb_release -a  
+No LSB modules are available. 
+
+Since there are no lsb modules installed in your machine, you get that message.
+You can install the lsb modules using the command
+sudo apt-get install lsb-core
+
+
