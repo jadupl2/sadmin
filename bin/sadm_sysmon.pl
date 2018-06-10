@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #===================================================================================================
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_sysmon.pl

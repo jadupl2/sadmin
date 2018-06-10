@@ -1,4 +1,4 @@
-#!/bin/perl 
+#!/usr/bin/env perl
 # ---------------------------------------------------------------------------------------------
 # SADM_Monitor Terminal Visualizer 
 # Written in February 2017 by Jacques Duplessis.
