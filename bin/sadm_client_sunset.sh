@@ -155,7 +155,7 @@ main_process()
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
-    run_command "sadm_client_dr_savefs.sh"                              # Client Save LVM FS Info
+    run_command "sadm_dr_savefs.sh"                                     # Client Save LVM FS Info
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)
