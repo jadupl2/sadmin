@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_server_osupdate.sh
+#   Title    :  sadm_osupdate_farm.sh
 #   Synopsis :  Apply O/S update to all active or selected selected servers
 #   Version  :  1.0
 #   Date     :  9 March 2015
@@ -37,6 +37,7 @@
 #   2018_02_08  V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
 #   2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
 #   2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
+#   2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -59,7 +60,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              exit 1                                     # Exit to Shell with Error
     fi
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.6'                               # Current Script Version
+    export SADM_VER='3.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -100,7 +101,7 @@ STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equ
 ONE_SERVER=""                               ; export ONE_SERVER         # Name If One server to Upd.
 
 # Script That is run on every client to update the Operating System
-USCRIPT="${SADM_BIN_DIR}/sadm_client_osupdate.sh" ; export USCRIPT      # Script to execute on nodes
+USCRIPT="${SADM_BIN_DIR}/sadm_osupdate.sh"  ; export USCRIPT            # Script to execute on nodes
 
 
 # --------------------------------------------------------------------------------------------------
