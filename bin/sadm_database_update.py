@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #===================================================================================================
 #   Author:     Jacques Duplessis
-#   Title:      sadm_server_database_update.py
+#   Title:      sadm_database_update.py
 #   Synopsis:   Read Hardware/Software/Performance data collected from servers & update database
 #===================================================================================================
 # Description
@@ -28,6 +28,7 @@
 # 2018_02_21    v2.9 Adjust to new calling sadmin lib method#
 # 2018_06_03    v3.0 Adapt to new SADMIN Python Library
 # 2018_06_09    v3.1 Last O/S Update Data & Status Taken from sysinfo.txt file in dr Dir.to Upd DB.
+# 2018_06_11    v3.2 Change name for sadm_database_update.py
 #
 #===================================================================================================
 #
@@ -69,7 +70,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.1"                 # Current Script Version
+    st.ver              = "3.2"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
