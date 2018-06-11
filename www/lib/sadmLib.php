@@ -197,7 +197,7 @@ function getEachIpInRange ($cidr) {
 #  |  | | +--------- month (1 - 12)
 #  |  | | |  +------ day of week (0 - 6) (Sunday=0 or 7)
 #  |  | | |  | User |Command to execute  
-# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_server.sh -s nano >/dev/null 2>&1
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
 # ==================================================================================================
 #
 function update_crontab ($pscript,$paction = "U",$pmonth = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN",
