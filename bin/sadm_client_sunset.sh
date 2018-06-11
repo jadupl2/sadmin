@@ -159,11 +159,11 @@ main_process()
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)
-    run_command "sadm_client_create_system_info.sh"                     # Create Client Sysinfo file
+    run_command "sadm_create_sysinfo.sh"                                # Create Client Sysinfo file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Create HTML file containing System Info.(files,hardware,software) $SADMIN/dat/dr/hostname.html
-    run_command "sadm_client_cfg2html.sh"                               # Produce cfg2html html file
+    run_command "sadm_cfg2html.sh"                                      # Produce cfg2html html file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     return $SADM_EXIT_CODE                                              # Return No Error to Caller
