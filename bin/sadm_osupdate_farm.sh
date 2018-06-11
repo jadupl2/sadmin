@@ -6,7 +6,7 @@
 #   Version  :  1.0
 #   Date     :  9 March 2015
 #   Requires :  sh
-#   SCCS-Id. :  @(#) sadm_osupdate_server.sh 1.0 2015/03/10
+#   SCCS-Id. :  @(#) sadm_osupdate_farm.sh 1.0 2015/03/10
 # --------------------------------------------------------------------------------------------------
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
