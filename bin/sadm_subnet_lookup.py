@@ -20,7 +20,7 @@
 # 2018-04-18    v1.5 Fix problem updating Mac Address in Database when it could not be detected on nect run.
 # 2018-04-26    v1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # 2018-06_06    v1.8 Small Corrections 
-# 2018-06_09    v1.9 Change Script name to sadm_server_subnet_lookup
+# 2018-06_09    v1.9 Change Script name to sadm_subnet_lookup
 # --------------------------------------------------------------------------------------------------
 # 
 try :
