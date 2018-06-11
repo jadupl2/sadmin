@@ -19,6 +19,7 @@
 #   2018_04_04  V2.8 Message when error while reading sadmin.cfg and sadmin.sh
 #   2018_05_04  V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
 #   2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
+#   2018_06_10  V3.1 Change name of O/S Update script
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -107,7 +108,7 @@ define("SADM_WWW_TMP_FILE3", SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); 
 define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File Network Interface lst
 
 #
-define("SADM_UPDATE_SCRIPT", "sadm_osupdate_server.sh -s ");            # O/S Update Script Name
+define("SADM_UPDATE_SCRIPT", "sadm_osupdate.sh -s ");                   # O/S Update Script Name
 
 
 # Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
