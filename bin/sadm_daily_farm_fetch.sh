@@ -1,12 +1,12 @@
 #! /bin/sh
 ####################################################################################################
-# Title      :  sadm_server_daily_fetch_data.sh
+# Title      :  sadm_daily_farm_fetch.sh
 # Description:  Get Hardware/Software/Performance Info Data from all actives servers
 # Version    :  1.8
 # Author     :  Jacques Duplessis
 # Date       :  2010-04-21
 # Requires   :  ksh
-# SCCS-Id.   :  @(#) sys_daily_data_collection.sh 1.4 21-04/2010
+# SCCS-Id.   :  @(#) sadm_daily_farm_fetch.sh 1.4 21-04/2010
 ####################################################################################################
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -34,6 +34,7 @@
 # 2018_05_01    v2.6 Don't return an error if no active server are found & remove unnecessary message
 # 2018_06_03    v2.7 Minor Corrections & Adapt to New SADM Shell Library.
 # 2018_06_09    v2.8 Change Script Name & Add Help and Version Function & Change Startup Order
+# 2018_06_11    v2.9 Change name for sadm_daily_farm_fetch.sh
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.8'                               # Current Script Version
+    export SADM_VER='2.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
