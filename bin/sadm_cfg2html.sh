@@ -15,6 +15,7 @@
 # 2018_01_03    v2.8 Add message to user stating that script is not supported on MacOS
 # 2018_05_01    v2.9 On Fedora 27 and Up - cfg2html hang - So in will not run when Fedora 27 and Up
 # 2018_06_03    v3.0 Adapt to new Shell Library, small corrections
+# 2018_06_11    v3.1 Change Name to sadm_cfg2html.sh
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.0'                               # Current Script Version
+    export SADM_VER='3.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
