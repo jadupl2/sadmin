@@ -30,6 +30,8 @@
 # 2018_05_03    v2.3 Fix Bugs fix with pip3 installation, firewalld setting check added
 # 2018_05_05    v2.4 Database Standard User Password are now recorded in .dbpass
 # 2018_06_03    v2.5 Change name of sadm_dr_fs_save_info.sh ,Put Backup in comment in client crontab
+# 2018_06_11    v2.6 Add SADMIN=$SADMIN in /etc/environment - Needed when ssh from server to client
+#
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -45,7 +47,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.5"                                             # Setup Version Number
+sver                = "2.6"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -372,9 +374,6 @@ def update_server_crontab_file(logfile) :
     hcron.write ("#\n")
     hcron.write ("# Morning report sent to Sysadmin by Email\n")
     hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
-    hcron.write ("#\n")
-    hcron.write ("# O/S Update of all your servers - Optional\n")
-    hcron.write ("#04 07 * * 1 ${SADMIN}/bin/sadm_osupdate_server.sh >/dev/null  2>&1\n")
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
@@ -1201,7 +1200,7 @@ def set_sadmin_env(ver):
         fi.close()                                                      # Just to create file
         fi = open(SADM_PROFILE,'r')                                     # Re-open in read mode
 
-    # Open the new sadmin.sh tmp file to ake sure SADMIN variable is set properly
+    # Open the new sadmin.sh tmp file to make sure SADMIN variable is set properly
     fo = open(SADM_TMPFILE,'w')                                         # Environment Output File
     fileEmpty=True                                                      # Env. file assume empty
     eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
@@ -1222,10 +1221,54 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_PROFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
+    # Make sure line SADMIN=$sadm_base_dir is in /etc/environment
+    SADM_ENVFILE='/etc/environment'                                     # System Environment File
+    SADM_TMPFILE='/etc/environment.tmp'                                 # System Env. Temp File
+    SADM_ORGFILE='/etc/environment.org'                                 # System Original Env. FIle
+
+    # If not already done, make a copy of /etc/environment to /etc/environment.org
+    if os.path.exists(SADM_ORGFILE)==False:                             # If Original Copy not exist
+        try:
+            shutil.copyfile(SADM_ENVFILE,SADM_ORGFILE)                  # Save Original Copy of file
+        except IOError as e:
+            writelog("Unable to copy %s to %s" % (SADM_ENVFILE,SADM_ORGFILE)) # Advise user 
+            sys.exit(1)                                                 # Exit to O/S With Error
+        except:
+            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            sys.exit(1)                                                 # Exit to O/S with Error
+
+    # Open the current /etc/profile.d/sadmin.sh 
+    try : 
+        fi = open(SADM_ENVFILE,'r')                                     # Open SADMIN Env. Setting 
+    except FileNotFoundError as e :                                     # If Env file doesn't exist
+        fi = open(SADM_ENVFILE,'w')                                     # Open in Write Mode(Create)
+        fi.close()                                                      # Just to create file
+        fi = open(SADM_ENVFILE,'r')                                     # Re-open in read mode
+    fo = open(SADM_TMPFILE,'w')                                         # Environment TMP File
+    fileEmpty=True                                                      # Env. file assume empty
+    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
+
+    for line in fi:                                                     # Read Input file until EOF
+        if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
+           line = "%s" % (eline)                                        # Replace line with latest
+        fo.write (line)                                                 # Write line to output file
+        fileEmpty=False                                                 # File was not empty flag
+    fi.close                                                            # File read now close it
+    if (fileEmpty) :                                                    # If Input file was empty
+        line = "%s\n" % (eline)                                         # Add line with needed line
+        fo.write (line)                                                 # Write 'export SADMIN=' Line
+    fo.close                                                            # Close the output file
+    try:                                                                # Will try rename env. file
+        os.remove(SADM_ENVFILE)                                         # Remove current sadmin.cfg
+        os.rename(SADM_TMPFILE,SADM_ENVFILE)                            # Rename tmp to real one
+    except:
+        print ("Error removing or renaming %s" % (SADM_ENVFILE))        # Show User if error
+        sys.exit(1)        
+
     print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
-    print ("  - The line below is now in %s" % (SADM_PROFILE)) 
+    print ("  - The line below is now in %s and in %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("  - %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This make sure 'SADMIN' environment variable is set upon reboot")
+    print ("  - This will make sure 'SADMIN' environment variable is set upon reboot")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
