@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
-#   Title    :  sadm_client_create_system_info.sh
+#   Title    :  sadm_create_sysinfo.sh
 #   Synopsis : .Run once a day to collect hardware & some software info of system (Use for DR)
 #   Version  :  1.5
 #   Date     :  13 November 2015
@@ -24,6 +24,7 @@
 # 2018_01_03    v2.4 Added New system file output & add OSX Commands for Network,System & Disk Info.
 # 2018_06_03    v2.5 Revisited and adapt to new Libr.
 # 2018_06_09    v2.6 Add SADMIN root dir & Date/Status of last O/S Update in ${HOSTNAME}_sysinfo.txt
+# 2018_06_11    v2.7 Change name to sadm_create_sysinfo.sh
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -43,7 +44,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -302,7 +303,7 @@ set_last_osupdate_date()
 {
 
     # Verify if the o/s update rch file exist
-    RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_client_osupdate.rch" 
+    RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_osupdate.rch" 
     if [ ! -r "$RCHFILE" ]
         then sadm_writelog "Can't read the O/S Update RCH file ($RCHFILE)"
              sadm_writelog "May be no update ran yet ?"
