@@ -33,6 +33,7 @@
 # 2018_01_10    V1.5 Default to backup ALL MySQL Databases present, except the one specified & 
 #                   can compress backup.
 # 2018_06_03    V1.6 Small Ameliorations and corrections
+# 2018_06_11    V1.7 Change name to sadm_backupsd.sh
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -55,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_VER='1.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
