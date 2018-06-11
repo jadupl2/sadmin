@@ -40,6 +40,7 @@
 # 2018_02_11    v1.10 Change message when succeeded to run script
 # 2018_06_06    v2.0 Restructure Code, Added Comments & Change for New SADMIN Libr.
 # 2018_06_09    v2.1 Change all the scripts name executed by this script (Prefix sadm_server)
+# 2018_06_11    v2.2 Backtrack change v2.1
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -55,7 +56,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -129,7 +130,7 @@ main_process()
     fi
 
     # Collect from all servers Hardware info, Perf. Stat, ((nmon and sar)
-    SCMD="${SADM_BIN_DIR}/sadm_server_daily_fetch_data.sh "
+    SCMD="${SADM_BIN_DIR}/sadm_daily_farm_fetch.sh "
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
@@ -139,7 +140,7 @@ main_process()
     fi
 
     # Daily DataBase Update with the Data Collected
-    SCMD="${SADM_BIN_DIR}/sadm_server_database_update.py"               # Update DB from sysinfo.txt
+    SCMD="${SADM_BIN_DIR}/sadm_database_update.py"                      # Update DB from sysinfo.txt
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
@@ -149,7 +150,7 @@ main_process()
     fi
 
     # With all the nmon collect from the server farm update respective host rrd performace database
-    SCMD="${SADM_BIN_DIR}/sadm_server_nmon_rrd_update.sh"
+    SCMD="${SADM_BIN_DIR}/sadm_nmon_rrd_update.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
@@ -159,7 +160,7 @@ main_process()
     fi
 
     # Scan the Subnet Selected - Inventory IP Address Avail.
-    SCMD="${SADM_BIN_DIR}/sadm_server_subnet_lookup.py"
+    SCMD="${SADM_BIN_DIR}/sadm_subnet_lookup.py"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
@@ -169,7 +170,7 @@ main_process()
     fi
 
     # Once a day we Backup the MySQL Database
-    SCMD="${SADM_BIN_DIR}/sadm_server_backupdb.sh -c"
+    SCMD="${SADM_BIN_DIR}/sadm_backupdb.sh -c"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
