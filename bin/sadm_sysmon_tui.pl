@@ -1,4 +1,13 @@
 #!/usr/bin/env perl
+<<<<<<< HEAD
+# ---------------------------------------------------------------------------------------------
+# SADM_Monitor Terminal Visualizer 
+# Written in February 2017 by Jacques Duplessis.
+# ---------------------------------------------------------------------------------------------
+# 	- SADMIN Environment Variable must be define and must indicate
+# 	  the location of this script
+# ---------------------------------------------------------------------------------------------
+=======
 #===================================================================================================
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_sysmon_tui.pl
@@ -12,6 +21,7 @@
 # 2017_02_02    v1.2 Initial Working Version
 # 2018_06_03    v1.3 Changes made to output format
 #===================================================================================================
+>>>>>>> fa58c27c50e1febd6c214e99b80b489461878a39
 use English;
 
 
