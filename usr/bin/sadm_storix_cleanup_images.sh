@@ -26,6 +26,7 @@
 # 2017_08_10    V1.11 Usage of USB External is an option now, based on USB_ATTACH Variable
 # 2018_05_20    V1.12 Fix /mnt/storix not unmounting at the end of clean up
 # 2018_06_04    V1.13 Adapt to new SADMIN Libr.
+# 2018_06_12    V1.14 Fix umounting problem with NFS & add List of USB Backup Images before cleanup
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.13'                              # Current Script Version
+    export SADM_VER='1.14'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -145,8 +146,11 @@ clean_nfs_storix_dir()
 
     # Umount THE NFS Mount of the Images
     cd /
-    sadm_writelog "Unmounting $USB_LOC_MOUNT"
-    umount $USB_LOC_MOUNT >/dev/null 2>&1
+    sadm_writelog "Unmounting ${NFS_LOC_MOUNT}"
+    umount ${NFS_LOC_MOUNT} >/dev/null 2>&1
+    if [ $? -ne 0 ] 
+        then sadm_writelog "Cannot unmount ${NFS_LOC_MOUNT}"
+    fi
     return 0
 }
 
@@ -192,7 +196,8 @@ clean_usb_storix_dir()
 
     cd ${USB_LOC_MOUNT}
     # Build a list of all hostname that have a backup in $USB_LOC_MOUNT
-    #sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Listing images of USB Disk"
+    ls -lt SB:*:TOC* | sort | nl 
     ls -1 SB:*:TOC* | cut -d: -f4 | sort -u | while read stclient
           do
           sadm_writelog "Checking images of host $stclient ..."
@@ -239,9 +244,12 @@ clean_usb_storix_dir()
              exit 1                                                     # Exit To O/S
     fi
 
+    # Check NFS Storix Backup
     rc1=0 ; rc2=0 ; export rc1 rc2                                      # Reset Error Indicator to 0
     clean_nfs_storix_dir                                                # Clean up NFS multiple copy
     rc1=$? ; export rc1                                                 # Save Return Code
+
+    # If USB Disk attach to server, do cleanup on it too.
     if [ "$USB_ATTACH" == "Y" ]                                         # If USB Attached to Server 
         then clean_usb_storix_dir                                       # Clean up USB multiple copy
              rc2=$? ; export rc2                                        # Save Return Code
