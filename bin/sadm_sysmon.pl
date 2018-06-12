@@ -14,6 +14,8 @@
 # 2018_05_14    V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement 
 # 2018_05_27    v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
 # 2018_06_03    v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
+# 2018_06_12    v2.14 Correct Problem with fileincrease and Filesystem Warning double error
+#
 #===================================================================================================
 #
 use English;
@@ -29,7 +31,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.13";                                       # Version Number
+my $VERSION_NUMBER      = "2.14";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -368,16 +370,17 @@ sub filesystem_increase {
     my ($FILESYSTEM) = @_;                                              # Filesystem name to enlarge
     print "\n\nFilesystem $FILESYSTEM selected for increase";           # Show User Filesystem Incr.
     my $FS_SCRIPT = "${SADM_BIN_DIR}/$SADM_RECORD->{SADM_SCRIPT}";      # Get FS Enlarge Script Name
+    print "\nName of script is  ..${FS_SCRIPT}..";           # Show User Filesystem Incr.
 
     # If no script specified - Return to caller
-    if ((length $FS_SCRIPT == 0 ) || ($FS_SCRIPT eq "-")) { 
-        print "\nNo Script specified for execution in sysmon.cfg";
+    if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) { 
+        print "\nNo Script specified for execution in hostname.smon";
         print "\nNo Filesystem increase will happen";
         return 0 ;
     }
 
     # Make sure script Exist and is executable - If not return to caller
-    if (( -e "$FS_SCRIPT" ) && ( ! -x "$FS_SCRIPT")) { 
+    if (( ! -e "$FS_SCRIPT" ) || ( ! -x "$FS_SCRIPT")) { 
         print "\nScript $FS_SCRIPT doesn't exist or is not executable";
         print "\nNo Filesystem increase will happen";
         return 0 ;
@@ -589,7 +592,7 @@ sub check_for_error {
       ## Filesystem alert occured
       if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
          $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%";  # Set up Error Message
-         write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);# Go Report Alert 
+         write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);  # Go Report Alert 
 
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
          if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
@@ -630,8 +633,8 @@ sub check_for_error {
                   print "\nDone more than $MAX_FS_INCR Filesystem increase of $WID in last 24 Hrs";
                   print "\nFilesystem increase will not be done.";       # Inform user not done
                }
-               $ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
-               write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
+               #$ERR_MESS = "FS $WID at $ACTVAL% > $value_exceeded%" ;    # Set up Error Message
+               #write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS); # Go Process Alert
             }else{
                $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                 # Incr. FS Counter
                $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);     # Insert Cnt in Array
