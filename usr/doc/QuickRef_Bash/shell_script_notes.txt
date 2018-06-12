@@ -25,6 +25,28 @@ case "$(sadm_get_osname)" in
 esac
 
 -----
+Crontab fields
+
+0 -> Sun
+1 -> Mon
+2 -> Tue
+3 -> Wed
+4 -> Thu
+5 -> Fri
+6 -> Sat
+7 -> Sun
+
+ +---------------- minute (0 - 59)
+ |   +------------- hour (0 - 23)
+ |    |   +---------- date of month (1 - 31)
+ |    |   |    +------- month (1 - 12)
+ |    |   |    |   +---- day of week (0 - 6) (Sunday=0 or 7)
+ |    |   |    |   |
+ *   *   *   *  *  command to be executed
+
+
+
+-----
 ***** Date Command
 monday                      date -dmonday +%Y%m%d 
 last monday                 date -dlast-monday +%Y%m%d 
