@@ -23,6 +23,7 @@
 # 2018_06_04    v1.11 Add User Directories, Database Backup Directory, New Backup Cfg Files 
 # 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
 # 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
+# 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -45,7 +46,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.13'                              # Current Script Version
+    export SADM_VER='1.14'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -292,46 +293,6 @@ file_housekeeping()
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
     fi
 
-
-    # Make sure the configuration file is at 644
-    sadm_writelog "chmod 0644 $SADM_CFG_FILE" 
-    chmod 0644 $SADM_CFG_FILE
-    lsline=`ls -l $SADM_CFG_FILE`
-    sadm_writelog "$lsline"
-
-    sadm_writelog "chmod 0644 $SADM_CFG_HIDDEN" 
-    chmod 0644 $SADM_CFG_HIDDEN
-    lsline=`ls -l $SADM_CFG_HIDDEN`
-    sadm_writelog "$lsline"
-
-    # Make Sysmon Template is 644 
-    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.template.smon" 
-    chmod 0644 ${SADM_CFG_DIR}/.template.smon
-    lsline=`ls -l ${SADM_CFG_DIR}/.template.smon` 
-    sadm_writelog "$lsline"
-
-    # Make sure backup files list are 644 
-    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_list.txt" 
-    chmod 0644 ${SADM_CFG_DIR}/backup_list.txt
-    lsline=`ls -l ${SADM_CFG_DIR}/backup_list.txt` 
-    sadm_writelog "$lsline"
-    #
-    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt" 
-    chmod 0644 ${SADM_CFG_DIR}/.backup_list.txt
-    lsline=`ls -l ${SADM_CFG_DIR}/.backup_list.txt` 
-    sadm_writelog "$lsline"
-
-    # Make sure backup exclude files list are 644 
-    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt" 
-    chmod 0644 ${SADM_CFG_DIR}/backup_exclude.txt
-    lsline=`ls -l ${SADM_CFG_DIR}/backup_exclude.txt` 
-    sadm_writelog "$lsline" 
-    #
-    sadm_writelog "chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt" 
-    chmod 0644 ${SADM_CFG_DIR}/.backup_exclude.txt
-    lsline=`ls -l ${SADM_CFG_DIR}/.backup_exclude.txt` 
-    sadm_writelog "$lsline" 
-
     if [ -f $SADM_WWW_LIB_DIR/.crontab.txt ] 
         then sadm_writelog "chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt" 
              chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt
@@ -440,10 +401,31 @@ file_housekeeping()
 
              
     # Reset privilege on SADMIN SYS Directory files
+    if [ -d "$SADM_CFG_DIR" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "find $SADM_CFG_DIR -type f -exec chmod -R 774 {} \;"       # Change Files Privilege
+             find $SADM_CFG_DIR -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Files Privilege
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+             sadm_writelog "find $SADM_CFG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \;"
+             find $SADM_CFG_DIR -type f -exec chown ${SADM_USER}.${SADM_GROUP} {} \; >/dev/null 2>&1 
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+    fi
+                   
+    # Reset privilege on SADMIN SYS Directory files
     if [ -d "$SADM_SYS_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \;"       # Change Files Privilege
-             find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \;" # Change Files Priv
+             find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1 # Change Files Priv
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
