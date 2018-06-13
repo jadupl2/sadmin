@@ -30,6 +30,8 @@
 # 2017_05_01    V1.4 - Test if not root at beginning
 # 2017_06_03    V1.5 - Added usr directory and .backup file in cfg Dir.
 # 2017_06_04    V1.6 - Added usr directory and .backup file in cfg Dir.
+# 2017_06_13    V1.7 - Add Documentation files, Remove .bashrc, .bash_profile from package.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -50,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_VER='1.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -297,6 +299,14 @@ main_process()
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
     run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
 
+    # Rsync Documentation Directories --------------------------------------------------------------------
+    sadm_writelog " "
+    SDIR="$SADM_DOC_DIR" ; DDIR="${PSADMIN}/doc"                        # Source & Destination Dir.
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
+    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
+    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
+    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+
     # Rsync Package Directories --------------------------------------------------------------------
     sadm_writelog " "
     SDIR="$SADM_PKG_DIR" ; DDIR="${PSADMIN}/pkg"                        # Source & Destination Dir.
@@ -411,9 +421,9 @@ main_process()
     # COPY $SADMIN/cfg to /psadmin/cfg -------------------------------------------------------------
     sadm_writelog " "
     sadm_writelog "Syncing cfg directory $SADM_CFG_DIR to ${PSCFG}"
-    run_oscommand "cp $DBPASSFILE ${PSCFG}"
-    run_oscommand "chmod 644 ${PSCFG}/.dbpass"
-    run_oscommand "chown sadmin.sadmin ${PSCFG}/.dbpass"
+    run_oscommand "touch ${PSCFG}/.dbpass"                              # Just make sure it exist
+    run_oscommand "chmod 644 ${PSCFG}/.dbpass"                          # and have the proper perm.
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.dbpass"                # And belong to sadmin user
     #
     run_oscommand "cp ${SADM_CFG_DIR}/.release ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.release"
