@@ -14,8 +14,8 @@
 #---------------------------------------------------------------------------------------------------
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #   2.1      Added support for XFS Filesystem
-# 2018_05_18 JDuplessis
-#   V2.2 Adapted to be used by Auto Filesystem Increase
+# 2018_05_18    V2.2 Adapted to be used by Auto Filesystem Increase
+# 2018_06_12    V2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
 #===================================================================================================
 # 
 #
@@ -230,7 +230,7 @@ get_mntdata()
    LVLINE=`$LVSCAN 2>/dev/null | grep "'/dev/${VGNAME}/${LVNAME}'"`
    LVWS1=$( echo $LVLINE  | awk -F'[' '{ print $2 }' )
    LVWS2=$( echo $LVWS1   | awk -F']' '{ print $1 }' )
-   LVFLT=$( echo $LVWS2   | awk '{ print $1 }' )
+   LVFLT=$( echo $LVWS2   | awk '{ print $1 }' | tr -d '<' )
    LVUNIT=$(  echo $LVWS2 | awk '{ print $2 }' )
    if [ "$LVUNIT" = "GB" ] || [ "$LVUNIT" = "GiB" ]
       then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc |awk -F'.' '{ print $1 }'`
