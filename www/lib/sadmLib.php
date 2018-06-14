@@ -275,7 +275,8 @@ function update_crontab ($pscript,$paction = "U",$pmonth = "YNNNNNNNNNNNNNNNNNNN
     
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN
-    $cline = $cline.SADM_USER." sudo ".SADM_BIN_DIR."/".$pscript." >/dev/null 2>&1\n";   
+    #$cline = $cline.SADM_USER." sudo ".SADM_BIN_DIR."/".$pscript." >/dev/null 2>&1\n";   
+    $cline = $cline . " root " . SADM_BIN_DIR . "/" . $pscript . " >/dev/null 2>&1\n";   
     if ($DEBUG) { echo "\n<br>Final crontab line : " . $cline ; }       # Debug Show crontab line
    
     # Opening what will become the new crontab file ------------------------------------------------
