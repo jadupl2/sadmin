@@ -15,6 +15,7 @@
 # 2018_05_27    v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
 # 2018_06_03    v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
 # 2018_06_12    v2.14 Correct Problem with fileincrease and Filesystem Warning double error
+# 2018_06_14    v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
 #
 #===================================================================================================
 #
@@ -31,7 +32,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.14";                                       # Version Number
+my $VERSION_NUMBER      = "2.15";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -152,10 +153,11 @@ sub load_sadmin_cfg {
 
     # Check if ${SADMIN}/cfg/sadmin.cfg, if not copy ${SADMIN}/cfg/.sadmin.cfg to sadmin.cfg 
     if ( ! -e "$SADMIN_CFG_FILE"  ) {                                   # If sadmin.cfg not exist
-        my $mail_message = "File $SADMIN_CFG_FILE not found, file created based on $SADMIN_STD_FILE";    
-        my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
-        @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
-        $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
+        ### Can't send email we don't know the email address yet
+        #my $mail_message = "File $SADMIN_CFG_FILE not found, file created based on $SADMIN_STD_FILE";    
+        #my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
+        #@cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
+        #$return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
         @cmd = ("$CMD_CP $SADMIN_STD_FILE $SADMIN_CFG_FILE");           # cp template to sadmin.cfg
         $return_code = 0xffff & system @cmd ;                           # Perform Command cp
         @cmd = ("$CMD_CHMOD 664 $SADMIN_CFG_FILE");                     # Make sadmin.cfg 664
@@ -1718,8 +1720,8 @@ sub end_of_sysmon {
     # Initializing SysMon
     init_process;                                   # Create lock file & do 'ps' commands to files
     $start_time = time;                             # Store Starting time - To calculate elapse time
-    load_smon_file;                                 # Load SysMon Config file hostname.smon in Array 
     load_sadmin_cfg;                                # Load SADMIN Config file sadmin.cfg in Glob.Var
+    load_smon_file;                                 # Load SysMon Config file hostname.smon in Array 
     load_df_in_array;                               # Execute "df" command & store result in a array
     open (SADMRPT," >$SYSMON_RPT_FILE")  or die "Can't open $SYSMON_RPT_FILE: $!\n"; 
 
