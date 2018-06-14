@@ -40,6 +40,8 @@
 # 2018_05_28    V2.26 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
 # 2018_06_10    V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
+# 2018_06_14    V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
+#
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -57,7 +59,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.28"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.29"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1916,6 +1918,14 @@ sadm_stop() {
 #                                THING TO DO WHEN FIRST CALLED
 # --------------------------------------------------------------------------------------------------
 #
+
+# Make sure SADMIN environment variable is present in /etc/environment
+# If it's not cause problem when ssh from SADMIN server to do the O/S Update
+    grep "^SADMIN" /etc/environment >/dev/null 2>&1 
+    if [ $? -ne 0 ] 
+        then echo "SADMIN=$SADMIN" >> /etc/environment 
+    fi 
+
     # Load SADMIN Configuration file
     sadm_load_config_file                                               # Load SADM cfg file
 
