@@ -31,6 +31,7 @@
 # 2018_05_05    v2.4 Database Standard User Password are now recorded in .dbpass
 # 2018_06_03    v2.5 Change name of sadm_dr_fs_save_info.sh ,Put Backup in comment in client crontab
 # 2018_06_11    v2.6 Add SADMIN=$SADMIN in /etc/environment - Needed when ssh from server to client
+# 2018_06_14    v2.7 Remove client & server crontab entry not needed
 #
 #===================================================================================================
 # 
@@ -47,7 +48,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.6"                                             # Setup Version Number
+sver                = "2.7"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -301,12 +302,12 @@ def update_client_crontab_file(logfile) :
     hcron.write ("# Run Daily, late at night - Create Host Info Files, Check permission\n")
     hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
     hcron.write ("#\n")
-    hcron.write ("# Run every 11 minutes - Make sure performance nmon daemon is running\n")
-    hcron.write ("*/11 * * * * sadmin sudo ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1\n")
-    hcron.write ("#\n")
-    hcron.write ("# Daily backup of importants Files & Dir.\n")
-    hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
-    hcron.write ("#\n")
+    #hcron.write ("# Run every 11 minutes - Make sure performance nmon daemon is running\n")
+    #hcron.write ("*/11 * * * * sadmin sudo ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1\n")
+    #hcron.write ("#\n")
+    #hcron.write ("# Daily backup of importants Files & Dir.\n")
+    #hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
+    #hcron.write ("#\n")
     hcron.write ("# Run SADM System Monitoring every 6 minutes\n")
     hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >/dev/null/sysmon.log 2>&1\n")
     hcron.write ("#\n")
@@ -372,9 +373,9 @@ def update_server_crontab_file(logfile) :
     hcron.write ("# Run Daily, Early in morning - Collect Performance,Host Info, Upd. DB\n")
     hcron.write ("17 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
-    hcron.write ("# Morning report sent to Sysadmin by Email\n")
-    hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
-    hcron.write ("#\n")
+    #hcron.write ("# Morning report sent to Sysadmin by Email\n")
+    #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
+    #hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
     # Change Server Crontab file permission to 644
