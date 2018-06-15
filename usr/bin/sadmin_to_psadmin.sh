@@ -31,6 +31,7 @@
 # 2017_06_03    V1.5 - Added usr directory and .backup file in cfg Dir.
 # 2017_06_04    V1.6 - Added usr directory and .backup file in cfg Dir.
 # 2017_06_13    V1.7 - Add Documentation files, Remove .bashrc, .bash_profile from package.
+# 2018_06_15    v1.8 Make template read-only
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Current Script Version
+    export SADM_VER='1.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -291,13 +292,14 @@ main_process()
     create_dir "dat/rpt"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
 
 
-    # Rsync Script Directory -----------------------------------------------------------------------
+    # Rsync Bin/Scripts Directory -----------------------------------------------------------------------
     sadm_writelog " "
     SDIR="$SADM_BIN_DIR" ; DDIR="${PSADMIN}/bin"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
     run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    run_oscommand "chmod  444 ${DDIR}/sadm_template*"                   # Read Only n Template
 
     # Rsync Documentation Directories --------------------------------------------------------------------
     sadm_writelog " "
