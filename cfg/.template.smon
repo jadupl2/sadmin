@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------------------------------------------------------------------------
 # UPDATED FOR VERSION 2.1
-# SADM SYStem MONitor  Configuration file - The file got to be place in $SADMDIR/cfg and named `hostname`.cfg
+# SADM SYStem MONitor  Configuration file
+# The file need to be place in $SADMDIR/cfg and name `hostname`.cfg
 # This file is read and updated by SADM SYSMON (sadm_sysmon.pl) every time it run.
 # New Filesystem line will be added automatically to this file when detected.
 #----------------------------------------------------------------------------------------------------------------------------------------
