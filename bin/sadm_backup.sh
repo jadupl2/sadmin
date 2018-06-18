@@ -47,6 +47,7 @@
 #                    user defined files respectivaly name 'backup_list.txt' and 'backup_exclude.txt'
 #                    in $SADMIN/cfg Directory.
 #   2018_06_02  V3.8 Add -v switch to display script version & Some minor corrections
+#   2018_06_18  v3.9 Backup compression is ON by default now (-n if don't want compression)
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -67,7 +68,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.8'                               # Current Script Version
+    export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -160,7 +161,7 @@ show_usage()
     printf "\n${SADM_PN} usage :"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
-    printf "\n\t-c   (Compress Backup)"
+    printf "\n\t-n   (Backup with NO compression)"
     printf "\n\n" 
 }
 show_version()
@@ -623,12 +624,12 @@ umount_nfs()
              exit 1                                                     # Exit To O/S with error
     fi
     # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
-    COMPRESS="OFF" 
-    while getopts "hvcd:" opt ; do                                      # Loop to process Switch
+    COMPRESS="ON"                                                       # Backup Compression Default
+    while getopts "hvnd:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
-            c) COMPRESS="ON"                                            # Compress backup activated
+            n) COMPRESS="OFF"                                           # No Compress backup
                ;;
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
