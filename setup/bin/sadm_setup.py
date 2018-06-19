@@ -917,8 +917,8 @@ def setup_mysql(sroot,sserver,sdomain):
         add_server_to_db(sserver,dbroot_pwd,sdomain)                    # Add current Server to DB
         dpfile = "%s/cfg/.dbpass" % (sroot)                             # Database Password File
         dbpwd  = open(dpfile,'w')                                       # Open DBPass in write mode
-        dbpwd.write("sadmin,%s") % (rw_passwd))                         # Create R/W user & Password
-        dbpwd.write("squery,%s") % (ro_passwd))                         # Create R/O user & Password
+        dbpwd.write("sadmin,%s" % (rw_passwd))                          # Create R/W user & Password
+        dbpwd.write("squery,%s" % (ro_passwd))                          # Create R/O user & Password
         dbpwd.close                                                     # Close DB Password File
 
     # Restart MariaDB Service
@@ -1502,7 +1502,8 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
-    sdefault = socket.getfqdn().split('.', 1)[1]                        # Set Current  Default value 
+    #sdefault = socket.getfqdn().split('.', 1)[1]                       # Set Current  Default value 
+    sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
     sprompt  = "Default domain name"                                    # Prompt for Answer
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
