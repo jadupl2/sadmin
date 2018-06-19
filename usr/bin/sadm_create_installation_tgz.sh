@@ -24,6 +24,7 @@
 # --------------------------------------------------------------------------------------------------
 # Change Log
 # 2018_06_03    v1.1 Add usr Directories
+# 2018_06_19    v1.2 Remove sadmin directory from tar file, will use sadmin installation script
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -45,7 +46,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.1'                               # Current Script Version
+    export SADM_VER='1.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -95,36 +96,36 @@ main_process()
     DEST="/install/files/sadmin"
 
     # Make sure Destination directory exist
-    sadm_writelog "Make sure principal directories exist in $DEST"
-    mkdir -p $DST           > /dev/null 2>&1
-    mkdir -p $DST/bin       > /dev/null 2>&1
-    mkdir -p $DST/cfg       > /dev/null 2>&1
-    mkdir -p $DST/lib       > /dev/null 2>&1
-    mkdir -p $DST/doc       > /dev/null 2>&1
-    mkdir -p $DST/pkg       > /dev/null 2>&1
-    mkdir -p $DST/sys       > /dev/null 2>&1
-    mkdir -p $DST/log       > /dev/null 2>&1
-    mkdir -p $DST/tmp       > /dev/null 2>&1
-    mkdir -p $DST/usr/bin   > /dev/null 2>&1
-    mkdir -p $DST/usr/lib   > /dev/null 2>&1
-    mkdir -p $DST/usr/doc   > /dev/null 2>&1
-    mkdir -p $DST/dat/mon   > /dev/null 2>&1
+    #sadm_writelog "Make sure principal directories exist in $DEST"
+    #mkdir -p $DST           > /dev/null 2>&1
+    #mkdir -p $DST/bin       > /dev/null 2>&1
+    #mkdir -p $DST/cfg       > /dev/null 2>&1
+    #mkdir -p $DST/lib       > /dev/null 2>&1
+    #mkdir -p $DST/doc       > /dev/null 2>&1
+    #mkdir -p $DST/pkg       > /dev/null 2>&1
+    #mkdir -p $DST/sys       > /dev/null 2>&1
+    #mkdir -p $DST/log       > /dev/null 2>&1
+    #mkdir -p $DST/tmp       > /dev/null 2>&1
+    #mkdir -p $DST/usr/bin   > /dev/null 2>&1
+    #mkdir -p $DST/usr/lib   > /dev/null 2>&1
+    #mkdir -p $DST/usr/doc   > /dev/null 2>&1
+    #mkdir -p $DST/dat/mon   > /dev/null 2>&1
 
     # Syncing Content of master sadmin with installation directories
-    sadm_writelog "Sync between $SRC and $DEST in progress"
-    rsync -var --delete $SRC/bin/       $DEST/bin/      >/dev/null 2>&1
-    rsync -var --delete $SRC/cfg/       $DEST/cfg/      >/dev/null 2>&1
-    rsync -var --delete $SRC/lib/       $DEST/lib/      >/dev/null 2>&1
-    rsync -var --delete $SRC/doc/       $DEST/doc/      >/dev/null 2>&1
-    rsync -var --delete $SRC/pkg/       $DEST/pkg/      >/dev/null 2>&1
-    rsync -var --delete $SRC/sys/       $DEST/sys/      >/dev/null 2>&1
-    rsync -var --delete $SRC/usr/bin/   $DEST/usr/bin/  >/dev/null 2>&1
-    rsync -var --delete $SRC/usr/lib/   $DEST/usr/lib/  >/dev/null 2>&1
-    rsync -var --delete $SRC/usr/doc/   $DEST/usr/doc/  >/dev/null 2>&1
-    rsync -var --delete $SRC/usr/mon/   $DEST/usr/mon/  >/dev/null 2>&1
+    #sadm_writelog "Sync between $SRC and $DEST in progress"
+    #rsync -var --delete $SRC/bin/       $DEST/bin/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/cfg/       $DEST/cfg/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/lib/       $DEST/lib/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/doc/       $DEST/doc/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/pkg/       $DEST/pkg/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/sys/       $DEST/sys/      >/dev/null 2>&1
+    #rsync -var --delete $SRC/usr/bin/   $DEST/usr/bin/  >/dev/null 2>&1
+    #rsync -var --delete $SRC/usr/lib/   $DEST/usr/lib/  >/dev/null 2>&1
+    #rsync -var --delete $SRC/usr/doc/   $DEST/usr/doc/  >/dev/null 2>&1
+    #rsync -var --delete $SRC/usr/mon/   $DEST/usr/mon/  >/dev/null 2>&1
 
     # Remove Server files
-    rm -f $DEST/cfg/.pgpass > /dev/null 
+    #rm -f $DEST/cfg/.pgpass > /dev/null 
 
 
     TAR_SRC="/install/files"
@@ -135,7 +136,7 @@ main_process()
     cd $TAR_SRC
     sadm_writelog "Now in `pwd` and creating install file $TAR_FILE"
     tar -cvzf $TAR_FILE . > /dev/null 2>&1
-    sadm_writelog "mv $TAR_FILE $TAR_SRC"s
+    sadm_writelog "mv $TAR_FILE $TAR_SRC"
     mv $TAR_FILE $TAR_SRC
 
     sadm_writelog "Final tar file created ..."
