@@ -41,6 +41,7 @@
 # 2018_06_06    v2.0 Restructure Code, Added Comments & Change for New SADMIN Libr.
 # 2018_06_09    v2.1 Change all the scripts name executed by this script (Prefix sadm_server)
 # 2018_06_11    v2.2 Backtrack change v2.1
+# 2018_06_19    v2.3 Default is to compress backup now
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -56,7 +57,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.2'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.3'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -170,7 +171,7 @@ main_process()
     fi
 
     # Once a day we Backup the MySQL Database
-    SCMD="${SADM_BIN_DIR}/sadm_backupdb.sh -c"
+    SCMD="${SADM_BIN_DIR}/sadm_backupdb.sh"
     sadm_writelog " " ; sadm_writelog "Running $SCMD ..."
     $SCMD >/dev/null 2>&1
     if [ $? -ne 0 ]                                                     # If Error was encounter
