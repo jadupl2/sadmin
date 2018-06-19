@@ -26,6 +26,7 @@
 #                   rm -f ~/.config/google-chrome/SingletonLock >/dev/null 2>&1
 #                   rm -f ~/.config/google-chrome/SingletonSocket  > /dev/null 2>&1
 # 2018_06_08    v2.0 Don't show error counter when zero and small corrections
+# 2018_06_19    v2.1 chown on /wsadmin is now jacques.apache
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -47,7 +48,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_VER='2.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -199,8 +200,8 @@ dir_housekeeping()
     if [ -d "/wsadmin" ]
         then sadm_writelog " "
              sadm_writelog "/wsadmin - sadmin.ca development web site " 
-             sadm_writelog "find /wsadmin -exec chown apache.apache {} \;"
-             find /wsadmin -exec chown apache.apache {} \; >/dev/null 2>&1
+             sadm_writelog "find /wsadmin -exec chown jacques.apache {} \;"
+             find /wsadmin -exec chown jacques.apache {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR=$(($ERROR+1))
