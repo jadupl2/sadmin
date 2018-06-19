@@ -41,7 +41,7 @@
 # 2018_06_06    v2.0 Restructure Code, Added Comments & Change for New SADMIN Libr.
 # 2018_06_09    v2.1 Change all the scripts name executed by this script (Prefix sadm_server)
 # 2018_06_11    v2.2 Backtrack change v2.1
-# 2018_06_19    v2.3 Default is to compress backup now
+# 2018_06_19    v2.3 Change Backup DB Command line (Default compress)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
