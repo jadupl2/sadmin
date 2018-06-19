@@ -32,7 +32,8 @@
 # 2018_06_03    v2.5 Change name of sadm_dr_fs_save_info.sh ,Put Backup in comment in client crontab
 # 2018_06_11    v2.6 Add SADMIN=$SADMIN in /etc/environment - Needed when ssh from server to client
 # 2018_06_14    v2.7 Remove client & server crontab entry not needed
-#
+# 2018_06_19    v2.8 Change way to get current domain name
+# 
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -48,7 +49,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.7"                                             # Setup Version Number
+sver                = "2.8"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1503,7 +1504,8 @@ def setup_sadmin_config_file(sroot):
 
     # Accept the Default Domain Name
     #sdefault = socket.getfqdn().split('.', 1)[1]                       # Set Current  Default value 
-    sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
+    #sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
+    sdefault = os.uname()[1].split('.', 1)[1]                           # Set Current  Default value 
     sprompt  = "Default domain name"                                    # Prompt for Answer
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
