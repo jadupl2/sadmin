@@ -28,6 +28,7 @@
 # 2017_04_25    V1.3 First Beta Version
 # 2017_05_15    V1.4 First Production version
 # 2018_06_06    V1.5 Restructure Code and Adapt to new library
+# 2018_06_20    V1.6 Fix and Improvement after testing on Raspbian
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.5'                               # Current Script Version
+    export SADM_VER='1.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -84,7 +85,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
-ROLLBACK_DIR="${SADMIN}/pkg/sadm_update"    ; export ROLLBACK_DIR       # Updated File are kept in
+export ROLLBACK_DIR="${SADMIN}/pkg/sadm_update/`date +%Y_%m_%d`"        # Updated File are kept Dir.
 
 
 # --------------------------------------------------------------------------------------------------
@@ -167,7 +168,8 @@ run_oscommand()
 main_process()
 {
     tput clear                                                          # Clear the screen
-    echo -e "SADMIN Updater ($SADM_PN) - Version ${SADM_VER}\n\n"          # Show Script Name & Version
+    echo -e "SADMIN Updater ($SADM_PN) - Version ${SADM_VER}\n\n"       # Show Script Name & Version
+    if [ ! -d "$ROLLBACK_DIR" ] ; then mkdir $ROLLBACK_DIR ; fi         # Where updated file reside
 
     # Accept tgz FileName of the new version
     cd /                                                                # Be Sure Full Path is enter
@@ -192,6 +194,8 @@ main_process()
     mkdir ${WDIR}                                                       # Create Working Directory
 
     cd ${WDIR}                                                          # Change to Working Dir.
+    echo "Change directory to ${WDIR}"                                  # Inform User
+    #
     echo "Untar $newtgz in ${WDIR}" | tee -a $SADM_LOG                  # Inform user
     tar -xvzf $newtgz >> $SADM_LOG 2>&1                                 # Untar TGZ File
 
@@ -202,8 +206,9 @@ main_process()
     echo " " 
     echo " " 
     echo "Update Procedure" 
+    echo " - Anything under the user directory (${SADMIN}/usr) will not touch."
     echo " - Scripts or any files you have created will not modified or deleted"
-    echo " - SADMIN scripts (sadm*.py, sadm*.sh) :"
+    echo " - For SADMIN scripts (sadm*.py, sadm*.sh) :"
     echo "     - If you haven't change them, they will be updated, if needed."
     echo "     - If you have change them, you will be asked what to do for each of them." 
     echo " - Only files in ${SADMIN} will be changed", not elsewhere.
@@ -218,7 +223,16 @@ main_process()
         #echo "wline = $wline"
         newsum=` echo $wline | awk '{ print $1 }'`                      # New Rel. md5sum of File
         sumfile=`echo $wline | awk '{ print $2 }'`                      # New Rel. FileName 
-        cursum=`md5sum ${SADMIN}/$sumfile | awk '{ print $1 }'`         # Create md5sum of Cur. File
+
+        # Skip New version file (Will be copied at the end of this function
+        if [ "$sumfile" = "./cfg/.versum" ] || [ "$sumfile" = "./cfg/.version" ]
+            then continue
+        fi
+
+        if [ ! -e ${SADMIN}/$sumfile ]                                  # If Original file not exist
+            then cursum=""                                              # No MD5 Sum 
+            else cursum=`md5sum ${SADMIN}/$sumfile |awk '{ print $1 }'` # Create md5sum of Cur. File
+        fi
         prevsum=`grep '$sumfile'  ${SADMIN}/cfg/.versum`                # Get md5sum of Prev. Rel.
 
         # If current md5sum is the same in the new version (do nothing)
@@ -230,31 +244,46 @@ main_process()
 
         # If user didn't change file since Previous Release 
         if [ "$prevsum" == "$cursum" ] 
-            then echo "User didn't change $sumfile since previous release and we have an update - Updating"
+            then echo "Updating - User didn't change $sumfile since previous release"
                  echo "cp $WDIR/$sumfile ${SADMIN}/$sumfile"
                  continue
         fi 
 
-        # User Made changes to file so ask him if he want to update it or not
-
+        # User Made changes to file so ask him if he want to update it or skip this update
         if [ "$prevsum" != "$cursum" ] 
-           then echo -e "\n----------" 
-                echo "Change were made by you to $sumfile since previous release"
+           then echo -e "\n" 
+                echo "Change were made to \"$sumfile\" since previous release"
                 echo " - [S]kip the update of this file"
                 echo " - [U]pdate file"
                 echo "    - Current file will be copied to ${ROLLBACK_DIR} before updating it."
                 echo "      in case you want to rollback"
-                echo -n "Do you want to [S]kip or [U]pdate this file [S/U] ? "
-                read choice
+                while :
+                    do
+                    echo -n "Do you want to [S]kip or [U]pdate this file [U] ? "
+                    read choice                                         # Read User answer
+                    if [ ${#choice} -lt 1 ] ; then choice="U" ; fi      # [ENTER] = Defaulut Update 
+                    case "$choice" in                                   # Test Answer
+                        S|s )   break                                   # Skip update for this file
+                                ;; 
+                        U|u )   break                                   # Ok with the Update
+                                ;;
+                        * )     ;;                                      # Wrong Choice Ask again
+                    esac
+                done                
                 if [ "$choice" == 'S' ] || [ "$choice" == 's' ] ;then continue ;fi # skip update
-                echo "Copying $sumfile to ${ROLLBACK_DIR}"              # Inform User
-                echo "cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}"            # Copy file to Rollback Dir.
-                echo "cp ${WDIR}/$sumfile ${SADMIN}/$sumfile"           # Update Cur. file with New
+                echo " "                                                # Blank Line
+                echo "Save current version (${SADMIN}/$sumfile) to the Rollback Directory (${ROLLBACK_DIR})."
+                cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}                   # Copy file to Rollback Dir.
+                #
+                echo "Update to new version - cp ${WDIR}/$sumfile ${SADMIN}/$sumfile" 
+                cp ${WDIR}/$sumfile ${SADMIN}/$sumfile                  # Update Cur. file with New
         fi
-        done 3< ${WDIR}/cfg/.versum
-    
-# /wsadmin/repo/sadmin_0.86_20180422.tgz
+        done 3< ${WDIR}/cfg/.versum                              # Ex :/opt/sadmin_0.86_20180422.tgz
 
+        echo "Updating Version files" 
+        cp ./cfg/.versum  ${SADMIN}/cfg/.versum
+        cp ./cfg/.version ${SADMIN}/cfg/.version
+        
 }
 
 
