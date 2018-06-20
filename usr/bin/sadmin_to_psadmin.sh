@@ -32,6 +32,7 @@
 # 2017_06_04    V1.6 - Added usr directory and .backup file in cfg Dir.
 # 2017_06_13    V1.7 - Add Documentation files, Remove .bashrc, .bash_profile from package.
 # 2018_06_15    v1.8 Make template read-only
+# 2018_06_20    v1.9 Don't copy .dbpass when doing new Package
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='1.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -399,6 +400,8 @@ main_process()
     run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
     run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
     run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    run_oscommand "rm -f ${DDIR}/.crontab.txt"                          # Don't copy my Crontab
+    
     #
     SDIR="${SADMIN}/www/view" ; DDIR="${PSADMIN}/www/view"              # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
@@ -423,9 +426,9 @@ main_process()
     # COPY $SADMIN/cfg to /psadmin/cfg -------------------------------------------------------------
     sadm_writelog " "
     sadm_writelog "Syncing cfg directory $SADM_CFG_DIR to ${PSCFG}"
-    run_oscommand "touch ${PSCFG}/.dbpass"                              # Just make sure it exist
-    run_oscommand "chmod 644 ${PSCFG}/.dbpass"                          # and have the proper perm.
-    run_oscommand "chown sadmin.sadmin ${PSCFG}/.dbpass"                # And belong to sadmin user
+    #run_oscommand "touch ${PSCFG}/.dbpass"                              # Just make sure it exist
+    #run_oscommand "chmod 644 ${PSCFG}/.dbpass"                          # and have the proper perm.
+    #run_oscommand "chown sadmin.sadmin ${PSCFG}/.dbpass"                # And belong to sadmin user
     #
     run_oscommand "cp ${SADM_CFG_DIR}/.release ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.release"
@@ -463,7 +466,7 @@ main_process()
 
     # COPY .bashrc and .bash_profile file-----------------------------------------------------------
     #
-    sadm_writelog " "
+    #sadm_writelog " "
     SFILE="${SADMIN}/.bashrc" ; DFILE="${PSADMIN}/.bashrc"
     sadm_writelog "Copying $SFILE to $DFILE"
     run_oscommand "cp ${SFILE} ${DFILE}"
