@@ -29,6 +29,8 @@
 # 2017_05_15    V1.4 First Production version
 # 2018_06_06    V1.5 Restructure Code and Adapt to new library
 # 2018_06_20    V1.6 Fix and Improvement after testing on Raspbian
+# 2018_06_20    V1.7 Check if new version of this script before update, if so update it & restart it
+# 2018_06_20    V1.8 Add Command line Switch (-u) To do a Batch Update (No Question)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -49,11 +51,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_VER='1.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
 
@@ -136,6 +138,27 @@ ask_user()
 
 
 #===================================================================================================
+# Check if this script have been updated in new version, put in ${SADMIN}/bin & restart it
+#===================================================================================================
+check_if_new_version()
+{
+    oldmd5=`md5sum ${SADMIN}/bin/${SADM_PN} | awk '{ print $1 }'`
+    newmd5=`md5sum ${WDIR}/bin/${SADM_PN}   | awk '{ print $1 }'`
+    if [ "$oldmd5" != "$newmd5" ]
+        then echo -e "\nThere is a new version of this script ..."
+             echo "We will install the new version and restart this script"
+             echo "Copying ${WDIR}/bin/${SADM_PN} to ${SADMIN}/bin/${SADM_PN}"
+             cp ${WDIR}/bin/${SADM_PN} ${SADMIN}/bin/${SADM_PN}
+             echo -e "New version of this script now in place"
+             echo -e "Please restart this script" 
+             sadm_stop                                                  # Cloase Log & Remove PID
+             exit
+    fi
+}
+
+
+
+#===================================================================================================
 # RUN O/S COMMAND RECEIVED AS PARAMETER - RETURN 0 IF SUCCEEDED - RETURN 1 IF ERROR ENCOUNTERED
 #===================================================================================================
 run_oscommand()
@@ -196,22 +219,23 @@ main_process()
     cd ${WDIR}                                                          # Change to Working Dir.
     echo "Change directory to ${WDIR}"                                  # Inform User
     #
-    echo "Untar $newtgz in ${WDIR}" | tee -a $SADM_LOG                  # Inform user
+    echo "Untar $newtgz into ${WDIR}" | tee -a $SADM_LOG                # Inform user
     tar -xvzf $newtgz >> $SADM_LOG 2>&1                                 # Untar TGZ File
 
     echo " " 
+    check_if_new_version                                                # new version of this script
     echo " " 
     echo "Your Current version is : `cat ${SADMIN}/cfg/.version`"
     echo "You will be updated to  : `cat ${WDIR}/cfg/.version`"
     echo " " 
     echo " " 
     echo "Update Procedure" 
-    echo " - Anything under the user directory (${SADMIN}/usr) will not touch."
-    echo " - Scripts or any files you have created will not modified or deleted"
-    echo " - For SADMIN scripts (sadm*.py, sadm*.sh) :"
+    echo " - Anything under the user directory (${SADMIN}/usr) will not be touch."
+    echo " - Scripts or files you have created won't be modified or deleted."
+    echo " - For SADMIN scripts (sadm*.py, sadm*.sh, *.php, ...) :"
     echo "     - If you haven't change them, they will be updated, if needed."
     echo "     - If you have change them, you will be asked what to do for each of them." 
-    echo " - Only files in ${SADMIN} will be changed", not elsewhere.
+    echo " - Only files in ${SADMIN} will be changed, not elsewhere."
     echo " - Before proceeding, you should have a backup of SADMIN (${SADMIN})"
     echo " " 
     ask_user "Proceed with the update"                                  # Proceed with update ?
@@ -257,20 +281,23 @@ main_process()
                 echo " - [U]pdate file"
                 echo "    - Current file will be copied to ${ROLLBACK_DIR} before updating it."
                 echo "      in case you want to rollback"
-                while :
-                    do
-                    echo -n "Do you want to [S]kip or [U]pdate this file [U] ? "
-                    read choice                                         # Read User answer
-                    if [ ${#choice} -lt 1 ] ; then choice="U" ; fi      # [ENTER] = Defaulut Update 
-                    case "$choice" in                                   # Test Answer
-                        S|s )   break                                   # Skip update for this file
-                                ;; 
-                        U|u )   break                                   # Ok with the Update
-                                ;;
-                        * )     ;;                                      # Wrong Choice Ask again
-                    esac
-                done                
-                if [ "$choice" == 'S' ] || [ "$choice" == 's' ] ;then continue ;fi # skip update
+                if [ "$AUTO_UPDATE" == 'OFF' ] 
+                    then while :
+                            do
+                            echo -n "Do you want to [S]kip or [U]pdate this file [U] ? "
+                            read choice                                         # Read User answer
+                            if [ ${#choice} -lt 1 ] ; then choice="U" ; fi      # [ENTER] = Defaulut Update 
+                            case "$choice" in                                   # Test Answer
+                                S|s )   break                                   # Skip update for this file
+                                        ;; 
+                                U|u )   break                                   # Ok with the Update
+                                        ;;
+                                * )     ;;                                      # Wrong Choice Ask again
+                            esac
+                            done                
+                            if [ "$choice" == 'S' ] || [ "$choice" == 's' ] ;then continue ;fi # skip update
+                    else choice="u"                                             # Batch mode = Update
+                fi
                 echo " "                                                # Blank Line
                 echo "Save current version (${SADMIN}/$sumfile) to the Rollback Directory (${ROLLBACK_DIR})."
                 cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}                   # Copy file to Rollback Dir.
@@ -283,6 +310,7 @@ main_process()
         echo "Updating Version files" 
         cp ./cfg/.versum  ${SADMIN}/cfg/.versum
         cp ./cfg/.version ${SADMIN}/cfg/.version
+        echo -e "\nUpdate completed !"
         
 }
 
@@ -304,10 +332,13 @@ main_process()
 
     # Command Line Switch Options- 
     # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    AUTO_UPDATE="OFF"                                                   # Interactive Mode Default
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
+            u) AUTO_UPDATE="ON"                                         # No Question asked - Update
+               ;;
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
