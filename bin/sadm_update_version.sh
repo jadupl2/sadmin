@@ -31,9 +31,12 @@
 # 2018_06_20    V1.6 Fix and Improvement after testing on Raspbian
 # 2018_06_20    V1.7 Check if new version of this script before update, if so update it & restart it
 # 2018_06_20    V1.8 Add Command line Switch (-u) To do a Batch Update (No Question)
+# 2018_06_21    V1.9 Added Debug Information - Fix Minor bug
+# 2018_06_21    V2.0 Fix and Minor Minor bug - Re-tested on Raspbian
+# 2018_06_21    V2.1 Minor Fix and Improvements 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
-#set -x
+#set -xs
 
 
 
@@ -51,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='2.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -150,13 +153,13 @@ check_if_new_version()
              echo "Copying ${WDIR}/bin/${SADM_PN} to ${SADMIN}/bin/${SADM_PN}"
              cp ${WDIR}/bin/${SADM_PN} ${SADMIN}/bin/${SADM_PN}
              echo -e "New version of this script now in place"
-             echo -e "Please restart this script" 
-             sadm_stop                                                  # Cloase Log & Remove PID
-             exit
+             echo -e "\nPlease wait while the script is restarting ..." 
+             sadm_stop 0                                                # Cloae Log & Remove PID
+             exec ${SADMIN}/bin/${SADM_PN}
     fi
 }
 
-
+ 
 
 #===================================================================================================
 # RUN O/S COMMAND RECEIVED AS PARAMETER - RETURN 0 IF SUCCEEDED - RETURN 1 IF ERROR ENCOUNTERED
@@ -191,7 +194,7 @@ run_oscommand()
 main_process()
 {
     tput clear                                                          # Clear the screen
-    echo -e "SADMIN Updater ($SADM_PN) - Version ${SADM_VER}\n\n"       # Show Script Name & Version
+    echo -e "SADMIN Updater ($SADM_PN) - Version ${SADM_VER}\n"         # Show Script Name & Version
     if [ ! -d "$ROLLBACK_DIR" ] ; then mkdir $ROLLBACK_DIR ; fi         # Where updated file reside
 
     # Accept tgz FileName of the new version
@@ -222,12 +225,10 @@ main_process()
     echo "Untar $newtgz into ${WDIR}" | tee -a $SADM_LOG                # Inform user
     tar -xvzf $newtgz >> $SADM_LOG 2>&1                                 # Untar TGZ File
 
-    echo " " 
     check_if_new_version                                                # new version of this script
     echo " " 
     echo "Your Current version is : `cat ${SADMIN}/cfg/.version`"
     echo "You will be updated to  : `cat ${WDIR}/cfg/.version`"
-    echo " " 
     echo " " 
     echo "Update Procedure" 
     echo " - Anything under the user directory (${SADMIN}/usr) will not be touch."
@@ -239,7 +240,10 @@ main_process()
     echo " - Before proceeding, you should have a backup of SADMIN (${SADMIN})"
     echo " " 
     ask_user "Proceed with the update"                                  # Proceed with update ?
-    if [ $? -eq 0 ] ; then return 1 ; fi                                # No, Then Return to caller
+    if [ $? -eq 0 ] 
+        then sadm_stop 0                                                # Cloae Log & Remove PID
+             exit 0                                                     # Back to O/S
+    fi
     
     # Read the New Version md5sum file line by line
     while read -u3 wline
@@ -257,26 +261,32 @@ main_process()
             then cursum=""                                              # No MD5 Sum 
             else cursum=`md5sum ${SADMIN}/$sumfile |awk '{ print $1 }'` # Create md5sum of Cur. File
         fi
-        prevsum=`grep '$sumfile'  ${SADMIN}/cfg/.versum`                # Get md5sum of Prev. Rel.
+        prevsum=`grep "$sumfile"  ${SADMIN}/cfg/.versum |awk '{ print $1 }'` # md5sum of Prev. Rel.
 
         # If current md5sum is the same in the new version (do nothing)
         if [ "$cursum" == "$newsum" ] ; then continue ; fi              # If New & Cur md5 are equal
 
-        echo -e "\n--------------- "
-        echo "File : $sumfile"
-        echo "md5sum - Org: $prevsum - Cur.: $cursum - New: $newsum"
+        # Under Debug Mode Show MD5SUM used for Updating each file
+        if [ $DEBUG_LEVEL -gt 0 ] 
+            then echo -e "\n--------------- "
+                 echo "File changed..........: $sumfile"
+                 echo "md5sum - Last version.: $prevsum"
+                 echo "       - Current......: $cursum"
+                 echo "       - New version..: $newsum"
+        fi
 
         # If user didn't change file since Previous Release 
         if [ "$prevsum" == "$cursum" ] 
-            then echo "Updating - User didn't change $sumfile since previous release"
+            then echo "Updating file $sumfile - Unchanged since last release"
                  echo "cp $WDIR/$sumfile ${SADMIN}/$sumfile"
                  continue
         fi 
 
         # User Made changes to file so ask him if he want to update it or skip this update
         if [ "$prevsum" != "$cursum" ] 
-           then echo -e "\n" 
-                echo "Change were made to \"$sumfile\" since previous release"
+           then echo "---------------"
+                echo "- Change were made to \"$sumfile\" since previous release"
+                echo "- Or you didn't update this file at the last update"
                 echo " - [S]kip the update of this file"
                 echo " - [U]pdate file"
                 echo "    - Current file will be copied to ${ROLLBACK_DIR} before updating it."
@@ -307,10 +317,12 @@ main_process()
         fi
         done 3< ${WDIR}/cfg/.versum                              # Ex :/opt/sadmin_0.86_20180422.tgz
 
-        echo "Updating Version files" 
+        echo -e "\n--------------- "
+        echo "Updating MD5 Version files" 
         cp ./cfg/.versum  ${SADMIN}/cfg/.versum
         cp ./cfg/.version ${SADMIN}/cfg/.version
-        echo -e "\nUpdate completed !"
+        echo -e "\n--------------- "
+        echo -e "Update completed !\n"
         
 }
 
