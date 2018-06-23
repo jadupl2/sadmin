@@ -369,7 +369,7 @@ def update_server_crontab_file(logfile) :
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
     hcron.write ("# Get all rch/log/rpt status files from all active client\n")
-    hcron.write ("*/4 * * * * ${SADMIN}/bin/sadm_fetch_servers.sh >/dev/null 2>&1\n")
+    hcron.write ("*/4 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Run Daily, Early in morning - Collect Performance,Host Info, Upd. DB\n")
     hcron.write ("17 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
@@ -1769,18 +1769,17 @@ def main():
     writelog ("Run SADM scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
-    run_script(sroot,"sadm_create_server_info.sh")                      # Server Spec in dat/dr dir.
-    run_script(sroot,"sadm_housekeeping_client.sh")                     # Validate Owner/Grp/Perm
-    run_script(sroot,"sadm_dr_fs_save_info.sh")                            # Client Save LVM FS Info
-    run_script(sroot,"sadm_create_cfg2html.sh")                         # Produce cfg2html html file
-    run_script(sroot,"sadm_nmon_watcher.sh")                            # Make sure nmon running
+    run_script(sroot,"sadm_create_sysinfo.sh")                          # Server Spec in dat/dr dir.
+    run_script(sroot,"sadm_client_housekeeping.sh")                     # Validate Owner/Grp/Perm
+    run_script(sroot,"sadm_dr_savefs.sh")                               # Client Save LVM FS Info
+    run_script(sroot,"sadm_cfg2html.sh")                                # Produce cfg2html html file
     run_script(sroot,"sadm_sysmon.pl")                                  # Run SADM System MOnitor
 
     # Run First SADM Server Script to feed Web interface and Database
     if (stype == "S"):                                                  # If Server Installation
-        run_script(sroot,"sadm_fetch_servers.sh")                       # Grab Status from clients
-        run_script(sroot,"sadm_daily_data_collection.sh")               # mv ClientData to ServerDir
-        run_script(sroot,"sadm_housekeeping_server.sh")                 # Validate Owner/Grp/Perm
+        run_script(sroot,"sadm_fetch_clients.sh")                       # Grab Status from clients
+        run_script(sroot,"sadm_daily_farm_fetch.sh")                    # mv ClientData to ServerDir
+        run_script(sroot,"sadm_server_housekeeping.sh")                 # Validate Owner/Grp/Perm
         run_script(sroot,"sadm_subnet_lookup.py")                       # Collect Network Info 
         run_script(sroot,"sadm_database_update.py")                     # Update DB with info collec
         
