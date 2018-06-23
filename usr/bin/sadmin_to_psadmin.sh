@@ -33,6 +33,7 @@
 # 2017_06_13    V1.7 - Add Documentation files, Remove .bashrc, .bash_profile from package.
 # 2018_06_15    v1.8 Make template read-only
 # 2018_06_20    v1.9 Don't copy .dbpass when doing new Package
+# 2018_06_23    v2.0 Change location of default service file (.sadmin.rc, sadmin.service) to cfg dir.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Current Script Version
+    export SADM_VER='2.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -448,7 +449,16 @@ main_process()
     #
     run_oscommand "cp ${SADM_CFG_DIR}/.backup_exclude.txt ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.backup_exclude.txt"
-    run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_exclude.txt"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.backup_exclude.txt"    
+    #
+    run_oscommand "cp ${SADM_CFG_DIR}/.sadmin.service ${PSCFG}"
+    run_oscommand "chmod 644 ${PSCFG}/.sadmin.service"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.sadmin.service"
+        #
+    run_oscommand "cp ${SADM_CFG_DIR}/.sadmin.rc ${PSCFG}"
+    run_oscommand "chmod 644 ${PSCFG}/.sadmin.rc"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.sadmin.rc"
+
 
     # COPY SADMIN LICENCE / README FILE------------------------------------------------------------
     sadm_writelog " "
@@ -467,18 +477,18 @@ main_process()
     # COPY .bashrc and .bash_profile file-----------------------------------------------------------
     #
     #sadm_writelog " "
-    SFILE="${SADMIN}/.bashrc" ; DFILE="${PSADMIN}/.bashrc"
-    sadm_writelog "Copying $SFILE to $DFILE"
-    run_oscommand "cp ${SFILE} ${DFILE}"
-    run_oscommand "chmod 775 ${DFILE}"
-    run_oscommand "chown sadmin.sadmin ${DFILE}"
+    #SFILE="${SADMIN}/.bashrc" ; DFILE="${PSADMIN}/.bashrc"
+    #sadm_writelog "Copying $SFILE to $DFILE"
+    #run_oscommand "cp ${SFILE} ${DFILE}"
+    #run_oscommand "chmod 775 ${DFILE}"
+    #run_oscommand "chown sadmin.sadmin ${DFILE}"
     #    
-    sadm_writelog " "
-    SFILE="${SADMIN}/.bash_profile" ; DFILE="${PSADMIN}/.bash_profile"
-    sadm_writelog "Copying $SFILE to $DFILE"
-    run_oscommand "cp ${SFILE} ${DFILE}"
-    run_oscommand "chmod 775 ${DFILE}"
-    run_oscommand "chown sadmin.sadmin ${DFILE}"
+    #sadm_writelog " "
+    #SFILE="${SADMIN}/.bash_profile" ; DFILE="${PSADMIN}/.bash_profile"
+    #sadm_writelog "Copying $SFILE to $DFILE"
+    #run_oscommand "cp ${SFILE} ${DFILE}"
+    #run_oscommand "chmod 775 ${DFILE}"
+    #run_oscommand "chown sadmin.sadmin ${DFILE}"
     #    
 
     return 0                                                            # Return No Error to Caller
