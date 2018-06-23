@@ -42,15 +42,16 @@
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
-
+   
 
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
