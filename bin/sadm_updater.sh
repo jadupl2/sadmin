@@ -47,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -160,7 +160,6 @@ check_if_new_version()
              sadm_writelog "We will install the new version and restart this script"
              sadm_writelog "Copying ${WDIR}/bin/${SADM_PN} to ${SADMIN}/bin/${SADM_PN}"
              cp ${WDIR}/bin/${SADM_PN} ${SADMIN}/bin/${SADM_PN}
-             sadm_writelog " "
              sadm_writelog "New version is now in place"
              sadm_writelog " "
              sadm_writelog "Please wait while the script is restarting ..." 
@@ -243,7 +242,7 @@ main_process()
     mkdir ${WDIR}                                                       # Create Working Directory
 
     cd ${WDIR}                                                          # Change to Working Dir.
-    sadm_writelog "Change directory to ${WDIR}"                                  # Inform User
+    #sadm_writelog "Change directory to ${WDIR}"                                  # Inform User
     #
     echo "Untar $newtgz into ${WDIR}" | tee -a $SADM_LOG                # Inform user
     tar -xvzf $newtgz >> $SADM_LOG 2>&1                                 # Untar TGZ File
@@ -252,8 +251,8 @@ main_process()
     check_if_new_version                                                # new version of this script
     
     sadm_writelog " " 
-    sadm_writelog "Your Current version is : `cat ${SADMIN}/cfg/.version`"
-    sadm_writelog "You will be updated to  : `cat ${WDIR}/cfg/.version`"
+    sadm_writelog "Your current version is  : `cat ${SADMIN}/cfg/.version`"
+    sadm_writelog "Your updating to version : `cat ${WDIR}/cfg/.version`"
     sadm_writelog " " 
     sadm_writelog "Update Information" 
     sadm_writelog " - Anything under ${SADMIN}/usr, ${SADMIN}/sys will not be touch."
@@ -305,9 +304,9 @@ main_process()
         # Under Debug Mode Show MD5SUM used for Updating each file
         if [ $DEBUG_LEVEL -gt 0 ] 
             then sadm_writelog "File changed..........: .$sumfile."
-                 sadm_writelog "md5sum - Last version.: .$prevsum."
-                 sadm_writelog "       - Current......: .$cursum."
-                 sadm_writelog "       - New version..: .$newsum."
+                 sadm_writelog "md5sum - At last update  : .$prevsum."
+                 sadm_writelog "       - Current on disk : .$cursum."
+                 sadm_writelog "       - New release  .. : .$newsum."
                  sadm_writelog " " 
         fi
 
@@ -338,8 +337,7 @@ main_process()
                 sadm_writelog "   2) You didn't update the file at the last update."
                 sadm_writelog "   3) The file was deleted from the system."
                 sadm_writelog "   4) This is a new file (or have moved in dir. structure)."
-                sadm_writelog ""
-                sadm_writelog "   Current file will be copied to RollBack Directory before updating it."
+                sadm_writelog "Current file will be moved to RollBack Directory before updating it."
                 sadm_writelog ""
                 if [ "$AUTO_UPDATE" == 'OFF' ] 
                     then while :
@@ -358,7 +356,6 @@ main_process()
                             if [ "$choice" == 'S' ] || [ "$choice" == 's' ] ;then continue ;fi
                     else choice="u"                                     # Batch mode = Update
                 fi
-                sadm_writelog " "                                       # Blank Line
                 if [ -e "${SADMIN}/$sumfile" ]                          # If current file exist
                     then sadm_writelog "Save current version ${SADMIN}/$sumfile to the Rollback Directory."
                          cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}          # Copy file to Rollback Dir.
@@ -386,10 +383,7 @@ main_process()
         rm -fr ${WDIR} > /dev/null
         #
         # End of Update
-        sadm_writelog " " 
-        sadm_writelog "--------------- "
-        sadm_writelog "`date`"
-        sadm_writelog "Update completed !"
+        sadm_writelog "Update completed `date`"
         sadm_writelog " " 
         
 }
@@ -413,7 +407,6 @@ main_process()
     # Command Line Switch Options- 
     # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     SAVEARG="$*"                                                        # Save All CmdLine Arg
-    printf "SAVEARG = $SAVEARG"
     AUTO_UPDATE="OFF"                                                   # Interactive Mode Default
     UPDATE_FILE=""                                                      # Name of TGZ version file
     while getopts "hvad:f:" opt ; do                                    # Loop to process Switch
