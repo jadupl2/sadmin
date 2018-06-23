@@ -93,6 +93,8 @@ cfg/*
 !cfg/.versum
 !cfg/.backup_list.txt
 !cfg/.backup_exclude_list.txt
+!cfg/.sadmin.service
+!cfg/.sadmin.rc
 
 # SADMIN Setup Directory
 setup/jac/*

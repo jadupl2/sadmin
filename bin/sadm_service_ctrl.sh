@@ -43,7 +43,7 @@
 # 2018_01_12    v1.11 Add Synopsis - Update SADM Tools section
 # 2018_02_08    v1.12 Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # 2018_06_06    v2.0 Restructure Code & Adapt to new SADMIN Shell Libr.
-#
+# 2018_06_23    v2.1 Change Location of default file for Systemd and InitV SADMIN service to cfg
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -64,7 +64,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_VER='2.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -103,11 +103,11 @@ if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SY
 export SYSTEMD                                                          # Export Result        
 #
 # Systemd Ini File
-SADM_SRV_IFILE="${SADM_SYS_DIR}/sadmin.service"     ; export SADM_SRV_IFILE  # Input Srv File
+SADM_SRV_IFILE="${SADM_CFG_DIR}/.sadmin.service"    ; export SADM_SRV_IFILE  # Input Srv File
 SADM_SRV_OFILE="/etc/systemd/system/sadmin.service" ; export SADM_SRV_OFILE  # Output Dest. Srv File
 #
 # SysV Init File
-SADM_INI_IFILE="${SADM_SYS_DIR}/sadmin.rc"          ; export SADM_INI_IFILE  # Input Srv File
+SADM_INI_IFILE="${SADM_CFG_DIR}/.sadmin.rc"         ; export SADM_INI_IFILE  # Input Srv File
 SADM_INI_OFILE="/etc/init.d/sadmin"                 ; export SADM_INI_OFILE  # Output Dest. Srv File
 
 
