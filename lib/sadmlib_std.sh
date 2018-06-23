@@ -213,14 +213,15 @@ sadm_tolower() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_writelog() {
-    SADM_MSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                        # Join Cur Date & Msg Recv.
+    SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
+    SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
-        s|S) printf "%-s\n" "$SADM_MSG"                                 # Write Msg To Screen
+        s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
              ;; 
-        l|L) printf "%-s\n" "$SADM_MSG" >> $SADM_LOG                    # Write Msg to Log File
+        l|L) printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Write Msg to Log File
              ;; 
-        b|B) printf "%-s\n" "$SADM_MSG"                                 # Both = to Screen
-             printf "%-s\n" "$SADM_MSG" >> $SADM_LOG                    # Both = to Log
+        b|B) printf "%-s\n" "$SADM_SMSG"                                # Both = to Screen
+             printf "%-s\n" "$SADM_LMSG" >> $SADM_LOG                   # Both = to Log
              ;;
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
              ;;
