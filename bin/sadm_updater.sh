@@ -36,6 +36,7 @@
 # 2018_06_21    V2.1 Minor Fix and Improvements 
 # 2018_06_22    V2.2 New File were not copied and Rollback Dir. was not populated in some conditions
 # 2018_06_23    V2.4 Lot of adjustements,enhancements and change name to sadm_updater.
+# 2018_06_24    V2.5 Rollback dir. moved to setup/update, performance boost, bug fixes
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -xs
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.4'                               # Current Script Version
+    export SADM_VER='2.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -84,17 +85,18 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 
-
-
-
 #===================================================================================================
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
-export ROLLBACK_DIR="${SADMIN}/pkg/sadm_update/`date +%Y_%m_%d`"        # Updated File are kept Dir.
+export ROLLBACK_DIR="${SADM_SETUP_DIR}/update/`date +%Y_%m_%d`"         # Updated File are kept Dir.
 DASHES=`printf %80s |tr " " "="`            ; export DASHES             # 80 equals sign line
 SAVEARG=""                                  ; export SAVEARG            # CmdLine ARG In Case restart
+updfile=""                                  ; export updfile            # Current filename to update
+upddir=""                                   ; export upddir             # Current filename Upd. Dir.
+
+
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -102,8 +104,8 @@ SAVEARG=""                                  ; export SAVEARG            # CmdLin
 show_usage()
 {
     printf "\n${SADM_PN} usage :"
-    printf "\n\t-a          (Automatic Update - No prompt)"
-    printf "\n\t-f [file]   (New version tgz file name)"
+    printf "\n\t-a          (Update without asking)"
+    printf "\n\t-f [file]   (File Name of new version (tgz))"
     printf "\n\t-d          (Debug Level [0-9])"
     printf "\n\t-h          (Display this help message)"
     printf "\n\t-v          (Show Script Version Info)"
@@ -156,18 +158,79 @@ check_if_new_version()
     newmd5=`md5sum ${WDIR}/bin/${SADM_PN}   | awk '{ print $1 }'`
     if [ "$oldmd5" != "$newmd5" ]
         then sadm_writelog " "
-             sadm_writelog "There is a new version of this script ..."
-             sadm_writelog "We will install the new version and restart this script"
-             sadm_writelog "Copying ${WDIR}/bin/${SADM_PN} to ${SADMIN}/bin/${SADM_PN}"
+             sadm_writelog "There is a new version of the updater ..."
+             sadm_writelog "We will install the new version and restart it."
+             if [ $DEBUG_LEVEL -gt 4 ] 
+                then sadm_writelog "Copying ${WDIR}/bin/${SADM_PN} to ${SADMIN}/bin/${SADM_PN}"
+             fi
              cp ${WDIR}/bin/${SADM_PN} ${SADMIN}/bin/${SADM_PN}
-             sadm_writelog "New version is now in place"
-             sadm_writelog " "
+             if [ $? -ne 0 ] ; then sadm_writelog "Error copying the updater ..." ; fi
+             #sadm_writelog "New version is now in place"
+             #sadm_writelog " "
              sadm_writelog "Please wait while the script is restarting ..." 
              sadm_stop 0                                                # Close Log & Remove PID
              exec ${SADMIN}/bin/${SADM_PN} $SAVEARG                     # Restart the Script
     fi
 }
 
+
+#===================================================================================================
+#  Old or Unused Files/Directories to delete
+#===================================================================================================
+housekeeping()
+{
+    sadm_writelog "Housekeeping "
+    if [ -e "${SADM_BIN_DIR}/demo2.sh" ] 
+        then sadm_writelog "Remove file rm -f ${SADM_BIN_DIR}/demo2.sh"
+             rm -f "${SADM_BIN_DIR}/demo2.sh" > /dev/null 2>&1 
+    fi
+    if [ -e "${SADM_BIN_DIR}/demo3.sh" ] ; then rm -f "${SADM_BIN_DIR}/demo3.sh" > /dev/null 2>&1 ; fi
+    if [ -d "${SADM_BIN_DIR}/demo" ]     ; then rmdir "${SADM_BIN_DIR}/demo"     > /dev/null 2>&1 ; fi
+
+}
+
+#===================================================================================================
+#  Function Update current Production version 
+#===================================================================================================
+update_file()
+{
+
+    # Make sure sub-directory in Rollback directory exist
+    if [ ! -d "${ROLLBACK_DIR}/${upddir}" ]                              # RollBack Dir. Not Exist 
+        then if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Creating ${ROLLBACK_DIR}/${upddir}" ;fi
+             mkdir -p ${ROLLBACK_DIR}/${upddir} > /dev/null 2>&1        # Create it 
+             chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}/${upddir} # Assign Dir. Owner & Group
+             chmod 775 ${ROLLBACK_DIR}/${upddir}                        # Assign Dir. privilege 
+    fi 
+
+    # If file exist on disk, copy it to the RollBack Directory, before updating it.
+    if [ -e "${SADMIN}/$updfile" ]                                      # If file exist currently
+        then sadm_writelog "Saving ${SADMIN}/$updfile to Rollback Directory."
+             if [ $DEBUG_LEVEL -gt 0 ] 
+                then sadm_writelog "cp ${SADMIN}/$updfile ${ROLLBACK_DIR}/${upddir}"
+             fi 
+             cp ${SADMIN}/$updfile ${ROLLBACK_DIR}/${upddir}            # Copy file to Rollback Dir.
+             if [ $? -ne 0 ] ; then sadm_writelog "Error copying to rollback directory."   ;fi
+    fi
+                
+    # Make sure Output Directory Exist in ${SADMIN}
+    if [ ! -d "${SADMIN}/${upddir}" ]                                   # RollBack Dir. Not Exist 
+        then if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Creating ${SADMIN}/${upddir}" ; fi
+             mkdir -p ${SADMIN}/${upddir} > /dev/null 2>&1              # Create it 
+             chown ${SADM_USER}.${SADM_GROUP} ${SADMIN}/${upddir}       # Assign Dir. Owner & Group
+             chmod 775 ${SADMIN}/${upddir}                              # Assign Dir. privilege 
+    fi 
+
+    # Update the file in ${SADMIN}
+    if [ -e "${SADMIN}/$updfile" ] 
+        then sadm_writelog "Updating file ${SADMIN}/$updfile ..."       # Inform user Updating file
+        else sadm_writelog "Installing new file ${SADMIN}/$updfile ..." # Inform usr Install newfile
+    fi
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cp ${WDIR}/$updfile ${SADMIN}/$updfile" ; fi 
+    cp ${WDIR}/$updfile ${SADMIN}/$updfile                              # Update Cur. file with New
+    if [ $? -ne 0 ] ; then sadm_writelog "Error updating $updfile ..." ; fi
+
+}
 
 
 #===================================================================================================
@@ -205,9 +268,16 @@ main_process()
     tput clear                                                          # Clear the screen
     sadm_writelog "SADMIN Updater - $SADM_PN - Version ${SADM_VER}"     # Show Script Name & Version
 
-    # Create Rollback directory
+    # Create Rollback directory, if don't exist
     sadm_writelog " " 
-    if [ ! -d "$ROLLBACK_DIR" ] ; then mkdir $ROLLBACK_DIR ; fi         # Where updated file reside
+    if [ ! -d "$ROLLBACK_DIR" ]                                         # Where updated file reside
+        then mkdir -p $ROLLBACK_DIR 
+             if [ $DEBUG_LEVEL -gt 0 ] 
+                then echo "chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}"
+             fi 
+             chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}           # Assign Dir. Owner & Group
+             chmod 775 ${ROLLBACK_DIR}                                  # Assign Dir. privilege 
+    fi      
     sadm_writelog "Rollback Directory is $ROLLBACK_DIR"
     sadm_writelog " " 
 
@@ -223,49 +293,50 @@ main_process()
              fi 
     fi 
 
-    # Try to read the new software version tgz file
+    # Validate if can read the new version tgz file
     tar -tvzf $newtgz > /dev/null 2>&1                                  # Try to read the TGZ file
     if [ $? -ne 0 ]                                                     # If error while reading it
         then sadm_writelog "Error while reading file $newtgz"           # Show Error to user
              return 1                                                   # Return Error to caller
     fi
   
-    # List file in tgz file
-    echo -e "\n\n-----\nList of files in new software version tgz file\n-----" >>$SADM_LOG
-    ls -l $newtgz >> $SADM_LOG                                          # Save tgz name in log
+    # List file in tgz file to Log
+    #echo -e "\n\n-----\nList of files in new software version tgz file\n-----" >>$SADM_LOG
+    #ls -l $newtgz >> $SADM_LOG                                          # Save tgz name in log
     
-    # Create Temporary Directory in /tmp
+    # Create Temporary Directory in /tmp and cd into it
     WCUR_DATE=$(date "+%C%y%m%d")                                       # Save Current Date
     WDIR="/tmp/sadmin_${WCUR_DATE}"                                     # Construct Working DirName 
     if [ -d $WDIR ] ; then rm -fr $WDIR > /dev/null 2>&1 ; fi           # If WDIR Exist Remove it
     sadm_writelog "Creating working directory ${WDIR}"                  # Inform User
     mkdir ${WDIR}                                                       # Create Working Directory
-
     cd ${WDIR}                                                          # Change to Working Dir.
-    #sadm_writelog "Change directory to ${WDIR}"                                  # Inform User
-    #
-    echo "Untar $newtgz into ${WDIR}" | tee -a $SADM_LOG                # Inform user
-    tar -xvzf $newtgz >> $SADM_LOG 2>&1                                 # Untar TGZ File
-
-    # Check if new version of this script, if so copy it to $SADMIN/bin and restart this script
-    check_if_new_version                                                # new version of this script
+    #sadm_writelog "Change directory to ${WDIR}"                        # Inform User
     
+    sadm_writelog "Untar $newtgz into ${WDIR}"                          # Inform user untarring
+    #tar -xvzf $newtgz >> $SADM_LOG 2>&1                                # Untar TGZ File
+    tar -xvzf $newtgz > /dev/null 2>&1                                  # Untar TGZ File
+
+    # Check if new version of updater, if so copy it to $SADMIN/bin and restart the updater
+    check_if_new_version                                                # new version of this script
     sadm_writelog " " 
     sadm_writelog "Your current version is  : `cat ${SADMIN}/cfg/.version`"
     sadm_writelog "Your updating to version : `cat ${WDIR}/cfg/.version`"
     sadm_writelog " " 
-    sadm_writelog "Update Information" 
-    sadm_writelog " - Anything under ${SADMIN}/usr, ${SADMIN}/sys will not be touch."
-    sadm_writelog " - Your configuration files in ${SADMIN}/cfg will not be modify."
-    sadm_writelog " - Scripts or files you have created won't be modified or deleted."
-    sadm_writelog " - For SADMIN scripts (sadm*.py, sadm*.sh, sadm*.php, ...) :"
-    sadm_writelog "     - If you haven't change them, they may be updated, if needed."
-    sadm_writelog "     - If you have change them, you will be asked what to do for each of them." 
-    sadm_writelog " - Only files in ${SADMIN} will be changed, not elsewhere."
-    sadm_writelog " - Before proceeding, you should have a backup of ${SADMIN}"
-    sadm_writelog " " 
+
+    # If Running in interactive mode, display info and ask if user want to proceed
     if [ "$AUTO_UPDATE" == "OFF" ] 
-        then ask_user "Proceed with the update"                         # Proceed with update ?
+        then sadm_writelog "Update Information" 
+             sadm_writelog " - Anything under ${SADMIN}/usr, ${SADMIN}/sys will not be touch."
+             sadm_writelog " - Your configuration files in ${SADMIN}/cfg will not be modify."
+             sadm_writelog " - Scripts or files you have created won't be modified or deleted."
+             sadm_writelog " - For SADMIN scripts (sadm*.py, sadm*.sh, sadm*.php, ...) :"
+             sadm_writelog "     - If you haven't change them, they may be updated, if needed."
+             sadm_writelog "     - If you have change them, you will be asked what to do for each of them." 
+             sadm_writelog " - Only files in ${SADMIN} will be changed, not elsewhere."
+             sadm_writelog " - Before proceeding, you should have a backup of ${SADMIN}"
+             sadm_writelog " " 
+             ask_user "Proceed with the update"                         # Proceed with update ?
              if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # If don't want to proceed    
     fi
 
@@ -274,99 +345,90 @@ main_process()
         do
         #echo "wline = $wline"
         newsum=` echo $wline | awk '{ print $1 }'`                      # New Rel. md5sum of File
-        sumfile=`echo $wline | awk '{ print $2 }'`                      # New Rel. FileName 
+        updfile=`echo $wline | awk '{ print $2 }'`                      # New Rel. FileName 
 
-        # Skip New version file (Will be copied at the end of this function
-        if [ "$sumfile" = "./cfg/.versum" ] || [ "$sumfile" = "./cfg/.version" ]
+        # Skip New md5 version file (Will be copied at the end of this function
+        if [ "$updfile" = "./cfg/.versum" ] || [ "$updfile" = "./cfg/.version" ]
             then continue
         fi
 
         # System Startup and Shutdown script are never update once installed - So skip them here.
-        if [ "$sumfile" = "./sys/sadm_startup.sh" ] || [ "$sumfile" = "./sys/sadm_shutdown.sh" ]
+        if [ "$updfile" = "./sys/sadm_startup.sh" ] || [ "$updfile" = "./sys/sadm_shutdown.sh" ]
             then continue
         fi
 
         # Calculate MD5SUM Checksum of current version of the file
-        if [ ! -e ${SADMIN}/$sumfile ]                                  # If Original file not exist
+        if [ ! -e ${SADMIN}/$updfile ]                                  # If Original file not exist
             then cursum=""                                              # No MD5 Sum 
-            else cursum=`md5sum ${SADMIN}/$sumfile |awk '{ print $1 }'` # Create md5sum of Cur. File
+            else cursum=`md5sum ${SADMIN}/$updfile |awk '{ print $1 }'` # Create md5sum of Cur. File
         fi
         
         # Get MD5SUM of Previous Update
-        prevsum=`grep "$sumfile"  ${SADMIN}/cfg/.versum |awk '{ print $1 }'` # md5sum of Prev. Rel.
+        prevsum=`grep "$updfile"  ${SADMIN}/cfg/.versum |awk '{ print $1 }'` # md5sum of Prev. Rel.
 
-        # If current md5sum is the same in the new version (do nothing file hasn't changed)
+        # If file on disk & in new version are the same, nothing to do. Continue with next file
         if [ "$cursum" == "$newsum" ] ; then continue ; fi              # If New & Cur md5 are equal
         
-        sadm_writelog " "                                               # White Line
+        #
+        sadm_writelog " "                                               # White Line. File Separator
         sadm_writelog "$DASHES"                                         # 80 Dash line
-        
+        updfile=`echo $updfile | cut -c 3-`                             # Del './' in front of Name
+        upddir=`dirname $updfile`                                       # Extract Dir.Name of File
+
         # Under Debug Mode Show MD5SUM used for Updating each file
         if [ $DEBUG_LEVEL -gt 0 ] 
-            then sadm_writelog "File changed..........: .$sumfile."
-                 sadm_writelog "md5sum - At last update  : .$prevsum."
-                 sadm_writelog "       - Current on disk : .$cursum."
-                 sadm_writelog "       - New release  .. : .$newsum."
+            then sadm_writelog "File changed..........   : $updfile"
+                 sadm_writelog "File directory........   : $upddir"
+                 sadm_writelog "md5sum - At last update  : $prevsum"
+                 sadm_writelog "       - Current on disk : $cursum"
+                 sadm_writelog "       - New release  .. : $newsum"
                  sadm_writelog " " 
         fi
 
-        # File didn't changed since last update
-        if [ "$prevsum" == "$cursum" ] 
-            then if [ "$prevsum" == "" ] && [ "$cursum" == "" ] 
-                    then sadm_writelog "Copying New Script $sumfile ..."
-                         newdir=`dirname $sumfile`
-                         if [ ! -d "$newdir" ] ; then mkdir -p $newdir > /dev/null 2>&1 ; fi
-                    else if [ -e "${SADMIN}/$sumfile" ] 
-                            then sadm_writelog "Saving ${SADMIN}/$sumfile to Rollback Directory."
-                                 cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}  # Copy file to Rollback Dir.
-                         fi
-                         sadm_writelog "Updating file $sumfile"
-                 fi 
-                 sadm_writelog "cp $WDIR/$sumfile ${SADMIN}/$sumfile"
-                 cp $WDIR/$sumfile ${SADMIN}/$sumfile 
-                 if [ $? -ne 0 ] ; then sadm_writelog "Error copying $sumfile ..." ; fi
+        # File on disk didn't changed since last update (Update it, no need to ask user)
+        if [ "$prevsum" == "$cursum" ]                                  # Disk File = Last Update
+            then #if [ "$prevsum" == "" ] && [ "$cursum" == "" ]         # md5 both file blank = New
+                 #   then sadm_writelog "Copying new file $updfile ..."  # Inform User New File
+                 #   else sadm_writelog "Updating file $updfile ..."     # Inform user Updating file
+                 #fi
+                 update_file                                            # Go Process file
                  continue
         fi 
 
-        # User Made changes to file so ask him if he want to update it or skip this update
+        # File on disk was changed since last update - 
+        # In Interactive mode ask user - [S]kip or [U]pdate the file update
+        # In Auto Update (-a Batch Mode) Default to [U]pdate the file
         if [ "$prevsum" != "$cursum" ] 
-           then sadm_writelog " "
-                sadm_writelog "File : \"$sumfile\""
-                sadm_writelog "One of these conditions happened since last update of this file."
-                sadm_writelog "   1) Change were made to the file."
-                sadm_writelog "   2) You didn't update the file at the last update."
-                sadm_writelog "   3) The file was deleted from the system."
-                sadm_writelog "   4) This is a new file (or have moved in dir. structure)."
-                sadm_writelog "Current file will be moved to RollBack Directory before updating it."
-                sadm_writelog ""
-                if [ "$AUTO_UPDATE" == 'OFF' ] 
-                    then while :
+           then if [ "$AUTO_UPDATE" == 'OFF' ]
+                    then sadm_writelog " "
+                         sadm_writelog "File : \"$updfile\""
+                         sadm_writelog "One of these conditions happened since last update of this file."
+                         sadm_writelog "   1) Change were made to the file."
+                         sadm_writelog "   2) You didn't update the file at the last update."
+                         sadm_writelog "   3) The file was deleted from the system."
+                         sadm_writelog "   4) This is a new file (or have moved in dir. structure)."
+                         sadm_writelog "Current file will be moved to RollBack Directory before updating it."
+                         sadm_writelog ""
+                         while :
                             do
-                            echo -n "Do you want to [S]kip or [U]pdate this file [U] ? "
-                            read choice                                 # Read User answer
-                            if [ ${#choice} -lt 1 ] ;then choice="U" ;fi # [ENTER] = Default Update 
-                            case "$choice" in                           # Test Answer
-                                S|s )   break                           # Skip update for this file
+                            echo -n "Want to [S]kip or [U]pdate this file [U] ? "
+                            read choix                                  # Read User answer
+                            if [ ${#choix} -lt 1 ] ;then choix="U" ;fi  # [ENTER] = Default Update 
+                            case "$choix" in                            # Test Answer
+                                S|s )   choix="S"                       # Make choice uppercase
+                                        break                           # Skip update for this file
                                         ;; 
-                                U|u )   break                           # Ok with the Update
+                                U|u )   choix="U"                       # Make Choice Uppercase
+                                        break                           # Ok with the Update
                                         ;;
-                                * )     ;;                              # Wrong Choice Ask again
+                                * )     choix=""                        # Reset Choice
+                                        ;;                              # Wrong Choice Ask again
                             esac
                             done                
-                            if [ "$choice" == 'S' ] || [ "$choice" == 's' ] ;then continue ;fi
-                    else choice="u"                                     # Batch mode = Update
+                         if [ "$choix" == 'S' ] ;then continue ;fi      # User Choose to Skip Update
+                    else choix="U"                                      # Batch mode = Update
                 fi
-                if [ -e "${SADMIN}/$sumfile" ]                          # If current file exist
-                    then sadm_writelog "Save current version ${SADMIN}/$sumfile to the Rollback Directory."
-                         cp ${SADMIN}/$sumfile ${ROLLBACK_DIR}          # Copy file to Rollback Dir.
-                fi
-                #
-                sadm_writelog "Update file to new version"
-                newdir=`dirname ${SADMIN}/$sumfile`
-                if [ ! -d "$newdir" ] ; then mkdir -p $newdir > /dev/null 2>&1 ; fi
-                sadm_writelog "cp ${WDIR}/$sumfile ${SADMIN}/$sumfile" 
-                cp ${WDIR}/$sumfile ${SADMIN}/$sumfile                  # Update Cur. file with New
-                if [ $? -ne 0 ] ; then sadm_writelog "Error copying $sumfile ..." ; fi
+                update_file                                             # Go Process file
         fi
         done 3< ${WDIR}/cfg/.versum                              # Ex :/opt/sadmin_0.86_20180422.tgz
 
@@ -378,12 +440,14 @@ main_process()
         cp ./cfg/.versum  ${SADMIN}/cfg/.versum
         cp ./cfg/.version ${SADMIN}/cfg/.version
         #
+        housekeeping                                                    # Del unused files & Dir.
+        #
         # Remove Working Directory
         cd /
         rm -fr ${WDIR} > /dev/null
         #
         # End of Update
-        sadm_writelog "Update completed `date`"
+        sadm_writelog "Update completed - `date`"
         sadm_writelog " " 
         
 }

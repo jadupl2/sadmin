@@ -1153,7 +1153,7 @@ def update_apache_config(sroot,sfile,sname,svalue):
 
 
 #===================================================================================================
-#        Set and/or Validate that SADMIN Environment Variable is set in /etc/environent file
+#   Set and/or Validate that SADMIN Environment Variable is set in /etc/environment file
 #===================================================================================================
 #
 def set_sadmin_env(ver):
@@ -1164,12 +1164,12 @@ def set_sadmin_env(ver):
     else:                                                               # If Not Ask User Full Path
         sadm_base_dir = input("Enter directory path where your install SADMIN : ")
 
-    # Does Directory specify exist ?
+    # Does Directory specify exist ? , if not exit to O/S with error
     if not os.path.exists(sadm_base_dir) :                              # Check if SADMIN Dir. Exist
         print ("Directory %s doesn't exist." % (sadm_base_dir))         # Advise User
         sys.exit(1)                                                     # Exit with Error Code
 
-    # Check if Directory specify contain the Shell SADMIN Library (Indicate Dir. is the good one)
+    # Validate That Directory specify contain the Shell SADMIN Library (Indicate Dir. is the good one)
     libname="%s/lib/sadmlib_std.sh" % (sadm_base_dir)                   # Set Full Path to Shell Lib
     if os.path.exists(libname)==False:                                  # If SADMIN Lib Not Found
         printBold ("The directory %s isn't the SADMIN directory" % (sadm_base_dir)) # Reject Msg
@@ -1239,7 +1239,7 @@ def set_sadmin_env(ver):
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
 
-    # Open the current /etc/profile.d/sadmin.sh 
+    # Open the current /etc/environment
     try : 
         fi = open(SADM_ENVFILE,'r')                                     # Open SADMIN Env. Setting 
     except FileNotFoundError as e :                                     # If Env file doesn't exist
@@ -1249,7 +1249,6 @@ def set_sadmin_env(ver):
     fo = open(SADM_TMPFILE,'w')                                         # Environment TMP File
     fileEmpty=True                                                      # Env. file assume empty
     eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
-
     for line in fi:                                                     # Read Input file until EOF
         if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
            line = "%s" % (eline)                                        # Replace line with latest
@@ -1265,7 +1264,7 @@ def set_sadmin_env(ver):
         os.rename(SADM_TMPFILE,SADM_ENVFILE)                            # Rename tmp to real one
     except:
         print ("Error removing or renaming %s" % (SADM_ENVFILE))        # Show User if error
-        sys.exit(1)        
+        sys.exit(1)                                                     # Exit to O/S with Error
 
     print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
     print ("  - The line below is now in %s and in %s" % (SADM_PROFILE,SADM_ENVFILE)) 
