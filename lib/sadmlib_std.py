@@ -28,6 +28,7 @@
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
 # 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
+# 2018_06_25    sadmlib_std.sh  v2.18 Correct problem trying to open DB on client.
 #
 #==================================================================================================
 try :
@@ -99,7 +100,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.17"                                # This Library Version
+        self.libver             = "2.18"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -378,9 +379,9 @@ class sadmtools():
             if "SADM_DBHOST"                 in CFG_NAME:  self.cfg_dbhost         = CFG_VALUE
             if "SADM_DBPORT"                 in CFG_NAME:  self.cfg_dbport         = int(CFG_VALUE)
             if "SADM_RW_DBUSER"              in CFG_NAME:  self.cfg_rw_dbuser      = CFG_VALUE
-            if "SADM_RW_DBPWD"               in CFG_NAME:  self.cfg_rw_dbpwd       = CFG_VALUE
+#            if "SADM_RW_DBPWD"               in CFG_NAME:  self.cfg_rw_dbpwd       = CFG_VALUE
             if "SADM_RO_DBUSER"              in CFG_NAME:  self.cfg_ro_dbuser      = CFG_VALUE
-            if "SADM_RO_DBPWD"               in CFG_NAME:  self.cfg_ro_dbpwd       = CFG_VALUE
+#            if "SADM_RO_DBPWD"               in CFG_NAME:  self.cfg_ro_dbpwd       = CFG_VALUE
             #
             if "SADM_BACKUP_NFS_SERVER"      in CFG_NAME: self.cfg_backup_nfs_server     = CFG_VALUE
             if "SADM_BACKUP_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_backup_nfs_mount_point= CFG_VALUE
@@ -413,26 +414,30 @@ class sadmtools():
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Open Database Password File, Read 'sadmin' and 'squery' user from .dbpass file
-        try:
-            FH_DBPWD = open(self.dbpass_file,'r')                       # Open DB Password File
-        except IOError as e:                                            # If Can't open DB Pwd  file
-            print ("Error opening file %s \r\n" % self.dbpass_file)     # Print DBPass FileName
-            print ("Error Number : {0}\r\n.format(e.errno)")            # Print Error Number    
-            print ("Error Text   : {0}\r\n.format(e.strerror)")         # Print Error Message
-            sys.exit(1) 
-        for dbline in FH_DBPWD :                                        # Loop until on all lines
-            wline = dbline.strip()                                      # Strip CR/LF & Trail spaces
-            if (wline[0:1] == '#' or len(wline) == 0) :                 # If comment or blank line
-                continue                                                # Go read the next line
-            if wline.startswith('sadmin,') :                            # Line begin with 'sadmin,'
-                self.cfg_rw_dbuser = 'sadmin'                           # Set DB R/W User Name
-                split_line = wline.split(',')                           # Split Line based on comma  
-                self.cfg_rw_dbpwd  = split_line[1]                      # Set DB R/W 'sadmin' Passwd
-            if wline.startswith('squery,') :                            # Line begin with 'squery,'
-                self.cfg_ro_dbuser = 'squery'                           # Set DB R/O User Name
-                split_line = wline.split(',')                           # Split Line based on comma  
-                self.cfg_ro_dbpwd  = split_line[1]                      # Set DB R/O 'squery' Passwd
-        FH_DBPWD.close()                                                # Close DB Password file
+        if self.get_fqdn() == self.cfg_server:                          # Only run on SADMIN
+            try:
+                FH_DBPWD = open(self.dbpass_file,'r')                   # Open DB Password File
+            except IOError as e:                                        # If Can't open DB Pwd  file
+                print ("Error opening file %s \r\n" % self.dbpass_file) # Print DBPass FileName
+                print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number    
+                print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
+                sys.exit(1) 
+            for dbline in FH_DBPWD :                                    # Loop until on all lines
+                wline = dbline.strip()                                  # Strip CR/LF & Trail spaces
+                if (wline[0:1] == '#' or len(wline) == 0) :             # If comment or blank line
+                    continue                                            # Go read the next line
+#                if wline.startswith('sadmin,') :                        # Line begin with 'sadmin,'
+                if wline.startswith(self.cfg_rw_dbuser) :               # LineStart with RW UserName
+                    split_line = wline.split(',')                       # Split Line based on comma  
+                    self.cfg_rw_dbpwd  = split_line[1]                  # Set DB R/W 'sadmin' Passwd
+#                if wline.startswith('squery,') :                        # Line begin with 'squery,'
+                if wline.startswith(self.cfg_ro_dbuser) :               # Line begin with 'squery,'
+                    split_line = wline.split(',')                       # Split Line based on comma  
+                    self.cfg_ro_dbpwd  = split_line[1]                  # Set DB R/O 'squery' Passwd
+            FH_DBPWD.close()                                            # Close DB Password file
+        else :
+            self.cfg_rw_dbpwd  = ''                                     # Set DB R/W 'sadmin' Passwd
+            self.cfg_ro_dbpwd  = ''                                     # Set DB R/O 'squery' Passwd
         return        
 
 
