@@ -240,9 +240,9 @@ def print_python_function(st):
     st.log_type="B"
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    print ('\nccode,cstdout,cstderr = ins.oscommand("%s" % (wcommand))')
-    print ('\nins.trimfile (file, maxline=500)')
-    print ('\npathname = ins.locate_command(wcommand)')
+    #print ('\nccode,cstdout,cstderr = ins.oscommand("%s" % (wcommand))')
+    #print ('\nins.trimfile (file, maxline=500)')
+    #print ('\npathname = ins.locate_command(wcommand)')
 
 #===================================================================================================
 # Print User Variables that affect SADMIN Tools Behavior

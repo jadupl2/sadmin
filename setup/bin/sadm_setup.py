@@ -33,6 +33,7 @@
 # 2018_06_11    v2.6 Add SADMIN=$SADMIN in /etc/environment - Needed when ssh from server to client
 # 2018_06_14    v2.7 Remove client & server crontab entry not needed
 # 2018_06_19    v2.8 Change way to get current domain name
+# 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
 # 
 #===================================================================================================
 # 
@@ -49,7 +50,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.8"                                             # Setup Version Number
+sver                = "2.9"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -310,7 +311,8 @@ def update_client_crontab_file(logfile) :
     #hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
     #hcron.write ("#\n")
     hcron.write ("# Run SADM System Monitoring every 6 minutes\n")
-    hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >/dev/null/sysmon.log 2>&1\n")
+    chostname = socket.gethostname().split('.')[0]
+    hcron.write ("*/5 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
@@ -369,7 +371,7 @@ def update_server_crontab_file(logfile) :
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
     hcron.write ("# Get all rch/log/rpt status files from all active client\n")
-    hcron.write ("*/4 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
+    hcron.write ("*/6 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Run Daily, Early in morning - Collect Performance,Host Info, Upd. DB\n")
     hcron.write ("17 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
@@ -1709,12 +1711,13 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
     writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
     writelog (" ")
-    writelog ("For example, to create your own shell script, copy '%s/bin/sadm_template.sh' " % (sroot))
-    writelog ("to a name of your choice 'your_script.sh', modify it to your need, run it and see the results.") 
+    writelog ("For example, to create your own shell script :")
+    writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
+    writelog ("modify it to your need, run it and see the results.") 
     writelog ("===========================================================================")
     writelog ("\nVIEW SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
-    writelog ("  - %s/lib/sadmlib_test.sh " % (sroot))
-    writelog ("  - %s/lib/sadmlib_test.py." % (sroot))
+    writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
+    writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
     writelog ("===========================================================================")
     writelog ("ENJOY !!",'bold')
 
