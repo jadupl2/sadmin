@@ -286,12 +286,12 @@ main_process()
     fi
 
 # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close/Trim Log & Del PID
-             exit 1                                                     # Exit To O/S with error
-    fi
+#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+#             sadm_writelog "Process aborted"                            # Abort advise message
+#             sadm_stop 1                                                # Close/Trim Log & Del PID
+#             exit 1                                                     # Exit To O/S with error
+#    fi
 
 # Your Main process procedure
     main_process                                                        # Main Process
