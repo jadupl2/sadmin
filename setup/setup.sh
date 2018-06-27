@@ -58,18 +58,18 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
-        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled) ..." >> $SLOG
+        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
     fi
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
-        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled) ..." >> $SLOG
+        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
     fi
 
     # Disable the EPEL Repository, Will Activate when needed only.
-    echo "Disabling EPEL Repository, will activate it only when needed" >> $SLOG
+    echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
     yum-config-manager --disable epel >/dev/null 2>&1
 }
 
@@ -160,15 +160,23 @@ check_lsb_release()
 #===================================================================================================
 #
 
-    # Display OS Name and Version
     tput clear 
-    echo " " > $SLOG                                                        # Init the Log File
+    cat << EOF
+ ____    _    ____  __  __ ___ _   _ 
+/ ___|  / \  |  _ \|  \/  |_ _| \ | |
+\___ \ / _ \ | | | | |\/| || ||  \| |
+ ___) / ___ \| |_| | |  | || || |\  |
+|____/_/   \_\____/|_|  |_|___|_| \_|
+                                     
+EOF
+    # Display OS Name and Version
+    echo " " > $SLOG                                                    # Init the Log File
     echo "SADMIN Pre-Installation Verification Version $SADM_VER" | tee -a $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     #echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
 
     # Only Supported on Linux
-    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                     # OS(AIX/LINUX/DARWIN/SUNOS)           
+    SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
     if [ "$SADM_OSTYPE" != LINUX ] 
         then echo "SADMIN Tools only supported on Linux (Not on $SADM_OSNAME)" | tee -a $SLOG
              exit 1

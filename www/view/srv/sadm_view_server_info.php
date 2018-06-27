@@ -512,8 +512,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='View System Information'>";# Tool Tips
         echo "<button type='button'>System Information</button></a>";               # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
     # Display Button to Display Network Information
@@ -523,8 +521,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='Network Information'>";    # Tool Tips
         echo "<button type='button'>Network Information</button></a>";              # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
     # Display Button to Display System Summary Information
@@ -534,8 +530,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='System Summary Info'>";    # Tool Tips
         echo "<button type='button'>Server Summary</button></a>";              # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
 
@@ -546,8 +540,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $url ;                                     # Build URL 
         echo "' data-toggle='tooltip' title='CFG2HTML Information'>";   # Tool Tips
         echo "<button type='button'>Server cfg2html</button></a>";             # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
     # Display Button to Display Disks Information
@@ -557,8 +549,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='Disk Information'>";       # Tool Tips
         echo "<button type='button'>Disk(s) Information</button></a>";                # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
     # Display Button to Display LVM Information
@@ -568,8 +558,6 @@ function display_top_buttons ($wrow) {
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='LVM Information'>";        # Tool Tips
         echo "<button type='button'>LVM</button></a>";                  # Display Button
-    }else{                                                              # FileName Recv. Not Exist
-        echo "No SysFile";                                              # Msg. No Button
     }
 
     # Display the Update Button
@@ -597,14 +585,14 @@ function display_top_buttons ($wrow) {
         $result = mysqli_query($con,$sql) ;                             # Execute SQL Select
         if (!$result)   {                           # If Server not found
             $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
-            $err_msg = $err_msg . mysqli_error($con) ;                     # Add Postgresql Error Msg
+            $err_msg = $err_msg . mysqli_error($con) ;                  # Add Postgresql Error Msg
             exit;
         }
-        $NUMROW = mysqli_num_rows($result);                               # Get Nb of rows returned
+        $NUMROW = mysqli_num_rows($result);                             # Get Nb of rows returned
 
          if ((!$result) or ($NUMROW == 0))  {                           # If Server not found
             $err_msg = "<br>Server " . $HOSTNAME . " not found in DB";  # Construct msg to user
-            $err_msg = $err_msg . mysqli_error($con) ;                     # Add Postgresql Error Msg
+            $err_msg = $err_msg . mysqli_error($con) ;                  # Add Postgresql Error Msg
             if ($DEBUG) {                                               # In Debug Insert SQL in Msg
                 $err_msg = $err_msg . "<br>\nMaybe a problem with SQL Command ?\n" . $query ;
             }

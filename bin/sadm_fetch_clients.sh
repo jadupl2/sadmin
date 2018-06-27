@@ -141,7 +141,7 @@ rsync_function()
     RETRY=0                                                             # Set Retry counter to zero
     while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
         do
-        let RETRY=RETRY+1                                               # Incr Retry counter
+        xcount=`expr $RETRY + 1`                                        # Incr Retry counter.
         rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
         RC=$?                                                           # save error number
 
@@ -190,7 +190,7 @@ process_servers()
 
     # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
-        then sadm_writelog "No Active Server were found."               # Not ACtive Server MSG
+        then sadm_writelog "No Active $WOSTYPE server were found."      # Not ACtive Server MSG
              return 0                                                   # Return Error to Caller
     fi 
     

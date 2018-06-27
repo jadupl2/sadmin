@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Apr 25, 2018 at 12:04 PM
+-- Generation Time: Jun 27, 2018 at 11:09 AM
 -- Server version: 5.5.56-MariaDB
 -- PHP Version: 5.4.16
 
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_date_creation` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Server Creation Date',
   `srv_date_edit` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Edit Date',
   `srv_date_update` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Update Date',
-  `srv_date_osupdate` datetime NOT NULL COMMENT 'Date of Update',
+  `srv_date_osupdate` datetime DEFAULT NULL COMMENT 'Date of Update',
   `srv_kernel_version` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Kernel Version',
   `srv_kernel_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Kernel is 32 or 64 bits',
   `srv_hwd_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Hardware is 32 or 64 bits',
@@ -80,9 +80,15 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_update_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Update Start Minute',
   `srv_maint` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Activate Maintenance Mode',
   `srv_maint_date_start` datetime NOT NULL COMMENT 'Start Date/Time of Maint. Mode',
-  `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode'
+  `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
+  `srv_sadmin_dir` varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client'
 ) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
+--
+-- Dumping data for table `server`
+--
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `server_category`
@@ -103,6 +109,7 @@ CREATE TABLE IF NOT EXISTS `server_category` (
 --
 
 INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `cat_date`, `cat_default`) VALUES
+(2, 'Legacy', 'Legacy Unsupported Server', 1, '2017-11-07 05:00:00', 0),
 (3, 'Dev', 'Development Environment', 1, '2017-11-07 05:00:00', 1),
 (5, 'Poc', 'Proof Of Concept env.', 1, '2017-11-07 05:00:00', 0),
 (6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
@@ -129,12 +136,13 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 --
 
 INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp_date`, `grp_default`) VALUES
-(2, 'Legacy', 'Legacy O/S version', 1, '2017-11-22 16:55:50', 0),
+(2, 'Cluster', 'Clustered Server', 1, '2017-11-22 16:55:50', 0),
 (3, 'Service', 'Infrastructure Service', 1, '2017-11-07 05:00:00', 0),
 (4, 'Retired', 'Server not in use', 1, '2017-11-07 05:00:00', 0),
 (5, 'Raspberry', 'Raspberry Pi', 1, '2017-11-07 05:00:00', 0),
-(6, 'Regular', 'App. Server', 1, '2017-11-23 17:33:43', 1),
-(8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
+(6, 'Regular', 'Normal App. Server', 1, '2017-11-23 17:33:43', 1),
+(7, 'Temporary', 'Temporaly in service', 1, '2017-11-07 05:00:00', 0),
+(8, 'Laptop', 'Laptop', 1, '2017-11-07 05:00:00', 0);
 
 -- --------------------------------------------------------
 
@@ -150,9 +158,13 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   `net_mac` text COLLATE utf8_unicode_ci NOT NULL COMMENT 'IP Mac Address',
   `net_man` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Card Manufacturer',
   `net_ping` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'IP Respond to ping ?',
-  `net_date_ping` datetime DEFAULT NULL COMMENT 'Last Ping Respond Date',
+  `net_date_ping` datetime NOT NULL COMMENT 'Last Ping Respond Date',
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Dumping data for table `server_network`
+--
 
 --
 -- Indexes for dumped tables
