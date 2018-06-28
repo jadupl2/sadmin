@@ -301,7 +301,7 @@ def update_client_crontab_file(logfile) :
     # Populate SADMIN Client Crontab File
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("# Run Daily, late at night - Create Host Info Files, Check permission\n")
+    hcron.write ("# Run Daily before midnight, generate host info files & check permission\n")
     hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
     hcron.write ("#\n")
     #hcron.write ("# Run every 11 minutes - Make sure performance nmon daemon is running\n")
@@ -310,9 +310,10 @@ def update_client_crontab_file(logfile) :
     #hcron.write ("# Daily backup of importants Files & Dir.\n")
     #hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
     #hcron.write ("#\n")
-    hcron.write ("# Run SADM System Monitoring every 6 minutes\n")
+    hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
     chostname = socket.gethostname().split('.')[0]
-    hcron.write ("*/5 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
+    #hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
+    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
@@ -370,11 +371,12 @@ def update_server_crontab_file(logfile) :
     # Populate SADMIN Server Crontab File
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("# Get all rch/log/rpt status files from all active client\n")
-    hcron.write ("*/6 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
+    hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
+    #hcron.write ("*/6 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
+    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
-    hcron.write ("# Run Daily, Early in morning - Collect Performance,Host Info, Upd. DB\n")
-    hcron.write ("17 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
+    hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
+    hcron.write ("05 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     #hcron.write ("# Morning report sent to Sysadmin by Email\n")
     #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
@@ -407,7 +409,7 @@ def update_server_crontab_file(logfile) :
 #===================================================================================================
 #                                 Install pymysql module 
 #===================================================================================================
-def special_install(lpacktype,sosname) :
+def special_install(lpacktype,sosname,logfile) :
 
     if ((lpacktype != "deb") and (lpacktype != "rpm")):                 # Only rpm & deb Supported 
         writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
@@ -418,7 +420,7 @@ def special_install(lpacktype,sosname) :
     if (locate_command('pip3') == "") :                                 # If pip3 command not found
         writelog("Installing python3 pip3")
         # If Debian Package, Refresh The Local Repository ------------------------------------------
-        if (packtype == "deb"):                                         # Is Debian Style Package
+        if (lpacktype == "deb"):                                         # Is Debian Style Package
             cmd =  "apt-get -y update >> %s 2>&1" % (logfile)           # Build Refresh Pack Cmd
             writelog ("Running apt-get update...",'nonl')               # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
@@ -440,11 +442,13 @@ def special_install(lpacktype,sosname) :
                 icmd="yum install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
 
         # Install pip3 command 
+        #writelog (icmd)                                                 # Inform User Pkg installing
         ccode, cstdout, cstderr = oscommand(icmd)                       # Run Install Cmd for pip3
         if (ccode == 0) :                                               # If no problem installing
             writelog (" Done ")                                         # Show user it is done
         else:                                                           # If error while installing
             writelog("Error Code is %d - See log %s" % (ccode,logfile),'bold') # Show Err & Logname
+            writelog ("stdout=%s stderr=%s" % (cstdout,cstderr))
     else:
         writelog("Done")
 
@@ -548,12 +552,12 @@ def firewall_rule() :
 
     # Open TCP Port 80 on Firewall
     writelog("  - Adding rules to allow incoming connection on port 80")
-    COMMAND = "firewall-cmd --pemanent --add-port=80/tcp"               # Allow port 80 for HTTP 
+    COMMAND="firewall-cmd --zone=public --add-port=80/tcp --permanent"  # Allow port 80 for HTTP 
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
 
     # Restart Firewall to activate the new rule
-    COMMAND = "systemctl restart firewalld"                             # Activate Rule - Restart FW
+    COMMAND = "firewall-cmd --reload"                                   # Activate Rule - Restart FW
     if (DEBUG): print ("O/S command : %s " % (COMMAND))                 # Under Debug print cmd   
     ccode,cstdout,cstderr = oscommand(COMMAND)                          # Try to Locate Command
 
@@ -750,6 +754,10 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     ccode, cstdout, cstderr = oscommand(wcmd)
     osdist=cstdout.upper()
     #
+    wcmd = "%s %s" % ("lsb_release","-sr")
+    ccode, cstdout, cstderr = oscommand(wcmd)
+    osver=cstdout
+    #
     # Construct insert new server SQL Statement
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
@@ -757,6 +765,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
     sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
     sql += " srv_osname='%s'," % (osdist);
+    sql += " srv_osversion='%s'," % (osver);
     sql += " srv_ostype='linux', srv_graph='1' ;"
     #
     # Execute the Insert New Server Statement
@@ -1553,9 +1562,9 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
-    #sdefault = socket.getfqdn().split('.', 1)[1]                       # Set Current  Default value 
+    sdefault = socket.getfqdn().split('.', 1)[1]                       # Set Current  Default value 
     #sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
-    sdefault = os.uname()[1].split('.', 1)[1]                           # Set Current  Default value 
+    #sdefault = os.uname()[1].split('.', 1)[1]                           # Set Current  Default value 
     sprompt  = "Default domain name"                                    # Prompt for Answer
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
@@ -1572,7 +1581,7 @@ def setup_sadmin_config_file(sroot):
         except (socket.gaierror) as error :                             # Unable to get Server IP
             writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
             continue                                                    # Go Re-Accept Server Name
-        xarray = socket.gethostbyaddr(SADM_IP)                              # Use IP & Get HostName
+        xarray = socket.gethostbyaddr(SADM_IP)                          # Use IP & Get HostName
         yname = socket.getfqdn(xarray[0])                               # Get FQDN of IP
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
             writelog("The server %s with ip %s is returning %s" % (wcfg_server,SADM_IP,yname))
@@ -1802,9 +1811,7 @@ def main():
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
     (userver,uip,udomain,uemail) = setup_sadmin_config_file(sroot)      # Ask Config questions
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
-    rrdtool_path = locate_command("rrdtool")                            # Get rrdtool path
-    update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)          # Update Value in sadmin.cfg
-    special_install(packtype,sosname)                                   # Install pymysql module
+    special_install(packtype,sosname,logfile)                           # Install pymysql module
     update_sudo_file(logfile)                                           # Create the sudo file
     update_client_crontab_file(logfile)                                 # Create Client Crontab File 
 
@@ -1816,6 +1823,8 @@ def main():
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
         update_server_crontab_file(logfile)                             # Create Server Crontab File 
+        rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
+        update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
 
     # Run First SADM Client Script to feed Web interface and Database
     writelog ('  ')
@@ -1823,6 +1832,7 @@ def main():
     writelog ('--------------------')
     writelog ("Run SADMIN Daily scripts once to feed Database and Web Interface",'bold')
     writelog ('  ')
+    writelog ("Running Client Scripts")
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
     run_script(sroot,"sadm_create_sysinfo.sh")                          # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_client_housekeeping.sh")                     # Validate Owner/Grp/Perm
@@ -1832,6 +1842,8 @@ def main():
 
     # Run First SADM Server Script to feed Web interface and Database
     if (stype == "S"):                                                  # If Server Installation
+        writelog ('  ')
+        writelog ("Running Server Scripts")
         run_script(sroot,"sadm_fetch_clients.sh")                       # Grab Status from clients
         run_script(sroot,"sadm_daily_farm_fetch.sh")                    # mv ClientData to ServerDir
         run_script(sroot,"sadm_server_housekeeping.sh")                 # Validate Owner/Grp/Perm
