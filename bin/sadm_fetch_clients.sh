@@ -24,6 +24,7 @@
 #   2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
 #   2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
 #   2018_05_06  v2.12 Small Modification for New Libr Version
+#   2018_06_29  v2.13 Use Root SADMIN Client Dir in Database instead of assuming /sadmin as root dir
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -59,7 +60,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.12'                              # Current Script Version
+    export SADM_VER='2.13'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -175,7 +176,7 @@ process_servers()
     sadm_writelog " "
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir "
     SQL="${SQL} from server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -203,6 +204,7 @@ process_servers()
         server_domain=`  echo $wline|awk -F, '{ print $3 }'`            # Extract Domain of Server
         server_monitor=` echo $wline|awk -F, '{ print $4 }'`            # Monitor t=True f=False
         server_sporadic=`echo $wline|awk -F, '{ print $5 }'`            # Sporadic t=True f=False
+        server_dir=`     echo $wline|awk -F, '{ print $7 }'`            # SADMIN Dir on Client 
         fqdn_server=`echo ${server_name}.${server_domain}`              # Create FQN Server Name
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
         sadm_writelog "Processing ($xcount) ${fqdn_server}"             # Print Counter/Server Name
@@ -217,6 +219,7 @@ process_servers()
                       then sadm_writelog "Sporadic server is ON for $fqdn_server"
                       else sadm_writelog "Sporadic server is OFF for $fqdn_server"
                 fi
+                sadm_writelog "SADMIN root directory on $fqdn_server is $server_dir"
         fi
 
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
@@ -268,34 +271,37 @@ process_servers()
                     done
         fi
 
-        # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
-        WDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir.
+        # MAKE SURE RCH RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/rch"                   # Local Receiving Dir.
+        RDIR="${server_dir}/dat/rch"                                    # Remote RCH Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
-            then rsync_function "${fqdn_server}:${SADM_RCH_DIR}/" "${WDIR}/"
-            else rsync_function "${SADM_RCH_DIR}/" "${WDIR}/"           # Local Rsync if on Master
+            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
+        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
-        # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
-        WDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
+        # MAKE SURE LOG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
+        RDIR="${server_dir}/log"                                        # Remote log Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
-            then rsync_function "${fqdn_server}:${SADM_LOG_DIR}/" "${WDIR}/"
-            else rsync_function "${SADM_LOG_DIR}/" "${WDIR}/"
+            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
+        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
-        # MAKE SURE RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
-        WDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
+        # MAKE SURE RPT RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        LDIR="$SADM_WWW_DAT_DIR/${server_name}/rpt"                     # Local www Receiving Dir.
+        RDIR="${server_dir}/dat/rpt"                                    # Remote log Directory
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
-            then rsync_function "${fqdn_server}:${SADM_RPT_DIR}/" "${WDIR}/"
-            else rsync_function "${SADM_RPT_DIR}/" "${WDIR}/"
+            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
-        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi
+        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
         # IF ERROR OCCURED DISPLAY NUMBER OF ERROR
-        if [ $ERROR_COUNT -ne 0 ]
+        if [ $ERROR_COUNT -ne 0 ]                                       # If at Least 1 Error
            then sadm_writelog " "                                       # Separation Blank Line
-                sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT" # Show Err. Count
         fi
               
         done < $SADM_TMP_FILE1
