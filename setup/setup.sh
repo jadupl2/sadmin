@@ -24,12 +24,10 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_03_27 JDuplessis
-#   V1.1 Initial Version - Make sure python 3 is installed and then execute sadm_setup.py
-# 2018_04_03 JDuplessis
-#   V1.4 Bug Fixes and add detail to log for support purpose 
-# 2018_05_01 JDuplessis
-#   V1.5 Show Full O/S Version in Log
+# 2018_03_27 V1.1 Initial Version - Make sure python 3 is installed and then execute sadm_setup.py
+# 2018_04_03 V1.4 Bug Fixes and add detail to log for support purpose 
+# 2018_05_01 V1.5 Show Full O/S Version in Log
+# 2018_06_29 V1.6 Change Log File Name & Appearance Changes 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -38,7 +36,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.5'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.6'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -47,7 +45,7 @@ SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script
 SCRIPT="$(dirname "$0")/bin/sadm_setup.py" ; export SCRIPT              # Main Setup SCRIPT Next
 SLOGDIR="$(dirname "$0")/log"              ; export SLOGDIR             # Log Directory
 if [ ! -d ${SLOGDIR} ] ; then mkdir $SLOGDIR ; fi                       # If Don't exist create dir
-SLOG="${SLOGDIR}/sadm_setup.log"           ; export SLOG                # Script Log Name
+SLOG="${SLOGDIR}/sadm_pre_setup.log"       ; export SLOG                # Script Log Name
 
 
 #===================================================================================================
@@ -58,13 +56,15 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
-        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+        then echo " " 
+             echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
     fi
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
-        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+        then echo " " 
+             echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              rpm -Uvh http://fedora-epel.mirror.iweb.com/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
     fi
 
@@ -171,7 +171,7 @@ check_lsb_release()
 EOF
     # Display OS Name and Version
     echo " " > $SLOG                                                    # Init the Log File
-    echo "SADMIN Pre-Installation Verification Version $SADM_VER" | tee -a $SLOG
+    echo "SADMIN Pre-installation verification v${SADM_VER}" | tee -a $SLOG
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     #echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
 
