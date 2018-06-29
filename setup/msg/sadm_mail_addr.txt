@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_MAIL_ADDR Documentation
 # Revise 2018_02_14
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 This field specify the email address of the system administrator.
-It is used by SADMIN Tools to send various email and alert.
+It's use by SADMIN Tools to send various email and alert.

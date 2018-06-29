@@ -1,11 +1,11 @@
 # sadmin.cfg SADM_MAX_LOGLINE Documentation
 # Revise 2018_03_15
 #----------------------------------------------------------------------------
-Every time a script (python or bash script) that use SADMIN Tools is run,
+Every time a script (python or shell script) that use SADMIN Tools is run,
 it produce a log, in the dedicated directory ${SADMIN}/log.
-
     - The name of the Log file is "[HOSTNAME]_[NAME_OF_SCRIPT].log".
     - Log file are cumulative by default, but it can be overriden if you want.
     - This number indicate the maximum of lines you want to keep in your log.
+    - Log file are trim automatically at the end of script execution.
     - This help keeping our log to a reasonnable size.
     

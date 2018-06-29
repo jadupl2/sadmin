@@ -34,6 +34,7 @@
 # 2018_06_14    v2.7 Remove client & server crontab entry not needed
 # 2018_06_19    v2.8 Change way to get current domain name
 # 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
+# 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
 # 
 #===================================================================================================
 # 
@@ -50,7 +51,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "2.9"                                             # Setup Version Number
+sver                = "3.0"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -860,7 +861,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     # Accept 'root' Database user password ---------------------------------------------------------
     sdefault = ""                                                       # No Default Password 
     sprompt  = "Enter MariaDB Database 'root' user password"            # Prompt for Answer
-    dbroot_pwd = accept_field(sroot,"SADM_ROOT",sdefault,sprompt,"P")   # Accept Mysql root pwd
+    dbroot_pwd = accept_field(sroot,"SADM_DBROOT",sdefault,sprompt,"P") # Accept Mysql root pwd
  
     # Test Access/Change MariaDB with the password given by user -----------------------------------
     cmd = "mysql -uroot -p%s -e 'show databases;'" % (dbroot_pwd)       # Cmd to show databases
@@ -921,6 +922,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     writelog ('')                                                       # Space line
     uname = "sadmin"                                                    # User to check in DB
     rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
+    writelog(' ')                                                       # Blank Line
+    writelog('----------')                                              # Separation Line
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl') # Show User
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))                     # Show user was found
@@ -946,6 +949,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     # Check if 'squery' user exist in Database, if not create User and Grant permission ------------
     uname = "squery"                                                    # Default Query DB UserName
     ro_passwd = ""                                                      # Clear dbpass squery Pwd
+    writelog('----------')                                              # Separation Line
     writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl')    
     if (user_exist(uname,dbroot_pwd)):                                  # Check if squery Usr Exist
         print ("User '%s' already exist" % (uname))                     # Advise User that it exist
@@ -969,6 +973,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
 
     if (load_db) :                                                      # If Load/Reload Database
+        writelog('----------')                                          # Separation Line
         add_server_to_db(sserver,dbroot_pwd,sdomain)                    # Add current Server to DB
 
 
@@ -1222,7 +1227,7 @@ def set_sadmin_env(ver):
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
         sadm_base_dir = os.environ.get('SADMIN')                        # Get SADMIN Base Directory
     else:                                                               # If Not Ask User Full Path
-        sadm_base_dir = input("Enter directory path where your install SADMIN : ")
+        sadm_base_dir = input("Enter directory path where you install SADMIN : ")
 
     # Does Directory specify exist ? , if not exit to O/S with error
     if not os.path.exists(sadm_base_dir) :                              # Check if SADMIN Dir. Exist
@@ -1326,10 +1331,10 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_ENVFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
-    print ("SADMIN Environment variable is now set to %s" % (sadm_base_dir))
-    print ("  - The line below is now in %s and in %s" % (SADM_PROFILE,SADM_ENVFILE)) 
-    print ("  - %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
-    print ("  - This will make sure 'SADMIN' environment variable is set upon reboot")
+    print ("SADMIN Environment variable now set to %s" % (sadm_base_dir))
+    print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
+    print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
+    print ("  - This will make 'SADMIN' environment variable set upon reboot")
     return sadm_base_dir                                                # Return SADMIN Root Dir
 
 
@@ -1349,7 +1354,7 @@ def create_sadmin_config_file(sroot):
         except:
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
-    writelog ("  - Initial SADMIN configuration file (%s) in place" % (cfgfile)) # Advise User
+    writelog ("  - Initial SADMIN configuration file (%s) in place." % (cfgfile)) # Advise User
     writelog (' ')
     
 
@@ -1555,14 +1560,14 @@ def setup_sadmin_config_file(sroot):
         break                                                           # Ok Email seem valid enough
     update_sadmin_cfg(sroot,"SADM_MAIL_ADDR",wcfg_mail_addr)            # Update Value in sadmin.cfg
 
-    # Accept the Email type to use at the end of each sript execution
+    # Accept the Email type to use at the end of each script execution
     sdefault = 1                                                        # Default value 1
     sprompt  = "Enter default email type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_MAIL_TYPE",sdefault,sprompt,"I",0,3)
     update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
-    sdefault = socket.getfqdn().split('.', 1)[1]                       # Set Current  Default value 
+    sdefault = socket.getfqdn().split('.', 1)[1]                        # Set Current  Default value 
     #sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
     #sdefault = os.uname()[1].split('.', 1)[1]                           # Set Current  Default value 
     sprompt  = "Default domain name"                                    # Prompt for Answer
@@ -1670,15 +1675,18 @@ def setup_sadmin_config_file(sroot):
 
     # Questions ask only if on the SADMIN Server
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
+        
         # Accept the default SSH port your use
         sdefault = 22                                                   # SSH Port Default value 
         sprompt  = "SSH port number to connect to client"               # Prompt for Answer
         wcfg_ssh_port = accept_field(sroot,"SADM_SSH_PORT",sdefault,sprompt,"I",1,65536)
         update_sadmin_cfg(sroot,"SADM_SSH_PORT",wcfg_ssh_port)          # Update Value in sadmin.cfg
+        
         # Accept the Network IP
         sdefault = "192.168.1.0"                                        # Network Default value 
         sprompt  = "Enter the network IP"                               # Prompt for Answer
         wcfg_network1a = accept_field(sroot,"SADM_NETWORK1",sdefault,sprompt) # Accept Net to Watch
+        
         # Accept the Network Netmask
         sdefault = "24"                                                 # Network Mask Default value 
         sprompt  = "Enter the Network Netmask [1-30]"                   # Prompt for Answer
@@ -1750,31 +1758,31 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("You need to logout and log back in before using SADMIN Tools,")
     writelog ("or type the following command (The dot and the space are important)")
     writelog (". /etc/profile.d/sadmin.sh",'bold')
-    writelog ("This will make sure SADMIN environment variable is define.")
+    writelog ("This will define SADMIN environment variable.")
     writelog ("===========================================================================")
     if (stype == "S") :
         writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM\n",'bold')
-        writelog ("The Web interface is available at :")
-        writelog ("http://sadmin.%s or http://%s" % (sdomain,sserver))
-        writelog ("  - For http://sadmin.%s to work, 'sadmin.%s' must be define in your DNS or /etc/hosts file." % (sdomain,sdomain))
+        writelog ("The Web interface is available at : http://%s" % (sserver))
+        writelog ("Also available at http://sadmin.%s  (if sadmin.%s is in your DNS)." % (sdomain,sdomain))
+        writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
-        writelog ("  - If you want, you can automatically update your server O/S at the time and day you scheduled.")
+        writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
         writelog ("  - There's still a lot more to come.")
         writelog ("===========================================================================")
     writelog ("\nCREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES\n",'bold')
-    writelog ("To create your own script using the SADMIN tools, you may want to take a look ")
-    writelog ("at the templates, run them and view their code.")
+    writelog ("Create your own script using SADMIN tools templates, take a look & run them ")
     writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
     writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
     writelog (" ")
-    writelog ("For example, to create your own shell script :")
+    writelog ("Create your own shell script :")
     writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog ("modify it to your need, run it and see the results.") 
+    writelog (" ")
+    writelog ("Modify it to your need, run it and see the result.") 
     writelog ("===========================================================================")
-    writelog ("\nVIEW SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
+    writelog ("\nSEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
     writelog ("===========================================================================")
