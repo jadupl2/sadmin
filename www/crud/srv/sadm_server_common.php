@@ -269,6 +269,23 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
     
+    # Client SADMIN Root Directory
+    echo "\n<div class='double_label'>SADMIN Install Dir.</div>";       # Display Name of Column
+    echo "\n<div class='double_input'>";                                # Class for Column Input
+    if ($smode == 'DISPLAY') {                                          # If Only Display no input
+       echo "\n<input type='text' name='scr_sadmin_dir' readonly ";     # Set Name and Read Only
+       echo " maxlength='15' size='17' ";                               # Set Max. Length
+       echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
+    }else{
+       echo "\n<input type='text' name='scr_sadmin_dir' ";              # Set Name & Col. is require
+       echo " placeholder='SADMIN Directory' ";                         # Set Default
+       echo " maxlength='15' size='17' ";                               # Set Max. Length
+       echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
+    }
+    echo "\n</div>";                                                    # << End of double_input
+    echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
+        
     # Server Tag
     echo "\n<div class='double_label'>Server Tag</div>";                # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input

@@ -154,6 +154,12 @@ function display_left_side ($wrow) {
     if (empty($wrow['srv_tag'])) { echo "&nbsp" ; }else{ echo $wrow['srv_tag'] ; }
     echo "</div>";
 
+    # SADMIN Install Root Directory
+    echo "\n\n<div class='server_left_label'>SADMIN Install Dir.</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_sadmin_dir'])) { echo "&nbsp" ; }else{ echo $wrow['srv_sadmin_dir'] ; }
+    echo "</div>";
+
     # Server Note
     echo "\n\n<div class='server_left_label'>Server Note</div>";
     echo "\n<div class='server_left_data'>";
@@ -267,37 +273,6 @@ function display_left_side ($wrow) {
         echo "$os_status";
     }
     echo "</div>";
-
-
-    # Server Backup 
-    echo "\n\n<div class='server_left_label'>Run Backup Script</div>";
-    echo "\n<div class='server_left_data'>\n";
-    switch ($wrow['srv_backup']) {
-        case 0: echo "No Backup Scheduled";
-                      break;
-        case 1: echo "Monday "    ;
-                     break;
-        case 2: echo "Tuesday "   ;
-                      break;
-        case 3: echo "Wednesday " ;
-                      break;
-        case 4: echo "Thursday "  ;
-                      break;
-        case 5: echo "Friday "    ;
-                      break;
-        case 6: echo "Saturday "  ;
-                      break;
-        case 7: echo "Sunday "    ;
-                      break;
-    }
-
-    # Date & Time the Backup Start 
-    if ($wrow['srv_backup'] != 0) {
-        echo " at " . sprintf("%02d",$wrow['srv_backup_hour']) . ":" ;
-        echo sprintf("%02d",$wrow['srv_backup_minute']) ;
-    }
-    echo "</div>";
-
 
 }
 
@@ -494,6 +469,38 @@ function display_right_side ($wrow) {
     echo "\n<div class='server_right_data'>";
     echo $wrow['srv_maint_date_end'] ;
     echo "\n</div>";    
+
+
+    # Server Backup 
+    echo "\n\n<div class='server_right_label'>Run Backup Script</div>";
+    echo "\n<div class='server_right_data'>\n";
+    switch ($wrow['srv_backup']) {
+        case 0: echo "No Backup Scheduled";
+                      break;
+        case 1: echo "Monday "    ;
+                     break;
+        case 2: echo "Tuesday "   ;
+                      break;
+        case 3: echo "Wednesday " ;
+                      break;
+        case 4: echo "Thursday "  ;
+                      break;
+        case 5: echo "Friday "    ;
+                      break;
+        case 6: echo "Saturday "  ;
+                      break;
+        case 7: echo "Sunday "    ;
+                      break;
+    }
+
+    # Date & Time the Backup Start 
+    if ($wrow['srv_backup'] != 0) {
+        echo " at " . sprintf("%02d",$wrow['srv_backup_hour']) . ":" ;
+        echo sprintf("%02d",$wrow['srv_backup_minute']) ;
+    }
+    echo "</div>";
+
+
 }
 
 

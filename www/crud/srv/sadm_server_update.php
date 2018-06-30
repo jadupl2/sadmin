@@ -66,6 +66,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . "srv_domain = '"          . sadm_clean_data($_POST['scr_domain'])     ."', ";
         $sql = $sql . "srv_desc = '"            . sadm_clean_data($_POST['scr_desc'])       ."', ";
         $sql = $sql . "srv_tag = '"             . sadm_clean_data($_POST['scr_tag'])        ."', ";
+        $sql = $sql . "srv_sadmin_dir = '"      . sadm_clean_data($_POST['scr_sadmin_dir']) ."', ";
         $sql = $sql . "srv_note = '"            . sadm_clean_data($_POST['scr_note'])       ."', ";
         $sql = $sql . "srv_active = '"          . sadm_clean_data($_POST['scr_active'])     ."', ";
         $sql = $sql . "srv_sporadic = '"        . sadm_clean_data($_POST['scr_sporadic'])   ."', ";
