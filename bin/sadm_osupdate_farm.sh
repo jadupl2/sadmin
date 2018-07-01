@@ -239,8 +239,12 @@ process_servers()
                         then WREBOOT="Y"                                # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
-                     sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT"
-                     $SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT
+                     if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
+                        then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT"
+                             $SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT
+                        else sadm_writelog "$USCRIPT"
+                             $USCRIPT 
+                     fi                             
                      if [ $? -ne 0 ]
                         then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
                              ERROR_COUNT=$(($ERROR_COUNT+1))
