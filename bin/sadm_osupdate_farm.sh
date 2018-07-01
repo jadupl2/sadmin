@@ -38,6 +38,7 @@
 #   2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
 #   2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
 #   2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
+#   2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -60,12 +61,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              exit 1                                     # Exit to Shell with Error
     fi
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.7'                               # Current Script Version
+    export SADM_VER='3.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
@@ -101,7 +102,7 @@ STAR_LINE=`printf %80s |tr " " "*"`         ; export STAR_LINE          # 80 equ
 ONE_SERVER=""                               ; export ONE_SERVER         # Name If One server to Upd.
 
 # Script That is run on every client to update the Operating System
-USCRIPT="${SADM_BIN_DIR}/sadm_osupdate.sh"  ; export USCRIPT            # Script to execute on nodes
+USCRIPT="sadm_osupdate.sh"                  ; export USCRIPT            # Script to execute on nodes
 
 
 # --------------------------------------------------------------------------------------------------
@@ -170,7 +171,7 @@ process_servers()
 {
     sadm_writelog "PROCESS LINUX SERVERS"
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
-    SQL2="srv_update_reboot, srv_sporadic, srv_active from server "
+    SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
     if [ "$ONE_SERVER" != "" ] 
         then SQL3="where srv_ostype = 'linux' and srv_active = True " 
              SQL4="and srv_name = '$ONE_SERVER' ;"
@@ -198,6 +199,7 @@ process_servers()
             server_update_auto=`        echo $wline|awk -F, '{ print $4 }'`
             server_update_reboot=`      echo $wline|awk -F, '{ print $5 }'`
             server_sporadic=`           echo $wline|awk -F, '{ print $6 }'`
+            server_sadmin_dir=`         echo $wline|awk -F, '{ print $8 }'`
             fqdn_server=`echo ${server_name}.${server_domain}`          # Create FQN Server Name
             sadm_writelog " "
             sadm_writelog "${STAR_LINE}"
@@ -240,8 +242,8 @@ process_servers()
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
-                        then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT"
-                             $SADM_SSH_CMD ${server_name}.${server_domain} $USCRIPT $WREBOOT
+                        then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT"
+                             $SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
                         else sadm_writelog "$USCRIPT"
                              $USCRIPT 
                      fi                             
