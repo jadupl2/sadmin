@@ -27,6 +27,7 @@
 # 2018_05_06    v2.1 Use Standard view file web page instead of custom vie log pageAdapted 
 #                    for MySQL and various look enhancement
 # 2018_06_06    v2.2 Correct problem with link to view the update log 
+# 2018_07_01    v2.1 Show Only Linux Server on this page (No Aix)
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -56,7 +57,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.2" ;                                                # Current version number
+$WVER          = "2.3" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -235,7 +236,7 @@ function display_data($count, $row) {
     
     # Display Icon to View Last O/S Update Log
     echo "<td class='dt-center'>";
-    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate_client.log";
+    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
         echo " title='View Update Log'>Log</a>";
@@ -275,7 +276,7 @@ function display_data($count, $row) {
     # Validate the view option received, Set Page Heading and Retreive Selected Data from Database
     switch ($SELECTION) {
         case 'all_servers'  : 
-            $sql = 'SELECT * FROM server order by srv_name;';
+            $sql = "SELECT * FROM server where srv_ostype = 'linux' and srv_active = True order by srv_name;";
             $TITLE = "O/S Update Schedule";
             break;
         case 'host'         : 
