@@ -1,14 +1,13 @@
-#----------------------------------------------------------------------------------------------------------------------------------------
-# UPDATED FOR VERSION 2.1
-# SADM SYStem MONitor  Configuration file
-# The file need to be place in $SADMDIR/cfg and name `hostname`.cfg
-# This file is read and updated by SADM SYSMON (sadm_sysmon.pl) every time it run.
-# New Filesystem line will be added automatically to this file when detected.
-#----------------------------------------------------------------------------------------------------------------------------------------
-# This file contains all the verifications made on the node and the actual value for each test
-# Comments lines must always begin with a "#".
-# Tabs and space can be used between field.
-#----------------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
+#
+# SADM SYStem MONitor Initial Configuration file - v2.2
+# The file need to be place in $SADMDIR/cfg and name .`hostname`.cfg
+# This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
+#   - New Filesystem line will be added automatically to this file when detected.
+#   - This file contains all the verifications made on the system and the actual value for each line.
+#   - Comments lines must always begin with a "#", tab and space can be used between field.
+#   - Column are delimited by space(s) and/or tabulation.
+#---------------------------------------------------------------------------------------------------
 #
 # Script to run if error condition occurs-----------------------------------------------------------------------------------------------
 # Email Aliases to advise when error occur----------------------------------------------------------------------------                 |  
