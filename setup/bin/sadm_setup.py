@@ -35,6 +35,7 @@
 # 2018_06_19    v2.8 Change way to get current domain name
 # 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
 # 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
+# 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
 # 
 #===================================================================================================
 # 
@@ -51,7 +52,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.0"                                             # Setup Version Number
+sver                = "3.1"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1567,9 +1568,12 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
-    sdefault = socket.getfqdn().split('.', 1)[1]                        # Set Current  Default value 
-    #sdefault = socket.gethostname().split('.', 1)[1]                    # Set Current  Default value 
-    #sdefault = os.uname()[1].split('.', 1)[1]                           # Set Current  Default value 
+    try :
+        sdefault = socket.getfqdn().split('.', 1)[1]                    # Set Current  Default value 
+    except (IndexError) as error :
+        sdefault = ""
+    #sdefault = socket.gethostname().split('.', 1)[1]                   # Set Current  Default value 
+    #sdefault = os.uname()[1].split('.', 1)[1]                          # Set Current  Default value 
     sprompt  = "Default domain name"                                    # Prompt for Answer
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
