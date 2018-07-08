@@ -240,7 +240,7 @@ process_servers()
     sadm_writelog "Processing All Actives Servers"                  # Enter Servers Processing
 
     # Put Rows you want in the select 
-    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/database_info directory
+    # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow"
     
@@ -259,6 +259,7 @@ process_servers()
              return 0                                                   # Return Status to Caller
     fi 
 
+    # Create Crontab File Header
     echo "# " > $SADM_CRON_FILE 
     echo "# Please don't edit manually, SADMIN generated." >> $SADM_CRON_FILE 
     echo "# Operating System Update Schedule" >> $SADM_CRON_FILE 
