@@ -1,0 +1,52 @@
+root@raspi3:~# cd .ssh
+root@raspi3:~/.ssh# ls -al
+total 12
+drwx------ 2 root root 4096 Jul  8 11:20 .
+drwx------ 5 root root 4096 Jul  8 11:20 ..
+-rw-r--r-- 1 root root  444 Jul  8 11:20 known_hosts
+root@raspi3:~/.ssh# 
+root@raspi3:~/.ssh# 
+root@raspi3:~/.ssh# vi /etc/ssh/sshd_config 
+
+root@raspi3:~/.ssh# grep -i rootlogin /etc/ssh/sshd_config 
+#PermitRootLogin prohibit-password
+PermitRootLogin yes
+
+root@raspi3:~/.ssh# 
+root@raspi3:~/.ssh# systemctl restart ssh
+root@raspi3:~/.ssh# 
+
+root@holmes~/.ssh# ssh-copy-id root@raspi3.maison.ca
+/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@raspi3.maison.ca's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@raspi3.maison.ca'"
+and check to make sure that only the key(s) you wanted were added.
+
+root@holmes~/.ssh# 
+
+
+root@raspi3:~/.ssh# 
+root@raspi3:~/.ssh# ls -al
+total 16
+drwx------ 2 root root 4096 Jul  8 12:01 .
+drwx------ 5 root root 4096 Jul  8 11:20 ..
+-rw------- 1 root root  403 Jul  8 12:01 authorized_keys
+-rw-r--r-- 1 root root  444 Jul  8 11:20 known_hosts
+root@raspi3:~/.ssh# 
+
+root@raspi3:~/.ssh# vi /etc/ssh/sshd_config 
+root@raspi3:~/.ssh# systemctl restart ssh
+root@raspi3:~/.ssh# 
+root@raspi3:~/.ssh# grep -i rootlogin /etc/ssh/sshd_config 
+#PermitRootLogin prohibit-password
+#PermitRootLogin yes
+# the setting of "PermitRootLogin without-password".
+root@raspi3:~/.ssh# 
+
+
+
