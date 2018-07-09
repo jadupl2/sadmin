@@ -26,8 +26,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#   2018_02_07  JDuplessis
-#       V2.1 Added Performance Link in SideBar
+#   2018_02_07  V2.1 Added Performance Link in SideBar
+#   2018_07_09  v2.2 Change SideBar Layout
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -41,7 +41,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -315,13 +315,42 @@ function SideBar_OS_Summary() {
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>O/S Update</a></div>";        # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Sched.</a></div>";  # URL To View O/S Upd. Page
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_MONITOR . "'>Servers Alerts</a></div>";     # URL to System Monitor Page
+    echo "<a href='" . $URL_MONITOR . "'>SysMon Alerts</a></div>";      # URL to System Monitor Page
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_PERF    . "'>Performance Graph</a></div>";  # URL to System Monitor Page
+    echo "<a href='" . $URL_PERF    . "'>Perf. Graph</a></div>";        # URL to System Monitor Page
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
+
+	# ----------------------------------   Network SIDEBAR   ---------------------------------------
+    echo "\n<div class='SideBarTitle'>IP Utilization</div>";            # SideBar Section Title
+    if (SADM_NETWORK1 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK1 ;     # URL To Network 1 Page
+        echo "&option=all'>" . SADM_NETWORK1 . "</a></div>";            # URL To Network 1 Page
+    }
+    if (SADM_NETWORK2 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK2 ;     # URL To Network 2 Page
+        echo "&option=all'>" . SADM_NETWORK2 . "</a></div>";            # URL To Network 2 Page
+    }
+    if (SADM_NETWORK3 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK3 ;     # URL To Network 3 Page
+        echo "&option=all'>" . SADM_NETWORK3 . "</a></div>";            # URL To Network 3 Page
+    }
+    if (SADM_NETWORK4 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK4 ;     # URL To Network 4 Page
+        echo "&option=all'>" . SADM_NETWORK4 . "</a></div>";            # URL To Network 4 Page
+    }
+    if (SADM_NETWORK5 != "") {
+        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
+        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK5 ;     # URL To Network 5 Page
+        echo "&option=all'>" . SADM_NETWORK5 . "</a></div>";            # URL To Network 5 Page
+    }
+    echo "\n<hr/>";                                                     # Print Horizontal Line
 
 	# ---------------------------   SCRIPTS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Scripts Status</div>";             # SideBar Section Title
@@ -372,44 +401,16 @@ function SideBar_OS_Summary() {
     
 
 	# ----------------------------------   EDIT SIDEBAR   ------------------------------------------
-    echo "\n<div class='SideBarTitle'>Edit Section</div>";              # SideBar Section Title
+    echo "\n<div class='SideBarTitle'>CRUD Operations</div>";           # SideBar Section Title
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_SRV . "'>Edit Server</a></div>";       # URL To Start Edit Server
+    echo "<a href='" . $URL_EDIT_SRV . "'>Server</a></div>";       # URL To Start Edit Server
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_CAT . "'>Edit Category</a></div>";     # URL To Start Edit Cat.
+    echo "<a href='" . $URL_EDIT_CAT . "'>Category</a></div>";     # URL To Start Edit Cat.
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_EDIT_GRP . "'>Edit Group</a></div>";        # URL To Start Edit Group
+    echo "<a href='" . $URL_EDIT_GRP . "'>Group</a></div>";        # URL To Start Edit Group
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
 
-	# ----------------------------------   Network SIDEBAR   ---------------------------------------
-    echo "\n<div class='SideBarTitle'>Network Section</div>";           # SideBar Section Title
-    if (SADM_NETWORK1 != "") {
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK1 ;     # URL To Network 1 Page
-        echo "&option=all'>" . SADM_NETWORK1 . "</a></div>";            # URL To Network 1 Page
-    }
-    if (SADM_NETWORK2 != "") {
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK2 ;     # URL To Network 2 Page
-        echo "&option=all'>" . SADM_NETWORK2 . "</a></div>";            # URL To Network 2 Page
-    }
-    if (SADM_NETWORK3 != "") {
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK3 ;     # URL To Network 3 Page
-        echo "&option=all'>" . SADM_NETWORK3 . "</a></div>";            # URL To Network 3 Page
-    }
-    if (SADM_NETWORK4 != "") {
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK4 ;     # URL To Network 4 Page
-        echo "&option=all'>" . SADM_NETWORK4 . "</a></div>";            # URL To Network 4 Page
-    }
-    if (SADM_NETWORK5 != "") {
-        echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
-        echo "<a href='" . $URL_NETWORK . "?net=" . SADM_NETWORK5 ;     # URL To Network 5 Page
-        echo "&option=all'>" . SADM_NETWORK5 . "</a></div>";            # URL To Network 5 Page
-    }
-    echo "\n<hr/>";                                                     # Print Horizontal Line
     
     echo "\n</div> <!-- End of SideBar  -->\n\n\n"                      # End of Left Column Div
 ?>
