@@ -34,6 +34,7 @@
 # 2018_06_15    v1.8 Make template read-only
 # 2018_06_20    v1.9 Don't copy .dbpass when doing new Package
 # 2018_06_23    v2.0 Change location of default service file (.sadmin.rc, sadmin.service) to cfg dir.
+# 2018_07_09    v2.1 Copy .version & .versum from psadmin to sadmin at end so git = release version
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -55,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.0'                               # Current Script Version
+    export SADM_VER='2.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -93,7 +94,7 @@ PSADMIN="/psadmin"                          ; export PSADMIN            # Prod. 
 PSBIN="${PSADMIN}/bin"                      ; export PSBIN              # Prod. bin Directory
 PSCFG="${PSADMIN}/cfg"                      ; export PSCFG              # Prod. cfg Directory
 #
-REL=`cat /sadmin/cfg/.release`              ; export REL                # Save Release Number
+REL=`cat $SADM_REL_FILE`                    ; export REL                # Save Release Number
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
 #
 
@@ -541,7 +542,17 @@ main_process()
         then main_process                                               # Upd./psadmin with latest
              create_release_file                                        # Create tgz and txt file
              SADM_EXIT_CODE=$?
-             if [ $SADM_EXIT_CODE -ne 0 ] ; then sadm_writelog "[ERROR] Creating tgz file" ; fi
+             if [ $SADM_EXIT_CODE -ne 0 ] 
+                then sadm_writelog "[ERROR] Creating tgz file"
+                else sadm_writelog " " 
+                     sadm_writelog "Copy version file back to $SADM_CFG_DIR"
+                     sadm_writelog "cp ${PSADMIN}/cfg/.versum  $SADM_CFG_DIR"
+                     cp ${PSADMIN}/cfg/.versum  $SADM_CFG_DIR
+                     if [ $? -ne 0 ] ; then sadm_writelog "Error on copy ${PSADMIN}/cfg/.versum" ;fi
+                     sadm_writelog "cp ${PSADMIN}/cfg/.version $SADM_CFG_DIR"
+                     cp ${PSADMIN}/cfg/.version $SADM_CFG_DIR
+                     if [ $? -ne 0 ] ; then sadm_writelog "Error on copy ${PSADMIN}/cfg/.version" ;fi
+                fi
     fi
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
 
