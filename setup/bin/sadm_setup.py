@@ -36,6 +36,7 @@
 # 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
 # 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
 # 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
+# 2018_07_09    v3.2 Minor change to SADM client crontab 
 # 
 #===================================================================================================
 # 
@@ -52,7 +53,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.1"                                             # Setup Version Number
+sver                = "3.2"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -303,19 +304,15 @@ def update_client_crontab_file(logfile) :
     # Populate SADMIN Client Crontab File
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("# Run Daily before midnight, generate host info files & check permission\n")
+    hcron.write ("# Run Daily before midnight\n")
+    hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & run cfg2html\n")
     hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
     hcron.write ("#\n")
-    #hcron.write ("# Run every 11 minutes - Make sure performance nmon daemon is running\n")
-    #hcron.write ("*/11 * * * * sadmin sudo ${SADMIN}/bin/sadm_nmon_watcher.sh >/dev/null 2>&1\n")
-    #hcron.write ("#\n")
-    #hcron.write ("# Daily backup of importants Files & Dir.\n")
-    #hcron.write ("#47 22 * * *  sadmin sudo ${SADMIN}/bin/sadm_backup.sh -c >/dev/null 2>&1\n")
-    #hcron.write ("#\n")
+    hcron.write ("#\n")
     hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
     chostname = socket.gethostname().split('.')[0]
-    #hcron.write ("*/6 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
-    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * *  sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
+    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
+    hcron.write ("#\n")
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
