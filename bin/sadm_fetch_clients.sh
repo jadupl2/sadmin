@@ -220,10 +220,11 @@ update_crontab ()
                 do                                                      # Day of the week (dow)
                 #echo "i=$i - ${cdow:$i:1}"                              # Debug Info
                 if [ "${cdow:$i:1}" == "Y" ]                            # If 1st Char=Y then AllWeek
-                    then if [ $flag_dow -eq 0 ]                         # If First Day to Insert
-                            then fdow=`printf "%02d" "$i"`              # Add day to Final Day
+                    then xday=`expr $i - 1`                             # Adjust Indx to Crontab Day
+                         if [ $flag_dow -eq 0 ]                         # If First Day to Insert
+                            then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
                                  flag_dow=1                             # No Longer the first Insert
-                            else wdow=`printf "%02d" "$i"`              # Format the day number
+                            else wdow=`printf "%02d" "$xday"`           # Format the day number
                                  fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
                          fi
                 fi                                                      # If DOW is set to No
@@ -319,12 +320,14 @@ process_servers()
     fi 
 
     # Create Crontab File Header
-    echo "# " > $SADM_CRON_FILE 
-    echo "# Please don't edit manually, SADMIN generated." >> $SADM_CRON_FILE 
-    echo "# Operating System Update Schedule" >> $SADM_CRON_FILE 
-    echo "# " >> $SADM_CRON_FILE 
-    echo "SADMIN=$SADM_BASE_DIR"  >>  $SADM_CRON_FILE
-    echo "# " >> $SADM_CRON_FILE     
+    echo "# "                                                        > $SADM_CRON_FILE 
+    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
+    echo "# Operating System Update Schedule"                       >> $SADM_CRON_FILE 
+    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
+    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
+    echo "# "                                                       >> $SADM_CRON_FILE 
+    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
+    echo "# "                                                       >> $SADM_CRON_FILE
 
     xcount=0; ERROR_COUNT=0;
     while read wline                                                    # Data in File then read it
