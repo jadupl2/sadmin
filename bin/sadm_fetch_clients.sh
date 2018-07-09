@@ -98,7 +98,6 @@ cscript="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export cscript        # Scrit 
 
 
 
-
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
 # --------------------------------------------------------------------------------------------------
@@ -264,7 +263,7 @@ rsync_function()
     RETRY=0                                                             # Set Retry counter to zero
     while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
         do
-        xcount=`expr $RETRY + 1`                                        # Incr Retry counter.
+        RETRY=`expr $RETRY + 1`                                        # Incr Retry counter.
         rsync -var --delete ${REMOTE_DIR} ${LOCAL_DIR} >/dev/null 2>&1  # rsync selected directory
         RC=$?                                                           # save error number
 
@@ -294,7 +293,7 @@ process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix or linux
     sadm_writelog " "
-    sadm_writelog "Processing active $WOSTYPE server(s)"                # Display/Log O/S type
+    sadm_writelog "Processing active '$WOSTYPE' server(s)"                # Display/Log O/S type
     sadm_writelog " "
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
@@ -324,7 +323,7 @@ process_servers()
     echo "# Please don't edit manually, SADMIN generated." >> $SADM_CRON_FILE 
     echo "# Operating System Update Schedule" >> $SADM_CRON_FILE 
     echo "# " >> $SADM_CRON_FILE 
-    echo "SADMIN=$SADM_BASE_DIR"  $SADM_CRON_FILE
+    echo "SADMIN=$SADM_BASE_DIR"  >>  $SADM_CRON_FILE
     echo "# " >> $SADM_CRON_FILE     
 
     xcount=0; ERROR_COUNT=0;
@@ -344,7 +343,7 @@ process_servers()
         db_updmth=`      echo $wline|awk -F, '{ print $11 }'`           # crontab Update Mth field
         db_upddow=`      echo $wline|awk -F, '{ print $12 }'`           # crontab Update DOW field        
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
-        sadm_writelog "Processing ($xcount) ${fqdn_server}"             # Print Counter/Server Name
+        sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
 
         # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
@@ -442,7 +441,7 @@ process_servers()
         fi
               
         # Create Crontab Entry for this server in crontab work file
-        update_crontab "${server_name}" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+        update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
 
         done < $SADM_TMP_FILE1
 
@@ -541,7 +540,7 @@ process_servers()
              chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set Permission on crontab
              sadm_writelog "O/S Update crontab was updated ..."
         else
-             sadm_writelog "No update needed for O/S update crontab ..."
+             sadm_writelog "No modification needed for O/S update crontab ..."
     fi
 
     # Gracefully Exit the script
