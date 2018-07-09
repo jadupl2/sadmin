@@ -1,10 +1,10 @@
 #! /usr/bin/env sh
-# --------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_osupdate_farm.sh
 #   Synopsis :  Apply O/S update to all active or selected selected servers
 #   Version  :  1.0
-#   Date     :  9 March 2015
+#   Date     :  9 March 2015 
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_osupdate_farm.sh 1.0 2015/03/10
 # --------------------------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ show_version()
 
 
 # --------------------------------------------------------------------------------------------------
-#               Update Last O/S Update Date and Result in Server Table in sadm Database
+#          Update Last Date of Last O/S Update and Result in Server Table in SADMIN Database
 # --------------------------------------------------------------------------------------------------
 update_server_db()
 {
@@ -244,7 +244,7 @@ process_servers()
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
                         then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT"
                              $SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
-                        else sadm_writelog "$USCRIPT"
+                        else sadm_writelog "Starting execution of $USCRIPT"
                              $USCRIPT 
                      fi                             
                      if [ $? -ne 0 ]
