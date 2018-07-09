@@ -27,7 +27,8 @@
 # 2018_05_06    v2.1 Use Standard view file web page instead of custom vie log pageAdapted 
 #                    for MySQL and various look enhancement
 # 2018_06_06    v2.2 Correct problem with link to view the update log 
-# 2018_07_01    v2.1 Show Only Linux Server on this page (No Aix)
+# 2018_07_01    v2.3 Show Only Linux Server on this page (No Aix)
+# 2018_07_09    v2.4 Last Update time remove seconds & Change layout
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -57,7 +58,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.3" ;                                                # Current version number
+$WVER          = "2.4" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -78,23 +79,23 @@ function setup_table() {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
+#    echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
+    echo '<table id="sadmTable" class="display" row-border width="100%">';   
 
     # Table Heading
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    #echo "<th>Description</th>\n";
     echo "<th>Cat.</th>\n";
+    echo "<th class='text-center'>Last Update</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>View Log</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot After</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -102,17 +103,16 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    #echo "<th>Description</th>\n";
     echo "<th>Cat.</th>\n";
+    echo "<th class='text-center'>Last Update</th>\n";
+    echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>View Log</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot After</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
     echo "<th class='text-center'>Time</th>\n";
-    echo "<th class='text-center'>Last Update</th>\n";
-    echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -129,21 +129,41 @@ function display_data($count, $row) {
     global $URL_HOST_INFO, $URL_VIEW_FILE, $URL_OSUPDATE ; 
     
     echo "<tr>\n";  
-    #echo "<td class='dt-center'>" . $count . "</td>\n";  
-
+    
     # Server Name
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
     echo "<td>";
     echo "<a href='" . $URL_OSUPDATE . "?sel=" . $row['srv_name'] ;
-    echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] ." - Click for more info'>" ;
+    echo "' title='$WOS $WVER server, ip address is " . $row['srv_ip'] ." ,Click to edit Schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
-
-    # Description of Server
-    #echo "<td>" . nl2br( $row['srv_desc'])  . "</td>\n";
     
     # Category de Serveur
     echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
+
+    # Last O/S Update Date 
+    echo "<td class='dt-center'>" . substr($row['srv_date_osupdate'],0,16) . "</td>\n";  
+        
+    # Last Update Status
+    echo "<td class='dt-center'>";
+    switch ( strtoupper($row['srv_update_status']) ) {
+        case 'S'  : echo "Success" ; break ;
+        case 'F'  : echo "Failed"  ; break ;
+        case 'R'  : echo "Running" ; break ;
+        default   : echo "Unknown" ; break ;
+    }
+    echo "</td>\n";  
+        
+    # Display Icon to View Last O/S Update Log
+    echo "<td class='dt-center'>";
+    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
+    if (file_exists($log_name)) {
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
+        echo " title='View Update Log'>Log</a>";
+    }else{
+        echo "N/A";
+    }
+    echo "</td>\n";  
 
     # Operating System Version
     #echo "<td class='dt-center'>" . nl2br( $row['srv_osversion'])   . "</td>\n";  
@@ -219,30 +239,6 @@ function display_data($count, $row) {
     }else{
         echo "Man";
     }    
-    echo "</td>\n";  
-    
-    # Last O/S Update Date 
-    echo "<td class='dt-center'>" . nl2br( $row['srv_date_osupdate']) . "</td>\n";  
-        
-    # Last Update Status
-    echo "<td class='dt-center'>";
-    switch ( strtoupper($row['srv_update_status']) ) {
-        case 'S'  : echo "Success" ; break ;
-        case 'F'  : echo "Failed"  ; break ;
-        case 'R'  : echo "Running" ; break ;
-        default   : echo "Unknown" ; break ;
-    }
-    echo "</td>\n";  
-    
-    # Display Icon to View Last O/S Update Log
-    echo "<td class='dt-center'>";
-    $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
-    if (file_exists($log_name)) {
-        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Update Log'>Log</a>";
-    }else{
-        echo "N/A";
-    }
     echo "</td>\n";  
 
     echo "</tr>\n"; 
