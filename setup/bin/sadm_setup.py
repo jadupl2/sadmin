@@ -36,7 +36,7 @@
 # 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
 # 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
 # 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
-# 2018_07_09    v3.2 Minor change to SADM client crontab 
+# 2018_07_09    v3.2 Minor change to SADM server/client crontab 
 # 
 #===================================================================================================
 # 
@@ -303,6 +303,9 @@ def update_client_crontab_file(logfile) :
 
     # Populate SADMIN Client Crontab File
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Run Daily before midnight\n")
     hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & run cfg2html\n")
@@ -369,6 +372,9 @@ def update_server_crontab_file(logfile) :
 
     # Populate SADMIN Server Crontab File
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
     #hcron.write ("*/6 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
