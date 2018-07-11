@@ -39,6 +39,7 @@
 #   2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
 #   2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
 #   2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
+#   2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -61,7 +62,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
              exit 1                                     # Exit to Shell with Error
     fi
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.8'                               # Current Script Version
+    export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -188,6 +189,7 @@ process_servers()
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
    
+    # LOOP THROUGH ACTIVE SERVERS FILE LIST
     xcount=0; ERROR_COUNT=0;
     if [ -s "$SADM_TMP_FILE1" ]
        then while read wline
@@ -207,7 +209,7 @@ process_servers()
             info_line="${info_line}os:${server_os}"
             sadm_writelog "$info_line"
             
-            # Ping Server to check if it is network reachable --------------------------------------
+            # TRY TO PING SERVER TO VERIFY IF IT'S REACHABLE ---------------------------------------
             sadm_writelog "Ping host $fqdn_server"
             ping -c2 $fqdn_server >> /dev/null 2>&1
             if [ $? -ne 0 ]
@@ -228,7 +230,7 @@ process_servers()
             fi
 
 
-            # If Server is network reachable, but the O/S Update field is OFF in DB Skip Update
+            # IF SERVER IS NETWORK REACHABLE, BUT THE O/S UPDATE FIELD IS OFF IN DB SKIP UPDATE
             if [ "$server_update_auto" = "0" ] && [ "$ONE_SERVER" = "" ] 
                 then sadm_writelog "*** O/S UPDATE IS OFF FOR THIS SERVER"
                      sadm_writelog "*** NO O/S UPDATE WILL BE PERFORM - CONTINUE WITH NEXT SERVER"
@@ -237,7 +239,7 @@ process_servers()
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
                 else WREBOOT=" N"                                       # Default is no reboot
-                     if [ "$server_update_reboot" = "1" ]            # If Requested in Database
+                     if [ "$server_update_reboot" = "1" ]               # If Requested in Database
                         then WREBOOT="Y"                                # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
@@ -245,7 +247,7 @@ process_servers()
                         then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT"
                              $SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
                         else sadm_writelog "Starting execution of $USCRIPT"
-                             $USCRIPT 
+                             . ${server_sadmin_dir}/bin/$USCRIPT 
                      fi                             
                      if [ $? -ne 0 ]
                         then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
