@@ -1,14 +1,112 @@
 #---------------------------------------------------------------------------------------------------
+# SADM System Monitor Configuration file - v2.2
+#   The file need to be place in ${SADMIN}/cfg and name `hostname`.smon
+#   This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
 #
-# SADM SYStem MONitor Initial Configuration file - v2.2
-# The file need to be place in $SADMDIR/cfg and name .`hostname`.cfg
-# This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
-#   - New Filesystem line will be added automatically to this file when detected.
-#   - This file contains all the verifications made on the system and the actual value for each line.
-#   - Comments lines must always begin with a "#", tab and space can be used between field.
-#   - Column are delimited by space(s) and/or tabulation.
+#     - New Filesystem line will be added automatically to this file when detected.
+#     - Filesystem can be increase automatically by 10% two times within 24 Hrs
+#         - If the last field (Script to Run Field) of the filesystem line contain "sadm_fs_incr.sh"
+#
+#     - Comments lines must always begin with a "#" (Column 1)
+#     - Column are delimited by space(s) and/or tabulation.
+#     - At execution each line is evaluated based on the test requested by the first column.
+#         - The result of the operation is reflected in second column.
 #---------------------------------------------------------------------------------------------------
+# Col   Name            Description
+#  1    IDENTIFIER      This name specify the test we want to run.
+#                       These are the one presently supported :
 #
+#       'script:yourscript.sh'  
+#               If you wish to run a custom script to you wrote, this is the one. 
+#               Place the word 'script:' in column 1, followed by the name of your script. 
+#               Be sure that your script exit with a return code of 0 or 1, so you can test it. 
+#               Script execution time must be as short as possible, cause it will run each time 
+#               the System Monitor is run.
+#       load_average
+#               Return system load average of the past 5 minutes, using 'uptime' (Linux,Aix,MacOS).
+#               Actual value is returned in column 2 of the line.
+#       cpu_level
+#               Return cpu usage using 'vmstat' command (Linux/Aix) and 'iostat' on MacOS. 
+#               The 'usr'added to the 'sys' value is returned in column 2 of the line.
+#       swap_space
+#               Return the percentage of the Swap/Paging Space used.
+#               On Linux we use 'free | grep -i swap', on Aix 'lsps -a' and on MacOS 
+#               'sysctl vm.swapusage'. Actual value is returned in column 2 of the line.
+#       service_                
+#               Return 1 if the service is active and 0 if it's not.
+#               Service name follow the identifier prefix 'service_'.
+#
+#               They can be one or multiple service name specified.
+#               Example, Redhat use 'crond' service name, Ubuntu use 'cron'. 
+#               To test if the cron daemon is running on both system you specify multiple services.
+#               Example : service_crond|cron
+#               When specifying multiple service name, separate them by '|'. 
+#               If one of them is active then 1 is returned.
+#
+#               If service is down, you can run one of your script to bring it up or used the 
+#               one that come with SADMIN ($SADMIN/usr/mon/srestart.sh).
+#               You can then put the restart script in the last field of the line, to get executed.
+#               The script name you put in the last field must exist in '$SADMIN/usr/mon' directory 
+#               and be executable. 
+#               If the service is down the script will be executed, but no more than twice in a 
+#               24 Hrs period. 
+#               SADMIN SysMon does this by looking at column 6 (RunCounter), H (date) & I (Time).
+#                   - The H and the I fields contain the date and time of the last script execution.
+#                   - The Column 6 contain the number of time the script ran in the last 24 hrs.
+#
+#               With this information SysMon can now know if it was run in the last 24 hours. 
+#                   - If it wasn't run in the last 24 Hrs, then the RunCounter(Col 6) is reset to 1,
+#                     and the script specified at the end of the line is executed. 
+#                   - If the script was executed in the last 24Hrs and if the RunCounter is less 
+#                     than 2, then the script is executed. 
+#                   - If the script was executed in the last 24Hrs and if the RunCounter is greater 
+#                     than 1, the script is not executed, since it already ran twice in the last 
+#                     24 hours.
+#
+#       daemon_ 
+#               The function search to the specify "name" is present in the process list (ps) of 
+#               the system. The search is case sensitive.
+#               Example: "daemon_batcode"   
+#                   - Will return 0 if 'batcode' is not in the process list.
+#                   - Will return a value greater than zero, if it appear in the process list.
+#                     If it appear four times, it will return 4.
+#
+#       check_multipath
+#               SysMon check each path of the multipath and if one one them is not active or ready,
+#               A value of 1 is returned if everything is ok or 0 when an error is detected. 
+#               Line will only be evaluated if the command 'multipathd' is present on system.
+#                       
+#       http_   
+#               Test the web site respond (1=Up 0=NoResponse)
+#               Example : http_sysinfo.maison.ca
+#
+#       ping_
+#               Everytime Sysmon is run is will ping the name or the IP your have specified after 
+#               the prefix 'ping_'.
+#               Example : ping_www.google.com
+#               This will ping the 'www.google.com' web site and return a 0 is it ping, if not a 1.
+#
+#       FS      Everytime Sysmon is run the server smon configuration file is loaded in memory,
+#               updated in memory during execution and then unloaded to disk when terminated.
+#               So SysMon is able to know when a new filesystem is created on the system and it is
+#               added automatically to his configuration file. 
+#               The warning threshold is set to 80% and the error to 90%.
+#               These are initial value, you can change them and they will remain to your setting.
+#
+#---------------------------------------------------------------------------------------------------
+# 
+#---------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
+#                       =,!=,<,>,=>,=<          Evaluation Operator
+#
+# Warning Level (0=not evaluated)--------   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
+#
+# Error Level (0=not evaluated)--------------   |  |    |   | | | | | | | |     |     |          |                   |                 |
+
+
+
+
 # Script to run if error condition occurs-----------------------------------------------------------------------------------------------
 # Email Aliases to advise when error occur----------------------------------------------------------------------------                 |  
 # Aliases to qpage if error condition occurs------------------------------------------------------                   |                 |
@@ -30,7 +128,8 @@
 # Evaluation Operator (=,!=,<,>,=>,=<)  |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
 # Last Value calculated by SYSMON|  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
 #                                |  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# IDENTIFIER                     V  V   V   V   V  V    V   V V V V V V V V     V     V          V                   V                 V
+# IDENTIFIER                     V  V   V   V   V  V    V   V V V V V V V V     V     V          V                   V
+# IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I          J                   K
 #----------------------------------------------------------------------------------------------------------------------------------------
 #
 #---------- Run specific scripts, check return code and issue a warning or error based on threshold
