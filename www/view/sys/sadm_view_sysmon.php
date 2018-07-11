@@ -225,7 +225,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
-    echo "\n<th class='dt-center'>Alert/Email Grp</th>";
+    echo "\n<th class='dt-center'>Slack / Email</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -239,7 +239,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
-    echo "\n<th class='dt-center'>Alert/Email Grp</th>";
+    echo "\n<th class='dt-center'>Slack / Email</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
