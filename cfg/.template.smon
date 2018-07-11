@@ -174,7 +174,7 @@
 #                       If it used by sysmon when condition are related to time period.
 #                       You don't need to change this field, sysmon take care of it.
 #---------------------------------------------------------------------------------------------------
-#  J    Group Name      Group name to Advise (Alert team,Slack room)
+#  J    Group Name      Slack Channel Name or Group name to Advise (Alert team,Slack Channel)
 #---------------------------------------------------------------------------------------------------
 #  K    Email Group     Email Group Name
 #---------------------------------------------------------------------------------------------------
