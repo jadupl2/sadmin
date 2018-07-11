@@ -70,16 +70,16 @@
 #       3- A backup of the structure of each VG is taken and store in ${SADM_BASE_DIR}/dat/dr.
 #          File is in backup/restore format.
 #                       root@aixb50(/sadmin/dat/dr)# file aixb50_datavg.savevg
-#                        aixb50_datavg.savevg: backup/restore format file
-#                       root@aixb50(/sadmin/dat/dr)#
-#           
-#          Both of the files created are quite small, since no users files is included in the backup
-#               -rw-rw-r--    1 sadmin   sadmin          215 Dec 01 12:10 aixb50_pvinfo.txt
-#               -rw-rw-r--    1 sadmin   sadmin        51200 Dec 01 12:10 aixb50_datavg.savevg
-#
-#       4- When the backup of a VG is done the line line that was added in the exclude file 
-#          is removed. 
-#
+#                        aixb50_datavg.savDEBUG_LEVELevg: backup/restore format file
+#                       root@aixb50(/sadmiDEBUG_LEVELn/dat/dr)#
+#           DEBUG_LEVEL
+#          Both of the files created are qDEBUG_LEVELuite small, since no users files is included in the backup
+#               -rw-rw-r--    1 sadmin   sDEBUG_LEVELadmin          215 Dec 01 12:10 aixb50_pvinfo.txt
+#               -rw-rw-r--    1 sadmin   sDEBUG_LEVELadmin        51200 Dec 01 12:10 aixb50_datavg.savevg
+#DEBUG_LEVEL
+#       4- When the backup of a VG is doneDEBUG_LEVEL the line line that was added in the exclude file 
+#          is removed. DEBUG_LEVEL
+#DEBUG_LEVEL
 #
 #===================================================================================================
 #
@@ -90,6 +90,7 @@
 #                 file under ${SADM_BASE_DIR}/dat/dr Directory 
 # 2018_06_04    v2.1 Change to Adapt to SADMIN New Libr (Support xfs)
 # 2018_06_09    v2.2 Add Help and Version function & Change Startup Order
+# 2018_07_11    v2.3 Was not showing if debug was activated or not
 #
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -111,7 +112,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Current Script Version
+    export SADM_VER='2.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -147,7 +148,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
 PRVFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.prev ;export PRVFILE # Yesterday Output file
-Debug=true                                        ; export Debug        # Debug increase Verbose 
+DEBUG=true                                        ; export DEBUG        # DEBUG increase Verbose 
 LVMVER=0                                          ; export LVMVER       # LVM Version on server (1/2)
 LVSCAN=" "                                        ; export LVSCAN       # Full path to lvscan cmd
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
@@ -166,7 +167,7 @@ SAVEVG="savevg -e -i -v -fVGDATAFILE_PLACE_HOLDER"
 show_usage()
 {
     printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-d   (Show Additionnal Debug Information)"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
@@ -192,7 +193,7 @@ check_lvm_version()
     sadm_writelog "Currently verifying if 'lvm2' package is installed"
     
     # Check if LVM Version 2 is installed
-    case "$(sadm_get_osname)" in                                            # Test OS Name
+    case "$(sadm_get_osname)" in                                        # Test OS Name
       "REDHAT"|"CENTOS"|"FEDORA")   sadm_writelog "rpm -qa lvm-2"
                                     rpm -qa '^lvm-2' > /dev/null 2>&1   # Query RPM DB
                                     if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
@@ -233,19 +234,19 @@ save_lvm_info()
 
     cat $SADM_TMP_FILE1 | while read LVLINE                             # process all LV detected
         do
-        if [ $Debug ] 
+        if [ $DEBUG ] 
             then    sadm_writelog " " ; sadm_writelog "$SADM_DASH"; 
                     sadm_writelog "Processing this line              = $LVLINE"   # Display lvm line processing
         fi 
 
         # Get logical volume name
         LVNAME=$( echo $LVLINE |awk '{ print $2 }' | tr -d "\'" | awk -F"/" '{ print$4 }' )
-        if [ $Debug ] ; then sadm_writelog "Logical Volume Name               = $LVNAME"  ; fi         
+        if [ $DEBUG ] ; then sadm_writelog "Logical Volume Name               = $LVNAME"  ; fi         
 
         
         # Get Volume Group Name
         VGNAME=$( echo $LVLINE | awk '{ print $2 }' | tr -d "\'" | awk -F"/" '{ print$3 }' )
-        if [ $Debug ] ; then sadm_writelog "Volume Group Name                 = $VGNAME"  ; fi         
+        if [ $DEBUG ] ; then sadm_writelog "Volume Group Name                 = $VGNAME"  ; fi         
 
         
         # Get logical Volume Size
@@ -259,7 +260,7 @@ save_lvm_info()
             else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
                  LVSIZE=$LVINT                                  # Keep Size in MB
         fi
-        if [ $Debug ]
+        if [ $DEBUG ]
             then sadm_writelog "Logical Volume Size               = $LVFLT"
                  sadm_writelog "Logical Volume Unit Used          = $LVUNIT"
                  sadm_writelog "Calculated LV size in MB          = $LVSIZE MB"
@@ -269,7 +270,7 @@ save_lvm_info()
         # Construct from LVSCAN Device the device name used in FSTAB
         LVPATH1=$(echo $LVLINE | awk '{ printf "%s ",$2 }' | tr -d "\'")
         LVPATH2="/dev/mapper/${VGNAME}-${LVNAME}"
-        if [ $Debug ] 
+        if [ $DEBUG ] 
             then sadm_writelog "LVM Device returned by lvscan     = $LVPATH1" 
                  sadm_writelog "LVM We need to find in $FSTAB = $LVPATH2" 
         fi
@@ -281,7 +282,7 @@ save_lvm_info()
         if [ "$WT" = "swap" ] || [ "$WT" = "ext4" ] || [ "$WT" = "ext3" ] || [ "$WT" = "xfs" ] || [ "$WT" = "ext2" ] 
            then LVTYPE="$WT"
         fi
-        if [ $Debug ] ; then sadm_writelog "File system Type                  = ${LVTYPE}" ; fi
+        if [ $DEBUG ] ; then sadm_writelog "File system Type                  = ${LVTYPE}" ; fi
 
         
         # Get mount point from FSTAB
@@ -289,12 +290,12 @@ save_lvm_info()
            then LVMOUNT="" ; LVLEN=0
            else LVMOUNT=`grep -iE "^${LVPATH1} |^${LVPATH2} " $FSTAB  | awk '{ print $2 }'`
         fi
-        if [ $Debug ] ; then sadm_writelog "Mount Point                       = $LVMOUNT" ; fi
+        if [ $DEBUG ] ; then sadm_writelog "Mount Point                       = $LVMOUNT" ; fi
         
         
         # Get the lenght of mount pointt
         LVLEN=${#LVMOUNT}
-        if [ $Debug ] ; then sadm_writelog "Lenght of Mount Point Name        = $LVLEN" ; fi
+        if [ $DEBUG ] ; then sadm_writelog "Lenght of Mount Point Name        = $LVLEN" ; fi
 
     
         # Get Owner and Group of the Filesystem or Swap Space
@@ -303,7 +304,7 @@ save_lvm_info()
             else LVGROUP=`ls -ld $LVMOUNT | awk '{ printf "%s", $4 }'`
                  LVOWNER=`ls -ld $LVMOUNT | awk '{ printf "%s", $3 }'`
         fi
-        if [ $Debug ] 
+        if [ $DEBUG ] 
             then sadm_writelog "Filesystem Group Owner            = $LVGROUP" 
                  sadm_writelog "Filesystem Owner                  = $LVOWNER"
         fi
@@ -313,7 +314,7 @@ save_lvm_info()
         if [ "$LVTYPE" = "swap" ]
            then LVPROT="0000"
            else LVLS=`ls -ld $LVMOUNT`
-                if [ $Debug ] ; then sadm_writelog "ls -ld returned                   = $LVLS" ; fi
+                if [ $DEBUG ] ; then sadm_writelog "ls -ld returned                   = $LVLS" ; fi
                 user_bit=0 ; group_bit=0 ; other_bit=0 ; stick_bit=0
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,2,1) }'`  = "r" ] ; then user_bit=`expr $user_bit + 4`   ; fi
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,3,1) }'`  = "w" ] ; then user_bit=`expr $user_bit + 2`   ; fi
@@ -332,7 +333,7 @@ save_lvm_info()
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,10,1) }'` = "t" ] ; then stick_bit=`expr $stick_bit + 1` ; fi
                 LVPROT="${stick_bit}${user_bit}${group_bit}${other_bit}"
         fi
-        if [ $Debug ] ; then sadm_writelog "Filesystem Protection             = $LVPROT" ; fi
+        if [ $DEBUG ] ; then sadm_writelog "Filesystem Protection             = $LVPROT" ; fi
 
 
         # Write data collection in order that need to be recreated 
@@ -443,10 +444,10 @@ save_aix_info()
 # --------------------------------------------------------------------------------------------------
 
 # Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set DEBUG Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+            d) DEBUG=True                                               # Get Debug Activated
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -460,7 +461,7 @@ save_aix_info()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+    if [ $DEBUG ] ; then printf "\nDebug activated\n" ; fi
 
 # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
