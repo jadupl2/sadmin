@@ -119,7 +119,7 @@ $SADM_RECORD = {
    SADM_ACTIVE => " ",                              # Line is Active or not
    SADM_DATE =>   " ",                              # Last Date this line was evaluated
    SADM_TIME =>   " ",                              # Last Time line was evaluated
-   SADM_QPAGE =>  " ",                              # Sadm Alias to page
+   SADM_CHANNEL =>  " ",                            # Slack Channel Name 
    SADM_EMAIL =>  " ",                              # Sadm Alias to send email
    SADM_SCRIPT => " ",                              # Script 2 execute when Error
 };
@@ -328,7 +328,7 @@ sub split_fields {
             $SADM_RECORD->{SADM_ACTIVE},
             $SADM_RECORD->{SADM_DATE},
             $SADM_RECORD->{SADM_TIME},
-            $SADM_RECORD->{SADM_QPAGE},
+            $SADM_RECORD->{SADM_CHANNEL},
             $SADM_RECORD->{SADM_EMAIL},
             $SADM_RECORD->{SADM_SCRIPT} ) = split ' ',$wline;
 }
@@ -358,7 +358,7 @@ sub combine_fields {
         $SADM_RECORD->{SADM_ACTIVE},
         $SADM_RECORD->{SADM_DATE},                  # Last Time that the error Occured
         $SADM_RECORD->{SADM_TIME},
-        $SADM_RECORD->{SADM_QPAGE},
+        $SADM_RECORD->{SADM_CHANNEL},               # Slack Channel
         $SADM_RECORD->{SADM_EMAIL},
         $SADM_RECORD->{SADM_SCRIPT};
     return "$wline";
@@ -1251,7 +1251,7 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_ACTIVE}  = "Y";             # Line Active/Tested,If N will skip line
             $SADM_RECORD->{SADM_DATE}    = "00000000";      # Last Date that the error Occured
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
-            $SADM_RECORD->{SADM_QPAGE}   = "sadm";          # Alert Group when Error
+            $SADM_RECORD->{SADM_CHANNEL} = "sadmin";        # Alert Group when Error
             $SADM_RECORD->{SADM_EMAIL}   = "sadm";          # Email Group when Error
             #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
             $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
@@ -1380,7 +1380,7 @@ sub write_rpt_file {
     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                  $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
-                 $SADM_RECORD->{SADM_QPAGE},$SADM_RECORD->{SADM_EMAIL};
+                 $SADM_RECORD->{SADM_CHANNEL},$SADM_RECORD->{SADM_EMAIL};
 
     # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
