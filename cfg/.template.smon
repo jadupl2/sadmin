@@ -94,63 +94,119 @@
 #               These are initial value, you can change them and they will remain to your setting.
 #
 #---------------------------------------------------------------------------------------------------
-# 
+# Col   Name            Description
+#  2    VALUE RETURNED  It's the value returned that is in conjunction with what is asked in col 1.
+#                       For 'FS' it is the percentage used, for 'ping_' it will be a 0 or a 1, 
+#                       for 'service_' it return 1 if the service is active and 0 if it's not.
 #---------------------------------------------------------------------------------------------------
+#  3    Operator        This dictate what operator will be used to compare the actual value (Col 2)
+#       =,!=,<,>,=>,=<  with the 'Warning' (Col 4) and the 'Error' (Col 5).
 #---------------------------------------------------------------------------------------------------
+#  4    Warning Level   This value is compare against the value returned using the operator in 
+#                       column 3. If it's True then a Warning is raise
+#                       When you leave this value at 0, then the Warning threshold is not evaluated.
 #---------------------------------------------------------------------------------------------------
-#                       =,!=,<,>,=>,=<          Evaluation Operator
-#
-# Warning Level (0=not evaluated)--------   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-#
-# Error Level (0=not evaluated)--------------   |  |    |   | | | | | | | |     |     |          |                   |                 |
-
-
-
-
-# Script to run if error condition occurs-----------------------------------------------------------------------------------------------
-# Email Aliases to advise when error occur----------------------------------------------------------------------------                 |  
-# Aliases to qpage if error condition occurs------------------------------------------------------                   |                 |
-# Last Time that the error Occured - Used in conjunction with 6th field ---------------          |                   |                 |
-# Last Date that the error Occured - Used in conjunction with 6th field ---------     |          |                   |                 |
-# Line is active ? Line to be tested ? (Y/N)-------------------------------     |     |          |                   |                 |
-# Test to be done on Saturday (Y/N)-------------------------------------- |     |     |          |                   |                 |
-# Test to be done on Friday (Y/N)-------------------------------------- | |     |     |          |                   |                 |
-# Test to be done on Thursday (Y/N)---------------------------------- | | |     |     |          |                   |                 |
-# Test to be done on Wednesday (Y/N)------------------------------- | | | |     |     |          |                   |                 |
-# Test to be done on Tuesday (Y/N)------------------------------- | | | | |     |     |          |                   |                 |
-# Test to be done on Monday (Y/N)------------------------------ | | | | | |     |     |          |                   |                 |
-# Test to be done on Sunday (Y/N)---------------------------- | | | | | | |     |     |          |                   |                 |
-# Hours that will stop to evaluate (0=not evaluate)------   | | | | | | | |     |     |          |                   |                 |
-# Hours that will start to evaluate (0=not evaluate)    |   | | | | | | | |     |     |          |                   |                 |
-# Error must occur over X minutes before trigger-  |    |   | | | | | | | |     |     |          |                   |                 |
-# Error Level (0=not evaluated)--------------   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Warning Level (0=not evaluated)--------   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Evaluation Operator (=,!=,<,>,=>,=<)  |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# Last Value calculated by SYSMON|  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-#                                |  |   |   |   |  |    |   | | | | | | | |     |     |          |                   |                 |
-# IDENTIFIER                     V  V   V   V   V  V    V   V V V V V V V V     V     V          V                   V
-# IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I          J                   K
-#----------------------------------------------------------------------------------------------------------------------------------------
+#  5    Error Level     This value is compare against the value returned using the operator in 
+#                       column 3. If it's True then an error is raise.
+#                       When you leave this value at 0, then the Error threshold is not evaluated.
+#---------------------------------------------------------------------------------------------------
+#  6    Duration Min/   This field have a double usage :
+#       RunCounter          - For load_average, cpu_level and swap_space it's the number of minutes
+#                             that the value returned must exceed the Warning or Error before a 
+#                             Warning or an Error is raised.
+#                             Example : You set the warning threshold of the 'cpu_level' line at 80%
+#                                       but you don't want to trigger an error if the CPU Level 
+#                                       exceed 80% for only 2 minutes. So you may want to set this
+#                                       column to 120 so an error would be trigger only when the cpu
+#                                       level exceed 80% for at least 120 continuous minutes. If you
+#                                       leave it 0, is sysmon is run at the cpu_level exceed 80% an
+#                                       error will be trigger immediatly.
+#                           - For Service (service_) and Filesystem (FS) lines it represented the
+#                             number of time the service was restarted or the filesystem was
+#                             increased in the last 24 Hours. You don't need to change this field,
+#                             it's taken care of automatically (Unless you want to reset it to 0 and
+#                             provoke a service restart or a filesystem increase within the 24 hrs).
+#---------------------------------------------------------------------------------------------------
+#  7    Monitor         Hour of the day you want to enable evaluation of the line (In 24:00 format)
+#       Start Time      Let's say you only want to evaluate a line between 7am and 9pm, you would
+#                       put 0700 in this column and 2100 in column 8 (Monitor End Time)..
+#                       If you leave this column at 0000 the line is evaluated 24 hours a day, 
+#                       unless specify otherwise in column 9 to G.
+#---------------------------------------------------------------------------------------------------
+#  8    Monitor         Hour of the day you want to disable evaluation of the line (In 24:00 format)
+#       End Time        Let's say you only want to evaluate a line between 7am and 9pm, you would
+#                       put 0700 in column 7 and 2100 in this column (Monitor End Time)..
+#                       If you leave this column at 0000 the line is evaluated 24 hours a day, 
+#                       unless specify otherwise in column 9 to G.
+#---------------------------------------------------------------------------------------------------
+#  9    Enable Sunday   If this value is set to 'Y', the line will be evaluated on Sunday (Default).
+#                       If this column is set to 'N', the line will not be evaluated on Sunday.
+#---------------------------------------------------------------------------------------------------
+#  A    Enable Monday   If this value is set to 'Y', the line will be evaluated on Monday (Default).
+#                       If this column is set to 'N', the line will not be evaluated on Monday.
+#---------------------------------------------------------------------------------------------------
+#  B    Enable Tuesday  If this value is set to 'Y', the line will be evaluated on Tuesday (Default).
+#                       If this column is set to 'N', the line will not be evaluated on Tuesday.
+#---------------------------------------------------------------------------------------------------
+#  C    Enable Wed.     If this value is set to 'Y', line will be evaluated on Wednesday (Default).
+#                       If this column is set to 'N', line will not be evaluated on Wednesday.
+#---------------------------------------------------------------------------------------------------
+#  D    Enable Thursday If this value is set to 'Y', the line will be evaluated on Thursday(Default).
+#                       If this column is set to 'N', the line will not be evaluated on Thursday.
+#---------------------------------------------------------------------------------------------------
+#  E    Enable Friday   If this value is set to 'Y', the line will be evaluated on Friday (Default).
+#                       If this column is set to 'N', the line will not be evaluated on Friday.
+#---------------------------------------------------------------------------------------------------
+#  F    Enable Saturday If this value is set to 'Y', the line will be evaluated on Saturday(Default).
+#                       If this column is set to 'N', the line will not be evaluated on Saturday.
+#---------------------------------------------------------------------------------------------------
+#  G    Active/Inactive If this value is set to 'Y', the line will always be evaluated (Default)
+#                       If this column is set to 'N', the line will never be evaluated.
+#                       This is used, when you want temporarely deactivate a line.
+#---------------------------------------------------------------------------------------------------
+#  H    Last Event Date This column contain the date of the last event (script execution, cpu_level
+#                       exceeded, swap_space exceeded, filesystem increase, service restarted,..)
+#                       If it used by sysmon when condition are related to time period.
+#                       You don't need to change this field, sysmon take care of it.
+#---------------------------------------------------------------------------------------------------
+#  I    Last Event Time This column contain the time of the last event (script execution, cpu_level
+#                       exceeded, swap_space exceeded, filesystem increase, service restarted,..)
+#                       If it used by sysmon when condition are related to time period.
+#                       You don't need to change this field, sysmon take care of it.
+#---------------------------------------------------------------------------------------------------
+#  J    Group Name      Group name to Advise (Alert team,Slack room)
+#---------------------------------------------------------------------------------------------------
+#  K    Email Group     Email Group Name
+#---------------------------------------------------------------------------------------------------
+#  L    Script Name     Never use by sysmon if it's blank or contain '-'.
+#                       When the line is evaluated and it turn out to be in error, if you put a
+#                       script name it will be executed (You may want to correct the error with it).
+#                       Script MUST reside in $SADMIN/usr/mon directory and be executable.
+#                       The script will produce a log in that same directory, with the same name as 
+#                       your script.
+#                       Fie filesystem increase, the name of the script MUST be 'sadm_fs_incr.sh'.
+#---------------------------------------------------------------------------------------------------
+# IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I   J    K   L
+#---------------------------------------------------------------------------------------------------
 #
 #---------- Run specific scripts, check return code and issue a warning or error based on threshold
 script:sysmon_template.sh        1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
 script:sadm_nmon_watcher.sh      1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
 #
-#---------- Aix/Linux CPU Load, Server Load Average and Swap Space usage Monitoring
+#----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
 load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
 cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadm sadm -
 swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20020911 1520 sadm sadm -
 #
 #
-#---------- Linux Service Monitoring
+#----- Linux Service Monitoring
 service_crond|cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
-#service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
+service_at|atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 #service_named|named-chroot      0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_chronyd|ntp|ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_ssh|sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_postfix|sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
 service_syslog|rsyslog|syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
-
 #
 # Daemon or process running monitoring
 #daemon_dhcpd                     1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20021120 1520 sadm sadm -
