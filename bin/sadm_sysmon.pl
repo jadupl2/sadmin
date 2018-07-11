@@ -16,6 +16,7 @@
 # 2018_06_03    v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
 # 2018_06_12    v2.14 Correct Problem with fileincrease and Filesystem Warning double error
 # 2018_06_14    v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
+# 2018_07_11    v2.16 Uptime/Load Average take last 5 min. values instead of current.
 #
 #===================================================================================================
 #
@@ -32,7 +33,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.15";                                       # Version Number
+my $VERSION_NUMBER      = "2.16";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
