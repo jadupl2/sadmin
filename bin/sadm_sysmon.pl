@@ -372,7 +372,7 @@ sub filesystem_increase {
     my ($FILESYSTEM) = @_;                                              # Filesystem name to enlarge
     print "\n\nFilesystem $FILESYSTEM selected for increase";           # Show User Filesystem Incr.
     my $FS_SCRIPT = "${SADM_BIN_DIR}/$SADM_RECORD->{SADM_SCRIPT}";      # Get FS Enlarge Script Name
-    print "\nName of script is  ..${FS_SCRIPT}..";           # Show User Filesystem Incr.
+    print "\nName of script is  ..${FS_SCRIPT}..";                      # Show User Filesystem Incr.
 
     # If no script specified - Return to caller
     if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) { 
@@ -896,7 +896,7 @@ sub check_load_average {
     open (DB_FILE, "$CMD_UPTIME |");                                    # 'uptime' output to stdout
     $load_line = <DB_FILE> ;                                            # Save output to load_line
     @ligne = split ' ',$load_line;                                      # Split line based on space
-    @dummy = split ',',$ligne[10];                                      # Get 10th Parm/Recent Load
+    @dummy = split ',',$ligne[11];                                      # Get 11th Parm/Recent Load
     $load_average = int $dummy[0];                                      # Save Load Average
     if ($SYSMON_DEBUG >= 5) {                                           # Debug Level >= 5
         printf "\nUptime line: $load_line";                            # Print uptime output line
