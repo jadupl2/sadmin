@@ -23,10 +23,9 @@
 # Enhancements/Corrections Version Log
 # 1.7  Added Print Content of Error reported by RCH Files
 #       Output now colorized
-# 2017_12_18    JDuplessis
-#   V1.8 Exit with Error when sadm_sysmon.pl was already running - Now Show Message & Exit 0
-# 2018_01_12 JDuplessis
-#   V1.9 Update SADM Library Section - Small Corrections
+# 2017_12_18    V1.8 Exit with Error when sadm_sysmon.pl was already running - Now Show Message & Exit 0
+# 2018_01_12    V1.9 Update SADM Library Section - Small Corrections
+# 2018_07_11    v2.0 Now showing running process after scanning the server rch files
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -41,7 +40,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -143,7 +142,7 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     find $SADM_RCH_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE2
 
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
-    awk 'match($8,/1/) { print }' $SADM_TMP_FILE2 > $SADM_TMP_FILE3 
+    awk 'match($8,/[1-2]/) { print }' $SADM_TMP_FILE2 | grep -v ' smon 2' > $SADM_TMP_FILE3 
 
     # Run the System Monitor
     $SADM_BIN_DIR/sadm_sysmon.pl
@@ -156,10 +155,12 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     fi
 
     tput clear 
-    echo "----------------------------------------------------------------------------------"
+    WDATE=`date "+%Y/%m/%d %H:%M"`
+    e_bold "System Monitor Command Line Report v${SADM_VER}                      $WDATE"
+    echo "------------------------------------------------------------------------------"
     e_bold "Based on SysMon configuration file $SADM_CFG_DIR/${HOSTNAME}.smon"
-    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${HOSTNAME}.rpt."
-    echo "----------------------------------------------------------------------------------"
+    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${HOSTNAME}.rpt"
+    echo "------------------------------------------------------------------------------"
     if [ -s $SADM_RPT_DIR/${HOSTNAME}.rpt ] 
         then cat $SADM_RPT_DIR/${HOSTNAME}.rpt | while read line 
                 do
@@ -169,9 +170,9 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     fi
     echo " "
     echo " "
-    echo "----------------------------------------------------------------------------------"
-    e_bold "Error(s) signaled by the Return Code History file"
-    echo "----------------------------------------------------------------------------------"
+    echo "------------------------------------------------------------------------------"
+    e_bold "Running script(s) and Error(s) signaled by the Return Code History file"
+    echo "------------------------------------------------------------------------------"
     if [ -s $SADM_TMP_FILE3 ] 
        then cat  $SADM_TMP_FILE3 | while read line 
               do
@@ -180,7 +181,7 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
        else e_success "No error reported by any RCH files" 
     fi
     echo " "
-    echo "----------------------------------------------------------------------------------"
+    echo "------------------------------------------------------------------------------"
     echo " "
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
