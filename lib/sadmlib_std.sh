@@ -1779,8 +1779,8 @@ sadm_start() {
              sadm_writelog " "                                          # Write Blank line
     fi
 
-    # If PID FIle exist and User want to run only 1 copy of the script - Abort Script
-    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" = "N" ]     # PIP Exist - Run One Copy
+    # If PID File exist and User want to run only 1 copy of the script - Abort Script
+    if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" != "Y" ]    # PIP Exist - Run One Copy
        then sadm_writelog "Script is already running ... "              # Script already running
             sadm_writelog "PID File ${SADM_PID_FILE} exist ..."         # Show PID File Name
             sadm_writelog "Won't launch a second copy of this script."  # Only one copy can run
