@@ -246,8 +246,8 @@ process_servers()
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
                         then sadm_writelog "$SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT"
                              $SADM_SSH_CMD ${server_name}.${server_domain} ${server_sadmin_dir}/bin/$USCRIPT $WREBOOT
-                        else sadm_writelog "Starting execution of $USCRIPT"
-                             . ${server_sadmin_dir}/bin/$USCRIPT 
+                        else sadm_writelog "Starting execution of ${server_sadmin_dir}/bin/$USCRIPT"
+                             ${server_sadmin_dir}/bin/$USCRIPT 
                      fi                             
                      if [ $? -ne 0 ]
                         then sadm_writelog "Error starting $USCRIPT on ${server_name}.${server_domain}"
