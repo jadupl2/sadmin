@@ -17,6 +17,7 @@
 # 2018_06_12    v2.14 Correct Problem with fileincrease and Filesystem Warning double error
 # 2018_06_14    v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
 # 2018_07_11    v2.16 Uptime/Load Average take last 5 min. values instead of current.
+# 2018_07_12    v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
 #
 #===================================================================================================
 #
@@ -33,7 +34,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.16";                                       # Version Number
+my $VERSION_NUMBER      = "2.17";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -119,8 +120,8 @@ $SADM_RECORD = {
    SADM_ACTIVE => " ",                              # Line is Active or not
    SADM_DATE =>   " ",                              # Last Date this line was evaluated
    SADM_TIME =>   " ",                              # Last Time line was evaluated
-   SADM_CHANNEL =>  " ",                            # Slack Channel Name 
-   SADM_EMAIL =>  " ",                              # Sadm Alias to send email
+   SADM_ALERT_T =>  " ",                            # Slack Channel Name 
+   SADM_ALERT_G =>  " ",                              # Sadm Alias to send email
    SADM_SCRIPT => " ",                              # Script 2 execute when Error
 };
 
@@ -328,8 +329,8 @@ sub split_fields {
             $SADM_RECORD->{SADM_ACTIVE},
             $SADM_RECORD->{SADM_DATE},
             $SADM_RECORD->{SADM_TIME},
-            $SADM_RECORD->{SADM_CHANNEL},
-            $SADM_RECORD->{SADM_EMAIL},
+            $SADM_RECORD->{SADM_ALERT_T},
+            $SADM_RECORD->{SADM_ALERT_G},
             $SADM_RECORD->{SADM_SCRIPT} ) = split ' ',$wline;
 }
 
@@ -358,8 +359,8 @@ sub combine_fields {
         $SADM_RECORD->{SADM_ACTIVE},
         $SADM_RECORD->{SADM_DATE},                  # Last Time that the error Occured
         $SADM_RECORD->{SADM_TIME},
-        $SADM_RECORD->{SADM_CHANNEL},               # Slack Channel
-        $SADM_RECORD->{SADM_EMAIL},
+        $SADM_RECORD->{SADM_ALERT_T},               # Alert Type (mail,slac,qpage,...)
+        $SADM_RECORD->{SADM_ALERT_G},
         $SADM_RECORD->{SADM_SCRIPT};
     return "$wline";
 }
@@ -756,7 +757,8 @@ sub check_service {
 
     #----- From the sysmon_array extract the service name
     my $service_count = 0 ;                                             # Service Running counter
-    my @service = split ('\|', $SERVICE );                              # Put All Srv. name in array
+#    my @service = split ('\|', $SERVICE );                              # Put All Srv. name in array
+    my @service = split (',', $SERVICE );                               # Put All Srv. name in array
     foreach my $srv (@service) {                                        # For each service in array
         if ($SYSMON_DEBUG >= 6) { print "\nChecking the service $srv"; }
         $srv_name = $srv ;                                              # Save Current Service name
@@ -1251,8 +1253,8 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_ACTIVE}  = "Y";             # Line Active/Tested,If N will skip line
             $SADM_RECORD->{SADM_DATE}    = "00000000";      # Last Date that the error Occured
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
-            $SADM_RECORD->{SADM_CHANNEL} = "sadmin";        # Alert Group when Error
-            $SADM_RECORD->{SADM_EMAIL}   = "sadm";          # Email Group when Error
+            $SADM_RECORD->{SADM_ALERT_T} = "mail";          # Alert Type (mail,slack,qpage)
+            $SADM_RECORD->{SADM_ALERT_G} = "sadmin";        # Alert Group (sadmin=std address), ...)
             #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
             $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
@@ -1380,7 +1382,7 @@ sub write_rpt_file {
     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                  $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
-                 $SADM_RECORD->{SADM_CHANNEL},$SADM_RECORD->{SADM_EMAIL};
+                 $SADM_RECORD->{SADM_ALERT_T},$SADM_RECORD->{SADM_ALERT_G};
 
     # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
@@ -1443,7 +1445,7 @@ sub write_rpt_file {
         print "\nSo $epoch - $last_epoch = $elapse_second seconds";     # Print Elapsed seconds
     }
 
-    # Get Daemon Process Name
+    # Get of service Name
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split smon ID
     $daemon_name = $dummy[1];                                           # Get Daemon Name
 
@@ -1468,7 +1470,7 @@ sub write_rpt_file {
         }else{                                                          # If Mail Succeeded
             printf "\nCommand succeeded - Return Code: %d", $? >> 8;    # Show Mail Return Code 
         }
-        $COMMAND = "$script_name >>${script_name}.log 2>&1";            # Build Script Exec. Command
+        $COMMAND = "$script_name $daemon_name >>${script_name}.log 2>&1";            # Build Script Exec. Command
         print "\nCommand sent ${COMMAND}";                              # Show User command executed
         @args = ("$COMMAND");                                           # Prepare to Execute
         system(@args) ;                                                 # Execute Restart Script
@@ -1490,7 +1492,7 @@ sub write_rpt_file {
             $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);       # Insert Counter in Array
             print "\nScript $SADM_RECORD->{SADM_SCRIPT} ran ";          # This script already ran
             print "$SADM_RECORD->{SADM_MINUTES} time(s) in last 24hrs.";# X times in the last 24hrs.
-            $COMMAND = "$script_name >>${script_name}.log 2>&1";        # Build Script Exec. Command
+            $COMMAND = "$script_name $daemon_name >>${script_name}.log 2>&1";        # Build Script Exec. Command
             print "\nCommand sent ${COMMAND}";                          # Show User command executed
             @args = ("$COMMAND");                                       # Prepare to Execute
             system(@args) ;                                             # Execute Restart Script
