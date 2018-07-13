@@ -36,7 +36,7 @@
 # 2018_06_25    sadm_setup.py   v2.9 Add log to client sysmon crontab line & change ending message
 # 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
 # 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
-# 2018_07_09    v3.2 Minor change to SADM server/client crontab 
+# 2018_07_13    v3.2 Added "SADMIN=..." Line to SADM server/client crontab 
 # 
 #===================================================================================================
 # 
@@ -274,7 +274,7 @@ def update_host_file(wdomain,wip) :
 #===================================================================================================
 #                            MAKE SURE SADMIN CLIENT CRONTAB FILE IS IN PLACE
 #===================================================================================================
-def update_client_crontab_file(logfile) :
+def update_client_crontab_file(logfile,sroot) :
 
     writelog('')
     writelog('--------------------')
@@ -305,6 +305,8 @@ def update_client_crontab_file(logfile) :
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
+    hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Run Daily before midnight\n")
@@ -343,7 +345,7 @@ def update_client_crontab_file(logfile) :
 #===================================================================================================
 #                            MAKE SURE SADMIN SERVER CRONTAB FILE IS IN PLACE
 #===================================================================================================
-def update_server_crontab_file(logfile) :
+def update_server_crontab_file(logfile,sroot) :
 
     writelog('')
     writelog('--------------------')
@@ -374,6 +376,8 @@ def update_server_crontab_file(logfile) :
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
+    hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
@@ -1828,7 +1832,7 @@ def main():
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
     update_sudo_file(logfile)                                           # Create the sudo file
-    update_client_crontab_file(logfile)                                 # Create Client Crontab File 
+    update_client_crontab_file(logfile,sroot)                           # Create Client Crontab File 
 
     # SADMIN Server 
     if (stype == 'S') :                                                 # If install SADMIN Server
@@ -1837,7 +1841,7 @@ def main():
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
-        update_server_crontab_file(logfile)                             # Create Server Crontab File 
+        update_server_crontab_file(logfile,sroot)                       # Create Server Crontab File 
         rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
         update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
 
