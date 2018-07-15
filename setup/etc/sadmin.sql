@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jun 27, 2018 at 11:09 AM
+-- Generation Time: Jul 15, 2018 at 10:18 AM
 -- Server version: 5.5.56-MariaDB
 -- PHP Version: 5.4.16
 
@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_update_auto` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'O/S Update Auto Schedule',
   `srv_update_status` varchar(1) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Last O/S Update Status(R/F/S)',
   `srv_update_reboot` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Reboot After Update',
-  `srv_update_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YYYYYYYYYYYYY' COMMENT 'Update Month YNNYNNYNNYNN',
-  `srv_update_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'NYNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Date of Update (1/31) YNNYNNYNNYNN...',
+  `srv_update_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Update Month YNNYNNYNNYNN',
+  `srv_update_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Date of Update (1/31) YNNYNNYNNYNN...',
   `srv_update_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Day of Update Any/Sun/Sat YNNNNNN',
   `srv_update_hour` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Update Start Hour',
   `srv_update_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Update Start Minute',
