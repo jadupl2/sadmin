@@ -31,6 +31,7 @@
 # 2018_02_10  V2.3 Change SQL Statement to remove SADMIN server from rsync process
 # 2018_05_31  V2.4 Added ".backup_list.txt" & ".backup_exclude.txt" to rsync list 
 # 2018_06_04  V2.5 Change $SADMIN/jac/bin to $SADM_UBIN_DIR 
+# 2018_07_15  V2.6 Use Client Install Directory Location from Database instead of assuming /sadmin.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -51,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -84,21 +85,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #                               This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-
-# Array of Directory that will be created if they don't exist on the SADM client
-rem_dir_to_create=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_UBIN_DIR}" 
-                    ${SADM_PKG_DIR} ${SADM_LIB_DIR}  ${SADM_CFG_DIR} 
-                    "/storix/custom/" )
-
-# Array of Directories to rsync to SADM client
-rem_dir_to_rsync=( ${SADM_BIN_DIR} ${SADM_SYS_DIR} "${SADM_UBIN_DIR}" 
-                   ${SADM_PKG_DIR} ${SADM_LIB_DIR} "/storix/custom/" )
-
-# Array of Files to rsync to SADM client
-rem_files_to_rsync=( "${SADM_CFG_DIR}/.template.smon"       "${SADM_CFG_DIR}/sadmin.cfg"
-                     "${SADM_CFG_DIR}/.release"             "${SADM_CFG_DIR}/.sadmin.cfg"  
-                     "${SADM_CFG_DIR}/.backup_exclude.txt"  "${SADM_CFG_DIR}/.backup_list.txt" ) 
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -174,7 +160,7 @@ process_servers()
     sadm_writelog " "
 
     # Select From Database Active Servers & output result in $SADM_TMP_FILE
-    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active"
+    SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_sadmin_dir"
     SQL="${SQL} from server"
     SQL="${SQL} where srv_active = True and srv_name <> '$SADM_HOSTNAME' "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -197,6 +183,7 @@ process_servers()
               server_domain=`  echo $wline|awk -F, '{ print $3 }'`      # Extract Domain of Server
               server_monitor=` echo $wline|awk -F, '{ print $4 }'`      # Monitor  t=True f=False
               server_sporadic=`echo $wline|awk -F, '{ print $5 }'`      # Sporadic t=True f=False
+              server_dir=`     echo $wline|awk -F, '{ print $6 }'`      # Client SADMIN Install Dir.
               server_fqdn=`echo ${server_name}.${server_domain}`        # Create FQN Server Name
               sadm_writelog " " ; sadm_writelog " "                     # Two Blank Lines
               sadm_writelog "${SADM_TEN_DASH}"
@@ -252,7 +239,7 @@ process_servers()
                         done
               fi
 
-              # If All SSH test failed, Issue Error Message and continue with next server
+              # IF ALL SSH TEST FAILED, ISSUE ERROR MESSAGE AND CONTINUE WITH NEXT SERVER
               if [ $RC -ne 0 ]   
                  then SMSG="[ ERROR ] Can't SSH to server '${server_fqdn}'"  
                       sadm_writelog "$SMSG"                             # Display Error Msg
@@ -265,7 +252,12 @@ process_servers()
               sadm_writelog "[ OK ] SSH to $server_fqdn"                # Good SSH Work
 
 
-              # Create remote directory on client if the don't exist
+              # ARRAY OF DIRECTORY THAT WILL BE CREATED IF THEY DON'T EXIST ON THE SADM CLIENT
+              rem_dir_to_create=( ${server_dir}/bin ${server_dir}/sys ${server_dir}/usr/bin 
+                                  ${server_dir}/pkg ${server_dir}/lib ${server_dir}/cfg 
+                                  ${server_dir}/dat ${server_dir}/log ${server_dir}/tmp )
+
+              # CREATE REMOTE DIRECTORY ON CLIENT IF THE DON'T EXIST
               for WDIR in "${rem_dir_to_create[@]}"
                 do
     	        create_remote_dir "${server_fqdn}" "${WDIR}"            # If ! Exist create Rem Dir.
@@ -275,34 +267,41 @@ process_servers()
                 done             
  
 
-              # Rsync local directory on client
+              # ARRAY OF IMPORTANT DIRECTORIES TO RSYNC TO SADM CLIENT
+              rem_dir_to_rsync=( bin sys usr/bin pkg lib )
+
+              # RSYNC ARRAY OF IMPORTANT DIRECTORIES TO SADM CLIENT
               for WDIR in "${rem_dir_to_rsync[@]}"
                 do
                 if [ $DEBUG_LEVEL -gt 5 ]                               # If Debug is Activated
-                    then sadm_writelog "rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/"
+                    then sadm_writelog "rsync -ar --delete ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/"
                 fi
-                rsync -ar --delete ${WDIR}/ ${server_fqdn}:${WDIR}/
+                rsync -ar --delete  ${SADM_BASE_DIR}/${WDIR}/ ${server_fqdn}:${server_dir}/${WDIR}/
                 RC=$? 
                 if [ $RC -ne 0 ]
-                   then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${WDIR}"
+                   then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/${WDIR}/"
                         ERROR_COUNT=$(($ERROR_COUNT+1))                 # Increase Error Counter
-                   else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${WDIR}" 
+                   else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${server_dir}/${WDIR}" 
                 fi
                 done             
 
+              # Rsync Template files Array to SADM client
+              rem_files_to_rsync=( cfg/.template.smon cfg/.release cfg/.sadmin.cfg cfg/.sadmin.rc 
+                                   cfg/.sadmin.service 
+                                   cfg/.backup_exclude.txt  cfg/.backup_list.txt ) 
 
               # Rsync local files on client
               for WFILE in "${rem_files_to_rsync[@]}"
                 do
                 if [ $DEBUG_LEVEL -gt 5 ]                               # If Debug is Activated
-                    then sadm_writelog "rsync -ar  --delete ${WFILE} ${server_fqdn}:${WFILE}"
+                    then sadm_writelog "rsync -ar  --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}"
                 fi
-                rsync -ar  --delete ${WFILE} ${server_fqdn}:${WFILE}
+                rsync -ar  --delete ${SADM_BASE_DIR}/${WFILE} ${server_fqdn}:${server_dir}/${WFILE}
                 RC=$?
                 if [ $RC -ne 0 ]
-                    then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${WFILE}"
+                    then sadm_writelog "[ ERROR ] rsync error($RC) for ${server_fqdn}:${server_dir}/${WFILE}"
                          ERROR_COUNT=$(($ERROR_COUNT+1))
-                    else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${WFILE}" 
+                    else sadm_writelog "[ OK ] rsync for ${server_fqdn}:${server_dir}/${WFILE}" 
                 fi
                 done             
 
