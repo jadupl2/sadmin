@@ -1,1 +1,1 @@
-Custom Error Message - Check your script
+Custom Error Message for sysmon_template.sh
