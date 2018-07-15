@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis 
 #   Title       :   sadm_server_nmon_rrd_update.sh
@@ -43,7 +43,7 @@
 # 2018_02_12    V1.9 Add RRD Update Warning Total after each file processed.
 # 2018_06_04    v2.0 Adapt to new SADMIN Libr.
 # 2018_06_09    v2.1 Change Help and Version Function, Change Script Name, Change Startup Order
-#
+# 2018_07_14    v2.2 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -65,7 +65,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_VER='2.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
