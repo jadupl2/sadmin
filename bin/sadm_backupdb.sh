@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_server_backupdb.sh
@@ -35,7 +35,7 @@
 # 2018_06_03    V1.6 Small Ameliorations and corrections
 # 2018_06_11    V1.7 Change name to sadm_backupsd.sh
 # 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompress backup
-#
+# 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='1.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
