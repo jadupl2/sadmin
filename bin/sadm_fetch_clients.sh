@@ -24,8 +24,9 @@
 #   2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
 #   2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
 #   2018_05_06  v2.12 Small Modification for New Libr Version
-#   2018_06_29  v2.13 Use Root SADMIN Client Dir in Database instead of assuming /sadmin as root dir
+#   2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
 #   2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
+#   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -61,7 +62,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.14'                              # Current Script Version
+    export SADM_VER='2.15'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -168,19 +169,22 @@ update_crontab ()
     cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
+
     # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
     flag_dom=0
-    if [ "$cdom" == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                # If it's to run every Date
+    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
         then cline="$cline *"                                           # Then use a Star for Date
         else fdom=""                                                    # Clear Final Date of Month
-             for i in {1..31}                                           # From the 1st to the 31th
-                do                                                      # Of the month
-                #echo "i=$i - ${cdom:$i:1}"                              # Debug Info
-                if [ "${cdom:$i:1}" == "Y" ]                            # If Date Set to Yes 
+             for i in $(seq 2 32)
+                do    
+                wchar=`expr substr $cdom $i 1`
+                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+                xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
                     then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
-                            then fdom=`printf "%02d" "$i"`              # Add Date to Final DOM
+                            then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
                                  flag_dom=1                             # No Longer the first date
-                            else wdom=`printf "%02d" "$i"`              # Format the Date number
+                            else wdom=`printf "%02d" "$xmth"`           # Format the Date number
                                  fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
                          fi
                 fi                                                      # If Date is set to No
@@ -189,19 +193,21 @@ update_crontab ()
     fi
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
+
     # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
     flag_mth=0
-    if [ "$cmonth" == "YNNNNNNNNNNNN" ]                                 # If it's to run every Month
+    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
         then cline="$cline *"                                           # Then use a Star for Month
         else fmth=""                                                    # Clear Final Date of Month
-             for i in {1..12}                                           # From the 1st to the 12th
-                do                                                      # Month of the year
-                #echo "i=$i - ${cmonth:$i:1}"                            # Debug Info
-                if [ "${cmonth:$i:1}" == "Y" ]                          # If Month Set to Yes 
-                    then if [ $flag_mth -eq 0 ]                         # If First Month to Run 
-                            then fmth=`printf "%02d" "$i"`              # Add Month to Final Months
+             for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
+                do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+                wchar=`expr substr $cmonth $i 1`
+                xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
+                    then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
+                            then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
                                  flag_mth=1                             # No Longer the first Month
-                            else wmth=`printf "%02d" "$i"`              # Format the Month number
+                            else wmth=`printf "%02d" "$xmth"`           # Format the Month number
                                  fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
                          fi
                 fi                                                      # If Month is set to No
@@ -213,14 +219,16 @@ update_crontab ()
 
     # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
     flag_dow=0
-    if [ "$cdow" == "YNNNNNNN" ]                                        # Run every Day of Week ?
+    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
         then cline="$cline *"                                           # Then use Star for All Week
         else fdow=""                                                    # Final Day of Week Flag
-             for i in {1..7}                                            # From Day 1(Sun) to 7(Sat)
+             for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
                 do                                                      # Day of the week (dow)
-                #echo "i=$i - ${cdow:$i:1}"                              # Debug Info
-                if [ "${cdow:$i:1}" == "Y" ]                            # If 1st Char=Y then AllWeek
-                    then xday=`expr $i - 1`                             # Adjust Indx to Crontab Day
+                wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
+                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+                if [ "$wchar" = "Y" ]                                   # If Day is Yes 
+                    then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
+                         if [ $DEBUG_LEVEL -gt 5 ] ; then echo "xday = $xday" ; fi
                          if [ $flag_dow -eq 0 ]                         # If First Day to Insert
                             then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
                                  flag_dow=1                             # No Longer the first Insert
@@ -232,6 +240,8 @@ update_crontab ()
              cline="$cline $fdow"                                       # Add DOW in Crontab Line
     fi
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    
+    
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN
     cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
@@ -300,7 +310,8 @@ process_servers()
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
-    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow"
+    SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
+    SQL="${SQL} srv_update_auto "
     SQL="${SQL} from server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
@@ -321,8 +332,9 @@ process_servers()
 
     # Create Crontab File Header
     echo "# "                                                        > $SADM_CRON_FILE 
+    echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
     echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
-    echo "# Operating System Update Schedule"                       >> $SADM_CRON_FILE 
+    echo "# "                                                       >> $SADM_CRON_FILE 
     echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
     echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
     echo "# "                                                       >> $SADM_CRON_FILE 
@@ -345,6 +357,7 @@ process_servers()
         db_upddom=`      echo $wline|awk -F, '{ print $10 }'`           # crontab Update DOM field
         db_updmth=`      echo $wline|awk -F, '{ print $11 }'`           # crontab Update Mth field
         db_upddow=`      echo $wline|awk -F, '{ print $12 }'`           # crontab Update DOW field        
+        db_updauto=`     echo $wline|awk -F, '{ print $13 }'`           # crontab Update DOW field        
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
         sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
 
@@ -444,8 +457,9 @@ process_servers()
         fi
               
         # Create Crontab Entry for this server in crontab work file
-        update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
-
+        if [ "$db_updauto" -eq 1 ] 
+            then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+        fi
         done < $SADM_TMP_FILE1
 
     sadm_writelog " "                                                   # Separation Blank Line
