@@ -1849,7 +1849,7 @@ def main():
     writelog ('  ')
     writelog ('  ')
     writelog ('--------------------')
-    writelog ("Run SADMIN Daily scripts once to feed Database and Web Interface",'bold')
+    writelog ("Run Initial SADMIN Daily scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
     writelog ("Running Client Scripts")
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
