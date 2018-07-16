@@ -37,6 +37,7 @@
 # 2018_06_29    sadm_setup.py   v3.0 Bux Fixes (Re-Test on CentOS7,Debian9,Ubuntu1804,Raspbian9)
 # 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
 # 2018_07_13    v3.2 Added "SADMIN=..." Line to SADM server/client crontab 
+# 2018_07_15    v3.3 Refuse SADM ServerName if resolve to localhost, Fix Server Crontab,
 # 
 #===================================================================================================
 # 
@@ -53,7 +54,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.2"                                             # Setup Version Number
+sver                = "3.3"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -302,10 +303,11 @@ def update_client_crontab_file(logfile,sroot) :
         return(1)
 
     # Populate SADMIN Client Crontab File
+    hcron.write ("# SADMIN Client Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
-    hcron.write ("# \n")
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
@@ -313,11 +315,9 @@ def update_client_crontab_file(logfile,sroot) :
     hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & run cfg2html\n")
     hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
     hcron.write ("#\n")
-    hcron.write ("#\n")
     hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
     chostname = socket.gethostname().split('.')[0]
     hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
-    hcron.write ("#\n")
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
@@ -364,7 +364,7 @@ def update_server_crontab_file(logfile,sroot) :
     except :                                                            # If not then it's OK
         pass                                                            # If don't exist continue
         
-    # Create the SADMIN Client Crontab file
+    # Create the SADMIN Server Crontab file
     try : 
         hcron = open(ccron_file,'w')                                    # Open Crontab file
     except :                                                            # If could not create output
@@ -373,19 +373,19 @@ def update_server_crontab_file(logfile,sroot) :
         return(1)
 
     # Populate SADMIN Server Crontab File
+    hcron.write ("# SADMIN Server Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
+    hcron.write ("# \n")
     hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
     hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
-    hcron.write ("# \n")
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
-    #hcron.write ("*/6 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
-    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
+    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * sadmin sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
-    hcron.write ("05 05 * * * ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
+    hcron.write ("05 05 * * * sadmin sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     #hcron.write ("# Morning report sent to Sysadmin by Email\n")
     #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
@@ -904,7 +904,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     else:                                                               # If SADMIN DB Exist=Warning
         writelog ('')                                                   # Space Line
         writelog ("Database 'sadmin' already exist !")                  # Show user DB exist
-        uquery="Do you really want to reload initial 'sadmin' Database (Will erase actual content)"
+        uquery="Do you really want to reload initial 'sadmin' Database (WILL ERASE ACTUAL CONTENT)"
         answer=askyesno(uquery,'N')                                     # Ask if want to Init DB
         if (answer): load_db = True                                     # Answer Yes Reload Database
 
@@ -988,10 +988,14 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     # Create $SADMIN/cfg/.dbpass (Database Password file) Only if it doesn't exist -----------------
     dpfile = "%s/cfg/.dbpass" % (sroot)                                 # Database Password FileName
     if not os.path.isfile(dpfile):                                      # If .dbpass don't exist
+        writelog ("Creating Database Password File (%s)" % (dpfile))    # Advise user create .dbpass
         dbpwd  = open(dpfile,'w')                                       # Create Database Pwd File
         dbpwd.write("sadmin,%s\n" % (rw_passwd))                        # Create R/W user & Password
         dbpwd.write("squery,%s\n" % (ro_passwd))                        # Create R/O user & Password
         dbpwd.close                                                     # Close DB Password File
+    else:
+        writelog ("Leaving Database Password File as it is (%s)" % (dpfile)) # Advise user 
+        
 
 
     # Make Sure MariaDB is Running -----------------------------------------------------------------
@@ -1585,19 +1589,36 @@ def setup_sadmin_config_file(sroot):
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
 
+
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
-    if (stype == "S"): sdefault = socket.getfqdn()                      # Server Install=Hostname
+    #if (stype == "S"): sdefault = socket.getfqdn()                      # Server Install=Hostname
     sprompt  = "Enter SADMIN (FQDN) server name"                        # Prompt for Answer
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
+        ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
+        digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
+        if (digit1 == "127"):                                           # If Resolve to loopback IP
+            writelog ("  ")
+            writelog ("*** ERROR ***")
+            writelog ("SADMIN server name can't resolve to localhost (%s)" %(SADM_IP))
+            writelog ("SADMIN clients would not be able to get to the SADMIN Server")
+            writelog ("SADMIN Server name must resolve to an IP other than in 127.0.0.0/24 subnet")
+            writelog ("You may need to press CTRL-C to abort installation and correct the situation")
+            writelog ("Once resolve, just execute the setup program again or enter a valid hostname")
+            continue                                                    # Go Re-Accept Server Name
+        sname=wcfg_server.split('.')                                    # Split Server Name in Array
+        if (len(sname) != 3):                                           # If not 3 Fields not FQDN
+            writelog ("  ")
+            writelog ("*** ERROR ***")
+            writelog ("SADMIN server name must be fully qualified, please specify domain name")
+            continue                                                    # Go Re-Accept Server Name
         try :
-            SADM_IP = socket.gethostbyname(wcfg_server)                 # Try to get IP of Server
+            xarray = socket.gethostbyaddr(SADM_IP)                          # Use IP & Get HostName
         except (socket.gaierror) as error :                             # Unable to get Server IP
             writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
             continue                                                    # Go Re-Accept Server Name
-        xarray = socket.gethostbyaddr(SADM_IP)                          # Use IP & Get HostName
         yname = socket.getfqdn(xarray[0])                               # Get FQDN of IP
         if (yname != wcfg_server) :                                     # If HostName != EnteredName
             writelog("The server %s with ip %s is returning %s" % (wcfg_server,SADM_IP,yname))
