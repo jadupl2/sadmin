@@ -42,6 +42,7 @@
 # 2018_06_10    V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
 # 2018_06_14    V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
 # 2018_07_07    V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
+# 2018_07_16    V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
 #
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
@@ -60,7 +61,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.30"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.31"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1797,7 +1798,7 @@ sadm_start() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                                  SADM END OF PROCESS FUNCTION
+# SADM END OF PROCESS FUNCTION (RECEIVE 1 PARAMETER = EXIT CODE OF SCRIPT)
 # What this function do.
 #   1) If Exit Code is not zero, change it to 1.
 #   2) Get Actual Time and Calculate the Execution Time.
@@ -1812,7 +1813,11 @@ sadm_start() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_stop() {    
-    SADM_EXIT_CODE=$1                                                   # Save Exit Code Received
+    if [ $# -eq 0 ]                                                     # If No status Code Received
+        then SADM_EXIT_CODE=1                                           # Assume Error if none given
+             sadm_writelog "sadm_stop expect a parameter (SADM_EXIT_CODE), assuming 1 (error)."
+        else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
+    fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
  
     # Start Writing Log Footer
