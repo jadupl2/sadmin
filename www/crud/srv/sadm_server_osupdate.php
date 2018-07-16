@@ -129,7 +129,7 @@ function display_osschedule($con,$wrow,$mode) {
                         echo "\n<input type='radio' name='scr_update_auto' value='0'> Manual  ";
                     }else{
                         echo "\n<input type='radio' name='scr_update_auto' value='1'> Scheduled  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > <b>Manual (No Schedule)</b>";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > <b>Manual</b>";
                     }
                     break;
     }
