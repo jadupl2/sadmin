@@ -36,6 +36,7 @@
 # 2018_06_09    v2.8 Change Script Name & Add Help and Version Function & Change Startup Order
 # 2018_06_11    v2.9 Change name for sadm_daily_farm_fetch.sh
 # 2018_06_30    v3.0 Now get /etc/environment from client to know where SADMIN is install for rsync
+# 2018_07_16    v3.1 Remove verbose when doing rsync
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -58,7 +59,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.0'                               # Current Script Version
+    export SADM_VER='3.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -255,10 +256,10 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/dr" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_writelog "rsync -var --delete ${server_name}:${REMDIR}/ $WDIR/"
-                 rsync -var --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_writelog "rsync -var --delete  ${REMDIR}/ $WDIR/"
-                 rsync -var --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            then sadm_writelog "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/"
+                 rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else sadm_writelog "rsync -ar --delete  ${REMDIR}/ $WDIR/"
+                 rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
@@ -279,10 +280,10 @@ process_servers()
         fi
         REMDIR="${RDIR}/dat/nmon" 
         if [ "${server_name}" != "$SADM_HOSTNAME" ]
-            then sadm_writelog "rsync -var --delete ${server_name}:${REMDIR}/ $WDIR/"
-                 rsync -var --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
-            else sadm_writelog "rsync -var --delete ${REMDIR}/ $WDIR/"
-                 rsync -var --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            then sadm_writelog "rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/"
+                 rsync -ar --delete ${server_name}:${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
+            else sadm_writelog "rsync -ar --delete ${REMDIR}/ $WDIR/"
+                 rsync -ar --delete ${REMDIR}/ $WDIR/ >>$SADM_LOG 2>&1
         fi
         RC=$?
         if [ $RC -ne 0 ]
