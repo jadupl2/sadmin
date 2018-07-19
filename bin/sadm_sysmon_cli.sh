@@ -26,6 +26,7 @@
 # 2017_12_18    V1.8 Exit with Error when sadm_sysmon.pl was already running - Now Show Message & Exit 0
 # 2018_01_12    V1.9 Update SADM Library Section - Small Corrections
 # 2018_07_11    v2.0 Now showing running process after scanning the server rch files
+# 2018_07_18    v2.1 Fix problem reporting System Monitor Result (rpt filename)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -40,7 +41,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
@@ -158,11 +159,11 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     WDATE=`date "+%Y/%m/%d %H:%M"`
     e_bold "System Monitor Command Line Report v${SADM_VER}                      $WDATE"
     echo "------------------------------------------------------------------------------"
-    e_bold "Based on SysMon configuration file $SADM_CFG_DIR/${HOSTNAME}.smon"
-    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${HOSTNAME}.rpt"
+    e_bold "Based on SysMon configuration file $SADM_CFG_DIR/${SADM_HOSTNAME}.smon"
+    e_bold "Here is the output of SysMon Report File $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt"
     echo "------------------------------------------------------------------------------"
-    if [ -s $SADM_RPT_DIR/${HOSTNAME}.rpt ] 
-        then cat $SADM_RPT_DIR/${HOSTNAME}.rpt | while read line 
+    if [ -s $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt ] 
+        then cat $SADM_RPT_DIR/${SADM_HOSTNAME}.rpt | while read line 
                 do
                 e_error "$line"
                 done 
