@@ -18,6 +18,7 @@
 # 2018_06_14    v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
 # 2018_07_11    v2.16 Uptime/Load Average take last 5 min. values instead of current.
 # 2018_07_12    v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
+# 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
 #
 #===================================================================================================
 #
@@ -34,7 +35,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.17";                                       # Version Number
+my $VERSION_NUMBER      = "2.18";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -597,6 +598,13 @@ sub check_for_error {
       if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
          $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%";  # Set up Error Message
          write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);  # Go Report Alert 
+    
+         # If no script specified - Return to caller
+         if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-") || ($SADM_RECORD->{SADM_SCRIPT} eq " ")) { 
+            print "\nNo Script specified for execution in hostname.smon";
+            print "\nNo Filesystem increase will happen";
+            return 0 ;
+         }
 
          ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();  # Get current epoch time
          if ($SYSMON_DEBUG >= 5) {                                      # If Debug is ON
