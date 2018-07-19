@@ -35,7 +35,7 @@
 # 2018_06_20    v1.9 Don't copy .dbpass when doing new Package
 # 2018_06_23    v2.0 Change location of default service file (.sadmin.rc, sadmin.service) to cfg dir.
 # 2018_07_09    v2.1 Copy .version & .versum from psadmin to sadmin at end so git = release version
-#
+# 2018_07_18    v2.2 Copy system monitor script template, nmon monitor & service restart in PSADMIN
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_VER='2.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -93,6 +93,7 @@ DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDe
 PSADMIN="/psadmin"                          ; export PSADMIN            # Prod. SADMIN Root Dir.
 PSBIN="${PSADMIN}/bin"                      ; export PSBIN              # Prod. bin Directory
 PSCFG="${PSADMIN}/cfg"                      ; export PSCFG              # Prod. cfg Directory
+PSMON="${PSADMIN}/usr/mon"                  ; export PSMON              # Prod. SysMon Script Dir.
 #
 REL=`cat $SADM_REL_FILE`                    ; export REL                # Save Release Number
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
@@ -252,6 +253,7 @@ main_process()
             return 1
     fi
     sadm_writelog "Currently in `pwd` directory"
+    sadm_writelog "Delete everything is ${PSADMIN} ..."
     sadm_writelog "rm -fr ${PSADMIN} > /dev/null 2>&1"
     rm -fr ${PSADMIN} > /dev/null 2>&1
 
@@ -425,7 +427,7 @@ main_process()
     run_oscommand "chown sadmin.sadmin ${DFILE}"
     #    
 
-    # COPY $SADMIN/cfg to /psadmin/cfg -------------------------------------------------------------
+    # Copy Configuration File from COPY $SADMIN/cfg to /psadmin/cfg --------------------------------
     sadm_writelog " "
     sadm_writelog "Syncing cfg directory $SADM_CFG_DIR to ${PSCFG}"
     #run_oscommand "touch ${PSCFG}/.dbpass"                              # Just make sure it exist
@@ -473,8 +475,27 @@ main_process()
     run_oscommand "cp ${SADMIN}/README.md ${PSADMIN}"
     run_oscommand "chmod 664 ${PSADMIN}/README.md"
     run_oscommand "chown sadmin.sadmin ${PSADMIN}/README.md"
-    #
+    
 
+    # COPY SYSTEM MONITOR SCRIPT TEMPLATE, NMON MONITOR and Service Retart Script ------------------
+    sadm_writelog " "
+    sadm_writelog "Copy SysMon Script Template to ${PSMON}"
+    run_oscommand "cp ${SADM_UMON_DIR}/sysmon_template.sh ${PSMON}"
+    run_oscommand "chmod 775 ${PSMON}/sysmon_template.sh"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/sysmon_template.sh"
+    #
+    sadm_writelog " "
+    sadm_writelog "Copy NMON Watcher to ${PSMON}"
+    run_oscommand "cp ${SADM_UMON_DIR}/sadm_nmon_watcher.sh ${PSMON}"
+    run_oscommand "chmod 775 ${PSMON}/sadm_nmon_watcher.sh"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/sadm_nmon_watcher.sh"
+    #
+    sadm_writelog " "
+    sadm_writelog "Copy Service Restart to ${PSMON}"
+    run_oscommand "cp ${SADM_UMON_DIR}/srestart.sh ${PSMON}"
+    run_oscommand "chmod 775 ${PSMON}/srestart.sh"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/srestart.sh"
+    #
     # COPY .bashrc and .bash_profile file-----------------------------------------------------------
     #
     #sadm_writelog " "
