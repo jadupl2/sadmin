@@ -32,6 +32,7 @@
 # 2018_05_31  V2.4 Added ".backup_list.txt" & ".backup_exclude.txt" to rsync list 
 # 2018_06_04  V2.5 Change $SADMIN/jac/bin to $SADM_UBIN_DIR 
 # 2018_07_15  V2.6 Use Client Install Directory Location from Database instead of assuming /sadmin.
+# 2018_07_19  V2.7 Now include Sysmon Template, nmon & service restart (srestart,sh) script
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -255,7 +256,8 @@ process_servers()
               # ARRAY OF DIRECTORY THAT WILL BE CREATED IF THEY DON'T EXIST ON THE SADM CLIENT
               rem_dir_to_create=( ${server_dir}/bin ${server_dir}/sys ${server_dir}/usr/bin 
                                   ${server_dir}/pkg ${server_dir}/lib ${server_dir}/cfg 
-                                  ${server_dir}/dat ${server_dir}/log ${server_dir}/tmp )
+                                  ${server_dir}/dat ${server_dir}/log ${server_dir}/tmp 
+                                  ${server_dir}/usr/mon )
 
               # CREATE REMOTE DIRECTORY ON CLIENT IF THE DON'T EXIST
               for WDIR in "${rem_dir_to_create[@]}"
@@ -288,7 +290,9 @@ process_servers()
               # Rsync Template files Array to SADM client
               rem_files_to_rsync=( cfg/.template.smon cfg/.release cfg/.sadmin.cfg cfg/.sadmin.rc 
                                    cfg/.sadmin.service 
-                                   cfg/.backup_exclude.txt  cfg/.backup_list.txt ) 
+                                   cfg/.backup_exclude.txt  cfg/.backup_list.txt 
+                                   usr/mon/sadm_nmon_watcher.sh usr/mon/sysmon_template.sh 
+                                   usr/mon/srestart.sh ) 
 
               # Rsync local files on client
               for WFILE in "${rem_files_to_rsync[@]}"
