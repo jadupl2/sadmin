@@ -25,6 +25,7 @@
 # Change Log
 # 2018_06_03    v1.1 Add usr Directories
 # 2018_06_19    v1.2 Remove sadmin directory from tar file, will use sadmin installation script
+# 2018_07_20    v1.3 Bug fix - Remove files.tar.gz from the file files.tar.gz
 # 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -47,7 +48,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.2'                               # Current Script Version
+    export SADM_VER='1.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -136,7 +137,7 @@ main_process()
     # Creating tar file
     cd $TAR_SRC
     sadm_writelog "Now in `pwd` and creating install file $TAR_FILE"
-    tar -cvzf $TAR_FILE . > /dev/null 2>&1
+    tar --exclude="files.tar.gz" -cvzf $TAR_FILE . > /dev/null 2>&1
     sadm_writelog "mv $TAR_FILE $TAR_SRC"
     mv $TAR_FILE $TAR_SRC
 
