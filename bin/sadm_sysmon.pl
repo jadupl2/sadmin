@@ -19,7 +19,7 @@
 # 2018_07_11    v2.16 Uptime/Load Average take last 5 min. values instead of current.
 # 2018_07_12    v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
 # 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
-#
+# 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
 #===================================================================================================
 #
 use English;
@@ -35,7 +35,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.18";                                       # Version Number
+my $VERSION_NUMBER      = "2.19";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -128,7 +128,7 @@ $SADM_RECORD = {
 
 # SADMIN CONFIGURATION FILE FIELDS
 my $SADM_HOST_TYPE  = "C";                                              # SADM Default HostType(S,C)
-my $SADM_MAIL_ADDR  = "webadmin\@sadmin.ca";                            # SADMIN Administrator Email
+my $SADM_MAIL_ADDR  = "root\@localhost";                                # Default Sysadmin Email
 my $SADM_CIE_NAME   = " ";                                              # SADMIN Company Name
 my $SADM_MAIL_TYPE  = "1";                                              # SADMIN MailType 1,2,3,4
 my $SADM_SERVER     = "";                                               # SADMIN FQDN Name
@@ -156,11 +156,13 @@ sub load_sadmin_cfg {
 
     # Check if ${SADMIN}/cfg/sadmin.cfg, if not copy ${SADMIN}/cfg/.sadmin.cfg to sadmin.cfg 
     if ( ! -e "$SADMIN_CFG_FILE"  ) {                                   # If sadmin.cfg not exist
-        ### Can't send email we don't know the email address yet
-        #my $mail_message = "File $SADMIN_CFG_FILE not found, file created based on $SADMIN_STD_FILE";    
-        #my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
-        #@cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
-        #$return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
+        my $mail_mess1 = "SADMIN configuration file $SADMIN_CFG_FILE for ${HOSTNAME} was not found.\n";
+        my $mail_mess2 = "A new file were created based on the template file ${$SADMIN_STD_FILE}.\n";
+        my $mail_mess3 = "You need to review it, to reflect your need.\n";
+        my $mail_message = "${mail_mess1}${mail_mess2}${mail_mess3}";
+        my $mail_subject = "SADM: WARNING $SADMIN_CFG_FILE not found on $HOSTNAME";
+        @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
+        $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
         @cmd = ("$CMD_CP $SADMIN_STD_FILE $SADMIN_CFG_FILE");           # cp template to sadmin.cfg
         $return_code = 0xffff & system @cmd ;                           # Perform Command cp
         @cmd = ("$CMD_CHMOD 664 $SADMIN_CFG_FILE");                     # Make sadmin.cfg 664
@@ -232,7 +234,9 @@ sub load_smon_file {
     print "\nLoading SysMon configuration file ${SYSMON_CFG_FILE}\n";
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
-        my $mail_message = "File $SYSMON_CFG_FILE not found, File created based on template.smon";    
+        my $mail_mess1 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} was not found.\n";
+        my $mail_mess2 = "A new file were created based on the template file ${SYSMON_STD_FILE}.\n";    
+        my $mail_message = "${mail_mess1}${mail_mess2}";
         my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
