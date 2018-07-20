@@ -25,7 +25,7 @@ dbac8f01514dd95b8767e6c699ac1606  ./bin/sadm_server_housekeeping.sh
 eca68e7f3f720dbc8761cd675ad6953e  ./bin/sadm_service_ctrl.sh
 f35944f05f994068971f2f02c34cbf7c  ./bin/sadm_subnet_lookup.py
 b17a5e5ea401947efcbcb2cfa4b1c998  ./bin/sadm_support_request.sh
-b504f100be50eaf58d6d92f66664cf39  ./bin/sadm_sysmon.pl
+17eee12d8701f2b0a6d58832ac1747e2  ./bin/sadm_sysmon.pl
 b755367501848b5e294246f9e3368605  ./bin/sadm_sysmon_cli.sh
 190bb10f5a04446cc170d4b21e8d64fe  ./bin/sadm_sysmon_tui.pl
 3454427a237202e1a13f81699d5944fd  ./bin/sadm_template.py
@@ -163,8 +163,8 @@ e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 6eac88da5b19b134d75dabe56a3ee0d6  ./cfg/.sadmin.service
 66aa8437dc83ae22dc1e889ec7b40854  ./cfg/.sadmin.rc
-1ca215335c8656529ad906fb3c735ab1  ./cfg/.version
-7252e069f65e26921d54113db8f9ca3a  ./cfg/.versum
+658caa3ec00d2fb2edaa263322f8bc75  ./cfg/.version
+8e459e2ad52b2377b5466376551eeb78  ./cfg/.versum
 6e6bf1dca8766feeca4c9cc158ffc48c  ./usr/mon/sysmon_template.sh
 bdd0313a7c479e404d668f465f4e09ad  ./usr/mon/sadm_nmon_watcher.sh
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
