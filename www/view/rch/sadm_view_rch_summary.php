@@ -27,6 +27,7 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_05_06 JDuplessis
 #       2.1 Change to use sadm_view_file instead of sadm_view_log 
+# 2018_07_21  v2.2 Screen disposition adjustments
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -56,7 +57,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
@@ -80,10 +81,10 @@ function setup_table() {
     echo "<th class='dt-center'>Start Date</th>\n";
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-head-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Elapse</th>\n";
-    echo "<th class='dt-center'>Status</th>\n"; 
-    echo "<th class='dt-center'>History</th>\n"; 
-    echo "<th class='dt-center'>Log</th>\n"; 
+    echo "<th class='dt-head-left'>Elapse</th>\n";
+    echo "<th class='dt-head-left'>Status</th>\n"; 
+    echo "<th class='dt-head-left'>History</th>\n"; 
+    echo "<th class='dt-head-left'>Log</th>\n"; 
     echo "</tr>\n";
     echo "</thead>\n";
 
@@ -95,10 +96,10 @@ function setup_table() {
     echo "<th class='dt-center'>Start Date</th>\n";
     echo "<th class='dt-center'>Start Time</th>\n";
     echo "<th class='dt-head-center'>End Time</th>\n";
-    echo "<th class='dt-center'>Elapse</th>\n";
-    echo "<th class='dt-center'>Status</th>\n"; 
-    echo "<th class='dt-center'>History</th>\n"; 
-    echo "<th class='dt-center'>Log</th>\n"; 
+    echo "<th class='dt-head-left'>Elapse</th>\n";
+    echo "<th class='dt-head-left'>Status</th>\n"; 
+    echo "<th class='dt-head-left'>History</th>\n"; 
+    echo "<th class='dt-head-left'>Log</th>\n"; 
     echo "</tr>\n";
     echo "</tfoot>\n";
 
@@ -138,7 +139,7 @@ function display_script_array($con,$wpage_type,$script_array) {
                  "' data-toggle='tooltip' title='" . $wdesc . "'>" . $cserver . "</a></td>";
                  
             # DISPLAY SCRIPT NAME, START DATE, START TIME, END TIME AND ELAPSE SCRIPT TIME ---------
-            echo "\n<td>"  . $cname . "</td>";                          # Server Name Cell
+            echo "\n<td class='dt-left'>"   . $cname   . "</td>";       # Server Name Cell
             echo "\n<td class='dt-center'>" . $cdate1  . "</td>";       # Start Date Cell
             echo "\n<td class='dt-center'>" . $ctime1  . "</td>";       # Start Time Cell
             if ($ccode == 2) {
@@ -146,25 +147,23 @@ function display_script_array($con,$wpage_type,$script_array) {
                 echo "\n<td class='dt-center'>............</td>";       # Running - No Elapse time
             }else{
                 echo "\n<td class='dt-center'>" . $ctime2   . "</td>";  # Script Ending Time
-                echo "\n<td>" . $celapsed . "</td>";                    # Script Elapse Time
+                echo "\n<td class='dt-left'>"   . $celapsed . "</td>";  # Script Elapse Time
             }
             
             # DISPLAY THE SCRIPT STATUS BASED ON RETURN CODE ---------------------------------------
+            echo "\n<td class='dt-left'><strong>";
             switch ($ccode) {
                 case 0:  
-                    echo "\n<td class='dt-center'><strong>";
                     echo "<font color='black'>Success</font></strong></td>";
                     break;
                 case 1:  
-                    echo "\n<td class='dt-center'><strong>";
                     echo "<font color='red'>Failed</font></strong></td>";
                     break;
                 case 2:  
-                    echo "\n<td class='dt-center'><strong>";
                     echo "<font color='green'>Running</font></strong></td>";
                     break;
                 default: 
-                    echo "\n<td class='dt-center'><font color='red'>Code " .$ccode. "</font></td>";
+                    echo "<font color='red'>Code " .$ccode. "</font></td>";
                     break;;
             }
             
