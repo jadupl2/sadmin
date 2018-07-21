@@ -38,6 +38,7 @@
 # 2018_07_08    v3.1 Correct Index Error (due to hostname without domain) when entering Domain Name
 # 2018_07_13    v3.2 Added "SADMIN=..." Line to SADM server/client crontab 
 # 2018_07_15    v3.3 Refuse SADM ServerName if resolve to localhost, Fix Server Crontab,
+# 2018_07_21    v3.4 Remove Some validation of SADMIN Server Name
 # 
 #===================================================================================================
 # 
@@ -54,7 +55,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.3"                                             # Setup Version Number
+sver                = "3.4"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1614,18 +1615,7 @@ def setup_sadmin_config_file(sroot):
             writelog ("*** ERROR ***")
             writelog ("SADMIN server name must be fully qualified, please specify domain name")
             continue                                                    # Go Re-Accept Server Name
-        try :
-            xarray = socket.gethostbyaddr(SADM_IP)                          # Use IP & Get HostName
-        except (socket.gaierror) as error :                             # Unable to get Server IP
-            writelog("Server Name %s isn't valid" % (wcfg_server),'bold')# Advise Invalid Server
-            continue                                                    # Go Re-Accept Server Name
-        yname = socket.getfqdn(xarray[0])                               # Get FQDN of IP
-        if (yname != wcfg_server) :                                     # If HostName != EnteredName
-            writelog("The server %s with ip %s is returning %s" % (wcfg_server,SADM_IP,yname))
-            writelog("FQDN is wrong or the IP doesn't correspond")      # Advise USer 
-            continue                                                    # Return Re-Accept SADMIN
-        else:
-            break                                                       # Ok Name pass the test
+        break                                                           # Ok Name pass the test
     update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)                  # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every log produce
