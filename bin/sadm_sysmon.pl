@@ -20,6 +20,7 @@
 # 2018_07_12    v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
 # 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
 # 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
+# 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
 #===================================================================================================
 #
 use English;
@@ -35,7 +36,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.19";                                       # Version Number
+my $VERSION_NUMBER      = "2.20";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -1158,7 +1159,7 @@ sub run_script {
     #(my $sfile_name, my $sfile_extension) = split /./, $sname ;        # Split name & extension
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
     print "\n\nExecution of script $sname is requested";                # Show User Script Name
-    if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
+    if ($SYSMON_DEBUG >= 5) {                                           # Debug Level 6 Information
         print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
     }
 
@@ -1194,7 +1195,7 @@ sub run_script {
 
     # Execute the script   
     printf "\nRunning script $sname ... ";                              # Print Script Name
-    @args = ("$sname >> ${sfile_name}.log 2>&1");                       # Command to execute
+    @args = ("$sname > ${SADM_SCR_DIR}/${sfile_name}.log 2>&1");        # Command to execute
     system(@args) ;                                                     # Execute the Script
     $src = $? >> 8;                                                     # Return code from script
     printf "\nReturn code is $src";                                     # Print Return Code
