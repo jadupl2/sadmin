@@ -27,6 +27,7 @@
 #   2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
 #   2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
 #   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
+#   2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -62,7 +63,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.15'                              # Current Script Version
+    export SADM_VER='2.16'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -321,9 +322,16 @@ process_servers()
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
     if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug = Write command Line
 
+    # Test Database Connection
+    $SADM_MYSQL $WAUTH -h $SADM_DBHOST -e "show databases;" > /dev/null 2>&1
+    if [ $? -ne 0 ]                                                     # Error Connecting to DB
+        then sadm_writelog "Error connecting to Database"               # Access Denied
+             return 1                                                   # Return Error to Caller
+    fi 
+
     # Execute SQL to Update Server O/S Data
     $SADM_MYSQL $WAUTH -h $SADM_DBHOST $SADM_DBNAME -N -e "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
-
+    
     # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File has zero length?
         then sadm_writelog "No Active $WOSTYPE server were found."      # Not ACtive Server MSG
