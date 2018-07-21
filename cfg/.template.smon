@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------------------------------------
-# v2.3 - SADM System Monitor Configuration file
+# v2.4 - SADM System Monitor Configuration file
 #   The file need to be place in ${SADMIN}/cfg and name `hostname`.smon
 #   This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
 #
@@ -193,10 +193,10 @@
 #
 # ----- Run specific scripts, check return code and issue a warning or error based on threshold
 # Example 
-#script:sysmon_template.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mail sadmin -
+#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mail sadmin -
 #
-# SADMIN Make sure nmon performance collector is running
-script:sadm_nmon_watcher.sh      0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mail sadmin -
+# SADMIN Script Don't remove - This script make sure 'nmon' performance collector is running
+script:swatch_nmon.sh            0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mail sadmin -
 #
 #
 # ----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
