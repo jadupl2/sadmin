@@ -28,6 +28,7 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_02_07  V2.1 Added Performance Link in SideBar
 #   2018_07_09  v2.2 Change SideBar Layout
+#   2018_07_21  v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -41,7 +42,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.3" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -91,25 +92,30 @@ function build_sidebar_scripts_info() {
         # Loop through filename list in the file
         while(! feof($input_fh)) {
             $wfile = trim(fgets($input_fh));                                # Read rch filename line
-            if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Show rch filename in Debug
+            if ($DEBUG) { echo "<br>Processing file :<br>" . $wfile; }      # Debug Show rch filename
             if ($wfile != "") {                                             # If filename not blank
                 $line_array = file($wfile);                                 # Reads entire file in array
                 $last_index = count($line_array) - 1;                       # Get Index of Last line
                 if ($last_index > 0) {                                      # If last Element Exist
                     if ($line_array[$last_index] != "") {                   # If None Blank Last Line
-                        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
-                        $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
-                        if ($DEBUG) {                                       # In Debug Show Output Line
-                            echo "<br>Output line is " . $outline ;         # Print Output Line
-                        }
-                        $count+=1;
-                        # Key is "StartDate + StartTime + FileName"
-                        $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
-                        if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
-                        if (array_key_exists("$akey",$script_array)) {
-                            $script_array[$akey] = $outline . "_" . $count ;
-                        }else{
-                            $script_array[$akey] = $outline ;
+                        $tag = explode(" ",$line_array[$last_index]);
+                        $num_tags = count($tag);
+#                        echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
+                        if ($num_tags == 8) {
+                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
+                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
+                            if ($DEBUG) {                                       # In Debug Show Output Line
+                                echo "<br>Output line is " . $outline ;         # Print Output Line
+                            }
+                            $count+=1;
+                            # Key is "StartDate + StartTime + FileName"
+                            $akey = $cdate1 ."_". $ctime1 ."_". basename($wfile);
+                            if ($DEBUG) {  echo "<br>AKey is " . $akey ;  }      # Print Array Key
+                            if (array_key_exists("$akey",$script_array)) {
+                                $script_array[$akey] = $outline . "_" . $count ;
+                            }else{
+                                $script_array[$akey] = $outline ;
+                            }
                         }
                     }
                 }
