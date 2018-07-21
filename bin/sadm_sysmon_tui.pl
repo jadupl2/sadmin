@@ -13,6 +13,7 @@
 # 2018_06_03    v1.3 Changes made to output format
 # 2018_06_21    v1.4 Added comments
 # 2018_07_19    v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
+# 2018_07_20    v1.6 Delete Work file at the end
 #===================================================================================================
 use English;
 
@@ -24,7 +25,7 @@ my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
 my $SADM_WDATA_DIR      = "${SADM_BASE_DIR}/www/dat";                   # Dir where all *.rpt reside
 $XDISPLAY= "$ENV{'DISPLAY'}";                                           # Variable ENV DIsplay
-$VERSION_NUMBER = "1.5";                                                # SADM Version Number
+$VERSION_NUMBER = "1.6";                                                # SADM Version Number
 $CLEAR=`tput clear`;
 $RPT_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rpt.$$";
 $RCH_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rch.$$";
@@ -69,6 +70,8 @@ sub display_report {
         printf "%-7s %-10s %-9s %-5s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,"Linux","Script",$RDesc;
     }
     close (SADMRCH);
+    unlink($RCH_FILE);
+    unlink($RPT_FILE);
 }
 
 
