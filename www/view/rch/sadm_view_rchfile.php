@@ -26,7 +26,7 @@
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
 #   2018_02_01 J.Duplessis
 #       V2.1 Correct Bug - Not showing last line of RCH when it was a running state (dot Date/Time)
-#
+# 2018_07_21  v2.2 Make screen more compact
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -55,7 +55,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
+$SVER  = "2.2" ;                                                        # Current version number
 
 
 # ==================================================================================================
@@ -65,7 +65,7 @@ function setup_table() {
     
     # TABLE CREATION
     echo "\n<div id='SimpleTable'>";                                      # Width Given to Table
-    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='98%'>";
+    echo "\n<table id='sadmTable' class='display' cell-border compact row-border wrap width='80%'>";
     
     # PAGE TABLE HEADING 
     echo "\n<thead>";
