@@ -33,6 +33,7 @@
 # 2018_06_04  V2.5 Change $SADMIN/jac/bin to $SADM_UBIN_DIR 
 # 2018_07_15  V2.6 Use Client Install Directory Location from Database instead of assuming /sadmin.
 # 2018_07_19  V2.7 Now include Sysmon Template, nmon & service restart (srestart,sh) script
+# 2018_07_21  V2.8 Added swatch_nmon.sh 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
+    export SADM_VER='2.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -291,7 +292,8 @@ process_servers()
               rem_files_to_rsync=( cfg/.template.smon cfg/.release cfg/.sadmin.cfg cfg/.sadmin.rc 
                                    cfg/.sadmin.service 
                                    cfg/.backup_exclude.txt  cfg/.backup_list.txt 
-                                   usr/mon/sadm_nmon_watcher.sh usr/mon/sysmon_template.sh 
+                                   usr/mon/swatch_nmon.sh usr/mon/stemplate.sh 
+                                   usr/mon/swatch_nmon.txt usr/mon/stemplate.txt
                                    usr/mon/srestart.sh ) 
 
               # Rsync local files on client
