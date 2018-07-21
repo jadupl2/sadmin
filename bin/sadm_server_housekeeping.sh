@@ -128,7 +128,7 @@ set_dir()
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
              sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}.${VAL_GROUP}"
-             chown ${VAL_OWNER}.${VAL_GROUP} $VAL_DIR
+             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
@@ -161,8 +161,8 @@ dir_housekeeping()
                 else sadm_writelog "OK"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
-             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -215,8 +215,8 @@ dir_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
 
-             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \;"
-             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}.${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
+             sadm_writelog "find $SADM_WWW_IMG_DIR -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \;"
+             find $SADM_WWW_IMG_DIR  -exec chown -R ${SADM_WWW_USER}:${SADM_WWW_GROUP} {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

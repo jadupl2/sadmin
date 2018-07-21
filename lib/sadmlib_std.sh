@@ -1462,7 +1462,6 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_RRDTOOL" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_RRDTOOL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        #
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1493,7 +1492,6 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        #
         echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1503,7 +1501,6 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_MKSYSB_BACKUP_TO_KEEP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MKSYSB_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        # 
         echo "$wline" |grep -i "^SADM_STORIX_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_STORIX_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1617,61 +1614,61 @@ sadm_start() {
     # If log Directory doesn't exist, create it.
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
     chmod 0775 $SADM_LOG_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_LOG_DIR           
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR           
 
     # If LOG File doesn't exist, Create it and Make it writable 
     [ ! -e "$SADM_LOG" ] && touch $SADM_LOG
     chmod 664 $SADM_LOG
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
 
     # If Email LOG File doesn't exist, Create it and Make it writable 
     rm -f $SADM_ELOG >> /dev/null
     touch $SADM_ELOG
     chmod 664 $SADM_ELOG
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_ELOG}
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
 
     # If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     chmod 1777 $SADM_TMP_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_TMP_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
 
     # If LIB Directory doesn't exist, create it.
     [ ! -d "$SADM_LIB_DIR" ] && mkdir -p $SADM_LIB_DIR
     chmod 0775 $SADM_LIB_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
 
     # If User Directory doesn't exist, create it.
     [ ! -d "$SADM_USR_DIR" ] && mkdir -p $SADM_USR_DIR
     chmod 0775 $SADM_USR_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_LIB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
 
     # If Custom Configuration Directory doesn't exist, create it.
     [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
     chmod 0775 $SADM_CFG_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_CFG_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
 
     # If System Startup/Shutdown Script Directory doesn't exist, create it.
     [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
     chmod 0775 $SADM_SYS_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_SYS_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
 
     # If Documentation Directory doesn't exist, create it.
     [ ! -d "$SADM_DOC_DIR" ] && mkdir -p $SADM_DOC_DIR
     chmod 0775 $SADM_DOC_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DOC_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
 
     # If Data Directory doesn't exist, create it.
     [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
     chmod 0775 $SADM_DAT_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DAT_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
 
     # If Package Directory doesn't exist, create it.
     [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
-    chmod 0775 $SADM_PKG_DIR && chown ${SADM_USER}.${SADM_GROUP} $SADM_PKG_DIR
+    chmod 0775 $SADM_PKG_DIR && chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
 
     # If Setup Directory doesn't exist, create it.
     [ ! -d "$SADM_SETUP_DIR" ] && mkdir -p $SADM_SETUP_DIR
-    chmod 0775 $SADM_SETUP_DIR && chown ${SADM_USER}.${SADM_GROUP} $SADM_SETUP_DIR
+    chmod 0775 $SADM_SETUP_DIR && chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
 
     # If SADM Server Web Site Directory doesn't exist, create it.
     if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
@@ -1711,52 +1708,52 @@ sadm_start() {
     # If NMON Directory doesn't exist, create it.
     [ ! -d "$SADM_NMON_DIR" ] && mkdir -p $SADM_NMON_DIR
     chmod 0775 $SADM_NMON_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_NMON_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
 
     # If Disaster Recovery Information Directory doesn't exist, create it.
     [ ! -d "$SADM_DR_DIR" ] && mkdir -p $SADM_DR_DIR
     chmod 0775 $SADM_DR_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DR_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR
 
     # If Network/Subnet Information Directory doesn't exist, create it.
     [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
     chmod 0775 $SADM_NET_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_NET_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
 
     # If SADM Sysmon Report Directory doesn't exist, create it.
     [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
     chmod 0775 $SADM_RPT_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_RPT_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
 
     # If SADM Database Backup Directory doesn't exist, create it.
     [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
     chmod 0775 $SADM_DBB_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_DBB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR
 
     # If Return Code History Directory doesn't exist, create it.
     [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
     chmod 0775 $SADM_RCH_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_RCH_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
 
     # If User Bin Dir doesn't exist, create it.
     [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
     chmod 0775 $SADM_UBIN_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_UBIN_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR
 
     # If User Lib Dir doesn't exist, create it.
     [ ! -d "$SADM_ULIB_DIR" ] && mkdir -p $SADM_ULIB_DIR
     chmod 0775 $SADM_ULIB_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_ULIB_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR
 
     # If User Doc Directory doesn't exist, create it.
     [ ! -d "$SADM_UDOC_DIR" ] && mkdir -p $SADM_UDOC_DIR
     chmod 0775 $SADM_UDOC_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_UDOC_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR
 
     # If User SysMon Scripts Directory doesn't exist, create it.
     [ ! -d "$SADM_UMON_DIR" ] && mkdir -p $SADM_UMON_DIR
     chmod 0775 $SADM_UMON_DIR
-    chown ${SADM_USER}.${SADM_GROUP} $SADM_UMON_DIR
+    chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
 
     # If user don't want to append to existing log - Clear it - Else we will append to it.
     if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
@@ -1766,7 +1763,7 @@ sadm_start() {
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}            # Assign user/group to RCH
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Assign user/group to RCH
              echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     fi
 
@@ -1844,7 +1841,7 @@ sadm_stop() {
              fi
              sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
              chmod 664 ${SADM_RCHLOG}                                   # Writable by O/G Readable W
-             chown ${SADM_USER}.${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
     fi
 
     # Write email choice in the log footer
@@ -1885,7 +1882,7 @@ sadm_stop() {
     cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Writable by O/G Readable W
-    chown ${SADM_USER}.${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
+    chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}                        # Change RCH file Owner
     
     # Inform UnixAdmin By Email based on his selected choice
     case $SADM_MAIL_TYPE in

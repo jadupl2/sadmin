@@ -199,7 +199,7 @@ update_file()
     if [ ! -d "${ROLLBACK_DIR}/${upddir}" ]                              # RollBack Dir. Not Exist 
         then if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Creating ${ROLLBACK_DIR}/${upddir}" ;fi
              mkdir -p ${ROLLBACK_DIR}/${upddir} > /dev/null 2>&1        # Create it 
-             chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}/${upddir} # Assign Dir. Owner & Group
+             chown ${SADM_USER}:${SADM_GROUP} ${ROLLBACK_DIR}/${upddir} # Assign Dir. Owner & Group
              chmod 775 ${ROLLBACK_DIR}/${upddir}                        # Assign Dir. privilege 
     fi 
 
@@ -217,7 +217,7 @@ update_file()
     if [ ! -d "${SADMIN}/${upddir}" ]                                   # RollBack Dir. Not Exist 
         then if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Creating ${SADMIN}/${upddir}" ; fi
              mkdir -p ${SADMIN}/${upddir} > /dev/null 2>&1              # Create it 
-             chown ${SADM_USER}.${SADM_GROUP} ${SADMIN}/${upddir}       # Assign Dir. Owner & Group
+             chown ${SADM_USER}:${SADM_GROUP} ${SADMIN}/${upddir}       # Assign Dir. Owner & Group
              chmod 775 ${SADMIN}/${upddir}                              # Assign Dir. privilege 
     fi 
 
@@ -273,9 +273,9 @@ main_process()
     if [ ! -d "$ROLLBACK_DIR" ]                                         # Where updated file reside
         then mkdir -p $ROLLBACK_DIR 
              if [ $DEBUG_LEVEL -gt 0 ] 
-                then echo "chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}"
+                then echo "chown ${SADM_USER}:${SADM_GROUP} ${ROLLBACK_DIR}"
              fi 
-             chown ${SADM_USER}.${SADM_GROUP} ${ROLLBACK_DIR}           # Assign Dir. Owner & Group
+             chown ${SADM_USER}:${SADM_GROUP} ${ROLLBACK_DIR}           # Assign Dir. Owner & Group
              chmod 775 ${ROLLBACK_DIR}                                  # Assign Dir. privilege 
     fi      
     sadm_writelog "Rollback Directory is $ROLLBACK_DIR"

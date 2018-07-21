@@ -141,7 +141,7 @@ update_site_conf()
     echo $newline >>$SADM_TMP_FILE2
     cp $SADM_TMP_FILE2 $REAR_CFGFILE
     chmod 644 $REAR_CFGFILE
-    chown root.root $REAR_CFGFILE
+    chown root:root $REAR_CFGFILE
 }
 
 
