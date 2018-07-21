@@ -1,11 +1,11 @@
 #! /bin/sh
 ####################################################################################################
-# Shellscript	:	sadmin.sh
-# Version    	:	2.0
-# Author    	:	J.Duplessis
-# Date      	:	2018-04-01
-# Requires  	:	bash shell
-# Synopsis	:   	This script is executed when users login system wide & when system start 
+# Shellscript   :   sadmin.sh
+# Version       :   2.1
+# Author        :   sadmin.ca
+# Date          :   2018-04-01
+# Requires      :   bash shell
+# Synopsis      :   This script is executed when users login system wide & when system start 
 #                   Do not modify this, it could be overwritten by new release.
 ####################################################################################################
 #
