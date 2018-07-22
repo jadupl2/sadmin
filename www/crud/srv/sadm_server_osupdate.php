@@ -139,7 +139,7 @@ function display_osschedule($con,$wrow,$mode) {
     
 
     # REBOOT AFTER O/S UPDATE (YES/NO) ? -----------------------------------------------------------
-    echo "\n\n<div class='osupdate_label'>Reboot server after the O/S update</div>";
+    echo "\n\n<div class='osupdate_label'>Reboot after O/S update</div>";
     echo "\n<div class='osupdate_input'>";
     if ($mode == 'C') { $wrow['srv_update_reboot'] = False ; }          # Default Value to No Reboot
     switch ($mode) {
@@ -200,7 +200,7 @@ function display_osschedule($con,$wrow,$mode) {
     # ----------------------------------------------------------------------------------------------
     # DATE NUMBER in the month (dom) to Update O/S 
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='osupdate_label'>Date in the month to perform the update</div>";
+    echo "\n\n<div class='osupdate_label'>Date to perform the update</div>";
     echo "\n<div class='osupdate_input'>";
     echo "\n<select name='scr_update_dom[]' multiple='multiple' size=5>";
     switch ($mode) {
