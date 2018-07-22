@@ -29,6 +29,7 @@
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
 # 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
 # 2018_06_25    sadmlib_std.sh  v2.18 Correct problem trying to open DB on client.
+# 2018_07_22    sadmlib_std.sh  v2.19 When using 'writelog' don't print date/time only in log.
 #
 #==================================================================================================
 try :
@@ -100,7 +101,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.18"                                # This Library Version
+        self.libver             = "2.19"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -459,15 +460,15 @@ class sadmtools():
         # Display Line on Screen
         if (self.log_type.upper() == "S") or (self.log_type.upper() == "B") :
             if (stype == "normal") : 
-                print ("%s" % logLine)  
+                print ("%s" % sline)  
             if (stype == "nonl") : 
-                print ("%s" % logLine, end='')
+                print ("%s" % sline, end='')
             if (stype == "bold") : 
                 class color:
                     DARKCYAN    = '\033[36m'
                     BOLD        = '\033[1m'
                     END         = '\033[0m'
-                print ( part1 + color.DARKCYAN + color.BOLD + part2 + color.END)
+                print (color.DARKCYAN + color.BOLD + sline + color.END)
 
 
     # ----------------------------------------------------------------------------------------------
