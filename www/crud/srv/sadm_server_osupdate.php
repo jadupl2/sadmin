@@ -28,6 +28,7 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2017_12_31 - Jacques Duplessis
 #       V2.1 Update O/S Update Page now update the SADM_USER crontab 
+#   2018_07_22  v2.2 After updating a server browser will go back on page ready to edit another one.
 #
 # ==================================================================================================
 #
@@ -88,8 +89,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$SVER  = "2.2" ;                                                        # Current version number
+$URL_MAIN   = '/view/sys/sadm_view_schedule.php';                       # Maintenance Main Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
@@ -406,15 +407,15 @@ function display_osschedule($con,$wrow,$mode) {
         }
         
         # CRONTAB SADMIN UPDATE ON LINUX
-        if ($DEBUG) { sadm_alert ("POST[server_os] = " . $_POST['server_os'])  ;}
-        if ($_POST['server_os'] == "linux") {
-            if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
-            update_crontab (SADM_UPDATE_SCRIPT . $_POST['server_key'],$MODE,$pmonth,$pdom,$pdow, 
-                $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
-        }
+        #if ($DEBUG) { sadm_alert ("POST[server_os] = " . $_POST['server_os'])  ;}
+        #if ($_POST['server_os'] == "linux") {
+        #    if (! $_POST['scr_update_auto']) { $MODE = "D"; }else{ $MODE = "U" ; }
+        #    update_crontab (SADM_UPDATE_SCRIPT . $_POST['server_key'],$MODE,$pmonth,$pdom,$pdow, 
+        #        $_POST['scr_update_hour'], $_POST['scr_update_minute']) ;
+        #}
 
         # Back to Server List Page
-        ?> <script> location.replace("/crud/srv/sadm_server_main.php"); </script><?php
+        ?> <script> location.replace("/view/sys/sadm_view_schedule.php"); </script><?php
         exit;
     }
 
@@ -446,7 +447,7 @@ function display_osschedule($con,$wrow,$mode) {
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
         ?>
-        <script>location.replace("/crud/srv/sadm_server_main.php");</script>
+        <script>location.replace("/view/sys/sadm_view_schedule.php");</script>
         <?php                                                           # Back 2 List Page
         exit ; 
     }
