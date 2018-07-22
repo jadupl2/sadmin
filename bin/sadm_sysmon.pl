@@ -21,6 +21,7 @@
 # 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
 # 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
 # 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
+# 2018_07_22    v2.21 Added Date and Time in mail messages are sent.
 #===================================================================================================
 #
 use English;
@@ -36,7 +37,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.20";                                       # Version Number
+my $VERSION_NUMBER      = "2.21";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -157,10 +158,12 @@ sub load_sadmin_cfg {
 
     # Check if ${SADMIN}/cfg/sadmin.cfg, if not copy ${SADMIN}/cfg/.sadmin.cfg to sadmin.cfg 
     if ( ! -e "$SADMIN_CFG_FILE"  ) {                                   # If sadmin.cfg not exist
-        my $mail_mess1 = "SADMIN configuration file $SADMIN_CFG_FILE for ${HOSTNAME} was not found.\n";
-        my $mail_mess2 = "A new file were created based on the template file ${$SADMIN_STD_FILE}.\n";
+        ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
+        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess1 = "SADMIN configuration file $SADMIN_CFG_FILE for ${HOSTNAME} wasn't found.\n";
+        my $mail_mess2 = "The file was recreated A new file were created based on the template file ${$SADMIN_STD_FILE}.\n";
         my $mail_mess3 = "You need to review it, to reflect your need.\n";
-        my $mail_message = "${mail_mess1}${mail_mess2}${mail_mess3}";
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: WARNING $SADMIN_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
@@ -235,9 +238,11 @@ sub load_smon_file {
     print "\nLoading SysMon configuration file ${SYSMON_CFG_FILE}\n";
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
-        my $mail_mess1 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} was not found.\n";
-        my $mail_mess2 = "A new file were created based on the template file ${SYSMON_STD_FILE}.\n";    
-        my $mail_message = "${mail_mess1}${mail_mess2}";
+        ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
+        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess1 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
+        my $mail_mess2 = "It was recreated based on the template file ${SYSMON_STD_FILE}.\n";    
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}";
         my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
@@ -1471,10 +1476,12 @@ sub write_rpt_file {
         print "\nScript selected for execution $SADM_RECORD->{SADM_SCRIPT}";
         #
         # Mail Message to SysAdmin
-        my $mail_message1 = "Daemon $daemon_name not running on $HOSTNAME\n";
-        my $mail_message2 = "SysMon Executed restart script : $SADM_RECORD->{SADM_SCRIPT}";
-        my $mail_message3 = " to restart the service. \nThis is the first time I am restarting it.";
-        my $mail_message  = "$mail_message1 $mail_message2 $mail_message3";
+        ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
+        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
+        my $mail_mess2 = "SysMon executed the restart script : $SADM_RECORD->{SADM_SCRIPT}.\n";
+        my $mail_mess3 = "This is the first time I am restarting it.";
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         system(@args) ;                                                 # Execute 
