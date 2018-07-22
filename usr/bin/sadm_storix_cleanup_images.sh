@@ -27,7 +27,7 @@
 # 2018_05_20    V1.12 Fix /mnt/storix not unmounting at the end of clean up
 # 2018_06_04    V1.13 Adapt to new SADMIN Libr.
 # 2018_06_12    V1.14 Fix umounting problem with NFS & add List of USB Backup Images before cleanup
-#
+# 2018_07_22    V1.15 Change Message showing number image to keep
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -49,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.14'                              # Current Script Version
+    export SADM_VER='1.15'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -98,7 +98,7 @@ USB_NBCOPY=12                                  ; export USB_NBCOPY      # Nb Ima
 clean_nfs_storix_dir()
 {
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Keep only $NB_COPY copies of Storix images per host"
+    sadm_writelog "Keep $NB_COPY copies of Storix images per host"
 
     # Check if NFS Local mount point exist - If not create it.
     if [ ! -d ${NFS_LOC_MOUNT} ]
@@ -162,7 +162,7 @@ clean_nfs_storix_dir()
 clean_usb_storix_dir()
 {
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Keep only $USB_NBCOPY copies of Storix images on USB Disk"
+    sadm_writelog "Keep $USB_NBCOPY copies of Storix images on USB Disk"
 
     # Check if NFS Local mount point exist - If not create it.
     if [ ! -d ${USB_LOC_MOUNT} ]
