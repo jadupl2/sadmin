@@ -43,7 +43,7 @@
 # 2018_06_14    V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
 # 2018_07_07    V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
 # 2018_07_16    V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
-#
+# 2018_07_24    v2.32 Show Kernel version instead of O/S Codename in log header
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -61,7 +61,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.31"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.32"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1216,7 +1216,8 @@ sadm_get_kernel_bitmode() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_kernel_version() {
     case "$(sadm_get_ostype)" in
-        "LINUX")    wkernel_version=`uname -r | cut -d. -f1-3`
+        "LINUX")    #wkernel_version=`uname -r | cut -d. -f1-3`
+                    wkernel_version=`uname -r`
                     ;;
         "AIX")      wkernel_version=`uname -r`
                     ;;
@@ -1772,7 +1773,7 @@ sadm_start() {
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
-             sadm_writelog "O/S: $(sadm_get_osname) $(sadm_get_osversion) - Code Name: $(sadm_get_oscodename)"
+             sadm_writelog "O/S $(sadm_get_osname) $(sadm_get_osversion) $(sadm_get_kernel_version)"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_writelog " "                                          # Write Blank line
     fi
