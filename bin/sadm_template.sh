@@ -29,16 +29,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2017_07_07    V1.0 Initial Version
-# 2018_02_08    v1.1 Fix compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
-# 2018_05_14    v1.2 Check if root is running script before calling sadm tool library
-# 2018_05_14    v1.3 Add SADM_USE_RCH Variable to use or not the [R]eturn [C]ode [H]istory file
-# 2018_05_15    v1.4 Add SADM_LOG_FOOTER & SADM_LOG_HEADER var. to create or not log header/footer
-# 2018_05_19    v1.5 Make SADMIN Setup a Function, Minor fix and performance issue.
-#               v1.5a Remove SADM_HOSTNAME DEFINITION from script (Done in sadmlib)
-# 2018_05_26    v1.6 Added SADM_EXIT_CODE for User to use
-# 2018_05_27    v1.7 Replace setup_sadmin Function by putting code at the beginning of source.
-# 2018_06_03    v1.8 Small Ameliorations and corrections
+# 2018_MM_DD    V1.0 Initial Version
+#
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -60,13 +52,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='1.0'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
