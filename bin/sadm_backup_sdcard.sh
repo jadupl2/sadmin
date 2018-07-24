@@ -70,7 +70,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    export SADM_MAIL_TYPE=3                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
@@ -91,8 +91,7 @@ CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Curren
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 CUR_DATE=`date "+%C%y_%m_%d"`       ; export CUR_DATE                   # Date Format 2018_05_27 
 LOCAL_MOUNT="/mnt/backup"           ; export LOCAL_MOUNT                # Local NFS Mount Point 
-ARCHIVE_DIR=""                      ; export ARCHIVE_DIR                # Will be filled by Script
-BACKUP_DIR=""                       ; export BACKUP_DIR                 # Will be Final Backup Dir.
+BACKUP_DIR="${LOCAL_MOUNT}/sdcards" ; export BACKUP_DIR                 # Where Backup Will Reside
 
 
 # --------------------------------------------------------------------------------------------------
@@ -106,6 +105,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
+
 show_version()
 {
     printf "\n${SADM_PN} - Version $SADM_VER"
@@ -162,6 +162,45 @@ umount_nfs()
 
 
 
+# --------------------------------------------------------------------------------------------------
+#               Keep only the number of backup copies specied in $SADM_DAILY_BACKUP_TO_KEEP
+# --------------------------------------------------------------------------------------------------
+clean_backup_dir()
+{
+    TOTAL_ERROR=0                                                       # Reset Total of error 
+    sadm_writelog " "                                                   # Blank Line in Log
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 10 Equal Char.
+    sadm_writelog "Applying chosen policy to ${BACKUP_DIR} directory"   # Msg to user
+    CUR_PWD=`pwd`                                                       # Save Current Working Dir.
+
+    # Enter Server Backup Directory
+    # May need to delete some backup if more than $SADM_REAR_BACKUP_TO_KEEP copies
+    cd ${BACKUP_DIR}                                                    # Change Dir. To Backup Dir.
+
+    # List Current backup days we have and Count Nb. how many we need to delete
+    sadm_writelog "List of image(s) currently on disk:"
+    ls -1 ${HOSTNAME}* |sort -r |while read ln ;do sadm_writelog "$ln" ;done
+    backup_count=`ls -1 ${HOSTNAME}* |sort -r |wc -l`                   # Calc. Nb. Days of backup
+    day2del=$(($backup_count-$SADM_REAR_BACKUP_TO_KEEP))                # Calc. Nb. Days to remove
+    sadm_writelog "Keep last $SADM_REAR_BACKUP_TO_KEEP SD Card images." # Show How many to keep
+    sadm_writelog "We now have $backup_count copies."                   # Show Nb. image on disk
+
+    # If current number of backup days on disk is greater than nb. of backup to keep, then cleanup.
+    if [ "$backup_count" -gt "$SADM_REAR_BACKUP_TO_KEEP" ] 
+        then sadm_writelog "So we need to delete $day2del image(s)." 
+             ls -1 ${HOSTNAME}* |sort -r |tail -$day2del > $SADM_TMP_FILE3
+             #cat $SADM_TMP_FILE3 |while read ln ;do sadm_writelog "Deleting $ln" ;rm -fr ${ln}* ;done
+             cat $SADM_TMP_FILE3 |while read ln ;do sadm_writelog "Deleting $ln" ;done
+             sadm_writelog " "
+             sadm_writelog "List of image(s) currently on disk:"
+             ls -1 ${HOSTNAME}* |sort -r |while read ln ;do sadm_writelog "$ln" ;done
+        else sadm_writelog "No clean up needed"
+    fi 
+    
+    cd $CUR_PWD                                                         # Restore Previous Cur Dir.
+    return 0                                                            # Return to caller
+}
+
 
 #===================================================================================================
 # Script Main Processing Function
@@ -171,10 +210,9 @@ main_process()
     sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
     mount_nfs                                                           # Mount NFS Drive
     
-    BASE_DIR="${LOCAL_MOUNT}/sdcards"                                   # Where Backup Will Reside
-    mkdir -p $BASE_DIR >/dev/null 2>&1                                  # Make Sure Dest. Dir Exist
+    mkdir -p $BACKUP_DIR >/dev/null 2>&1                                # Make Sure Dest. Dir Exist
     TIME_STAMP=`date "+%C%y_%m_%d"`                                     # Current Date 
-    BACK_FILE="${BASE_DIR}/${HOSTNAME}_${TIME_STAMP}.img.gz"            # Final gz Image file name
+    BACK_FILE="${BACKUP_DIR}/${HOSTNAME}_${TIME_STAMP}.img.gz"          # Final gz Image file name
     sadm_writelog " "                                                   # Space Line
     sadm_writelog "dd bs=4M if=/dev/mmcblk0 | gzip > $BACK_FILE"        # Show Using Command
     dd bs=4M if=/dev/mmcblk0 | gzip > $BACK_FILE                        # Execute DD Command
@@ -184,10 +222,10 @@ main_process()
         else MESS="[SUCCESS] Creating Backup $BACK_FILE"                # Advise Backup Success
     fi
     sadm_writelog "$MESS"                                               # Advise User - Log Info
-
     # To restore, pipe the output of gunzip to dd:
     # gunzip --stdout raspbian.img.gz | sudo dd bs=4M of=/dev/sdb
 
+    clean_backup_dir                                                    # Keep nb of images choosen
     umount_nfs                                                          # Unmount NFS Drive
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
