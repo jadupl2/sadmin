@@ -1773,7 +1773,7 @@ sadm_start() {
         then sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
-             sadm_writelog "O/S $(sadm_get_osname) $(sadm_get_osversion) $(sadm_get_kernel_version)"
+             sadm_writelog "$(sadm_get_osname) $(sadm_get_osversion) Kernel $(sadm_get_kernel_version)"
              sadm_writelog "${SADM_FIFTY_DASH}"                         # Write 50 Dashes Line
              sadm_writelog " "                                          # Write Blank line
     fi
