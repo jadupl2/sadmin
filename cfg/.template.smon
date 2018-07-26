@@ -220,15 +220,11 @@ service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 2018
 # ----- Check Linux Multipath Status (0=Error 1=All path(s) are Online/Ready)
 check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
 #
-# ----- Test http access to web site(s) below (0=ok 1=Error)
-http_www.linternux.com           0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
-http_www.sadmin.ca               0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
-#
 # Ping server (Return 0=Ok 1=Error) Line below raise a Warning if site doesn't respond to ping.
-ping_www.google.com              0  >  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
+ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
-ping_www.ibm.com                 0  >  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
+ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mail sadmin -
 #
 #
 #
