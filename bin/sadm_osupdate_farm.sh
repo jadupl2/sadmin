@@ -64,7 +64,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
