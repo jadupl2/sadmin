@@ -480,15 +480,15 @@ main_process()
     # COPY SYSTEM MONITOR SCRIPT TEMPLATE, NMON MONITOR and Service Retart Script ------------------
     sadm_writelog " "
     sadm_writelog "Copy SysMon Script Template to ${PSMON}"
-    run_oscommand "cp ${SADM_UMON_DIR}/sysmon_template.sh ${PSMON}"
-    run_oscommand "chmod 775 ${PSMON}/sysmon_template.sh"
-    run_oscommand "chown sadmin.sadmin ${PSMON}/sysmon_template.sh"
+    run_oscommand "cp ${SADM_UMON_DIR}/stemplate.sh ${PSMON}"
+    run_oscommand "chmod 775 ${PSMON}/stemplate.sh"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/stemplate.sh"
     #
     sadm_writelog " "
     sadm_writelog "Copy NMON Watcher to ${PSMON}"
-    run_oscommand "cp ${SADM_UMON_DIR}/sadm_nmon_watcher.sh ${PSMON}"
-    run_oscommand "chmod 775 ${PSMON}/sadm_nmon_watcher.sh"
-    run_oscommand "chown sadmin.sadmin ${PSMON}/sadm_nmon_watcher.sh"
+    run_oscommand "cp ${SADM_UMON_DIR}/swatch_nmon.sh ${PSMON}"
+    run_oscommand "chmod 775 ${PSMON}/swatch_nmon.sh"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/swatch_nmon.sh"
     #
     sadm_writelog " "
     sadm_writelog "Copy Service Restart to ${PSMON}"
