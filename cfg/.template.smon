@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------------------------------------
-# v2.4 - SADM System Monitor Configuration file
+# v2.5 - SADM System Monitor Configuration file
 #   The file need to be place in ${SADMIN}/cfg and name `hostname`.smon
 #   This file is read and updated by SADMIN System Monitor (sadm_sysmon.pl) every time it run.
 #
@@ -176,9 +176,9 @@
 #                       If it used by sysmon when condition are related to time period.
 #                       You don't need to change this field, sysmon take care of it.
 #---------------------------------------------------------------------------------------------------
-#  J    Group Name      Group name to Advise (Slack Channel Name - Futur Version)
+#  J    Group Name      Group name to Advise (Slack Channel Name, Futur Version) Not used for moment
 #---------------------------------------------------------------------------------------------------
-#  K    Email Group     Email Group Name 
+#  K    Email Group     Email Group Name - For now will send to SADMIN Admin Email
 #---------------------------------------------------------------------------------------------------
 #  L    Script Name     Never use by sysmon if it's blank or contain '-'.
 #                       When the line is evaluated and it turn out to be in error, if you put a
