@@ -28,6 +28,7 @@
 #   2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
 #   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
 #   2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
+#   2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -63,7 +64,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.16'                              # Current Script Version
+    export SADM_VER='2.17'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -244,8 +245,10 @@ update_crontab ()
     
     
     # Add User, script name and script parameter to crontab line -----------------------------------
-    # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN
-    cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
+    # $SADM_TMP_DIR
+    #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_CRON_FILE                                    # Output Line to Crontab cfg
@@ -305,7 +308,7 @@ process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix or linux
     sadm_writelog " "
-    sadm_writelog "Processing active '$WOSTYPE' server(s)"                # Display/Log O/S type
+    sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
     sadm_writelog " "
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
