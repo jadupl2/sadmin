@@ -7,7 +7,7 @@
     echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
     echo "\n<div id='sadmEnteteLine1'>              <!-- Start Of sadmEnteteLine1 -->\n";
     echo "\n    <div id='sadmLogo'><a href='/index.php'>";
-    echo "           <img width=48 height=48 src=/images/sadmin_logo.png></a>";
+    echo "           <img width=64 height=64 src=/images/sadmin_logo3.png></a>";
     echo "</div>";
     echo "\n    <div id='sadmEntete1L'>SADMIN Control Center</div>";
     echo "\n    <div id='sadmEntete1R'>The Unix Servers Farm Control Environment - Release " .SADM_VERSION."</div>"; 
