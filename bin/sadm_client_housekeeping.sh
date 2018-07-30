@@ -24,6 +24,7 @@
 # 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
 # 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
 # 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
+#@2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -46,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.14'                              # Current Script Version
+    export SADM_VER='1.15'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -282,23 +283,48 @@ file_housekeeping()
     sadm_writelog "${SADM_TEN_DASH}"
 
 
-    # Remove files that shopuld be there (Only the SADMIN Server not the client)
+    # Remove files that should only be there on the SADMIN Server not the client.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
        then sadm_writelog "Remove useless files on client"
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             afile="$SADM_CFG_DIR/.dbpass"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/holmes.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
     fi
 
-    if [ -f $SADM_WWW_LIB_DIR/.crontab.txt ] 
-        then sadm_writelog "chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt" 
-             chmod 0644 $SADM_WWW_LIB_DIR/.crontab.txt
-             lsline=`ls -l $SADM_WWW_LIB_DIR/.crontab.txt` 
+    # Make sure crontab for SADMIN client have proper permission and owner
+    afile="/etc/cron.d/sadm_client"
+    if [ -f "$afile" ] 
+        then sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
              sadm_writelog "$lsline" 
     fi
+
+    # Make sure crontab for SADMIN server have proper permission and owner
+    afile="/etc/cron.d/sadm_server"
+    if [ -f "$afile" ] 
+        then sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline" 
+    fi
+
+    # Make sure crontab for O/S Update have proper permission and owner
+    afile="/etc/cron.d/sadm_osupdate"
+    if [ -f "$afile" ] 
+        then sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline" 
+    fi
+
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
