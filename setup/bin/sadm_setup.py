@@ -39,7 +39,8 @@
 # 2018_07_13    v3.2 Added "SADMIN=..." Line to SADM server/client crontab 
 # 2018_07_15    v3.3 Refuse SADM ServerName if resolve to localhost, Fix Server Crontab,
 # 2018_07_21    v3.4 Remove Some validation of SADMIN Server Name
-# 
+#@2018_07_30    v3.5 Add line 'Defaults !requiretty' to sudo file,so script can use sudo in crontab.
+#
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -55,7 +56,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.4"                                             # Setup Version Number
+sver                = "3.5"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -506,6 +507,7 @@ def update_sudo_file(logfile) :
         writelog("Error Opening %s file" % (sudofile),'bold')           # Advise Usr couldn't create
         writelog("Could not adjust 'sudo' configuration")               # Sudo file not updated
         sys.exit(1) 
+    hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
     hsudo.write ('Defaults  env_keep += "SADMIN"')                      # Keep Env. Var. SADMIN 
     hsudo.write ("\nsadmin ALL=(ALL) NOPASSWD: ALL\n")                  # No Passwd for SADMIN
     hsudo.close                                                         # Close SADMIN sudo  file
