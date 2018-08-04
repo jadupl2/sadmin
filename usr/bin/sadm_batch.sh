@@ -219,8 +219,12 @@ process_servers()
         fi
 
         # PROCESSING CAN BE PUT HERE
-        echo "$SADM_SSH_CMD $fqdn_server \"rm -f ${server_rootdir}/cfg/${server_name}.smon\""
-        $SADM_SSH_CMD $fqdn_server "rm -f ${server_rootdir}/cfg/${server_name}.smon"
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
+            then echo "$SADM_SSH_CMD $fqdn_server \"rm -f ${server_rootdir}/cfg/${server_name}.smon\""
+                 $SADM_SSH_CMD $fqdn_server "rm -f ${server_rootdir}/cfg/${server_name}.smon"
+                 echo "$SADM_SSH_CMD $fqdn_server \"rm -f ${server_rootdir}/cfg/sadmin.cfg\""
+                 $SADM_SSH_CMD $fqdn_server "rm -f ${server_rootdir}/cfg/sadmin.cfg"
+        fi
         done < $SADM_TMP_FILE1
     return $ERROR_COUNT                                                 # Return Err Count to caller
 }
