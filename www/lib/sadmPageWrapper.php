@@ -4,18 +4,57 @@
 
     echo "\n<div id='sadmWrapper'>                  <!-- Start Of sadmWrapper -->\n";
 
-    echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
-    echo "\n<div id='sadmEnteteLine1'>              <!-- Start Of sadmEnteteLine1 -->\n";
-    echo "\n    <div id='sadmLogo'><a href='/index.php'>";
-    echo "           <img width=64 height=64 src=/images/sadmin_logo3.png></a>";
-    echo "</div>";
-    echo "\n    <div id='sadmEntete1L'>SADMIN Control Center</div>";
-    echo "\n    <div id='sadmEntete1R'>The Unix Servers Farm Control Environment - Release " .SADM_VERSION."</div>"; 
-    echo "\n    <div id='sadmEntete1C'> - " . SADM_CIE_NAME . "</div>";
-    echo "\n</div>                                  <!-- End Of sadmEnteteLine1 -->\n";
-    echo "\n    <div style='clear: both;'> </div>";
-    echo "\n</div>                                  <!-- End of sadmHeader -->\n\n";
+    // echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
+    // echo "\n<div id='sadmEnteteLine1'>              <!-- Start Of sadmEnteteLine1 -->\n";
+    // echo "\n    <div id='sadmLogo'><a href='/index.php'>";
+    // echo "           <img width=64 height=64 src=/images/sadmin_logo3.png></a>";
+    // echo "</div>";
+    // echo "\n    <div id='sadmEntete1L'>SADMIN Control Center</div>";
+    // echo "\n    <div id='sadmEntete1R'>The Unix Servers Farm Control Environment - Release " .SADM_VERSION."</div>"; 
+    // echo "\n    <div id='sadmEntete1C'> - " . SADM_CIE_NAME . "</div>";
+    // echo "\n</div>                                  <!-- End Of sadmEnteteLine1 -->\n";
+    // echo "\n    <div style='clear: both;'> </div>";
+    // echo "\n</div>                                  <!-- End of sadmHeader -->\n\n";
 
+    echo "\n<div id='sadmHeader'>                   <!-- Start Of sadmHeader  -->";
+    ?>
+
+
+    <center>
+    <table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="5" width=90% >
+    <tr>
+        <td bgcolor="#124f44" rowspan="2" align="center" valign="middle">
+            <img width=64 height=64 src=/images/sadmin_logo3.png>
+        </td>
+        <!-- <td bgcolor="#124f44" align="left">
+            <font size="6"><font color="#f8debd"><strong>SADMIN</strong></font>
+        </td>  -->
+        <td bgcolor="#124f44" align="left">
+            <img width=175 height=30 src=/images/sadmin_text.png>
+        </td> 
+        <td bgcolor="#124f44" align="right">
+            <font size="2"><font color="#f8debd"><strong>
+            <?php echo "Release "  . SADM_VERSION ?>
+            </strong></font>
+        </td> 
+        <!-- <td  bgcolor="#124f44"><img src=/img/test.png></td> -->
+    </tr>
+    <tr>
+        <td bgcolor="#124f44" align="left">
+            <font size="5"><font color="white"><strong>Linux System ADMINistrator Tools</font></strong>
+        </td>
+        <td bgcolor="#124f44" align="right">
+            <font size="2"><font color="#f8debd"><strong>
+            <?php echo SADM_CIE_NAME ?>
+            </strong></font>
+        </td> 
+    </tr>
+    </table>
+    </center>
+
+
+<?php
+    echo "\n</div>                                  <!-- End of sadmHeader -->\n\n";
     # ----------------------------------------------------------------------------------------------
     # HEADING MENU LINE 
     # ----------------------------------------------------------------------------------------------

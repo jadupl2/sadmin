@@ -49,12 +49,12 @@ table {
     font-family     :   'Arial';
     border-collapse :   collapse;
     width           :   90%;
-    border          :   1px solid #eee;
+    /* border          :   1px solid #eee;
     border-bottom   :   2px solid #00cccc;
     box-shadow      :   0px 0px 20px rgba(0,0,0,0.10),
                         0px 10px 20px rgba(0,0,0,0.05),
                         0px 20px 20px rgba(0,0,0,0.05),
-                        0px 30px 20px rgba(0,0,0,0.05);
+                        0px 30px 20px rgba(0,0,0,0.05); */
     /* border: medium solid #6495ed; */
 }
 /* Table Row BackupGround */
@@ -75,8 +75,8 @@ th {
 td {
     font-family     :   arial;
     padding         :   1px;
-    text-align      :   left;
-    background-color:    #ffffff;
+    /* text-align      :   left; */
+    /* background-color:    #ffffff; */
     /* font-family: monospace; */
     /* border: thin solid #6495ed; */
 }
