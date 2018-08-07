@@ -117,53 +117,6 @@ td {
     /* height          :   120px;
     padding         :   1px 1px 1px 5px; */
 }
-/* SADMIN LOGO IMAGE PLACEMENT */
-#sadmLogo {
-    float           :   left;
-    padding         :   10px;
-}
-
-/* Page Heading Line 1 */
-#sadmEnteteLine1{
-    #clear           :   both;
-    #line-height     :   1.0;
-    padding         :   1px;
-}
-/* Page Heading Line 1 - Left of Line */
-#sadmEntete1L {
-    font-family     :   Verdana, Geneva, sans-serif;
-    float           :   left;
-    padding         :   5px;
-    color           :   #FFFFFF;
-    font-size       :   20px;
-    text-decoration :   none;
-	font-weight     :   bold;
-    /* font-size: x-large; */
-    /* color : white; */
-}
-/* Page Heading Line 1 - Right of Line */
-#sadmEntete1R {
-    font-family     :   Verdana, Monaco, monospace;
-    float           :   right;
-    color           :   #FF9800;
-    padding         :   5px;
-    font-size       :   14px;
-    font-weight     :   bold;
-    /* text-align: right; */
-    /* color : #9B869C; */
-    /* display: block; */
-}
-/* Page Heading Line 1 - Company Name */
-#sadmEntete1C{
-    font-family     :   Verdana, Geneva, sans-serif;
-    float           :   left;
-    padding         :   5px;
-    color           :   #7bff00;
-    font-size       :   20px;
-    text-decoration :   none;
-	font-weight     :   bold;
-    /* font-size: x-large; */
-}
 
 
 /* ---------------------------------------------------------------------------------------------- */
