@@ -326,7 +326,7 @@ function display_png ($WHOST,$WTYPE,$WPERIOD,$WCOUNT,$DEBUG) {
     }
 
     # Display Standard Page Heading ----------------------------------------------------------------
-    $TITRE = "Graph for all servers v${SVER} - $WTITLE"; 
+    $TITRE = "Graph for all servers v${SVER} - ${WTITLE}"; 
     display_std_heading("NotHome","$TITRE","","",""); 
 
     # Display This page heading --------------------------------------------------------------------

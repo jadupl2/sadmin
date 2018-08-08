@@ -676,7 +676,7 @@ function display_graph ($WHOST,$WDESC,$WTYPE,$DEBUG)
 
     
     # Display Standard Page Heading ----------------------------------------------------------------
-    display_std_heading("NotHome","Server Summary Graph","","","v{$SVER}"); 
+    display_std_heading("NotHome","Server Summary Graph","","","{$SVER}"); 
 
     # Specific Page Heading for Server
     echo "<center><strong><H2>";

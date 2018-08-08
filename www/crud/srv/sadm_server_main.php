@@ -38,7 +38,7 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, ,100, "All"]],
+            "lengthMenu": [[12, 25, 50, 100, -1], [12, 25, 50, ,100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
