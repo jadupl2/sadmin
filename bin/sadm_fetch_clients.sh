@@ -29,6 +29,7 @@
 #   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
 #   2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
 #   2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
+#@  2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -64,7 +65,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.17'                              # Current Script Version
+    export SADM_VER='2.18'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -372,19 +373,6 @@ process_servers()
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
         sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
 
-        # IN DEBUG MODE - SHOW IF SERVER MONITORING AND SPORADIC OPTIONS ARE ON/OFF
-        if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
-           then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
-                      then sadm_writelog "Monitoring is ON for $fqdn_server"
-                      else sadm_writelog "Monitoring is OFF for $fqdn_server"
-                fi
-                if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
-                      then sadm_writelog "Sporadic server is ON for $fqdn_server"
-                      else sadm_writelog "Sporadic server is OFF for $fqdn_server"
-                fi
-                sadm_writelog "SADMIN root directory on $fqdn_server is $server_dir"
-        fi
-
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
         if ! host  $fqdn_server >/dev/null 2>&1
            then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
@@ -397,6 +385,11 @@ process_servers()
                 continue                                                # skip this server
         fi
 
+        # Create Crontab Entry for this server in crontab work file
+        if [ "$db_updauto" -eq 1 ]                                      # If O/S Update Scheduled
+            then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+        fi
+        
         # TEST SSH TO SERVER
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server for date
@@ -467,10 +460,7 @@ process_servers()
                 sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT" # Show Err. Count
         fi
               
-        # Create Crontab Entry for this server in crontab work file
-        if [ "$db_updauto" -eq 1 ] 
-            then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
-        fi
+
         done < $SADM_TMP_FILE1
 
     sadm_writelog " "                                                   # Separation Blank Line
