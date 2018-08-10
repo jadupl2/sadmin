@@ -26,12 +26,11 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_03_30 JDuplessisBug Fixes
-#   V1.0 Initial Version
-# 2018_04_04 JDuplessis
-#   V1.1 Bug Fixes
-# 2018_04_27 JDuplessis
-#   V1.2 Change Default Shell to Bash for running this script
+#   2018_03_30 v1.0 Initial Version
+#   2018_04_04 V1.1 Bug Fixes
+#   2018_04_27 V1.2 Change Default Shell to Bash for running this script
+#@  2018_08_10 v1.3 Remove Version Restriction and added /etc/environment printing.
+#
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -40,21 +39,17 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='1.2'                              ; export SADM_VER           # Your Script Version
+SADM_VER='1.3'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
 SADM_TPID="$$"                              ; export SADM_TPID          # Script PID
 SADM_EXIT_CODE=0                            ; export SADM_EXIT_CODE     # Script Exit Return Code
+DASH_LINE=`printf %100s |tr " " "="`        ; export DASH_LINE          # 100 equals sign line
 
 # SADMIN Base Dir. 
-SDIR=`grep "^SADMIN=" /etc/profile.d/sadmin.sh| awk -F= '{ print $2 }'` ; export SDIR 
+SDIR=`grep "^SADMIN=" /etc/environment| awk -F= '{ print $2 }'` ; export SDIR 
 SLOG="${SDIR}/log/${SADM_HOSTNAME}_${SADM_INST}.log" ; export SLOG      # Script resulting log
-
-# Display OS Name and Version
-tput clear 
-#echo "---------------------------------------------------------------------------"| tee -a $SLOG
-#echo "SADMIN $SADM_PN - Version $SADM_VER" | tee -a $SLOG
 
 
 # Only Supported on Linux
@@ -68,7 +63,8 @@ fi
 SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`
 if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
 if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
-SADM_OSVERSION=`lsb_release -sr | awk -F. '{ print $1 }'| tr -d ' '`    # Use lsb_release to Get Ver
+SADM_OSMAJORVERSION=`lsb_release -sr |awk -F. '{ print $1 }'|tr -d ' '` # O/S Major Version No.
+SADM_OSVERSION=`lsb_release -sr`                                        # Full Version Number
 
 
 #===================================================================================================
@@ -77,15 +73,28 @@ SADM_OSVERSION=`lsb_release -sr | awk -F. '{ print $1 }'| tr -d ' '`    # Use ls
 print_file()
 {
     wfile=$1
-    if [ ! -r $wfile ] ; then return 1 ; fi 
+    if [ ! -r $wfile ] 
+        then    echo " " >> $SLOG
+                echo " " >> $SLOG
+                echo " " >> $SLOG
+                echo "[ ERROR ] $wfile was not found ..." | tee -a $SLOG
+                echo " " >> $SLOG
+                echo " " >> $SLOG
+                echo " " >> $SLOG
+                return 1 
+    fi 
 
-    echo "Adding $wfile to $SLOG ..."
+    #echo "Adding $wfile to $SLOG ..."
+    echo "Adding $wfile to support request log ..."
     echo " " >> $SLOG
-    echo " " >> $SLOG
-    echo "---------------------------------------------------------------------------" >>$SLOG
+    echo "$DASH_LINE" >>$SLOG
     echo "Content of $wfile" >> $SLOG
-    echo "--------------------------------------------------------" >> $SLOG
+    echo "$DASH_LINE" >>$SLOG
     cat $wfile >> $SLOG
+    echo " " >> $SLOG
+    echo " " >> $SLOG
+    echo " " >> $SLOG
+    echo " " >> $SLOG
     return 0                                                            # Return No Error to Caller
 }
 
@@ -94,16 +103,18 @@ print_file()
 #===================================================================================================
 main_process()
 {
-    print_file "$SDIR/setup/log/sadm_setup.log"
+    print_file "/etc/environment" 
     print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SDIR/cfg/sadmin.cfg"
     print_file "/etc/sudoers.d/033_sadmin-nopasswd"
     print_file "/etc/cron.d/sadm_server"
     print_file "/etc/cron.d/sadm_client"
+    print_file "/etc/cron.d/sadm_osupdate"
     print_file "/etc/selinux/config"
     print_file "/etc/hosts"
     print_file "/etc/httpd/conf.d/sadmin.conf"
     print_file "$SDIR/log/sadmin_error.log"
+    print_file "$SDIR/setup/log/sadm_setup.log"
     return 0
 }
 
@@ -113,17 +124,17 @@ main_process()
 #                                       Script Start HERE
 #===================================================================================================
 #
+    # Create Log Header
     if [ -f "$SLOG" ] ; then rm -f $SLOG >/dev/null 2>&1 ; fi           # Remove log if exist
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo "SADMIN $SADM_PN - Version $SADM_VER"                                        | tee -a $SLOG
     echo "`date`"                                                                     | tee -a $SLOG
-    echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    echo "System is running $SADM_OSNAME Ver.$SADM_OSVERSION ..."                     | tee -a $SLOG
-    echo "SADMIN Base Directory is $SDIR"                                             | tee -a $SLOG
+    echo "System is running $SADM_OSNAME Ver.$SADM_OSVERSION - Kernel `uname -r` "    | tee -a $SLOG
+    echo "SADMIN Base Directory   : $SDIR"                                            | tee -a $SLOG
+    echo "Name of support request : $SLOG"                                            | tee -a $SLOG  
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     echo " " >> $SLOG
     echo " " >> $SLOG
-
 
     # Script must be run by root
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
@@ -132,25 +143,26 @@ main_process()
              exit 1                                                     # Exit To O/S
     fi
 
-    # Support only Redhat/CentOS or Debian/Ubuntu
-    if [ "${OS_NAME}" == "REDHAT" ] || [ "${OS_NAME}" == "CENTOS" ]
-        then if [ "${SADM_OSVERSION}" -lt "6" ]
-                then echo "Version of ${OS_NAME} is too low - Support Version 6 and up"| tee -a $SLOG
-                     exit 1
-             fi
-    fi 
-    if [ "${OS_NAME}" == "DEBIAN" ] && [ "${SADM_OSVERSION}" -lt "8" ]
-        then echo "Version of ${OS_NAME} is too low - Support Version 8 and up"| tee -a $SLOG
-             exit 1
-    fi 
-    if [ "${OS_NAME}" == "UBUNTU" ] && [ "${SADM_OSVERSION}" -lt "16" ]
-        then echo "Version of ${OS_NAME} is too low - Support Version 16 and up"| tee -a $SLOG
-             exit 1
-    fi 
+    # # Support only Redhat/CentOS Version 6 and above
+    # if [ "${OS_NAME}" == "REDHAT" ] || [ "${OS_NAME}" == "CENTOS" ]
+    #     then if [ "${SADM_OSVERSION}" -lt "6" ]
+    #             then echo "${OS_NAME} version is too low - Support Version 5 and up"| tee -a $SLOG
+    #                  exit 1
+    #          fi
+    # fi 
+    # # Support only Debian 8 and above
+    # if [ "${OS_NAME}" == "DEBIAN" ] && [ "${SADM_OSVERSION}" -lt "8" ]
+    #     then echo "Version of ${OS_NAME} is too low - Support Version 8 and up"| tee -a $SLOG
+    #          exit 1
+    # fi 
+    # if [ "${OS_NAME}" == "UBUNTU" ] && [ "${SADM_OSVERSION}" -lt "16" ]
+    #     then echo "Version of ${OS_NAME} is too low - Support Version 16 and up"| tee -a $SLOG
+    #          exit 1
+    # fi 
 
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
-    echo -e "\nInformation collected\nSend the log ($SLOG) to support@sadmin.ca"
+    echo -e "\nSupport Information collected\nSend the log ($SLOG) to support@sadmin.ca"
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
 
