@@ -248,8 +248,8 @@ update_crontab ()
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
-    #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
-    cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
+    cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_CRON_FILE                                    # Output Line to Crontab cfg
