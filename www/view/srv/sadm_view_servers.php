@@ -26,7 +26,8 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#
+#@ 2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
+
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -55,7 +56,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$WVER  = "2.0" ;                                                        # Current version number
+$WVER  = "2.1" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -82,10 +83,10 @@ function setup_table() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
-    echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
+    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    #echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
     echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
@@ -100,10 +101,10 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
-    echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
+    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
+    #echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
     echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
     echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
     echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
@@ -129,8 +130,11 @@ function display_data($con,$row) {
     echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
     echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
          
+    # Display Server Desc.
+    echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
+
     # Display Server Alert
-    echo "\n<td class='dt-center'>" ."None". "</td>";                   # Display Server Alert
+    #echo "\n<td class='dt-center'>" ."None". "</td>";                   # Display Server Alert
     
     # Display O/S Name
     echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=os";  
@@ -139,9 +143,6 @@ function display_data($con,$row) {
     # Display O/S Version
     echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
     echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
-    
-    # Display Server Desc.
-    echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
     
     # Display Server Category
     echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
