@@ -25,6 +25,7 @@
 # 1.6   Minor Corrections
 # 2018_01_04    V1.7 Use the $SADMIN/cfg/sadmin.cfg NFS Information for mksysb destination
 # 2018_06_02    V1.8 Minor Changes 
+#@2018_06_02    V1.9 Added Command line switch for debug , show version and show help
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -86,6 +87,28 @@ OUTPUT_DIR="${LOCAL_MOUNT}/${SADM_HOSTNAME}"  ;export OUTPUT_DIR        # Where 
 #SADM_MKSYSB_NFS_SERVER         = NFS-FQDN
 #SADM_MKSYSB_NFS_MOUNT_POINT    = NFS-MOUNT-POINT
 #SADM_MKSYSB_BACKUP_TO_KEEP     = MKSYSB-VERSION-TO-KEEP
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
 
 
 # ==================================================================================================
@@ -150,6 +173,32 @@ umount_nfs()
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S with error
     fi
+
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
 
     sadm_start                                                          # Start Using SADM Tools
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
