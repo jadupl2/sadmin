@@ -54,11 +54,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='1.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="N"                             # Generate entry in Return Code History .rch
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -71,11 +71,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    export SADM_MAIL_TYPE=3                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    export SADM_MAIL_TYPE=0                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+    SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1 # Tmp File 1 
+    SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2 # Tmp File 2
+    SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FILE3 # Tmp File 3
 #===================================================================================================
 
 
@@ -91,6 +94,7 @@ CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Curren
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 CUR_DATE=`date "+%C%y_%m_%d"`       ; export CUR_DATE                   # Date Format 2018_05_27 
+
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -118,10 +122,36 @@ show_version()
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
-
-    find /sadmin -type f  -regex  '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \;
-
+    find $SADM_BIN_DIR   -type f -regex '.*\(sh\|pl\|php\|py\)$' -exec grep -H "^#@" {} \;  >$SADM_TMP_FILE1
+    find $SADM_DOC_DIR   -type f -regex '.*\(pdf\|txt\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
+    find $SADM_CFG_DIR   -type f -regex '.*$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
+    find $SADM_LIB_DIR   -type f -regex '.*\(sh\|pl\|php\|py\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
+    find $SADM_SETUP_DIR -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
+    find $SADM_WWW_DIR   -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
+    
+    sed -i 's/\#@//g' $SADM_TMP_FILE1
+    cat $SADM_TMP_FILE1 | while read wline 
+        do
+        PRG=`echo $wline | awk -F: '{ print $1 }'`
+        PNAME=`basename $PRG`
+        PLINE=`echo $wline | awk -F: '{ print $2 }'`
+        PDATE=`echo $PLINE | awk '{ print $1 }' |awk '{$1=$1;print}'`
+        PVER=`echo $PLINE | awk '{ print $2 }'`
+        PNF=`echo $PLINE | awk '{ print NF }'`
+        PCOMMENT=`echo $PLINE | cut -d' ' -f3-$PNF `
+        if [ $DEBUG_LEVEL -gt 0 ] ; then echo -e "\nLigne : $wline" ; fi
+        if [ $DEBUG_LEVEL -gt 3 ]
+            then    echo "PNAME = $PNAME"
+                    echo "PLINE = $PLINE"
+                    echo "PDATE = $PDATE"
+                    echo "PVER = $PVER"
+                    echo "PNF = $PNF"
+                    echo "PCOMMENT = $PCOMMENT"
+        fi
+        printf "\n%-30s %s %-6s %s" "$PNAME" "$PDATE" "$PVER" "$PCOMMENT"  >> $SADM_TMP_FILE2
+        done
+    sort -k2 $SADM_TMP_FILE2 | uniq
+    echo " "
 
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
