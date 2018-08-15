@@ -29,7 +29,7 @@
 #   2018_03_30 v1.0 Initial Version
 #   2018_04_04 V1.1 Bug Fixes
 #   2018_04_27 V1.2 Change Default Shell to Bash for running this script
-#@  2018_08_10 v1.3 Remove Version Restriction and added /etc/environment printing.
+#@  2018_08_10 v1.3 Remove O/S Version Restriction and added /etc/environment printing.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
