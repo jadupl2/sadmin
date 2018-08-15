@@ -21,7 +21,7 @@
 # 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
 # 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
 # 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
-# 2018_07_22    v2.21 Added Date and Time in mail messages are sent.
+#@2018_07_22    v2.21 Added Date and Time in mail messages sent.
 #===================================================================================================
 #
 use English;
@@ -1734,7 +1734,7 @@ sub end_of_sysmon {
         printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line
     }
 }
-
+  
 
 #---------------------------------------------------------------------------------------------------
 # Main Program Start HERE
