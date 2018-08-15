@@ -13,7 +13,7 @@
 # 2018_06_03    v1.3 Changes made to output format
 # 2018_06_21    v1.4 Added comments
 # 2018_07_19    v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
-# 2018_07_20    v1.6 Delete Work file at the end
+#@ 2018_07_20   v1.6 Wasn't Deleting work file at the end
 #===================================================================================================
 use English;
 
