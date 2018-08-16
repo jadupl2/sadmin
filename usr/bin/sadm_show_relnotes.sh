@@ -29,7 +29,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-#@2018_07_16    V1.0 Initial Version
+# 2018_07_16    V1.0 Initial Version
+#@2018_08_16    V1.1 With HTML Output
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.0'                               # Current Script Version
+    export SADM_VER='1.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -129,6 +130,9 @@ main_process()
     find $SADM_SETUP_DIR -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
     find $SADM_WWW_DIR   -type f -regex '.*\(sh\|php\|py\)$' -exec grep -H "^#@" {} \; >>$SADM_TMP_FILE1
     
+    # Prepare HTML Output File
+    printf "\n<center><table>" > $SADM_TMP_FILE3
+    
     sed -i 's/\#@//g' $SADM_TMP_FILE1
     cat $SADM_TMP_FILE1 | while read wline 
         do
@@ -148,10 +152,14 @@ main_process()
                     echo "PNF = $PNF"
                     echo "PCOMMENT = $PCOMMENT"
         fi
-        printf "\n%-30s %s %-6s %s" "$PNAME" "$PDATE" "$PVER" "$PCOMMENT"  >> $SADM_TMP_FILE2
+        printf "\n<br>%-30s %s %-6s %s" "$PNAME" "$PDATE" "$PVER" "$PCOMMENT"  >> $SADM_TMP_FILE2
+#        printf "\n%-30s %-6s %s" "$PNAME" "$PVER" "$PCOMMENT"
+        printf "\n<tr><td>%s</td><td>%s</td><td>%s</td></tr>" "$PNAME" "$PVER" "$PCOMMENT" >> $SADM_TMP_FILE3
         done
     sort -k2 $SADM_TMP_FILE2 | uniq
+    printf "\n</table></center>\n\n" >> $SADM_TMP_FILE3
     echo " "
+    cat $SADM_TMP_FILE3
 
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
 }
