@@ -36,7 +36,7 @@
 # 2018_06_11    V1.7 Change name to sadm_backupsd.sh
 # 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompress backup
 # 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
-# 2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
+#@2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
