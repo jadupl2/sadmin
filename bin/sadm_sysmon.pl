@@ -256,7 +256,7 @@ sub load_smon_file {
     open (SMONFILE,"<$SYSMON_CFG_FILE") or die "Can't open $SYSMON_CFG_FILE: $!\n";
     $widx = 0;                                                          # Array Index
     while ($line = <SMONFILE>) {                                        # Read while end of file
-        next if $line =~ /^#SADMSTAT/ ;                                 # Don't load sysmon statline
+        next if $line =~ /^#SYSMON/ ;                                 # Don't load sysmon statline
         $sysmon_array[$widx++] = $line ;                                # Load Line in Array
         if ($SYSMON_DEBUG >= 6) { print "Line loaded from cfg : $line" ; }
     }
@@ -290,7 +290,7 @@ sub unload_smon_file {
 
     # GET ENDING TIME & WRITE SADM STATISTIC LINE AT THE EOF
     $end_time = time;                                                   # Get current time
-    $xline1 = sprintf ("#SADMSTAT $VERSION_NUMBER $HOSTNAME - ");
+    $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");
     $xline2 = sprintf ("%s" , scalar localtime(time));
     $xline3 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time); 
     printf (SADMTMP "${xline1}${xline2}${xline3}");
@@ -1728,7 +1728,7 @@ sub end_of_sysmon {
     # Print Execution time
     if ($SYSMON_DEBUG >= 5) { 
         $end_time = time;                                                   # Get current time
-        $xline1 = sprintf ("#SADMSTAT $VERSION_NUMBER $HOSTNAME - ");       # Version & Hostname
+        $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
         $xline2 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
         $xline3 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time)); 
         printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line
