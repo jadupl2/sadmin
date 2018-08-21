@@ -32,6 +32,7 @@
 #
 # 2016_05_05    v1.0 Initial Version
 # 2018_06_04    v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
+#@2018_08_21    v1.2 Remove trailing space for data lines.
 #
 # --------------------------------------------------------------------------------------------------
 
@@ -40,7 +41,7 @@
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='1.1'                                       # Current Script Version
+export SADM_VER='1.2'                                       # Current Script Version
 SADM_DASH=`printf %100s |tr " " "="`                        # 100 equals sign line
 DEBUG_LEVEL=0                                               # 0=NoDebug Higher=+Verbose
 file="/tmp/sdf_tmp1.$$"                                     # File Contain Result of df
@@ -54,7 +55,7 @@ export SADM_PN=${0##*/}                                     # Current Script nam
 #===================================================================================================
     
 # Run df command and output to file
-df -ThP --total |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-30s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
+df -ThP --total |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
 
 
 # Work on df result file - getting ready to output
