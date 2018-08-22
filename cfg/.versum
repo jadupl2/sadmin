@@ -1,6 +1,6 @@
 cffa48134c1b7dcbe5c1267d916c37e2  ./bin/sadm_backup.sh
 c0fe7d9db56b81714048611fb6b03b1f  ./bin/sadm_backup_sdcard.sh
-1a1b52ddbc2ce80ecff1bd64eaab6d33  ./bin/sadm_backupdb.sh
+b0c0b5789e86d77dce2409b4422cf198  ./bin/sadm_backupdb.sh
 a7467f74ba2816976582c5c9878e4af2  ./bin/sadm_cfg2html.sh
 3b6443b258826250477ab1d0a5e40b8f  ./bin/sadm_client_housekeeping.sh
 2aca69d4cde1ff6e50d6783cc05d465b  ./bin/sadm_client_sunset.sh
@@ -8,11 +8,11 @@ a7467f74ba2816976582c5c9878e4af2  ./bin/sadm_cfg2html.sh
 633c08ece9c744e8370b2d462d8a0bcc  ./bin/sadm_create_sysinfo.sh
 40bccede0ad8e983799346d0690ab764  ./bin/sadm_daily_farm_fetch.sh
 101e70daef624a74f78883fd64e088d9  ./bin/sadm_database_update.py
-66121c6474910040c705fd833febcf9a  ./bin/sadm_df
+17a202186f780454f55280a303f99d87  ./bin/sadm_df.sh
 36b35685d89c9b30fea3ee761d17efd9  ./bin/sadm_dr_recreatefs.sh
 b4a832f5ed8a5c678c41599bd4bfdcf5  ./bin/sadm_dr_savefs.sh
 256d6c6a5cf7d32d994f401a5921e012  ./bin/sadm_fetch_clients.sh
-6f10ead35a6a75d56cd97c18a79dc58b  ./bin/sadm_fs_incr.sh
+e96b79bf12b1aa41d00bb97449c6bb8b  ./bin/sadm_fs_incr.sh
 323ad9c9a45410c72d867ecb568fa737  ./bin/sadm_nmon_rrd_update.sh
 2a6f461665f68eb24c75dd43ccb09d50  ./bin/sadm_nmon_watcher.log
 bdd0313a7c479e404d668f465f4e09ad  ./bin/sadm_nmon_watcher.sh
@@ -26,8 +26,8 @@ b6b3ecc6931a12b9462c2e556bbe3e81  ./bin/sadm_rch_scr_summary.sh
 eca68e7f3f720dbc8761cd675ad6953e  ./bin/sadm_service_ctrl.sh
 f35944f05f994068971f2f02c34cbf7c  ./bin/sadm_subnet_lookup.py
 b7f75149fb3126faedd92ea7e802448f  ./bin/sadm_support_request.sh
-554fc608368072e8ef2bf6ac33c9dee6  ./bin/sadm_sysmon.pl
-b755367501848b5e294246f9e3368605  ./bin/sadm_sysmon_cli.sh
+26b1315e98118a2fa39925e8a99d8de3  ./bin/sadm_sysmon.pl
+80d9b4cb9ff1e58feff73d72a770772a  ./bin/sadm_sysmon_cli.sh
 5636816219e11e39ac47d2eef6e78807  ./bin/sadm_sysmon_tui.pl
 c9b4a01080d15003ad9f5a8fc03ea8e8  ./bin/sadm_template.py
 086ba8f57b4648655406af57a1db59ab  ./bin/sadm_template.sh
@@ -107,7 +107,7 @@ fcae14350c640cd8f4c6b9f6b9108306  ./sys/sadm_startup.sh
 d3dce3a249b847018cd86c7413f70012  ./lib/sadmlib_fs.sh
 866de0fba62f8169c7a7faaef0aa47a7  ./lib/sadmlib_screen.sh
 6f60517326c5200561f7f62067c234fb  ./lib/sadmlib_std.py
-fe56b854c4eac473266d53dc0e7e2125  ./lib/sadmlib_std.sh
+fbf0b37ccb77169487f0f63aa849d33f  ./lib/sadmlib_std.sh
 f45e7b400c1387e136ae6ebfd21f001b  ./doc/pdf/database/table_content_category.pdf
 2caecdd3e3a2af7c7308146a7a2a8690  ./doc/pdf/database/table_content_group.pdf
 ab93de83af1a97403727525e4fc84705  ./doc/pdf/database/table_content_server.pdf
@@ -118,21 +118,21 @@ a00bff7d0de9623195d73ba5090f687a  ./doc/pdf/database/table_structure_group.pdf
 4b3730dae725ce25041853d679f19f58  ./doc/pdf/sadmlib_demo/sadmlib_std_demo_py.pdf
 ae6667f4dd84ace45e1057b2599fb0b0  ./doc/pdf/sadmlib_demo/sadmlib_std_demo_sh.pdf
 6709342efab4644a0217a37e7314ee5c  ./doc/pdf/ServerInstall.pdf
+1aaf7249ee3f9c5b06b251b319fdfb9c  ./doc/pdf/sadmin_manual.pdf
 a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 882fe1f5f875919251132cebd7c7a367  ./doc/setup examples/setup_debian9.pdf
 9a4ff0116e8a5c1b1cf57870f4e7abf4  ./doc/setup examples/setup_raspbian94_client.pdf
 264e20aa159c47d243123b3cfc14a3e5  ./doc/setup examples/setup_raspbian94_server.pdf
 606be8131928eff6d50b7b31c99e1bce  ./doc/setup examples/setup_ubuntu1804.pdf
-41bb93d9fbffbe97289c13b961900581  ./doc/sadmin_manual.pdf
-54e21726779527316034e3f1afc4fd9b  ./cfg/.release
+65436410281a163adcb07bba8cd27dc2  ./cfg/.release
 1a99d005d557b7012035ac168bfa3975  ./cfg/.sadmin.cfg
 f6cfd24a5d56e99a400fcbc8a1bdc127  ./cfg/.template.smon
 e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 6eac88da5b19b134d75dabe56a3ee0d6  ./cfg/.sadmin.service
 66aa8437dc83ae22dc1e889ec7b40854  ./cfg/.sadmin.rc
-64589f8e1f826a84dba46ba667b4b13c  ./cfg/.version
-0828280c7c83a0415c006f1eb4462f60  ./cfg/.versum
+073001155499040bee78a9e9ab18a299  ./cfg/.version
+6491c9043cc0ed538fa05a98c8cba463  ./cfg/.versum
 531ee68b0054dad5e8827d7ac8d641b9  ./usr/mon/stemplate.sh
 e382e0d018caa016a59a5a856a5ba8a1  ./usr/mon/swatch_nmon.sh
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
@@ -217,13 +217,9 @@ d501493d0842c30c767de249ad27c5be  ./www/images/running2.jpg
 778ce0e55ff5d09ca21d4e8dd290a0a8  ./www/images/sadmin.ca.jpg
 384487bdefb621563893b43098d1d389  ./www/images/sadmin.jpg
 9cfbbd096520d4c83a0c2d6c7e042010  ./www/images/sadmin_head.png
-f5f54cd580192fb6ca4b3d301db7509d  ./www/images/sadmin_logo (copy).png
-d4a417b8835a3ef98af22f916dafee9f  ./www/images/sadmin_logo.png
-dd978bd835013ed4735a115e37007e16  ./www/images/sadmin_logo2.png
-d642947bb0b411cc73248c4c4d94d3e1  ./www/images/sadmin_logo3.png
-6ef8b37a2b07d97c6967d7b57ac5c347  ./www/images/sadmin_logo_part1.png
+6ffee7e7c438bd3680bd5f23ecb0634a  ./www/images/sadmin_logo.png
 407d8f88604e3ffa89b9add1f6d05108  ./www/images/sadmin_text.png
-78e48faddc36e0acff20bd104adafc25  ./www/images/sadmin_text.xcf
+532ea56a9cbd07ca9832b4029b118905  ./www/images/sadmin_text4.png
 ad30d05d7bcdf94da16fa1a5e5930822  ./www/images/suse.png
 f20cb27419ffe003c993c57f4185b6a7  ./www/images/suse_logo.jpg
 f0b8b7ba4ea9b70b4d21ad28f962f0ac  ./www/images/ubuntu.png
@@ -245,7 +241,7 @@ a7aaa651d8d6c306c8b205e45010920b  ./www/lib/sadmInit.php
 082102686651c1b93b9a346d4dfaba7f  ./www/lib/sadmPageFooter.php
 42723945a24528fab1ab25619b21365d  ./www/lib/sadmPageHeader.php
 afc897631727c4819c1995ffbe579652  ./www/lib/sadmPageSideBar.php
-65b1122e9018bf874f76409d32ce91c0  ./www/lib/sadmPageWrapper.php
+ce49f79501b8f25fbc86181b591058cb  ./www/lib/sadmPageWrapper.php
 4ad43b484fbbc672e0ee209b7a34e7eb  ./www/lib/sadmlib_graph.php
 0f59aaf8aaf00ccbc8f43e99f63815a5  ./www/view/log/sadm_view_file.php
 d414bfd6bc7c83a537880b3a0faaa0d9  ./www/view/log/sadm_view_logfile.php
@@ -266,5 +262,5 @@ b3e7a0d731bc6d3e11173a1af88ff5c4  ./www/view/sys/sadm_view_sysmon.php
 48101bbdd897877cc62b8704a293a436  ./www/view/phpinfo.php
 1937060cc3e9b4dba9fa36fc8608cf69  ./www/view/sadm_view_template.php
 4ad7d5df529b5c01c15b7c24426351b1  ./www/index.php
-84dcc94da3adb52b53ae4fa38fe49e5d  ./LICENSE
-1dd236fceeb1dc89df0009c80876ce1e  ./README.md
+d32239bcb673463ab874e80d47fae504  ./LICENSE
+1b7e8318c571718c526d970efa177ca7  ./README.md
