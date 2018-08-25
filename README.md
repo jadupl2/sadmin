@@ -108,11 +108,13 @@ This will make sure "SADMIN" environment variable is define.
 
 
 ## SADMIN Support
-Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your problem or question and sent to support@sadmin.ca. We will get back to you as soon as possible. 
+Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your 
+problem or question and sent to [support@sadmin.ca](mailto:support@sadmin.com).  
+We will get back to you as soon as possible. 
 
 ## Authors
 
-Jacques Duplessis - *Initial work* - [sadmin](https://github.com/jadupl2/sadmin)
+[Jacques Duplessis](mailto:support@sadmin.com) - *Initial work* 
 
 
 ## License
