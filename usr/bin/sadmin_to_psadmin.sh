@@ -36,6 +36,7 @@
 # 2018_06_23    v2.0 Change location of default service file (.sadmin.rc, sadmin.service) to cfg dir.
 # 2018_07_09    v2.1 Copy .version & .versum from psadmin to sadmin at end so git = release version
 # 2018_07_18    v2.2 Copy system monitor script template, nmon monitor & service restart in PSADMIN
+#@2018_08_25    v2.3 Added .gitkeep file to empty directory so they exist in clone image & tgz file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -496,6 +497,17 @@ main_process()
     run_oscommand "chmod 775 ${PSMON}/srestart.sh"
     run_oscommand "chown sadmin.sadmin ${PSMON}/srestart.sh"
     #
+
+    # Touch Empty Directory to Keep
+    touch ${PSADMIN}/usr/bin/.gitkeep
+    touch ${PSADMIN}/usr/doc/.gitkeep
+    touch ${PSADMIN}/usr/lib/.gitkeep
+    touch ${PSADMIN}/dat/.gitkeep
+    touch ${PSADMIN}/tmp/.gitkeep
+    touch ${PSADMIN}/log/.gitkeep
+    touch ${PSADMIN}/dat/nmon/.gitkeep
+    
+
     # COPY .bashrc and .bash_profile file-----------------------------------------------------------
     #
     #sadm_writelog " "
