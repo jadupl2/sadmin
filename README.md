@@ -42,7 +42,7 @@ If you like one these features, then will certainly find a couple of more intere
 
 
 ## SADMIN is working on most popular Linux distributions
-
+****
 * The SADMIN client have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
 * The SADMIN server should work on any Linux distribution but it's only supported on Redhat, CentOS, Fedora and Debian, Ubuntu and Raspbian distribution.
 * In less than 15 minutes, you can install and start using the tools. 
@@ -119,15 +119,16 @@ make sure "SADMIN" environment variable is define.\
 
 
 ## SADMIN Support
+****
 Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your 
 problem or question and sent to <support@sadmin.ca>.\
 We will get back to you as soon as possible. 
 
 ## Authors
-
+****
 [Jacques Duplessis](mailto:support@sadmin.com) - *Initial work*.
 
 
 ## License
-
+****
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
