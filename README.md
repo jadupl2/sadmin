@@ -80,7 +80,7 @@ If you like one these features, then will certainly find a couple of more intere
     Create a filesystem or directory where you want SADMIN to be install
     # mkdir /opt/sadmin
 
-    Copy the latest version of SADMIN file you have downloaded from our download page in '/opt' directory.
+    Copy the latest version of SADMIN file you have downloaded in '/opt' directory.
     # cp sadmin_x.xx_yyyymmdd.tgz /opt
 
     Change directory to '/opt/sadmin' directory
@@ -94,7 +94,7 @@ If you like one these features, then will certainly find a couple of more intere
 
 ```
 
-Setup program will ask questions regarding your environment and store your answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg). This file is used by the web interface, the SADMIN libraries, the scripts you will create and add flexibility to your SADMIN environment. The configuration can be modified afterward if you need to.
+* Setup program will ask questions regarding your environment and store your answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg). This file is used by the web interface, the SADMIN libraries, the scripts you will create and add flexibility to your SADMIN environment. The configuration can be modified afterward if you need to.
 * The setup program can be run more than once, so don't worry if you made a mistake, just run it again.
 * If there are missing packages, the setup program will install them for you.
 * You will be asked what type of installation you want, a 'SADM server' or a 'SADMIN client'.
@@ -112,9 +112,9 @@ Should you ran into problem while installing or running the SADMIN tools, please
 
 ## Authors
 
-Jacques Duplessis - *Initial work* - [sadmin]2(https://github.com/jadupl2/sadmin)
+Jacques Duplessis - *Initial work* - [sadmin](https://github.com/jadupl2/sadmin)
 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
