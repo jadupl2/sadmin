@@ -6,7 +6,7 @@ a7467f74ba2816976582c5c9878e4af2  ./bin/sadm_cfg2html.sh
 2aca69d4cde1ff6e50d6783cc05d465b  ./bin/sadm_client_sunset.sh
 20df6c9489078bc887e967353856d74b  ./bin/sadm_create_mksysb.sh
 633c08ece9c744e8370b2d462d8a0bcc  ./bin/sadm_create_sysinfo.sh
-40bccede0ad8e983799346d0690ab764  ./bin/sadm_daily_farm_fetch.sh
+a2f8ea53e39c115cac14f1995e02b5e2  ./bin/sadm_daily_farm_fetch.sh
 101e70daef624a74f78883fd64e088d9  ./bin/sadm_database_update.py
 17a202186f780454f55280a303f99d87  ./bin/sadm_df.sh
 36b35685d89c9b30fea3ee761d17efd9  ./bin/sadm_dr_recreatefs.sh
@@ -16,9 +16,9 @@ e96b79bf12b1aa41d00bb97449c6bb8b  ./bin/sadm_fs_incr.sh
 323ad9c9a45410c72d867ecb568fa737  ./bin/sadm_nmon_rrd_update.sh
 2a6f461665f68eb24c75dd43ccb09d50  ./bin/sadm_nmon_watcher.log
 bdd0313a7c479e404d668f465f4e09ad  ./bin/sadm_nmon_watcher.sh
-c8ce30d08501a7442036dae22ef86c41  ./bin/sadm_osupdate.sh
+f8a00d633a90386839a180dcd8a550f8  ./bin/sadm_osupdate.sh
 cb22e570708c03ea83ab89e92d08ecf6  ./bin/sadm_osupdate_farm.sh
-b6b3ecc6931a12b9462c2e556bbe3e81  ./bin/sadm_rch_scr_summary.sh
+44c91ccac1e3f3150d87420241bd8871  ./bin/sadm_rch_scr_summary.sh
 1124742b32c0a194bd428954c3ba75e4  ./bin/sadm_rear_backup.sh
 4e8cb7429334c9e36af750977bb878d7  ./bin/sadm_rear_initiator.sh
 2588f7c73da29b7ac1ff6fd37c23cf66  ./bin/sadm_server_housekeeping.sh
@@ -102,6 +102,7 @@ a990da22b13af01793426514a624914a  ./pkg/nmon/rhel/8/64Bits/nmon-16g-3.el7.x86_64
 03c782d95fe2b9cd1f9a74828716da07  ./pkg/nmon/sles/42.3/nmon-16g-26.1.x86_64.rpm
 1ad0b5c765aa9b82f98c3fc9ac27d50c  ./pkg/nmon/ubuntu/16/nmon16g_x86_ubuntu1604
 30d12898a57beec9c3e2073778b6ef24  ./pkg/nmon/ubuntu/18/nmon_16g+debian-3_amd64.deb
+d41d8cd98f00b204e9800998ecf8427e  ./tmp/.gitkeep
 5dfa5e7e5e35ac1f592b21fb3374cab5  ./sys/sadm_shutdown.sh
 fcae14350c640cd8f4c6b9f6b9108306  ./sys/sadm_startup.sh
 d3dce3a249b847018cd86c7413f70012  ./lib/sadmlib_fs.sh
@@ -124,6 +125,7 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 9a4ff0116e8a5c1b1cf57870f4e7abf4  ./doc/setup examples/setup_raspbian94_client.pdf
 264e20aa159c47d243123b3cfc14a3e5  ./doc/setup examples/setup_raspbian94_server.pdf
 606be8131928eff6d50b7b31c99e1bce  ./doc/setup examples/setup_ubuntu1804.pdf
+d41d8cd98f00b204e9800998ecf8427e  ./log/.gitkeep
 65436410281a163adcb07bba8cd27dc2  ./cfg/.release
 1a99d005d557b7012035ac168bfa3975  ./cfg/.sadmin.cfg
 f6cfd24a5d56e99a400fcbc8a1bdc127  ./cfg/.template.smon
@@ -131,11 +133,14 @@ e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 6eac88da5b19b134d75dabe56a3ee0d6  ./cfg/.sadmin.service
 66aa8437dc83ae22dc1e889ec7b40854  ./cfg/.sadmin.rc
-073001155499040bee78a9e9ab18a299  ./cfg/.version
-6491c9043cc0ed538fa05a98c8cba463  ./cfg/.versum
+90131a1198c765298c39d96599776788  ./cfg/.version
+2b4e682feaa175c03da3a1306ffb347f  ./cfg/.versum
+d41d8cd98f00b204e9800998ecf8427e  ./usr/bin/.gitkeep
+d41d8cd98f00b204e9800998ecf8427e  ./usr/lib/.gitkeep
 531ee68b0054dad5e8827d7ac8d641b9  ./usr/mon/stemplate.sh
 e382e0d018caa016a59a5a856a5ba8a1  ./usr/mon/swatch_nmon.sh
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
+d41d8cd98f00b204e9800998ecf8427e  ./usr/doc/.gitkeep
 5ed3bb72515445d833278db5e9e5f4b7  ./setup/etc/sadmin.cnf
 e41041df77dad2bab316af06c450b8cf  ./setup/etc/sadmin.conf
 548ff128ef8e11799ceabe22456d09d3  ./setup/etc/sadmin.sh
@@ -237,8 +242,8 @@ c9f5aeeca3ad37bf2aa006139b935f0a  ./www/js/jquery-3.2.1.min.js
 28e78e8c1897d5a8bcf7e18b2f2ba0b6  ./www/js/jquery.dataTables.js
 114c26084cb472c6a5f8b58908472ad7  ./www/js/jquery.dataTables.min.js
 a7aaa651d8d6c306c8b205e45010920b  ./www/lib/sadmInit.php
-08ebdd383273653574c02ae44139968b  ./www/lib/sadmLib.php
-082102686651c1b93b9a346d4dfaba7f  ./www/lib/sadmPageFooter.php
+8a031035db445f2a887c8f762d61670e  ./www/lib/sadmLib.php
+efc8450724c15eb82d00b66785ff8b51  ./www/lib/sadmPageFooter.php
 42723945a24528fab1ab25619b21365d  ./www/lib/sadmPageHeader.php
 afc897631727c4819c1995ffbe579652  ./www/lib/sadmPageSideBar.php
 ce49f79501b8f25fbc86181b591058cb  ./www/lib/sadmPageWrapper.php
@@ -262,5 +267,7 @@ b3e7a0d731bc6d3e11173a1af88ff5c4  ./www/view/sys/sadm_view_sysmon.php
 48101bbdd897877cc62b8704a293a436  ./www/view/phpinfo.php
 1937060cc3e9b4dba9fa36fc8608cf69  ./www/view/sadm_view_template.php
 4ad7d5df529b5c01c15b7c24426351b1  ./www/index.php
+d41d8cd98f00b204e9800998ecf8427e  ./dat/nmon/.gitkeep
+d41d8cd98f00b204e9800998ecf8427e  ./dat/.gitkeep
 d32239bcb673463ab874e80d47fae504  ./LICENSE
-1b7e8318c571718c526d970efa177ca7  ./README.md
+ba361f781726b6f372278dd40da22d89  ./README.md
