@@ -19,7 +19,8 @@
 #
 # 2015_12_14    V1.0 Initial Version
 # 2018_07_25    v1.1 Modify Look of Email Sent with option -m
-#@2018_07_29    v1.2 Remove utilization of RCH for this interactive script (SADM_USE_RCH="N" )
+# 2018_07_29    v1.2 Remove utilization of RCH for this interactive script (SADM_USE_RCH="N" )
+#@2018_07_29    v1.3 Remove Log Header & Footer, Change Email & Help Format.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -41,11 +42,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.2'                               # Current Script Version
+    export SADM_VER='1.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
 
@@ -78,20 +79,34 @@ line_per_page=20                                ; export line_per_page  # Nb of 
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
 HTML_FILE="${SADM_TMP_DIR}/${SADM_INST}$$.html" ; export HTML_FILE      # HTML File sent to user
+DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N 
-#===================================================================================================
-help()
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo "smon usage : -m Mail report"
-    echo "             -p No pager"
-    echo "             -e Error report only"
-    echo "             -w Watch 1st page in real time"
-    echo "             -s [ServerName]"
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-p   (No pager)"
+    printf "\n\t-e   (Error report only)"
+    printf "\n\t-w   (Watch 1st page in real time)"
+    printf "\n\t-s   ([ServerName])"    
+    printf "\n\t-m   (Mail report)"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
 }
-
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
 
 
 
@@ -228,8 +243,8 @@ main_process()
                          display_heading                                # Clr Screen & Display Head
                          if [ "$xcount" -ne 0 ] ;then xline_count=0 ;fi # Reset Line no on page
                     else if [ "$WATCH" = "ON" ]                         # If No Pager & Watch ON
-                            then echo "This page will refresh every 15 seconds"
-                                 sleep 15                               # Sleep 15 Seconds
+                            then echo "This page will refresh every 60 seconds"
+                                 sleep 60                               # Sleep 60 Seconds
                                  return 0                               # Return to Caller
                          fi
                  fi
@@ -243,9 +258,14 @@ main_process()
     if [ "$MAIL_ONLY" = "ON" ]                                          # If mail Switch is ON
         then echo "#<!DOCTYPE html><html><head><meta charset="utf-8" /><title>" >$HTML_FILE
              echo "</title></head><body><code>" >> $HTML_FILE
-             awk '{ print  }' $SADM_TMP_FILE2 >> $HTML_FILE
+             #awk '{ print  }' $SADM_TMP_FILE2 >> $HTML_FILE
+             cat $SADM_TMP_FILE2 | while read hline
+                do 
+                echo "<br>$hline" >> $HTML_FILE
+                done
              echo "</code></body></html>" >> $HTML_FILE
-             cat $HTML_FILE | mail -s "SADM : Activity Summary Report"  $SADM_MAIL_ADDR
+             #cat $HTML_FILE | mail -s "SADM : Activity Summary Report"  $SADM_MAIL_ADDR
+             mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR $SADM_MAIL_ADDR -s "RCH Summary Report" < $HTML_FILE
              #cat $HTML_FILE | sendmail -t -s "SADM : Activity Summary Report"  $SADM_MAIL_ADDR
 
     fi      
@@ -259,21 +279,13 @@ main_process()
 # --------------------------------------------------------------------------------------------------
 #                       S T A R T     O F    T H E    S C R I P T 
 # --------------------------------------------------------------------------------------------------
-    sadm_start                                                          # Init Env. Dir & RC/Log File
-    
-    # Script can only be run on the sadmin server (files needed for report are ont it)
-    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
-        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             echo "This script can be run only on the SADMIN server (${SADM_SERVER})"
-             echo "Process aborted"                                     # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
+
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
 
     PAGER="ON" ; ERROR_ONLY="OFF" ; MAIL_ONLY="OFF" ; WATCH="OFF"       # Set Switch Default Value
     SERVER_NAME=""                                                      # Set Switch Default Value
-    while getopts "epmhws:" opt ; do                                    # Loop to process Switch
+    while getopts "hvd:epmws:" opt ; do                                 # Loop to process Switch
         case $opt in
             m) MAIL_ONLY="ON"                                           # Output goes to sysadmin
                PAGER="OFF"                                              # Mail need pager to be off
@@ -287,16 +299,39 @@ main_process()
                ;;                                                       # And it's refresh every Min
             p) PAGER="OFF"                                              # Display Continiously    
                ;;                                                       # No stop after each page
-            h) help                                                     # Display Help Usage
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
                ;;
-           \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
-               help                                                     # Display Help Usage
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
-        done                                                            # End of loop
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+    sadm_start                                                          # Init Env. Dir & RC/Log File
+    
+    # Script can only be run on the sadmin server (files needed for report are ont it)
+    if [ "$(sadm_get_hostname).$(sadm_get_domainname)" != "$SADM_SERVER" ]      # Only run on SADMIN Server
+        then sadm_writelog "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             echo "This script can be run only on the SADMIN server (${SADM_SERVER})"
+             echo "Process aborted"                                     # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
 
     # Get the last line of all rch files in $SADMIN/www, sort results and Display them
     if [ "$WATCH" = "ON" ]                                              # If WATCH switch is ON
