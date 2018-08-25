@@ -28,6 +28,8 @@ For more information visit the [SADMIN web site](https://www.sadmin.ca).
     * You control the maximum of lines you want to keep in the RCH file.
     * If you don't want to use the RCH file, you have to option to disable it.
 * With the "srch" command, you can even have a status of all your scripts that ran in your server farm.
+* Use SADMIN wrapper and run your existing using the SADMIN tools
+  * $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh
 * What happen when one your script fail, are you alerted/advised ?
 * In the morning do you have to look in multiple place to check if everything went right last night ?
 * Can you look at performance graph of your servers to see or to justify the cpu utilization increase ?
