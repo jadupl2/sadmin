@@ -37,6 +37,7 @@
 # 2018_06_11    v2.9 Change name for sadm_daily_farm_fetch.sh
 # 2018_06_30    v3.0 Now get /etc/environment from client to know where SADMIN is install for rsync
 # 2018_07_16    v3.1 Remove verbose when doing rsync
+#@2018_08_24    v3.2 If couldn't get /etc/environment from client, change Email format.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -59,7 +60,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.1'                               # Current Script Version
+    export SADM_VER='3.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -238,6 +239,7 @@ process_servers()
                  fi 
             else sadm_writelog "  - [ERROR] Couldn't get /etc/environment on ${server_name}"
                  sadm_writelog "  - Assuming /opt/sadmin" 
+                 sadm_writelog "  - Check SSH Connection to ${server_name}" 
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  RDIR="/opt/sadmin" 
         fi
