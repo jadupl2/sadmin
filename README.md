@@ -10,14 +10,15 @@ For more information visit the [SADMIN web site at <https://www.sadmin.ca>.
 ### **Templates Scripts (Shell and Python)**
 
 * Make a copy of the template script, modify it to your need and enjoy :
-  * All your script log (*.log) will :
-    * Have the same format.
-    * Be recorded in the same location ($SADMIN/log).
+  * All your scripts will have a log.
+    * All your logs will have a standardize name (${HOST}_${SCRIPT}.log) 
+    * All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
+    * They will be recorded in the same location ($SADMIN/log).
     * View-able from a Web Interface.
-    * Look at them from the command line.
-    * You control if you want to append or create a new log at each execution.
+    * View-able from the command line.
+    * Control if you want to append or create a new log at each execution.
     * You decide the maximum of lines you want to keep in the log.
-  * Execution history will be recorded (*.rch file) :
+  * Execution Date/Time, Elapse time and result will be recorded (*.rch file) :
     * Script execution date and time (Start and Ending) will be recorded.
     * Execution elapse time is calculated and included in the history file (*.rch).
     * Script ending status is also recorded (Success, Failed).
@@ -26,7 +27,7 @@ For more information visit the [SADMIN web site at <https://www.sadmin.ca>.
     * You will able to view the History file from the Web Interface.
     * And you can also look at them from the command line.
     * You control the maximum of lines you want to keep in the RCH file.
-    * If you don't want to use the RCH file, you have to option to disable it.
+    * If you don't want to use the RCH file, you have the option to disable it.
 * With the "srch" command, you can even have a status of all your scripts that ran in your server farm.
 * Use SADMIN wrapper and run your existing using the SADMIN tools
   * $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh
@@ -60,10 +61,7 @@ If you like one these features, then will certainly find a couple of more intere
 ```
 
 * You can track the changes by viewing the [Release Archive page](https://www.sadmin.ca/www/archive.php).
-<br/>
-<br/>
-<br/>
-<br/>
+
 
 # Getting Started
 
@@ -99,7 +97,7 @@ If you like one these features, then will certainly find a couple of more intere
     Untar the file
     # tar -xvzf ../sadmin_x.xx_yyyymmdd.tgz
 
-    Run the setup program (CentOS installation example)
+    Run the setup program
     # /opt/sadmin/setup/setup.sh
 
 ```
