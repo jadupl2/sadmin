@@ -391,7 +391,7 @@ mail_report()
     echo -e "\n</table><br><br>"       >> $HTML_FILE
 
     echo -e "</body></html>"       >> $HTML_FILE
-    #mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR $SADM_MAIL_ADDR -s "Daily Summary Report" < $HTML_FILE
+    #mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR $SADM_MAIL_ADDR -s "Daily Summary Report `date`" < $HTML_FILE
     mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR -s "Scripts Summary Report" <$HTML_FILE
     SADM_EXIT_CODE=$?
     if [ "$SADM_EXIT_CODE" = "0" ]
