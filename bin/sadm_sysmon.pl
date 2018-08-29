@@ -1479,8 +1479,8 @@ sub write_rpt_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
-        my $mail_mess2 = "SysMon executed the restart script : $SADM_RECORD->{SADM_SCRIPT}.\n";
-        my $mail_mess3 = "This is the first time I am restarting it.";
+        my $mail_mess2 = "SysMon executed the service restart script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name \n";
+        my $mail_mess3 = "This is the first time SysMon is restarting it.";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
