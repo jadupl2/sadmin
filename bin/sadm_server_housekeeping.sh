@@ -25,6 +25,7 @@
 # 2018_05_14    v1.9 Correct problem on MacOS with change owner/group command
 # 2018_06_05    v2.0 Added www/tmp/perf removal of *.png files older than 5 days.
 # 2018_06_09    v2.1 Add Help and version function, change script name & Change startup order
+#@2018_08_28    v2.2 Delete rch and log older than the number of days specified in sadmin.cfg
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -44,7 +45,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_VER='2.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -248,6 +249,40 @@ file_housekeeping()
              find $SADM_WWW_PERF_DIR -type f -mtime +5 -name "*.png" -exec rm -f {} \; | tee -a $SADM_LOG
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on remove process."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+    fi
+
+    # Remove *.rch (Return Code History) file older than ${SADM_RCH_KEEPDAYS} days in SADMIN/WWW/DAT
+    if [ -d "${SADM_WWW_DAT_DIR}" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "You have chosen to keep *.rch files for ${SADM_RCH_KEEPDAYS} days."
+             sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_WWW_DAT_DIR} and delete them."
+             sadm_writelog "List of rch files that will be deleted."
+             find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;" 
+             find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
+                     ERROR_COUNT=$(($ERROR_COUNT+1))
+                else sadm_writelog "OK"
+                     if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
+             fi
+    fi
+
+    # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
+    if [ -d "${SADM_WWW_DAT_DIR}" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "You have chosen to keep *.log files for ${SADM_LOG_KEEPDAYS} days."
+             sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_WWW_DAT_DIR} and delete them."
+             sadm_writelog "List of log file that will be deleted."
+             find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;" 
+             find ${SADM_WWW_DAT_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
+             if [ $? -ne 0 ]
+                then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
                 else sadm_writelog "OK"
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
