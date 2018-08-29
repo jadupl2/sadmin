@@ -1786,8 +1786,8 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("===========================================================================")
     if (stype == "S") :
         writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM\n",'bold')
-        writelog ("The Web interface is available at : http://%s" % (sserver))
-        writelog ("Also available at http://sadmin.%s  (if sadmin.%s is in your DNS)." % (sdomain,sdomain))
+        writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
+        writelog ("Remember, 'sadmin.%s' to need to be defined in your DNS to be accessible from other servers." % (sdomain))
         writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
