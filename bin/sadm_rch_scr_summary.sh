@@ -21,7 +21,7 @@
 # 2018_07_25    v1.1 Modify Look of Email Sent with option -m
 # 2018_07_29    v1.2 Remove utilization of RCH for this interactive script (SADM_USE_RCH="N" )
 # 2018_07_29    v1.3 Remove Log Header & Footer, Change Email & Help Format.
-#@2018_08_27    v1.4 New Email format when using -m command line switch
+#@2018_08_27    v1.4 New Email format when using -m command line switch, View script log from email.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -79,11 +79,11 @@ FIELD_IN_RCH=8                                  ; export FIELD_IN_RCH   # Nb of 
 line_per_page=20                                ; export line_per_page  # Nb of line per scr page
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
-HTML_FILE="${SADM_TMP_DIR}/${SADM_INST}$$.html" ; export HTML_FILE      # HTML File sent to user
+HTML_FILE="${SADM_TMP_DIR}/${SADM_INST}.html"   ; export HTML_FILE      # HTML File sent to user
 TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}1_$$.tmp" ; export TMP_FILE1     # TMP Report File 1
 TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}2_$$.tmp" ; export TMP_FILE2     # TMP Report File 2
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-
+URL_VIEW_FILE='/view/log/sadm_view_file.php'    ; export URL_VIEW_FILE  # View File Content URL
 
 
 # --------------------------------------------------------------------------------------------------
@@ -214,33 +214,102 @@ load_array()
     return 0
 }
 
+
+
 #===================================================================================================
-# Return Code History Summary Report Heading
+# Return Code History Summary Report Email Heading
 #===================================================================================================
 email_rch_heading()
 {
     RTITLE=$1
-    echo -e "\n<table border=1>"            >> $HTML_FILE
+    echo -e "\n<center><table border=0>"            >> $HTML_FILE
     echo -e "\n<thead>"            >> $HTML_FILE
 
     echo -e "\n<tr>"               >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white' colspan=8 dt-head-center>${RTITLE}</th>" >> $HTML_FILE
+    echo -e "\n<th colspan=8 dt-head-center>${RTITLE}</th>" >> $HTML_FILE
     echo -e "\n</tr>"              >> $HTML_FILE
 
     echo -e "\n<tr>"               >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Count</th>"     >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Date</th>"      >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Status</th>"    >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Server</th>"    >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Script</th>"    >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Start</th>"     >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>End</th>"       >> $HTML_FILE
-    echo -e "\n<th bgcolor='#4285f4' color='white'>Elapse</th>"    >> $HTML_FILE
+    echo -e "\n<th>Count</th>"     >> $HTML_FILE
+    echo -e "\n<th>Date</th>"      >> $HTML_FILE
+    echo -e "\n<th>Status</th>"    >> $HTML_FILE
+    echo -e "\n<th>Server</th>"    >> $HTML_FILE
+    echo -e "\n<th>Script</th>"    >> $HTML_FILE
+    echo -e "\n<th>Start</th>"     >> $HTML_FILE
+    echo -e "\n<th>End</th>"       >> $HTML_FILE
+    echo -e "\n<th>Elapse</th>"    >> $HTML_FILE
     echo -e "\n</tr>"              >> $HTML_FILE
 
     echo -e "\n</thead>"           >> $HTML_FILE
     echo -e "\n"                   >> $HTML_FILE
 }
+
+
+#===================================================================================================
+# Print Return Code History File in HTML Table
+#===================================================================================================
+rch2html()
+{
+    RCH_FILE=$1                                                         # Print this RCHFile in HTML
+    RCH_TITLE=$2                                                        # Table Title
+    
+    xcount=0                                                            # Clear Line Counter  
+    while read wline                                                    # Read Line from TEMP2 file
+        do                                                                          
+        if [ "$xcount" -eq 0 ]                                          # If no line print yet
+            then email_rch_heading "$RCH_TITLE"
+        fi 
+        xcount=$(($xcount+1))                                           # Incr. Cumulative Lineno
+
+        # Split Line Received
+        WSERVER=`echo -e $wline | awk '{ print $1 }'`                   # Extract Server Name
+        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Date Started
+        WTIME1=` echo -e $wline | awk '{ print $3 }'`                   # Extract Time Started
+        WDATE2=` echo -e $wline | awk '{ print $4 }'`                   # Extract Date Started
+        WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
+        WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
+        WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
+        WRCODE=` echo -e $wline | awk '{ print $8 }'`                   # Extract Return Code 
+        WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
+        if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
+        if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
+        if [ "$WRCODE" = "2" ] ; then WRDESC="➜ Running" ; fi           # Code 2 = Running
+        
+        # Insert Line in HTML Table
+        echo -e "\n<tr>"  >> $HTML_FILE
+
+        # Set Background Color - Color at https://www.w3schools.com/tags/ref_colornames.asp
+        if [ "$WRCODE" = "0" ] ; then BCOL="#FFDAB9" ; FCOL="#000000" ; fi  # 0 = Success = Beige
+        if [ "$WRCODE" = "1" ] ; then BCOL="Red"     ; FCOL="#000000" ; fi  # 1 = Error = Red
+        if [ "$WRCODE" = "2" ] ; then BCOL="Yellow"  ; FCOL="#000000" ; fi  # 2 = Running = Yellow
+
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$xcount</font></td>"  >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>"  >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WRDESC</font></td>"  >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML_FILE
+
+        # Insert Name of the Script with link to log if log is accessible
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_FILE
+        LOGFILE="${WSERVER}_${WSCRIPT}.log"                             # Assemble log Script Name
+        LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"         # Add Dir. Path to Name
+        LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
+        if [ -r "$LOGNAME" ]                                            # If log is Readable
+            then echo "<a href='$LOGURL' "            >> $HTML_FILE     # Link to Access the Log
+                 echo "title='View Script Log File'>" >> $HTML_FILE     # ToolTip to Show User
+                 echo -e "$WSCRIPT</font></a></td>"   >> $HTML_FILE     # End of Link Definition
+            else echo -e "$WSCRIPT</font></td>"       >> $HTML_FILE     # No Log = No LInk
+        fi
+        
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME2</font></td>"  >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_FILE
+        echo -e "\n</tr>" >> $HTML_FILE
+
+        done < $TMP_FILE2                                               # Read From Created File
+    echo -e "\n</table></center><br><br>" >> $HTML_FILE                 # End of Table
+    return 
+} 
+
 
 
 
@@ -249,13 +318,35 @@ email_rch_heading()
 #===================================================================================================
 mail_report()
 {
-
     # Create Summary Report HTML Header
-    echo -e "<!DOCTYPE html><html>\n"                      > $HTML_FILE
-    echo -e "<head>\n<meta charset='utf-8' />\n<title>\n" >> $HTML_FILE
-    echo -e "</title>\n</head>\n<body>\n\n"               >> $HTML_FILE
+    echo -e "<!DOCTYPE html><html>\n"                > $HTML_FILE
+    echo -e "<head>\n"                              >> $HTML_FILE
+    echo -e "<style>\n"                             >> $HTML_FILE
+    echo -e "th { color: white; background-color: #4CAF50;     padding: 5px; }\n"  >> $HTML_FILE
+    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }\n"  >> $HTML_FILE
+    echo -e "tr:nth-child(even) {background-color: #f2f2f2;}" >> $HTML_FILE
+    echo -e "</style>\n"                            >> $HTML_FILE
+    echo -e "<meta charset='utf-8' />\n"            >> $HTML_FILE
+    echo -e "<title>\n"                             >> $HTML_FILE
+    echo -e "</title>\n</head>\n<body>\n\n"         >> $HTML_FILE
+    echo -e "<br><center><strong>Report generated on `date`</strong></center><br>\n" >> $HTML_FILE
 
-    # Produce Report for Yesterday
+    # Produce Report of script running or failed ---------------------------------------------------
+    sadm_writelog "Producing Summary Report of 'Failed' scripts ..."
+    xcount=0                                                            # Clear Line Counter  
+    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
+    for wline in "${array[@]}"                                          # Process till End of array
+        do                                                                          
+        WRCODE=` echo $wline | awk '{ print $8 }'`                       # Extract Return Code 
+        if [ "$WRCODE" != "1" ] ; then continue ; fi                    # If Script Succeeded = Skip 
+        echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
+        done 
+    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
+        then sort -t' ' -rk8,8 $TMP_FILE1 > $TMP_FILE2                  # Sort File by Return Code
+             rch2html "$TMP_FILE2" "List of scripts that 'Failed'"      # Print RCH File in HTML
+    fi
+
+    # Produce Report for Yesterday -----------------------------------------------------------------
     DATE1=`date --date="yesterday" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
     sadm_writelog "Producing Email Summary Report for yesterday ($DATE1) ..."
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 1 day ago  : $DATE1" ; fi
@@ -268,40 +359,12 @@ mail_report()
         if [ "$WDATE1" != "$DATE1" ] ; then continue ; fi               # If Not the Day Wanted
         echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
         done 
-    sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                            # Sort File by Start time
-    xcount=0                                                            # Clear Line Counter  
-    while read wline                                                    # Read Line from TEMP3 file
-        do                                                                          
-        if [ "$xcount" -eq 0 ]  ; then email_rch_heading "Scripts Status for Yesterday ($DATE1)" ; fi 
-        xcount=$(($xcount+1))                                           # Incr. Cumulative Lineno
-        WSERVER=`echo -e $wline | awk '{ print $1 }'`                   # Extract Server Name
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Date Started
-        WTIME1=` echo -e $wline | awk '{ print $3 }'`                   # Extract Time Started
-        WDATE2=` echo -e $wline | awk '{ print $4 }'`                   # Extract Date Started
-        WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
-        WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
-        WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
-        WRCODE=` echo -e $wline | awk '{ print $8 }'`                   # Extract Return Code 
-        WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
-        if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
-        if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
-        if [ "$WRCODE" = "2" ] ; then WRDESC="➜ Running" ; fi           # Code 2 = Running
-        #
-        echo -e "\n<tr>"               >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$xcount</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WDATE1</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WRDESC</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WSERVER</td>"  >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WSCRIPT</td>"  >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WELAPSE</td>"  >> $HTML_FILE
-        echo -e "\n</tr>"              >> $HTML_FILE
-        done < $TMP_FILE2
-    echo -e "\n</table><br><br>"       >> $HTML_FILE
+    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
+        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
+             rch2html "$TMP_FILE2" "Scripts Status for Yesterday ($DATE1)" # Print RCH File in HTML
+    fi 
 
-
-    # Produce Report for 2 days ago
+    # Produce Report for 2 days ago ----------------------------------------------------------------
     DATE2=`date --date="-2 days" +"%Y.%m.%d"`                           # Date 2 days ago YYY.MM.DD
     sadm_writelog "Producing Email Summary Report for 2 days ago ($DATE2) ..."
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 2 day ago  : $DATE2" ;fi 
@@ -314,39 +377,12 @@ mail_report()
         if [ "$WDATE1" != "$DATE2" ] ; then continue ; fi               # If Not the Day Wanted
         echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
         done 
-    sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                            # Sort File by Start time
-    xcount=0                                                            # Clear Line Counter  
-    while read wline                                                    # Read Line from TEMP3 file
-        do                                                                          
-        if [ "$xcount" -eq 0 ]  ; then email_rch_heading "Scripts Status of 2 days ago ($DATE1)" ; fi 
-        xcount=$(($xcount+1))                                           # Incr. Cumulative Lineno
-        WSERVER=`echo -e $wline | awk '{ print $1 }'`                   # Extract Server Name
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Date Started
-        WTIME1=` echo -e $wline | awk '{ print $3 }'`                   # Extract Time Started
-        WDATE2=` echo -e $wline | awk '{ print $4 }'`                   # Extract Date Started
-        WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
-        WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
-        WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
-        WRCODE=` echo -e $wline | awk '{ print $8 }'`                   # Extract Return Code 
-        WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
-        if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
-        if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
-        if [ "$WRCODE" = "2" ] ; then WRDESC="➜ Running" ; fi           # Code 2 = Running
-        #
-        echo -e "\n<tr>"               >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$xcount</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WDATE1</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WRDESC</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WSERVER</td>"  >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WSCRIPT</td>"  >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td bgcolor='#fdffe3'>$WELAPSE</td>"  >> $HTML_FILE
-        echo -e "\n</tr>"              >> $HTML_FILE
-        done < $TMP_FILE2
-    echo -e "\n</table><br><br>"       >> $HTML_FILE
+    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
+        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
+             rch2html "$TMP_FILE2" "Scripts Status of 2 days ago ($DATE2)" # Print RCH File in HTML
+    fi
 
-    # Produce Report of what is old than number of days to keep rch in sadmin.cfg
+    # Produce Report of what is old than number of days to keep rch in sadmin.cfg ------------------
     DATE3=`date --date="-$SADM_RCH_KEEPDAYS days" +"%Y%m%d"`          # Date XX Days Ago YYYY.MM.DD
     sadm_writelog "Producing Email Summary Report for Status older than $SADM_RCH_KEEPDAYS days ($DATE3) ..."
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for $SADM_RCH_KEEPDAYS day ago: $DATE3" ;fi 
@@ -358,40 +394,14 @@ mail_report()
         if [ "$WDATE1" -gt "$DATE3" ] ; then continue ; fi                # If Not the Day Wanted
         echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
         done 
-    sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                            # Sort File by Start time
-    xcount=0                                                            # Clear Line Counter  
-    while read wline                                                    # Read Line from TEMP3 file
-        do                                                                          
-        if [ "$xcount" -eq 0 ]  ; then email_rch_heading "Scripts Status older than $SADM_RCH_KEEPDAYS days ($DATE3)" ; fi 
-        xcount=$(($xcount+1))                                           # Incr. Cumulative Lineno
-        WSERVER=`echo -e $wline | awk '{ print $1 }'`                   # Extract Server Name
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Date Started
-        WTIME1=` echo -e $wline | awk '{ print $3 }'`                   # Extract Time Started
-        WDATE2=` echo -e $wline | awk '{ print $4 }'`                   # Extract Date Started
-        WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
-        WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
-        WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
-        WRCODE=` echo -e $wline | awk '{ print $8 }'`                   # Extract Return Code 
-        WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
-        if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
-        if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
-        if [ "$WRCODE" = "2" ] ; then WRDESC="➜ Running" ; fi           # Code 2 = Running
-        #
-        echo -e "\n<tr>"               >> $HTML_FILE
-        echo -e "\n<td>$xcount</td>"   >> $HTML_FILE
-        echo -e "\n<td>$WDATE1</td>"   >> $HTML_FILE
-        echo -e "\n<td>$WRDESC</td>"   >> $HTML_FILE
-        echo -e "\n<td>$WSERVER</td>"  >> $HTML_FILE
-        echo -e "\n<td>$WSCRIPT</td>"  >> $HTML_FILE
-        echo -e "\n<td>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td>$WTIME2</td>"   >> $HTML_FILE
-        echo -e "\n<td>$WELAPSE</td>"  >> $HTML_FILE
-        echo -e "\n</tr>"              >> $HTML_FILE
-        done < $TMP_FILE2
-    echo -e "\n</table><br><br>"       >> $HTML_FILE
+    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
+        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
+             rch2html "$TMP_FILE2" "Scripts Status older than $SADM_RCH_KEEPDAYS days ($DATE3)"  
+    fi                                                                  # Print RCH File in HTML
 
-    echo -e "</body></html>"       >> $HTML_FILE
-    #mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR $SADM_MAIL_ADDR -s "Daily Summary Report `date`" < $HTML_FILE
+    echo -e "</body></html>"       >> $HTML_FILE                        # Terminate HTML Page
+
+    # Send Email 
     mutt -e 'set content_type="text/html"' $SADM_MAIL_ADDR -s "Scripts Summary Report" <$HTML_FILE
     SADM_EXIT_CODE=$?
     if [ "$SADM_EXIT_CODE" = "0" ]
@@ -517,11 +527,13 @@ main_process()
         else main_process                                               # main Process all lines
     fi
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    
+    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Remove Work Temp File 1
+    rm -f $TMP_FILE2 >/dev/null 2>&1                                    # Remove Work Temp File 3
+
     # Record in rch file that didn't have six fields (Wrong format) were written to SADM_TMP_FILE3
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
         then tput clear                                                 # Clear the Screen
-             echo "Error identified in some \"rch\" files"              # Display Msg to user
+             echo "Invalid format - Error identified in some \"rch\" files" # Display Msg to user
              nl $SADM_TMP_FILE3                                         # Display file content
     fi
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
