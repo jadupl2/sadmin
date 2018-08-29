@@ -39,7 +39,8 @@
 # 2018_07_13    v3.2 Added "SADMIN=..." Line to SADM server/client crontab 
 # 2018_07_15    v3.3 Refuse SADM ServerName if resolve to localhost, Fix Server Crontab,
 # 2018_07_21    v3.4 Remove Some validation of SADMIN Server Name
-#@2018_07_30    v3.5 Add line 'Defaults !requiretty' to sudo file,so script can use sudo in crontab.
+# 2018_07_30    v3.5 Add line 'Defaults !requiretty' to sudo file,so script can use sudo in crontab.
+#@2018_08_29    v3.6 http://sadmin.YourDomain is now the standard to access sadmin web Site.
 #
 #===================================================================================================
 # 
@@ -56,7 +57,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.5"                                             # Setup Version Number
+sver                = "3.6"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
