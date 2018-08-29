@@ -32,10 +32,9 @@
 # 
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
-# 2018_05_15 JDuplessis
-#   V1.0 - Initial Version
-# 2018_05_18 JDuplessis
-#   V1.1 - Working Initial Version
+# 2018_05_15    V1.0 Initial Version
+# 2018_05_18    V1.1 Working Initial Version
+#@2018_08_19    V1.2 Change Filesystem Increase before and after Email information.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -49,7 +48,7 @@ if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install di
 if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 #
 # YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.1'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
 SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
 SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
 SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
@@ -178,8 +177,9 @@ send_email()
 
     # Current Directory Size and Usage
     echo -e "\n${DASH}" >>$MAIL_BODY                                    # Print Dash Line
-    echo -e "Current ${FSNAME} Filesystem size and usage" >>$MAIL_BODY  # Title for Filesystem Usage
-    df -hP ${FSNAME} >> $MAIL_BODY                                      # Print FileSystem Usage
+    #echo -e "Current ${FSNAME} Filesystem size and usage" >>$MAIL_BODY  # Title for Filesystem Usage
+    echo -e "`date`\nFilesystem $FSNAME actual size.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
+    #df -hP ${FSNAME} >> $MAIL_BODY                                      # Print FileSystem Usage
 
     # Print 20 biggest directory of filesystem
     echo -e "\n${DASH}"  >>$MAIL_BODY                                   # Print Dash Line
@@ -287,7 +287,7 @@ main_process()
     sadm_writelog ""                                                    # Blank Line
     sadm_writelog "df -hP $FSNAME - Before increase"                    # Show FileSystem Usage
     echo -e "\n${DASH}" >>$MAIL_BODY                                    # Print Dash Line
-    echo -e "`date` - Filesystem $FSNAME before increase : \n `df -hP $FSNAME` \n" >> $MAIL_BODY
+    echo -e "`date`\nFilesystem $FSNAME before increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     df -hP $FSNAME                                                      # Show FS Usage to User  
     sadm_writelog ""                                                    # Blank Line
     extend_fs                                                           # Go Extend Filesystem
@@ -303,7 +303,7 @@ main_process()
     sadm_writelog ""                                                    # Blank Line
     sadm_writelog "df -hP $FSNAME - After increase"                     # Show FS Usage after Incr.
     df -hP $FSNAME                                                      # Show FS Usage to User  
-    #echo -e "`date` - Filesystem $FSNAME after increase : \n `df -hP $FSNAME` \n" >> $MAIL_BODY
+    #echo -e "`date`\nFilesystem $FSNAME after increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     sadm_writelog ""                                                    # Blank Line
     send_email "Filesystem $FSNAME on $MYHOST was increase"
     return $RC                                                          # Return Return Code Caller

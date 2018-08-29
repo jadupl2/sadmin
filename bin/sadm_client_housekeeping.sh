@@ -472,7 +472,7 @@ file_housekeeping()
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
-             find $SADM_BIN_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
+             find $SADM_BIN_DIR -type f -exec chmod -R 775 {} \; >/dev/null 2>&1     # Change Files Privilege
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))

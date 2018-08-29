@@ -36,6 +36,7 @@
 # 2018_06_11    V1.7 Change name to sadm_backupsd.sh
 # 2018_06_19    V1.8 Default option is to Compress Backup - Add -u to do uncompress backup
 # 2018_07_14    v1.9 Switch to Bash Shell instead of sh (Causing Problem with Dash on Debian/Ubuntu)
+#@2018_08_19    v2.0 Add '-b' to specify backup directory, enhance log verbose. 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Current Script Version
+    export SADM_VER='2.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -94,40 +95,34 @@ CUR_DAY_NUM=`date +"%u"`            ; export CUR_DAY_NUM                # Curren
 CUR_DATE_NUM=`date +"%d"`           ; export CUR_DATE_NUM               # Current Date Nb. in Month
 CUR_MTH_NUM=`date +"%m"`            ; export CUR_MTH_NUM                # Current Month Number 
 MYSQLDUMP=""                        ; export MYSQLDUMP                  # Save mysqldump Full Path
-BACKUP_ROOT_DIR="${SADMIN}/dat/dbb" ; export BACKUP_ROOT_DIR            # Root DataBase Backup Dir.
 BACKUP_FILENAME=""                  ; export BACKUP_FILENAME            # Backup File Name
 BACKUP_NAME="all"                   ; export BACKUP_NAME                # DB Name to Backup or 'all'
-COMPRESS_BACKUP="N"                 ; export COMPRESS_BACKUP            # Default Backup no compress
 ERROR_COUNT=0                       ; export ERROR_COUNT                # Total Backup Error Counter
+COMPRESS_BACKUP="Y"                 ; export COMPRESS_BACKUP            # Default Compress Backup 
 
-# Database Name to exclude from backup, separate each name by the pipe symbol '|'.
-DBEXCLUDE="information_schema|performance_schema"  ; export DBEXCLUDE
 
-# MySQL Connections Credential
-CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" ; export CREDENTIAL # for MySQL
-#
 WEEKDAY=("index0" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
 MTH_NAME=("index0" "January" "February" "March" "April" "May" "June" "July" "August" "September" 
         "October" "November" "December")
 
-# Backup Directories
-DAILY_DIR="${BACKUP_ROOT_DIR}/daily"     ; export DAILY_DIR             # Dir. For Daily Backup                                 
-WEEKLY_DIR="${BACKUP_ROOT_DIR}/weekly"   ; export WEEKLY_DIR            # Dir. For Weekly Backup
-MONTHLY_DIR="${BACKUP_ROOT_DIR}/monthly" ; export MONTHLY_DIR           # Dir. For Monthly Backup
-YEARLY_DIR="${BACKUP_ROOT_DIR}/yearly"   ; export YEARLY_DIR            # Dir. For Yearly Backup
-LATEST_DIR="${BACKUP_ROOT_DIR}/latest"   ; export LATEST_DIR            # Latest Backup Directory
+# MySQL Connections Credential (Default Take Read/Write User in $SADMIN/cfg/sadmin.cfg)
+CREDENTIAL="-u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD -h $SADM_DBHOST" ; export CREDENTIAL # for MySQL
+
+# Database Name to exclude from backup, separate each name by the pipe symbol '|'.
+DBEXCLUDE="information_schema|performance_schema"  ; export DBEXCLUDE
+
 
 # Number of backup to keep per backup type
-DAILY_BACKUP_TO_KEEP=14             ; export DAILY_BACKUP_TO_KEEP       # Nb. Daily Backup to keep
+DAILY_BACKUP_TO_KEEP=8              ; export DAILY_BACKUP_TO_KEEP       # Nb. Daily Backup to keep
 WEEKLY_BACKUP_TO_KEEP=5             ; export WEEKLY_BACKUP_TO_KEEP      # Nb. Weekly Backup to keep
-MONTHLY_BACKUP_TO_KEEP=14           ; export MONTHLY_BACKUP_TO_KEEP     # Nb. Monthly Backup to keep
-YEARLY_BACKUP_TO_KEEP=7             ; export YEARLY_BACKUP_TO_KEEP      # Nb. Yearly Backup to keep
+MONTHLY_BACKUP_TO_KEEP=13           ; export MONTHLY_BACKUP_TO_KEEP     # Nb. Monthly Backup to keep
+YEARLY_BACKUP_TO_KEEP=4             ; export YEARLY_BACKUP_TO_KEEP      # Nb. Yearly Backup to keep
 
 # Trigger per backup type
 WEEKLY_BACKUP_DAY=5                 ; export WEEKLY_BACKUP_DAY          # Day Week Backup 1=Mon7=Sun
 MONTHLY_BACKUP_DATE=1               ; export MONTHLY_BACKUP_DATE        # Monthly Backup Date (1-28)
-YEARLY_BACKUP_MONTH=1               ; export YEARLY_BACKUP_MONTH        # Yearly Backup Month (1-12)
-YEARLY_BACKUP_DATE=2                ; export YEARLY_BACKUP_DATE         # Yearly Backup Date (1-28)
+YEARLY_BACKUP_MONTH=12              ; export YEARLY_BACKUP_MONTH        # Yearly Backup Month (1-12)
+YEARLY_BACKUP_DATE=31               ; export YEARLY_BACKUP_DATE         # Yearly Backup Date (1-28)
 
 
 #===================================================================================================
@@ -248,6 +243,7 @@ backup_cleanup()
 {
     CLEAN_DIR=$1                                                        # Save Backup Dir. to Clean
     NB_KEEP=$2                                                          # Nb. OF Backup to Keep
+    sadm_writelog " "   
     sadm_writelog "Cleaning `basename $CLEAN_DIR` Backup (Keep last $NB_KEEP Backups)"   
 
     # Produce a list of Databases Directories in $CLEAN_DIR 
@@ -261,11 +257,12 @@ backup_cleanup()
     pwd_save=`pwd`                                                      # Save Current Directory
     while read dbdir                                                    # Read All DB Dir to process
         do
-        sadm_writelog "    - Pruning `basename $dbdir` Database Backup" # Show User Database pruning
+        #sadm_writelog "    - Pruning `basename $dbdir` Database Backup" # Show User Database pruning
+        sadm_writelog "    - Pruning $dbdir Database Backup"            # Show User Database pruning
         cd $dbdir                                                       # cd to Database Backup Dir.
         if [ $DEBUG_LEVEL -gt 0 ] ; then ls -l ; fi                     # In Debug List Backup files
         NB_BACKUP=`ls -1 | wc -l | tr -d ' '`                           # Count Nb. Backup in Dir.
-        let "NB_DELETE = $NB_BACKUP - $NB_KEEP"                         # Nb. Backup to Delete
+        NB_DELETE=`echo "$NB_BACKUP - $NB_KEEP" | $SADM_BC`             # Nb. Backup to Delete
         if [ $DEBUG_LEVEL -gt 0 ]                                       # If Debug Activated
             then sadm_writelog "NB_DELETE = $NB_BACKUP - $NB_KEEP"      # Show Math Done to Get Nb
         fi
@@ -277,7 +274,7 @@ backup_cleanup()
                     sadm_writelog "      - Deleting file $bname ..."    # Show Backup file to Del.
                     rm -f $bname                                        # Remove Database Backup
                     done                 
-            else sadm_writelog "      - No Backup to delete (Currently $NB_BACKUP)"  
+            else sadm_writelog "      - No Backup to delete (We have now $NB_BACKUP backup file(s))"  
         fi
         done < ${SADM_TMP_FILE1}                                        # List of Database to clean
     cd $pwd_save                                                        # cd to previous save dir.
@@ -286,7 +283,7 @@ backup_cleanup()
 
     
 #===================================================================================================
-#                             S c r i p t    M a i n     P r o c e s s
+#                             Backup Database Function
 #===================================================================================================
 backup_db()
 {
@@ -358,10 +355,15 @@ main_process()
     # Make sure at least (-a or -n) we have a database backup to do.
     if [ "$BACKUP_NAME"  = "" ]                                         # No Database Name Specified
         then sadm_writelog "[ERROR] No Database Name Specified"
-             sadm_writelog "        Use '-a' to Backup all Databases" 
-             sadm_writelog "        Use '-n dbname' to specify Database to backup"
              return 1
     fi
+
+    # Backup Directories
+    DAILY_DIR="${BACKUP_ROOT_DIR}/daily"     ; export DAILY_DIR             # Dir. For Daily Backup                                 
+    WEEKLY_DIR="${BACKUP_ROOT_DIR}/weekly"   ; export WEEKLY_DIR            # Dir. For Week Backup
+    MONTHLY_DIR="${BACKUP_ROOT_DIR}/monthly" ; export MONTHLY_DIR           # Dir. For Mth Backup
+    YEARLY_DIR="${BACKUP_ROOT_DIR}/yearly"   ; export YEARLY_DIR            # Dir. For Yearly Backup
+    LATEST_DIR="${BACKUP_ROOT_DIR}/latest"   ; export LATEST_DIR            # Latest Backup Dir.
 
     # Make Sure Backup Directories exist, Option given are valid and show user options chosen ------
     backup_setup                                                        # Is Setup/Requirement ok ?
@@ -412,7 +414,8 @@ main_process()
     fi
 
     # Switch for Help (-h), Debug Level (-d[1-9]), Compress Backup (-c), Database to Backup (-n)----
-    BACKUP_NAME="all"                                                   # DB to Backup Default=None
+    BACKUP_NAME="all"                                                   # DB to Backup Default=All
+    BACKUP_ROOT_DIR="${SADMIN}/dat/dbb"                                 # Default DB Backup Dir.
     COMPRESS_BACKUP="Y"                                                 # Compress Backup by Default
     while getopts "had:n:u" opt ; do                                    # Loop to process Switch
         case $opt in
@@ -420,7 +423,7 @@ main_process()
                ;;                                                       # No stop after each page
             n) BACKUP_NAME=$OPTARG                                      # Database Name to Backup
                ;;
-            a) BACKUP_NAME="all"                                        # Backup all database 
+            b) BACKUP_ROOT_DIR=$OPTARG                                  # Database Backup Directory
                ;;
             u) COMPRESS_BACKUP="N"                                      # Backup Uncompress 
                ;;

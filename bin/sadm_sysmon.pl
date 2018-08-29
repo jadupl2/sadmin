@@ -256,7 +256,7 @@ sub load_smon_file {
     open (SMONFILE,"<$SYSMON_CFG_FILE") or die "Can't open $SYSMON_CFG_FILE: $!\n";
     $widx = 0;                                                          # Array Index
     while ($line = <SMONFILE>) {                                        # Read while end of file
-        next if $line =~ /^#SADMSTAT/ ;                                 # Don't load sysmon statline
+        next if $line =~ /^#SYSMON/ ;                                 # Don't load sysmon statline
         $sysmon_array[$widx++] = $line ;                                # Load Line in Array
         if ($SYSMON_DEBUG >= 6) { print "Line loaded from cfg : $line" ; }
     }
@@ -290,7 +290,7 @@ sub unload_smon_file {
 
     # GET ENDING TIME & WRITE SADM STATISTIC LINE AT THE EOF
     $end_time = time;                                                   # Get current time
-    $xline1 = sprintf ("#SADMSTAT $VERSION_NUMBER $HOSTNAME - ");
+    $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");
     $xline2 = sprintf ("%s" , scalar localtime(time));
     $xline3 = sprintf (" - Execution Time %2.2f seconds\n" ,$end_time - $start_time); 
     printf (SADMTMP "${xline1}${xline2}${xline3}");
@@ -1479,8 +1479,8 @@ sub write_rpt_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
-        my $mail_mess2 = "SysMon executed the restart script : $SADM_RECORD->{SADM_SCRIPT}.\n";
-        my $mail_mess3 = "This is the first time I am restarting it.";
+        my $mail_mess2 = "SysMon executed the service restart script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name \n";
+        my $mail_mess3 = "This is the first time SysMon is restarting it.";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
@@ -1728,7 +1728,7 @@ sub end_of_sysmon {
     # Print Execution time
     if ($SYSMON_DEBUG >= 5) { 
         $end_time = time;                                                   # Get current time
-        $xline1 = sprintf ("#SADMSTAT $VERSION_NUMBER $HOSTNAME - ");       # Version & Hostname
+        $xline1 = sprintf ("#SYSMON $VERSION_NUMBER $HOSTNAME - ");         # Version & Hostname
         $xline2 = sprintf ("%s" , scalar localtime(time));                  # Print Current Time
         $xline3 = sprintf (" - Execution Time %2.2f seconds", ($end_time - $start_time)); 
         printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line

@@ -36,6 +36,8 @@
 # 2018_06_23    v2.0 Change location of default service file (.sadmin.rc, sadmin.service) to cfg dir.
 # 2018_07_09    v2.1 Copy .version & .versum from psadmin to sadmin at end so git = release version
 # 2018_07_18    v2.2 Copy system monitor script template, nmon monitor & service restart in PSADMIN
+# 2018_08_25    v2.3 Added .gitkeep file to empty directory so they exist in clone image & tgz file.
+#@2018_08_26    v2.4 Rewritten to use rsync between sadmin to psadmin, cause want to use git (.git).
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,10 +46,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -56,13 +59,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='2.4'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -77,39 +80,47 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     # But some can overriden here on a per script basis.
     #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
 
-
-
+  
 
 #===================================================================================================
-#                               Script environment variables
+# Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 PSADMIN="/psadmin"                          ; export PSADMIN            # Prod. SADMIN Root Dir.
 PSBIN="${PSADMIN}/bin"                      ; export PSBIN              # Prod. bin Directory
 PSCFG="${PSADMIN}/cfg"                      ; export PSCFG              # Prod. cfg Directory
 PSMON="${PSADMIN}/usr/mon"                  ; export PSMON              # Prod. SysMon Script Dir.
-#
 REL=`cat $SADM_REL_FILE`                    ; export REL                # Save Release Number
 EPOCH=`date +%s`                            ; export EPOCH              # Current EPOCH Time
 #
 
 
-#===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
-#===================================================================================================
-help()
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "${SADM_PN} usage :"
-    echo "             -d   (Debug Level [0-9])"
-    echo "             -h   (Display this help message)"
-    echo " "
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
 }
 
 
@@ -234,6 +245,52 @@ create_release_file()
 
 
 #===================================================================================================
+#    Function use to rsync Development Directory (/sadmin) with Production Directory (/psadmin)
+#===================================================================================================
+rsync_function()
+{
+    # Parameters received should always be two 
+    # If not write error to log and return to caller
+    if [ $# -ne 2 ]
+        then sadm_writelog "[ERROR] Function ${FUNCNAME[0]} didn't receive 2 parameters"
+             sadm_writelog "Function received $* and this isn't valid"
+             return 1
+    fi
+
+    # Save rsync information
+    SRC_DIR=$1                                                          # Source Directory
+    DEST_DIR=$2                                                         # Destination directory
+
+    # If Source directory doesn't exist - Return to caller with error 
+    if [ ! -d "${SRC_DIR}" ] 
+        then sadm_writelog "[ERROR] Source Directory ${SRC_DIR} don't exist"
+             return 1
+    fi
+
+    # Rsync Source directory with Destination - On error try 3 times before signaling error
+    # Consider Error 24 as none critical (Partial transfer due to vanished source files)
+    RETRY=0                                                             # Set Retry counter to zero
+    while [ $RETRY -lt 3 ]                                              # Retry rsync 3 times
+        do
+        RETRY=`expr $RETRY + 1`                                         # Incr Retry counter.
+        rsync -var --delete ${SRC_DIR} ${DEST_DIR} | tee -a $SADM_LOG   # rsync selected directory
+        RC=$?                                                           # save error number
+        if [ $RC -eq 24 ] ; then RC=0 ; fi                              # Source File Gone = OK
+        if [ $RC -ne 0 ]                                                # If Error doing rsync
+           then if [ $RETRY -lt 3 ]                                     # If less than 3 retry
+                   then sadm_writelog "[RETRY ${RETRY}] rsync -var --delete ${SRC_DIR} ${DEST_DIR} "
+                   else sadm_writelog "[ERROR ${RETRY}] rsync -var --delete ${SRC_DIR} ${DEST_DIR} "
+                        break
+                fi
+           else sadm_writelog "[ OK ] rsync -var --delete ${SRC_DIR} ${DEST_DIR} "
+                break
+        fi
+    done
+    return $RC
+}
+
+
+#===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
 #===================================================================================================
 main_process()
@@ -253,179 +310,71 @@ main_process()
             return 1
     fi
     sadm_writelog "Currently in `pwd` directory"
-    sadm_writelog "Delete everything is ${PSADMIN} ..."
-    sadm_writelog "rm -fr ${PSADMIN} > /dev/null 2>&1"
-    rm -fr ${PSADMIN} > /dev/null 2>&1
-
-    # Create SADMIN Directories arborescence
-    create_dir "bin"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "pkg"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "tmp"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "sys"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "lib"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "doc"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "log"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "cfg"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "usr"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "usr/bin"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "usr/lib"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "usr/mon"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "usr/doc"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "setup"      ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "setup/etc"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "setup/msg"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "setup/bin"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "setup/log"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/tmp"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/rrd"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/dat"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/crud"   ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/css"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/doc"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/icons"  ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/images" ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/js"     ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/lib"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "www/view"   ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat"        ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/dbb"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/dr"     ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/net"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/nmon"   ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/rch"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-    create_dir "dat/rpt"    ; if [ $? -ne 0 ] ; then sadm_writelog "Program Aborted" ; fi
-
 
     # Rsync Bin/Scripts Directory -----------------------------------------------------------------------
-    sadm_writelog " "
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
     SDIR="$SADM_BIN_DIR" ; DDIR="${PSADMIN}/bin"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    run_oscommand "chmod  444 ${DDIR}/sadm_template*"                   # Read Only n Template
+    rsync_function "${SDIR}/" "${DDIR}/"                                # RSync Source/Dest. Dir.
+    if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
+    #
+    run_oscommand "chmod  444 ${DDIR}/sadm_template*"                   # Make Template Read Only
 
     # Rsync Documentation Directories --------------------------------------------------------------------
-    sadm_writelog " "
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
     SDIR="$SADM_DOC_DIR" ; DDIR="${PSADMIN}/doc"                        # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
+    rsync_function "${SDIR}/" "${DDIR}/"                                # RSync Source/Dest. Dir.
+    if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
+
 
     # Rsync Package Directories --------------------------------------------------------------------
-    sadm_writelog " "
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
     SDIR="$SADM_PKG_DIR" ; DDIR="${PSADMIN}/pkg"                        # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
+    rsync_function "${SDIR}/" "${DDIR}/"                                # RSync Source/Dest. Dir.
+    if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
 
     # Rsync Library Directories --------------------------------------------------------------------
-    sadm_writelog " "
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
     SDIR="$SADM_LIB_DIR" ; DDIR="${PSADMIN}/lib"                        # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
+    rsync_function "${SDIR}/" "${DDIR}/"                                # RSync Source/Dest. Dir.
+    if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
 
     # Rsync Setup Directories ----------------------------------------------------------------------
-    sadm_writelog " "
-    SDIR="${SADMIN}/setup/bin" ; DDIR="${PSADMIN}/setup/bin"            # Source & Destination Dir.
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
+    SDIR="${SADMIN}/setup" ; DDIR="${PSADMIN}/setup"                    # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    sadm_writelog " "
-    SDIR="${SADMIN}/setup/etc" ; DDIR="${PSADMIN}/setup/etc"            # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    sadm_writelog " "
-    SDIR="${SADMIN}/setup/msg" ; DDIR="${PSADMIN}/setup/msg"            # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SFILE="${SADMIN}/setup/setup.sh" ; DFILE="${PSADMIN}/setup/setup.sh"
-    sadm_writelog "Copying $SFILE to $DFILE"
-    run_oscommand "cp ${SFILE} ${DFILE}"
-    run_oscommand "chmod 775 ${DFILE}"
-    run_oscommand "chown sadmin.sadmin ${DFILE}"
-    #    
+    rsync -var --delete --exclude 'jac' ${SDIR}/ ${DDIR}/ | tee -a $SADM_LOG   # rsync selected directory
+    RC=$?                                                           # save error number
+    if [ $RC -eq 24 ] ; then RC=0 ; fi                              # Source File Gone = OK
+    if [ $RC -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
+    find ${DDIR} -name "*.log" -exec rm -f {} \;
 
     # Rsync System Directories ---------------------------------------------------------------------
-    sadm_writelog " "
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
     SDIR="$SADM_SYS_DIR" ; DDIR="${PSADMIN}/sys"                        # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
+    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform USer
+    rsync_function "${SDIR}/" "${DDIR}/"                                # RSync Source/Dest. Dir.
+    if [ $? -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
 
-    # Rsync Web Directories ------------------------------------------------------------------------
-    sadm_writelog " "
-    SDIR="${SADMIN}/www/crud" ; DDIR="${PSADMIN}/www/crud"              # Source & Destination Dir.
+    # Rsync www Directories ----------------------------------------------------------------------
+    sadm_writelog " "                                                   # Insert Blank Line
+    sadm_writelog "$SADM_DASH"                                          # Insert a dash line.
+    SDIR="${SADMIN}/www" ; DDIR="${PSADMIN}/www"                        # Source & Destination Dir.
     sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/css" ; DDIR="${PSADMIN}/www/css"                # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/icons" ; DDIR="${PSADMIN}/www/icons"            # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 644 ${DDIR}/*"                              # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/images" ; DDIR="${PSADMIN}/www/images"          # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 644 ${DDIR}/*"                              # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/js" ; DDIR="${PSADMIN}/www/js"                  # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/lib" ; DDIR="${PSADMIN}/www/lib"                # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    run_oscommand "rm -f ${DDIR}/.crontab.txt"                          # Don't copy my Crontab
-    
-    #
-    SDIR="${SADMIN}/www/view" ; DDIR="${PSADMIN}/www/view"              # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 775 ${DDIR}"                                # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    SDIR="${SADMIN}/www/doc" ; DDIR="${PSADMIN}/www/doc"                # Source & Destination Dir.
-    sadm_writelog "Syncing directory ${SDIR} to ${DDIR}"                # Inform User
-    run_oscommand "rsync -ar --delete ${SDIR}/ ${DDIR}/"                # RSync Source/Dest. Dir.
-    run_oscommand "chmod -R 644 ${DDIR}/*"                              # Change Permission
-    run_oscommand "chown -R sadmin.sadmin ${DDIR}"                      # Change Owner and Group
-    #
-    sadm_writelog " "
-    SFILE="${SADMIN}/www/index.php" ; DFILE="${PSADMIN}/www/index.php"
-    sadm_writelog "Copying $SFILE to $DFILE"
-    run_oscommand "cp ${SFILE} ${DFILE}"
-    run_oscommand "chmod 644 ${DFILE}"
-    run_oscommand "chown sadmin.sadmin ${DFILE}"
-    #    
+    rsync -var --delete --exclude 'dat' --exclude 'rrd' --exclude 'tmp' /sadmin/www/ /psadmin/www/ | tee -a $SADM_LOG   # rsync selected directory
+    RC=$?                                                           # save error number
+    if [ $RC -eq 24 ] ; then RC=0 ; fi                              # Source File Gone = OK
+    if [ $RC -ne 0 ] ; then sadm_writelog "[ERROR] while syncing ${SDIR} to ${DDIR}" ; return 1 ; fi
+    find ${DDIR} -name "*.log" -exec rm -f {} \;
 
     # Copy Configuration File from COPY $SADMIN/cfg to /psadmin/cfg --------------------------------
     sadm_writelog " "
@@ -496,6 +445,17 @@ main_process()
     run_oscommand "chmod 775 ${PSMON}/srestart.sh"
     run_oscommand "chown sadmin.sadmin ${PSMON}/srestart.sh"
     #
+
+    # Touch Empty Directory to Keep
+    touch ${PSADMIN}/usr/bin/.gitkeep
+    touch ${PSADMIN}/usr/doc/.gitkeep
+    touch ${PSADMIN}/usr/lib/.gitkeep
+    touch ${PSADMIN}/dat/.gitkeep
+    touch ${PSADMIN}/tmp/.gitkeep
+    touch ${PSADMIN}/log/.gitkeep
+    touch ${PSADMIN}/dat/nmon/.gitkeep
+    
+
     # COPY .bashrc and .bash_profile file-----------------------------------------------------------
     #
     #sadm_writelog " "
@@ -520,50 +480,68 @@ main_process()
 #===================================================================================================
 #                                       Script Start HERE
 #===================================================================================================
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then echo  "Script can only be run user 'root'"         # Advise User should be root
-             echo  "Process aborted"                            # Abort advise message
-             exit 1                                                     # Exit To O/S
-    fi
 
-    sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script only run on SADMIN system (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9]) ---------------------------------
-    while getopts "hd:" opt ; do                                        # Loop to process Switch
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
                ;;                                                       # No stop after each page
-            h) help_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
+            h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
                ;;
-           \?) sadm_writelog "Invalid option: -$OPTARG"                 # Invalid Option Message
-               help_usage                                               # Display Help Usage
-               sadm_stop 1                                              # Close the shop
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
                exit 1                                                   # Exit with Error
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+    # Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
     fi
 
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    ask_user "Do you want to create production environment"
-    if [ $? -eq 1 ]
-        then main_process                                               # Upd./psadmin with latest
-             create_release_file                                        # Create tgz and txt file
-             SADM_EXIT_CODE=$?
-             if [ $SADM_EXIT_CODE -ne 0 ] 
+    ask_user "Do you want to sync Development with Production environment"
+    if [ $? -eq 0 ]                                                     # If don't want to Sync       
+        then sadm_stop 0                                                # Close log,rch - rm tmp&pid
+             exit $SADM_EXIT_CODE                                       # Exit to O/S
+    fi
+
+    main_process                                                        # rsync sadmin to psadmin
+    SADM_EXIT_CODE=$?
+    if [ $SADM_EXIT_CODE -ne 0 ] 
+       then sadm_writelog "[ERROR] Something went wrong when syncing with Prod. Environment"
+            sadm_writelog "Do not release this version"
+       else create_release_file                                                 # Create tgz and md5sum file
+            SADM_EXIT_CODE=$?
+            if [ $SADM_EXIT_CODE -ne 0 ] 
                 then sadm_writelog "[ERROR] Creating tgz file"
                 else sadm_writelog " " 
                      sadm_writelog "Copy version file back to $SADM_CFG_DIR"
@@ -573,9 +551,9 @@ main_process()
                      sadm_writelog "cp ${PSADMIN}/cfg/.version $SADM_CFG_DIR"
                      cp ${PSADMIN}/cfg/.version $SADM_CFG_DIR
                      if [ $? -ne 0 ] ; then sadm_writelog "Error on copy ${PSADMIN}/cfg/.version" ;fi
-                fi
-    fi
-    SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
+            fi
+    fi 
 
+    SADM_EXIT_CODE=$?                                                   # Save Error Code
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)

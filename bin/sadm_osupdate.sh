@@ -345,7 +345,7 @@ run_apt_get()
                 *)
                         sadm_writelog "This OS ($(sadm_get_osname)) is not yet supported"
                         sadm_writelog "Please report it to SADMIN Web Site at this email :"
-                        sadm_writelog "webadmin@sadmin.ca"
+                        sadm_writelog "support@sadmin.ca"
                         ;;
             esac
        else if [ $RC -eq 1 ]                                            # If No Update Avail
