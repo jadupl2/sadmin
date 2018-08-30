@@ -172,7 +172,7 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
-    set_dir "$SADM_CFG_DIR"       "0755" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
+    set_dir "$SADM_CFG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
