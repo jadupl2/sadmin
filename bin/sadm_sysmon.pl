@@ -241,9 +241,9 @@ sub load_smon_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
-        my $mail_mess2 = "It was recreated based on the template file ${SYSMON_STD_FILE}.\n";    
+        my $mail_mess2 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";    
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}";
-        my $mail_subject = "SADM: WARNING $SYSMON_CFG_FILE not found on $HOSTNAME";
+        my $mail_subject = "SADM: INFO $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command 
         @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon 
