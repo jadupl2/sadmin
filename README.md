@@ -7,7 +7,17 @@ For more information visit the [SADMIN web site at <https://www.sadmin.ca>.
 
 ## Some features of SADMIN Tools
 ****
-### **Templates Scripts (Shell and Python)**
+**Web interface to ease your work**
+- Use it to add, update and delete server in your server farm.
+- View performance graph of your servers up to two years in the past.
+- If you want, you can automatically update your server O/S at the time and day you scheduled.
+- Have server configuration on hand, usefull in case of a Disaster Recovery.
+- View your servers farm subnet utilization and see what IP are free to use.
+- View the status of all the scripts that run in your server farm.
+- View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
+- There's still a lot more to come.
+
+**Templates Scripts (Shell and Python)**
 
 * Make a copy of the template script, modify it to your need and enjoy :
   * All your scripts will have a log.
@@ -35,8 +45,8 @@ For more information visit the [SADMIN web site at <https://www.sadmin.ca>.
 * In the morning do you have to look in multiple place to check if everything went right last night ?
 * Can you look at performance graph of your servers to see or to justify the cpu utilization increase ?
 * In case of a disaster recovery situation, do you have all the information on hand to rebuild your servers ?
-* When a filesystem/disk is getting full on one of your servers are you alerted ?
-* If a service start working, can you restart automatically ?
+* Be alerted when a filesystem/disk is getting full on one of your servers.
+* If a service start working, if you want you can restart it automatically.
 * Include a frontend tool (sadm) to create/increase/delete filesystem (ext3,ext4,xfs)
 
 If you like one these features, then will certainly find a couple of more interesting things in SADMIN.
