@@ -222,26 +222,26 @@ load_array()
 email_rch_heading()
 {
     RTITLE=$1
-    echo -e "\n<center><table border=0>"            >> $HTML_FILE
-    echo -e "\n<thead>"            >> $HTML_FILE
+    echo -e "\n<center><table border=0>"  >> $HTML_FILE
+    echo -e "\n<thead>"             >> $HTML_FILE
 
-    echo -e "\n<tr>"               >> $HTML_FILE
+    echo -e "\n<tr>"                >> $HTML_FILE
     echo -e "\n<th colspan=8 dt-head-center>${RTITLE}</th>" >> $HTML_FILE
-    echo -e "\n</tr>"              >> $HTML_FILE
+    echo -e "\n</tr>"               >> $HTML_FILE
 
-    echo -e "\n<tr>"               >> $HTML_FILE
-    echo -e "\n<th>Count</th>"     >> $HTML_FILE
-    echo -e "\n<th>Date</th>"      >> $HTML_FILE
-    echo -e "\n<th>Status</th>"    >> $HTML_FILE
-    echo -e "\n<th>Server</th>"    >> $HTML_FILE
-    echo -e "\n<th>Script</th>"    >> $HTML_FILE
-    echo -e "\n<th>Start</th>"     >> $HTML_FILE
-    echo -e "\n<th>End</th>"       >> $HTML_FILE
-    echo -e "\n<th>Elapse</th>"    >> $HTML_FILE
-    echo -e "\n</tr>"              >> $HTML_FILE
+    echo -e "\n<tr>"                >> $HTML_FILE
+    echo -e "\n<th>Count</th>"      >> $HTML_FILE
+    echo -e "\n<th>Date</th>"       >> $HTML_FILE
+    echo -e "\n<th>Status</th>"     >> $HTML_FILE
+    echo -e "\n<th>Server</th>"     >> $HTML_FILE
+    echo -e "\n<th>Script/Log</th>" >> $HTML_FILE
+    echo -e "\n<th>Start</th>"      >> $HTML_FILE
+    echo -e "\n<th>End</th>"        >> $HTML_FILE
+    echo -e "\n<th>Elapse</th>"     >> $HTML_FILE
+    echo -e "\n</tr>"               >> $HTML_FILE
 
-    echo -e "\n</thead>"           >> $HTML_FILE
-    echo -e "\n"                   >> $HTML_FILE
+    echo -e "\n</thead>"            >> $HTML_FILE
+    echo -e "\n"                    >> $HTML_FILE
 }
 
 
