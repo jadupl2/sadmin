@@ -32,7 +32,7 @@
 # 2018_MM_DD    V1.0 Initial Version
 #
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
+trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIGINT SIGTERM received
 #set -x
      
 
