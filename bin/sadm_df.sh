@@ -33,16 +33,18 @@
 # 2016_05_05    v1.0 Initial Version
 # 2018_06_04    v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
 # 2018_08_21    v1.2 Remove trailing space for data lines.
-#@2018_08_21    v1.3 Adapted to work on MacOS and Aix
+# 2018_08_21    v1.3 Adapted to work on MacOS and Aix
+#@2018_09_03    v1.4 Option --total don't work on RHEL5, Total Line Removed for now
 #
 # --------------------------------------------------------------------------------------------------
+#set -x
 
 
 
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='1.3'                                       # Current Script Version
+export SADM_VER='1.4'                                       # Current Script Version
 SADM_DASH=`printf %100s |tr " " "="`                        # 100 equals sign line
 DEBUG_LEVEL=0                                               # 0=NoDebug Higher=+Verbose
 file="/tmp/sdf_tmp1.$$"                                     # File Contain Result of df
@@ -56,11 +58,12 @@ export SADM_PN=${0##*/}                                     # Current Script nam
 #===================================================================================================
     
 ostype=`uname -s | tr '[:lower:]' '[:upper:]'`              # OS Name (AIX/LINUX/DARWIN/SUNOS)
+
 # Run df command and output to file
     case "$ostype" in
         "DARWIN")   df -h > $file
                     ;;
-        "LINUX")    df -ThP --total |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
+        "LINUX")    df -ThP |awk '{printf "%-35s %-8s %-8s %-8s %-8s %-8s %-s\n",$1,$2,$3,$4,$5,$6,$7'}> $file
                     ;;
         "AIX")      df -g | awk '{ printf "%-30s %-8s %-8s %-8s %-8s %-8s %-28s\n", $1, $2, $3, $4, $5, $6, $7 }' > $file
                     ;;
@@ -72,7 +75,7 @@ lines=`wc -l $file | awk '{print $1}'`                                  # Total 
 ntail=`expr $lines - 1`                                                 # Calc. tail Number to use
 nhead=`expr $ntail - 1`                                                 # Calc. head Number to use
 title=`head -1 $file`                                                   # Save 'df' Title Line
-if [ "$ostype" == "DARWIN" ] || [ "$ostype" == "AIX" ]                  # For Mac and Aix No Total
+if [ "$ostype" == "DARWIN" ] || [ "$ostype" == "AIX" ] || [ "$ostype" == "LINUX" ]   # For Mac and Aix No Total
    then total=""                                                        # On Mac/Aix no Total Line
         tail -${ntail} $file  > $data                                   # Put DF minus Heading  
    else total=`tail -1 $file`                                           # Save 'df' Total Line
