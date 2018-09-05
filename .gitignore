@@ -87,10 +87,14 @@ sysmon.lock
 # SADMIN Configuration Directory
 cfg/*
 !cfg/.sadmin.cfg
+!cfg/.mailgroup.cfg
+!cfg/.slackgroup.cfg
+!cfg/.slackchannel.cfg
 !cfg/.template.smon
 !cfg/.release
 !cfg/.version
 !cfg/.versum
+!cfg/.alert_history.txt
 !cfg/.backup_list.txt
 !cfg/.backup_exclude_list.txt
 !cfg/.sadmin.service
