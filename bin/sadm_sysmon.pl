@@ -24,6 +24,9 @@
 #@2018_07_22    v2.21 Added Date and Time in mail messages sent.
 #===================================================================================================
 #
+# curl -X POST -H 'Content-type: application/json' --data '{"text":"Coco"}'
+# https://hooks.slack.com/services/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
+#
 use English;
 use DateTime; 
 use File::Basename;
@@ -123,8 +126,8 @@ $SADM_RECORD = {
    SADM_ACTIVE => " ",                              # Line is Active or not
    SADM_DATE =>   " ",                              # Last Date this line was evaluated
    SADM_TIME =>   " ",                              # Last Time line was evaluated
-   SADM_ALERT_T =>  " ",                            # Slack Channel Name 
-   SADM_ALERT_G =>  " ",                              # Sadm Alias to send email
+   SADM_SLACK_CHANNEL =>  " ",                      # Slack Channel Name 
+   SADM_MAIL_GROUP =>  " ",                         # Email Group Name to send email
    SADM_SCRIPT => " ",                              # Script 2 execute when Error
 };
 
@@ -340,8 +343,8 @@ sub split_fields {
             $SADM_RECORD->{SADM_ACTIVE},
             $SADM_RECORD->{SADM_DATE},
             $SADM_RECORD->{SADM_TIME},
-            $SADM_RECORD->{SADM_ALERT_T},
-            $SADM_RECORD->{SADM_ALERT_G},
+            $SADM_RECORD->{SADM_SLACK_CHANNEL},
+            $SADM_RECORD->{SADM_MAIL_GROUP},
             $SADM_RECORD->{SADM_SCRIPT} ) = split ' ',$wline;
 }
 
@@ -370,8 +373,8 @@ sub combine_fields {
         $SADM_RECORD->{SADM_ACTIVE},
         $SADM_RECORD->{SADM_DATE},                  # Last Time that the error Occured
         $SADM_RECORD->{SADM_TIME},
-        $SADM_RECORD->{SADM_ALERT_T},               # Alert Type (mail,slac,qpage,...)
-        $SADM_RECORD->{SADM_ALERT_G},
+        $SADM_RECORD->{SADM_SLACK_CHANNEL},               # Alert Type (mail,slac,qpage,...)
+        $SADM_RECORD->{SADM_MAIL_GROUP},
         $SADM_RECORD->{SADM_SCRIPT};
     return "$wline";
 }
@@ -1271,8 +1274,8 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_ACTIVE}  = "Y";             # Line Active/Tested,If N will skip line
             $SADM_RECORD->{SADM_DATE}    = "00000000";      # Last Date that the error Occured
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
-            $SADM_RECORD->{SADM_ALERT_T} = "mail";          # Alert Type (mail,slack,qpage)
-            $SADM_RECORD->{SADM_ALERT_G} = "sadmin";        # Alert Group (sadmin=std address), ...)
+            $SADM_RECORD->{SADM_SLACK_CHANNEL} = "sadmin";  # Slack Channel Name
+            $SADM_RECORD->{SADM_MAIL_GROUP} = "mailgrp";    # Mail Group (sadmin=std address), ...)
             #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
             $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
@@ -1400,7 +1403,7 @@ sub write_rpt_file {
     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                  $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
-                 $SADM_RECORD->{SADM_ALERT_T},$SADM_RECORD->{SADM_ALERT_G};
+                 $SADM_RECORD->{SADM_SLACK_CHANNEL},$SADM_RECORD->{SADM_MAIL_GROUP};
 
     # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
