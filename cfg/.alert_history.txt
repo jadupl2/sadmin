@@ -1,0 +1,4 @@
+# SADMIN SysMon Alert History File
+# This file Record each Alert that was send either by email or Slack.
+# --------------------------------------------------------------------
+#

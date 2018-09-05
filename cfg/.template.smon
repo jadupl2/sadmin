@@ -193,44 +193,44 @@
 #
 # ----- Run specific scripts, check return code and issue a warning or error based on threshold
 # Example 
-#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mailgrp sadmin -
+#script:stemplate.sh       1  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 sadmin mailgrp -
 #
 # SADMIN Script Don't remove - This script make sure 'nmon' performance collector is running
-script:swatch_nmon.sh            0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mailgrp sadmin -
+script:swatch_nmon.sh            0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 sadmin mailgrp -
 #
 #
 # ----- Aix/Linux/MacOS CPU Load, Server Load Average and Swap Space usage Monitoring
-load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 mailgrp sadmin -
-cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 mailgrp sadmin -
-swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 mailgrp sadmin -
+load_average                     0  >  20  35 120 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadmin mailgrp -
+cpu_level                       29 >=  85  95 240 0700 2100 Y Y Y Y Y Y Y Y 00000000 0000 sadmin mailgrp -
+swap_space                      14  >  85  90 000 0000 0000 Y Y Y Y Y Y Y Y 20180911 1520 sadmin mailgrp -
 #
 # ----- Linux Service Monitoring
-service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-service_chronyd,ntp,ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-service_postfix,sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-#service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-#service_named,named-chroot       0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
-#service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin srestart.sh
+service_crond,cron               1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+service_chronyd,ntp,ntpd         0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+service_ssh,sshd                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+service_postfix,sendmail         1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+service_syslog,rsyslog,syslogd   0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+#service_at,atd                   1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+#service_named,named-chroot       0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
+#service_dhcpd                    0  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp srestart.sh
 #
 # ----- Monitor Daemon or Process Running 
-#daemon_mydaemon                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 mailgrp sadmin -
+#daemon_mydaemon                 1  <  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 20180820 1520 sadmin mailgrp -
 #
 # ----- Check Linux Multipath Status (0=Error 1=All path(s) are Online/Ready)
-check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mailgrp sadmin -
+check_multipath                  1 !=  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadmin mailgrp -
 #
 # Ping server (Return 0=Ok 1=Error) Line below raise a Warning if site doesn't respond to ping.
-ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mailgrp sadmin -
+ping_www.google.com              0  =  01  00 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadmin mailgrp -
 
 # Ping server (Return 0=Ok 1=Error) Line below raise an Error if site doesn't respond to ping.
-ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 mailgrp sadmin -
+ping_www.ibm.com                 0  =  00  01 000 0000 0000 Y Y Y Y Y Y Y Y 00000000 0000 sadmin mailgrp -
 #
 #
 #
 # ----- Filesystem Monitoring
 # Can increase it by 10%, two times within 24hours maximum, if script "sadm_fs_incr.sh" in Column L.
-# FS/example                    23 >=  25  90 001 0000 0000 Y Y Y Y Y Y Y Y 20180615 0824 mailgrp sadmin sadm_fs_incr.sh
+# FS/example                    23 >=  25  90 001 0000 0000 Y Y Y Y Y Y Y Y 20180615 0824 sadmin mailgrp sadm_fs_incr.sh
 #---------------------------------------------------------------------------------------------------
 # IDENTIFIER - COLUMN 1          2  3   4   5   6  7    8   9 A B C D E F G     H     I   J    K   L
 #---------------------------------------------------------------------------------------------------
