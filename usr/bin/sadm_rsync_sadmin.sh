@@ -34,7 +34,7 @@
 # 2018_07_15  V2.6 Use Client Install Directory Location from Database instead of assuming /sadmin.
 # 2018_07_19  V2.7 Now include Sysmon Template, nmon & service restart (srestart,sh) script
 # 2018_07_21  V2.8 Added swatch_nmon.sh 
-# 2018_09_03  V2.9 Added .egroup.cfg (Email Group File) to rsync process. 
+#@2018_09_03  V2.9 Added .mailgroup.cfg, .slackgroup.cfg and .slackchannel.cfg to rsync process. 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -290,8 +290,9 @@ process_servers()
                 done             
 
               # Rsync Template files Array to SADM client
-              rem_files_to_rsync=( cfg/.template.smon cfg/.release cfg/.sadmin.cfg cfg/.sadmin.rc 
-                                   cfg/.sadmin.service cfg/.egroup.cfg 
+              rem_files_to_rsync=( cfg/.template.smon  cfg/.release cfg/.sadmin.cfg  cfg/.sadmin.rc 
+                                   cfg/.sadmin.service  cfg/.mailgroup.cfg  
+                                   cfg/.slackgroup.cfg  cfg/.slackchannel.cfg 
                                    cfg/.backup_exclude.txt  cfg/.backup_list.txt 
                                    usr/mon/swatch_nmon.sh usr/mon/stemplate.sh 
                                    usr/mon/swatch_nmon.txt usr/mon/stemplate.txt
