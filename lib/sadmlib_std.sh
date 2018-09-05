@@ -44,7 +44,8 @@
 # 2018_07_07    V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
 # 2018_07_16    V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
 # 2018_07_24    v2.32 Show Kernel version instead of O/S Codename in log header
-#@2018_08_16    v2.33 Remove Change Owner & Protection Error Message while not running with root.
+# 2018_08_16    v2.33 Remove Change Owner & Protection Error Message while not running with root.
+#@2018_09_04    v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -62,7 +63,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.33"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.34"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -137,6 +138,8 @@ SADM_FACTER=""                              ; export SADM_FACTER        # Defaul
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_MAIL_TYPE=1                            ; export SADM_MAIL_TYPE     # 0=No 1=Err 2=Succes 3=All
+SADM_SLACKHOOK="https://hooks.slack.com/services/..." ; export SADM_SLACK_HOOK # Slack WebHook
+SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Email 2=Slack 3=Both
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # SADMIN [S]erver/[C]lient
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
@@ -1401,6 +1404,12 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_MAIL_TYPE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MAIL_TYPE=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
         #
+        echo "$wline" |grep -i "^SADM_SLACKHOOK" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_SLACKHOOK=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_ALERT_TYPE" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_ALERT_TYPE=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        #
         echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
         #
@@ -1558,6 +1567,8 @@ sadm_load_config_file() {
              sadm_writelog "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
              sadm_writelog "  - SADM_HOST_TYPE=$SADM_HOST_TYPE"         # [C]lient or [S]erver 
              sadm_writelog "  - SADM_MAIL_TYPE=$SADM_MAIL_TYPE"         # Send Email after each run
+             sadm_writelog "  - SADM_SLACKHOOK=$SADM_SLACKHOOK"         # Slack Web Hook
+             sadm_writelog "  - SADM_ALERT_TYPE=$SADM_ALERT_TYPE"       # SysMon Alert Type
              sadm_writelog "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
              sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
              sadm_writelog "  - SADM_SSH_PORT=$SADM_SSH_PORT"           # SADMIN SSH TCP Port
