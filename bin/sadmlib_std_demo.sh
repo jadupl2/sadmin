@@ -20,6 +20,7 @@
 # 2018_05_28    v3.2 Add Backup Parameters that come from sadmin.cfg from now on.
 # 2018_06_04    v3.3 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05    v3.4 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf Display
+#@2018_09_04    v3.5 Show SMON Alert type and Slack WebHook on output.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -39,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_VER='3.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Header in script log (.log)
@@ -626,6 +627,17 @@ print_sadmin_cfg()
     pexample="\$SADM_MAIL_TYPE"                                         # Directory Variable Name
     pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Directory Description
     presult="$SADM_MAIL_TYPE"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+          
+    pexample="\$SADM_SLACKHOOK"                                         # Variable Name
+    pdesc="Slack WebHook used to send message"                          # Description
+    presult="$SADM_SLACKHOOK"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+          
+                    
+    pexample="\$SADM_ALERT_TYPE"                                        # Variable Name
+    pdesc="0=NoMail 1=Mail 2=Slack 3=Both"                              # Description
+    presult="$SADM_ALERT_TYPE"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
           
     pexample="\$SADM_CIE_NAME"                                          # Directory Variable Name
