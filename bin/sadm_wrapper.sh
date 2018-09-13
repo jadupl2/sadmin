@@ -131,7 +131,7 @@ check_script()
              SADM_PN=`basename "$SCRIPT"`                               # Keep Script without Path
              SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`                 # Script name without ext.
              source ${SADMIN}/lib/sadmlib_std.sh                        # Load SADMIN Std Library
-             SADM_MAIL_TYPE=1  ; export SADM_MAIL_TYPE                  # 0=No 1=OnErr 2=OnOK  3=All
+             SADM_ALERT_TYPE=1  ; export SADM_ALERT_TYPE                  # 0=No 1=OnErr 2=OnOK  3=All
     fi
     
     check_script                                                        # Validate param. received

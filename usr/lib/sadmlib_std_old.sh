@@ -14,7 +14,8 @@
 # 2016_04_17    V2.1 Added Support for Linux Mint
 # 2016_04_19    V2.2 Minor Modifications concerning Trimming the Log File
 # 2017_07_03    V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
-# 2017_07_17    V2.4 Split Second line of log header into two lines/ Change Timming Line
+# 2017_07_17    V2.4 Added SADM_ELOG to store error message encounter to send to user if requested
+#                    Split Second line of log header into two lines/ Change Timming Line
 # 2017_08_12    V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
 # 2017_08_27    V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
 # 2017_09_23    V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
@@ -44,8 +45,7 @@
 # 2018_07_16    V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
 # 2018_07_24    v2.32 Show Kernel version instead of O/S Codename in log header
 # 2018_08_16    v2.33 Remove Change Owner & Protection Error Message while not running with root.
-# 2018_09_04    v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
-#@2018_09_07    v2.35 Include Logic to use Slack (slack.com) and/or Email as Alerting System.
+#@2018_09_04    v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -63,7 +63,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.35"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.34"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -106,10 +106,6 @@ SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                  ; export SADM_WWW_PE
 # SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
-SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"             ; export SADM_ALERT_FILE # AlertGrp File
-SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"            ; export SADM_ALERT_INIT # Initial Alert
-SADM_SLACK_FILE="$SADM_CFG_DIR/slackchannel.cfg"            ; export SADM_SLACK_FILE # Slack WebHook
-SADM_SLACK_INIT="$SADM_CFG_DIR/.slakchannel.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
@@ -117,6 +113,7 @@ SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HI
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1 
 SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2  # Temp File 2
 SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FILE3  # Temp File 3
+SADM_ELOG="${SADM_TMP_DIR}/${SADM_INST}_E.log"              ; export SADM_ELOG       # Email Log Tmp 
 SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"    ; export LOG         # Output LOG 
 SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch" ; export SADM_RCHLOG # Return Code 
 SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"        ; export SADM_RPT_FILE   # RPT FileName 
@@ -128,9 +125,7 @@ SADM_BC=""                                  ; export SADM_BC            # Comman
 SADM_FDISK=""                               ; export SADM_FDISK         # fdisk (Read Disk Capacity)
 SADM_WHICH=""                               ; export SADM_WHICH         # which Path - Required
 SADM_PERL=""                                ; export SADM_PERL          # perl Path (for epoch time)
-SADM_MAIL=""                                ; export SADM_MAIL          # mail Pgm Path
-SADM_MUTT=""                                ; export SADM_MUTT          # mutt Pgm Path
-SADM_CURL=""                                ; export SADM_CURL          # curl Pgm Path
+SADM_MAIL=""                                ; export SADM_MAIL          # Mail Pgm Path
 SADM_LSCPU=""                               ; export SADM_LSCPU         # Path to lscpu Command
 SADM_NMON=""                                ; export SADM_NMON          # Path to nmon Command
 SADM_PARTED=""                              ; export SADM_PARTED        # Path to parted Command
@@ -139,10 +134,12 @@ SADM_SSH=""                                 ; export SADM_SSH           # Path t
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
+#curl -X POST -H 'Content-type: application/json' --data '{"text":"Hello, World!"}' 
+# https://hooks.slack.com/services/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
+#
 # SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
-SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
-SADM_ALERT_GROUP=""                         ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
+SADM_ALERT_TYPE=1                            ; export SADM_ALERT_TYPE     # 0=No 1=Err 2=Succes 3=All
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # SADMIN [S]erver/[C]lient
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
@@ -199,11 +196,6 @@ SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE
 SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER
 SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT
 SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP
-#
-# Local to Library Variable - Can't be us elsewhere
-LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                                # Local Temp File
-LIB_DEBUG=0                                 ; export LIB_DEBUG          # Libr. Debug Level
-
 
 # --------------------------------------------------------------------------------------------------
 #                     THIS FUNCTION RETURN THE STRING RECEIVED TO UPPERCASE
@@ -307,6 +299,7 @@ sadm_trimfile() {
 #
 sadm_check_command_availibility() {
     SADM_CMD=$1                                                         # Save Parameter received
+
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # command is found ?
         then SADM_VAR1=`${SADM_WHICH} ${SADM_CMD}`                      # Store Path of command
              return 0                                                   # Return 0 if cmd found
@@ -415,42 +408,24 @@ sadm_check_requirements() {
                      if [ $? -eq 0 ] ; then sadm_check_command_availibility nmon ;fi
             fi
             SADM_NMON=$SADM_VAR1                                        # Save Command Path
-
             sadm_check_command_availibility "ethtool"                   # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                 then sadm_install_package "ethtool" "ethtool"           # Go Install Missing Package
                     if [ $? -eq 0 ] ;then sadm_check_command_availibility ethtool ;fi
             fi
             SADM_ETHTOOL=$SADM_VAR1                                     # Save Command Path
-            
             sadm_check_command_availibility "parted"                    # Command available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                 then sadm_install_package "parted" "parted"             # Go Install Missing Package
                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "parted" ;fi
             fi
             SADM_PARTED=$SADM_VAR1                                      # Save Command Path
-            
             sadm_check_command_availibility "mail"                      # Mail cmd available?
             if [ "$SADM_VAR1" = "" ]                                    # If Command not found
                 then sadm_install_package "mailx" "mailutils"            # Go Install Missing Package
                      if [ $? -eq 0 ] ;then sadm_check_command_availibility "mail" ; fi
             fi
             SADM_MAIL=$SADM_VAR1                                        # Save Command Path    
-            
-            sadm_check_command_availibility "mutt"                      # mutt cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "mutt" "mutt"                 # Go Install Missing Package
-                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mutt" ; fi
-            fi
-            SADM_MUTT=$SADM_VAR1                                        # Save Command Path    
-            
-            sadm_check_command_availibility "curl"                      # mutt cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "curl" "curl"                 # Go Install Missing Package
-                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mutt" ; fi
-            fi
-            SADM_CURL=$SADM_VAR1                                        # Save Command Path    
-            
             sadm_check_command_availibility lscpu                       # lscpu cmd available?
             SADM_LSCPU=$SADM_VAR1                                       # Save Command Path    
     fi
@@ -1385,61 +1360,6 @@ sadm_server_vg() {
 
 
 
-# --------------------------------------------------------------------------------------------------
-#            Make sure the Alert Group and the Slack Channel file Exist on System 
-# --------------------------------------------------------------------------------------------------
-#
-check_alert_files() {
-
-    # Alert Group File ($SADMIN/cfg/alert_group.cfg) MUST be present.
-    # If it doesn't exist create it from initial file ($SADMIN/cfg/.alert_group.cfg)
-    if [ ! -r "$SADM_ALERT_FILE" ]                                      # If AlertGrp not Exist
-        then if [ ! -r "$SADM_ALERT_INIT" ]                             # If AlertInit File not Fnd
-                then echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                     echo "Even the Alert Group template file can't be found - $SADM_ALERT_INIT"
-                     echo "Copy both files from another system to this server"
-                     echo "Or restore the files from a backup"
-                     echo "Don't forget to review the file content."
-                     echo "****************************************************************"
-                     sadm_stop 1                                        # Exit to O/S with Error
-                else echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                     echo "Will continue using Alert Group template file $SADM_ALERT_INIT"
-                     echo "Please review the Alert Group file ($SADM_ALERT_FILE)."
-                     echo "cp $SADM_ALERT_INIT $SADM_ALERT_FILE"          # Install Initial cfg file
-                     cp $SADM_ALERT_INIT $SADM_ALERT_FILE                 # Install Default cfg file
-                     echo "****************************************************************"
-             fi
-    fi
-
-    # Slack Channel File ($SADMIN/cfg/slackchannel.cfg) MUST be present.
-    # If it doesn't exist create it from initial file ($SADMIN/cfg/.slackchannel.cfg)
-    if [ ! -r "$SADM_SLACK_FILE" ]                                      # If AlertGrp not Exist
-        then if [ ! -r "$SADM_SLACK_INIT" ]                             # If AlertInit File not Fnd
-                then echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_SLACK_FILE "
-                     echo "Even the Alert Group template file can't be found - $SADM_SLACK_INIT"
-                     echo "Copy both files from another system to this server"
-                     echo "Or restore the files from a backup"
-                     echo "Don't forget to review the file content."
-                     echo "****************************************************************"
-                     sadm_stop 1                                        # Exit to O/S with Error
-                else echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_SLACK_FILE "
-                     echo "Will continue using Alert Group template file $SADM_SLACK_INIT"
-                     echo "Please review the Alert Group file ($SADM_SLACK_FILE)."
-                     echo "cp $SADM_SLACK_INIT $SADM_SLACK_FILE"          # Install Initial cfg file
-                     cp $SADM_SLACK_INIT $SADM_SLACK_FILE                 # Install Default cfg file
-                     echo "****************************************************************"
-             fi
-    fi
-
-
-    
-}
-
-
 
 # --------------------------------------------------------------------------------------------------
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
@@ -1447,24 +1367,23 @@ check_alert_files() {
 #
 sadm_load_config_file() {
 
-    # SADMIN Configuration file MUST be present.
-    # If not, then create sadmin.cfg from .sadmin.cfg.
-    if [ ! -r "$SADM_CFG_FILE" ]                                        # If $SADMIN/cfg/sadmin.cfg
-        then if [ ! -r "$SADM_CFG_HIDDEN" ]                             # Initial Cfg file not exist
+    # Configuration file MUST be present - If .sadm_config exist, then create sadm_config from it.
+    if [ ! -r "$SADM_CFG_FILE" ]
+        then if [ ! -r "$SADM_CFG_HIDDEN" ] 
                 then echo "****************************************************************"
                      echo "SADMIN Configuration file not found - $SADM_CFG_FILE "
                      echo "Even the config template file can't be found - $SADM_CFG_HIDDEN"
                      echo "Copy both files from another system to this server"
                      echo "Or restore the files from a backup"
-                     echo "Don't forget to review the file content."
+                     echo "Review the file content."
                      echo "****************************************************************"
-                     sadm_stop 1                                        # Exit to O/S with Error
+                     sadm_stop 1
                 else echo "****************************************************************"
-                     echo "SADMIN configuration file $SADM_CFG_FILE doesn't exist."
+                     echo "SADMIN  configuration file $SADM_CFG_FILE doesn't exist."
                      echo "Will continue using template configuration file $SADM_CFG_HIDDEN"
                      echo "Please review the configuration file ($SADM_CFG_FILE)."
-                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"          # Install Initial cfg file
-                     cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg file
+                     echo "cp $SADM_CFG_HIDDEN $SADM_CFG_FILE"          # Install Initial cfg  file
+                     cp $SADM_CFG_HIDDEN $SADM_CFG_FILE                 # Install Default cfg  file
                      echo "****************************************************************"
              fi
     fi
@@ -1483,10 +1402,7 @@ sadm_load_config_file() {
         if [ $? -eq 0 ] ; then SADM_CIE_NAME=`echo "$wline" |cut -d= -f2 |sed -e 's/^[ \t]*//'` ;fi
         #
         echo "$wline" |grep -i "^SADM_ALERT_TYPE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_ALERT_TYPE=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
-        #
-        echo "$wline" |grep -i "^SADM_ALERT_GROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_ALERT_GROUP=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_ALERT_TYPE=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
@@ -1504,10 +1420,10 @@ sadm_load_config_file() {
         if [ $? -eq 0 ] ; then SADM_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_WWW_USER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WWW_USER=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_WWW_USER=`echo "$wline"          |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_WWW_GROUP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WWW_GROUP=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_WWW_GROUP=`echo "$wline"         |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MAX_LOGLINE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MAX_LOGLINE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
@@ -1525,52 +1441,52 @@ sadm_load_config_file() {
         if [ $? -eq 0 ] ; then SADM_LOG_KEEPDAYS=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_DBNAME" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_DBNAME=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_DBHOST" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_DBHOST=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_DBPORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DBPORT=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_DBPORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_RW_DBUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_DBUSER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_RW_DBUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_RW_DBPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RW_DBPWD=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_RW_DBPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_RO_DBUSER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_DBUSER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_RO_DBUSER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_RO_DBPWD" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RO_DBPWD=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_RO_DBPWD=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SSH_PORT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_SSH_PORT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_RRDTOOL" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_RRDTOOL=`echo "$wline"       |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_RRDTOOL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_BACKUP_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_BACKUP_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_DAILY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_DAILY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_DAILY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_WEEKLY_BACKUP_DAY" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_DAY=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_WEEKLY_BACKUP_DAY=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MONTHLY_BACKUP_DATE" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_MONTHLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -1579,34 +1495,35 @@ sadm_load_config_file() {
         if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_MONTH=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_YEARLY_BACKUP_DATE" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_YEARLY_BACKUP_DATE=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MKSYSB_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"    |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MKSYSB_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_MKSYSB_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_MKSYSB_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_MKSYSB_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_STORIX_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_SERVER=`echo "$wline"     |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_STORIX_NFS_MOUNT_POINT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_MOUNT_POINT=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_STORIX_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_STORIX_BACKUP_TO_KEEP" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_STORIX_BACKUP_TO_KEEP=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_STORIX_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         # 
         echo "$wline" |grep -i "^SADM_REAR_NFS_SERVER" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline" |cut -d= -f2 |tr -d ' '` ;fi
+        if [ $? -eq 0 ] ; then SADM_REAR_NFS_SERVER=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_REAR_NFS_MOUNT_POINT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_REAR_NFS_MOUNT_POINT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_REAR_BACKUP_TO_KEEP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_REAR_BACKUP_TO_KEEP=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
         #
         echo "$wline" |grep -i "^SADM_NETWORK1" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_NETWORK1=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
@@ -1633,6 +1550,53 @@ sadm_load_config_file() {
              SADM_RO_DBPWD=""
     fi
 
+    # For Debugging Purpose - Display Final Value of configuration file
+    if [ "$SADM_DEBUG_LEVEL" -gt 8 ]
+        then sadm_writelog ""
+             sadm_writelog "EXPORTED VARIABLES THAT ARE SET AFTER READING THE CONFIG FILE " 
+             sadm_writelog "SADM_DEBUG_LEVEL $SADM_DEBUG_LEVEL Information"
+             sadm_writelog "CONFIGURATION FILE IS $SADM_CFG_FILE"
+             sadm_writelog "  - SADM_MAIL_ADDR=$SADM_MAIL_ADDR"         # Default email address
+             sadm_writelog "  - SADM_CIE_NAME=$SADM_CIE_NAME"           # Company Name
+             sadm_writelog "  - SADM_HOST_TYPE=$SADM_HOST_TYPE"         # [C]lient or [S]erver 
+             sadm_writelog "  - SADM_ALERT_TYPE=$SADM_ALERT_TYPE"         # Send Email after each run
+             sadm_writelog "  - SADM_SERVER=$SADM_SERVER"               # SADMIN server
+             sadm_writelog "  - SADM_DOMAIN=$SADM_DOMAIN"               # SADMIN Domain Default
+             sadm_writelog "  - SADM_SSH_PORT=$SADM_SSH_PORT"           # SADMIN SSH TCP Port
+             sadm_writelog "  - SADM_RRDTOOL=$SADM_RRDTOOL"             # RRDTOOL Location
+             sadm_writelog "  - SADM_USER=$SADM_USER"                   # sadmin user account
+             sadm_writelog "  - SADM_GROUP=$SADM_GROUP"                 # sadmin group account
+             sadm_writelog "  - SADM_WWW_USER=$SADM_WWW_USER"           # sadmin user account
+             sadm_writelog "  - SADM_WWW_GROUP=$SADM_WWW_GROUP"         # sadmin group account
+             sadm_writelog "  - SADM_MAX_LOGLINE=$SADM_MAX_LOGLINE"     # Max Line in each *.log
+             sadm_writelog "  - SADM_MAX_RCLINE=$SADM_MAX_RCLINE"       # Max Line in each *.rch
+             sadm_writelog "  - SADM_NMON_KEEPDAYS=$SADM_NMON_KEEPDAYS" # Days to keep old *.nmon
+             sadm_writelog "  - SADM_RCH_KEEPDAYS=$SADM_NMON_KEEPDAYS"  # Days to keep old *.rch
+             sadm_writelog "  - SADM_DBNAME=$SADM_DBNAME"               # MySQL DataBase Name
+             sadm_writelog "  - SADM_DBHOST=$SADM_DBHOST"               # MySQL DataBase Host
+             sadm_writelog "  - SADM_DBPORT=$SADM_DBPORT"               # MySQL Listening Port
+             sadm_writelog "  - SADM_RW_DBUSER=$SADM_RW_DBUSER"         # MySQL RW User
+             sadm_writelog "  - SADM_RW_DBPWD=$SADM_RW_DBPWD"           # MySQL RW User Pwd
+             sadm_writelog "  - SADM_RO_DBUSER=$SADM_RO_DBUSER"         # MySQL RO User
+             sadm_writelog "  - SADM_RO_DBPWD=$SADM_RO_DBPWD"           # MySQL RO User Pwd
+             sadm_writelog "  - SADM_REAR_NFS_SERVER=$SADM_REAR_NFS_SERVER" 
+             sadm_writelog "  - SADM_REAR_NFS_MOUNT_POINT=$SADM_REAR_NFS_MOUNT_POINT" 
+             sadm_writelog "  - SADM_REAR_BACKUP_TO_KEEP=$SADM_REAR_BACKUP_TO_KEEP   " 
+             sadm_writelog "  - SADM_STORIX_NFS_SERVER=$SADM_STORIX_NFS_SERVER" 
+             sadm_writelog "  - SADM_STORIX_NFS_MOUNT_POINT=$SADM_STORIX_NFS_MOUNT_POINT" 
+             sadm_writelog "  - SADM_STORIX_BACKUP_TO_KEEP=$SADM_STORIX_BACKUP_TO_KEEP" 
+             sadm_writelog "  - SADM_BACKUP_NFS_SERVER=$SADM_BACKUP_NFS_SERVER" 
+             sadm_writelog "  - SADM_BACKUP_NFS_MOUNT_POINT=$SADM_BACKUP_NFS_MOUNT_POINT" 
+             sadm_writelog "  - SADM_DAILY_BACKUP_TO_KEEP=$SADM_DAILY_BACKUP_TO_KEEP" 
+             sadm_writelog "  - SADM_MKSYSB_NFS_SERVER=$SADM_MKSYSB_NFS_SERVER" 
+             sadm_writelog "  - SADM_MKSYSB_NFS_MOUNT_POINT=$SADM_MKSYSB_NFS_MOUNT_POINT" 
+             sadm_writelog "  - SADM_MKSYSB_NFS_TO_KEEP=$SADM_MKSYSB_NFS_TO_KEEP" 
+             sadm_writelog "  - SADM_NETWORK1 = $SADM_NETWORK1"         # Subnet to Scan
+             sadm_writelog "  - SADM_NETWORK2 = $SADM_NETWORK2"         # Subnet to Scan
+             sadm_writelog "  - SADM_NETWORK3 = $SADM_NETWORK3"         # Subnet to Scan
+             sadm_writelog "  - SADM_NETWORK4 = $SADM_NETWORK4"         # Subnet to Scan
+             sadm_writelog "  - SADM_NETWORK5 = $SADM_NETWORK5"         # Subnet to Scan
+    fi                 
     return 0
 }
 
@@ -1645,189 +1609,220 @@ sadm_load_config_file() {
 #   2) Make sure the log file exist with proper permission ($SADM_LOG)
 #   3) Make sure the Return Code History Log exist and have the right permission
 #   4) Create script PID file - If it exist and user want to run only 1 copy of script, then abort
-#   5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2 = Running)
+#   5) Add line in the [R]eturn [C]ode [H]istory file stating script is started (Code 2)
 #   6) Write HostName - Script name and version - O/S Name and version to the Log file ($SADM_LOG)
 # --------------------------------------------------------------------------------------------------
 #
 sadm_start() {
 
-    # ($SADMIN/log) If log Directory doesn't exist, create it.
-    [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR           
-    fi
-
-    # ($SADMIN/log/`hostname -s`_SCRIPT.log) If LOG File doesn't exist, Create it & Make it writable 
-    [ ! -e "$SADM_LOG" ] && touch $SADM_LOG
-    if [ $(id -u) -eq 0 ] 
-        then chmod 664 $SADM_LOG ; chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
-    fi
-
-    # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
-    [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 1777 $SADM_TMP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
-    fi
-
-    # ($SADMIN/lib) If LIB Directory doesn't exist, create it.
-    [ ! -d "$SADM_LIB_DIR" ] && mkdir -p $SADM_LIB_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_LIB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
-    fi
-
-    # ($SADMIN/cfg) If Custom Configuration Directory doesn't exist, create it.
-    [ ! -d "$SADM_CFG_DIR" ] && mkdir -p $SADM_CFG_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_CFG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_CFG_DIR
-    fi
-
-    # ($SADMIN/sys) If System Startup/Shutdown Script Directory doesn't exist, create it.
-    [ ! -d "$SADM_SYS_DIR" ] && mkdir -p $SADM_SYS_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_SYS_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
-    fi 
-
-    # ($SADMIN/doc) If Documentation Directory doesn't exist, create it.
-    [ ! -d "$SADM_DOC_DIR" ] && mkdir -p $SADM_DOC_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_DOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
-    fi
-
-    # ($SADMIN/pkg) If Package Directory doesn't exist, create it.
-    [ ! -d "$SADM_PKG_DIR" ] && mkdir -p $SADM_PKG_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_PKG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
-    fi
-
-    # ($SADMIN/setup) If Setup Directory doesn't exist, create it.
-    [ ! -d "$SADM_SETUP_DIR" ] && mkdir -p $SADM_SETUP_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_SETUP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
-    fi
-
-    # ($SADMIN/dat) If Data Directory doesn't exist, create it.
-    [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_DAT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
-    fi 
-
-    # ($SADMIN/dat/nmon) If NMON Directory doesn't exist, create it.
-    [ ! -d "$SADM_NMON_DIR" ] && mkdir -p $SADM_NMON_DIR
-    if [ $(id -u) -eq 0 ]  
-        then chmod 0775 $SADM_NMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR 
-    fi
-
-    # ($SADMIN/dat/dr) If Disaster Recovery Information Directory doesn't exist, create it.
-    [ ! -d "$SADM_DR_DIR" ] && mkdir -p $SADM_DR_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_DR_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR 
-    fi
-
-    # ($SADMIN/dat/rpt) If Sysmon Report Directory doesn't exist, create it.
-    [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_RPT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR
-    fi
-
-    # ($SADMIN/dat/rch) If Return Code History Directory doesn't exist, create it.
-    [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_RCH_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR
-    fi
-
-    # ($SADMIN/usr) If User Directory doesn't exist, create it.
-    [ ! -d "$SADM_USR_DIR" ] && mkdir -p $SADM_USR_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_USR_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_USR_DIR
-    fi 
-
-    # ($SADMIN/usr/bin) If User Bin Dir doesn't exist, create it.
-    [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_UBIN_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR 
-    fi
-
-    # ($SADMIN/usr/lib) If User Lib Dir doesn't exist, create it.
-    [ ! -d "$SADM_ULIB_DIR" ] && mkdir -p $SADM_ULIB_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_ULIB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR
-    fi
-
-    # ($SADMIN/usr/doc) If User Doc Directory doesn't exist, create it.
-    [ ! -d "$SADM_UDOC_DIR" ] && mkdir -p $SADM_UDOC_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_UDOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR 
-    fi
-
-    # ($SADMIN/usr/mon) If User SysMon Scripts Directory doesn't exist, create it.
-    [ ! -d "$SADM_UMON_DIR" ] && mkdir -p $SADM_UMON_DIR
-    if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR 
-    fi
-
-    # Check Directories that are present only on SADMIN Server
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] 
-        then # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
-             [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
+    # If log Directory doesn't exist, create it.
+    if [ ! -d "$SADM_LOG_DIR" ] 
+        then mkdir -p $SADM_LOG_DIR
              if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_NET_DIR 
-                     chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR
+                then chmod 0775 $SADM_LOG_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR           
              fi
-             # ($SADMIN/dat/dbb) If Database Backup Directory doesn't exist, create it.
-             [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
+    fi
+
+    # If LOG File doesn't exist, Create it and Make it writable 
+    if [ ! -e "$SADM_LOG" ] 
+        then touch $SADM_LOG
              if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_DBB_DIR 
-                     chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR 
+                then chmod 664 $SADM_LOG
+                     chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}
              fi
-             # $SADMIN/www Dir.
-             [ ! -d "$SADM_WWW_DIR" ] && mkdir -p $SADM_WWW_DIR
+    fi
+
+    # If Email LOG File doesn't exist, Create it and Make it writable 
+    rm -f $SADM_ELOG >> /dev/null 2>&1
+    touch $SADM_ELOG
+    if [ $(id -u) -eq 0 ] 
+        then chmod 664 $SADM_ELOG
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_ELOG}
+    fi
+
+    # If TMP Directory doesn't exist, create it.
+    if [ ! -d "$SADM_TMP_DIR" ] 
+        then mkdir -p $SADM_TMP_DIR
              if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_DIR 
+                then chmod 1777 $SADM_TMP_DIR 
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
+             fi
+    fi
+
+    # If LIB Directory doesn't exist, create it.
+    if [ ! -d "$SADM_LIB_DIR" ] 
+        then mkdir -p $SADM_LIB_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_LIB_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_LIB_DIR
+             fi
+    fi
+
+    # If User Directory doesn't exist, create it.
+    if [ ! -d "$SADM_USR_DIR" ] 
+        then mkdir -p $SADM_USR_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_USR_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_USR_DIR
+             fi
+    fi 
+
+    # If Custom Configuration Directory doesn't exist, create it.
+    if [ ! -d "$SADM_CFG_DIR" ] 
+        then mkdir -p $SADM_CFG_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_CFG_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_CFG_DIR
+             fi 
+    fi
+
+    # If System Startup/Shutdown Script Directory doesn't exist, create it.
+    if [ ! -d "$SADM_SYS_DIR" ] 
+        then mkdir -p $SADM_SYS_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_SYS_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_DIR
+             fi
+    fi 
+
+    # If Documentation Directory doesn't exist, create it.
+    if [ ! -d "$SADM_DOC_DIR" ] 
+        then mkdir -p $SADM_DOC_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_DOC_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
+             fi
+    fi
+
+    # If Data Directory doesn't exist, create it.
+    if [ ! -d "$SADM_DAT_DIR" ] 
+        then mkdir -p $SADM_DAT_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_DAT_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+             fi
+    fi 
+
+    
+    # If Package Directory doesn't exist, create it.
+    if [ ! -d "$SADM_PKG_DIR" ] 
+        then mkdir -p $SADM_PKG_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_PKG_DIR 
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_PKG_DIR
+             fi
+    fi
+
+    # If Setup Directory doesn't exist, create it.
+    if [ ! -d "$SADM_SETUP_DIR" ] 
+        then mkdir -p $SADM_SETUP_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_SETUP_DIR 
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_SETUP_DIR
+             fi
+    fi
+
+    # If SADM Server Web Site Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
+        then mkdir -p $SADM_WWW_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_WWW_DIR
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DIR
              fi
-             # $SADMIN/www/dat Dir.
-             [ ! -d "$SADM_WWW_DAT_DIR" ] && mkdir -p $SADM_WWW_DAT_DIR
+    fi
+
+    # If SADM Server Web Site Data Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_DAT_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server   
+        then mkdir -p $SADM_WWW_DAT_DIR
              if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_DAT_DIR 
+                then chmod 0775 $SADM_WWW_DAT_DIR  
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
-             fi
-             # $SADMIN/www/doc Dir. 
-             [ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
+            fi
+    fi
+    
+    # If SADM Server Web Site HTML Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_DOC_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
+        then mkdir -p $SADM_WWW_DOC_DIR
              if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_DOC_DIR 
+                then chmod 0775 $SADM_WWW_DOC_DIR  
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
-             fi
-             # $SADMIN/www/lib Dir.
-             [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
-             if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_LIB_DIR 
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
-             fi
-             # $SADMIN/www/images Dir.
-             [ ! -d "$SADM_WWW_IMG_DIR" ] && mkdir -p $SADM_WWW_IMG_DIR
-             if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_IMG_DIR 
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
-             fi
-             # $SADMIN/www/tmp Dir.
-             [ ! -d "$SADM_WWW_TMP_DIR" ] && mkdir -p $SADM_WWW_TMP_DIR
-             if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_TMP_DIR 
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_TMP_DIR
              fi
     fi
 
-    # If user don't want to append to existing log - Clear it - Else we will append to it.
-    [ "$SADM_LOG_APPEND" != "Y" ] && echo " " > $SADM_LOG
+    # If SADM Server Web Site LIB Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_LIB_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
+        then mkdir -p $SADM_WWW_LIB_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_WWW_LIB_DIR  
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_LIB_DIR
+             fi
+    fi
 
-    # Feed the Return Code History File stating the script is Running
+    # If SADM Server Web Site Images Directory doesn't exist, create it.
+    if [ ! -d "$SADM_WWW_IMG_DIR" ] && [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] # Only on SADMIN Server
+        then mkdir -p $SADM_WWW_IMG_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_WWW_IMG_DIR  
+                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_IMG_DIR
+             fi
+    fi
+
+    # If NMON Directory doesn't exist, create it.
+    if [ ! -d "$SADM_NMON_DIR" ] 
+        then mkdir -p $SADM_NMON_DIR
+             if [ $(id -u) -eq 0 ] 
+                then chmod 0775 $SADM_NMON_DIR
+                     chown ${SADM_USER}:${SADM_GROUP} $SADM_NMON_DIR
+             fi
+    fi
+
+    # If Disaster Recovery Information Directory doesn't exist, create it.
+    if [ ! -d "$SADM_DR_DIR" ] ; then mkdir -p $SADM_DR_DIR ; fi
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_DR_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DR_DIR ;fi
+
+    # If Network/Subnet Information Directory doesn't exist, create it.
+    if [ ! -d "$SADM_NET_DIR" ] ; then mkdir -p $SADM_NET_DIR ; fi
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_NET_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_NET_DIR ; fi
+
+    # If SADM Sysmon Report Directory doesn't exist, create it.
+    [ ! -d "$SADM_RPT_DIR" ] && mkdir -p $SADM_RPT_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_RPT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RPT_DIR ; fi
+
+    # If SADM Database Backup Directory doesn't exist, create it.
+    [ ! -d "$SADM_DBB_DIR" ] && mkdir -p $SADM_DBB_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_DBB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DBB_DIR ; fi
+
+    # If Return Code History Directory doesn't exist, create it.
+    [ ! -d "$SADM_RCH_DIR" ] && mkdir -p $SADM_RCH_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_RCH_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_RCH_DIR ; fi
+
+    # If User Bin Dir doesn't exist, create it.
+    [ ! -d "$SADM_UBIN_DIR" ] && mkdir -p $SADM_UBIN_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_UBIN_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UBIN_DIR ; fi
+
+    # If User Lib Dir doesn't exist, create it.
+    [ ! -d "$SADM_ULIB_DIR" ] && mkdir -p $SADM_ULIB_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_ULIB_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_ULIB_DIR ; fi
+
+    # If User Doc Directory doesn't exist, create it.
+    [ ! -d "$SADM_UDOC_DIR" ] && mkdir -p $SADM_UDOC_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_UDOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UDOC_DIR ; fi
+
+    # If User SysMon Scripts Directory doesn't exist, create it.
+    [ ! -d "$SADM_UMON_DIR" ] && mkdir -p $SADM_UMON_DIR
+    if [ $(id -u) -eq 0 ] ; then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR ; fi
+
+    # If user don't want to append to existing log - Clear it - Else we will append to it.
+    if [ "$SADM_LOG_APPEND" != "Y" ] ; then echo " " > $SADM_LOG ; fi
+
+    # Feed the Return Code History File stating the script is starting
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
-             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} 
-             WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST 2" >>$SADM_RCHLOG
+             if [ $(id -u) -eq 0 ] ; then chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} ; fi
+             echo "${SADM_HOSTNAME} $SADM_STIME .......... ........ ........ $SADM_INST 2" >>$SADM_RCHLOG
     fi
 
     # Write Starting Info in the Log
@@ -1875,8 +1870,7 @@ sadm_start() {
 sadm_stop() {    
     if [ $# -eq 0 ]                                                     # If No status Code Received
         then SADM_EXIT_CODE=1                                           # Assume Error if none given
-             sadm_writelog "Function 'sadm_stop' expect a parameter (SADM_EXIT_CODE)"
-             sadm_writelog "Received None - Assuming 1 (error)."        # Advise User
+             sadm_writelog "sadm_stop expect a parameter (SADM_EXIT_CODE), assuming 1 (error)."
         else SADM_EXIT_CODE=$1                                          # Save Exit Code Received
     fi
     if [ "$SADM_EXIT_CODE" -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi         # Making Sure code is 1 or 0
@@ -1890,12 +1884,12 @@ sadm_stop() {
 
     # Get End time and Calculate Elapse Time
     sadm_end_time=`date "+%C%y.%m.%d %H:%M:%S"` ; export sadm_end_time  # Get & Format End Time
-    sadm_elapse=`sadm_elapse "$sadm_end_time" "$SADM_STIME"`            # Get Elapse - End-Start
+    sadm_elapse=`sadm_elapse "$sadm_end_time" "$SADM_STIME"`       # Get Elapse - End-Start
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then sadm_writelog "Script execution time is $sadm_elapse"      # Write the Elapse Time
     fi 
 
-    # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
+    # Add Ending line in RCH File & Trim based on Variable $SADM_MAX_RCLINE define in sadmin.cfg
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE" # Format Part2 of RCH File
@@ -1908,26 +1902,30 @@ sadm_stop() {
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
     fi
 
-    # Write Alert Choice & The Log 
+    # Write email choice in the log footer
+    if [ "$SADM_MAIL" = "" ] ; then SADM_ALERT_TYPE=4 ; fi               # Mail not Install - no Mail
     if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]        # Want to Produce Log Footer
         then case $SADM_ALERT_TYPE in
-                0)  sadm_writelog "User requested no alert to be sent when script end"
+                0)  sadm_writelog "User requested no mail when script end (Fail or Success)"
                     ;;
                 1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-                        then sadm_writelog "User request an alert if script failed (Alert sent)"
-                        else sadm_writelog "User request an alert only if script fail (No Alert Sent)"
+                        then sadm_writelog "User requested mail only if script fail - Will send mail"
+                        else sadm_writelog "User requested mail only if script fail - Will not send mail"
                     fi
                     ;;
                 2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-                        then sadm_writelog "User request an alert on Success of script (Alert Sent)"
-                        else sadm_writelog "User request an alert only on Success of script (No Alert Sent)"
+                        then sadm_writelog "User requested mail only on Success of script - Will send mail"
+                        else sadm_writelog "User requested mail only on Success of script - Will not send mail"
                     fi 
                     ;;
-                3)  sadm_writelog "User requested an alert at the end of each execution (Alert Sent)"
+                3)  sadm_writelog "User requested mail either Success or Error of script - Will send mail"
+                    ;;
+                4)  sadm_writelog "No Mail can be send until the mail command is install"
+                    sadm_writelog "On CentOS/Red Hat/Fedora  - enter command 'yum -y mail'"
+                    sadm_writelog "On Ubuntu/Debian/Raspbian/LinuxMint - use 'apt-get install mailutils'"
                     ;;
                 *)  sadm_writelog "The SADM_ALERT_TYPE is not set properly - Should be between 0 and 3"
-                    sadm_writelog "It is set to $SADM_ALERT_TYPE changing it to 3"
-                    SADM_ALERT_TYPE=3
+                    sadm_writelog "It is now set to $SADM_ALERT_TYPE"
                     ;;
              esac
              sadm_writelog "Trim log $SADM_LOG to ${SADM_MAX_LOGLINE} lines" # Inform user trimming 
@@ -1939,182 +1937,45 @@ sadm_stop() {
              sadm_writelog " "                                          # Blank Line
     fi
 
-
-    # Trim the Log 
     cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
     chmod 664 ${SADM_LOG}                                               # Owner/Group Write Else Read
     chgrp ${SADM_GROUP} ${SADM_LOG}                                     # Change Log file Group 
-
-    # Alert the Unix Admin. based on his selected choice
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
-
+    
+    # Inform UnixAdmin By Email based on his selected choice
     case $SADM_ALERT_TYPE in
-      1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
-             then wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"   # Format Alert Mess
-                  sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"       # Send Alert to SysAdmin
+      1)  if [ "$SADM_EXIT_CODE" -ne 0 ] && [ "$SADM_MAIL" != "" ]      # Mail On Error Only
+             then wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"   # Format Mail Subject
+                  cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR # Send Email to SysAdmin
           fi
           ;;
-      2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
-             then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Subject
-                  sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"       # Send Alert to SysAdmin
+      2)  if [ "$SADM_EXIT_CODE" -eq 0 ] && [ "$SADM_MAIL" != "" ]      # Mail On Success Only
+             then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Mail Subject
+                  cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR # Send Email to SysAdmin
           fi 
           ;;
-      3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
-            then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"  # Format Subject
-            else wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"    # Format Subject
+      3)  if [ "$SADM_EXIT_CODE" -eq 0 ] && [ "$SADM_MAIL" != "" ]      # Always mail
+              then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Mail Subject
+              else wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"  # Format Mail Subject
           fi
-          sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"               # Send Alert to SysAdmin
+          cat $SADM_LOG | $SADM_MAIL -s "$wsub" $SADM_MAIL_ADDR         # Send Email to SysAdmin
           ;;
     esac
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
-
-        
-    # Normally we Delete the PID File when exiting the script.
-    # But when script is already running, we are the second instance of the script 
-    # (DELETE_PID is set to "N"), we don't want to delete PID file
-    if ( [ -e "$SADM_PID_FILE"  ] && [ "$DELETE_PID" = "Y" ] )          # PID Exist & Only Running 1
-        then rm -f $SADM_PID_FILE  >/dev/null 2>&1                      # Delete the PID File
+    
+    # Normally we Delete the PID File when exiting Script
+    # But when script is already running, we are the second instance 
+    # (DELETE_PID is set to "N"),we don't want to delete PID file
+    if ( [ -e "$SADM_PID_FILE"  ] && [ "$DELETE_PID" = "Y" ] )
+        then rm -f $SADM_PID_FILE  >/dev/null 2>&1 
     fi
 
     # Delete Temporary files used
     if [ -e "$SADM_TMP_FILE1" ] ; then rm -f $SADM_TMP_FILE1 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE2" ] ; then rm -f $SADM_TMP_FILE2 >/dev/null 2>&1 ; fi
     if [ -e "$SADM_TMP_FILE3" ] ; then rm -f $SADM_TMP_FILE3 >/dev/null 2>&1 ; fi
+    if [ -e "$SADM_ELOG" ]      ; then rm -f $SADM_ELOG >/dev/null 2>&1 ; fi
     return $SADM_EXIT_CODE
 }
-
-
-# --------------------------------------------------------------------------------------------------
-# Send an Alert 
-#
-# 1st Parameter    : [S] If it is a Script Alert (Alert Message will includ Script Info)
-#                        For type [S] Default Group come from sadmin.cfg or user can modify it 
-#                        by altering SADM_ALERT_GROUP variable.
-#                    [M] If it's used for a System Monitor Alert
-#                        For type [M] Warning and Error Alert Group are taken from the host
-#                        System Monitor file ($SADMIN/cfg/hostname.smon)
-#
-# 2nd Parameter    : Alert Group Name to send Message
-# 3th Parameter    : The Alert Message
-# --------------------------------------------------------------------------------------------------
-#
-sadm_send_alert() { 
-
-    # Validate the Number of parameter received.
-    if [ $# -lt 1 ] || [ $# -gt 3 ]                                     # Invalid No. of Parameter
-        then sadm_writelog "Invalid Nb argument receive by ${FUNCNAME}" # Advise User
-             sadm_writelog "Should be 3, we received this : $*"         # Show what received
-             return 1                                                   # Return Error to caller
-    fi
-
-    # Save Parameters Received (After Removing leading and trailing Spaces.
-    alert_type=`echo "$1"    | awk '{$1=$1;print}'`                     # [S]cript Err [M]onitor Err
-    alert_type=`echo $alert_type |tr "[:lower:]" "[:upper:]"`           # Make Uppercase
-    alert_group=`echo "$2"   | awk '{$1=$1;print}'`                     # SADM AlertGroup to Advise
-    alert_message=`echo "$3" | awk '{$1=$1;print}'`                     # Save Alert Message
-    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
-       then debmes="sadm_send_alert: alert_type=$alert_type "           # Show Alert Type
-            debmes="$debmes alert_group=$alert_group "                  # Show Alert Group
-            debmes="$debmes alert_message=\"$alert_message\""           # Show Alert Message
-            sadm_writelog "$debmes"
-    fi
-
-    # Is the AlertGroup File Readable ?
-    if [ ! -r "$SADM_ALERT_FILE" ]                                      # If Can't read AlertGroup
-       then sadm_writelog "Alert Group File '$SADM_ALERT_FILE' missing" # Advise User
-            return 1                                                    # Return Error to caller
-    fi 
-
-    # Does the Alert Group exist in the Group in alert File ?
-    grep -i "^$alert_group" $SADM_ALERT_FILE >/dev/null 2>&1            # Line beginning with group
-    if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
-        then sadm_writelog "Alert Group $alert_group don't exist"       # Advise User 
-             return 1                                                   # Return Error to caller
-    fi
-    
-    # Get SADMIN AlertGroup Type and Members.
-    alert_group_type=`grep -i "^$alert_group" $SADM_ALERT_FILE |awk -F, '{ print $2 }'` # [S/M]Group 
-    alert_group_type=`echo $alert_group_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
-    alert_group_member=`grep -i "^$alert_group"  $SADM_ALERT_FILE | awk -F, '{ print $3 }'` # Member
-    alert_group_member=`echo $alert_group_member | awk '{$1=$1;print}'` # Rm Leading/Trailing Space
-    if [ "$LIB_DEBUG" -gt 4 ]
-       then debmes="sadm_send_alert: alert_group=$alert_group "         # Show Alert Group
-            debmes="$debmes alert_group_type=$alert_group_type "        # Show Alert Group Type
-            debmes="$debmes alert_group_member=${alert_group_member}"   # Show Alert Group Member
-            sadm_writelog "$debmes"
-    fi
-
-
-    # If Alert Group Type is [M] then send Alert by Email.
-    if [ "$alert_group_type" == "M" ]                                   # If Alert by Email
-        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Email Alert" ; fi
-             if [ "$alert_type" != "S" ]                                # Alert for a [S]cript
-                then echo "`date`" | $SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
-                     RC=$?                                              # Save Error Number    
-                     if [ $RC != 0 ]                                    # If Error Sending Email
-                        then sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
-                     fi
-                     return $RC                                         # Return to Caller
-                else echo "Event Date/Time : `date`" > $LOCAL_TMP       # Add Event Date/Time In Msg
-                     echo "Script Name is $SADM_PN - Version $SADM_VER" >> $LOCAL_TMP
-                     echo "RCH Line is $RCHLINE" >> $LOCAL_TMP          # Add rch line in Msg
-                     cat $LOCAL_TMP | $SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
-                     RC=$?                                              # Save Error Number    
-                     if [ $RC != 0 ]                                    # If Error Sending Email
-                        then sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
-                     fi
-                     rm -f $LOCAL_TMP >/dev/null 2>&1                   # Remove Tmp File Used
-                     return $RC                                         # Return to Caller
-             fi
-    fi
-
-    # If Alert Group Type is [S] then send Alert by Email.
-    if [ "$alert_group_type" == "S" ]
-        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Slack Alert" ; fi
-             if [ ! -r "$SADM_SLACK_FILE" ]                             # Can't read SlackChannel 
-                then sadm_writelog "Slack Channel File '$SADM_SLACK_FILE' missing" # Advise User
-                     return 1                                           # Return Error to caller
-             fi 
-             grep -i "^$alert_group_member"  $SADM_SLACK_FILE >/dev/null 2>&1 # Line with ChannelName
-             if [ $? -ne 0 ]                                            # Channel not in Chn File
-                then sadm_writelog "Slack Channel $alert_group_member missing in $SADM_SLACK_FILE"
-                     return 1                                           # Return Error to caller
-             fi
-             slack_hook_url=`grep -i "^$alert_group_member" $SADM_SLACK_FILE |awk '{ print $2 }'`
-             if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_writelog "Slack Channel=$alert_group_member Slack Webhook=$slack_hook_url"
-             fi
-             SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
-             if [ "$alert_type" == "M" ]                                # If sys[M]on Alert Message         
-                then slack_text="$alert_message"                        # Set Alert Text
-                else text="\n${alert_message}\nCurrent Date : `date`"   # If [S]cript Alert Message
-                     text="${text}\nScript Name  : $SADM_PN - Version $SADM_VER"
-                     text="${text}\nRCH Line     : $RCHLINE"            # Insert RCH LIne in Message
-                     slack_text="$text"                                 # Set Alert Text
-             fi
-             escaped_msg=$(echo -e "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
-             slack_text="\"text\": \"${escaped_msg}\""                  # Set Final Text Message
-             slack_username="batservers"
-             slack_icon="warning"
-             markdown="\"mrkdwn\": false,"
-             #json="{\"channel\": \"${alert_group_member}\", \"username\":\"${slack_username}\", \"icon_emoji\":\":${slack_icon}:\", ${markdown} ${slack_text}}"
-             json="{\"channel\": \"${alert_group_member}\", \"icon_emoji\": \":${slack_icon}:\", ${markdown} ${slack_text}}"
-             if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_writelog "$SADM_CURL -s -d \"payload=$json\" $slack_hook_url"
-            fi
-             SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
-             if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
-             if [ $SRC == "ok" ] 
-                then RC=0
-                else RC=1
-                     sadm_writelog "Error message : $SRC" 
-             fi
-             return $RC                                                 # Return to Caller
-    fi
-    return 0
-}
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2131,7 +1992,6 @@ sadm_send_alert() {
 
     # Load SADMIN Configuration file
     sadm_load_config_file                                               # Load SADM cfg file
-    check_alert_files                                                   # Alert Files MUST Exist
 
     # Make sure Minimum requirement are met - If not then exit 1
     sadm_check_requirements                                             # Check Lib Requirements
@@ -2139,3 +1999,4 @@ sadm_send_alert() {
 
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     export SADM_USERNAME=$(whoami)                                      # Current User Name
+

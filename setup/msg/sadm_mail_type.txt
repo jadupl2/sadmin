@@ -1,8 +1,8 @@
-# sadmin.cfg SADM_MAIL_TYPE Documentation
+# sadmin.cfg SADM_ALERT_TYPE Documentation
 # Revise 2018_02_14
 #----------------------------------------------------------------------------
 Default option for sending email after a script is finish.
-Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
+Can be overridden by changing SADM_ALERT_TYPE in SADMIN section of your script.
 [0] = Never send email.
 [1] = Only send the log when script finish with error (Default)
 [2] = Only send the log when script finish with success.

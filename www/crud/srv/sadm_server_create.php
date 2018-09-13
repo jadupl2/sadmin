@@ -63,7 +63,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         # Construct SQL to Insert row
         $sql = "INSERT INTO server ";                                   # Construct SQL Statement
         $sql = $sql . "(srv_name, srv_domain, srv_desc, srv_tag, srv_note, srv_active, ";
-        $sql = $sql . " srv_sporadic, srv_monitor, srv_graph, srv_cat, srv_group, srv_ostype, ";
+        $sql = $sql . " srv_sporadic, srv_monitor, srv_alert_group, srv_graph, srv_cat, srv_group, srv_ostype, ";
         $sql = $sql . " srv_date_creation) VALUES ('";
         $sql = $sql . $_POST['scr_name']        . "','" ;
         $sql = $sql . $_POST['scr_domain']      . "','" ;
@@ -73,6 +73,7 @@ $CREATE_BUTTON = False ;                                                # Don't 
         $sql = $sql . $_POST['scr_active']      . "','" ;
         $sql = $sql . $_POST['scr_sporadic']    . "','" ;
         $sql = $sql . $_POST['scr_monitor']     . "','" ;
+        $sql = $sql . $_POST['scr_alert_group'] . "','" ;
         $sql = $sql . $_POST['scr_graph']       . "','" ;
         $sql = $sql . $_POST['scr_cat']         . "','" ;
         $sql = $sql . $_POST['scr_group']       . "','" ;

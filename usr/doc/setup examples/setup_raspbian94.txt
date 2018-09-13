@@ -104,15 +104,15 @@ Enter System Administrator Email : batman@batcave.com
 [SADM_MAIL_ADDR] set to 'batman@batcave.com' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
-[SADM_MAIL_TYPE]
+[SADM_ALERT_TYPE]
 Default option for sending email after a script is finish.
-Can be overridden by changing SADM_MAIL_TYPE in SADMIN section of your script.
+Can be overridden by changing SADM_ALERT_TYPE in SADMIN section of your script.
 [0] = Never send email.
 [1] = Only send the log when script finish with error (Default)
 [2] = Only send the log when script finish with success.
 [3] = Always send the script log when script finish.
 Enter default email type [1] : 
-[SADM_MAIL_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
+[SADM_ALERT_TYPE] set to '1' in /opt/sadmin/cfg/sadmin.cfg
  
 ----------
 [SADM_DOMAIN]

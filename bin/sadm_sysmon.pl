@@ -135,7 +135,7 @@ $SADM_RECORD = {
 my $SADM_HOST_TYPE  = "C";                                              # SADM Default HostType(S,C)
 my $SADM_MAIL_ADDR  = "root\@localhost";                                # Default Sysadmin Email
 my $SADM_CIE_NAME   = " ";                                              # SADMIN Company Name
-my $SADM_MAIL_TYPE  = "1";                                              # SADMIN MailType 1,2,3,4
+my $SADM_ALERT_TYPE  = "1";                                              # SADMIN MailType 1,2,3,4
 my $SADM_SERVER     = "";                                               # SADMIN FQDN Name
 my $SADM_SSH_PORT   = "22";                                             # SADMIN Default SSH Port No
 my $SADM_USER       = "sadmin";                                         # SADMIN Default User Name
@@ -188,7 +188,7 @@ sub load_sadmin_cfg {
         $svalue =~ s/^\s+|\s+$//g;                                      # Remove Leading/Trailing Ch
         if ($sname eq "SADM_HOST_TYPE") { $SADM_HOST_TYPE = $svalue; }  # HostType [S]erver [C]lient
         if ($sname eq "SADM_CIE_NAME")  { $SADM_CIE_NAME  = $svalue; }  # Cie name
-        if ($sname eq "SADM_MAIL_TYPE") { $SADM_MAIL_TYPE = $svalue; }  # MailType 1=MailOnError
+        if ($sname eq "SADM_ALERT_TYPE") { $SADM_ALERT_TYPE = $svalue; }  # MailType 1=MailOnError
         if ($sname eq "SADM_SERVER")    { $SADM_SERVER    = $svalue; }  # SADM FQDN Name
         if ($sname eq "SADM_SSH_PORT")  { $SADM_SSH_PORT  = $svalue; }  # SSH Port Used
         if ($sname eq "SADM_USER")      { $SADM_USER      = $svalue; }  # sadmin user name
@@ -208,7 +208,7 @@ sub load_sadmin_cfg {
         print "SADM_HOST_TYPE           = ${SADM_HOST_TYPE}\n" ;
         print "SADM_MAIL_ADDR           = ${SADM_MAIL_ADDR}\n" ;
         print "SADM_CIE_NAME            = ${SADM_CIE_NAME}\n"  ;
-        print "SADM_MAIL_TYPE           = ${SADM_MAIL_TYPE}\n"  ;
+        print "SADM_ALERT_TYPE           = ${SADM_ALERT_TYPE}\n"  ;
         print "SADM_SERVER              = ${SADM_SERVER}\n"  ;
         print "SADM_SSH_PORT            = ${SADM_SSH_PORT}\n"  ;
         print "SADM_USER                = ${SADM_USER}\n"  ;

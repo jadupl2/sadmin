@@ -167,7 +167,7 @@ f22c263cb134bf6dedf50bdfd3bd5c94  ./setup/msg/sadm_dbhost.txt
 2e307ee3b999cf674c6939123a5789a2  ./setup/msg/sadm_group.txt
 2ced6a888521934499f3219e9b16cf5c  ./setup/msg/sadm_host_type.txt
 cd0b16fa90c85a8d1c0e62af8d257ecd  ./setup/msg/sadm_mail_addr.txt
-41a1b1201b21042cbba6c31715f1b172  ./setup/msg/sadm_mail_type.txt
+41a1b1201b21042cbba6c31715f1b172  ./setup/msg/SADM_ALERT_TYPE.txt
 31c0a68a481642204e14c06e7c7a47c6  ./setup/msg/sadm_max_logline.txt
 ab6836c480ed3da669261197a22927ba  ./setup/msg/sadm_max_rchline.txt
 63d61419e1a5dce1417ae55fceb6ba03  ./setup/msg/sadm_netmask1.txt

@@ -52,7 +52,7 @@ SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run ma
 #
 # An email can be sent at the end of the script depending on the ending status
 # 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE    # 0=No 1=OnErr 2=Success 3=All
+SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=OnErr 2=Success 3=All
 #
 #===================================================================================================
 #

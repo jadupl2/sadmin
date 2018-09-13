@@ -359,7 +359,7 @@ class sadmtools():
             # Save Each Parameter found in Sadmin Configuration File
             if "SADM_MAIL_ADDR"              in CFG_NAME:  self.cfg_mail_addr      = CFG_VALUE
             if "SADM_CIE_NAME"               in CFG_NAME:  self.cfg_cie_name       = CFG_VALUE
-            if "SADM_MAIL_TYPE"              in CFG_NAME:  self.cfg_mail_type      = int(CFG_VALUE)
+            if "SADM_ALERT_TYPE"              in CFG_NAME:  self.cfg_mail_type      = int(CFG_VALUE)
             if "SADM_HOST_TYPE"              in CFG_NAME:  self.cfg_host_type      = CFG_VALUE
             if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
             if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
@@ -1181,7 +1181,7 @@ class sadmtools():
             MailMess="Mail requested on Success or Error - Mail sent"   # Message User Email Choice
     
         if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :           # User Email Choice Invalid
-            MailMess="SADM_MAIL_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
+            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
 
         if self.mail == "" :                                            # If Mail Program not found
             MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice

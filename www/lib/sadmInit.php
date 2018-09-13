@@ -99,6 +99,7 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web ne
 
 # SADMIN FILES DEFINITION
 define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
+define("SADM_ALERT_FILE"   , SADM_CFG_DIR . "/alert_group.cfg");        # SADM Alert Group File
 define("SADM_DBPASS_FILE"  , SADM_CFG_DIR . "/.dbpass") ;               # Name of Database Usr Pwd
 define("SADM_REL_FILE"     , SADM_CFG_DIR . "/.release") ;              # Name of the Release File
 define("SADM_CRON_FILE"    , SADM_WWW_LIB_DIR . "/.crontab.txt");       # SADM Crontab File
@@ -122,21 +123,17 @@ $handle = fopen(SADM_CFG_FILE , "r");                                   # Set Co
 if ($handle) {                                                          # If Successfully Open
     while (($line = fgets($handle)) !== false) {                        # If Still Line to read
           $lineno++;                                                    # Increase Line Number
-          if ($DEBUG) {
-            $long = strlen($line);
-            echo "\n<BR>$lineno : $line - $long ";
-          }
-          if ((strpos(trim($line),'#') === 0) or (strlen($line) < 2)) # If 1st Non-WhiteSpace is #
+          if (strpos(trim($line),'#') === 0)                            # If 1st Non-WhiteSpace is #
              continue;                                                  # Go Read the next line
           list($fname,$fvalue) = explode ('=',$line);                   # Split Line by Name & Value
           if ($DEBUG) {
-                $long = strlen($line);
-                echo "\n<BR>$lineno : $line - $long ";
+                #$long = strlen($line);
+                echo "\n<BR>------------\n<br>$lineno : $line ";
                 echo "\n<BR>The Parameter is : " . $fname ;
                 echo "\n<BR>The Value is     : " . $fvalue ;
           }
           if (trim($fname) == "SADM_MAIL_ADDR")     { define("SADM_MAIL_ADDR"     , trim($fvalue));}
-          if (trim($fname) == "SADM_MAIL_TYPE")     { define("SADM_MAIL_TYPE"     , trim($fvalue));}
+          if (trim($fname) == "SADM_ALERT_TYPE")    { define("SADM_ALERT_TYPE"    , trim($fvalue));}
           if (trim($fname) == "SADM_CIE_NAME")      { define("SADM_CIE_NAME"      , trim($fvalue));}
           if (trim($fname) == "SADM_USER")          { define("SADM_USER"          , trim($fvalue));}
           if (trim($fname) == "SADM_GROUP")         { define("SADM_GROUP"         , trim($fvalue));}
@@ -182,6 +179,11 @@ if ($handle) {                                                          # If Suc
     fclose($handle);
 } else {
     echo "<BR>\nError opening the SADMIN configuration file " . SADM_CFG_FILE . "<BR>";
+}
+
+# Check the Existence of Alert Group File ($SADMIN/cfg/alert_group.cfg) ----------------------------
+if (!is_readable(SADM_ALERT_FILE)) {
+    exit ("The Alert Group File " . SADM_ALERT_FILE . " wasn't found or not readable") ;
 }
 
 

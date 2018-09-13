@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jul 15, 2018 at 10:18 AM
--- Server version: 5.5.56-MariaDB
+-- Generation Time: Sep 12, 2018 at 08:32 AM
+-- Server version: 5.5.60-MariaDB
 -- PHP Version: 5.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Server Active ?',
   `srv_sporadic` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Server Sporadically ON?',
   `srv_monitor` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Monitor the Server?',
+  `srv_alert_group` varchar(15) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'default' COMMENT 'Alert Group',
   `srv_graph` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Display Performance Graph?',
   `srv_cat` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Category',
   `srv_group` varchar(10) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Server Group',
@@ -82,12 +83,13 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_maint_date_start` datetime NOT NULL COMMENT 'Start Date/Time of Maint. Mode',
   `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
   `srv_sadmin_dir` varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client'
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 --
--- Dumping data for table `server`
+-- Truncate table before insert `server`
 --
 
+TRUNCATE TABLE `server`;
 -- --------------------------------------------------------
 
 --
@@ -105,6 +107,11 @@ CREATE TABLE IF NOT EXISTS `server_category` (
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
 
 --
+-- Truncate table before insert `server_category`
+--
+
+TRUNCATE TABLE `server_category`;
+--
 -- Dumping data for table `server_category`
 --
 
@@ -113,7 +120,7 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 (3, 'Dev', 'Development Environment', 1, '2017-11-07 05:00:00', 1),
 (5, 'Poc', 'Proof Of Concept env.', 1, '2017-11-07 05:00:00', 0),
 (6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
-(11, 'Temp', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
+(11, 'Temporary', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
 
 -- --------------------------------------------------------
 
@@ -132,6 +139,11 @@ CREATE TABLE IF NOT EXISTS `server_group` (
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Group Table';
 
 --
+-- Truncate table before insert `server_group`
+--
+
+TRUNCATE TABLE `server_group`;
+--
 -- Dumping data for table `server_group`
 --
 
@@ -142,7 +154,7 @@ INSERT INTO `server_group` (`grp_id`, `grp_code`, `grp_desc`, `grp_active`, `grp
 (5, 'Raspberry', 'Raspberry Pi', 1, '2017-11-07 05:00:00', 0),
 (6, 'Regular', 'Normal App. Server', 1, '2017-11-23 17:33:43', 1),
 (7, 'Temporary', 'Temporaly in service', 1, '2017-11-07 05:00:00', 0),
-(8, 'Laptop', 'Laptop', 1, '2017-11-07 05:00:00', 0);
+(8, 'Laptop', 'Linux Laptop', 1, '2017-11-07 05:00:00', 0);
 
 -- --------------------------------------------------------
 
@@ -163,7 +175,10 @@ CREATE TABLE IF NOT EXISTS `server_network` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
--- Dumping data for table `server_network`
+-- Truncate table before insert `server_network`
+--
+
+TRUNCATE TABLE `server_network`;
 --
 
 --
@@ -206,7 +221,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=35;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=36;
 --
 -- AUTO_INCREMENT for table `server_category`
 --

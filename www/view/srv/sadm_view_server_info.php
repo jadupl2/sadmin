@@ -220,6 +220,16 @@ function display_left_side ($wrow) {
     if ($wrow['srv_monitor'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>"; 
     
+    # Alert Group
+    echo "\n\n<div class='server_left_label'>Alert Group</div>";
+    echo "\n<div class='server_left_data'>";
+    if (empty($wrow['srv_alert_group'])) { 
+        echo "&nbsp" ; 
+    }else{ 
+        echo $wrow['srv_alert_group']; 
+    }
+    echo "</div>"; 
+    
     # Creation Date 
     echo "\n\n<div class='server_left_label'>Creation Date</div>";
     echo "\n<div class='server_left_data'>";

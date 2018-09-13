@@ -79,7 +79,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
@@ -182,7 +182,6 @@ process_servers()
         if ! host  $fqdn_server >/dev/null 2>&1
             then SMSG="[ ERROR ] Can't process '$fqdn_server', hostname can't be resolved"
                  sadm_writelog "$SMSG"                                  # Advise user
-                 echo "$SMSG" >> $SADM_ELOG                             # Log Err. to Email Log
                  ERROR_COUNT=$(($ERROR_COUNT+1))                        # Increase Error Counter
                  if [ $ERROR_COUNT -ne 0 ]                              # If Error count not at zero
                     then sadm_writelog "Total error(s) : $ERROR_COUNT"  # Show Total Error Count

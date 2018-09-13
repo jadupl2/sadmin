@@ -71,7 +71,7 @@ SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN
 # --------------------------------------------------------------------------------------------------
 # An email can be sent at the end of the script depending on the ending status 
 # 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
+SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
 #SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
 #===================================================================================================
 #

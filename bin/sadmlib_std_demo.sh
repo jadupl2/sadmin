@@ -59,7 +59,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
@@ -624,19 +624,8 @@ print_sadmin_cfg()
     presult="$SADM_MAIL_ADDR"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                     
-    pexample="\$SADM_MAIL_TYPE"                                         # Directory Variable Name
-    pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Directory Description
-    presult="$SADM_MAIL_TYPE"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-          
-    pexample="\$SADM_SLACKHOOK"                                         # Variable Name
-    pdesc="Slack WebHook used to send message"                          # Description
-    presult="$SADM_SLACKHOOK"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-          
-                    
-    pexample="\$SADM_ALERT_TYPE"                                        # Variable Name
-    pdesc="0=NoMail 1=Mail 2=Slack 3=Both"                              # Description
+    pexample="\$SADM_ALERT_TYPE"                                        # Directory Variable Name
+    pdesc="0=NoMail 1=OnError 2=OnSuccess 3=All"                        # Directory Description
     presult="$SADM_ALERT_TYPE"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
           

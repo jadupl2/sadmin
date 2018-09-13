@@ -105,6 +105,8 @@ req_client = {
                     'deb':'parted',                         'drepo':'base'},
     'mail'       :{ 'rpm':'mailx',                          'rrepo':'base',
                     'deb':'mailutils',                      'drepo':'base'},
+    'mutt'       :{ 'rpm':'mutt',                           'rrepo':'base',
+                    'deb':'mutt',                           'drepo':'base'},
     'gawk'       :{ 'rpm':'gawk',                           'rrepo':'base',
                     'deb':'gawk',                           'drepo':'base'},
     'facter'     :{ 'rpm':'facter',                         'rrepo':'epel',  
@@ -1579,8 +1581,8 @@ def setup_sadmin_config_file(sroot):
     # Accept the Email type to use at the end of each script execution
     sdefault = 1                                                        # Default value 1
     sprompt  = "Enter default email type"                               # Prompt for Answer
-    wcfg_mail_type = accept_field(sroot,"SADM_MAIL_TYPE",sdefault,sprompt,"I",0,3)
-    update_sadmin_cfg(sroot,"SADM_MAIL_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
+    wcfg_mail_type = accept_field(sroot,"SADM_ALERT_TYPE",sdefault,sprompt,"I",0,3)
+    update_sadmin_cfg(sroot,"SADM_ALERT_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
     try :
