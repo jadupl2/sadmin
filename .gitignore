@@ -88,12 +88,13 @@ sysmon.lock
 cfg/*
 !cfg/.sadmin.cfg
 !cfg/.alert_group.cfg
-!cfg/.slackchannel.cfg
+!cfg/.alert_slack.cfg
+!cfg/.alert_history.txt
+!cfg/.alert_history.seq
 !cfg/.template.smon
 !cfg/.release
 !cfg/.version
 !cfg/.versum
-!cfg/.alert_history.txt
 !cfg/.backup_list.txt
 !cfg/.backup_exclude_list.txt
 !cfg/.sadmin.service
