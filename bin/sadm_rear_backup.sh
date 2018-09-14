@@ -41,11 +41,12 @@
 # --------------------------------------------------------------------------------------------------
 # Change Log
 #
-#  2016_12_14   v1.7 Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
-#  2017_03_09   v1.8 Move test if rear is installed first, if not abort process up front.
-#                    Error Message more verbose and More Customization
-#  2017_04_20   v2.0 Return Code returned by Rear handle correctly, Script Messages more informative
-#  2017_06_06   v2.1 NFS Server Name, Mount Point and Nb of copy to keep are taken from sadmin.cfg
+# 2016_12_14 v1.7 Add Check to see if Rear Configuration file isnt't present, abort Job (Exit 1)
+# 2017_03_09 v1.8 Move test if rear is installed first, if not abort process up front.
+#                 Error Message more verbose and More Customization
+# 2017_04_20 v2.0 Return Code returned by Rear handle correctly, Script Messages more informative
+# 2017_06_06 v2.1 NFS Server Name, Mount Point and Nb of copy to keep are taken from sadmin.cfg
+# 2018_09_14 v2.2 ExitCode was reporting error on some occasion, even when backup was ok.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -56,10 +57,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -68,13 +70,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='2.2'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -87,10 +89,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
@@ -192,7 +195,9 @@ rear_housekeeping()
 {
     FNC_ERROR=0                                                       # Cleanup Error Default 0
     sadm_writelog "***** Perform ReaR Housekeeping *****"
-    
+
+    update_site_conf                                                  # Chck Backup URL in site.conf 
+
     # Make sure Local mount point exist
     if [ ! -d ${NFS_MOUNT} ] ; then mkdir ${NFS_MOUNT} ; chmod 775 ${NFS_MOUNT} ; fi
 
@@ -317,21 +322,22 @@ rear_housekeeping()
 
 
 # --------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 #                                    Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
+# --------------------------------------------------------------------------------------------------
 
-    # Switch for Help Usage (-h), Show Script Version (-v) or Activate Debug Level (-d[1-9])
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -345,17 +351,24 @@ rear_housekeeping()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}" ; fi
-    
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
+    # Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
+ 
     # Check if REAR is not installed - Abort Process 
-
-    REAR=`${SADM_WHICH} rear`
     if ${SADM_WHICH} rear >/dev/null 2>&1                               # command is found ?
         then REAR=`${SADM_WHICH} rear`                                  # Store Path of command
-        else sadm_writelog "COMMAND 'rear' ISN'T FOUND - JOB ABORTED"   # Advise User Aborting
+        else sadm_writelog "The command 'rear' is missing, Job Aborted" # Advise User Aborting
              sadm_stop 1                                                # Upd. RCH File & Trim Log 
              exit 1                                                     # Exit With Global Err (0/1)
     fi
@@ -366,16 +379,18 @@ rear_housekeeping()
              sadm_writelog "The backup will not run - Job Aborted"      # Warn User - No Backup
              sadm_stop 1                                                # Upd. RCH File & Trim Log 
              exit 1                                                     # Exit With Global Err (0/1)
-        else update_site_conf                                           # Update ReaR site.conf 
     fi
     
     # Remove default crontab job - So we can decide otherwise when we run rear from this script
     if [ -r /etc/cron.d/rear ] ; then rm -f /etc/cron.d/rear >/dev/null 2>&1; fi
-    
+
     rear_housekeeping                                                   # Set Perm. & rm old version
     if [ $? -eq 0 ]                                                     # If went OK do Clean up
         then create_backup                                              # Set Perm. & rm old version
-             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi               # Error encounter exitcode=1
+             if [ $? -ne 0 ]                                            # If Error Making Backup
+                then SADM_EXIT_CODE=1                                   # If Error Exit code = 1
+                else SADM_EXIT_CODE=0                                   # No Error Exit code = 0
+             fi             
         else SADM_EXIT_CODE=1                                           # Error encounter exitcode=1
     fi
  
