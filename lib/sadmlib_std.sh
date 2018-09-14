@@ -108,8 +108,10 @@ SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FI
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
 SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"             ; export SADM_ALERT_FILE # AlertGrp File
 SADM_ALERT_INIT="$SADM_CFG_DIR/.alert_group.cfg"            ; export SADM_ALERT_INIT # Initial Alert
-SADM_SLACK_FILE="$SADM_CFG_DIR/slackchannel.cfg"            ; export SADM_SLACK_FILE # Slack WebHook
-SADM_SLACK_INIT="$SADM_CFG_DIR/.slakchannel.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
+SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"             ; export SADM_SLACK_FILE # Slack WebHook
+SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
+SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_HIST # Alert History
+SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
@@ -200,7 +202,7 @@ SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER
 SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT
 SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP
 #
-# Local to Library Variable - Can't be us elsewhere
+# Local to Library Variable - Can't be use elsewhere
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                                # Local Temp File
 LIB_DEBUG=0                                 ; export LIB_DEBUG          # Libr. Debug Level
 
@@ -251,7 +253,6 @@ sadm_isnumeric() {
     if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
 }
 
-    
 
 
 # --------------------------------------------------------------------------------------------------
@@ -274,7 +275,7 @@ sadm_trimfile() {
              return 1                                                   # Return Error to Caller
     fi
 
- #   # Test if Second Parameter Received is an integer
+    # Test if Second Parameter Received is an integer
     sadm_isnumeric "$maxline"                                           # Test if an Integer
     if [ $? -ne 0 ]                                                     # If not an Integer
         then wreturn_code=1                                             # Return Code report error
@@ -1399,18 +1400,13 @@ check_alert_files() {
                      echo "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
                      echo "Even the Alert Group template file can't be found - $SADM_ALERT_INIT"
                      echo "Copy both files from another system to this server"
-                     echo "Or restore the files from a backup"
+                     echo "Or restore them from a backup"
                      echo "Don't forget to review the file content."
                      echo "****************************************************************"
                      sadm_stop 1                                        # Exit to O/S with Error
-                else echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_ALERT_FILE "
-                     echo "Will continue using Alert Group template file $SADM_ALERT_INIT"
-                     echo "Please review the Alert Group file ($SADM_ALERT_FILE)."
-                     echo "cp $SADM_ALERT_INIT $SADM_ALERT_FILE"          # Install Initial cfg file
-                     cp $SADM_ALERT_INIT $SADM_ALERT_FILE                 # Install Default cfg file
-                     echo "****************************************************************"
-             fi
+                else cp $SADM_ALERT_INIT $SADM_ALERT_FILE               # Copy Template as initial
+                     chmod 664 $SADM_ALERT_FILE
+fi
     fi
 
     # Slack Channel File ($SADMIN/cfg/slackchannel.cfg) MUST be present.
@@ -1418,24 +1414,29 @@ check_alert_files() {
     if [ ! -r "$SADM_SLACK_FILE" ]                                      # If AlertGrp not Exist
         then if [ ! -r "$SADM_SLACK_INIT" ]                             # If AlertInit File not Fnd
                 then echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_SLACK_FILE "
-                     echo "Even the Alert Group template file can't be found - $SADM_SLACK_INIT"
+                     echo "SADMIN Slack Channel file is missing - $SADM_SLACK_FILE "
+                     echo "Even the Slack Channel template file is missing - $SADM_SLACK_INIT"
                      echo "Copy both files from another system to this server"
-                     echo "Or restore the files from a backup"
+                     echo "Or restore them from a backup"
                      echo "Don't forget to review the file content."
                      echo "****************************************************************"
                      sadm_stop 1                                        # Exit to O/S with Error
-                else echo "****************************************************************"
-                     echo "SADMIN Alert Group file not found - $SADM_SLACK_FILE "
-                     echo "Will continue using Alert Group template file $SADM_SLACK_INIT"
-                     echo "Please review the Alert Group file ($SADM_SLACK_FILE)."
-                     echo "cp $SADM_SLACK_INIT $SADM_SLACK_FILE"          # Install Initial cfg file
-                     cp $SADM_SLACK_INIT $SADM_SLACK_FILE                 # Install Default cfg file
-                     echo "****************************************************************"
+                else cp $SADM_SLACK_INIT $SADM_SLACK_FILE               # Copy Template as initial
+                     chmod 664 $SADM_SLACK_FILE
              fi
     fi
 
 
+    # Alert History File ($SADMIN/cfg/alert_history.txt) MUST be present.
+    # If it doesn't exist create blank one
+    if [ ! -r "$SADM_ALERT_HIST" ]                                      # If Alert History Missing
+        then if [ ! -r "$SADM_ALERT_HINI" ]                             # If Alert Init File not Fnd
+                then touch $SADM_ALERT_HIST
+                     chmod 666 $SADM_ALERT_HIST
+                else cp $SADM_ALERT_HINI $SADM_ALERT_HIST
+                     chmod 666 $SADM_ALERT_HIST
+             fi
+    fi
     
 }
 
@@ -1914,12 +1915,12 @@ sadm_stop() {
                 0)  sadm_writelog "User requested no alert to be sent when script end"
                     ;;
                 1)  if [ "$SADM_EXIT_CODE" -ne 0 ]
-                        then sadm_writelog "User request an alert if script failed (Alert sent)"
+                        then sadm_writelog "User request an alert if script failed (Will send alert)"
                         else sadm_writelog "User request an alert only if script fail (No Alert Sent)"
                     fi
                     ;;
                 2)  if [ "$SADM_EXIT_CODE" -eq 0 ]
-                        then sadm_writelog "User request an alert on Success of script (Alert Sent)"
+                        then sadm_writelog "User request an alert on Success of script (Will send alert)"
                         else sadm_writelog "User request an alert only on Success of script (No Alert Sent)"
                     fi 
                     ;;
