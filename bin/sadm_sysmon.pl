@@ -21,12 +21,11 @@
 # 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
 # 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
 # 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
-#@2018_07_22    v2.21 Added Date and Time in mail messages sent.
+# 2018_07_22    v2.21 Added Date and Time in mail messages sent.
+#@2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
 #===================================================================================================
 #
-# curl -X POST -H 'Content-type: application/json' --data '{"text":"Coco"}'
-# https://hooks.slack.com/services/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
-#
+
 use English;
 use DateTime; 
 use File::Basename;
@@ -40,7 +39,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.21";                                       # Version Number
+my $VERSION_NUMBER      = "2.22";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -126,20 +125,21 @@ $SADM_RECORD = {
    SADM_ACTIVE => " ",                              # Line is Active or not
    SADM_DATE =>   " ",                              # Last Date this line was evaluated
    SADM_TIME =>   " ",                              # Last Time line was evaluated
-   SADM_SLACK_CHANNEL =>  " ",                      # Slack Channel Name 
-   SADM_MAIL_GROUP =>  " ",                         # Email Group Name to send email
+   SADM_ALERT_GRP_WARNING =>  " ",                  # Warning Alert Group
+   SADM_ALERT_GRP_ERROR =>  " ",                    # Error Alert Group
    SADM_SCRIPT => " ",                              # Script 2 execute when Error
 };
 
 # SADMIN CONFIGURATION FILE FIELDS
-my $SADM_HOST_TYPE  = "C";                                              # SADM Default HostType(S,C)
-my $SADM_MAIL_ADDR  = "root\@localhost";                                # Default Sysadmin Email
-my $SADM_CIE_NAME   = " ";                                              # SADMIN Company Name
-my $SADM_ALERT_TYPE  = "1";                                              # SADMIN MailType 1,2,3,4
-my $SADM_SERVER     = "";                                               # SADMIN FQDN Name
-my $SADM_SSH_PORT   = "22";                                             # SADMIN Default SSH Port No
-my $SADM_USER       = "sadmin";                                         # SADMIN Default User Name
-my $SADM_GROUP      = "sadmin";                                         # SADMIN Default User Group
+my $SADM_HOST_TYPE   = "C";                                              # SADM Default HostType(S,C)
+my $SADM_MAIL_ADDR   = "root\@localhost";                                # Default Sysadmin Email
+my $SADM_CIE_NAME    = " ";                                              # SADMIN Company Name
+my $SADM_ALERT_TYPE  = "1";                                              # SADMIN Alert 1,2,3,4
+my $SADM_SERVER      = "";                                               # SADMIN FQDN Name
+my $SADM_SSH_PORT    = "22";                                             # SADMIN Default SSH PortNo
+my $SADM_USER        = "sadmin";                                         # SADMIN Default User Name
+my $SADM_GROUP       = "sadmin";                                         # SADMIN Default User Group
+my $SADM_ALERT_GROUP = "default";                                        # SADMIN Default Alert Grp
 
 # SSH COMMANDS AND VARIABLES
 my $CMD_SSH       = `which ssh`                ;chomp($CMD_SSH);        # Get location of ssh 
@@ -186,14 +186,15 @@ sub load_sadmin_cfg {
         }
         $sname  =~ s/^\s+|\s+$//g;                                      # Remove Leading/Trailing Ch
         $svalue =~ s/^\s+|\s+$//g;                                      # Remove Leading/Trailing Ch
-        if ($sname eq "SADM_HOST_TYPE") { $SADM_HOST_TYPE = $svalue; }  # HostType [S]erver [C]lient
-        if ($sname eq "SADM_CIE_NAME")  { $SADM_CIE_NAME  = $svalue; }  # Cie name
-        if ($sname eq "SADM_ALERT_TYPE") { $SADM_ALERT_TYPE = $svalue; }  # MailType 1=MailOnError
-        if ($sname eq "SADM_SERVER")    { $SADM_SERVER    = $svalue; }  # SADM FQDN Name
-        if ($sname eq "SADM_SSH_PORT")  { $SADM_SSH_PORT  = $svalue; }  # SSH Port Used
-        if ($sname eq "SADM_USER")      { $SADM_USER      = $svalue; }  # sadmin user name
-        if ($sname eq "SADM_GROUP")     { $SADM_GROUP     = $svalue; }  # sadmin user group
-        if ($sname eq "SADM_MAIL_ADDR") {                               # sadmin Email Adresse
+        if ($sname eq "SADM_HOST_TYPE")   { $SADM_HOST_TYPE   = $svalue; } # HostType [S]erver [C]lient
+        if ($sname eq "SADM_CIE_NAME")    { $SADM_CIE_NAME    = $svalue; } # Cie name
+        if ($sname eq "SADM_ALERT_TYPE")  { $SADM_ALERT_TYPE  = $svalue; } # MailType 1=MailOnError
+        if ($sname eq "SADM_SERVER")      { $SADM_SERVER      = $svalue; } # SADM FQDN Name
+        if ($sname eq "SADM_SSH_PORT")    { $SADM_SSH_PORT    = $svalue; } # SSH Port Used
+        if ($sname eq "SADM_USER")        { $SADM_USER        = $svalue; } # sadmin user name
+        if ($sname eq "SADM_GROUP")       { $SADM_GROUP       = $svalue; } # sadmin user group
+        if ($sname eq "SADM_ALERT_GROUP") { $SADM_ALERT_GROUP = $svalue; } # Default Alert Group
+        if ($sname eq "SADM_MAIL_ADDR")   {                               # sadmin Email Adresse
             $SADM_MAIL_ADDR = $svalue ;                                 # Save Email Addr.
             $SADM_MAIL_ADDR =~ s/@/\\@/ig;                              # Precede the @ with a \
         }
@@ -343,8 +344,8 @@ sub split_fields {
             $SADM_RECORD->{SADM_ACTIVE},
             $SADM_RECORD->{SADM_DATE},
             $SADM_RECORD->{SADM_TIME},
-            $SADM_RECORD->{SADM_SLACK_CHANNEL},
-            $SADM_RECORD->{SADM_MAIL_GROUP},
+            $SADM_RECORD->{SADM_ALERT_GRP_WARNING},
+            $SADM_RECORD->{SADM_ALERT_GRP_ERROR},
             $SADM_RECORD->{SADM_SCRIPT} ) = split ' ',$wline;
 }
 
@@ -371,10 +372,10 @@ sub combine_fields {
         $SADM_RECORD->{SADM_FRI},
         $SADM_RECORD->{SADM_SAT},
         $SADM_RECORD->{SADM_ACTIVE},
-        $SADM_RECORD->{SADM_DATE},                  # Last Time that the error Occured
-        $SADM_RECORD->{SADM_TIME},
-        $SADM_RECORD->{SADM_SLACK_CHANNEL},               # Alert Type (mail,slac,qpage,...)
-        $SADM_RECORD->{SADM_MAIL_GROUP},
+        $SADM_RECORD->{SADM_DATE},                                      # Last Date error Occured
+        $SADM_RECORD->{SADM_TIME},                                      # Last Time error Occured
+        $SADM_RECORD->{SADM_ALERT_GRP_WARNING},                         # Warning Alert Group
+        $SADM_RECORD->{SADM_ALERT_GRP_ERROR},                           # Error Alert Group
         $SADM_RECORD->{SADM_SCRIPT};
     return "$wline";
 }
@@ -1274,10 +1275,10 @@ sub check_for_new_filesystems  {
             $SADM_RECORD->{SADM_ACTIVE}  = "Y";             # Line Active/Tested,If N will skip line
             $SADM_RECORD->{SADM_DATE}    = "00000000";      # Last Date that the error Occured
             $SADM_RECORD->{SADM_TIME}    = "0000";          # Last Time that the error Occured
-            $SADM_RECORD->{SADM_SLACK_CHANNEL} = "sadmin";  # Slack Channel Name
-            $SADM_RECORD->{SADM_MAIL_GROUP} = "mailgrp";    # Mail Group (sadmin=std address), ...)
-            #$SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
-            $SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
+            $SADM_RECORD->{SADM_ALERT_GRP_WARNING} = $SADM_ALERT_GROUP; # Warning Alert Group
+            $SADM_RECORD->{SADM_ALERT_GRP_ERROR}   = $SADM_ALERT_GROUP; # Error Alert Group
+            $SADM_RECORD->{SADM_SCRIPT} = "sadm_fs_incr.sh"; # Script that execute to increase FS
+            #$SADM_RECORD->{SADM_SCRIPT}  = "-";             # No Script to auto increase fiesystem
             if ($SYSMON_DEBUG >= 5) { print "\n  - New filesystem Found - $fname";}
             $index=@sysmon_array;                           # Get Nb of Item in Array
             $sysmon_array[$index] = combine_fields() ;      # Combine field and insert in array
@@ -1403,7 +1404,7 @@ sub write_rpt_file {
     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
                  $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
-                 $SADM_RECORD->{SADM_SLACK_CHANNEL},$SADM_RECORD->{SADM_MAIL_GROUP};
+                 $SADM_RECORD->{SADM_ALERT_GRP_WARNING},$SADM_RECORD->{SADM_ALERT_GRP_ERROR};
 
     # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
