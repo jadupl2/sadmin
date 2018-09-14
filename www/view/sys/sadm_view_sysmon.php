@@ -30,6 +30,7 @@
 #       v2.1 Added Some Debugging Information
 #   2018_05_06 JDuplessis
 #       2.2 Use Standard view file web page instead of custom vie log page
+#@2018_08_14 v2.3 Change Heading to show Alert Group associated with event
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -62,7 +63,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.3" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -225,7 +226,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
-    echo "\n<th class='dt-center'>Slack / Email</th>";
+    echo "\n<th class='dt-center'>Alert Group (W / E)</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
 
@@ -239,7 +240,7 @@ function sysmon_page_heading() {
     echo "\n<th class='dt-center'>Module</th>";
     echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-center'>Cat.</th>";
-    echo "\n<th class='dt-center'>Slack / Email</th>";
+    echo "\n<th class='dt-center'>Alert Group (W / E)</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
