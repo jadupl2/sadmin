@@ -8,28 +8,29 @@
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_fetch_servers.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
-#  Change Log
-#   2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
-#   2017_02_09  v1.8 Change Script name and change SADM server default crontab
-#   2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
-#   2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
-#   2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
-#   2017_08_03  v2.2 Minor Bug Fix
-#   2017_08_24  v2.3 Rewrote section of code & Message more concise
-#   2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
-#   2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
-#   2017_12_17  v2.6 Modify to use MySQL instead of PostGres
-#   2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
-#   2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
-#   2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
-#   2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
-#   2018_05_06  v2.12 Small Modification for New Libr Version
-#   2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
-#   2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
-#   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
-#   2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
-#   2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
-#@  2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
+# Change Log
+# 2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
+# 2017_02_09  v1.8 Change Script name and change SADM server default crontab
+# 2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
+# 2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
+# 2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
+# 2017_08_03  v2.2 Minor Bug Fix
+# 2017_08_24  v2.3 Rewrote section of code & Message more concise
+# 2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
+# 2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
+# 2017_12_17  v2.6 Modify to use MySQL instead of PostGres
+# 2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
+# 2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
+# 2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
+# 2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
+# 2018_05_06  v2.12 Small Modification for New Libr Version
+# 2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
+# 2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
+# 2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
+# 2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
+# 2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
+# 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
+#@2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -53,10 +54,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -65,13 +67,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.18'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='2.19'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -84,10 +86,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    export SADM_ALERT_GROUP="sprod"                     # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
