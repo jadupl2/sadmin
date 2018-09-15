@@ -45,7 +45,7 @@
 # 2018_07_24    v2.32 Show Kernel version instead of O/S Codename in log header
 # 2018_08_16    v2.33 Remove Change Owner & Protection Error Message while not running with root.
 # 2018_09_04    v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
-#@2018_09_07    v2.35 Include Logic to use Slack (slack.com) and/or Email as Alerting System.
+#@2018_09_07    v2.35 Alerting System now support using Slack (slack.com).
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -112,6 +112,7 @@ SADM_SLACK_FILE="$SADM_CFG_DIR/alert_slack.cfg"             ; export SADM_SLACK_
 SADM_SLACK_INIT="$SADM_CFG_DIR/.alert_slack.cfg"            ; export SADM_SLACK_INIT # Slack Init WH
 SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_HIST # Alert History
 SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
+SADM_ALERT_SEQ="$SADM_CFG_DIR/alert_history.seq"            ; export SADM_ALERT_SEQ  # History Seq#
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
 SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
@@ -1426,7 +1427,6 @@ fi
              fi
     fi
 
-
     # Alert History File ($SADMIN/cfg/alert_history.txt) MUST be present.
     # If it doesn't exist create blank one
     if [ ! -r "$SADM_ALERT_HIST" ]                                      # If Alert History Missing
@@ -1438,6 +1438,13 @@ fi
              fi
     fi
     
+    # Alert History Sequence Number File ($SADMIN/cfg/alert_history.seq) MUST be present.
+    # If it doesn't exist create one
+    if [ ! -r "$SADM_ALERT_SEQ" ]                                       # If Alert Hist. Seq# Missing
+        then echo "000001" > $SADM_ALERT_SEQ                            # Create Initial Hist. Seq.
+             chmod 666 $SADM_ALERT_SEQ                                  # Make it W/R File
+    fi
+    
 }
 
 
@@ -1445,7 +1452,6 @@ fi
 # --------------------------------------------------------------------------------------------------
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
-#
 sadm_load_config_file() {
 
     # SADMIN Configuration file MUST be present.
@@ -1953,19 +1959,19 @@ sadm_stop() {
     case $SADM_ALERT_TYPE in
       1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
              then wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"   # Format Alert Mess
-                  sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"       # Send Alert to SysAdmin
+                  sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
           fi
           ;;
       2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
              then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Subject
-                  sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"       # Send Alert to SysAdmin
+                  sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
           fi 
           ;;
       3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
             then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"  # Format Subject
             else wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"    # Format Subject
           fi
-          sadm_send_alert "S" "$SADM_ALERT_GROUP" "$wsub"               # Send Alert to SysAdmin
+          sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
           ;;
     esac
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
@@ -1989,31 +1995,34 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 # Send an Alert 
 #
-# 1st Parameter    : [S] If it is a Script Alert (Alert Message will includ Script Info)
-#                        For type [S] Default Group come from sadmin.cfg or user can modify it 
-#                        by altering SADM_ALERT_GROUP variable.
-#                    [M] If it's used for a System Monitor Alert
-#                        For type [M] Warning and Error Alert Group are taken from the host
-#                        System Monitor file ($SADMIN/cfg/hostname.smon)
+# 1st Parameter    : [S]    If it is a Script Alert (Alert Message will includ Script Info)
+#                           For type [S] Default Group come from sadmin.cfg or user can modify it 
+#                           by altering SADM_ALERT_GROUP variable.
+#                    [E/W]  If it's an Error or Warning detected by System Monitor.
+#                           For this type [M] Warning and Error Alert Group are taken from the host
+#                           System Monitor file ($SADMIN/cfg/hostname.smon).
+#                           In System monitor file Warning are at column 'J' and Error at col. 'K'.
 #
-# 2nd Parameter    : Alert Group Name to send Message
-# 3th Parameter    : The Alert Message
+# 2nd Parameter    : Server Where Alert come from
+# 3th Parameter    : Alert Group Name to send Message
+# 4th Parameter    : The Alert Message
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() { 
 
     # Validate the Number of parameter received.
-    if [ $# -lt 1 ] || [ $# -gt 3 ]                                     # Invalid No. of Parameter
+    if [ $# -lt 1 ] || [ $# -gt 4 ]                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid Nb argument receive by ${FUNCNAME}" # Advise User
              sadm_writelog "Should be 3, we received this : $*"         # Show what received
              return 1                                                   # Return Error to caller
     fi
 
     # Save Parameters Received (After Removing leading and trailing Spaces.
-    alert_type=`echo "$1"    | awk '{$1=$1;print}'`                     # [S]cript Err [M]onitor Err
-    alert_type=`echo $alert_type |tr "[:lower:]" "[:upper:]"`           # Make Uppercase
-    alert_group=`echo "$2"   | awk '{$1=$1;print}'`                     # SADM AlertGroup to Advise
-    alert_message=`echo "$3" | awk '{$1=$1;print}'`                     # Save Alert Message
+    alert_type=`echo "$1"    | awk '{$1=$1;print}'`                     # [S]cript [E]rror [W]arning
+    alert_type=`echo $alert_type |tr "[:lower:]" "[:upper:]"`           # Make Alert Type Uppercase
+    alert_server=`echo "$2"   | awk '{$1=$1;print}'`                    # Server where alert Come 
+    alert_group=`echo "$3"   | awk '{$1=$1;print}'`                     # SADM AlertGroup to Advise
+    alert_message=`echo "$4" | awk '{$1=$1;print}'`                     # Save Alert Message
     if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
        then debmes="sadm_send_alert: alert_type=$alert_type "           # Show Alert Type
             debmes="$debmes alert_group=$alert_group "                  # Show Alert Group
@@ -2034,6 +2043,14 @@ sadm_send_alert() {
              return 1                                                   # Return Error to caller
     fi
     
+    # Define Search String to see if we already alerted the user (Want to alert Once a Day)
+    hsearch=`printf "%s,%s,%s" "$alert_server" "$alert_group" "$alert_message"`
+    hdate=`date +"%Y/%m/%d"`                                            # Current Date
+
+    # Search For Today Message with the string "Server, Alert Group and first 30Char of Message"
+    grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # Grep Today Messages
+    if [ $? -eq 0 ] ; then return 0 ; fi                                # String Found=Already Done
+
     # Get SADMIN AlertGroup Type and Members.
     alert_group_type=`grep -i "^$alert_group" $SADM_ALERT_FILE |awk -F, '{ print $2 }'` # [S/M]Group 
     alert_group_type=`echo $alert_group_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
@@ -2047,30 +2064,32 @@ sadm_send_alert() {
     fi
 
 
-    # If Alert Group Type is [M] then send Alert by Email.
+    # If Alert Group Type is [M] then send Alert by Email.------------------------------------------
     if [ "$alert_group_type" == "M" ]                                   # If Alert by Email
         then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Email Alert" ; fi
-             if [ "$alert_type" != "S" ]                                # Alert for a [S]cript
-                then echo "`date`" | $SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
+             if [ "$alert_type" != "S" ]                                # Alert Coming form SysMon
+                then echo "`date`" |$SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
-                     if [ $RC != 0 ]                                    # If Error Sending Email
-                        then sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
+                     if [ $RC -eq 0 ]                                   # If Error Sending Email
+                        then write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
+                        else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
                      fi
                      return $RC                                         # Return to Caller
-                else echo "Event Date/Time : `date`" > $LOCAL_TMP       # Add Event Date/Time In Msg
+                else echo "Event Date/Time : `date`" > $LOCAL_TMP       # Alert Coming from a Script
                      echo "Script Name is $SADM_PN - Version $SADM_VER" >> $LOCAL_TMP
                      echo "RCH Line is $RCHLINE" >> $LOCAL_TMP          # Add rch line in Msg
                      cat $LOCAL_TMP | $SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
-                     if [ $RC != 0 ]                                    # If Error Sending Email
-                        then sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
+                     if [ $RC -eq 0 ]                                   # If Error Sending Email
+                        then write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
+                        else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
                      fi
                      rm -f $LOCAL_TMP >/dev/null 2>&1                   # Remove Tmp File Used
                      return $RC                                         # Return to Caller
              fi
     fi
 
-    # If Alert Group Type is [S] then send Alert by Email.
+    # If Alert Group Type is [S]lack then send Alert to Slack with the WebHook.
     if [ "$alert_group_type" == "S" ]
         then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Slack Alert" ; fi
              if [ ! -r "$SADM_SLACK_FILE" ]                             # Can't read SlackChannel 
@@ -2108,6 +2127,7 @@ sadm_send_alert() {
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
              if [ $SRC == "ok" ] 
                 then RC=0
+                     write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
                 else RC=1
                      sadm_writelog "Error message : $SRC" 
              fi
@@ -2115,6 +2135,54 @@ sadm_send_alert() {
     fi
     return 0
 }
+
+
+# --------------------------------------------------------------------------------------------------
+# Write Alert History File 
+# Parameters:
+#   1st = Alert Type        = [S]cript [E]rror [W]arning
+#   2nd = Alert Group Name  = Alert Group Name to Advise (Must exist in $SADMIN/cfg/alert_group.cfg)
+#   3rd = Server Name       = Where the event happen
+#   4th = Alert Description = Alert Message
+# write_alert_history "s" "alertGroup" "server" "mess"
+# --------------------------------------------------------------------------------------------------
+#
+write_alert_history() { 
+    htype=$1                                                            # [S]cript [E]rror [W]arning
+    htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
+    hgroup=`echo "$2"   | awk '{$1=$1;print}'`                          # SADM AlertGroup to Advise
+    hserver=`echo "$3"  | awk '{$1=$1;print}'`                          # Save Server Name
+    hmess=`echo "$4" | awk '{$1=$1;print}'`                             # Save Alert Message
+    hmess=`printf "%30s" "$hmess" | awk '{$1=$1;print}'`                # ChopMess to 30Chr for Hist
+    hmess=$(echo -e "${hmess}" |sed 's/\n/ /g' |sed "s/'/\'/g")         # Remove NewLine SingleQuote
+
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+       then debmes="alert_history: htype=$htype "                       # Show Alert Type
+            debmes="$debmes hgroup=$hgroup "                            # Show Alert Group
+            debmes="$debmes hmess=\"$hmess\""                           # Show Alert Message
+            debmes="$debmes hserver=$hserver "                          # Server where it happen
+            sadm_writelog "$debmes"                                     # Show Debugging line
+    fi
+    hdate=`date +"%Y/%m/%d"`                                            # Current Date
+    htime=`date +"%H:%M:%S"`                                            # Current Time
+
+    # Define Search String to see if we already alerted the user (Want to alert Once a Day)
+    hsearch=`printf "%s,%s,%s" "$hserver" "$hgroup" "$hmess"`
+
+    # Search For Today Message with the string "Server, Alert Group and first 30Char of Message"
+    grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # Grep Today Messages
+    if [ $? -eq 0 ] ; then return 0 ; fi                                # String Found=Already Done
+
+    # Increment Alert Reference Number
+    href=`cat $SADM_ALERT_SEQ`                                          # Get Last Alert Reference #
+    href=$(($href+1))                                                   # Increment Alert Reference#
+    printf "%06d" $href > $SADM_ALERT_SEQ                               # Update Alert Ref. No. File
+
+    # Format History Line - RefNo (W/E/S) HH:MM:SS SERVER YYYY/MM/DD AlertGrp Message
+    hline=`printf "%06d,%1s,%-10s,%8s,%s\n" $href "$htype" "$hdate" "$htime" "$hsearch"`
+    echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
+}
+
 
 
 
