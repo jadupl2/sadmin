@@ -424,6 +424,10 @@ main_process()
     run_oscommand "cp ${SADM_CFG_DIR}/.alert_history.txt ${PSCFG}"
     run_oscommand "chmod 644 ${PSCFG}/.alert_history.txt"
     run_oscommand "chown sadmin.sadmin ${PSCFG}/.alert_history.txt"
+    #
+    run_oscommand "cp ${SADM_CFG_DIR}/.alert_history.seq ${PSCFG}"
+    run_oscommand "chmod 644 ${PSCFG}/.alert_history.seq"
+    run_oscommand "chown sadmin.sadmin ${PSCFG}/.alert_history.seq"
 
 
     # COPY SADMIN LICENCE / README FILE------------------------------------------------------------
