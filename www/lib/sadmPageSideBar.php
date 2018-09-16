@@ -26,9 +26,10 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#   2018_02_07  V2.1 Added Performance Link in SideBar
-#   2018_07_09  v2.2 Change SideBar Layout
-#   2018_07_21  v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
+# 2018_02_07 V2.1 Added Performance Link in SideBar
+# 2018_07_09 v2.2 Change SideBar Layout
+# 2018_07_21 v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
+# 2018_09_16 v2.4 Add Alert Group in RCH Array
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -42,7 +43,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -101,9 +102,9 @@ function build_sidebar_scripts_info() {
                         $tag = explode(" ",$line_array[$last_index]);
                         $num_tags = count($tag);
 #                        echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
-                        if ($num_tags == 8) {
-                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
-                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
+                        if ($num_tags == 9) {
+                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode) = explode(" ",$line_array[$last_index], 9);
+                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". trim($ccode) .",". basename($wfile) ."\n";
                             if ($DEBUG) {                                       # In Debug Show Output Line
                                 echo "<br>Output line is " . $outline ;         # Print Output Line
                             }
