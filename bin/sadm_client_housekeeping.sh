@@ -24,7 +24,8 @@
 # 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
 # 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
 # 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
-#@2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
+# 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
+#@2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -47,7 +48,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.15'                              # Current Script Version
+    export SADM_VER='1.16'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -289,6 +290,30 @@ file_housekeeping()
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
             afile="$SADM_CFG_DIR/.dbpass"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi            
+            afile="$SADM_CFG_DIR/.alert_history.seq"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/alert_history.seq"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.alert_history.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/alert_history.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.alert_slack.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/alert_slack.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.egroup.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.mailgroup.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.slackchannel.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.slackgroup.cfg"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.version"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            afile="$SADM_CFG_DIR/.versum"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
     fi
 
@@ -675,6 +700,9 @@ file_housekeeping()
     file_housekeeping                                                   # Do File HouseKeeping
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR))                          # ExitCode = DIR+File Errors
+
+    # TO REMOVE RUN ONCE 
+    find $SADMIN/dat/rch -type f -name '*.rch' -exec rm -f {} \;
 
 # SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
