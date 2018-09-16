@@ -289,6 +289,7 @@ process_servers()
               # Rsync Template files Array to SADM client
               rem_files_to_rsync=( cfg/.template.smon  cfg/.release cfg/.sadmin.cfg  cfg/.sadmin.rc 
                                    cfg/.sadmin.service cfg/.alert_group.cfg  cfg/.alert_slack.cfg 
+                                   cfg/alert_group.cfg  cfg/alert_slack.cfg 
                                    cfg/.backup_exclude.txt  cfg/.backup_list.txt 
                                    usr/mon/swatch_nmon.sh usr/mon/stemplate.sh 
                                    usr/mon/swatch_nmon.txt usr/mon/stemplate.txt
