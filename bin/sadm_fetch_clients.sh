@@ -95,7 +95,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 
 
-
+  
 
 #===================================================================================================
 # Scripts Variables 
@@ -474,34 +474,96 @@ process_servers()
 
 
 
+# --------------------------------------------------------------------------------------------------
+# Check SysMon report files (*.rpt) received for errors & for failed Script (Last line of all *.rch)
+# --------------------------------------------------------------------------------------------------
+check_for_alert()
+{
+    # Process All Error/Warning collected by SysMon 
+    # ----------
+    # Get all *.rpt files content and output it then a temp file.
+    #  Example : 
+    #  find $SADM_WWW_DAT_DIR -type f -name *.rpt -exec cat {} \;
+    #   Warning;nomad;2018.09.16;11:00;linux;FILESYSTEM;Filesystem /usr at 86% > 85%;mail;sadmin
+    #   Error;nano;2018.09.16;11:00;SERVICE;DAEMON;Service crond|cron not running !;sadm;sadm
+    #   Error;holmes;2018.09.16;11:02;linux;FILESYSTEM;Filesystem /usr at 85% > 85%;sprod;sprod
+    #   Error;raspi0;2018.09.16;11:00;linux;CPU;CPU at 100 pct for more than 240 min;mail;sadmin
+    # ----------
+    sadm_writelog " "
+    sadm_writelog "Check All Servers SysMon Report Files for Warning and Errors"
+    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
+    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero Size
+        then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
+                do
+                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                if [ ! ${line:0:1} == "W" ] || [ ! ${line:0:1} == "w" ] # If it is a Warning
+                    then etype="W"                                      # Set Event Type to Warning
+                         egroup=`echo $line | awk -F\; '{ print $8 }'`   # Get Warning Alert Group
+                    else etype="E"                                      # Set Event Type to Error
+                         egroup=`echo $line | awk -F\; '{ print $9 }'`   # Get Error Alert Group
+                fi
+                ehost=`echo $line | awk -F\; '{ print $2 }'`             # Get Hostname for Event
+                emess=`echo $line | awk -F\; '{ print $7 }'`             # Get Event Error Message
+                if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
+                fi
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess"    # Send Alert 
+                done 
+        else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
+    fi
+
+    # Gather all last line of all *rch files that end with a 1 (Error)
+    sadm_writelog " "
+    sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files for Errors"
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' 
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' > $SADM_TMP_FILE2 2>&1
+
+
+    # Process All Error encountered in scripts (last Line of rch that end with a 1)
+    # ----------
+    # Example of line in rch file
+    #   holmes 2018.08.11 10:37:37 2018.08.11 10:37:44 00:00:07 sadm_sysmon_cli 1
+    # ----------
+    if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero Size
+        then cat $SADM_TMP_FILE2 | while read line                      # Read Each Line of file
+                do                
+                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                etype="S"                                               # Set Script Event Type 
+                egroup="sprod"                                          # Set Script Alert Group
+                ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
+                edate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
+                etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
+                escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
+                emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
+                if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
+                fi
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess"    # Send Alert 
+                done 
+        else sadm_writelog  "No error reported by any scripts files (*.rch)" 
+    fi
+
+}
 
 
 
 # --------------------------------------------------------------------------------------------------
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
 
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
-    while getopts "vhd:" opt ; do                                       # Loop to process Switch
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -515,16 +577,34 @@ process_servers()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+    # Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
     fi
 
-    # Create File that will include only Error message that will be sent to user if requested
-    echo "----------" > $SADM_ELOG
-    echo "Date/Time  : `date`"     >> $SADM_ELOG
-    echo "Script Name: ${SADM_PN}" >> $SADM_ELOG
-    echo "Hostname   : $HOSTNAME " >> $SADM_ELOG
-    echo "----------" >> $SADM_ELOG
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+    # # Create File that will include only Error message that will be sent to user if requested
+    # echo "----------" > $SADM_ELOG
+    # echo "Date/Time  : `date`"     >> $SADM_ELOG
+    # echo "Script Name: ${SADM_PN}" >> $SADM_ELOG
+    # echo "Hostname   : $HOSTNAME " >> $SADM_ELOG
+    # echo "----------" >> $SADM_ELOG
 
     # Process All Active Linux/Aix servers
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
@@ -545,12 +625,6 @@ process_servers()
 
     if [ "$SADM_EXIT_CODE" -ne 0 ]
         then sadm_writelog "Writing Error Encountered at the top of the log"
-             echo "----------" >> $SADM_ELOG
-             cat $SADM_ELOG $SADM_LOG > $SADM_TMP_FILE3 2>&1
-             cp $SADM_TMP_FILE3 $SADM_LOG
-             #cp $SADM_ELOG $SADM_LOG
-             #alert_user "M" "E" "$_server" ""  "`cat $SADM_ELOG`"         # Email User
-
     fi
 
     # Being root can update o/s update crontab - Can't while in web interface
@@ -563,6 +637,8 @@ process_servers()
         else
              sadm_writelog "No modification needed for O/S update crontab ..."
     fi
+
+    check_for_alert                                                     # Report Alert if Any
 
     # Gracefully Exit the script
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
