@@ -10,42 +10,43 @@
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_11_05    V2.0 Create log file earlier to prevent error message
-# 2016_04_17    V2.1 Added Support for Linux Mint
-# 2016_04_19    V2.2 Minor Modifications concerning Trimming the Log File
-# 2017_07_03    V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
-# 2017_07_17    V2.4 Split Second line of log header into two lines/ Change Timming Line
-# 2017_08_12    V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
-# 2017_08_27    V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
-# 2017_09_23    V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
-# 2017_09_29    V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
-# 2017_12_18    V2.9 Function were changed to run on MacOS and Some Restructuration was done
-# 2017_12_23    V2.10 SSH Command line construction added at the end of script
-# 2017_12_30    V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
-# 2018_01_03    V2.12 Added Check for facter command , if present use it get get hardware info
-# 2018_01_05    V2.13 Remove Warning when command can't be found for compatibility
-# 2018_01_23    V2.14 Add arc directory in $SADMIN/www for archiving purpose
-# 2018_01_25    V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_07    V2.16 Bug Fix when determining if server is a virtual or physical
-# 2018_02_08    V2.17 Correct 'if' statement compatibility problem with 'dash' shell
-# 2018_02_14    V2.18 Add Documentation Directory
-# 2018_02_22    V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
-# 2018_05_03    V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
-# 2018_05_06    V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
-# 2018_05_14    V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
-# 2018_05_23    V2.23 Remove some variables and logic modifications
-# 2018_05_26    V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
-# 2018_05_27    V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
-# 2018_05_28    V2.26 Added Loading of backup parameters coming from sadmin.cfg
-# 2018_06_04    V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
-# 2018_06_10    V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
-# 2018_06_14    V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
-# 2018_07_07    V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
-# 2018_07_16    V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
-# 2018_07_24    v2.32 Show Kernel version instead of O/S Codename in log header
-# 2018_08_16    v2.33 Remove Change Owner & Protection Error Message while not running with root.
-# 2018_09_04    v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
-#@2018_09_07    v2.35 Alerting System now support using Slack (slack.com).
+# 2016_11_05  V2.0 Create log file earlier to prevent error message
+# 2016_04_17  V2.1 Added Support for Linux Mint
+# 2016_04_19  V2.2 Minor Modifications concerning Trimming the Log File
+# 2017_07_03  V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
+# 2017_07_17  V2.4 Split Second line of log header into two lines/ Change Timming Line
+# 2017_08_12  V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
+# 2017_08_27  V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
+# 2017_09_23  V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not 
+# 2017_09_29  V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
+# 2017_12_18  V2.9 Function were changed to run on MacOS and Some Restructuration was done
+# 2017_12_23  V2.10 SSH Command line construction added at the end of script
+# 2017_12_30  V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2018_01_03  V2.12 Added Check for facter command , if present use it get get hardware info
+# 2018_01_05  V2.13 Remove Warning when command can't be found for compatibility
+# 2018_01_23  V2.14 Add arc directory in $SADMIN/www for archiving purpose
+# 2018_01_25  V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_07  V2.16 Bug Fix when determining if server is a virtual or physical
+# 2018_02_08  V2.17 Correct 'if' statement compatibility problem with 'dash' shell
+# 2018_02_14  V2.18 Add Documentation Directory
+# 2018_02_22  V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
+# 2018_05_03  V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
+# 2018_05_06  V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
+# 2018_05_14  V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
+# 2018_05_23  V2.23 Remove some variables and logic modifications
+# 2018_05_26  V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
+# 2018_05_27  V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
+# 2018_05_28  V2.26 Added Loading of backup parameters coming from sadmin.cfg
+# 2018_06_04  V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
+# 2018_06_10  V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
+# 2018_06_14  V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
+# 2018_07_07  V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
+# 2018_07_16  V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
+# 2018_07_24  v2.32 Show Kernel version instead of O/S Codename in log header
+# 2018_08_16  v2.33 Remove Change Owner & Protection Error Message while not running with root.
+# 2018_09_04  v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
+# 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
+#@2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -63,7 +64,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.35"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.36"                         ; export SADM_LIB_VER       # This Library Version
 #
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1834,7 +1835,7 @@ sadm_start() {
              chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} 
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
-             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST 2" >>$SADM_RCHLOG
+             echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP 2" >>$SADM_RCHLOG
     fi
 
     # Write Starting Info in the Log
@@ -1905,7 +1906,8 @@ sadm_stop() {
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
-             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST $SADM_EXIT_CODE" # Format Part2 of RCH File
+             RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 of RCH File
+             RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_EXIT_CODE"       # Format Part3 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
              if [ -z "$SADM_LOG_FOOTER" ] || [ "$SADM_LOG_FOOTER" = "Y" ]
                 then sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines" 
