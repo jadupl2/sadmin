@@ -61,11 +61,11 @@ SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equ
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
-SADM_STIME=""                               ; export SADM_STIME         # Script Start Time
+SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
 SADM_LIB_VER="2.36"                         ; export SADM_LIB_VER       # This Library Version
-#
+
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
 SADM_BIN_DIR="$SADM_BASE_DIR/bin"           ; export SADM_BIN_DIR       # Script Root binary Dir.
@@ -85,14 +85,15 @@ SADM_NET_DIR="$SADM_DAT_DIR/net"            ; export SADM_NET_DIR       # Networ
 SADM_RPT_DIR="$SADM_DAT_DIR/rpt"            ; export SADM_RPT_DIR       # SADM Sysmon Report Dir
 SADM_DBB_DIR="$SADM_DAT_DIR/dbb"            ; export SADM_DBB_DIR       # Database Backup Directory
 SADM_WWW_DIR="$SADM_BASE_DIR/www"           ; export SADM_WWW_DIR       # Web Dir
-#
+
+# SADMIN USER DIRECTORIES
 SADM_USR_DIR="$SADM_BASE_DIR/usr"           ; export SADM_USR_DIR       # Script User directory
 SADM_UBIN_DIR="$SADM_USR_DIR/bin"           ; export SADM_UBIN_DIR      # Script User Bin Dir.
 SADM_ULIB_DIR="$SADM_USR_DIR/lib"           ; export SADM_ULIB_DIR      # Script User Lib Dir.
 SADM_UDOC_DIR="$SADM_USR_DIR/doc"           ; export SADM_UDOC_DIR      # Script User Doc. Dir.
 SADM_UMON_DIR="$SADM_USR_DIR/mon"           ; export SADM_UMON_DIR      # Script User SysMon Scripts
-#
-# SADMIN WEB SITE DIRECTORIES DEFINITION
+
+# SADMIN SERVER WEB SITE DIRECTORIES DEFINITION
 SADM_WWW_DOC_DIR="$SADM_WWW_DIR/doc"                        ; export SADM_WWW_DOC_DIR  # www Doc Dir
 SADM_WWW_DAT_DIR="$SADM_WWW_DIR/dat"                        ; export SADM_WWW_DAT_DIR  # www Dat Dir
 SADM_WWW_RRD_DIR="$SADM_WWW_DIR/rrd"                        ; export SADM_WWW_RRD_DIR  # www RRD Dir
@@ -102,9 +103,8 @@ SADM_WWW_IMG_DIR="$SADM_WWW_DIR/images"                     ; export SADM_WWW_IM
 SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NET_DIR  # web net dir
 SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                        ; export SADM_WWW_TMP_DIR  # web tmp dir
 SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                  ; export SADM_WWW_PERF_DIR # web perf dir
-#
-#
-# SADM CONFIG FILE, LOGS, AND TEMP FILES USER CAN USE
+
+# SADM CONFIG FILE, LOGS AND TEMP FILES USER CAN USE
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
 SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"             ; export SADM_ALERT_FILE # AlertGrp File
@@ -124,8 +124,8 @@ SADM_TMP_FILE3="${SADM_TMP_DIR}/${SADM_INST}_3.$$"          ; export SADM_TMP_FI
 SADM_LOG="${SADM_LOG_DIR}/${SADM_HOSTNAME}_${SADM_INST}.log"    ; export LOG         # Output LOG 
 SADM_RCHLOG="${SADM_RCH_DIR}/${SADM_HOSTNAME}_${SADM_INST}.rch" ; export SADM_RCHLOG # Return Code 
 SADM_RPT_FILE="${SADM_RPT_DIR}/${SADM_HOSTNAME}.rpt"        ; export SADM_RPT_FILE   # RPT FileName 
-#
-# COMMAND PATH REQUIRE TO RUN SADM
+
+# COMMAND PATH REQUIRE THAT SADMIN USE
 SADM_LSB_RELEASE=""                         ; export SADM_LSB_RELEASE   # Command lsb_release Path
 SADM_DMIDECODE=""                           ; export SADM_DMIDECODE     # Command dmidecode Path
 SADM_BC=""                                  ; export SADM_BC            # Command bc (Do Some Math)
@@ -143,7 +143,7 @@ SADM_SSH=""                                 ; export SADM_SSH           # Path t
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
-# SADM CONFIG FILE VARIABLES (Values defined here Will be overrridden by SADM CONFIG FILE Content)
+# SADMIN CONFIG FILE VARIABLES (Default Values here will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP=""                         ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
@@ -176,36 +176,29 @@ DBPASSFILE="${SADM_CFG_DIR}/.dbpass"        ; export DBPASSFILE         # MySQL 
 SADM_RELEASE=`cat $SADM_REL_FILE`           ; export SADM_RELEASE       # SADM Release Ver. Number
 SADM_SSH_PORT=""                            ; export SADM_SSH_PORT      # Default SSH Port
 SADM_RRDTOOL=""                             ; export SADM_RRDTOOL       # RRDTool Location
-#
-SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER
-SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT
-SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP   
-#
-SADM_STORIX_NFS_SERVER=""                   ; export SADM_STORIX_NFS_SERVER
-SADM_STORIX_NFS_MOUNT_POINT=""              ; export SADM_STORIX_NFS_MOUNT_POINT
-SADM_STORIX_BACKUP_TO_KEEP=3                ; export SADM_STORIX_BACKUP_TO_KEEP
-#
-SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER
-SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT
-SADM_DAILY_BACKUP_TO_KEEP=3                 ; export SADM_DAILY_BACKUP_TO_KEEP
-SADM_WEEKLY_BACKUP_TO_KEEP=3                ; export SADM_WEEKLY_BACKUP_TO_KEEP
-SADM_MONTHLY_BACKUP_TO_KEEP=2               ; export SADM_MONTHLY_BACKUP_TO_KEEP
-SADM_YEARLY_BACKUP_TO_KEEP=1                ; export SADM_YEARLY_BACKUP_TO_KEEP
+SADM_REAR_NFS_SERVER=""                     ; export SADM_REAR_NFS_SERVER        # ReaR NFS Server
+SADM_REAR_NFS_MOUNT_POINT=""                ; export SADM_REAR_NFS_MOUNT_POINT   # ReaR Mount Point
+SADM_REAR_BACKUP_TO_KEEP=3                  ; export SADM_REAR_BACKUP_TO_KEEP    # Rear Nb.Copy 
+SADM_STORIX_NFS_SERVER=""                   ; export SADM_STORIX_NFS_SERVER      # Storix NFS Server
+SADM_STORIX_NFS_MOUNT_POINT=""              ; export SADM_STORIX_NFS_MOUNT_POINT # Storix Mnt Point
+SADM_STORIX_BACKUP_TO_KEEP=3                ; export SADM_STORIX_BACKUP_TO_KEEP  # Storix Nb. Copy
+SADM_BACKUP_NFS_SERVER=""                   ; export SADM_BACKUP_NFS_SERVER      # Backup NFS Server
+SADM_BACKUP_NFS_MOUNT_POINT=""              ; export SADM_BACKUP_NFS_MOUNT_POINT # Backup Mnt Point
+SADM_DAILY_BACKUP_TO_KEEP=3                 ; export SADM_DAILY_BACKUP_TO_KEEP   # Daily to Keep
+SADM_WEEKLY_BACKUP_TO_KEEP=3                ; export SADM_WEEKLY_BACKUP_TO_KEEP  # Weekly to Keep
+SADM_MONTHLY_BACKUP_TO_KEEP=2               ; export SADM_MONTHLY_BACKUP_TO_KEEP # Monthly to Keep
+SADM_YEARLY_BACKUP_TO_KEEP=1                ; export SADM_YEARLY_BACKUP_TO_KEEP  # Yearly to Keep
 # Day of the week to do a weekly backup (1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat,7=Sun)
-SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY 
-# Date in the month to do a Monthly Backup Date (1-28)             
-SADM_MONTHLY_BACKUP_DATE=1                  ; export SADM_MONTHLY_BACKUP_DATE
-# Month and Date When to do a Yearly Backup Month
-SADM_YEARLY_BACKUP_MONTH=12                 ; export SADM_YEARLY_BACKUP_MONTH
-SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE
-#
-#
-SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER
-SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT
-SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP
-#
-# Local to Library Variable - Can't be use elsewhere
-LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"                                # Local Temp File
+SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY      # Weekly Backup Day          
+SADM_MONTHLY_BACKUP_DATE=1                  ; export SADM_MONTHLY_BACKUP_DATE    # Monthly Back Date
+SADM_YEARLY_BACKUP_MONTH=12                 ; export SADM_YEARLY_BACKUP_MONTH    # Yearly Backup Mth
+SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE     # Yearly Backup Day
+SADM_MKSYSB_NFS_SERVER=""                   ; export SADM_MKSYSB_NFS_SERVER      # Mksysb NFS Server
+SADM_MKSYSB_NFS_MOUNT_POINT=""              ; export SADM_MKSYSB_NFS_MOUNT_POINT # Mksysb Mnt Point
+SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP     # Mksysb Bb. Copy
+
+# Local to Library Variable - Can't be use elsewhere outside this script
+LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
 LIB_DEBUG=0                                 ; export LIB_DEBUG          # Libr. Debug Level
 
 
@@ -216,7 +209,6 @@ sadm_toupper() {
     echo $1 | tr  "[:lower:]" "[:upper:]"
 }
 
-
 # --------------------------------------------------------------------------------------------------
 #                       THIS FUNCTION RETURN THE STRING RECEIVED TO LOWERCASE 
 # --------------------------------------------------------------------------------------------------
@@ -224,12 +216,18 @@ sadm_tolower() {
     echo $1 | tr  "[:upper:]" "[:lower:]"
 }
 
+# --------------------------------------------------------------------------------------------------
+# Check if variable is an integer - Return 1, if not an intener - Return 0 if it is an integer
+# --------------------------------------------------------------------------------------------------
+sadm_isnumeric() {
+    wnum=$1
+    if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
+}
 
 
 # --------------------------------------------------------------------------------------------------
 #     WRITE INFORMATION TO THE LOG (L) , TO SCREEN (S)  OR BOTH (B) DEPENDING ON $SADM_LOG_TYPE
 # --------------------------------------------------------------------------------------------------
-#
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
@@ -245,16 +243,6 @@ sadm_writelog() {
              ;;
     esac
 }
-
-
-# --------------------------------------------------------------------------------------------------
-# Check if variable is an integer - Return 1, if not an intener - Return 0 if it is an integer
-# --------------------------------------------------------------------------------------------------
-sadm_isnumeric() {
-    wnum=$1
-    if [ "$wnum" -eq "$wnum" ] 2>/dev/null ; then return 0 ; else return 1 ; fi
-}
-
 
 
 # --------------------------------------------------------------------------------------------------
@@ -288,7 +276,6 @@ sadm_trimfile() {
     #tmpfile=`mktemp --tmpdir=${SADM_TMP_DIR}`                          # Problem in RHEL4 
     tmpfile="${SADM_TMP_DIR}/${SADM_INST}.$$"                           # Create Temp Work FileName    
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
-
     tail -${maxline} $wfile > $tmpfile                                  # Trim file to Desired Nb.
     if [ $? -ne 0 ] ; then wreturn_code=1 ; fi                          # Return Code report error
     rm -f ${wfile} > /dev/null                                          # Remove Original Log
@@ -304,33 +291,24 @@ sadm_trimfile() {
 
 
 # --------------------------------------------------------------------------------------------------
-# THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SERVER 
-# IF THE COMMAND EXIST, RETURN 0, IF IT DOESN' T EXIST RETURN 1
+# THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM 
+# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST RETURN 1
 # --------------------------------------------------------------------------------------------------
-#
 sadm_check_command_availibility() {
     SADM_CMD=$1                                                         # Save Parameter received
     if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # command is found ?
         then SADM_VAR1=`${SADM_WHICH} ${SADM_CMD}`                      # Store Path of command
              return 0                                                   # Return 0 if cmd found
         else SADM_VAR1=""                                               # Clear Path of command
-             #sadm_writelog " "                                            # Inform User 
-             #sadm_writelog "WARNING : \"${SADM_CMD}\" command isn't available on $SADM_HOSTNAME"
-             #sadm_writelog "To fully benefit the SADMIN Library & give you accurate information"
-             #sadm_writelog "We will install the package that include the command \"${SADM_CMD}\""
-             #sadm_writelog "SADMIN Will install it for you ... One moment"
-             #sadm_writelog "Once the software is installed, rerun this script"
-             #sadm_writelog "Will continue anyway, but some functionnality may not work as expected"
     fi  
     return 1
 }
 
 
 # --------------------------------------------------------------------------------------------------
-#       THIS FUNCTION IS USED TO INSTALL A MISSING PACKAGE THAT IS REQUIRED BY SADMIN TOOLS
+# THIS FUNCTION IS USED TO INSTALL A MISSING PACKAGE THAT IS REQUIRED BY SADMIN TOOLS
 #                       THE PACKAGE TO INSTALL IS RECEIVED AS A PARAMETER
 # --------------------------------------------------------------------------------------------------
-#
 sadm_install_package() 
 {
     # Check if we received at least a parameter
