@@ -64,10 +64,7 @@ usr/*
 !usr/doc
 !usr/lib
 !usr/mon
-
-# Exclude $SADMIN/jac, except $SADMIN/jac/bin directory
-jac/*
-!jac/bin
+usr/mon/*.log
 
 .vscode/
 
