@@ -2112,7 +2112,7 @@ sadm_send_alert() {
                 then slack_text="$alert_message"                        # Set Alert Text
                 else text="\n${alert_message}\nCurrent Date : `date`"   # If [S]cript Alert Message
                      text="${text}\nScript Name  : $SADM_PN - Version $SADM_VER"
-                     text="${text}\nRCH Line     : $RCHLINE"            # Insert RCH LIne in Message
+                     text="${text}\nServer       : $alert_server"       # Insert RCH LIne in Message
                      slack_text="$text"                                 # Set Alert Text
              fi
              escaped_msg=$(echo -e "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
@@ -2125,14 +2125,15 @@ sadm_send_alert() {
              if [ "$LIB_DEBUG" -gt 4 ] 
                 then sadm_writelog "$SADM_CURL -s -d \"payload=$json\" $slack_hook_url"
             fi
-             SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
+             #SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
-             if [ $SRC == "ok" ] 
-                then RC=0
-                     write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
-                else RC=1
-                     sadm_writelog "Error message : $SRC" 
-             fi
+             #if [ $SRC == "ok" ] 
+             #   then RC=0
+             #        write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
+             #   else RC=1
+             #        sadm_writelog "Error message : $SRC" 
+             #fi
+             RC=0
              return $RC                                                 # Return to Caller
     fi
     return 0
