@@ -17,35 +17,40 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2015_12_14    V1.0 Initial Version
-# 2018_07_25    v1.1 Modify Look of Email Sent with option -m
-# 2018_07_29    v1.2 Remove utilization of RCH for this interactive script (SADM_USE_RCH="N" )
-# 2018_07_29    v1.3 Remove Log Header & Footer, Change Email & Help Format.
-#@2018_08_27    v1.4 New Email format when using -m command line switch, View script log from email.
+# 2015_12_14 V1.0 Initial Version
+# 2018_07_25 v1.1 Modify Look of Email Sent with option -m
+# 2018_07_29 v1.2 Remove utilization of RCH for this interactive script (SADM_USE_RCH="N" )
+# 2018_07_29 v1.3 Remove Log Header & Footer, Change Email & Help Format.
+# 2018_08_27 v1.4 New Email format when using -m command line switch, View script log from email.
+# 2018_09_18 v1.5 Email when using -m command line switch include ow the Alert Group
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
 
+
+
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    # Test if 'SADMIN' environment variable is defined
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
         then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
+
+    # Test if 'SADMIN' Shell Library is readable 
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.4'                               # Current Script Version
+    export SADM_VER='1.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
@@ -56,17 +61,19 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
-    # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
+#
+#---------------------------------------------------------------------------------------------------
+#
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    # But they can be overriden here on a per script basis.
+    export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
 #===================================================================================================
 
 
@@ -75,7 +82,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 #
-FIELD_IN_RCH=8                                  ; export FIELD_IN_RCH   # Nb of field in a RCH File
+FIELD_IN_RCH=9                                  ; export FIELD_IN_RCH   # Nb of field in a RCH File
 line_per_page=20                                ; export line_per_page  # Nb of line per scr page
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
@@ -122,12 +129,12 @@ display_heading()
     if [ "$PAGER" = "ON" ] || ( [ "$PAGER" = "OFF" ]  &&  [ "$WATCH" = "ON" ] )
         then tput clear ; 
              echo -e "${bblue}${white}\c"
-             echo -e "`date +%Y/%m/%d`                    Server Farm Scripts Summary Report \c"  
-             echo -e "                         `date +%H:%M:%S`"  
+             echo -e "`date +%Y/%m/%d`                        Server Farm Scripts Summary Report \c"  
+             echo -e "                               `date +%H:%M:%S`"  
              echo -e "Count    Status  Server       Script   \c"
-             echo -e "                         Date     Start      End    Elapse "
+             echo -e "                         Date     Start      End    Elapse   Alert"
              echo -e "==================================================\c"
-             echo -e "================================================${reset}"
+             echo -e "==========================================================${reset}"
     fi
 }
 
@@ -146,7 +153,8 @@ display_detail_line()
     WTIME2=` echo $DLINE | awk '{ print $5 }'`                          # Extract Time Ended
     WELAPSE=`echo $DLINE | awk '{ print $6 }'`                          # Extract Time Ended
     WSCRIPT=`echo $DLINE | awk '{ print $7 }'`                          # Extract Script Name
-    WRCODE=` echo $DLINE | awk '{ print $8 }'`                          # Extract Return Code 
+    WALERT=` echo $DLINE | awk '{ print $8 }'`                          # Extract Alert Code
+    WRCODE=` echo $DLINE | awk '{ print $9 }'`                          # Extract Return Code 
     case "$WRCODE" in                                                   # Case on Return Code
         0 ) WRDESC="✔ Success"                                          # Code 0 = Success
             ;; 
@@ -158,7 +166,7 @@ display_detail_line()
             ;;                                                          
     esac
     RLINE1=`printf "[%04d] %10s %-12s %-30s " "$xcount" "$WRDESC" "${WSERVER}" "${WSCRIPT}"  `
-    RLINE2=`printf "%s %s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" ${WELAPSE}`
+    RLINE2=`printf "%s %s %s %s %s"  "${WDATE1}" "${WTIME1}" "${WTIME2}" "${WELAPSE}" "${WALERT}"`
     RLINE="${RLINE1}${RLINE2}"                                          # Wrap 2 lines together
     if [ "$MAIL_ONLY" = "OFF" ]                                         # No Mail include color
         then if [ $WRCODE -eq 0 ] ; then echo -e "${white}\c" ;fi       # white For Good Finish Job
@@ -186,7 +194,7 @@ load_array()
     # A Temp file that containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
-    sort -t' ' -rk8,8 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
+    sort -t' ' -rk9,9 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
     if [ "$SERVER_NAME" != "" ]
         then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2
              cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1
@@ -226,7 +234,7 @@ email_rch_heading()
     echo -e "\n<thead>"             >> $HTML_FILE
 
     echo -e "\n<tr>"                >> $HTML_FILE
-    echo -e "\n<th colspan=8 dt-head-center>${RTITLE}</th>" >> $HTML_FILE
+    echo -e "\n<th colspan=9 dt-head-center>${RTITLE}</th>" >> $HTML_FILE
     echo -e "\n</tr>"               >> $HTML_FILE
 
     echo -e "\n<tr>"                >> $HTML_FILE
@@ -238,6 +246,7 @@ email_rch_heading()
     echo -e "\n<th>Start</th>"      >> $HTML_FILE
     echo -e "\n<th>End</th>"        >> $HTML_FILE
     echo -e "\n<th>Elapse</th>"     >> $HTML_FILE
+    echo -e "\n<th>AlertGroup</th>" >> $HTML_FILE
     echo -e "\n</tr>"               >> $HTML_FILE
 
     echo -e "\n</thead>"            >> $HTML_FILE
@@ -269,7 +278,8 @@ rch2html()
         WTIME2=` echo -e $wline | awk '{ print $5 }'`                   # Extract Time Ended
         WELAPSE=`echo -e $wline | awk '{ print $6 }'`                   # Extract Time Ended
         WSCRIPT=`echo -e $wline | awk '{ print $7 }'`                   # Extract Script Name
-        WRCODE=` echo -e $wline | awk '{ print $8 }'`                   # Extract Return Code 
+        WALERT=` echo -e $wline | awk '{ print $8 }'`                   # Extract Alert Group 
+        WRCODE=` echo -e $wline | awk '{ print $9 }'`                   # Extract Return Code 
         WRDESC="CODE $WRCODE"                                           # Illegal Code  Desc
         if [ "$WRCODE" = "0" ] ; then WRDESC="✔ Success" ; fi           # Code 0 = Success
         if [ "$WRCODE" = "1" ] ; then WRDESC="✖ Error  " ; fi           # Code 1 = Error
@@ -303,6 +313,7 @@ rch2html()
         echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_FILE
         echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME2</font></td>"  >> $HTML_FILE
         echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_FILE
+        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WALERT</font></td>" >> $HTML_FILE
         echo -e "\n</tr>" >> $HTML_FILE
 
         done < $TMP_FILE2                                               # Read From Created File
