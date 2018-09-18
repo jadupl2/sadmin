@@ -82,7 +82,7 @@ def initSADM():
     st.debug = 0                                # Debug Level (0-9)
     
     # When script ends, send Log by Mail [0]=NoMail [1]=OnlyOnError [2]=OnlyOnSuccess [3]=Allways
-    st.cfg_mail_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    st.cfg_alert_type = 1                        # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     #st.cfg_mail_addr = ""                      # Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name  = ""                      # Override Company Name specify in sadmin.cfg
 

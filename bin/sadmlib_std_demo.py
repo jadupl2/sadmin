@@ -82,7 +82,7 @@ def setup_sadmin():
     st.exit_code        = 0                     # Script Exit Code for you to use
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
     #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
@@ -561,9 +561,9 @@ def print_sadmin_cfg(st):
     presult=st.cfg_mail_addr                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="ins.cfg_mail_type"                                        # Example Calling Function
+    pexample="ins.cfg_alert_type"                                        # Example Calling Function
     pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Function Description
-    presult=st.cfg_mail_type                                            # Return Value(s)
+    presult=st.cfg_alert_type                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="ins.cfg_cie_name"                                         # Example Calling Function
