@@ -30,7 +30,7 @@
 # 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
 # 2018_06_25    sadmlib_std.py  v2.18 Correct problem trying to open DB on client.
 # 2018_07_22    sadmlib_std.py  v2.19 When using 'writelog' don't print date/time only in log.
-#@2018_09_19    sadmlib_std.py  v2.20 Add alert group to RCH file and Add Alert Group Module
+#@2018_09_19    sadmlib_std.py  v2.20 Add alert group to RCH file.
 #
 #==================================================================================================
 try :
