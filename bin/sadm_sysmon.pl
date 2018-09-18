@@ -22,7 +22,8 @@
 # 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
 # 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
 # 2018_07_22    v2.21 Added Date and Time in mail messages sent.
-#@2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
+# 2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
+#@2018_09_18    v2.23 Error reported was stating > instead of >=
 #===================================================================================================
 #
 
@@ -39,7 +40,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.22";                                       # Version Number
+my $VERSION_NUMBER      = "2.23";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -610,7 +611,7 @@ sub check_for_error {
 
       ## Filesystem alert occured
       if (($SUBMODULE eq "FILESYSTEM") && ($MODULE eq "linux")) {       # If Filesystem SIze Alert
-         $ERR_MESS = "Filesystem $WID at $ACTVAL% > $value_exceeded%";  # Set up Error Message
+         $ERR_MESS = "Filesystem $WID at $ACTVAL% $TEST $value_exceeded%";  # Set up Error Message
          write_rpt_file($alert_type,"$OSNAME","FILESYSTEM",$ERR_MESS);  # Go Report Alert 
     
          # If no script specified - Return to caller
