@@ -30,7 +30,8 @@
 # 2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
 # 2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
 # 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
-#@2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
+# 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
+#@2018_09_18  v2.20 Alert Minors fixes
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -67,7 +68,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.19'                              # Current Script Version
+    export SADM_VER='2.20'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -479,8 +480,9 @@ process_servers()
 # --------------------------------------------------------------------------------------------------
 check_for_alert()
 {
-    # Process All Error/Warning collected by SysMon 
+
     # ----------
+    # Process All Error/Warning collected by SysMon 
     # Get all *.rpt files content and output it then a temp file.
     #  Example : 
     #  find $SADM_WWW_DAT_DIR -type f -name *.rpt -exec cat {} \;
@@ -493,18 +495,18 @@ check_for_alert()
     sadm_writelog "Check All Servers SysMon Report Files for Warning and Errors"
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
-    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero Size
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
                 do
                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 if [ ! ${line:0:1} == "W" ] || [ ! ${line:0:1} == "w" ] # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
-                         egroup=`echo $line | awk -F\; '{ print $8 }'`   # Get Warning Alert Group
+                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
                     else etype="E"                                      # Set Event Type to Error
-                         egroup=`echo $line | awk -F\; '{ print $9 }'`   # Get Error Alert Group
+                         egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
                 fi
-                ehost=`echo $line | awk -F\; '{ print $2 }'`             # Get Hostname for Event
-                emess=`echo $line | awk -F\; '{ print $7 }'`             # Get Event Error Message
+                ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
+                emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
                 fi
@@ -513,28 +515,27 @@ check_for_alert()
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
 
+
+    # ----------
+    # Process All Error encountered in scripts (last Line of rch that end with a 1)
+    # Example of line in rch file
+    #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 1
+    # ----------
     # Gather all last line of all *rch files that end with a 1 (Error)
     sadm_writelog " "
     sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files for Errors"
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' 
     find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' > $SADM_TMP_FILE2 2>&1
-
-
-    # Process All Error encountered in scripts (last Line of rch that end with a 1)
-    # ----------
-    # Example of line in rch file
-    #   holmes 2018.08.11 10:37:37 2018.08.11 10:37:44 00:00:07 sadm_sysmon_cli 1
-    # ----------
-    if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero Size
+    if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero in Size
         then cat $SADM_TMP_FILE2 | while read line                      # Read Each Line of file
                 do                
                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 etype="S"                                               # Set Script Event Type 
-                egroup="sprod"                                          # Set Script Alert Group
                 ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
                 edate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
                 etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
                 escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
+                egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
                 emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
@@ -551,7 +552,6 @@ check_for_alert()
 # --------------------------------------------------------------------------------------------------
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-
 
 # Evaluate Command Line Switch Options Upfront
 # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
@@ -599,13 +599,6 @@ check_for_alert()
              exit 1                                                     # Exit To O/S with error
     fi
 
-    # # Create File that will include only Error message that will be sent to user if requested
-    # echo "----------" > $SADM_ELOG
-    # echo "Date/Time  : `date`"     >> $SADM_ELOG
-    # echo "Script Name: ${SADM_PN}" >> $SADM_ELOG
-    # echo "Hostname   : $HOSTNAME " >> $SADM_ELOG
-    # echo "----------" >> $SADM_ELOG
-
     # Process All Active Linux/Aix servers
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
     process_servers "linux"                                             # Process Active Linux
@@ -623,11 +616,7 @@ check_for_alert()
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
 
-    if [ "$SADM_EXIT_CODE" -ne 0 ]
-        then sadm_writelog "Writing Error Encountered at the top of the log"
-    fi
-
-    # Being root can update o/s update crontab - Can't while in web interface
+    # Being root we can modify O/S Update crontab - Can't while in web interface
     work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'`          # Work crontab sha1sum
     real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'`          # Real crontab sha1sum
     if [ "$work_sha1" != "$real_sha1" ]                                 # Work Different than Real ?
@@ -638,8 +627,8 @@ check_for_alert()
              sadm_writelog "No modification needed for O/S update crontab ..."
     fi
 
+    # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
     check_for_alert                                                     # Report Alert if Any
 
-    # Gracefully Exit the script
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
     exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)
