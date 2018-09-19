@@ -43,45 +43,91 @@
 #
 # ==================================================================================================
 # Changelog
-# 2018_01_09 JDuplessis
-#    V1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
+# 2018_01_09 V1.5 New Version - Script Restructure, Usage Instructions & Work with new Library
+# 2018_09_19 V1.6 Update for Alert Group and new LIbrary
 #
 # ==================================================================================================
 #
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
 
 
 #===================================================================================================
-#                               Script environment variables
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
-DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.5'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
 #
-USAGE="Usage: $SADMIN/bin/sadm_wrapper path-name/script-name ['parameter(s) to your script']"
+    # Test if 'SADMIN' environment variable is defined
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
 
+    # Test if 'SADMIN' Shell Library is readable 
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+#
+#---------------------------------------------------------------------------------------------------
+#
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
+#===================================================================================================
 
 
 #===================================================================================================
-#                H E L P       U S A G E    D I S P L A Y    F U N C T I O N
+# Scripts Variables 
 #===================================================================================================
-help()
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+
+
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
 {
-    echo " "
-    echo "${SADM_PN} 'name-of-script-to-run' ['parameter(s) to your script'] usage :"
-    echo "             -d   (Debug Level [0-9])"
-    echo "             -h   (Display this help message)"
-    echo " "
+    printf "\n${SADM_PN} 'name-of-script-to-run' ['parameter(s) to your script'] usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
 }
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
+
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -93,7 +139,7 @@ check_script()
     # The Script Name to run must be specified on the command line
     if [ -z "$SCRIPT" ]
         then    echo "[ERROR] Script to execute must be specified" 
-                echo "$USAGE" 
+                show_usage 
                 echo "Job aborted"
                 return 1
     fi
@@ -101,7 +147,7 @@ check_script()
     # The script specified must exist in path specified
     if [ ! -e "$SCRIPT" ]
        then     echo "[ERROR] The script $SCRIPT doesn't exist" 
-                echo "$USAGE" 
+                show_usage 
                 echo "Job aborted"
                 return 1
     fi
@@ -109,7 +155,7 @@ check_script()
     # The Script Name must executable
     if [ ! -x "$SCRIPT" ]
        then     echo "[ERROR] script $SCRIPT is not executable ?" 
-                echo "$USAGE" 
+                show_usage 
                 echo "Job aborted"
                 return 1
     fi
@@ -124,18 +170,21 @@ check_script()
 # ==================================================================================================
     if [ $# -eq 0 ]                                                     # If no Parameter received
         then echo "No arguments provided"                               # Advise User
-             echo $USAGE                                                # Show Script Usage
+             show_usage                                                 # Show Script Usage
              exit 1                                                     # Exit Script with Error
         else SCRIPT="$1" ; export SCRIPT                                # Script uith pathname
              shift                                                      # Keep only argument(if any)    
              SADM_PN=`basename "$SCRIPT"`                               # Keep Script without Path
              SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`                 # Script name without ext.
              source ${SADMIN}/lib/sadmlib_std.sh                        # Load SADMIN Std Library
-             SADM_ALERT_TYPE=1  ; export SADM_ALERT_TYPE                  # 0=No 1=OnErr 2=OnOK  3=All
+             SADM_ALERT_TYPE=1           ; export SADM_ALERT_TYPE       # 0=No 1=OnErr 2=OnOK  3=All
+             SADM_ALERT_GROUP='default'  ; export SADM_ALERT_GROUP      # Alert Group to Alert
     fi
     
     check_script                                                        # Validate param. received
     if [ $? -ne 0 ] ; then exit 1 ;fi                                   # Exit if Problem  
+    sadm_start                                                          # Init Env. Dir. & RC/Log
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
 
     # If normal user can run your script, put the lines below in comment
     if [ "$(whoami)" != "root" ]                                        # Is it root running script?
@@ -144,14 +193,10 @@ check_script()
              sadm_stop 1                                                # Close/Trim Log & Upd. RCH
              exit 1                                                     # Exit To O/S
     fi
-    
-    sadm_start                                                          # Init Env. Dir. & RC/Log
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
     sadm_writelog "  "                                                  # Write white line to log
     sadm_writelog "Executing $SCRIPT $@"                                # Write script name to log
     sadm_writelog "  "                                                  # Write white line to log
-    $SCRIPT "$@" >> $SADM_LOG 2>&1                                       # Run selected user script
+    $SCRIPT "$@" >> $SADM_LOG 2>&1                                      # Run selected user script
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
-
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)                                             # Exit With Global Error code (0/1)
