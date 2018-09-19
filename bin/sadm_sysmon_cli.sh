@@ -35,14 +35,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    # Test if 'SADMIN' environment variable is defined
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
         then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
+
+    # Test if 'SADMIN' Shell Library is readable 
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
@@ -50,11 +52,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='2.2'                               # Current Script Version
-    export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
@@ -62,17 +64,19 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
-    # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
+#
+#---------------------------------------------------------------------------------------------------
+#
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    export SADM_ALERT_TYPE=0                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
 #===================================================================================================
 
 
@@ -154,7 +158,7 @@ e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${re
     find $SADM_RCH_DIR -type f -name '*.rch' -exec tail -1 {} \; > $SADM_TMP_FILE2
 
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
-    awk 'match($8,/[1-2]/) { print }' $SADM_TMP_FILE2 | grep -v ' smon 2' > $SADM_TMP_FILE3 
+    awk 'match($9,/[1-2]/) { print }' $SADM_TMP_FILE2 | grep -v ' smon 2' > $SADM_TMP_FILE3 
 
     # Run the System Monitor
     $SADM_BIN_DIR/sadm_sysmon.pl
