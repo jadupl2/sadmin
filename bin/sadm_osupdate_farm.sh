@@ -22,24 +22,25 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
 # Change Log
-#   2016_11_11  v2.6 Insert Logic to Pass a param. (Y/N) to sadm_osupdate_client.sh to Reboot or not
-#                    server after successfull update. Reboot is specified in Database (Web Interface)
-#                    on a server by server basis.
-#   2016_11_15  v2.7 Log will now be cumulative (Not clear every time the script in run)
-#   2017_02_03  v2.8 Database Columns were changed
-#   2017_03_15  v2.9 Add Logic for command line switch [-s servername] to update only one server
-#                    Command line swtich [-h]  for help also added
-#   2017_03_17  v3.0 Not a cumulative log anymore
-#   2017_04_05  v3.1 Allow program to run more than once at same time, to allow simultanious Update
-#                    Put Back cumulative Log, so don't miss anything, when multiple update running
-#   2017_12_10  v3.2 Adapt program to use MySQL instead of PostGres 
-#   2017_12_12  V3.3 Correct Problem connecting to Database
-#   2018_02_08  V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
-#   2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
-#   2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
-#   2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
-#   2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
-#   2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
+# 2016_11_11  v2.6 Insert Logic to Pass a param. (Y/N) to sadm_osupdate_client.sh to Reboot or not
+#                  server after successfull update. Reboot is specified in Database (Web Interface)
+#                  on a server by server basis.
+# 2016_11_15  v2.7 Log will now be cumulative (Not clear every time the script in run)
+# 2017_02_03  v2.8 Database Columns were changed
+# 2017_03_15  v2.9 Add Logic for command line switch [-s servername] to update only one server
+#                  Command line swtich [-h]  for help also added
+# 2017_03_17  v3.0 Not a cumulative log anymore
+# 2017_04_05  v3.1 Allow program to run more than once at same time, to allow simultanious Update
+#                  Put Back cumulative Log, so don't miss anything, when multiple update running
+# 2017_12_10  v3.2 Adapt program to use MySQL instead of PostGres 
+# 2017_12_12  V3.3 Correct Problem connecting to Database
+# 2018_02_08  V3.4 Fix Compatibility problem with 'sadh' shell (If statement)
+# 2018_06_05  v3.5 Add Switch -v to view version, change help message, adapt to new Libr.
+# 2018_06_09  v3.6 Change the name  of the client o/s update script & Change name of this script
+# 2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
+# 2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
+# 2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
+#@2018_09_19  v3.10 Include Alert Group
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -50,42 +51,48 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "${SADMIN}" ]                               # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory.." 
+    # Test if 'SADMIN' environment variable is defined
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
+
+    # Test if 'SADMIN' Shell Library is readable 
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
     fi
+
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.9'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='3.10'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
-    # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
+#
+#---------------------------------------------------------------------------------------------------
+#
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
 #===================================================================================================
 
 
