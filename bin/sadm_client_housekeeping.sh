@@ -704,9 +704,6 @@ file_housekeeping()
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR))                          # ExitCode = DIR+File Errors
 
-    # TO REMOVE RUN ONCE 
-    find $SADMIN/dat/rch -type f -name '*.rch' -exec rm -f {} \;
-
 # SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
