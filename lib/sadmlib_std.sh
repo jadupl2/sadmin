@@ -1972,6 +1972,7 @@ sadm_stop() {
 # 2nd Parameter    : Server Where Alert come from
 # 3th Parameter    : Alert Group Name to send Message
 # 4th Parameter    : The Alert Message
+# Example : sadm_send_alert E holmes sprod Filesystem /usr at 85% >= 85%
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() { 
@@ -2080,9 +2081,15 @@ sadm_send_alert() {
                 then text="Current Date is `date`"                      # Insert Date in Message
                      text="${text}\nScript Name is $SADM_PN - Version $SADM_VER"
                      text="${text}\nServer $alert_server"               # Insert Server with Alert
-                     text="${text}\n${alert_message}"                   # Insert Alert Message
+                     if [ "$alert_type" = "E" ] 
+                        then text="${text}\nSADM ERROR:\n$alert_message"
+                        else text="${text}\nSADM WARNING:\n$alert_message"
+                     fi
                      slack_text="$text"                                 # Set Alert Text
-                else slack_text="$alert_message"                        # Set Alert Text
+                else if [ "$alert_type" = "E" ] 
+                        then slack_text="`date`\nSADM ERROR:\n${alert_message}\nOn server ${alert_server}"
+                        else slack_text="`date`\nSADM WARNING:n${alert_message}\nOn server ${alert_server}"
+                     fi
              fi
              escaped_msg=$(echo -e "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
              slack_text="\"text\": \"${escaped_msg}\""                  # Set Final Text Message
