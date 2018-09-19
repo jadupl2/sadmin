@@ -38,45 +38,48 @@ trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIG
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
+    # Test if 'SADMIN' environment variable is defined
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
         then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
+
+    # Test if 'SADMIN' Shell Library is readable 
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.0'                               # Current Script Version
+    export SADM_VER='1.1'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
     export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
-
-    # Load SADMIN Standard Shell Library 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
+#
+#---------------------------------------------------------------------------------------------------
+#
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    export SADM_ALERT_GROUP="sinfo"                     # AlertGroup Used to Alert (alert_group.cfg)
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
 #===================================================================================================
 
 
@@ -154,17 +157,6 @@ process_servers()
         sadm_writelog " "                                               # Blank Line
         sadm_writelog "`printf %10s |tr " " "-"`"                       # Ten Dashes Line    
         sadm_writelog "Processing ($xcount) $fqdn_server"               # Server Count & FQDN Name 
-        if [ $DEBUG_LEVEL -gt 5 ]                                       # If Debug Activated
-            then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
-                    then sadm_writelog "$fqdn_server Monitoring ON"     # Show Monitor Status ON
-                    else sadm_writelog "$fqdn_server Monitoring OFF"    # Show Monitor Status OFF
-                 fi
-                 if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
-                    then sadm_writelog "$fqdn_server Sporadic ON"       # Show Server is Sporadic
-                    else sadm_writelog "$fqdn_server Sporadic OFF"      # Show Non Sporadic Server
-                 fi
-                 sadm_writelog "SADMIN Root Dir. is $server_rootdir"    # Show SADMIN Root Dir.
-        fi
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
         if ! host  $fqdn_server >/dev/null 2>&1                         # If hostname not resolvable
@@ -196,7 +188,17 @@ process_servers()
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
             then sadm_writelog "[ OK ] SSH to $fqdn_server work"        # Good SSH Work on Client
                  sadm_writelog "$SADM_SSH_CMD $fqdn_server ${server_rootdir}/bin/sadm_client_housekeeping.sh"
-                 $SADM_SSH_CMD $fqdn_server "${server_rootdir}/bin/sadm_client_housekeeping.sh"
+
+                 JCMD="scp /storix/custom/*.sh ${fqdn_server}:/storix/custom"
+                 sadm_writelog "COMMAND: $JCMD"
+                 $JCMD
+                 RC=$?
+                 if [ $RC -eq 0 ]
+                    then sadm_writelog "[OK] $JCMD"
+                    else sadm_writelog "[ERROR] $RC $JCMD"
+                 fi
+
+                 #$SADM_SSH_CMD $fqdn_server "${server_rootdir}/bin/sadm_client_housekeeping.sh"
             else sadm_writelog "[ OK ] No SSH using 'root' on the SADMIN Server ($SADM_SERVER)"
         fi
         done < $SADM_TMP_FILE1
