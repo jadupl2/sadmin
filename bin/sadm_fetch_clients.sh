@@ -499,7 +499,7 @@ check_for_alert()
         then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
                 do
                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
-                if [ ! ${line:0:1} == "W" ] || [ ! ${line:0:1} == "w" ] # If it is a Warning
+                if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ] # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
                          egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
                     else etype="E"                                      # Set Event Type to Error
