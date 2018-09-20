@@ -47,7 +47,8 @@
 # 2018_09_04  v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
 # 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
 # 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
-#@2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
+# 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
+# 2018_09_20  v2.38 Fix Alerting problem with Slack
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -65,7 +66,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.37"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.38"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1999,15 +2000,22 @@ sadm_send_alert() {
 
     # Is the AlertGroup File Readable ?
     if [ ! -r "$SADM_ALERT_FILE" ]                                      # If Can't read AlertGroup
-       then sadm_writelog "Alert Group File '$SADM_ALERT_FILE' missing" # Advise User
+       then sadm_writelog "Alert Group File '$SADM_ALERT_FILE' missing" 
             return 1                                                    # Return Error to caller
     fi 
 
     # Does the Alert Group exist in the Group in alert File ?
     grep -i "^$alert_group" $SADM_ALERT_FILE >/dev/null 2>&1            # Line beginning with group
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
-        then sadm_writelog "Alert Group $alert_group don't exist"       # Advise User 
-             return 1                                                   # Return Error to caller
+        then sadm_writelog " "                                          # White line Before 
+             sadm_writelog "----------"
+             sadm_writelog "Alert Group '$alert_group' don't exist in $SADM_ALERT_FILE"  
+             sadm_writelog "  - On server     : $alert_server"          # Show Server where Error Is
+             sadm_writelog "  - Alert Type    : $alert_type"            # Show Error Message to User
+             sadm_writelog "  - Alert Message : $alert_message"         # Show Error Message to User
+             sadm_writelog "Changing alert group from '$alert_group' to 'default'"
+             alert_group='default'                                      # Change Alert Group
+             sadm_writelog "----------"
     fi
     
     # Define Search String to see if we already alerted the user (Want to alert Once a Day)
@@ -2017,7 +2025,8 @@ sadm_send_alert() {
     # Search For Today Message with the string "Server, Alert Group and Message"
     grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # GrepMessage with same Date
     if [ $? -eq 0 ]                                                     # String Found=Already Done
-        then sadm_writelog "Not sending Alert, already sent in last 24Hrs"
+        then sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
+             sadm_writelog "$hsearch"
              return 0
     fi                                
 
@@ -2054,7 +2063,7 @@ sadm_send_alert() {
                      RC=$?                                              # Save Error Number    
              fi
              if [ $RC -eq 0 ]                                           # If Error Sending Email
-                then write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
+                then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_message"
                 else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
              fi
              return $RC                                                 # Return to Caller
@@ -2105,7 +2114,7 @@ sadm_send_alert() {
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
              if [ $SRC == "ok" ] 
                 then RC=0
-                     write_alert_history "$alert_type" "$alert_group" "$SADM_HOSTNAME" "$alert_message"
+                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_message"
                 else RC=1
                      sadm_writelog "Error message : $SRC" 
              fi
