@@ -20,6 +20,7 @@
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #   2.1      Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
 #   2.2      Correct cannot change filesystem type (always goes back to xfs)
+#   2.3      Fix problem with filesystem increase
 #===================================================================================================
 
 # Load Filesystem Library Tools
@@ -311,7 +312,7 @@ enlarge_filesystem()
                          get_mntdata $LVMOUNT
                          RM_FLAG=1
                          let "RM_MB=$LVSIZE+1"
-                         getvg_info
+                         getvg_info "$VGNAME"
                  fi
                  ;;
              2 ) sadm_accept_data 15 51 07 N $RM_MB                     # Accept new filsystem size
