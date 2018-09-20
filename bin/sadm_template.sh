@@ -73,8 +73,8 @@ trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIG
 #
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But they can be overriden here on a per script basis.
-    export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
@@ -229,6 +229,7 @@ process_servers()
 main_process()
 {
     sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
+    #sadm_send_alert "E" "holmes" "sprod" "Filesystem /usr at 85% >= 85%" 
     
     # PROCESSING CAN BE PUT HERE
     # If Error occured, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
