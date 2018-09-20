@@ -10,6 +10,7 @@
 # 2017_09_01    v1.1 Added Display of SADM Release Number on second line of menu
 # 2017_10_09    v1.2 Change Menu Heading & Menu item display
 # 2018_05_14    v1.3 Fix Display Problem under MacOS
+#@2018_09_20    v1.4 Show SADM Version instead of Release No.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -19,7 +20,7 @@
 # --------------------------------------------------------------------------------------------------
 #              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
-lib_screen_ver=1.3                              ; export lib_screen_ver
+lib_screen_ver=1.4                              ; export lib_screen_ver
 # Screen related variables
 clreol=`tput el`                                ; export clreol         # Clr to end of lne
 clreos=`tput ed`                                ; export clreos         # Clr to end of scr
@@ -55,7 +56,7 @@ byellow=$(tput setab 3)                          ; export byellow         # Yell
 bblue=$(tput setab 4)                            ; export bblue           # Blue color
 bmagentae=$(tput setab 5)                        ; export bmagenta        # Magenta color
 bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
-bwhite=$(tput setab 7)                           ; export bwhite          # White color
+#bwhite=$(tput setab 7)                           ; export bwhite          # White color
 
 # Headers and  Logging
 e_header()      { printf "\n${bold}${purple}==========  %s  ==========${reset}\n" "$@" 
@@ -175,8 +176,10 @@ sadm_display_heading()
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
     sadm_writexy 02 $wpos "$titre"                                      # Display Title Centered
-    let wpos="77 - ${#SADM_RELEASE}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "Rel $SADM_RELEASE"                           # Display Script Version
+    #let wpos="77 - ${#SADM_RELEASE}"                                    # Calc. Pos. Line 2 on Right
+    #sadm_writexy 02 $wpos "Rel $SADM_RELEASE"                           # Display Script Version
+    let wpos="74 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
+    sadm_writexy 02 $wpos "Ver $SADM_VER"                           # Display Script Version
 
     sadm_writexy 04 01 "${reset}\c"                                     # Reset to Normal & Pos. Cur
 }
