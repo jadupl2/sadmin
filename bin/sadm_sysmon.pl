@@ -24,6 +24,7 @@
 # 2018_07_22    v2.21 Added Date and Time in mail messages sent.
 # 2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
 #@2018_09_18    v2.23 Error reported was stating > instead of >=
+#@2018_09_21    v2.24 Ping System 3 times before signaling an Error
 #===================================================================================================
 #
 
@@ -40,7 +41,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.23";                                       # Version Number
+my $VERSION_NUMBER      = "2.24";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg 
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
