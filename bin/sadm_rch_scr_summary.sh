@@ -129,10 +129,10 @@ display_heading()
     if [ "$PAGER" = "ON" ] || ( [ "$PAGER" = "OFF" ]  &&  [ "$WATCH" = "ON" ] )
         then tput clear ; 
              echo -e "${bblue}${white}\c"
-             echo -e "`date +%Y/%m/%d`                        Server Farm Scripts Summary Report \c"  
-             echo -e "                               `date +%H:%M:%S`"  
+             echo -e "`date +%Y/%m/%d`                           Server Farm Scripts Summary Report \c"
+             echo -e "                            `date +%H:%M:%S`"  
              echo -e "Count    Status  Server       Script   \c"
-             echo -e "                         Date     Start      End    Elapse   Alert"
+             echo -e "                         Date     Start      End    Elapse  Alert Grp"
              echo -e "==================================================\c"
              echo -e "==========================================================${reset}"
     fi
