@@ -48,7 +48,7 @@
 # 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
 # 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
 # 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
-#@2018_09_20  v2.38 Fix Alerting problem with Slack & Set default alert group to 'default'
+#@2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -1610,7 +1610,7 @@ sadm_start() {
     # ($SADMIN/tmp) If TMP Directory doesn't exist, create it.
     [ ! -d "$SADM_TMP_DIR" ] && mkdir -p $SADM_TMP_DIR
     if [ $(id -u) -eq 0 ] 
-        then chmod 1777 $SADM_TMP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_TMP_DIR
+        then chmod 1777 $SADM_TMP_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_TMP_DIR
     fi
 
     # ($SADMIN/lib) If LIB Directory doesn't exist, create it.
@@ -1634,7 +1634,7 @@ sadm_start() {
     # ($SADMIN/doc) If Documentation Directory doesn't exist, create it.
     [ ! -d "$SADM_DOC_DIR" ] && mkdir -p $SADM_DOC_DIR
     if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_DOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DOC_DIR
+        then chmod 0775 $SADM_DOC_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DOC_DIR
     fi
 
     # ($SADMIN/pkg) If Package Directory doesn't exist, create it.
@@ -1652,7 +1652,7 @@ sadm_start() {
     # ($SADMIN/dat) If Data Directory doesn't exist, create it.
     [ ! -d "$SADM_DAT_DIR" ] && mkdir -p $SADM_DAT_DIR
     if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_DAT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_WWW_DAT_DIR
+        then chmod 0775 $SADM_DAT_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_DAT_DIR
     fi 
 
     # ($SADMIN/dat/nmon) If NMON Directory doesn't exist, create it.
