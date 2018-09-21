@@ -148,7 +148,7 @@ SADM_FACTER=""                              ; export SADM_FACTER        # Defaul
 # SADMIN CONFIG FILE VARIABLES (Default Values here will be overrridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
-SADM_ALERT_GROUP=""                         ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
+SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # SADMIN [S]erver/[C]lient
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
