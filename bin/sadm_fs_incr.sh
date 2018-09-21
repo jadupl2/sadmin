@@ -35,46 +35,58 @@
 # 2018_05_15    V1.0 Initial Version
 # 2018_05_18    V1.1 Working Initial Version
 #@2018_08_19    V1.2 Change Filesystem Increase before and after Email information.
+#@2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
 
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='1.2'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="B"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="N"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_LOG_HEADER="Y"                        ; export SADM_LOG_HEADER     # Show/Generate Log Header
-SADM_LOG_FOOTER="Y"                        ; export SADM_LOG_FOOTER     # Show/Generate Log Footer
-SADM_MULTIPLE_EXEC="N"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_USE_RCH="Y"                           ; export SADM_USE_RCH        # Update Return Code History
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+
+
+#===================================================================================================
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
+    # Test if 'SADMIN' environment variable is defined
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # Test if 'SADMIN' Shell Library is readable 
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='1.3'                               # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+#
+#---------------------------------------------------------------------------------------------------
+#
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
+#===================================================================================================
+
 
 # Load Filesystem Tool SADM Library
 [ -f ${SADMIN}/lib/sadmlib_fs.sh ]  && . ${SADMIN}/lib/sadmlib_fs.sh    # Load FS SADMIN Library
@@ -258,7 +270,9 @@ main_process()
        then WMESS="Increase Refused, need ${SIZE2ADD}MB & only ${VGFREE}MB left in VG $VGNAME"
             sadm_writelog "$WMESS"                                      # Show Error to User
             echo "$WMESS" >> $MAIL_BODY                                 # Msg to Email Body File
-            send_email "SADMIN: Filesystem $FSNAME Increase rejected - Space Low"    
+            wmess="SADM WARNING: Filesystem $FSNAME Increase rejected on - Space Low $VGFREE MB"    
+            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess"
+            send_email "SADM WARNING: $SADM_HOSTNAME $wmess"
             return 1                                                    # Return Error to Caller
     fi
 
@@ -276,7 +290,9 @@ main_process()
        then WMESS="$FSNAME increase refused only ${MBLEFT}MB free in VG $VGNAME"
             sadm_writelog "$WMESS"                                      # Show User Error 
             echo "$WMESS" >> $MAIL_BODY                                 # Add Mess. to Mail Body
-            send_email "Filesystem $FSNAME was rejected"                # Send Email to Sysadmin
+            wmess="Filesystem $FSNAME was rejected"                     # Send Email to Sysadmin
+            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess"
+            send_email "SADM WARNING: $SADM_HOSTNAME $wmess"
             return 1                                                    # Return Error to Caller
        else sadm_writelog "Filesystem $FSNAME will increase by $SIZE2ADD MB"
     fi
@@ -305,7 +321,9 @@ main_process()
     df -hP $FSNAME                                                      # Show FS Usage to User  
     #echo -e "`date`\nFilesystem $FSNAME after increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     sadm_writelog ""                                                    # Blank Line
-    send_email "Filesystem $FSNAME on $MYHOST was increase"
+    wmess="Filesystem $FSNAME on $SADM_HOSTNAME was increase"
+    sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess"
+    send_email "SADM WARNING: $wmess"   
     return $RC                                                          # Return Return Code Caller
 }
 
