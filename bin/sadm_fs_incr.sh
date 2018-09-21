@@ -189,7 +189,7 @@ send_email()
 
     # Current Directory Size and Usage
     echo -e "\n${DASH}" >>$MAIL_BODY                                    # Print Dash Line
-    #echo -e "Current ${FSNAME} Filesystem size and usage" >>$MAIL_BODY  # Title for Filesystem Usage
+    #echo -e "Current ${FSNAME} Filesystem size and usage on $SADM_HOSTNAME" >>$MAIL_BODY  # Title for Filesystem Usage
     echo -e "`date`\nFilesystem $FSNAME actual size.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     #df -hP ${FSNAME} >> $MAIL_BODY                                      # Print FileSystem Usage
 
