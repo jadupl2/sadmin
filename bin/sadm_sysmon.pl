@@ -1138,7 +1138,7 @@ sub ping_ip  {
     $ipname = $dummy[1];                                                # Extract Name/IP to ping
     print "\n\nTest ping to $ipname ... ";                              # Show to User Name/IP
 
-    $PCMD = "ping -c2 $ipname >/dev/null 2>&1" ;                        # Build ping command
+    $PCMD = "ping -c3 $ipname >/dev/null 2>&1" ;                        # Build ping command
     @args = ("$PCMD"); system(@args) ;                                  # Perform the ping operation
     $src = $? >> 8;                                                     # Get Ping Result
     $SADM_RECORD->{SADM_CURVAL}=$src;                                   # Save Result Code to CurVal
