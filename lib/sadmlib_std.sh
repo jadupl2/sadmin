@@ -48,7 +48,7 @@
 # 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
 # 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
 # 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
-# 2018_09_20  v2.38 Fix Alerting problem with Slack
+#@2018_09_20  v2.38 Fix Alerting problem with Slack & Set default alert group to 'default'
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
