@@ -74,7 +74,7 @@ b2c475a8d6a77348db54e3f3260d0fae  ./.git/logs/refs/remotes/origin/master
 07f5e5899d6366260322562c5888806c  ./.git/COMMIT_EDITMSG
 6c5e69ac185570bcf163dab425a39fd8  ./.git/FETCH_HEAD
 d32239bcb673463ab874e80d47fae504  ./LICENSE
-e971286d445f7eb1d83089464191366e  ./README.md
+cf3baea9fe40bdfb13a016fdc45ee5c2  ./README.md
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 48b170fc8c93ccd0bef422ea0b7b5e25  ./cfg/.release
