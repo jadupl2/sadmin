@@ -3,7 +3,7 @@
 If you are a Unix system administrator who is taking care of multiple servers, you probably 
 created some scripts to help you keeping your environment stable. With SADMIN you can be alerted
 when something goes wrong, when a script fail or just to let you know that your script ran with
- success. You can received these alerts by email or on your mobile device using the 'Slack' 
+ success. You can received these alerts by email or on your mobile device using the '[Slack](https://slack.com/)' 
  application. SADMIN surely can help you, improve and standardize the administration of your 
  server farm.
 For more information visit the SADMIN web site at <https://www.sadmin.ca>.
