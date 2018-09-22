@@ -23,8 +23,8 @@
 #   Version 1.0 - Initial Version October 2017 
 #   2018_04_14 JDuplessis
 #       V1.1  First Working Version
-#   2018_04_19 JDuplessis
-#       V1.2  Release Version 
+# 2018_04_19 v1.2  Release Version 
+#@2018_09_21 v1.3  Compact Page Layout  
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -42,7 +42,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
-            "info"      : true
+            "info"      : true,
+            'buttons'   : [ 'pdf', 'print' ]
         } );
     } );
 </script>
@@ -55,7 +56,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG           = False ;                                               # Debug Activated True/False
-$SVER            = "1.2" ;                                              # Current version number
+$SVER            = "1.3" ;                                              # Current version number
 $URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
 $CREATE_FILE_PGM = "sadm_subnet_lookup.py";                             # Script to create in file
 $URL_IPVIEW      = '/view/net/sadm_view_subnet.php';                    # Display Subnet Network URL
@@ -78,13 +79,13 @@ function show_subnet($wsubnet,$woption,$con) {
     $netmask = cidr2mask($cidr);                                        # Convert CIDR to Netmask
     list ($wnet, $wfirstip, $wlastip, $wbroadcast) = netinfo($ipaddress,$netmask);
     echo "\n<h1><center>Information about subnet " . $wsubnet . "</h1></center>";
-    echo "\n<center>Network : " . $wnet . " - Netmask : " . $netmask . " - First IP : " . $wfirstip ;
-    echo " - Last IP : " . $wlastip . " - Broadcast : " . $wbroadcast . "</center><br>";
+    echo "\n<center>Network:" . $wnet . " - Netmask:" . $netmask . " - First IP:" . $wfirstip ;
+    echo " - Last IP:" . $wlastip . " - Broadcast:" . $wbroadcast . "</center><br>";
 
     echo '<center>';
     echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=all'>All IP</a> - ";
-    echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=free'>Free IP (Not Pingable & No Hostname)</a> - ";
-    echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=used'>Used IP (Pingable with Hostname)</a> - ";
+    echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=free'>Free IP</a> - ";
+    echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=used'>Used IP</a> - ";
     echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=awn'>IP Pingable without Hostname</a> - ";
     echo "\n<a href='" .$URL_IPVIEW. "?net=" .$wsubnet. "&option=iwn'>IP Not Pingable with Hostname</a>";
     echo '</center><br>';
@@ -107,12 +108,12 @@ function show_subnet($wsubnet,$woption,$con) {
         #             [used]  Display only the used IPs (respond to ping and have DNS entry)
         if (($row['net_ping'] == "0")  and ($row['net_hostname'] == "")) { $wstate="free" ; } 
         if (($row['net_ping'] == "1")  and ($row['net_hostname'] != "")) { $wstate="used" ; }
-        if (($row['net_ping'] == "1")  and ($row['net_hostname'] == "")) { $wstate="no hostname";}
-        if (($row['net_ping'] == "0")  and ($row['net_hostname'] != "")) { $wstate="dead hostname";}
+        if (($row['net_ping'] == "1")  and ($row['net_hostname'] == "")) { $wstate="awn";}
+        if (($row['net_ping'] == "0")  and ($row['net_hostname'] != "")) { $wstate="iwn";}
         # Display IP Information -------------------------------------------------------------------
         if  (($woption == "all") or 
-            (($woption == "iwn")  and ($wstate == "dead hostname")) or 
-            (($woption == "awn")  and ($wstate == "no hostname")) or
+            (($woption == "iwn")  and ($wstate == "iwn")) or 
+            (($woption == "awn")  and ($wstate == "awn")) or
             (($woption == "free") and ($wstate == "free")) or       
             (($woption == "used") and ($wstate == "used")))          
             { 
@@ -120,21 +121,21 @@ function show_subnet($wsubnet,$woption,$con) {
             echo "\n<tr>";
             #echo "\n<td class='dt-center'>" .$linecount. "</td>";           # Show LineCounter
             echo "\n<td class='dt-center'>" .$row['net_ip_wzero']. "</td>"; # Show Current IP With 
-            echo "\n<td class='dt-center'>" .ucfirst($wstate). "</td>";     # Show State IP/HostName
+            echo "\n<td class='dt-center'>" .$row['net_hostname']."</td>";  # Show DNS Name of IP
             if ($row['net_ping'] == 0) {                                    # If IP Not Pingable
                 echo "\n<td class='dt-center'>No</td>";                     # Display No
             }else{                                                          # If IP Pingable
                 echo "\n<td class='dt-center'>Yes</td>";                    # Display Yes
             }
+            echo "\n<td class='dt-center'>" .ucfirst($wstate). "</td>";     # Show State IP/HostName
             if ($row['net_date_ping'] == "0000-00-00 00:00:00") {           # If No Date Last Ping
                 echo "\n<td class='dt-center'>None</td>";                   # Show None to User
             }else{                                                          # If Ping Worked Once
                 echo "\n<td class='dt-center'>";                            # Show most recent Date
                 echo substr ($row['net_date_ping'],0,10) ."</td>";          # that The Ping Worked
             }
-            echo "\n<td class='dt-center'>" .$row['net_hostname']."</td>";  # Show DNS Name of IP
             echo "\n<td class='dt-center'>" . $row['net_mac'] ."</td>";     # Show Mac Address Card
-            echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
+            #echo "\n<td class='dt-center'>" . $row['net_man'] ."</td>";     # Show Card Manufacturer
             echo "\n<td class='dt-center'>";                                # Show Last Change Date
             echo substr ($row['net_date_update'],0,10) ."</td>";            # Of Mac,Host or Ping
             echo "\n</tr>";
@@ -151,7 +152,7 @@ function show_heading() {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" style="width:95%">';   
+    echo '<table id="sadmTable" class="display" cellspacing="0" style="width:100%">';   
     #echo '<table id="sadmTable" class="cell-border" class="hover" compact row-border wrap width="95%">';   
     #echo '<table id="sadmTable" class="display"      compact row-border wrap width="95%">';    
     # TABLE HEADING
@@ -159,13 +160,13 @@ function show_heading() {
     echo "\n<tr>";
     #echo "\n<th class='dt-head-center'>No</th>";
     echo "\n<th class='dt-head-center'>IP Address</th>";
-    echo "\n<th class='dt-head-center'>IP State</th>";
-    echo "\n<th class='dt-head-center'>Ping</th>";
-    echo "\n<th class='dt-head-center'>Last Ping</th>";
     echo "\n<th class='dt-head-center'>Hostname</th>";
+    echo "\n<th class='dt-head-center'>Ping</th>";
+    echo "\n<th class='dt-head-center'>State</th>";
+    echo "\n<th class='dt-head-center'>LastPing</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
-    echo "\n<th class='dt-head-center'>Manufacturer</th>";
-    echo "\n<th class='dt-head-center'>Last Change</th>";
+    #echo "\n<th class='dt-head-center'>Manufacturer</th>";
+    echo "\n<th class='dt-head-center'>LastChange</th>";
     echo "\n</tr>";
     echo "\n</thead>";
 
@@ -174,13 +175,13 @@ function show_heading() {
     echo "\n<tr>";
     #echo "\n<th class='dt-head-center'>No</th>";
     echo "\n<th class='dt-head-center'>IP Address</th>";
-    echo "\n<th class='dt-head-center'>IP State</th>";
-    echo "\n<th class='dt-head-center'>Ping</th>";
-    echo "\n<th class='dt-head-center'>Last Ping</th>";
     echo "\n<th class='dt-head-center'>Hostname</th>";
+    echo "\n<th class='dt-head-center'>Ping</th>";
+    echo "\n<th class='dt-head-center'>State</th>";
+    echo "\n<th class='dt-head-center'>LastPing</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
-    echo "\n<th class='dt-head-center'>Manufacturer</th>";
-    echo "\n<th class='dt-head-center'>Last Change</th>";
+    #echo "\n<th class='dt-head-center'>Manufacturer</th>";
+    echo "\n<th class='dt-head-center'>LastChange</th>";
     echo "\n</tr>";
     echo "\n</tfoot>";
 
