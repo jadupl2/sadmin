@@ -48,7 +48,8 @@
 # 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
 # 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
 # 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
-#@2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
+# 2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
+#@2018_09_22  v2.39 Change Alert Message Format
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -66,7 +67,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.38"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.39"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1962,13 +1963,13 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 # Send an Alert 
 #
-# 1st Parameter    : [S]    If it is a Script Alert (Alert Message will include Script Info)
-#                           For type [S] Default Group come from sadmin.cfg or user can modify it 
-#                           by altering SADM_ALERT_GROUP variable.
-#                    [E/W]  If it's an Error or Warning detected by System Monitor.
-#                           For this type [M] Warning and Error Alert Group are taken from the host
-#                           System Monitor file ($SADMIN/cfg/hostname.smon).
-#                           In System monitor file Warning are at column 'J' and Error at col. 'K'.
+# 1st Parameter    : [S]     If it is a Script Alert (Alert Message will include Script Info)
+#                            For type [S] Default Group come from sadmin.cfg or user can modify it 
+#                            by altering SADM_ALERT_GROUP variable.
+#                    [E/W/I] If it's an Error, a Warning or for Information detected by System Monitor.
+#                            For this type [M] Warning and Error Alert Group are taken from the host
+#                            System Monitor file ($SADMIN/cfg/hostname.smon).
+#                            In System monitor file Warning are at column 'J' and Error at col. 'K'.
 #
 # 2nd Parameter    : Server Where Alert come from
 # 3th Parameter    : Alert Group Name to send Message
@@ -2034,7 +2035,8 @@ sadm_send_alert() {
     alert_group_type=`grep -i "^$alert_group" $SADM_ALERT_FILE |awk -F, '{ print $2 }'` # [S/M]Group 
     alert_group_type=`echo $alert_group_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
     if [ "$alert_group_type" != "M" ] && [ "$alert_group_type" != "S" ]
-       then sadm_writelog "Invalid Alert Group Type '$alert_group_type' specify in $SADM_ALERT_FILE"
+       then wmess="Invalid Alert Group Type '$alert_group_type' specify for '$alert_group' in $SADM_ALERT_FILE"
+            sadm_writelog "$wmess"
             return 1
     fi
 
@@ -2053,13 +2055,14 @@ sadm_send_alert() {
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail 
         then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Email Alert" ; fi
              if [ "$alert_type" = "S" ]                                 # Alert Coming from a Script
-                then echo "Event Date is `date`" > $LOCAL_TMP           # Write date in Mess.File
-                     echo "Script Name is $SADM_PN - Version $SADM_VER" >> $LOCAL_TMP
+                then echo "Date: `date`" > $LOCAL_TMP                   # Write date in Mess.File
+                     #echo "Script Name is $SADM_PN - Version $SADM_VER" >> $LOCAL_TMP
                      echo "$alert_message" >> $LOCAL_TMP                # Add Message to Mess. File
+                     echo "On server $alert_server" >>$LOCAL_TMP        # Add Server Name to Mess.
                      cat $LOCAL_TMP |$SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
                      rm -f $LOCAL_TMP >/dev/null 2>&1                   # Remove Tmp File Used
-                else echo "`date`" |$SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
+                else echo "`date`" |$SADM_MUTT -s "$alert_message on $alert_server" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
              fi
              if [ $RC -eq 0 ]                                           # If Error Sending Email
@@ -2087,18 +2090,11 @@ sadm_send_alert() {
              fi
              SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
              if [ "$alert_type" = "S" ]                                 # If Alert for a [S]cript
-                then text="Current Date is `date`"                      # Insert Date in Message
-                     text="${text}\nScript Name is $SADM_PN - Version $SADM_VER"
-                     text="${text}\nServer $alert_server"               # Insert Server with Alert
-                     if [ "$alert_type" = "E" ] 
-                        then text="${text}\nSADM ERROR:\n$alert_message"
-                        else text="${text}\nSADM WARNING:\n$alert_message"
-                     fi
+                then text="Date: `date`"                                # Insert Date in Message
+                     text="${text}\n$alert_message"                     # Insert Alert Message 
+                     text="${text}\nOn server: $alert_server"           # Insert Server with Alert
                      slack_text="$text"                                 # Set Alert Text
-                else if [ "$alert_type" = "E" ] 
-                        then slack_text="`date`\nSADM ERROR:\n${alert_message}\nOn server ${alert_server}"
-                        else slack_text="`date`\nSADM WARNING:n${alert_message}\nOn server ${alert_server}"
-                     fi
+                else slack_text="$alert_message"                        # Set Alert Text
              fi
              escaped_msg=$(echo -e "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
              slack_text="\"text\": \"${escaped_msg}\""                  # Set Final Text Message
