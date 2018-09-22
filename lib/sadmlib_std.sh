@@ -1962,7 +1962,7 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 # Send an Alert 
 #
-# 1st Parameter    : [S]    If it is a Script Alert (Alert Message will includ Script Info)
+# 1st Parameter    : [S]    If it is a Script Alert (Alert Message will include Script Info)
 #                           For type [S] Default Group come from sadmin.cfg or user can modify it 
 #                           by altering SADM_ALERT_GROUP variable.
 #                    [E/W]  If it's an Error or Warning detected by System Monitor.
