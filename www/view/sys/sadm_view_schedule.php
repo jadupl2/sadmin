@@ -29,6 +29,7 @@
 # 2018_06_06    v2.2 Correct problem with link to view the update log 
 # 2018_07_01    v2.3 Show Only Linux Server on this page (No Aix)
 # 2018_07_09    v2.4 Last Update time remove seconds & Change layout
+#@2018_07_09    v2.5 Change Layout of line (More Compact)
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -58,7 +59,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.4" ;                                                # Current version number
+$WVER          = "2.5" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -86,12 +87,12 @@ function setup_table() {
     echo "<thead>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th>Cat.</th>\n";
+    #echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log</th>\n";
-    echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot After</th>\n";
+    echo "<th class='text-center'>View</th>\n";
+    echo "<th class='text-center'>Auto</th>\n";
+    echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
@@ -103,12 +104,12 @@ function setup_table() {
     echo "<tfoot>\n";
     echo "<tr>\n";
     echo "<th>Server</th>\n";
-    echo "<th>Cat.</th>\n";
+    #echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
-    echo "<th class='text-center'>View Log</th>\n";
-    echo "<th class='text-center'>Auto Update</th>\n";
-    echo "<th class='text-center'>Reboot After</th>\n";
+    echo "<th class='text-center'>View</th>\n";
+    echo "<th class='text-center'>Auto</th>\n";
+    echo "<th class='text-center'>Reboot</th>\n";
     echo "<th class='text-center'>Month</th>\n";
     echo "<th class='text-center'>Date</th>\n";
     echo "<th class='text-center'>Day</th>\n";
@@ -133,16 +134,22 @@ function display_data($count, $row) {
     # Server Name
     $WOS  = $row['srv_osname'];
     $WVER = $row['srv_osversion'];
-    echo "<td>";
+    echo "<td class='dt-center'>";
     echo "<a href='" . $URL_OSUPDATE . "?sel=" . $row['srv_name'] ;
     echo "' title='$WOS $WVER server, ip address is " . $row['srv_ip'] ." ,Click to edit Schedule'>";
     echo $row['srv_name']  . "</a></td>\n";
     
     # Category de Serveur
-    echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
+    #echo "<td class='dt-center'>" . nl2br( $row['srv_cat']) . "</td>\n";  
 
     # Last O/S Update Date 
-    echo "<td class='dt-center'>" . substr($row['srv_date_osupdate'],0,16) . "</td>\n";  
+    echo "<td class='dt-center'>" ;
+    if (substr($row['srv_date_osupdate'],0,16) == "0000-00-00 00:00") {
+        echo "None Yet";  
+    }else{
+        echo substr($row['srv_date_osupdate'],0,16) ;
+    }
+    echo "</td>\n";  
         
     # Last Update Status
     echo "<td class='dt-center'>";
@@ -150,7 +157,7 @@ function display_data($count, $row) {
         case 'S'  : echo "Success" ; break ;
         case 'F'  : echo "Failed"  ; break ;
         case 'R'  : echo "Running" ; break ;
-        default   : echo "Unknown" ; break ;
+        default   : echo "Not Appl." ; break ;
     }
     echo "</td>\n";  
         
