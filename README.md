@@ -1,8 +1,11 @@
 # SADMIN Tools
 
 If you are a Unix system administrator who is taking care of multiple servers, you probably 
-created some scripts to help you keeping your environment stable. SADMIN surely can help you, 
-improve and standardize the administration of your server farm.  
+created some scripts to help you keeping your environment stable. With SADMIN you can be alerted
+when something goes wrong, when a script fail or just to let you know that your script ran with
+ success. You can received these alerts by email or on your mobile device using the 'Slack' 
+ application. SADMIN surely can help you, improve and standardize the administration of your 
+ server farm.
 For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 ## Some features of SADMIN Tools
@@ -48,7 +51,7 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 - In the morning do you have to look in multiple place to check if everything went right last night ?
 - Can you look at performance graph of your servers to see or to justify the cpu utilization increase ?
 - In case of a disaster recovery situation, do you have all the information on hand to rebuild your servers ?
-- Be alerted when a filesystem/disk is getting full on one of your servers.
+- Be alerted when a filesystem/disk is getting full on one of your servers on your phone.
 - If a service start working, if you want you can restart it automatically.
 - Include a frontend tool (sadm) to create/increase/delete filesystem (ext3,ext4,xfs)
 
