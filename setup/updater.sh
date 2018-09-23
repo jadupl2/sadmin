@@ -1,0 +1,1 @@
+../bin/sadm_updater.sh
