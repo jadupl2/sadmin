@@ -23,6 +23,7 @@
 # 2018_07_29 v1.3 Remove Log Header & Footer, Change Email & Help Format.
 # 2018_08_27 v1.4 New Email format when using -m command line switch, View script log from email.
 # 2018_09_18 v1.5 Email when using -m command line switch include ow the Alert Group
+#@2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.5'                               # Current Script Version
+    export SADM_VER='1.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -181,37 +182,41 @@ display_detail_line()
 
 
 #===================================================================================================
+#
 # Create a file containing last line of all *.rch locate within $SADMIN/wwww/dat.
-# Then sort it in Return Code Revrese order then by date , then by server into $SADM_TMP_FILE1 
+# Then sort it by Return Code in Reverse order then by date , then by server into $SADM_TMP_FILE1 
 # Then line are loaded into an array.
-# While reading each line, if any line doessn't have 6 fiels it is added into copied $SADM_TMP_FILE3
+# While reading each line, if any line don't have $FIELD_IN_RCH fields it's added to $SADM_TMP_FILE3
 #
 #===================================================================================================
 load_array()
 {
-    # SADMIN Server collect ReturnCodeHistory (RCH) files from clients via "sadm_fetch_clients.sh" 
-    # This is done at regular interval from the server crontab,
+    # SADMIN Server get ReturnCodeHistory (RCH) files from all clients via "sadm_fetch_clients.sh" 
+    # This is done at regular interval from the server crontab,(/etc/cron.d/sadm_server)
     # A Temp file that containing the LAST line of each *.rch file present in ${SADMIN}/www/dat dir.
     # ----------------------------------------------------------------------------------------------
     find $SADM_WWW_DAT_DIR -type f -name "*.rch" -exec tail -1 {} \; > $SADM_TMP_FILE2
     sort -t' ' -rk9,9 -k2,3 -k7,7 $SADM_TMP_FILE2 > $SADM_TMP_FILE1     # Sort by Return Code & date
-    if [ "$SERVER_NAME" != "" ]
-        then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2
-             cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1
-    fi
-    if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
-       then sadm_writelog "No RCH File to process - File is empty"        # Issue message to user
-            return 1                                                    # Exit Function 
+
+    # If Option -s was used on the command line to get the report for only the one specified.
+    if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
+        then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
+             cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1                       # That become working file
     fi
 
+    # Check if working file is empty, then nothing to report
+    if [ ! -s "$SADM_TMP_FILE1" ]                                       # No rch file record ??
+       then sadm_writelog "No RCH File to process"                      # Issue message to user
+            return 1                                                    # Exit Function 
+    fi
     
-    # Now we put each line of all rch file the temp file into an array
+    # Now we put the last line of all rch file from the working temp file into an array.
     xcount=0 ; array=""                                                 # Initialize Array & Index
-    touch $SADM_TMP_FILE3                                               # rch format error file 
+    touch $SADM_TMP_FILE3                                               # Field Number dont' match
     while read wline                                                    # Read Line from TEMP3 file
         do                                                              # Start of loop
         WNB_FIELD=`echo $wline | wc -w`                                 # Check Nb. Of field in Line
-        if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field ! What Expected
+        if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field don't match
             then echo $wline >> $SADM_TMP_FILE3                         # Save Line in TEMP3 file
                  sadm_writelog "ERROR : Nb of field is not $FIELD_IN_RCH - Line was ignore : $wline"
                  continue                                               # Go on and read next line
@@ -316,7 +321,7 @@ rch2html()
         echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WALERT</font></td>" >> $HTML_FILE
         echo -e "\n</tr>" >> $HTML_FILE
 
-        done < $TMP_FILE2                                               # Read From Created File
+        done < $RCH_FILE                                               # Read From Created File
     echo -e "\n</table></center><br><br>" >> $HTML_FILE                 # End of Table
     return 
 } 
@@ -348,7 +353,7 @@ mail_report()
     rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
-        WRCODE=` echo $wline | awk '{ print $8 }'`                       # Extract Return Code 
+        WRCODE=` echo $wline | awk '{ print $9 }'`                      # Extract Return Code 
         if [ "$WRCODE" != "1" ] ; then continue ; fi                    # If Script Succeeded = Skip 
         echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
         done 
@@ -427,12 +432,10 @@ mail_report()
 #===================================================================================================
 main_process()
 {
-    load_array                                                          # Load RCH Array
+    load_array                                                          # Load Array lastLine of RCH
     if [ "$ERROR_ONLY" = "ON" ]                                         # If only Error Switch is ON
-        then tput clear                                                 # Clear the Screen
-             if [ -s "$SADM_TMP_FILE3" ]                                # Check something in file
-                 then nl $SADM_TMP_FILE3                                # Display Error file with no.
-                 else echo "No error to report (All *.rch files have $FIELD_IN_RCH fields)"
+        then if [ ! -s "$SADM_TMP_FILE3" ]                                # Check something in file
+                 then echo "No error to report (All *.rch files have $FIELD_IN_RCH fields)"
              fi
              return 0                                                   # Return to caller
     fi 
@@ -541,12 +544,17 @@ main_process()
     rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Remove Work Temp File 1
     rm -f $TMP_FILE2 >/dev/null 2>&1                                    # Remove Work Temp File 3
 
-    # Record in rch file that didn't have six fields (Wrong format) were written to SADM_TMP_FILE3
+    # Record in rch file that didn't have 9 fields (Wrong format) were written to SADM_TMP_FILE3
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
-        then tput clear                                                 # Clear the Screen
+        then #tput clear                                                 # Clear the Screen
              echo "Invalid format - Error identified in some \"rch\" files" # Display Msg to user
              nl $SADM_TMP_FILE3                                         # Display file content
+             wsubject="RCH files without $FIELD_IN_RCH fields."
+             wmess="$SADM_PN - `date`\nList of lines without $FIELD_IN_RCH fields.\n"
+             alert_sysadmin 'M' 'W' "$SADM_HOSTNAME" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
+             #sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsubject"
     fi
+
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
