@@ -49,7 +49,8 @@
 # 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
 # 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
 # 2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
-#@2018_09_22  v2.39 Change Alert Message Format
+# 2018_09_22  v2.39 Change Alert Message Format
+#@2018_09_23  v2.40 Added alert_sysadmin function
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -67,7 +68,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.39"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.40"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -483,52 +484,78 @@ sadm_check_requirements() {
 
 
 # --------------------------------------------------------------------------------------------------
-#      Called when we need to advise the user of an error or when his attention is required.
+# Called when we need to advise the SysAdmin of an error or when his attention is required.
+#   Email of system admintrator(s) is taken from SADMIN configuration file ($SADMIN/cfg/sadmin.cfg)
+#   The Common variable name that contains the email(s) is $SADM_MAIL_ADDR
+#
+# 1st Paramater : Alert Typer [M]ail [S]lack
+# 2nd Parameter : Message Severity ([E]rror [W]arning [I]nformation
+# 3rd Paramater : Server Name 
+# 4rd Paramater : Subject of Message
+# 5th Parameter : Message
+# 6th Parameter : FileName of attachement (if Any, could be blank)
+#
 # --------------------------------------------------------------------------------------------------
-alert_user()    {
+alert_sysadmin()    {
+
+    # Validate the Number of parameter received.
+    if [ $# -ne 6 ] 
+        then sadm_writelog "Invalid Nb argument receive by ${FUNCNAME}" # Advise User
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+    as_exit_code=0                                                      # Func. Default Return Code
+
+    # Save Parameters (After Removing leading and trailing Spaces and/or Making it UpperCase)
+    as_type=`echo $1      | tr "[:lower:]" "[:upper:]"`                 # Alert Type [M]ail [S]lack
+    as_severity=`echo $2  | tr "[:lower:]" "[:upper:]"`                 # E=Error W=Warning I=info
+    as_server=`echo "$3"  | awk '{$1=$1;print}'`                        # Problematic Server Name 
+    as_subject=`echo "$4" | awk '{$1=$1;print}'`                        # Alert Subject
+    as_mess=$5                                                          # Alert Message 
+    as_file=`echo "$6"    | awk '{$1=$1;print}'`                        # Alert Attachement FileName
+
+    # Is there is an attachment is the File Readable ?
+    if [ "$as_file" != "" ] && [ ! -r "$as_file" ]                      # Can't read Attachment File
+       then sadm_writelog "Error in ${FUNCNAME} - Attachment file '$as_file' missing" 
+            return 1                                                    # Return Error to caller
+    fi 
     
-    # Save Received Parameters
-    a_type=$1                                                           # Proto M=Mail T=Text P=Page
-    a_severity=$2                                                       # E=Error W=Warning I=info
-    a_server=$3                                                         # Problematic Server Name 
-    a_group=$4                                                          # Destination alert group
-    a_mess=$5                                                           # Alert Message
-    a_exit_code=0                                                       # Def. Function Return Code
-
-    # Build the SADM uniform Subject Prefix - Based on Alert Severity Received
-    case "$a_severity" in                                               # Depend on Severity E/W/I
-        e|E) a_prefix="SADM: ERROR "                                    # Error SADM Subject Prefix        
+    # Build SADM uniform Subject Prefix - Based on Alert Severity Received
+    case "$as_severity" in                                              # Depend on Severity E/W/I
+        e|E) as_subject="SADM ERROR: $as_subject"                       # Error Subject Prefix 
              ;; 
-        w|W) a_prefix="SADM: WARNING "                                  # Warning SADM Subject Prefix                 
+        w|W) as_subject="SADM WARNING: $as_subject"                     # Warning Subject Prefix 
              ;; 
-        i|I) a_prefix="SADM: INFO "                                     # Info SADM Subject Prefix                 
+        i|I) as_subject="SADM INFO: $as_subject"                        # Info Subject Prefix 
              ;; 
-          *) a_prefix="SADM: N/A "                                      # Invalid SADM Subject Prefix                 
-             a_exit_code=1                                              # Something went wrong in fct.
+          *) as_subject="SADM: $as_subject"                             # Invalid Subject Prefix
              ;; 
     esac
 
-    # Send the Alert Message using the Protocol requested
-    case "$a_type" in 
-        m|M) if [ "$SADM_MAIL" = "" ] 
-                then sadm_writelog "Function 'alert_user' was requested to send an email" 
-                     sadm_writelog "But the mail program was not found (SADM_MAIL=${SADM_MAIL})" 
-                     sadm_writelog "Correct the situation and try again"
-                     a_exit_code=1                                      # Something went wrong 
-                else a1_msg="`date` ${a_server} ${a_prefix}${a_mess}"   # Build Email Alert Message
-                     echo "${a1_msg}" | $SADM_MAIL -s "${a_prefix}${a_mess}" $SADM_MAIL_ADDR
-                     a_exit_code=$?                                     # Set Return Code 
-             fi
-             ;; 
-          *) a1_msg="`date` ${a_server} ${a_prefix}"                    # Invalid Protocol Received
-             a2_msg="Function 'alert_user' received an invalid first parameter ($a_type)" 
-             a3_msg="${a1_msg}${a2_msg}"                                # Advise usr something wrong
-             echo "`date` ${a_server} $a3_msg" |$SADM_MAIL -s "SADM: ALERT $a_mess" $SADM_MAIL_ADDR
-             a_exit_code=1                                              # Something went wrong 
-             ;; 
+    # Send the Alert Message using the type of alert requested
+    case "$as_type" in 
+        M) if [ "$SADM_MUTT" = "" ] 
+                then sadm_writelog "Function 'alert_sysadmin' was requested to send an email" 
+                     sadm_writelog "But the 'mutt' program was not found (SADM_MUTT=${SADM_MUTT})" 
+                     sadm_writelog "Install the 'mutt' command and try again"
+                     return 1                                           # Something went wrong 
+                else MUTT_CMD="echo $as_mess | $SADM_MUTT -s '$as_subject' '$SADM_MAIL_ADDR' "
+                     MUTT_CMD="echo coco | $SADM_MUTT -s '$as_subject' $SADM_MAIL_ADDR "
+                     if [ "$as_file" != "" ] ; then $MUTT_CMD="$MUTT_CMD -a $as_file" ; fi 
+                     sadm_writelog "MUTTCMD = $MUTT_CMD"
+                     as_exit_code=$?                                    # Set Return Code 
+                     if [ "$as_exit_code" -ne 0 ] 
+                        then sadm_writelog "Error send email to SysAdmin '$SADM_MAIL_ADDR'"
+                             sadm_writelog "Command used: $MUTT_CMD"
+                     fi                             
+           fi
+           ;; 
+        *) sadm_writelog "Error in ${FUNCNAME} - Type of alert '$as_type' not supported" 
+           as_exit_code=1                                               # Something went wrong 
+           ;; 
     esac
 
-    return $a_exit_code
+    return $as_exit_code
 }
 
 
