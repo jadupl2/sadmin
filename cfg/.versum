@@ -70,7 +70,7 @@ ee6a7b17f1f06a7876dad8a5d6284344  ./.git/packed-refs
 b2c475a8d6a77348db54e3f3260d0fae  ./.git/logs/refs/remotes/origin/master
 185289007530a7da3e158d69bc1c08f0  ./.git/logs/refs/heads/master
 185289007530a7da3e158d69bc1c08f0  ./.git/logs/HEAD
-67d889e21a35ea5ee74cf9b47bddc53c  ./.git/index
+4d619d62bbfe5eac82d12e0011e47a6e  ./.git/index
 07f5e5899d6366260322562c5888806c  ./.git/COMMIT_EDITMSG
 6c5e69ac185570bcf163dab425a39fd8  ./.git/FETCH_HEAD
 d32239bcb673463ab874e80d47fae504  ./LICENSE
@@ -206,6 +206,8 @@ d41d8cd98f00b204e9800998ecf8427e  ./usr/lib/.gitkeep
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
 531ee68b0054dad5e8827d7ac8d641b9  ./usr/mon/stemplate.sh
 e382e0d018caa016a59a5a856a5ba8a1  ./usr/mon/swatch_nmon.sh
+f604ac67f505b5aeaf656c9cca796546  ./usr/mon/swatch_nmon.txt
+a4c926c5be861e400efaac5a6f91b4e3  ./usr/mon/stemplate.txt
 fd1a5afb5d7595b6a8e44e635b46c92c  ./www/crud/cat/sadm_category_common.php
 23da2417660c6d4a0c03e3da585698e0  ./www/crud/cat/sadm_category_create.php
 7bd5b784d68eb8b639ebc10cdc3376ab  ./www/crud/cat/sadm_category_delete.php
@@ -370,4 +372,4 @@ a00719795f69475d30c0ea028103c67a  ./.Trash-602/files/jac/debug_test_notes.txt
 856b9d1450a221c8583bb09ab5f452eb  ./.Trash-602/files/jac/secure_mysql.sql
 30ddccba91caba81b3d3f4652cd071bf  ./.Trash-602/files/jac/useradd.sql
 323a0db2169f89a340cf7532d4166d9a  ./.Trash-602/files/jac/useradd2.sql
-89aae0e58b10662915a995d52b25a811  ./.gitignore
+42853e94c1dbcc561fbe65e746fe5379  ./.gitignore
