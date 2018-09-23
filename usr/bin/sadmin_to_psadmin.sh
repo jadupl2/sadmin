@@ -38,7 +38,8 @@
 # 2018_07_18    v2.2 Copy system monitor script template, nmon monitor & service restart in PSADMIN
 # 2018_08_25    v2.3 Added .gitkeep file to empty directory so they exist in clone image & tgz file.
 # 2018_08_26    v2.4 Rewritten to use rsync between sadmin to psadmin, cause want to use git (.git).
-#@2018_09_14    v2.5 Added alert group, alert slack and alert History file to SADM
+# 2018_09_14    v2.5 Added alert group, alert slack and alert History file to SADM
+#@2018_09_14    v2.6 Added /usr/mon error message text file to process
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -60,7 +61,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -450,12 +451,18 @@ main_process()
     run_oscommand "cp ${SADM_UMON_DIR}/stemplate.sh ${PSMON}"
     run_oscommand "chmod 775 ${PSMON}/stemplate.sh"
     run_oscommand "chown sadmin.sadmin ${PSMON}/stemplate.sh"
+    run_oscommand "cp ${SADM_UMON_DIR}/stemplate.txt ${PSMON}"
+    run_oscommand "chmod 664 ${PSMON}/stemplate.txt"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/stemplate.txt"
     #
     sadm_writelog " "
     sadm_writelog "Copy NMON Watcher to ${PSMON}"
     run_oscommand "cp ${SADM_UMON_DIR}/swatch_nmon.sh ${PSMON}"
     run_oscommand "chmod 775 ${PSMON}/swatch_nmon.sh"
     run_oscommand "chown sadmin.sadmin ${PSMON}/swatch_nmon.sh"
+    run_oscommand "cp ${SADM_UMON_DIR}/swatch_nmon.txt ${PSMON}"
+    run_oscommand "chmod 664 ${PSMON}/swatch_nmon.txt"
+    run_oscommand "chown sadmin.sadmin ${PSMON}/swatch_nmon.txt"
     #
     sadm_writelog " "
     sadm_writelog "Copy Service Restart to ${PSMON}"
