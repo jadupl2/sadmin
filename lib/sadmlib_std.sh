@@ -522,13 +522,17 @@ alert_sysadmin()    {
     
     # Build SADM uniform Subject Prefix - Based on Alert Severity Received
     case "$as_severity" in                                              # Depend on Severity E/W/I
-        e|E) as_subject="SADM ERROR: $as_subject"                       # Error Subject Prefix 
+        E)   
+             as_subject="SADM ERROR: $as_subject"                       # Error Subject Prefix 
              ;; 
-        w|W) as_subject="SADM WARNING: $as_subject"                     # Warning Subject Prefix 
+        W)   
+             as_subject="SADM WARNING: $as_subject"                     # Warning Subject Prefix 
              ;; 
-        i|I) as_subject="SADM INFO: $as_subject"                        # Info Subject Prefix 
+        I)   
+             as_subject="SADM INFO: $as_subject"                        # Info Subject Prefix 
              ;; 
-          *) as_subject="SADM: $as_subject"                             # Invalid Subject Prefix
+          *) 
+             as_subject="SADM ${as_severity}: $as_subject"              # Invalid Subject Prefix
              ;; 
     esac
 
@@ -539,10 +543,12 @@ alert_sysadmin()    {
                      sadm_writelog "But the 'mutt' program was not found (SADM_MUTT=${SADM_MUTT})" 
                      sadm_writelog "Install the 'mutt' command and try again"
                      return 1                                           # Something went wrong 
-                else MUTT_CMD="echo $as_mess | $SADM_MUTT -s '$as_subject' '$SADM_MAIL_ADDR' "
-                     MUTT_CMD="echo coco | $SADM_MUTT -s '$as_subject' $SADM_MAIL_ADDR "
-                     if [ "$as_file" != "" ] ; then $MUTT_CMD="$MUTT_CMD -a $as_file" ; fi 
-                     sadm_writelog "MUTTCMD = $MUTT_CMD"
+                else if [ "$as_file" != "" ]
+                        then echo -e "$as_mess" | $SADM_MUTT -s "$as_subject" $SADM_MAIL_ADDR -a $as_file
+                        else echo -e "$as_mess" | $SADM_MUTT -s "$as_subject" $SADM_MAIL_ADDR 
+                     fi 
+                     #if [ "$as_file" != "" ] ; then $MUTT_CMD="$MUTT_CMD -a $as_file" ; fi 
+                     #sadm_writelog "MUTTCMD = $MUTT_CMD"
                      as_exit_code=$?                                    # Set Return Code 
                      if [ "$as_exit_code" -ne 0 ] 
                         then sadm_writelog "Error send email to SysAdmin '$SADM_MAIL_ADDR'"
@@ -2081,15 +2087,12 @@ sadm_send_alert() {
     # If Alert Group Type is [M] then send Alert by Email.------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail 
         then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Send Email Alert" ; fi
+             adate=`date`
              if [ "$alert_type" = "S" ]                                 # Alert Coming from a Script
-                then echo "Date: `date`" > $LOCAL_TMP                   # Write date in Mess.File
-                     #echo "Script Name is $SADM_PN - Version $SADM_VER" >> $LOCAL_TMP
-                     echo "$alert_message" >> $LOCAL_TMP                # Add Message to Mess. File
-                     echo "On server $alert_server" >>$LOCAL_TMP        # Add Server Name to Mess.
-                     cat $LOCAL_TMP |$SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
+                then wmess=`echo "${adate}\n${alert_message}\nOn server ${alert_server}"` 
+                     echo -e $wmess | $SADM_MUTT -s "$alert_message" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
-                     rm -f $LOCAL_TMP >/dev/null 2>&1                   # Remove Tmp File Used
-                else echo "`date`" |$SADM_MUTT -s "$alert_message on $alert_server" "$alert_group_member" -a $SADM_LOG
+                else echo "$adate" | $SADM_MUTT -s "$alert_message on $alert_server" "$alert_group_member" -a $SADM_LOG
                      RC=$?                                              # Save Error Number    
              fi
              if [ $RC -eq 0 ]                                           # If Error Sending Email
