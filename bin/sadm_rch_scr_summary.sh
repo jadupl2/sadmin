@@ -381,7 +381,7 @@ mail_report()
         done 
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
         then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
-             rch2html "$SADM_TMP_FILE2" "List of scripts than executed Yesterday ($DATE1)" 
+             rch2html "$SADM_TMP_FILE2" "List of scripts executed Yesterday ($DATE1)" 
     fi 
 
     # Produce Report for 2 days ago ----------------------------------------------------------------
