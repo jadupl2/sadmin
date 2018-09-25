@@ -512,7 +512,7 @@ check_for_alert()
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess"    # Send Alert 
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess" ""   # Send Alert 
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
@@ -542,7 +542,7 @@ check_for_alert()
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess"    # Send Alert 
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess" "" # Send Alert 
                 done 
         else sadm_writelog  "No error reported by any scripts files (*.rch)" 
     fi
