@@ -20,7 +20,8 @@
 # 2018_05_28    v3.2 Add Backup Parameters that come from sadmin.cfg from now on.
 # 2018_06_04    v3.3 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05    v3.4 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf Display
-#@2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
+# 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
+#@2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -42,7 +43,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.5'                               # Current Script Version
+    export SADM_VER='3.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -574,13 +575,48 @@ print_file()
     presult="$SADM_CFG_FILE"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_CFG_HIDDEN"                                        # Directory Variable Name
-    pdesc="SADMIN Initial Configuration File"                           # Directory Description
+    pexample="\$SADM_CFG_HIDDEN"                                        # Variable Name
+    pdesc="SADMIN Initial Configuration File"                           # Description
     presult="$SADM_CFG_HIDDEN"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-                    
-    #pexample="\$SADM_REL_FILE"                                          # Directory Variable Name
-    #pdesc="SADMIN Release File"                                         # Directory Description
+
+    pexample="\$SADM_ALERT_FILE"                                        # Variable Name
+    pdesc="SADMIN Alert Group File"                                     # Description
+    presult="$SADM_ALERT_FILE"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_ALERT_INIT"                                        # Variable Name
+    pdesc="SADMIN Initial Alert Group File"                             # Description
+    presult="$SADM_ALERT_INIT"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SLACK_FILE"                                        # Variable Name
+    pdesc="SADMIN Slack Channel WebHook File"                           # Description
+    presult="$SADM_SLACK_FILE"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_SLACK_INIT"                                        # Variable Name
+    pdesc="SADMIN Initial Slack WebHook File"                           # Description
+    presult="$SADM_SLACK_INIT"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_ALERT_HIST"                                        # Variable Name
+    pdesc="SADMIN Alert History File"                                   # Description
+    presult="$SADM_ALERT_HIST"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_ALERT_HINI"                                        # Variable Name
+    pdesc="SADMIN Initial Alert History File"                           # Description
+    presult="$SADM_ALERT_HINI"                                          # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    pexample="\$SADM_ALERT_SEQ"                                         # Variable Name
+    pdesc="SADMIN Alert Reference Number File"                          # Description
+    presult="$SADM_ALERT_SEQ"                                           # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+
+    #pexample="\$SADM_REL_FILE"                                          # Variable Name
+    #pdesc="SADMIN Release File"                                         # Description
     #presult="$SADM_REL_FILE"                                            # Actual Content of Variable
     #printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
