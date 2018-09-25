@@ -23,7 +23,8 @@
 # 2018_07_29 v1.3 Remove Log Header & Footer, Change Email & Help Format.
 # 2018_08_27 v1.4 New Email format when using -m command line switch, View script log from email.
 # 2018_09_18 v1.5 Email when using -m command line switch include ow the Alert Group
-#@2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
+# 2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
+#@2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Current Script Version
+    export SADM_VER='1.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -88,8 +89,6 @@ line_per_page=20                                ; export line_per_page  # Nb of 
 xcount=0                                        ; export xcount         # Index for our array
 xline_count=0                                   ; export xline_count    # Line display counter
 HTML_FILE="${SADM_TMP_DIR}/${SADM_INST}.html"   ; export HTML_FILE      # HTML File sent to user
-TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}1_$$.tmp" ; export TMP_FILE1     # TMP Report File 1
-TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}2_$$.tmp" ; export TMP_FILE2     # TMP Report File 2
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 URL_VIEW_FILE='/view/log/sadm_view_file.php'    ; export URL_VIEW_FILE  # View File Content URL
 
@@ -294,7 +293,11 @@ rch2html()
         echo -e "\n<tr>"  >> $HTML_FILE
 
         # Set Background Color - Color at https://www.w3schools.com/tags/ref_colornames.asp
-        if [ "$WRCODE" = "0" ] ; then BCOL="#FFDAB9" ; FCOL="#000000" ; fi  # 0 = Success = Beige
+        if (( $xcount%2 == 0 ))
+           then BCOL="#ffffcc" ; FCOL="#000000" 
+           else BCOL="#f2ffcc" ; FCOL="#000000"
+        fi
+        #if [ "$WRCODE" = "0" ] ; then BCOL="#f2ffcc" ; FCOL="#000000" ; fi  # 0 = Success = Beige
         if [ "$WRCODE" = "1" ] ; then BCOL="Red"     ; FCOL="#000000" ; fi  # 1 = Error = Red
         if [ "$WRCODE" = "2" ] ; then BCOL="Yellow"  ; FCOL="#000000" ; fi  # 2 = Running = Yellow
 
@@ -338,28 +341,29 @@ mail_report()
     echo -e "<!DOCTYPE html><html>\n"                > $HTML_FILE
     echo -e "<head>\n"                              >> $HTML_FILE
     echo -e "<style>\n"                             >> $HTML_FILE
-    echo -e "th { color: white; background-color: #4CAF50;     padding: 5px; }\n"  >> $HTML_FILE
+    echo -e "th { color: white; background-color: #5e39ad;     padding: 5px; }\n"  >> $HTML_FILE
     echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }\n"  >> $HTML_FILE
-    echo -e "tr:nth-child(even) {background-color: #f2f2f2;}" >> $HTML_FILE
+    echo -e "tr:nth-child(even) { background-color: #000000; }\n" >> $HTML_FILE
+    echo -e "tr:nth-child(odd)  { background-color: #f2f2f2; }\n" >> $HTML_FILE
     echo -e "</style>\n"                            >> $HTML_FILE
     echo -e "<meta charset='utf-8' />\n"            >> $HTML_FILE
     echo -e "<title>\n"                             >> $HTML_FILE
     echo -e "</title>\n</head>\n<body>\n\n"         >> $HTML_FILE
-    echo -e "<br><center><strong>Report generated on `date`</strong></center><br>\n" >> $HTML_FILE
+    echo -e "<br><center><h1>Scripts Daily Report for `date`</h1></center><br>\n" >> $HTML_FILE
 
     # Produce Report of script running or failed ---------------------------------------------------
     sadm_writelog "Producing Summary Report of 'Failed' scripts ..."
     xcount=0                                                            # Clear Line Counter  
-    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
+    rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
         WRCODE=` echo $wline | awk '{ print $9 }'`                      # Extract Return Code 
         if [ "$WRCODE" != "1" ] ; then continue ; fi                    # If Script Succeeded = Skip 
-        echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
+        echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
         done 
-    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
-        then sort -t' ' -rk8,8 $TMP_FILE1 > $TMP_FILE2                  # Sort File by Return Code
-             rch2html "$TMP_FILE2" "List of scripts that 'Failed'"      # Print RCH File in HTML
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
+        then sort -t' ' -rk8,8 $SADM_TMP_FILE1 > $SADM_TMP_FILE2        # Sort File by Return Code
+             rch2html "$SADM_TMP_FILE2" "List of scripts that 'Failed'" # Print RCH File in HTML
     fi
 
     # Produce Report for Yesterday -----------------------------------------------------------------
@@ -368,51 +372,51 @@ mail_report()
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 1 day ago  : $DATE1" ; fi
     # Isolate Yesterday Event & Sort by Event Time afterward.
     xcount=0                                                            # Clear Line Counter  
-    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
+    rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
         WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
         if [ "$WDATE1" != "$DATE1" ] ; then continue ; fi               # If Not the Day Wanted
-        echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
+        echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
         done 
-    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
-        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
-             rch2html "$TMP_FILE2" "Scripts Status for Yesterday ($DATE1)" # Print RCH File in HTML
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
+        then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
+             rch2html "$SADM_TMP_FILE2" "List of scripts than executed Yesterday ($DATE1)" 
     fi 
 
     # Produce Report for 2 days ago ----------------------------------------------------------------
-    DATE2=`date --date="-2 days" +"%Y.%m.%d"`                           # Date 2 days ago YYY.MM.DD
-    sadm_writelog "Producing Email Summary Report for 2 days ago ($DATE2) ..."
-    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 2 day ago  : $DATE2" ;fi 
-    # Isolate 2 Days Ago Event & Sort by Event Time afterward.
-    xcount=0                                                            # Clear Line Counter  
-    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
-    for wline in "${array[@]}"                                          # Process till End of array
-        do                                                                          
-        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
-        if [ "$WDATE1" != "$DATE2" ] ; then continue ; fi               # If Not the Day Wanted
-        echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
-        done 
-    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
-        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
-             rch2html "$TMP_FILE2" "Scripts Status of 2 days ago ($DATE2)" # Print RCH File in HTML
-    fi
+    #DATE2=`date --date="-2 days" +"%Y.%m.%d"`                           # Date 2 days ago YYY.MM.DD
+    #sadm_writelog "Producing Email Summary Report for 2 days ago ($DATE2) ..."
+    #if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for 2 day ago  : $DATE2" ;fi 
+    ## Isolate 2 Days Ago Event & Sort by Event Time afterward.
+    #xcount=0                                                            # Clear Line Counter  
+    #rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
+    #for wline in "${array[@]}"                                          # Process till End of array
+    #    do                                                                          
+    #    WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
+    #    if [ "$WDATE1" != "$DATE2" ] ; then continue ; fi               # If Not the Day Wanted
+    #    echo "$wline" >> $SADM_TMP_FILE1                                     # Write Event to Tmp File1
+    #    done 
+    #if [ -s "$SADM_TMP_FILE1" ]                                              # If Input file Size > 0 
+    #    then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2                   # Sort File by Start time
+    #         rch2html "$SADM_TMP_FILE2" "Scripts Status of 2 days ago ($DATE2)" # Print RCH File in HTML
+    #fi
 
     # Produce Report of what is old than number of days to keep rch in sadmin.cfg ------------------
-    DATE3=`date --date="-$SADM_RCH_KEEPDAYS days" +"%Y%m%d"`          # Date XX Days Ago YYYY.MM.DD
+    DATE3=`date --date="-$SADM_RCH_KEEPDAYS days" +"%Y%m%d"`            # Date XX Days Ago YYYY.MM.DD
     sadm_writelog "Producing Email Summary Report for Status older than $SADM_RCH_KEEPDAYS days ($DATE3) ..."
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for $SADM_RCH_KEEPDAYS day ago: $DATE3" ;fi 
     xcount=0                                                            # Clear Line Counter  
-    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Make Sure it doesn't exist
+    rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
     for wline in "${array[@]}"                                          # Process till End of array
         do                                                                          
         WDATE1=` echo -e $wline | awk '{ print $2 }'| tr -d '\.'`       # Extract Event Date Started
-        if [ "$WDATE1" -gt "$DATE3" ] ; then continue ; fi                # If Not the Day Wanted
-        echo "$wline" >> $TMP_FILE1                                     # Write Event to Tmp File1
+        if [ "$WDATE1" -gt "$DATE3" ] ; then continue ; fi              # If Not the Day Wanted
+        echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
         done 
-    if [ -s "$TMP_FILE1" ]                                              # If Input file Size > 0 
-        then sort -t' ' -k3,3 $TMP_FILE1 > $TMP_FILE2                   # Sort File by Start time
-             rch2html "$TMP_FILE2" "Scripts Status older than $SADM_RCH_KEEPDAYS days ($DATE3)"  
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
+        then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
+             rch2html "$SADM_TMP_FILE2" "Scripts Status older than $SADM_RCH_KEEPDAYS days ($DATE3)"  
     fi                                                                  # Print RCH File in HTML
 
     echo -e "</body></html>"       >> $HTML_FILE                        # Terminate HTML Page
@@ -434,7 +438,7 @@ main_process()
 {
     load_array                                                          # Load Array lastLine of RCH
     if [ "$ERROR_ONLY" = "ON" ]                                         # If only Error Switch is ON
-        then if [ ! -s "$SADM_TMP_FILE3" ]                                # Check something in file
+        then if [ ! -s "$SADM_TMP_FILE3" ]                              # Check something in file
                  then echo "No error to report (All *.rch files have $FIELD_IN_RCH fields)"
              fi
              return 0                                                   # Return to caller
@@ -541,18 +545,15 @@ main_process()
         else main_process                                               # main Process all lines
     fi
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
-    rm -f $TMP_FILE1 >/dev/null 2>&1                                    # Remove Work Temp File 1
-    rm -f $TMP_FILE2 >/dev/null 2>&1                                    # Remove Work Temp File 3
 
     # Record in rch file that didn't have 9 fields (Wrong format) were written to SADM_TMP_FILE3
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
-        then #tput clear                                                 # Clear the Screen
-             echo "Invalid format - Error identified in some \"rch\" files" # Display Msg to user
+        then wsubject="Invalid formatted line(s) in RCH file(s)"        # Mail Message
+             echo "$wsubject"                                           # Display Msg to user
              nl $SADM_TMP_FILE3                                         # Display file content
-             wsubject="RCH files without $FIELD_IN_RCH fields."
-             wmess="$SADM_PN - `date`\nList of lines without $FIELD_IN_RCH fields.\n"
+             wmess="$SADM_PN - `date`\nSee attachment for the list of lines without $FIELD_IN_RCH fields.\n"
              alert_sysadmin 'M' 'W' "$SADM_HOSTNAME" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
-             #sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsubject"
+             #sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsubject" ""
     fi
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
