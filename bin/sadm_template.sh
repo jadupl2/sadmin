@@ -229,8 +229,7 @@ process_servers()
 main_process()
 {
     sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
-    #sadm_send_alert "E" "holmes" "sprod" "Filesystem /usr at 85% >= 85%" 
-    
+
     # PROCESSING CAN BE PUT HERE
     # If Error occured, set SADM_EXIT_CODE to 1 before returning to caller, else return 0 (default).
     # ........
