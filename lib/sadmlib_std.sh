@@ -51,8 +51,8 @@
 # 2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
 # 2018_09_22  v2.39 Change Alert Message Format
 # 2018_09_23  v2.40 Added alert_sysadmin function
-#@2018_09_25  v2.41 Enhance Email Standard Alert Message
-# 2018_09_26  v2.42 Send Alert Include Message Subject now
+# 2018_09_25  v2.41 Enhance Email Standard Alert Message
+#@2018_09_26  v2.42 Send Alert Include Message Subject now
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -2017,9 +2017,9 @@ sadm_stop() {
 sadm_send_alert() { 
 
     # Validate the Number of parameter received.
-    if [ $# -ne 5 ]                                                     # Invalid No. of Parameter
+    if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
-             sadm_writelog "Should be 5, we received $# : $*"           # Show what received
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
              return 1                                                   # Return Error to caller
     fi
 
