@@ -178,6 +178,20 @@ process_servers()
         fi
         if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "Return Code: $RC" ;fi # Show SSH Status
 
+        # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
+        if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
+            then sadm_writelog "[ WARNING ] Can't SSH to sporadic system $fqdn_server"
+                 sadm_writelog "Continuing with next system"            # Not Error if Sporadic Srv. 
+                 continue                                               # Continue with next system
+        fi
+
+        # If SSH Failed & Monitoring is Off, Show Warning and continue with next system.
+        if [ $RC -ne 0 ] &&  [ "$server_monitor" = "0" ]                # SSH don't work/Monitor OFF
+            then sadm_writelog "[ WARNING ] Can't SSH to $fqdn_server - Monitoring is OFF"
+                 sadm_writelog "Continuing with next system"            # Not Error if don't Monitor
+                 continue                                               # Continue with next system
+        fi
+        
         # If All SSH test failed, Issue Error Message and continue with next system
         if [ $RC -ne 0 ]                                                # If SSH to Server Failed
             then SMSG="[ ERROR ] Can't SSH to system '${fqdn_server}'"  # Problem with SSH
