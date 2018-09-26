@@ -51,7 +51,7 @@
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
     export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
