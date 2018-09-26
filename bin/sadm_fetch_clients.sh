@@ -31,7 +31,8 @@
 # 2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
 # 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
 # 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
-#@2018_09_18  v2.20 Alert Minors fixes
+# 2018_09_18  v2.20 Alert Minors fixes
+#@2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -68,7 +69,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.20'                              # Current Script Version
+    export SADM_VER='2.21'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -504,15 +505,22 @@ check_for_alert()
                 if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
                          egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
-                         emess="SADM WARNING: $emess"                   # Specify it is a Warning
-                    else etype="E"                                      # Set Event Type to Error
+                         esubject="SADM WARNING: $emess"                # Specify it is a Warning
+                fi
+                if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
+                    then etype="W"                                      # Set Event Type to Info
+                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
+                         esubject="SADM INFO: $emess"                   # Specify it is an Info
+                fi
+                if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
+                    then etype="E"                                      # Set Event Type to Error
                          egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
-                         emess="SADM ERROR: $emess"                     # Specify it is a Error
+                         esubject="SADM ERROR: $emess"                  # Specify it is a Error
                 fi
                 if [ $DEBUG_LEVEL -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess" ""   # Send Alert 
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" ""   # Send Alert 
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
@@ -538,11 +546,12 @@ check_for_alert()
                 etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
                 escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
                 egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
+                esubject="SADM SCRIPT: $escript reported an error on $ehost"
                 emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
                 if [ $DEBUG_LEVEL -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$emess" "" # Send Alert 
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" "" # Send Alert 
                 done 
         else sadm_writelog  "No error reported by any scripts files (*.rch)" 
     fi
