@@ -36,7 +36,7 @@
 # 2018_05_18    V1.1 Working Initial Version
 # 2018_08_19    V1.2 Change Filesystem Increase before and after Email information.
 # 2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
-#@2018_09_25    V1.4 Alerting can now send attachment
+#@2018_09_25    V1.4 Alerting can now send attachment with Subject
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -271,8 +271,9 @@ main_process()
        then WMESS="Increase Refused, need ${SIZE2ADD}MB & only ${VGFREE}MB left in VG $VGNAME"
             sadm_writelog "$WMESS"                                      # Show Error to User
             echo "$WMESS" >> $MAIL_BODY                                 # Msg to Email Body File
-            wmess="SADM WARNING: Filesystem $FSNAME Increase rejected on - Space Low $VGFREE MB"    
-            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess" "" 
+            wmess="SADM WARNING: Filesystem $FSNAME Increase rejected on - Space Low $VGFREE MB" 
+            wsub="SADM SCRIPT: $SADM_PN reported an error on $SADM_HOSTNAME"   
+            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsub" "$wmess" "" 
             send_email "SADM WARNING: $SADM_HOSTNAME $wmess"
             return 1                                                    # Return Error to Caller
     fi
@@ -292,7 +293,8 @@ main_process()
             sadm_writelog "$WMESS"                                      # Show User Error 
             echo "$WMESS" >> $MAIL_BODY                                 # Add Mess. to Mail Body
             wmess="Filesystem $FSNAME was rejected"                     # Send Email to Sysadmin
-            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess" "" 
+            wsub="SADM SCRIPT: $SADM_PN reported an error on $SADM_HOSTNAME"   
+            sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsub" "$wmess" "" 
             send_email "SADM WARNING: $SADM_HOSTNAME $wmess"
             return 1                                                    # Return Error to Caller
        else sadm_writelog "Filesystem $FSNAME will increase by $SIZE2ADD MB"
@@ -323,7 +325,8 @@ main_process()
     #echo -e "`date`\nFilesystem $FSNAME after increase.\n\n`df -hP $FSNAME` \n" >> $MAIL_BODY
     sadm_writelog ""                                                    # Blank Line
     wmess="Filesystem $FSNAME on $SADM_HOSTNAME was increase"
-    sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wmess" ""
+    wsub="SADM SCRIPT: $SADM_PN reported an error on $SADM_HOSTNAME"   
+    sadm_send_alert "W" "$SADM_HOSTNAME" "default" $wsub" "$wmess" ""
     send_email "SADM WARNING: $wmess"   
     return $RC                                                          # Return Return Code Caller
 }
