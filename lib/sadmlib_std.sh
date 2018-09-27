@@ -52,7 +52,8 @@
 # 2018_09_22  v2.39 Change Alert Message Format
 # 2018_09_23  v2.40 Added alert_sysadmin function
 # 2018_09_25  v2.41 Enhance Email Standard Alert Message
-#@2018_09_26  v2.42 Send Alert Include Message Subject now
+# 2018_09_26  v2.42 Send Alert Include Message Subject now
+#@2018_09_27  v2.43 Now Script log is sent to Slack Alert
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -70,7 +71,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.42"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.43"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -331,20 +332,26 @@ sadm_install_package()
     # Install the Package under RedHat/CentOS/Fedora
     if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] || 
        [ "$(sadm_get_osname)" = "FEDORA" ]
-        then sadm_writelog "Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
+        then lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
+             lmess="${lmess} Version $(sadm_get_osmajorversion)" 
+             sadm_writelog "$lmess"
              case "$(sadm_get_osmajorversion)" in
-                [3|4]) sadm_writelog "Current version of O/S is $(sadm_get_osmajorversion)"
-                       sadm_writelog "Running \"up2date --nox -i ${PACKAGE_RPM}\""
+                [34])  sadm_writelog "Running \"up2date --nox -i ${PACKAGE_RPM}\""
                        up2date --nox -i ${PACKAGE_RPM} >>$SADM_LOG 2>&1
                        rc=$?
                        sadm_writelog "Return Code after installing ${PACKAGE_RPM} is $rc"
                        break
                        ;;
-              [5|6|7]) sadm_writelog "Current version of O/S is $(sadm_get_osmajorversion)"
-                       sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
-                       yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1      # List Available update
+              [567])   sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
+                       yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
                        rc=$?                                            # Save Exit Code
                        sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
+                       break
+                       ;;
+              *)       lmess="The version $(sadm_get_osmajorversion) of"
+                       lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
+                       sadm_writelog "$lmess"
+                       rc=1                                             # Save Exit Code
                        break
                        ;;
              esac
@@ -1632,9 +1639,7 @@ sadm_start() {
 
     # Write Starting Info in the Log
     if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
-        then sadm_writelog " "                                          # Blank Line
-             sadm_writelog " "                                          # Blank Line
-             sadm_writelog " "                                          # Blank Line
+        then echo -e "\n\n" >>$SADM_LOG                                 # Blank line at beginning
              sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
@@ -1957,27 +1962,31 @@ sadm_stop() {
     chgrp ${SADM_GROUP} ${SADM_LOG}                                     # Change Log file Group 
 
     # Alert the Unix Admin. based on his selected choice
-    #if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
-
-    #case $SADM_ALERT_TYPE in
-    #  1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
-    #         then wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"   # Format Alert Mess
-    #              sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
-    #      fi
-    #      ;;
-    #  2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
-    #         then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}" # Format Subject
-    #              sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
-    #      fi 
-    #      ;;
-    #  3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
-    #        then wsub="SADM : SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"  # Format Subject
-    #        else wsub="SADM : ERROR of $SADM_PN on ${SADM_HOSTNAME}"    # Format Subject
-    #      fi
-    #      sadm_send_alert "S" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" # Send Alert 
-    #      ;;
-    #esac
-    #if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
+    wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
+    case $SADM_ALERT_TYPE in
+      1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
+             then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
+                  sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+           fi
+          ;;
+      2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
+             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
+                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
+          fi 
+          ;;
+      3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
+            then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
+                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
+            else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
+                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
+          fi
+          ;;
+      4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
+          sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
+          ;;
+    esac
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
 
         
     # Normally we Delete the PID File when exiting the script.
@@ -2084,7 +2093,7 @@ sadm_send_alert() {
         then sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
              sadm_writelog "$hdate - $hsearch"
              return 0
-        else sadm_writelog "Sending Alert to $alert_group : $hdate - $hsearch"
+#        else sadm_writelog "Sending Alert to $alert_group : $hdate - $hsearch"
     fi                                
 
     # Determine if a [M]ail or a [S]lack Message need to be issued
