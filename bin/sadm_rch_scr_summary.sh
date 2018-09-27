@@ -24,7 +24,8 @@
 # 2018_08_27 v1.4 New Email format when using -m command line switch, View script log from email.
 # 2018_09_18 v1.5 Email when using -m command line switch include ow the Alert Group
 # 2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
-#@2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
+# 2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
+#@2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -50,7 +51,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Current Script Version
+    export SADM_VER='1.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -290,7 +291,7 @@ rch2html()
         if [ "$WRCODE" = "2" ] ; then WRDESC="➜ Running" ; fi           # Code 2 = Running
         
         # Insert Line in HTML Table
-        echo -e "\n<tr>"  >> $HTML_FILE
+        echo -e "<tr>"  >> $HTML_FILE
 
         # Set Background Color - Color at https://www.w3schools.com/tags/ref_colornames.asp
         if (( $xcount%2 == 0 ))
@@ -301,13 +302,13 @@ rch2html()
         if [ "$WRCODE" = "1" ] ; then BCOL="Red"     ; FCOL="#000000" ; fi  # 1 = Error = Red
         if [ "$WRCODE" = "2" ] ; then BCOL="Yellow"  ; FCOL="#000000" ; fi  # 2 = Running = Yellow
 
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$xcount</font></td>"  >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>"  >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WRDESC</font></td>"  >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$xcount</font></td>"  >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WDATE1</font></td>"  >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WRDESC</font></td>"  >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WSERVER</font></td>" >> $HTML_FILE
 
         # Insert Name of the Script with link to log if log is accessible
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>" >> $HTML_FILE
         LOGFILE="${WSERVER}_${WSCRIPT}.log"                             # Assemble log Script Name
         LOGNAME="${SADM_WWW_DAT_DIR}/${WSERVER}/log/${LOGFILE}"         # Add Dir. Path to Name
         LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" # Url to View Log
@@ -318,11 +319,11 @@ rch2html()
             else echo -e "$WSCRIPT</font></td>"       >> $HTML_FILE     # No Log = No LInk
         fi
         
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME2</font></td>"  >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_FILE
-        echo -e "\n<td align=center bgcolor=$BCOL><font color=$FCOL>$WALERT</font></td>" >> $HTML_FILE
-        echo -e "\n</tr>" >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME1</font></td>"  >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WTIME2</font></td>"  >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WELAPSE</font></td>" >> $HTML_FILE
+        echo -e "<td align=center bgcolor=$BCOL><font color=$FCOL>$WALERT</font></td>" >> $HTML_FILE
+        echo -e "</tr>\n" >> $HTML_FILE
 
         done < $RCH_FILE                                               # Read From Created File
     echo -e "\n</table></center><br><br>" >> $HTML_FILE                 # End of Table
@@ -338,18 +339,18 @@ rch2html()
 mail_report()
 {
     # Create Summary Report HTML Header
-    echo -e "<!DOCTYPE html><html>\n"                > $HTML_FILE
-    echo -e "<head>\n"                              >> $HTML_FILE
-    echo -e "<style>\n"                             >> $HTML_FILE
-    echo -e "th { color: white; background-color: #5e39ad;     padding: 5px; }\n"  >> $HTML_FILE
-    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }\n"  >> $HTML_FILE
-    echo -e "tr:nth-child(even) { background-color: #000000; }\n" >> $HTML_FILE
-    echo -e "tr:nth-child(odd)  { background-color: #f2f2f2; }\n" >> $HTML_FILE
-    echo -e "</style>\n"                            >> $HTML_FILE
-    echo -e "<meta charset='utf-8' />\n"            >> $HTML_FILE
-    echo -e "<title>\n"                             >> $HTML_FILE
-    echo -e "</title>\n</head>\n<body>\n\n"         >> $HTML_FILE
-    echo -e "<br><center><h1>Scripts Daily Report for `date`</h1></center><br>\n" >> $HTML_FILE
+    echo -e "<!DOCTYPE html><html>"                > $HTML_FILE
+    echo -e "<head>"                              >> $HTML_FILE
+    echo -e "<style>"                             >> $HTML_FILE
+    echo -e "th { color: white; background-color: #5e39ad;     padding: 5px; }"  >> $HTML_FILE
+    echo -e "td { color: white; border-bottom: 1px solid #ddd; padding: 5px; }"  >> $HTML_FILE
+    echo -e "tr:nth-child(even) { background-color: #000000; }" >> $HTML_FILE
+    echo -e "tr:nth-child(odd)  { background-color: #f2f2f2; }" >> $HTML_FILE
+    echo -e "</style>"                            >> $HTML_FILE
+    echo -e "<meta charset='utf-8' />"            >> $HTML_FILE
+    echo -e "<title>SADMIN Daily Summary Report</title>" >> $HTML_FILE
+    echo -e "</head>\n<body>\n"         >> $HTML_FILE
+    echo -e "<br><center><h1>Scripts Daily Report for `date`</h1></center>\n" >> $HTML_FILE
 
     # Produce Report of script running or failed ---------------------------------------------------
     sadm_writelog "Producing Summary Report of 'Failed' scripts ..."
@@ -365,6 +366,24 @@ mail_report()
         then sort -t' ' -rk8,8 $SADM_TMP_FILE1 > $SADM_TMP_FILE2        # Sort File by Return Code
              rch2html "$SADM_TMP_FILE2" "List of scripts that 'Failed'" # Print RCH File in HTML
     fi
+
+    # Produce Report for Today ---------------------------------------------------------------------
+    DATE1=`date --date="today" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
+    sadm_writelog "Producing Email Summary Report for Today ($DATE1) ..."
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Date for Today : $DATE1" ; fi
+    # Isolate Today Event & Sort by Event Time afterward.
+    xcount=0                                                            # Clear Line Counter  
+    rm -f $SADM_TMP_FILE1 >/dev/null 2>&1                               # Make Sure it doesn't exist
+    for wline in "${array[@]}"                                          # Process till End of array
+        do                                                                          
+        WDATE1=` echo -e $wline | awk '{ print $2 }'`                   # Extract Event Date Started
+        if [ "$WDATE1" != "$DATE1" ] ; then continue ; fi               # If Not the Day Wanted
+        echo "$wline" >> $SADM_TMP_FILE1                                # Write Event to Tmp File1
+        done 
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
+        then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
+             rch2html "$SADM_TMP_FILE2" "List of scripts executed Today ($DATE1)" 
+    fi 
 
     # Produce Report for Yesterday -----------------------------------------------------------------
     DATE1=`date --date="yesterday" +"%Y.%m.%d"`                         # Date 1 day ago YYY.MM.DD
