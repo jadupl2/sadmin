@@ -201,12 +201,16 @@ process_servers()
         fi
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If not on SADMIN Server
             then sadm_writelog "[ OK ] SSH to $fqdn_server work"        # Good SSH Work on Client
-                 #sadm_writelog "$SADM_SSH_CMD $fqdn_server ${server_rootdir}/bin/sadm_client_housekeeping.sh"
-                 #$SADM_SSH_CMD $fqdn_server "${server_rootdir}/bin/sadm_client_housekeeping.sh"
 
-                 JCMD="scp /storix/custom/*.sh ${fqdn_server}:/storix/custom"
-                 #JCMD="scp /home/jacques/Downloads/sadmin.cfg ${fqdn_server}:${server_rootdir}/cfg"
+            #=======================================================================================
+            # RUN THE FOLLOWING COMMAND ON ALL ACTIVES SERVERS
                  #JCMD="$SADM_SSH_CMD $fqdn_server 'rm -f ${server_rootdir}/dat/rch/*.rch'"
+
+                 #sadm_writelog "scp /storix/custom/*.sh ${fqdn_server}:/storix/custom"
+                 JCMD="scp /storix/custom/*.sh ${fqdn_server}:/storix/custom"
+
+
+            #=======================================================================================
                  sadm_writelog "COMMAND: $JCMD"
                  $JCMD
                  RC=$?
