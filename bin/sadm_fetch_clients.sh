@@ -505,17 +505,17 @@ check_for_alert()
                 if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
                          egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
-                         esubject="SADM WARNING: $emess"                # Specify it is a Warning
+                         esubject="$emess"                              # Specify it is a Warning
                 fi
                 if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
-                    then etype="W"                                      # Set Event Type to Info
+                    then etype="I"                                      # Set Event Type to Info
                          egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
-                         esubject="SADM INFO: $emess"                   # Specify it is an Info
+                         esubject="$emess"                              # Specify it is an Info
                 fi
                 if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
                     then etype="E"                                      # Set Event Type to Error
                          egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
-                         esubject="SADM ERROR: $emess"                  # Specify it is a Error
+                         esubject="$emess"                              # Specify it is a Error
                 fi
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
