@@ -26,6 +26,7 @@
 # 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
 # 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
 #@2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
+# 2018_09_28    v1.17 Code Optimize and Cleanup
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.16'                              # Current Script Version
+    export SADM_VER='1.17'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -284,46 +285,46 @@ file_housekeeping()
     sadm_writelog "$SADM_80_DASH"
     sadm_writelog "CLIENT FILES HOUSEKEEPING STARTING"
     sadm_writelog " "
-    sadm_writelog "${SADM_TEN_DASH}"
 
 
     # Remove files that should only be there on the SADMIN Server not the client.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
-       then sadm_writelog "Remove useless files on client"
+       then sadm_writelog "${SADM_TEN_DASH}"
+            sadm_writelog "Remove useless files on client (if any) ..."
+            #
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.dbpass"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi            
+            #
             afile="$SADM_CFG_DIR/.alert_history.seq"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/alert_history.seq"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.alert_history.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/alert_history.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.alert_slack.txt"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/alert_slack.txt"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.egroup.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.mailgroup.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.slackchannel.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            afile="$SADM_CFG_DIR/.slackgroup.cfg"
-            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.version"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.versum"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            sadm_writelog "${SADM_TEN_DASH}"
     fi
 
     # Make sure crontab for SADMIN client have proper permission and owner
     afile="/etc/cron.d/sadm_client"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for SADMIN client have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -334,7 +335,9 @@ file_housekeeping()
     # Make sure crontab for SADMIN server have proper permission and owner
     afile="/etc/cron.d/sadm_server"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for SADMIN server have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -345,7 +348,9 @@ file_housekeeping()
     # Make sure crontab for O/S Update have proper permission and owner
     afile="/etc/cron.d/sadm_osupdate"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for O/S Update have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -564,9 +569,8 @@ file_housekeeping()
     # Remove files older than 7 days in SADMIN TEMP Directory
     if [ -d "$SADM_TMP_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_TMP_DIR -type f -mtime +7 -exec rm -f {} \;"
-             find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;" 
+             find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -575,9 +579,9 @@ file_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Delete pid files once a day - To prevent cause script not to run"
-             find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "Delete pid files once a day - This prevent script not to run"
              sadm_writelog "find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \;" 
+             find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
     fi
 
