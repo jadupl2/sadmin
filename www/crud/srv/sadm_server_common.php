@@ -385,7 +385,7 @@ function display_srv_form ($con,$wrow,$mode) {
                     while (($line = fgets($fh)) !== false) {            # If Still Line to read
                         if (strpos(trim($line),'#') === 0)              # If 1st Non-WhiteSpace is #
                            continue;                                    # Go Read the next line
-                        list($gname,$gtype,$gvalue) = explode (',',$line); # Split Alerm Group Line 
+                        list($gname,$gtype,$gvalue) = explode (' ',$line); # Split Alert Group Line 
                         if (trim($gname) == "default") {                # It is the default
                             echo "\n<option selected>" ;                # Make it the Selected Item
                         }else{                                          # If not The Default
