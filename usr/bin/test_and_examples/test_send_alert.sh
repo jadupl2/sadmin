@@ -129,16 +129,29 @@ test_slack_alert()
     #sadm_dev,     https://hooks.slack.com/services/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uKc
     # ----------------------------------------------------------------------
     #
-    export NBMESS=1
+    export NBMESS=2
     export NBCOUNT=0
 
 
-    # Send an alert from a script - Slack Message to alert group 'sinfo'
+    # (1) Send an alert from a script - Slack Message to alert group 'sinfo'
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} Slack Alert from script No attachment"
-    wsub="SADM SCRIPT: $SADM_PN reported an error on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} Script Slack Alert to sinfo with No attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
     sadm_send_alert "S" "$SADM_HOSTNAME" "sinfo" "$wsub" "$wmess" ""
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
+
+    # (2) Send an alert from a script - Slack Message to alert group 'sinfo'
+    NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
+    wmess="Test ${NBCOUNT} of ${NBMESS} Script Slack Alert to sinfo with attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_send_alert "S" "$SADM_HOSTNAME" "sinfo" "$wsub" "$wmess" "$SADM_CFG_FILE"
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
 
 }
@@ -179,54 +192,82 @@ test_email_alert()
     export NBCOUNT=0
 
 
-    # Send an alert from a script - Email to alert group 'sysadmin' - No Attachment
+    # (1) Send an alert from a script - Email to alert group 'sysadmin' - No Attachment
     NBCOUNT=$(($NBCOUNT+1))                                  # Incr. Message counter
-    alert_type="S"                                           # [S]cript [E]rror [W]arning [I]nfo
-    alert_server="$SADM_HOSTNAME"                            # Server where alert Come 
-    alert_group="sysadmin"                                   # SADM AlertGroup to Advise
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Email Alert from script - No Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} - Script Email Alert to sysadmin group with no attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert S $SADM_HOSTNAME sysadmin $wsub $wmess"
     sadm_send_alert "S" "$SADM_HOSTNAME" "sysadmin"  "$wsub" "$wmess" ""
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
 
-    # Send an alert from a script - Email to alert group 'sysadmin' - With Attachment
+    # (2) Send an alert from a script - Email to alert group 'sysadmin' - With Attachment
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Email Alert from script - with Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} - Script Email Alert to sysadmin group with Attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert S $SADM_HOSTNAME sysadmin $wsub $wmess $SADM_CFG_FILE"
     sadm_send_alert "S" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" "$SADM_CFG_FILE"
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
 
-    # Simulate an Email Error Alert that come from System Monitor - With Attachment
+    # (3) Simulate an Email Error Alert that come from System Monitor - With Attachment
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Error Email Alert from SysMon with Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} - SysMon Error Email Alert to sysadmin group with Attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert E $SADM_HOSTNAME sysadmin $wsub $wmess $SADM_CFG_FILE"
     sadm_send_alert "E" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" "$SADM_CFG_FILE"
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
-    # Simulate an Email Error Alert that come from System Monitor - No Attachement
+
+    # (4) Simulate an Email Error Alert that come from System Monitor - No Attachement
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Error Email Alert from SysMon No Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
-    sadm_send_alert "E" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" "$SADM_CFG_FILE"
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    wmess="Test ${NBCOUNT} of ${NBMESS} - SysMon Error Email Alert to sysadmin group with No Attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert E $SADM_HOSTNAME sysadmin $wsub $wmess"
+    sadm_send_alert "E" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" ""
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
 
-    # Simulate an Email Warning Alert that come from System Monitor
+    # (5) Simulate an Email Warning Alert that come from System Monitor
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Warning Email Alert from SysMon - No Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} - Sysmon Warning Email Alert to sysadmin group with no attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert W $SADM_HOSTNAME sysadmin $wsub $wmess"
     sadm_send_alert "W" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" ""
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
 
 
-    # Simulate an Email Info Alert that come from System Monitor
+    # (6) Simulate an Email Info Alert that come from System Monitor
     NBCOUNT=$(($NBCOUNT+1))                                             # Incr. Message counter
-    wmess="Test ${NBCOUNT} of ${NBMESS} - Info Email Alert from SysMon - With Attachment"
-    wsub="SADM SCRIPT: Error reported by $SADM_PN on $SADM_HOSTNAME"   
+    wmess="Test ${NBCOUNT} of ${NBMESS} - SysMon Info Email Alert to sysadmin group with attachment"
+    wsub="Test ${NBCOUNT} of ${NBMESS}"   
+    sadm_writelog " "
+    sadm_writelog "sadm_send_alert I $SADM_HOSTNAME sysadmin $wsub $wmess $SADM_CFG_FILE"
     sadm_send_alert "I" "$SADM_HOSTNAME" "sysadmin" "$wsub" "$wmess" "$SADM_CFG_FILE"
-    if [ $? -ne 0 ] ; then sadm_writelog "Error Sending Alert" ; else sadm_writelog "Alert sent" ;fi
+    RC=$?
+    if [ $RC -eq 0 ] ; then sadm_writelog "Alert Sent" ;fi 
+    if [ $RC -eq 1 ] ; then sadm_writelog "Error Sending Alert" ;fi 
+    if [ $RC -eq 2 ] ; then sadm_writelog "Alert was already sent today" ;fi 
  
 }
 
@@ -241,7 +282,7 @@ main_process()
     #sadm_send_alert "E" "holmes" "sprod" "Filesystem /usr at 85% >= 85%" 
     
     #test_sysadmin_alert
-    test_email_alert
+    #test_email_alert
     test_slack_alert
 
     return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
