@@ -1967,7 +1967,7 @@ sadm_stop() {
     case $SADM_ALERT_TYPE in
       1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
              then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
-                  sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+                  sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
            fi
           ;;
       2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
@@ -1979,7 +1979,7 @@ sadm_stop() {
             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
             else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
-                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
+                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG" 
           fi
           ;;
       4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
