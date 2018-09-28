@@ -53,7 +53,7 @@
 # 2018_09_23  v2.40 Added alert_sysadmin function
 # 2018_09_25  v2.41 Enhance Email Standard Alert Message
 # 2018_09_26  v2.42 Send Alert Include Message Subject now
-#@2018_09_27  v2.43 Now Script log is sent to Slack Alert
+#@2018_09_27  v2.43 Now Script log can be sent to Slack Alert
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -1625,7 +1625,7 @@ sadm_start() {
     # ($SADMIN/log) If log Directory doesn't exist, create it.
     [ ! -d "$SADM_LOG_DIR" ] && mkdir -p $SADM_LOG_DIR
     if [ $(id -u) -eq 0 ] 
-        then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR           
+        then chmod 0775 $SADM_LOG_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_LOG_DIR 
     fi
 
     # ($SADMIN/log/`hostname -s`_SCRIPT.log) If LOG File doesn't exist, Create it & Make it writable 
@@ -1639,7 +1639,7 @@ sadm_start() {
 
     # Write Starting Info in the Log
     if [ -z "$SADM_LOG_HEADER" ] || [ "$SADM_LOG_HEADER" = "Y" ]        # Want to Produce Log Header
-        then echo -e "\n\n" >>$SADM_LOG                                 # Blank line at beginning
+        then echo " " >>$SADM_LOG                                       # Blank line at beginning
              sadm_writelog "${SADM_80_DASH}"                            # Write 80 Dashes Line
              sadm_writelog "Starting ${SADM_PN} V${SADM_VER} - SADM Lib. V${SADM_LIB_VER}"
              sadm_writelog "Server Name: $(sadm_get_fqdn) - Type: $(sadm_get_ostype)" 
@@ -2009,11 +2009,14 @@ sadm_stop() {
 #
 # 1st Parameter    : [S]     If it is a Script Alert (Alert Message will include Script Info)
 #                            For type [S] Default Group come from sadmin.cfg or user can modify it 
-#                            by altering SADM_ALERT_GROUP variable.
+#                            by altering SADM_ALERT_GROUP variable in his script.
+#                            ** Alert issue from a script will not be assign a reference no.
 #                    [E/W/I] If it's an Error, a Warning or for Information detected by System Monitor.
 #                            For this type [M] Warning and Error Alert Group are taken from the host
 #                            System Monitor file ($SADMIN/cfg/hostname.smon).
 #                            In System monitor file Warning are at column 'J' and Error at col. 'K'.
+#                            ** Alert issue from SADMIN SysMon will be assign a reference no. and will
+#                               will be include in the alert message.
 #
 # 2nd Parameter    : Server Where Alert come from
 # 3th Parameter    : Alert Group Name to send Message
@@ -2068,7 +2071,8 @@ sadm_send_alert() {
     fi 
 
     # Does the Alert Group exist in the Group in alert File ?
-    grep -i "^$alert_group" $SADM_ALERT_FILE >/dev/null 2>&1            # Line beginning with group
+    #awk -F, '{ print $1 }' alert_group.cfg | grep -i "^sdev$"
+    grep -i "^$alert_group " $SADM_ALERT_FILE >/dev/null 2>&1           # Line beginning with group
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
         then sadm_writelog " "                                          # White line Before 
              sadm_writelog "----------"
@@ -2090,14 +2094,14 @@ sadm_send_alert() {
     # Search For Today Message with the string "Server, Alert Group and Message"
     grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # GrepMessage with same Date
     if [ $? -eq 0 ]                                                     # String Found=Already Done
-        then sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
-             sadm_writelog "$hdate - $hsearch"
-             return 0
+        then #sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
+             #sadm_writelog "$hdate - $hsearch"
+             return 2                                                   # Return 2 when alert exist
 #        else sadm_writelog "Sending Alert to $alert_group : $hdate - $hsearch"
     fi                                
 
     # Determine if a [M]ail or a [S]lack Message need to be issued
-    alert_group_type=`grep -i "^$alert_group" $SADM_ALERT_FILE |awk -F, '{ print $2 }'` # [S/M]Group 
+    alert_group_type=`grep -i "^$alert_group " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M]Group 
     alert_group_type=`echo $alert_group_type |awk '{$1=$1;print}' |tr  "[:lower:]" "[:upper:]"`
     if [ "$alert_group_type" != "M" ] && [ "$alert_group_type" != "S" ]
        then wmess="Invalid Alert Group Type '$alert_group_type' for '$alert_group' in $SADM_ALERT_FILE"
@@ -2106,7 +2110,7 @@ sadm_send_alert() {
     fi
 
     # Get the Member of the Alert Group (Could be Email(s) or a SlackChannel define in Channel File)
-    alert_group_member=`grep -i "^$alert_group"  $SADM_ALERT_FILE | awk -F, '{ print $3 }'` # Member
+    alert_group_member=`grep -i "^$alert_group " $SADM_ALERT_FILE | awk '{ print $3 }'` # Member
     alert_group_member=`echo $alert_group_member | awk '{$1=$1;print}'` # Del Leading/Trailing Space
     if [ "$LIB_DEBUG" -gt 4 ]                                           # If Debugging Library
        then debmes="sadm_send_alert: alert_group=$alert_group "         # Show Alert Group
@@ -2116,24 +2120,30 @@ sadm_send_alert() {
             sadm_writelog "$debmes"
     fi
 
+    # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
+        then refno="000000"                                             # Ref# when not on SADM Srv
+        else href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
+             href=$(($href+1))                                          # Increment Alert Ref. No.
+             printf "%d" $href > $SADM_ALERT_SEQ                        # Update Alert Ref. No. File
+             refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
+    fi
 
     # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail 
         then adate=`date`                                               # Save Actual Date and Time
-             wm=`echo "${adate}\n${alert_message}\nOn server ${alert_server}."` # Def. Mail Message
-             ws="${alert_subject}"                                      # Default Mail Subject
-             if [ "$alert_type" != "S" ]                                # Alert Coming from SysMon
-                then if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_message}"   ; fi 
-                     if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_message}" ; fi 
-                     if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_message}"    ; fi 
-             fi
+             if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi 
+             if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_subject}" ; fi 
+             if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_subject}"    ; fi 
+             if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT: ${alert_subject}"  ; fi 
+             wm=`echo "${adate}\nReference No ${refno}\n${alert_message}\nOn server ${alert_server}."`
              if [ "$alert_attach" != "" ]                               # If Attachment Specified
                 then echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member" -a $alert_attach
                 else echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member"
              fi 
              RC=$?                                                      # Save Error Number    
              if [ $RC -eq 0 ]                                           # If Error Sending Email
-                then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject"
+                then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
                 else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
              fi
              return $RC                                                 # Return to Caller
@@ -2141,43 +2151,58 @@ sadm_send_alert() {
 
     # If Alert Group Type is [S]lack then send ALERT TO SLACK with the WebHook.---------------------
     if [ "$alert_group_type" = "S" ]                                    # If Alert Type is Slack
-        then grep -i "^$alert_group_member" $SADM_SLACK_FILE >/dev/null 2>&1 # Grep Channel Name
+        then 
+             # Search Slack Channel file for selected channel
+             grep -i "^$alert_group_member " $SADM_SLACK_FILE >/dev/null 2>&1 # Grep Channel Name
              if [ $? -ne 0 ]                                            # Channel not in Chn File
-                then sadm_writelog "Slack Channel '$alert_group_member' missing in $SADM_SLACK_FILE"
+                then sadm_writelog "ERROR: Slack Channel '$alert_group_member' missing in $SADM_SLACK_FILE"
                      return 1                                           # Return Error to caller
              fi
-             slack_hook_url=`grep -i "^$alert_group_member" $SADM_SLACK_FILE |awk '{ print $2 }'`
+
+             # Get the WebHook for the selected Channel
+             slack_hook_url=`grep -i "^$alert_group_member " $SADM_SLACK_FILE |awk '{ print $2 }'`
              if [ "$LIB_DEBUG" -gt 4 ] 
                 then sadm_writelog "Slack Channel=$alert_group_member Slack Webhook=$slack_hook_url"
              fi
-             SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
+             
+             # If Alert is coming from a script
+             mdate="`date`"                                              # Ready to Insert Date
+             if [ "$alert_type" = "E" ] ; then ws="*SADM ERROR: ${alert_subject}*"   ; fi 
+             if [ "$alert_type" = "W" ] ; then ws="*SADM WARNING: ${alert_subject}*" ; fi 
+             if [ "$alert_type" = "I" ] ; then ws="*SADM INFO: ${alert_subject}*"    ; fi 
+             if [ "$alert_type" = "S" ] ; then ws="*SADM SCRIPT: ${alert_subject}*"  ; fi 
              if [ "$alert_type" = "S" ]                                 # If Alert for a [S]cript
-                then text="`date`"                                      # Insert Date in Message
-                     text="${text}\n$alert_subject"                     # Insert Alert Subject
+                then text="${ws}\n{$mdate}"                             # Insert Alert Subject
+                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
                      text="${text}\n$alert_message"                     # Insert Alert Message 
+                else text="${ws}\n{$mdate}"                             # Insert Alert Subject
+                     text="${text}\nReference No ${refno}"              # Insert Alert Reference No.
                      text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     slack_text="$text"                                 # Set Alert Text
-                else text="`date`"                                      # Insert Date in Message
-                     text="${text}\n$alert_subject"                     # Insert Alert Subject
                      text="${text}\n${alert_message}"                   # Insert Alert Message 
-                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     slack_text="$text"                                 # Set Alert Text
              fi
+             
+             # Test for attachment 
+             if [ "$alert_attach" != "" ]                               # If Attachment Specified
+                then text_tail=`tail -50 ${alert_attach}`
+                     text="${text}\n\n*-----Attachment-----*\n${text_tail}"
+             fi 
+
+             slack_text="$text"                                         # Set Alert Text
              escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
              slack_text="\"text\": \"${escaped_msg}\""                  # Set Final Text Message
-             #slack_username="batservers"
              slack_icon="warning"
-             markdown="\"mrkdwn\": false,"
+             markdown="\"mrkdwn\": true,"
              #json="{\"channel\": \"${alert_group_member}\", \"username\":\"${slack_username}\", \"icon_emoji\":\":${slack_icon}:\", ${markdown} ${slack_text}}"
              json="{\"channel\": \"${alert_group_member}\", \"icon_emoji\": \":${slack_icon}:\", ${markdown} ${slack_text}}"
              if [ "$LIB_DEBUG" -gt 4 ] 
                 then sadm_writelog "$SADM_CURL -s -d \"payload=$json\" $slack_hook_url"
              fi
+             #SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
              SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
              if [ $SRC == "ok" ] 
                 then RC=0
-                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_message"
+                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_message" "$refno"
                 else RC=1
                      sadm_writelog "Error message : $SRC" 
              fi
@@ -2191,26 +2216,28 @@ sadm_send_alert() {
 # --------------------------------------------------------------------------------------------------
 # Write Alert History File 
 # Parameters:
-#   1st = Alert Type        = [S]cript [E]rror [W]arning
+#   1st = Alert Type        = [S]cript [E]rror [W]arning [I]nfo
 #   2nd = Alert Group Name  = Alert Group Name to Advise (Must exist in $SADMIN/cfg/alert_group.cfg)
 #   3rd = Server Name       = Where the event happen
 #   4th = Alert Description = Alert Message
+#   5th = Alert Reference#  = Reference No.
 # write_alert_history "s" "alertGroup" "server" "mess"
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() { 
-    htype=$1                                                            # [S]cript [E]rror [W]arning
+    htype=$1                                                  # [S]cript [E]rror [W]arning [I]nfo
     htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     hgroup=`echo "$2"   | awk '{$1=$1;print}'`                          # SADM AlertGroup to Advise
     hserver=`echo "$3"  | awk '{$1=$1;print}'`                          # Save Server Name
     hmess="$4"                                                          # Save Alert Message
+    href="$5"                                                           # Save Alert Reference No.
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
     htime=`date +"%H:%M:%S"`                                            # Current Time
     hsearch=`printf "%s,%s,%s" "$hserver" "$hgroup" "$hmess"`           # Format Futur Search String
-    href=`cat $SADM_ALERT_SEQ`                                          # Get Last Alert Ref. No.
-    href=$(($href+1))                                                   # Increment Alert Ref. No.
-    printf "%d" $href > $SADM_ALERT_SEQ                                 # Update Alert Ref. No. File
-    hline=`printf "%06d,%1s,%-10s,%8s,%s\n" $href "$htype" "$hdate" "$htime" "$hsearch"`
+    #href=`cat $SADM_ALERT_SEQ`                                          # Get Last Alert Ref. No.
+    #href=$(($href+1))                                                   # Increment Alert Ref. No.
+    #printf "%d" $href > $SADM_ALERT_SEQ                                 # Update Alert Ref. No. File
+    hline=`printf "%s,%1s,%-10s,%8s,%s\n" $href "$htype" "$hdate" "$htime" "$hsearch"`
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
