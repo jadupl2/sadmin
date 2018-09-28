@@ -1,8 +1,13 @@
-# V2.4 - 31 May 2018
-# JDuplessis - Git Ignore File
+#---------------------------------------------------------------------------------------------------
+#   Author      :   Jacques Duplessis
+#   Project Name:   SADMIN 
+#   Date        :   2015/08/09
 #
-# It's better to unpack these files and commit the raw source
-# git has its own built in compression methods
+# Change Log
+# 2018_09_28   v2.5  Restucture for GitHub 
+# --------------------------------------------------------------------------------------------------
+#
+# Ignored Compress Files Extensions, it's better to unpack these files and commit the raw source.
 *.7z
 *.dmg
 *.gz
@@ -12,11 +17,9 @@
 *.tar
 *.zip
 
-# Project unwanted files extensions
-[Tt]humbs.db
+
+# Ignore these files extensions
 *.obj
-*.exe
-*.EXE
 *.pdb
 *.bak
 *.log
@@ -24,33 +27,35 @@
 *.org
 *.tmp
 
-# Linux Specific Files
-.bash_history
-.viminfo
-.mysql_history
 
-# Python Related Exclude 
+# Ignore Python Related files and directories
 __pycache__/
 **/__pycache__/
 *.pyc
 
-#  .DS_Store is a file that stores custom attributes of its containing folder
+# Ignore MacOS related custom attributes of its containing folder
 .DS_Store
 .DS_Store?
 ._.DS_Store
 
-# Linux Trash Can & Desktop
+# Ignore Windows Related files.
+[Tt]humbs.db
+
+# Ignore Linux related files
+.bash_history
+.viminfo
+.mysql_history
 .Trash-*/
-.ICEauthority
-.config/gnome-initial-setup-done
-.config/user-dirs.dirs
-.config/dconf/user
-.config/nautilus/desktop-metadata
-.config/yelp/yelp.cfg
-.esd_auth
+.vscode/
 
+# --------------------------------------
+# SADMIN PROJECT 
+# --------------------------------------
 
-# Want these directories dat, log and tmp to be part of project (but empty)
+# Exclude these files related to SADMIN Project
+sysmon.lock
+
+# Want theses directories to be part of the project (but empty)
 dat/*
 !dat/.gitkeep
 log/*
@@ -60,13 +65,16 @@ tmp/*
 
 # Exclude $SADMIN/usr except $SADMIN/usr/bin,lib,sysmon_scripts and doc
 usr/*
-!usr/bin
-!usr/doc
-!usr/lib
-!usr/mon
 usr/mon/*.log
-
-.vscode/
+!usr/bin/.gitkeep
+!usr/doc/.gitkeep
+!usr/lib/.gitkeep
+!usr/mon/.gitkeep
+!usr/mon/srestart.sh
+!usr/mon/stemplate.sh
+!usr/mon/stemplate.txt
+!usr/mon/swatch_nmon.sh
+!usr/mon/swatch_nmon.txt
 
 # Web Dir. - Want these directories dat and tmp to be part of project (but empty)
 www/dat/*
@@ -77,9 +85,6 @@ www/tmp/*
 www/rrd/
 # Web Dir. - No O/S Update crontab
 www/lib/.crontab.txt
-
-# Exclude SADM SYStem MONitor Lock File
-sysmon.lock
 
 # SADMIN Configuration Directory
 cfg/*
