@@ -67,16 +67,16 @@ tmp/*
 
 # Exclude $SADMIN/usr except $SADMIN/usr/bin,lib,sysmon_scripts and doc
 usr/*
-!usr/.gitkeep
 usr/mon/*.log
-!usr/bin/.gitkeep
-!usr/doc/.gitkeep
-!usr/lib/.gitkeep
+!usr/.gitkeep
 !usr/mon/srestart.sh
 !usr/mon/stemplate.sh
 !usr/mon/stemplate.txt
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
+!usr/bin/.gitkeep
+!usr/doc/.gitkeep
+!usr/lib/.gitkeep
 
 # Want these WebSite directories to be part of project (but empty)
 www/dat/*
