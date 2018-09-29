@@ -22,7 +22,7 @@
 *.obj
 *.pdb
 *.bak
-*.log
+**/*.log
 *.cache
 *.org
 *.tmp
@@ -81,6 +81,7 @@ www/dat/*
 !www/dat/.gitkeep
 www/tmp/*
 !www/tmp/.gitkeep
+
 # Web Dir. - Not Include $SADMIN/www/rrd Content
 www/rrd/
 # Web Dir. - No O/S Update crontab
@@ -92,7 +93,6 @@ cfg/*
 !cfg/.alert_group.cfg
 !cfg/.alert_slack.cfg
 !cfg/.alert_history.txt
-!cfg/.alert_history.seq
 !cfg/.template.smon
 !cfg/.release
 !cfg/.version
