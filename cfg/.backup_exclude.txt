@@ -1,0 +1,9 @@
+# Exclude these files and directories from SADMIN Backup.
+# Remember that socket files are excluded from every backup (tar command don't like them).
+# --------------------------------------------------------------------------------------------------
+*.iso 
+sysmon.lock 
+.cache/*
+/tmp
+__pycache__/
+
