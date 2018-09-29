@@ -191,22 +191,19 @@ f2e3deebc132f7e3b34498c5eb6614a4  ./cfg/.alert_history.txt
 897316929176464ebc9ad085f31e7284  ./cfg/.alert_history.seq
 d41d8cd98f00b204e9800998ecf8427e  ./dat/.gitkeep
 d41d8cd98f00b204e9800998ecf8427e  ./dat/nmon/.gitkeep
-6709342efab4644a0217a37e7314ee5c  ./doc/pdf/ServerInstall.pdf
-f45e7b400c1387e136ae6ebfd21f001b  ./doc/pdf/database/table_content_category.pdf
-2caecdd3e3a2af7c7308146a7a2a8690  ./doc/pdf/database/table_content_group.pdf
-ab93de83af1a97403727525e4fc84705  ./doc/pdf/database/table_content_server.pdf
 d5dbd9e0e2ac44d6efcf6962411b0d6d  ./doc/pdf/database/table_structure_category.pdf
 a00bff7d0de9623195d73ba5090f687a  ./doc/pdf/database/table_structure_group.pdf
 9777d249e8d42a0b9e7181eb04d53e88  ./doc/pdf/database/table_structure_network.pdf
 738d9c86cf316d74c608f95578fb18a4  ./doc/pdf/database/table_structure_server.pdf
 1aaf7249ee3f9c5b06b251b319fdfb9c  ./doc/pdf/sadmin_manual.pdf
-4b3730dae725ce25041853d679f19f58  ./doc/pdf/sadmlib_demo/sadmlib_std_demo_py.pdf
-e31483ebf6878ff9e7d00d918f15bd16  ./doc/pdf/sadmlib_demo/sadmlib_std_demo_sh.pdf
+4b3730dae725ce25041853d679f19f58  ./doc/pdf/sadmlib_std_py_output.pdf
+e31483ebf6878ff9e7d00d918f15bd16  ./doc/pdf/sadmlib_std_sh_output.pdf
 a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 882fe1f5f875919251132cebd7c7a367  ./doc/setup examples/setup_debian9.pdf
 9a4ff0116e8a5c1b1cf57870f4e7abf4  ./doc/setup examples/setup_raspbian94_client.pdf
 264e20aa159c47d243123b3cfc14a3e5  ./doc/setup examples/setup_raspbian94_server.pdf
 606be8131928eff6d50b7b31c99e1bce  ./doc/setup examples/setup_ubuntu1804.pdf
+6709342efab4644a0217a37e7314ee5c  ./doc/setup examples/Server_Install_Example.pdf
 6bfa994a25bb3aa37122fe4ffd41d73d  ./lib/sadmlib_fs.sh
 f694e76402c9ae7bbf6383b15ec6373d  ./lib/sadmlib_screen.sh
 c158f78594dc240f264284f31c2b226e  ./lib/sadmlib_std.py
@@ -297,6 +294,7 @@ a5c4bf46ec3955465d00019705d5c821  ./setup/msg/sadm_ro_dbpwd.txt
 f45500339e0f43a250911a432b08d835  ./setup/msg/sadm_ssh_port.txt
 0bbb1df4fb1b92db9f7a7bca6918138f  ./setup/msg/sadm_user.txt
 832e90ba00cd5d1fd100769ac8867bf6  ./setup/setup.sh
+d41d8cd98f00b204e9800998ecf8427e  ./setup/update/.gitkeep
 d41d8cd98f00b204e9800998ecf8427e  ./setup/log/.gitkeep
 d892ef20dab38c3f64c5903854b28aa6  ./sys/sadm_shutdown.sh
 b2d506f7903f9c4b66a62458524ed756  ./sys/sadm_startup.sh
