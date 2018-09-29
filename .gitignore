@@ -67,8 +67,8 @@ tmp/*
 
 # Exclude $SADMIN/usr except $SADMIN/usr/bin,lib,sysmon_scripts and doc
 usr/*
-usr/mon/*.log
 !usr/.gitkeep
+usr/mon/*.log
 !usr/mon/srestart.sh
 !usr/mon/stemplate.sh
 !usr/mon/stemplate.txt
