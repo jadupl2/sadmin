@@ -1777,11 +1777,11 @@ sadm_start() {
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
              fi
              # $SADMIN/www/doc Dir. 
-             [ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
-             if [ $(id -u) -eq 0 ] 
-                then chmod 0775 $SADM_WWW_DOC_DIR 
-                     chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
-             fi
+             #[ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
+             #if [ $(id -u) -eq 0 ] 
+             #   then chmod 0775 $SADM_WWW_DOC_DIR 
+             #        chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
+             #fi
              # $SADMIN/www/lib Dir.
              [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
              if [ $(id -u) -eq 0 ] 
