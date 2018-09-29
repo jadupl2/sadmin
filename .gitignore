@@ -69,16 +69,12 @@ tmp/*
 usr/cfg/*
 usr/dat/*
 usr/wip/*
-
 usr/bin/*
 !usr/bin/.gitkeep
-
 usr/doc/*
 !usr/doc/.gitkeep
-
 usr/lib/*
 !usr/lib/.gitkeep
-
 usr/mon/*
 !usr/mon/srestart.sh
 !usr/mon/stemplate.sh
