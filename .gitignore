@@ -15,7 +15,9 @@
 *.jar
 *.rar
 *.tar
-*.zip
+
+# Allow 
+#*.zip
 
 
 # Ignore these files extensions
