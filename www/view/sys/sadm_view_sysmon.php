@@ -30,7 +30,8 @@
 #       v2.1 Added Some Debugging Information
 #   2018_05_06 JDuplessis
 #       2.2 Use Standard view file web page instead of custom vie log page
-#@2018_08_14 v2.3 Added Alert Group associated with event
+# 2018_08_14 v2.3 Added Alert Group associated with event
+#@2018_09_30 v2.4 Enhance Performance, New Page Layout and Fix issue with rch new format.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -63,7 +64,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
@@ -108,7 +109,8 @@ function load_sysmon_array() {
     }
 
     # GET THE LAST LINE OF EVERY RCH FILE INTO THE TMP2 WORK FILE
-    $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; > $tmp_file2";
+    #$CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; > $tmp_file2";
+    $CMD="find " . SADM_WWW_DAT_DIR . " -type f -name '*.rch' -exec tail -1 {} \; | awk 'match($9,/[1-2]/) { print }' > $tmp_file2";
     if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
     $a = exec ( $CMD , $FILE_LIST, $RCODE);
     if ($DEBUG) { 
@@ -124,28 +126,28 @@ function load_sysmon_array() {
     }
 
     # RETAIN LINES THAT TERMINATE BY A 1(ERROR) OR A 2(RUNNING) FROM TMP2 WORK FILE INTO TMP3 FILE
-    $CMD="awk 'match($8,/[1-2]/) { print }' $tmp_file2 > $tmp_file3" ;
-    if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
-    $a = exec ( $CMD , $FILE_LIST, $RCODE);
-    if ($DEBUG) { 
-        echo "\n<br>Return code of command is : " . $RCODE ; 
-        $orig = file_get_contents($tmp_file3);
-        $a = htmlentities($orig);
-        echo '<code>';
-        echo '<pre>';
-        echo $a;
-        echo '</pre>';
-        echo '</code>';    
-    }
+    #$CMD="awk 'match($9,/[1-2]/) { print }' $tmp_file2 > $tmp_file3" ;
+    #if ($DEBUG) { echo "\n<br>Command executed is : " . $CMD ; }
+    #$a = exec ( $CMD , $FILE_LIST, $RCODE);
+    #if ($DEBUG) { 
+    #    echo "\n<br>Return code of command is : " . $RCODE ; 
+    #    $orig = file_get_contents($tmp_file3);
+    #    $a = htmlentities($orig);
+    #    echo '<code>';
+    #    echo '<pre>';
+    #    echo $a;
+    #    echo '</pre>';
+    #    echo '</code>';    
+    #}
 
 
     # CONVERT THESE RCH KIND OF LINES
-    # debian7 2017.02.09 00:06:02 2017.02.09 00:06:02 00:00:00 sadm_rear_backup 1
-    #   1        2         3         4        5        6          7            8
+    # raspi2 2018.09.29 23:25:00 2018.09.29 23:25:17 00:00:17 sadm_client_housekeeping default 1
+    #   1        2         3         4        5        6               7                  8    9
     # TO THIS TYPE OF LINE (RPT)
     # Error;nano;2017.02.08;17:00;SERVICE;PROCESS;Service syslogd not running !;sadm;sadm;
     #   1    2       3        4      5       6             7                     8     9
-    $lines = file($tmp_file3);                                          # Load RCH Line into Array
+    $lines = file($tmp_file2);                                          # Load RCH Line into Array
     $afile = fopen("$alert_file","a") or die("can't open in append mode file " . $alert_file );
 
     foreach ($lines as $line_num => $line) {
@@ -156,7 +158,7 @@ function load_sysmon_array() {
         echo '</pre>';
         echo '</code>';                   
         }
-        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$wcode) = explode(" ",$line);
+        list($whost,$wdate1,$wtime1,$wdate2,$wtime2,$welapse,$wscript,$walert,$wcode) = explode(" ",$line);
         $rdate = trim($wdate2);
         $rtime = substr(trim($wtime2),0,-3);
         switch (trim($wcode)) {
@@ -168,16 +170,15 @@ function load_sysmon_array() {
                         $rdate = trim($wdate1);
                         $rtime = substr(trim($wtime1),0,-3);
                         break;
-            default:    $rtype = "Unknown" ;
+            default:    $rtype = "Unknown" . $wcode ;
                         break;
         }
         $rhost      = trim($whost);
         $rmod       = "SADM";
         $rsubmod    = "SCRIPT";
-        $rpage      = "sadm";
-        $rmail      = "sadm";
+        $ralert      = "$walert";
         $rdesc      = "Script " . $wscript;
-        $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${rpage};${rmail}\n";
+        $LINE="${rtype};${rhost};${rdate};${rtime};${rmod};${rsubmod};${rdesc};${ralert};${ralert}\n";
         if ($DEBUG) { 
             echo '<code>';
             echo '<pre>';
@@ -220,12 +221,12 @@ function sysmon_page_heading() {
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-left'>Alert Description</th>";
+    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     #echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Date / Time</th>";
-    echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-center'>Alert Group</th>";
     echo "\n</tr>";
     echo "\n</thead>\n";
@@ -234,12 +235,12 @@ function sysmon_page_heading() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     echo "\n<th class='dt-center'>Status</th>";
-    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-center'>Date / Time</th>";
     echo "\n<th class='dt-left'>Alert Description</th>";
+    echo "\n<th class='dt-center'>Server</th>";
+    echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-head-left'>Server Description</th>";
     #echo "\n<th class='dt-center'>Module</th>";
-    echo "\n<th class='dt-center'>Date / Time</th>";
-    echo "\n<th class='dt-center'>Cat.</th>";
     echo "\n<th class='dt-center'>Alert Group</th>";
     echo "\n</tr>";
     echo "\n</tfoot>\n";
@@ -281,14 +282,25 @@ function display_data($con,$alert_file) {
                 echo "style='width:24px;height:24px;'></span> Warning</td>";
                 $alert_group=$wealert;
                 break;
+            case 'RUNNING' :
+                echo "\n<td class='dt-justify'>";
+                echo "<span data-toggle='tooltip' title='Script currently running'>";
+                echo "<img src='/images/running.png' ";
+                echo "style='width:24px;height:24px;'></span> Running</td>";
+                $alert_group=$wealert;
+                break;
             default:
                 echo "\n<td class='dt-center' vertical-align: center;>";
                 echo "<span data-toggle='tooltip' title='Unknown Status'>";
-                echo "<img src='/images/question_mark.png' ";
+                echo "<img src='/images/question_mark.jpg' ";
                 echo "style='width:24px;height:24px;'></span> Unknown</td>";
                 $alert_group="Unknown";
                 break;
         }
+        
+        # ALERT DATE AND TIME ----------------------------------------------------------------------
+        echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
+
 
         # READ SERVER TABLE TO GET THE DESCRIPTION -------------------------------------------------
         $sql = "SELECT * FROM server where srv_name = '". $whost . "';";
@@ -310,12 +322,7 @@ function display_data($con,$alert_file) {
             }
         }
 
-        # SERVER NAME ------------------------------------------------------------------------------
-        echo "<td class='dt-center'>";
-        echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
-        echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
-        echo nl2br($whost) . "</a></td>\n";
-
+                
         # ALERT DESCRIPTION ------------------------------------------------------------------------
         list($wdummy,$wscript) = explode(" ",$wdesc);
         $wlog =  $whost . "_" . $wscript . ".log";
@@ -331,6 +338,18 @@ function display_data($con,$alert_file) {
         }
         echo "</td>\n";
 
+
+        # SERVER NAME ------------------------------------------------------------------------------
+        echo "<td class='dt-center'>";
+        echo "<a href='" . $URL_HOST_INFO . "?host=" . nl2br($whost) ;
+        echo "' title='$WOS $WVER server - ip address is " . $row['srv_ip'] . "'>" ;
+        echo nl2br($whost) . "</a></td>\n";
+
+        # SERVER CATEGORY --------------------------------------------------------------------------
+        $WCAT  = sadm_clean_data($row['srv_cat']);
+        $WOS   = sadm_clean_data($row['srv_osname']);
+        echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
+
         # SERVER DESCRIPTION -----------------------------------------------------------------------
         echo "<td>" . $WDESC . "</td>\n";
 
@@ -338,15 +357,7 @@ function display_data($con,$alert_file) {
         #echo "<td class='dt-center'>";
         #echo ucfirst(strtolower($wmod))    . " / " ;
         #echo ucfirst(strtolower($wsubmod)) . "</td>\n";
-        
-        # ALERT DATE AND TIME ----------------------------------------------------------------------
-        echo "<td class='dt-center'>" . $wdate . " " . $wtime . "</td>\n";
 
-        # SERVER CATEGORY --------------------------------------------------------------------------
-        $WCAT  = sadm_clean_data($row['srv_cat']);
-
-        $WOS   = sadm_clean_data($row['srv_osname']);
-        echo "<td class='dt-center'>" . $WCAT                . "</td>\n";
         #echo "<td class='dt-center'>" . $wwalert . " / " . $wealert               . "</td>\n";
         echo "<td class='dt-center'>" . $alert_group               . "</td>\n";
     }
