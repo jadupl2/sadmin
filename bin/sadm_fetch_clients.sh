@@ -546,7 +546,7 @@ check_for_alert()
                 etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
                 escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
                 egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
-                esubject="SADM SCRIPT: $escript reported an error on $ehost"
+                esubject="$escript reported an error on $ehost"
                 emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
                 if [ $DEBUG_LEVEL -gt 0 ] 
                     then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 

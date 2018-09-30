@@ -1963,26 +1963,31 @@ sadm_stop() {
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
-    wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
+    #wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
     case $SADM_ALERT_TYPE in
       1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
              then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
+                  wmess="$wsub"
                   sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
            fi
           ;;
       2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
              then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
+                  wmess="$wsub"
                   sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
           fi 
           ;;
       3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
+                 wmess="$wsub"
                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
             else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
+                 wmess="$wsub"
                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG" 
           fi
           ;;
       4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
+          wmess="$wsub"
           sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
           ;;
     esac
