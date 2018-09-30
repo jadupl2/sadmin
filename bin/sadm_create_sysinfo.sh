@@ -26,7 +26,8 @@
 # 2018_06_09    v2.6 Add SADMIN root dir & Date/Status of last O/S Update in ${HOSTNAME}_sysinfo.txt
 # 2018_06_11    v2.7 Change name to sadm_create_sysinfo.sh
 # 2018_09_19    v2.8 Update Default Alert Group
-#@2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
+# 2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
+#@2018_09_30    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -46,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.9'                               # Current Script Version
+    export SADM_VER='3.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -319,7 +320,7 @@ set_last_osupdate_date()
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
 
     # Get the Status of the last O/S update
-    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $8}'`
+    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $9}'`
     case "$RCH_CODE" in 
         0)  OSUPDATE_STATUS="S" 
             ;;
