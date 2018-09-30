@@ -37,7 +37,7 @@
 # 2018_08_19    V1.2 Change Filesystem Increase before and after Email information.
 # 2018_08_21    V1.3 Use Alerting system on top of email for Error or Warning occur.
 # 2018_09_25    V1.4 Alerting can now send attachment with Subject
-#@2018_09_30    V1.5 Change format of Error/Warning Message for elerting system
+#@2018_09_30    V1.5 Reformat error message for alerting system
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
