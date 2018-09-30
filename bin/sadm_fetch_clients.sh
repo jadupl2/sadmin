@@ -32,7 +32,8 @@
 # 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
 # 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
 # 2018_09_18  v2.20 Alert Minors fixes
-#@2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
+# 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
+#@2018_09_26  v2.22 Reformat Error message for alerting systsem
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -69,7 +70,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.21'                              # Current Script Version
+    export SADM_VER='2.22'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
