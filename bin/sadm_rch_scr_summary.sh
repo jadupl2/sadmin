@@ -1,7 +1,6 @@
 #! /usr/bin/env sh
 # --------------------------------------------------------------------------------------------------
 #   Author      :  Jacques Duplessis
-#   Title       :  template.sh
 #   Script name :  sadm_rch_scr_summary.sh
 #   Synopsis    :  Display from CLI the Result File (RCH Files) Summary
 #   Version     :  1.5
