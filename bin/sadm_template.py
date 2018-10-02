@@ -29,6 +29,7 @@
 # 2018_05_15 V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
 # 2018_05_20 V1.9 Restructure the code and added comments
 # 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
+#@2018_10_02 V2.1 Add Debug variable to get more verbosity 
 # 
 # --------------------------------------------------------------------------------------------------
 #
@@ -68,7 +69,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.0"                 # Current Script Version
+    st.ver              = "2.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -78,6 +79,7 @@ def setup_sadmin():
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
     st.exit_code        = 0                     # Script Exit Code for you to use
+    st.debug            = 0                     # Increase Verbose from 0 to 9 
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
     #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
