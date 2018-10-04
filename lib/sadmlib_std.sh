@@ -1969,22 +1969,22 @@ sadm_stop() {
     case $SADM_ALERT_TYPE in
       1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
              then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
-                  wmess="$wsub"
+                  wmess="$wsub\nScript execution time is $sadm_elapse"
                   sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
            fi
           ;;
       2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
              then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
-                  wmess="$wsub"
+                  wmess="$wsub\nScript execution time is $sadm_elapse"
                   sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
           fi 
           ;;
       3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
-                 wmess="$wsub"
+                 wmess="$wsub\nScript execution time is $sadm_elapse"
                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "" 
             else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
-                 wmess="$wsub"
+                 wmess="$wsub\nScript execution time is $sadm_elapse"
                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG" 
           fi
           ;;
@@ -2018,18 +2018,20 @@ sadm_stop() {
 #                            For type [S] Default Group come from sadmin.cfg or user can modify it 
 #                            by altering SADM_ALERT_GROUP variable in his script.
 #                            ** Alert issue from a script will not be assign a reference no.
-#                    [E/W/I] If it's an Error, a Warning or for Information detected by System Monitor.
+#
+#                    [E/W/I] Error, Warning or Information Alert are detected by System Monitor.
 #                            For this type [M] Warning and Error Alert Group are taken from the host
 #                            System Monitor file ($SADMIN/cfg/hostname.smon).
 #                            In System monitor file Warning are at column 'J' and Error at col. 'K'.
-#                            ** Alert issue from SADMIN SysMon will be assign a reference no. and will
-#                               will be include in the alert message.
+#                            ** Error and Warning (Not Info) Alert issue from SADMIN SysMon will be 
+#                            assign a reference no. and will be included in the alert message.
 #
-# 2nd Parameter    : Server Where Alert come from
+# 2nd Parameter    : Server Name Where Alert come from
 # 3th Parameter    : Alert Group Name to send Message
 # 4th Parameter    : Subject/Title
 # 5th Parameter    : The Alert Message
 # 6th Parameter    : The Full Path Name of the attachment (If used, else blank)
+#
 # Example : sadm_send_alert E holmes sprod Filesystem /usr at 85% >= 85%
 # --------------------------------------------------------------------------------------------------
 #
@@ -2043,7 +2045,7 @@ sadm_send_alert() {
     fi
 
     # Save Parameters Received (After Removing leading and trailing Spaces.
-    alert_type=`echo "$1"   | awk '{$1=$1;print}'`                      # [S]cript [E]rror [W]arning
+    alert_type=`echo "$1"   | awk '{$1=$1;print}'`               # [S]cript [E]rror [W]arning [I]nfo
     alert_type=`echo $alert_type |tr "[:lower:]" "[:upper:]"`           # Make Alert Type Uppercase
     alert_server=`echo "$2" | awk '{$1=$1;print}'`                      # Server where alert Come 
     alert_group=`echo "$3"  | awk '{$1=$1;print}'`                      # SADM AlertGroup to Advise
@@ -2131,7 +2133,7 @@ sadm_send_alert() {
     fi
 
     # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] || [ "$alert_type" = "I" ] 
         then refno="000000"                                             # Ref# when not on SADM Srv
         else href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
              href=$(($href+1))                                          # Increment Alert Ref. No.
@@ -2146,7 +2148,10 @@ sadm_send_alert() {
              if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_subject}" ; fi 
              if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_subject}"    ; fi 
              if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT: ${alert_subject}"  ; fi 
-             wm=`echo "${adate}\nReference No ${refno}\n${alert_message}\nOn server ${alert_server}."`
+             if [ "$alert_type" = "I" ]
+                then wm=`echo "${adate}\n${alert_message}\nOn server ${alert_server}."`
+                else wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+             fi
              if [ "$alert_attach" != "" ]                               # If Attachment Specified
                 then echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member" -a $alert_attach
                 else echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member"
@@ -2181,12 +2186,12 @@ sadm_send_alert() {
              if [ "$alert_type" = "W" ] ; then ws="*SADM WARNING: ${alert_subject}*" ; fi 
              if [ "$alert_type" = "I" ] ; then ws="*SADM INFO: ${alert_subject}*"    ; fi 
              if [ "$alert_type" = "S" ] ; then ws="*SADM SCRIPT: ${alert_subject}*"  ; fi 
-             if [ "$alert_type" = "S" ]                                 # If Alert for a [S]cript
+             if [ "$alert_type" = "S" ] || [ "$alert_type" = "I" ]      # Alert [S]cript or [I]nfo
                 then text="${ws}\n{$mdate}"                             # Insert Alert Subject
                      text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
                      text="${text}\n$alert_message"                     # Insert Alert Message 
                 else text="${ws}\n{$mdate}"                             # Insert Alert Subject
-                     text="${text}\nReference No ${refno}"              # Insert Alert Reference No.
+                     text="${text}\nReference No.${refno}"              # Insert Alert Reference No.
                      text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
                      text="${text}\n${alert_message}"                   # Insert Alert Message 
              fi
