@@ -2210,7 +2210,7 @@ sadm_send_alert() {
              #SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
              SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
-             if [ $SRC == "ok" ] 
+             if [ $SRC = "ok" ] 
                 then RC=0
                      write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
                 else RC=1
