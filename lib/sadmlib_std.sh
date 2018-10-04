@@ -54,7 +54,8 @@
 # 2018_09_25  v2.41 Enhance Email Standard Alert Message
 # 2018_09_26  v2.42 Send Alert Include Message Subject now
 # 2018_09_27  v2.43 Now Script log can be sent to Slack Alert
-#@2018_09_30  v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
+# 2018_09_30  v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
+#@2018_10_04  v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C    
 #set -x
@@ -72,7 +73,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit 
-SADM_LIB_VER="2.44"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.45"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -2033,7 +2034,7 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() { 
-
+    #LIB_DEBUG=6
     # Validate the Number of parameter received.
     if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
@@ -2098,12 +2099,15 @@ sadm_send_alert() {
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
 
     # Search For Today Message with the string "Server, Alert Group and Message"
+    if [ "$LIB_DEBUG" -gt 4 ] 
+        then sadm_writelog "Search History for \"$hdate\" and \"$hsearch\""
+    fi
     grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # GrepMessage with same Date
     if [ $? -eq 0 ]                                                     # String Found=Already Done
-        then #sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
-             #sadm_writelog "$hdate - $hsearch"
+        then sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
+             sadm_writelog "$hdate - $hsearch"
              return 2                                                   # Return 2 when alert exist
-#        else sadm_writelog "Sending Alert to $alert_group : $hdate - $hsearch"
+#        else sadm_writelog "Alert Not in History - Sending Alert to $alert_group : $hdate - $hsearch"
     fi                                
 
     # Determine if a [M]ail or a [S]lack Message need to be issued
@@ -2208,7 +2212,7 @@ sadm_send_alert() {
              if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
              if [ $SRC == "ok" ] 
                 then RC=0
-                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_message" "$refno"
+                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
                 else RC=1
                      sadm_writelog "Error message : $SRC" 
              fi
