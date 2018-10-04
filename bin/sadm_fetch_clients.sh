@@ -33,7 +33,8 @@
 # 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
 # 2018_09_18  v2.20 Alert Minors fixes
 # 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
-#@2018_09_26  v2.22 Reformat Error message for alerting systsem
+# 2018_09_26  v2.22 Reformat Error message for alerting systsem
+#@2018_10_04  v2.23 Supplemental message about o/s update crontab modification
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -70,7 +71,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.22'                              # Current Script Version
+    export SADM_VER='2.23'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -636,7 +637,8 @@ check_for_alert()
              chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set Permission on crontab
              sadm_writelog "O/S Update crontab was updated ..."
         else
-             sadm_writelog "No modification needed for O/S update crontab ..."
+             sadm_writelog "No changes made to O/S Update schedule ..."
+             sadm_writelog "No need to update O/S Update crontab ..."
     fi
 
     # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
