@@ -6,9 +6,9 @@
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :
 #
-#   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
-#                   a 100 characters per line. Comments in script always begin at column 73. You 
-#                   will have a better experience, if you set screen width to have at least 100 Chr.
+# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+#        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
 # --------------------------------------------------------------------------------------------------
 #
@@ -73,10 +73,10 @@ trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIG
 #
 #---------------------------------------------------------------------------------------------------
 #
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
     # But they can be overriden here on a per script basis.
-    export SADM_ALERT_TYPE=3                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
