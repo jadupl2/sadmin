@@ -47,8 +47,8 @@ except ImportError as e:
 try :
     import pymysql
 except ImportError as e:
-    print ("The Python Module to access MySQL is not installed : %s " % e)
-    print ("We need to install it before continuying")
+    print ("The Python Module PyMySQL is not installed : %s " % e)
+    print ("We need to install it before continuing")
     print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
     print ("sudo apt-get install python3-pip")
     print ("sudo pip3 install PyMySQL")
@@ -70,6 +70,7 @@ fifty_dash          = "=" * 50                                          # Line o
 args                = len(sys.argv)                                     # Nb. argument receive
 osname              = os.name                                           # OS name (nt,dos,posix,...)
 platform            = sys.platform                                      # Platform (darwin,linux)
+
 # To calculate execution Time 
 start_time          = ""                                                # Script Start Date & Time
 stop_time           = ""                                                # Script Stop Date & Time
@@ -84,7 +85,7 @@ start_epoch         = ""                                                # Script
 class sadmtools():
 
     #-----------------------------------------------------------------------------------------------
-    #  INITIALISATION OF SADM TOOLS------------------------------------------------------
+    #  INITIALIZATION OF SADM TOOLS------------------------------------------------------
     #-----------------------------------------------------------------------------------------------
     def __init__(self):
         """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
@@ -92,8 +93,8 @@ class sadmtools():
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
         if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env. Var. Defined ?
-            print ("SADMIN Environment Variable isn't define")          # SADMIN Var MUST be defined
-            print ("It indicate the directory where you installed the SADMIN Tools")
+            print ("SADMIN Environment Variable isn't define.")         # SADMIN Var MUST be defined
+            print ("It specify the directory where you installed the SADMIN Tools")
             print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
             print ("SADMIN='/[dir-where-you-install-sadmin]'")          # Show What to Add.
             print ("Then logout and log back in and run this script again.")
@@ -102,7 +103,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.20"                                # This Library Version
+        self.libver             = "2.21"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
