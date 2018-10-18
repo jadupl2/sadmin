@@ -4,7 +4,8 @@
 #   Title:      sadm_startup.sh
 #   Date:       25 October 2015
 #   Synopsis:   This script is run when the system is started (via sadmin.service).
-#               Called by /etc/systemd/system/sadmin.service
+#               Called by /etc/systemd/system/sadmin.service (systemd) or /etc/init.d/sadmin (SysV)
+#               
 # --------------------------------------------------------------------------------------------------
 #set -x
 #
@@ -22,13 +23,13 @@
 # 2018_02_02    V3.2 Redirect output of starting nmon in the log (already log by sadm_nmon_watcher.sh).
 # 2018_02_04    V3.3 Remove all pid when starting server - Make sure there is no leftover.
 # 2018_06_22    V3.4 Remove output of ntpdate & Add Error Message when error synchronizing change.
-#@2018_09_19    V3.5 Updated to include the Alert Group
+# 2018_09_19    V3.5 Updated to include the Alert Group
+# 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
+#@2018_10_18    V3.7 Only send alert when exit with error.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
-. /etc/profile.d/sadmin.sh                                              # Get SADMIN Var. Defined
-
 
 
 #===================================================================================================
@@ -48,11 +49,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.5'                               # Current Script Version
+    export SADM_VER='3.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
+    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
@@ -83,7 +84,6 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #                                   This Script environment variables
 # --------------------------------------------------------------------------------------------------
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_ALERT_TYPE=3                            ; export SADM_ALERT_TYPE     # 0=No 1=Err 2=Succes 3=All
 NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada NTP Pool
 
 
