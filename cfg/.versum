@@ -1,5 +1,5 @@
 d32239bcb673463ab874e80d47fae504  ./LICENSE
-cf3baea9fe40bdfb13a016fdc45ee5c2  ./README.md
+634328969c515a6ded60c211d314456c  ./README.md
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 2aab0d14137297e1ff22c191e5434c89  ./cfg/.release
@@ -9,7 +9,7 @@ e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 855055751dc3da4083e08d476ffa947e  ./cfg/.template.smon
 f343139dad5bbc1c548b5a4c9cd259f6  ./cfg/.version
 d41d8cd98f00b204e9800998ecf8427e  ./cfg/.versum
-e3084f37ca5987b5953d8186897f96e2  ./cfg/.alert_group.cfg
+e90112d098bbe5eec545d81420fce057  ./cfg/.alert_group.cfg
 24a5c9176c4db9048560c96b54fb24fc  ./cfg/.alert_slack.cfg
 f2e3deebc132f7e3b34498c5eb6614a4  ./cfg/.alert_history.txt
 897316929176464ebc9ad085f31e7284  ./cfg/.alert_history.seq
@@ -29,7 +29,7 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 6bfa994a25bb3aa37122fe4ffd41d73d  ./lib/sadmlib_fs.sh
 f694e76402c9ae7bbf6383b15ec6373d  ./lib/sadmlib_screen.sh
 ff815ef822a0117cd3344d89ab378c1c  ./lib/sadmlib_std.py
-8c0c25296e1a64dcc1c717729be7daa5  ./lib/sadmlib_std.sh
+07e9e7cb48c69eab0add5c21480944b3  ./lib/sadmlib_std.sh
 3a47604ed48c9b842772013e72f98995  ./pkg/DataTables/DataTables-1.10.11.zip
 5d6e38017d15726fbb5c4efc7c42e347  ./pkg/DataTables/DataTables-1.10.12.zip
 70dbf5308decd9d49b36b4c69bcc2a71  ./pkg/cfg2html/cfg2html
@@ -115,8 +115,8 @@ a5c4bf46ec3955465d00019705d5c821  ./setup/msg/sadm_ro_dbpwd.txt
 f45500339e0f43a250911a432b08d835  ./setup/msg/sadm_ssh_port.txt
 0bbb1df4fb1b92db9f7a7bca6918138f  ./setup/msg/sadm_user.txt
 832e90ba00cd5d1fd100769ac8867bf6  ./setup/setup.sh
-d892ef20dab38c3f64c5903854b28aa6  ./sys/sadm_shutdown.sh
-b2d506f7903f9c4b66a62458524ed756  ./sys/sadm_startup.sh
+2f5e977236c071adc26134c6a56c5d25  ./sys/sadm_shutdown.sh
+008300c4da53d558ed6696ab83646e46  ./sys/sadm_startup.sh
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
 531ee68b0054dad5e8827d7ac8d641b9  ./usr/mon/stemplate.sh
 e382e0d018caa016a59a5a856a5ba8a1  ./usr/mon/swatch_nmon.sh
@@ -245,10 +245,10 @@ d74c1c31df213d6ba1440c1a2936cda0  ./bin/sadm_osupdate_farm.sh
 5b3efc29c1cff6725d5612e76b74c3a7  ./bin/sadm_rear_initiator.sh
 8063cd5a186c958f14277c12aba61e24  ./bin/sadm_server_housekeeping.sh
 135f31cda56bfdac594a08fb8dab1c54  ./bin/sadm_server_sunrise.sh
-9a6a77c8ae99c67dd288df2f3e819329  ./bin/sadm_service_ctrl.sh
+3b485dc8561715db37dc0bad3508c1d4  ./bin/sadm_service_ctrl.sh
 81073bc15803d0194727e6fb1d0f99f4  ./bin/sadm_subnet_lookup.py
 b7f75149fb3126faedd92ea7e802448f  ./bin/sadm_support_request.sh
-8ec641cb30e0658d367281401f5a0540  ./bin/sadm_sysmon.pl
+9fc89b000bfebd4c73f82add7136b36f  ./bin/sadm_sysmon.pl
 4bbf7cfe917ae16626352e4293565720  ./bin/sadm_sysmon_cli.sh
 5636816219e11e39ac47d2eef6e78807  ./bin/sadm_sysmon_tui.pl
 3842b840cd33d3ee5ea202355dc12571  ./bin/sadm_template.py
