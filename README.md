@@ -1,12 +1,15 @@
-# SADMIN Tools
+# SADMIN Tools 0.91.0
 
-If you are a Unix system administrator who is taking care of multiple servers, you probably 
+If you are a Unix system administrator who is taking care of multiple servers, you probably
 created some scripts to help you keeping your environment stable. With SADMIN you can be alerted
 when something goes wrong, when a script fail or just to let you know that your script ran with
- success. You can received these alerts by email or on your mobile device using the '[Slack](https://slack.com/)' 
- application. SADMIN surely can help you, improve and standardize the administration of your 
+ success. You can received these alerts by email or on your mobile device using the '[Slack](https://slack.com/)'
+ application. SADMIN surely can help you, improve and standardize the administration of your
  server farm.
+
 For more information visit the SADMIN web site at <https://www.sadmin.ca>.
+
+[See our latest release changelog](https://www.sadmin.ca/www/changelog.php).
 
 ## Some features of SADMIN Tools
 
@@ -27,7 +30,7 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 - Make a copy of the [template script](http://wsadmin.maison.ca/doc/man/man_sadm_template.php), modify it to your need and enjoy :
   - All your scripts will have a log.
-    - All your logs will have a standardize name (${HOST}_${SCRIPT}.log) 
+    - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
     - All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
     - They will be recorded in the same location ($SADMIN/log).
     - View-able from a Web Interface.
@@ -64,14 +67,15 @@ If you like one these features, then will certainly find a couple of more intere
 
 - The SADMIN client have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
 - The SADMIN server should work on any Linux distribution but it's only supported on Redhat, CentOS, Fedora and Debian, Ubuntu and Raspbian distribution.
-- In less than 15 minutes, you can install and start using the tools. 
+- In less than 15 minutes, you can install and start using the tools.
 - We have been working for more than two years on these tools and we are happy to release the SADMIN project. We will continue to add and enhance the SADMIN tools over the years to come. We are starting with the basic infrastructure, but there is much more to come, stay tuned.
 - Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/www/quickstart.php) first.
-  
+
 
 ## Download
 
 - You download the latest version of the SADMIN Project from our [Download page](https://www.sadmin.ca/www/download.php) .
+- Take a look at our [changelog](https://www.sadmin.ca/www/changelog.php) and see the latest features and bug fixes.
 - You can clone the project from [GitHub](https://github.com/jadupl2/sadmin)
 
 ```bash
@@ -103,19 +107,19 @@ If you like one these features, then will certainly find a couple of more intere
 
 ```bash
     Change directory to /opt
-    # cd /opt 
+    # cd /opt
 
     Create a filesystem or directory where you want SADMIN to be install
     # mkdir /opt/sadmin
 
     Copy the latest version of SADMIN file you have downloaded in '/opt' directory.
-    # cp sadmin_x.xx_yyyymmdd.tgz /opt
+    # cp sadmin_xx.xx.xx.tgz /opt
 
     Change directory to '/opt/sadmin' directory
     # cd /opt/sadmin
 
     Untar the file
-    # tar -xvzf ../sadmin_x.xx_yyyymmdd.tgz
+    # tar -xvzf ../sadmin_xx.xx.xx.tgz
 
     Run the setup program
     # /opt/sadmin/setup/setup.sh
@@ -128,11 +132,11 @@ If you like one these features, then will certainly find a couple of more intere
 - You will be asked what type of installation you want, a 'SADM server' or a 'SADMIN client'.
 - If you are installing a 'SADMIN server', the setup program will install and configure for you the 'Mariadb' (Database) and the Apache Web Server. When installation is finished you will have a working Web SADMIN environment.
 
-After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below (The dot and the space are important), This will 
+After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below (The dot and the space are important), This will
 make sure "SADMIN" environment variable is define.\
 ```bash
 # . /etc/profile.d/sadmin.sh
-``` 
+```
 
 
 
@@ -140,9 +144,9 @@ make sure "SADMIN" environment variable is define.\
 
 ****
 
-Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your 
+Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your
 problem or question and sent to <support@sadmin.ca>.\
-We will get back to you as soon as possible. 
+We will get back to you as soon as possible.
 
 ## Authors
 
