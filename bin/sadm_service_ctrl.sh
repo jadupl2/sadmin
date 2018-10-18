@@ -44,7 +44,8 @@
 # 2018_02_08    v1.12 Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # 2018_06_06    v2.0 Restructure Code & Adapt to new SADMIN Shell Libr.
 # 2018_06_23    v2.1 Change Location of default file for Systemd and InitV SADMIN service to cfg
-# --------------------------------------------------------------------------------------------------
+#@2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
+#--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
  
@@ -68,7 +69,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_VER='2.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -268,7 +269,7 @@ service_start()
             d) P_DISABLE="ON"                                           # Disable SADM Service 
                service_stop    sadmin                                   # Stop sadmin Service
                service_disable sadmin                                   # Enable sadmin Service
-               service_status  sadmin                                   # Status of sadmin Service
+               #service_status  sadmin                                   # Status of sadmin Service
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
