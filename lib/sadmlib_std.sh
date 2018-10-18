@@ -2107,7 +2107,7 @@ sadm_send_alert() {
     fi
     grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # GrepMessage with same Date
     if [ $? -eq 0 ]                                                     # String Found=Already Done
-        then sadm_writelog "Not sending Alert below, already sent in last 24Hrs"
+        then sadm_writelog "Not sending Alert below, already sent Today."
              sadm_writelog "$hdate - $hsearch"
              return 2                                                   # Return 2 when alert exist
 #        else sadm_writelog "Alert Not in History - Sending Alert to $alert_group : $hdate - $hsearch"
