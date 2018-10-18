@@ -4,24 +4,19 @@
 #   Title:      sadm_shutdown.sh
 #   Date:       25 October 2015
 #   Synopsis:   This script is run when the sadmin.service is shutdown when server goes down.
-#               Called by /etc/systemd/system/sadmin.service
+#               Called by /etc/systemd/system/sadmin.service (systemd) or /etc/init.d/sadmin (SysV)
 # --------------------------------------------------------------------------------------------------
-# Version 2.2 - June 2017
-#               Log Enhancement
-# Version 2.3 - June 2017
-#               Restructure to use the SADM Library and Send email on execution.
-# Version 2.4 - July 2017
-#               Add sleep of 5 sec. at the end, to allow completion of sending email before shutdown
-# Version 2.5 - July 2017
-#               Added code to run shutdown command based on Hostname
-# 2017_08_05    JDuplessis
-#   V2.6 Send email only on Execution Error
-# 2018_01_31 V2.7 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
-#@2018_09_19 V2.8 Added Alert Group Utilisation
+# Version 2.2 - Log Enhancement
+# Version 2.3 - Restructure to use the SADM Library and Send email on execution.
+# Version 2.4 - Add sleep of 5 sec. at the end, to allow completion of sending email before shutdown
+# Version 2.5 - Added code to run shutdown command based on Hostname
+# 2017_08_05    V2.6 Send email only on Execution Error
+# 2018_01_31    V2.7 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
+# 2018_09_19    V2.8 Added Alert Group Utilisation
+#@2018_10_18    v2.9 Remove execution of /etc/profile.d/sadmin.sh (Don't need anymore)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
-. /etc/profile.d/sadmin.sh                                              # Get SADMIN Var. Defined
 
 
 #===================================================================================================
@@ -41,7 +36,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.8'                               # Current Script Version
+    export SADM_VER='2.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
