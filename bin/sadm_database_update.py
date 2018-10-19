@@ -29,6 +29,7 @@
 # 2018_06_03    v3.0 Adapt to new SADMIN Python Library
 # 2018_06_09    v3.1 Last O/S Update Data & Status Taken from sysinfo.txt file in dr Dir.to Upd DB.
 # 2018_06_11    v3.2 Change name for sadm_database_update.py
+#@2018_10_02    v3.3 Add Debug Variable and verbosity to script
 #
 #===================================================================================================
 #
@@ -70,7 +71,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.2"                 # Current Script Version
+    st.ver              = "3.3"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -80,9 +81,10 @@ def setup_sadmin():
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
     st.exit_code        = 0                     # Script Exit Code for you to use
+    st.debug            = 0                     # Increase verbosity 0 to 9 
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
     #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
@@ -146,6 +148,7 @@ def update_row(st,wconn, wcur, wdict):
 
     # Execute the SQL Update Statement
     try:
+        if st.debug > 4: st.writelog("sql=%s" % (sql))
         wcur.execute(sql)                                               # Update Server Data 
         wconn.commit()                                                  # Commit the transaction
         st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
@@ -215,13 +218,13 @@ def process_servers(wconn,wcur,st):
             st.writelog("Sysinfo file not found %s" % (sysfile))
             continue
         except IOError as e:                                            # If Can't open file
-            set.writelog("Error opening file %s \r\n" % sysfile)        # Print FileName
-            set.writelog("Error Number : {0}\r\n.format(e.errno)")      # Print Error Number
-            set.writelog ("error({0}):{1}".format(e.errno, e.strerror))
-            set.writelog (repr(e))           
-            set.writelog("Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
+            st.writelog ("Error opening file %s \r\n" % sysfile)        # Print FileName
+            st.writelog ("Error Number : {0}\r\n.format(e.errno)")      # Print Error Number
+            st.writelog ("error({0}):{1}".format(e.errno, e.strerror))
+            st.writelog (repr(e))           
+            st.writelog( "Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
             return 1                                                    # Return Error to Caller
-        if st.debug > 4: set.writelog("File %s opened" % sysfile)       # Opened Sysinfo file Msg
+        if st.debug > 4: st.writelog ("File %s opened" % sysfile)       # Opened Sysinfo file Msg
 
         # Process the content of the sysinfo.txt file ----------------------------------------------
         if st.debug > 4: st.writelog("Reading %s" % sysfile)            # Reading Sysinfo file Msg

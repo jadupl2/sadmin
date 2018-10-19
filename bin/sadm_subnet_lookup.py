@@ -21,6 +21,7 @@
 # 2018-04-26    v1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # 2018-06_06    v1.8 Small Corrections 
 # 2018-06_09    v1.9 Change Script name to sadm_subnet_lookup
+#@2018-09_22    v2.0 Fix Problem with Updating Last Ping Date
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -38,7 +39,7 @@ except ImportError as e:
 #                                 Local Variables used by this script
 #===================================================================================================
 #
-DEBUG = False                                                            # Activate Debug (Verbosity)
+DEBUG = False                                                           # Activate Debug (Verbosity)
 netdict = {}                                                            # Network Work Dictionnary
 
 
@@ -60,11 +61,11 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "1.9"                 # Current Script Version
+    st.ver              = "2.0"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
-    st.use_rch          = True                  # Generate entry in Return Code History (.rch) 
+    st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
@@ -72,16 +73,18 @@ def setup_sadmin():
     st.exit_code        = 0                     # Script Exit Code for you to use
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
-    #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
+    #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines
+    #st.cfg_max_rchline  = 125                  # When Script End Trim rch file to 125 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
 
     # Start SADMIN Tools - Initialize 
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     return(st)                                  # Return Instance Obj. To Caller
+
 
 
 #===================================================================================================
@@ -199,6 +202,7 @@ def db_update(st,wconn,wcur,wip,wzero,wname,wmac,wman,wping,wdateping,wdatechang
         st.writelog(">>>>>>>>>>>>> (%s) %s " % (enum,error))            # Print Error No. & Message
         st.writelog("sql=%s" % (sql))
         return(1)                                                       # return (1) to indicate Err
+    if (DEBUG) : st.writelog("sql=%s" % (sql))                      # Show SQL in Error
 
     # Execute the SQL Update Statement
     try:
@@ -289,9 +293,12 @@ def scan_network(st,snet,wconn,wcur) :
     # Iterating through the “usable” addresses on a network:
     for ip in NET4.hosts():                                             # Loop through possible IP
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP 
+        if (DEBUG) :
+            print ("\n----------\nProcessing IP %s" % (hip))
         try :                                                           # Try Get Hostname of the IP
             (hname,halias,hiplist)   = socket.gethostbyaddr(hip)        # Get IP DNS Name
-            #print ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
+            if (DEBUG) :
+                print ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
         except socket.herror as e:                                      # If IP has no Name
             hname = ""                                                  # Clear IP Hostname
         hmac = ''                                                       # Clear Work Mac Address
@@ -330,21 +337,31 @@ def scan_network(st,snet,wconn,wcur) :
             if (DEBUG) :
                 st.writelog("OLD - hostname %s, Mac %s, Ping %s, DatePing %s, DateUpdate %s" % (old_hostname,old_mac,old_ping,wdateping,wdatechange))
             wdate = time.strftime('%Y-%m-%d %H:%M:%S')                  # Save Current Date & Time
-            if ((old_ping != hactive) and (hactive != 0)) : 
-                st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
-                wdateping = wdate
-                st.writelog("Ping Date Updated")
-                wdatechange = wdate
-            if (old_mac != hmac) :
-                if (hmac == "") :
-                    st.writelog("%s Leave old mac at '%s' since new mac is '%s'" % (hip,old_mac,hmac))
-                    hmac = old_mac
+
+            # If Ip is Pingable
+            if (hactive == 1) :                                         # If IP is pingable
+                wdateping = wdate                                       # Update Last Ping Date
+                st.writelog("%-17s - Ping Date Updated" % (hip))        # Advise User
+
+            #if ((old_ping != hactive) and (hactive != 0)) : 
+            #    st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
+            #    wdatechange = wdate
+
+            # If MAC Change
+            if (old_mac != hmac) :                                      # If MAC Change
+                if (hmac == "") :                                       # If No New MAC
+                    st.writelog("%-17s - Leave old mac at '%s' since new mac is '%s'" % (hip,old_mac,hmac))
+                    hmac = old_mac                                      # Keep Old MAC
                 else:
-                    st.writelog("%s - Mac Address changed from '%s' to '%s'" % (hip,old_mac,hmac))
-                    wdatechange = wdate
-            if (old_hostname != hname):
-                st.writelog("IP %s Host Name changed from '%s' to '%s'" % (hip,old_hostname,hname))
-                wdatechange = wdate
+                    st.writelog("%-17s - Mac Address changed from '%s' to '%s'" % (hip,old_mac,hmac))
+                    wdatechange = wdate                                 # MAC Changed Upd. Date Chng
+
+            # If HostName Changed
+            if (old_hostname != hname):             
+                st.writelog("%-17s - Host Name changed from '%s' to '%s'" % (hip,old_hostname,hname))
+                wdatechange = wdate                                     # MAC Changed Upd. Date Chng
+
+            # Go Update Database
             if (DEBUG) : st.writelog ("Updating '%s' data" % (hip))
             dberr = db_update(st,wconn,wcur,hip,zip,hname,hmac,hmanu,hactive,wdateping,wdatechange) 
             if (dberr != 0) :                                           # If no Error updating IP

@@ -8,28 +8,33 @@
 #   Requires :  sh
 #   SCCS-Id. :  @(#) sadm_fetch_servers.sh 1.0 2015.09.06
 # --------------------------------------------------------------------------------------------------
-#  Change Log
-#   2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
-#   2017_02_09  v1.8 Change Script name and change SADM server default crontab
-#   2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
-#   2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
-#   2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
-#   2017_08_03  v2.2 Minor Bug Fix
-#   2017_08_24  v2.3 Rewrote section of code & Message more concise
-#   2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
-#   2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
-#   2017_12_17  v2.6 Modify to use MySQL instead of PostGres
-#   2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
-#   2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
-#   2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
-#   2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
-#   2018_05_06  v2.12 Small Modification for New Libr Version
-#   2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
-#   2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
-#   2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
-#   2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
-#   2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
-#@  2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
+# Change Log
+# 2016_12_12  v1.6 Major changes to include ssh test to each server and alert when not working
+# 2017_02_09  v1.8 Change Script name and change SADM server default crontab
+# 2017_04_04  v1.9 Cosmetic - Remove blank lines inside processing servers
+# 2017_07_07  v2.0 Remove Ping before doing the SSH to each server (Not really needed)
+# 2017_07_20  v2.1 When Error Detected - The Error is included at the top of Email (Simplify Diag)
+# 2017_08_03  v2.2 Minor Bug Fix
+# 2017_08_24  v2.3 Rewrote section of code & Message more concise
+# 2017_08_29  v2.4 Bug Fix - Corrected problem when retrying rsync when failed
+# 2017_08_30  v2.5 If SSH test to server fail, try a second time (Prevent false Error)
+# 2017_12_17  v2.6 Modify to use MySQL instead of PostGres
+# 2018_02_08  v2.8 Fix compatibility problem with 'dash' shell
+# 2018_02_10  v2.9 Rsync on SADMIN server (locally) is not using ssh
+# 2018_04_05  v2.10 Do not copy web Interface crontab from backup unless file exist
+# 2018_05_06  v2.11 Remove URL from Email when Error are detecting while fetching data
+# 2018_05_06  v2.12 Small Modification for New Libr Version
+# 2018_06_29  v2.13 Use SADMIN Client Dir in Database instead of assuming /sadmin as root dir
+# 2018_07_08  v2.14 O/S Update crontab file is recreated and updated if needed at end of script.
+# 2018_07_14  v2.15 Fix Problem Updating O/S Update crontab when running with the dash shell.
+# 2018_07_21  v2.16 Give Explicit Error when cannot connect to Database
+# 2018_07_27  v2.17 O/S Update Script will store each server output log in $SADMIN/tmp for 7 days.
+# 2018_08_08  v2.18 Server not responding to SSH wasn't include in O/S update crontab,even active
+# 2018_09_14  v2.19 Alert are now send to Production Alert Group (sprod-->Slack Channel sadm_prod)
+# 2018_09_18  v2.20 Alert Minors fixes
+# 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
+# 2018_09_26  v2.22 Reformat Error message for alerting systsem
+#@2018_10_04  v2.23 Supplemental message about o/s update crontab modification
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -53,10 +58,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -65,13 +71,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.18'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='2.23'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -84,15 +90,16 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="sprod"                     # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
 
 
-
+  
 
 #===================================================================================================
 # Scripts Variables 
@@ -471,34 +478,105 @@ process_servers()
 
 
 
+# --------------------------------------------------------------------------------------------------
+# Check SysMon report files (*.rpt) received for errors & for failed Script (Last line of all *.rch)
+# --------------------------------------------------------------------------------------------------
+check_for_alert()
+{
+
+    # ----------
+    # Process All Error/Warning collected by SysMon 
+    # Get all *.rpt files content and output it then a temp file.
+    #  Example : 
+    #  find $SADM_WWW_DAT_DIR -type f -name *.rpt -exec cat {} \;
+    #   Warning;nomad;2018.09.16;11:00;linux;FILESYSTEM;Filesystem /usr at 86% > 85%;mail;sadmin
+    #   Error;nano;2018.09.16;11:00;SERVICE;DAEMON;Service crond|cron not running !;sadm;sadm
+    #   Error;holmes;2018.09.16;11:02;linux;FILESYSTEM;Filesystem /usr at 85% > 85%;sprod;sprod
+    #   Error;raspi0;2018.09.16;11:00;linux;CPU;CPU at 100 pct for more than 240 min;mail;sadmin
+    # ----------
+    sadm_writelog " "
+    sadm_writelog "Check All Servers SysMon Report Files for Warning and Errors"
+    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
+    find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
+    if [ -s "$SADM_TMP_FILE1" ]                                         # If File Not Zero in Size
+        then cat $SADM_TMP_FILE1 | while read line                      # Read Each Line of file
+                do
+                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
+                emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
+                if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
+                    then etype="W"                                      # Set Event Type to Warning
+                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
+                         esubject="$emess"                              # Specify it is a Warning
+                fi
+                if [ ${line:0:1} = "I" ] || [ ${line:0:1} = "i" ]       # If it is an Info
+                    then etype="I"                                      # Set Event Type to Info
+                         egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Info Alert Group
+                         esubject="$emess"                              # Specify it is an Info
+                fi
+                if [ ${line:0:1} = "E" ] || [ ${line:0:1} = "e" ]       # If it is an Info
+                    then etype="E"                                      # Set Event Type to Error
+                         egroup=`echo $line | awk -F\; '{ print $9 }'`  # Get Error Alert Group
+                         esubject="$emess"                              # Specify it is a Error
+                fi
+                if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
+                fi
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" ""   # Send Alert 
+                done 
+        else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
+    fi
+
+
+    # ----------
+    # Process All Error encountered in scripts (last Line of rch that end with a 1)
+    # Example of line in rch file
+    #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 1
+    # ----------
+    # Gather all last line of all *rch files that end with a 1 (Error)
+    sadm_writelog " "
+    sadm_writelog "Check All Servers [R]esult [C]ode [H]istory Scripts Files for Errors"
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' 
+    find $SADM_WWW_DAT_DIR -type f -name '*.rch' -exec tail -1 {} \;| awk 'match($9,/1/) { print }' > $SADM_TMP_FILE2 2>&1
+    if [ -s "$SADM_TMP_FILE2" ]                                         # If File Not Zero in Size
+        then cat $SADM_TMP_FILE2 | while read line                      # Read Each Line of file
+                do                
+                if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
+                etype="S"                                               # Set Script Event Type 
+                ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
+                edate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
+                etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
+                escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
+                egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
+                esubject="$escript reported an error on $ehost"
+                emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
+                if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
+                fi
+                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" "" # Send Alert 
+                done 
+        else sadm_writelog  "No error reported by any scripts files (*.rch)" 
+    fi
+
+}
 
 
 
 # --------------------------------------------------------------------------------------------------
 #                                       Script Start HERE
 # --------------------------------------------------------------------------------------------------
-    # If you want this script to be run only by 'root'.
-    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo %s" "${0##*/}"                          # Suggest using sudo
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S with error
-    fi
 
-    sadm_start                                                          # Start Using SADM Tools
-    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
-
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN Server
-        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-             sadm_writelog "Process aborted"                            # Abort advise message
-             sadm_stop 1                                                # Close and Trim Log
-             exit 1                                                     # Exit To O/S
-    fi
-
-    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
-    while getopts "vhd:" opt ; do                                       # Loop to process Switch
+# Evaluate Command Line Switch Options Upfront
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       exit 0
+               fi
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -512,16 +590,27 @@ process_servers()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
-        then sadm_writelog "Debug activated, Level ${DEBUG_LEVEL}"      # Display Debug Level
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+    # Call SADMIN Initialization Procedure
+    sadm_start                                                          # Init Env Dir & RC/Log File
+    if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
     fi
 
-    # Create File that will include only Error message that will be sent to user if requested
-    echo "----------" > $SADM_ELOG
-    echo "Date/Time  : `date`"     >> $SADM_ELOG
-    echo "Script Name: ${SADM_PN}" >> $SADM_ELOG
-    echo "Hostname   : $HOSTNAME " >> $SADM_ELOG
-    echo "----------" >> $SADM_ELOG
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
+    fi
 
     # Process All Active Linux/Aix servers
     LINUX_ERROR=0; AIX_ERROR=0                                          # Init. Error count to 0
@@ -540,17 +629,7 @@ process_servers()
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
 
-    if [ "$SADM_EXIT_CODE" -ne 0 ]
-        then sadm_writelog "Writing Error Encountered at the top of the log"
-             echo "----------" >> $SADM_ELOG
-             cat $SADM_ELOG $SADM_LOG > $SADM_TMP_FILE3 2>&1
-             cp $SADM_TMP_FILE3 $SADM_LOG
-             #cp $SADM_ELOG $SADM_LOG
-             #alert_user "M" "E" "$_server" ""  "`cat $SADM_ELOG`"         # Email User
-
-    fi
-
-    # Being root can update o/s update crontab - Can't while in web interface
+    # Being root we can modify O/S Update crontab - Can't while in web interface
     work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'`          # Work crontab sha1sum
     real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'`          # Real crontab sha1sum
     if [ "$work_sha1" != "$real_sha1" ]                                 # Work Different than Real ?
@@ -558,9 +637,12 @@ process_servers()
              chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set Permission on crontab
              sadm_writelog "O/S Update crontab was updated ..."
         else
-             sadm_writelog "No modification needed for O/S update crontab ..."
+             sadm_writelog "No changes made to O/S Update schedule ..."
+             sadm_writelog "No need to update O/S Update crontab ..."
     fi
 
-    # Gracefully Exit the script
+    # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
+    check_for_alert                                                     # Report Alert if Any
+
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
     exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)

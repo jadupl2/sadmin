@@ -24,7 +24,9 @@
 # 2018_06_05    v1.12 Enhance Ouput Display - Add Missing Setup Dir, Review Purge Commands
 # 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
 # 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
-#@2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
+# 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
+#@2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
+# 2018_09_28    v1.17 Code Optimize and Cleanup
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -35,10 +37,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Shell Library
+#===================================================================================================
 #
     # TEST IF SADMIN LIBRARY IS ACCESSIBLE
     if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
-        then echo "Please set 'SADMIN' Environment Variable to install directory." 
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
     if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
@@ -47,13 +50,13 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.15'                              # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='1.17'                              # Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate entry in Return Code History .rch
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
     # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
@@ -66,12 +69,14 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
-    #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
+
 
 
 
@@ -172,7 +177,7 @@ dir_housekeeping()
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
-    set_dir "$SADM_CFG_DIR"       "0755" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
+    set_dir "$SADM_CFG_DIR"       "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN CFG Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
 
@@ -280,22 +285,46 @@ file_housekeeping()
     sadm_writelog "$SADM_80_DASH"
     sadm_writelog "CLIENT FILES HOUSEKEEPING STARTING"
     sadm_writelog " "
-    sadm_writelog "${SADM_TEN_DASH}"
 
 
     # Remove files that should only be there on the SADMIN Server not the client.
     if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] 
-       then sadm_writelog "Remove useless files on client"
+       then sadm_writelog "${SADM_TEN_DASH}"
+            sadm_writelog "Remove useless files on client (if any) ..."
+            #
             afile="$SADM_WWW_LIB_DIR/.crontab.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
             afile="$SADM_CFG_DIR/.dbpass"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi            
+            #
+            afile="$SADM_CFG_DIR/.alert_history.seq"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/alert_history.seq"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/.alert_history.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/alert_history.txt"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/.version"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            afile="$SADM_CFG_DIR/.versum"
+            if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
+            #
+            sadm_writelog "${SADM_TEN_DASH}"
     fi
 
     # Make sure crontab for SADMIN client have proper permission and owner
     afile="/etc/cron.d/sadm_client"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for SADMIN client have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -306,7 +335,9 @@ file_housekeeping()
     # Make sure crontab for SADMIN server have proper permission and owner
     afile="/etc/cron.d/sadm_server"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for SADMIN server have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -317,7 +348,9 @@ file_housekeeping()
     # Make sure crontab for O/S Update have proper permission and owner
     afile="/etc/cron.d/sadm_osupdate"
     if [ -f "$afile" ] 
-        then sadm_writelog "chmod 0644 $afile"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for O/S Update have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
              chmod 0644 $afile
              sadm_writelog "chown root:root $afile"
              chown root:root $afile
@@ -472,7 +505,7 @@ file_housekeeping()
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
-             find $SADM_BIN_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1     # Change Files Privilege
+             find $SADM_BIN_DIR -type f -exec chmod -R 775 {} \; >/dev/null 2>&1     # Change Files Privilege
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -536,9 +569,8 @@ file_housekeeping()
     # Remove files older than 7 days in SADMIN TEMP Directory
     if [ -d "$SADM_TMP_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_TMP_DIR -type f -mtime +7 -exec rm -f {} \;"
-             find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;" 
+             find $SADM_TMP_DIR  -type f -mtime +7 -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \; >/dev/null 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
@@ -547,9 +579,9 @@ file_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Delete pid files once a day - To prevent cause script not to run"
-             find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
+             sadm_writelog "Delete pid files once a day - This prevent script not to run"
              sadm_writelog "find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \;" 
+             find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
     fi
 

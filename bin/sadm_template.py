@@ -6,11 +6,11 @@
 #   Requires    :   python3 and SADMIN Python Library
 #   Description :
 #
-#   Note        :   All scripts (Shell,Python,php) and screen output are formatted to have and use 
-#                   a 100 characters per line. Comments in script always begin at column 73. You 
-#                   will have a better experience, if you set screen width to have at least 100 Chr.
+# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+#        You will have a better experience, if you set screen width to have at least 100 Characters.
 # 
-# --------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
@@ -29,6 +29,7 @@
 # 2018_05_15 V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
 # 2018_05_20 V1.9 Restructure the code and added comments
 # 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
+#@2018_10_02 V2.1 Add Debug variable to get more verbosity 
 # 
 # --------------------------------------------------------------------------------------------------
 #
@@ -68,7 +69,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.0"                 # Current Script Version
+    st.ver              = "2.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -78,9 +79,11 @@ def setup_sadmin():
     st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
     st.exit_code        = 0                     # Script Exit Code for you to use
+    st.debug            = 0                     # Increase Verbose from 0 to 9 
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
-    #st.cfg_mail_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_type   = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
+    #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
     #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines

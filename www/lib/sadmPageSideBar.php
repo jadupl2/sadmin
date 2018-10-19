@@ -26,9 +26,11 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#   2018_02_07  V2.1 Added Performance Link in SideBar
-#   2018_07_09  v2.2 Change SideBar Layout
-#   2018_07_21  v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
+# 2018_02_07 V2.1 Added Performance Link in SideBar
+# 2018_07_09 v2.2 Change SideBar Layout
+# 2018_07_21 v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
+# 2018_09_16 v2.4 Add Alert Group in RCH Array
+#@2018_09_22 v2.5 Failed Script counter was wrong
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -42,7 +44,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -60,15 +62,15 @@ $URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Perfor
 // ================================================================================================
 function build_sidebar_scripts_info() {
     
-        $DEBUG = FALSE;                                                     # Activate/Deactivate Debug
+        $DEBUG = FALSE;                                                 # Activate/Deactivate Debug
     
         # Reset All Counters
-        $count=0;                                                           # Working Counter
+        $count=0;                                                       # Working Counter
         $script_array = array() ;
     
         # Form the base directory name where all the servers 'rch' files are located
-        $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                    # $SADMIN/www/dat
-        if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }            # Debug Display RCH Root Dir
+        $RCH_ROOT = $_SERVER['DOCUMENT_ROOT'] . "/dat/";                # $SADMIN/www/dat
+        if ($DEBUG) { echo "<br>Opening $RCH_ROOT directory "; }        # Debug Display RCH Root Dir
     
         # Make sure that the DATA Root directory is a directory
         if (! is_dir($RCH_ROOT)) {
@@ -101,9 +103,9 @@ function build_sidebar_scripts_info() {
                         $tag = explode(" ",$line_array[$last_index]);
                         $num_tags = count($tag);
 #                        echo "<br>Line Skipped : $line_array[$last_index]\n<br>Only $num_tags elements.<br>";
-                        if ($num_tags == 8) {
-                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode) = explode(" ",$line_array[$last_index], 8);
-                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". trim($ccode) .",". basename($wfile) ."\n";
+                        if ($num_tags == 9) {
+                            list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode) = explode(" ",$line_array[$last_index], 9);
+                            $outline = $cserver .",". $cdate1 .",". $ctime1 .",". $cdate2 .",". $ctime2 .",". $celapsed .",". $cname .",". $calert .",". trim($ccode) .",". basename($wfile) ."\n";
                             if ($DEBUG) {                                       # In Debug Show Output Line
                                 echo "<br>Output line is " . $outline ;         # Print Output Line
                             }
@@ -289,7 +291,7 @@ function SideBar_OS_Summary() {
     if ( ${kpart2} != 0 ) {                                             # If no Inactive server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_inactive'>";   # View Inactive server URL
-        echo "${kpart2} inactive(s)</a></div>";                         # Print Nb. Inactive Server
+        echo "${kpart2} Inactive(s)</a></div>";                         # Print Nb. Inactive Server
     }
 
     # DISPLAY NUMBER OF VIRTUAL SERVERS
@@ -297,7 +299,7 @@ function SideBar_OS_Summary() {
     if ( ${kpart2} != 0 ) {                                             # If no Virtual Server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_vm'>";         # View Virtual server URL
-        echo "${kpart2} virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
+        echo "${kpart2} Virtual(s)</a></div>";                          # Print Nb. of Virtual Srv. 
     }
 
     # DISPLAY NUMBER OF PHYSICAL SERVERS
@@ -305,7 +307,7 @@ function SideBar_OS_Summary() {
     if ( ${kpart2} != 0 ) {                                             # If No Physical Server
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_physical'>";   # View Physical server URL
-        echo "${kpart2} physical(s)</a></div>";                         # Print Nb. of Physical Srv.
+        echo "${kpart2} Physical(s)</a></div>";                         # Print Nb. of Physical Srv.
     }
 
     # DISPLAY NUMBER OF SPORADIC SERVERS
@@ -313,7 +315,7 @@ function SideBar_OS_Summary() {
     if ( ${kpart2} != 0 ) {                                             # If no sporadic servers
         echo "\n<div class='SideBarItem'>";                             # SideBar Item Div Class
         echo "<a href='" . $URL_SERVER . "?selection=all_sporadic'>";   # View Sporadic server URL
-        echo "${kpart2} sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
+        echo "${kpart2} Sporadic(s)</a></div>";                         # Print Nb. of Sporadic Srv.
     }
     echo "\n<hr/>";                                                     # Print Horizontal Line
     
@@ -366,7 +368,7 @@ function SideBar_OS_Summary() {
 
     # Loop through Script Array to count Different Return Code
     foreach($script_array as $key=>$value) {
-        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$ccode,$cfile) = explode(",", $value);
+        list($cserver,$cdate1,$ctime1,$cdate2,$ctime2,$celapsed,$cname,$calert,$ccode,$cfile) = explode(",", $value);
         if ($ccode == 0) { $TOTAL_SUCCESS += 1; }
         if ($ccode == 1) { $TOTAL_FAILED  += 1; }
         if ($ccode == 2) { $TOTAL_RUNNING += 1; }

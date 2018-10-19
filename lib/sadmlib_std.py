@@ -28,8 +28,9 @@
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
 # 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
-# 2018_06_25    sadmlib_std.sh  v2.18 Correct problem trying to open DB on client.
-# 2018_07_22    sadmlib_std.sh  v2.19 When using 'writelog' don't print date/time only in log.
+# 2018_06_25    sadmlib_std.py  v2.18 Correct problem trying to open DB on client.
+# 2018_07_22    sadmlib_std.py  v2.19 When using 'writelog' don't print date/time only in log.
+#@2018_09_19    sadmlib_std.py  v2.20 Add alert group to RCH file.
 #
 #==================================================================================================
 try :
@@ -46,8 +47,8 @@ except ImportError as e:
 try :
     import pymysql
 except ImportError as e:
-    print ("The Python Module to access MySQL is not installed : %s " % e)
-    print ("We need to install it before continuying")
+    print ("The Python Module PyMySQL is not installed : %s " % e)
+    print ("We need to install it before continuing")
     print ("\nIf you are on Debian,Raspbian,Ubuntu family type the following command to install it:")
     print ("sudo apt-get install python3-pip")
     print ("sudo pip3 install PyMySQL")
@@ -69,6 +70,7 @@ fifty_dash          = "=" * 50                                          # Line o
 args                = len(sys.argv)                                     # Nb. argument receive
 osname              = os.name                                           # OS name (nt,dos,posix,...)
 platform            = sys.platform                                      # Platform (darwin,linux)
+
 # To calculate execution Time 
 start_time          = ""                                                # Script Start Date & Time
 stop_time           = ""                                                # Script Stop Date & Time
@@ -83,7 +85,7 @@ start_epoch         = ""                                                # Script
 class sadmtools():
 
     #-----------------------------------------------------------------------------------------------
-    #  INITIALISATION OF SADM TOOLS------------------------------------------------------
+    #  INITIALIZATION OF SADM TOOLS------------------------------------------------------
     #-----------------------------------------------------------------------------------------------
     def __init__(self):
         """ Class sadmtool: Series of function to that can be used to administer a Linux/Aix Farm.
@@ -91,8 +93,8 @@ class sadmtools():
 
         # Making Sure SADMIN Environment Variable is Define & import 'sadmlib_std.py' if can be found.
         if (os.getenv("SADMIN",default="X") == "X"):                    # SADMIN Env. Var. Defined ?
-            print ("SADMIN Environment Variable isn't define")          # SADMIN Var MUST be defined
-            print ("It indicate the directory where you installed the SADMIN Tools")
+            print ("SADMIN Environment Variable isn't define.")         # SADMIN Var MUST be defined
+            print ("It specify the directory where you installed the SADMIN Tools")
             print ("Add this line at the end of /etc/environment file") # Show Where to Add Env. Var
             print ("SADMIN='/[dir-where-you-install-sadmin]'")          # Show What to Add.
             print ("Then logout and log back in and run this script again.")
@@ -101,7 +103,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.19"                                # This Library Version
+        self.libver             = "2.21"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -162,6 +164,13 @@ class sadmtools():
         self.rpt_file           = self.rpt_dir + '/' + self.hostname + '.rpt' 
         self.cfg_file           = self.cfg_dir + '/sadmin.cfg'          # Configuration Filename
         self.cfg_hidden         = self.cfg_dir + '/.sadmin.cfg'         # Hidden Config Filename
+        self.alert_file         = self.cfg_dir + '/alert_group.cfg'     # AlertGroup Definition File
+        self.alert_init         = self.cfg_dir + '/.alert_group.cfg'    # AlertGroup Initial File
+        self.slack_file         = self.cfg_dir + '/alert_slack.cfg'     # Alert Slack Channel File
+        self.slack_init         = self.cfg_dir + '/.alert_slack.cfg'    # Alert Slack Channel Init
+        self.alert_hist         = self.cfg_dir + '/alert_history.cfg'   # Alert History Text File
+        self.alert_hini         = self.cfg_dir + '/.alert_history.cfg'  # Alert History Initial File
+        self.alert_seq          = self.cfg_dir + '/alert_history.seq'   # Alert Reference Counter 
         #self.crontab_work       = self.www_lib_dir + '/.crontab.txt'   # Work crontab
         #self.crontab_file       = '/etc/cron.d/sadmin'                 # Final crontab
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
@@ -174,7 +183,8 @@ class sadmtools():
         self.tmp_file3          = "%s_3.%s" % (self.tmp_file_prefix,self.tpid)  # Temp3 Filename
         
         # SADM Configuration file (sadmin.cfg) content loaded from configuration file 
-        self.cfg_mail_type              = 1                             # 0=No 1=Err 2=Succes 3=All
+        self.cfg_alert_type             = 1                             # 0=No 1=Err 2=Succes 3=All
+        self.cfg_alert_group            = "default"                     # Defined in alert_group.cfg
         self.cfg_host_type              = ""                            # [C or S] Client or Server
         self.cfg_mail_addr              = ""                            # Default is in sadmin.cfg
         self.cfg_cie_name               = ""                            # Company Name
@@ -238,6 +248,8 @@ class sadmtools():
         self.lscpu              = ""                                    # lscpu command path       
         self.parted             = ""                                    # parted command path       
         self.ethtool            = ""                                    # ethtool command path       
+        self.curl               = ""                                    # curl command path       
+        self.mutt               = ""                                    # mutt command path       
 
         self.load_config_file(self.cfg_file)                            # Load sadmin.cfg in cfg var
         self.check_requirements()                                       # Check SADM Requirement Met
@@ -359,7 +371,8 @@ class sadmtools():
             # Save Each Parameter found in Sadmin Configuration File
             if "SADM_MAIL_ADDR"              in CFG_NAME:  self.cfg_mail_addr      = CFG_VALUE
             if "SADM_CIE_NAME"               in CFG_NAME:  self.cfg_cie_name       = CFG_VALUE
-            if "SADM_MAIL_TYPE"              in CFG_NAME:  self.cfg_mail_type      = int(CFG_VALUE)
+            if "SADM_ALERT_TYPE"             in CFG_NAME:  self.cfg_alert_type     = int(CFG_VALUE)
+            if "SADM_ALERT_GROUP"            in CFG_NAME:  self.cfg_alert_group    = CFG_VALUE
             if "SADM_HOST_TYPE"              in CFG_NAME:  self.cfg_host_type      = CFG_VALUE
             if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
             if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
@@ -1058,8 +1071,8 @@ class sadmtools():
             if not os.path.exists(self.www_dir)      : os.mkdir(self.www_dir,0o0775)     # WWW  Dir.
             os.chown(self.www_dir, wuid, wgid)                          # Change owner of log file
             #
-            if not os.path.exists(self.www_doc_dir)  : os.mkdir(self.www_doc_dir,0o0775) # HTML Dir.
-            os.chown(self.www_doc_dir, wuid, wgid)                      # Change owner of rch file
+            #if not os.path.exists(self.www_doc_dir)  : os.mkdir(self.www_doc_dir,0o0775) # HTML Dir.
+            #os.chown(self.www_doc_dir, wuid, wgid)                      # Change owner of rch file
             #
             if not os.path.exists(self.www_dat_dir)  : os.mkdir(self.www_dat_dir,0o0775) # DAT  Dir.
             os.chown(self.www_dat_dir, wuid, wgid)                      # Change owner of dat file
@@ -1111,7 +1124,7 @@ class sadmtools():
                 print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number    
                 print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
                 sys.exit(1)     
-            rch_line="%s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,"2")
+            rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,".......... ........ ........",self.inst,self.cfg_alert_group,"2")
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
         return 0
@@ -1153,7 +1166,7 @@ class sadmtools():
             i = datetime.datetime.now()                                 # Get Current Stop Time
             stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                   # Format Stop Date & Time
             FH_RCH_FILE=open(self.rch_file,'a')                         # Open RCH Log - append mode
-            rch_line="%s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.exit_code)
+            rch_line="%s %s %s %s %s %s %s" % (self.hostname,start_time,stop_time,elapse_time,self.inst,self.cfg_alert_group,self.exit_code)
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
             if (self.log_footer) :                                      # Want to Produce log Footer
@@ -1162,26 +1175,26 @@ class sadmtools():
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
         # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
-        if self.cfg_mail_type == 0 :                                    # User don't want any email
+        if self.cfg_alert_type == 0 :                                    # User don't want any email
             MailMess="No mail is requested when script end - No mail sent" # Message User Email Choice
 
-        if self.cfg_mail_type == 1 :                                    # Want Email on Error Only
+        if self.cfg_alert_type == 1 :                                    # Want Email on Error Only
             if self.exit_code != 0 :                                    # If Script Failed = Email
                 MailMess="Mail requested if script fail - Mail sent"    # Message User Email Choice
             else :                                                      # Script Success = No Email
                 MailMess="Mail requested if script fail - No mail sent" # Message User Email Choice
 
-        if self.cfg_mail_type == 2 :                                    # Email on Success Only
+        if self.cfg_alert_type == 2 :                                    # Email on Success Only
             if not self.exit_code == 0 :                                # If script is a Success
                 MailMess="Mail requested on Success only - Mail sent"   # Message User Email Choice
             else :                                                      # If Script not a Success
                 MailMess="Mail requested on Success only - No mail sent"# Message User Email Choice
 
-        if self.cfg_mail_type == 3 :                                    # User always Want email 
+        if self.cfg_alert_type == 3 :                                    # User always Want email 
             MailMess="Mail requested on Success or Error - Mail sent"   # Message User Email Choice
     
-        if self.cfg_mail_type > 3 or self.cfg_mail_type < 0 :           # User Email Choice Invalid
-            MailMess="SADM_MAIL_TYPE is not set properly [0-3] Now at %s",(str(cfg_mail_type))
+        if self.cfg_alert_type > 3 or self.cfg_alert_type < 0 :           # User Email Choice Invalid
+            MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(cfg_alert_type))
 
         if self.mail == "" :                                            # If Mail Program not found
             MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice
@@ -1208,13 +1221,13 @@ class sadmtools():
         wsub_error="SADM : ERROR of %s on %s" % (self.pn,self.hostname) # Format Failed Subject
     
         # If Error & User want email
-        if self.exit_code != 0 and (self.cfg_mail_type == 1 or self.cfg_mail_type == 3): 
+        if self.exit_code != 0 and (self.cfg_alert_type == 1 or self.cfg_alert_type == 3): 
             wsubject=wsub_error                                         # Build the Subject Line
            
-        if self.cfg_mail_type == 2 and self.exit_code == 0 :            # Success & User Want Email
+        if self.cfg_alert_type == 2 and self.exit_code == 0 :            # Success & User Want Email
             wsubject=wsub_success                                       # Format Subject Line
 
-        if self.cfg_mail_type == 3 :                                    # USer Always want Email
+        if self.cfg_alert_type == 3 :                                    # USer Always want Email
             if self.exit_code == 0 :                                    # If Script is a Success
                 wsubject=wsub_success                                   # Build the Subject Line
             else :                                                      # If Script Failed 

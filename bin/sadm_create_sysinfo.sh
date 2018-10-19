@@ -25,6 +25,9 @@
 # 2018_06_03    v2.5 Revisited and adapt to new Libr.
 # 2018_06_09    v2.6 Add SADMIN root dir & Date/Status of last O/S Update in ${HOSTNAME}_sysinfo.txt
 # 2018_06_11    v2.7 Change name to sadm_create_sysinfo.sh
+# 2018_09_19    v2.8 Update Default Alert Group
+# 2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
+#@2018_10_02    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -44,9 +47,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
+    export SADM_VER='3.0'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
@@ -63,7 +66,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
     # But some can overriden here on a per script basis.
-    #export SADM_MAIL_TYPE=1                            # 0=NoMail 1=MailOnError 2=MailOnOK 3=Allways
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
     #export SADM_MAX_LOGLINE=5000                       # When Script End Trim log file to 5000 Lines
     #export SADM_MAX_RCLINE=100                         # When Script End Trim rch file to 100 Lines
@@ -305,19 +309,27 @@ set_last_osupdate_date()
     # Verify if the o/s update rch file exist
     RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_osupdate.rch" 
     if [ ! -r "$RCHFILE" ]
-        then sadm_writelog "Can't read the O/S Update RCH file ($RCHFILE)"
-             sadm_writelog "May be no update ran yet ?"
-             sadm_writelog "Field SADM_OSUPDATE_DATE & SADM_OSUPDATE_STATUS can't be establish"
+        then sadm_writelog "Missing O/S Update RCH file ($RCHFILE)"
+             sadm_writelog "Can't determine last O/S Update Date & Status"
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
              return 1
     fi
 
     # Get Last Update Date from Return History File
+    sadm_writelog "Getting last o/s update date from $RCHFILE ..."
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
+    if [ $? -ne 0 ] 
+        then sadm_writelog "Can't determine last O/S Update Date ..."
+             return 1
+    fi
 
     # Get the Status of the last O/S update
-    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $8}'`
+    RCH_CODE=`tail -1 ${RCHFILE} |awk '{printf "%s", $9}'`
+    if [ $? -ne 0 ] 
+        then sadm_writelog "Can't determine last O/S Update Status ..."
+             return 1
+    fi
     case "$RCH_CODE" in 
         0)  OSUPDATE_STATUS="S" 
             ;;
@@ -328,6 +340,7 @@ set_last_osupdate_date()
       "*")  OSUPDATE_STATUS="U"
             ;;
     esac
+    return 0
 }
 
 
@@ -623,6 +636,10 @@ create_aix_config_files()
 create_summary_file()
 {
     set_last_osupdate_date                                              # Get Last O/S Update Date
+    if [ $? -ne 0 ] 
+        then sadm_writelog "Can't determine last O/S Update Date & Status ..."
+             SADM_EXIT_CODE=1
+    fi
 
     sadm_writelog "Creating $HWD_FILE ..."
     sadm_writelog " "
@@ -703,5 +720,6 @@ create_summary_file()
         else create_linux_config_files                                  # Collect Linux/OSX Info
     fi
     create_summary_file                                                 # Create Summary File for DB
+    SADM_EXIT_CODE=$?                                                   # Save Function Return code
     sadm_stop $SADM_EXIT_CODE                                           # Upd RCH & Trim Log & RCH
     exit $SADM_EXIT_CODE                                                # Exit Glob. Err.Code (0/1)

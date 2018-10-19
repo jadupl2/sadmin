@@ -30,6 +30,7 @@
 #       V2.2 Rework page design and button at bottom of page
 #   2018_04_07 JDuplessis
 #       V2.3 Change Page & Fixes some bugs
+#@2018_10_01 v2.4 Alert Group was remove from server view (Unnecessary)
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -44,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.3" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -219,6 +220,16 @@ function display_left_side ($wrow) {
     echo "\n<div class='server_left_data'>";
     if ($wrow['srv_monitor'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>"; 
+    
+    # Alert Group
+    #echo "\n\n<div class='server_left_label'>Alert Group</div>";
+    #echo "\n<div class='server_left_data'>";
+    #if (empty($wrow['srv_alert_group'])) { 
+    #    echo "&nbsp" ; 
+    #}else{ 
+    #    echo $wrow['srv_alert_group']; 
+    #}
+    #echo "</div>"; 
     
     # Creation Date 
     echo "\n\n<div class='server_left_label'>Creation Date</div>";

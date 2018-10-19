@@ -1,0 +1,14 @@
+# SADMIN Alert History File
+# This file Record each Alert that was sent either by email or Slack.
+# --------------------------------------------------------------------
+# Format History Line
+# Field 1= Reference Number (Increase each time an alert is sent)
+#       2= Alert issue from a [S]cript.
+#          [W]arning [E]rror come from System Monitor.
+#       3= Time of Event
+#       4= Date of Event
+#       5= Server where event happened
+#       6= Alert Group used to send alert
+#       7= Alert Message
+# --------------------------------------------------------------------
+#

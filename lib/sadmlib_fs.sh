@@ -14,8 +14,9 @@
 #---------------------------------------------------------------------------------------------------
 #   2.0      Revisited to work with SADM environment - Jan 2017 - Jacques Duplessis
 #   2.1      Added support for XFS Filesystem
-# 2018_05_18    V2.2 Adapted to be used by Auto Filesystem Increase
-# 2018_06_12    V2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
+# 2018_05_18 v2.2 Adapted to be used by Auto Filesystem Increase
+# 2018_06_12 v2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
+# 2018_09_20 v2.4 Fix problem with filesystem commands options
 #===================================================================================================
 # 
 #
@@ -91,6 +92,10 @@ setlvm_path() {
     if [ $? -eq 0 ] ; then LVSCAN=`which lvscan`            ; else LVSCAN=""  ;fi
     export LVSCAN
 
+    which vgs >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then VGS=`which vgs`                  ; else VGS=""  ;fi
+    export VGS
+
     which vgdisplay >/dev/null 2>&1 
     if [ $? -eq 0 ] ; then VGDISPLAY=`which vgdisplay`      ; else VGDISPLAY=""  ;fi
     export VGDISPLAY
@@ -121,11 +126,10 @@ setlvm_path() {
             sadm_writelog "XFS_GROWFS       = $XFS_GROWFS"
             sadm_writelog "XFS_REPAIR       = $XFS_REPAIR"
             sadm_writelog "VGDISPLAY        = $VGDISPLAY"
+            sadm_writelog "VGS              = $VGS"
             sadm_writelog " " ; sadm_writelog " " 
     fi
 }
-
-
 
 
 #===================================================================================================
@@ -133,9 +137,7 @@ setlvm_path() {
 #===================================================================================================
 create_vglist()
 {
-    if [ "$OSNAME" = "linux" ]
-       then $VGS --noheadings --separator , |awk -F, '{ print $1 }'|tr -d ' '} >$VGLIST
-    fi
+    $VGS --noheadings --separator , |awk -F, '{ print $1 }'|tr -d ' '} >$VGLIST
 }
 
 
@@ -755,5 +757,5 @@ create_fs()
 #---------------------------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------
-create_vglist
 setlvm_path
+create_vglist

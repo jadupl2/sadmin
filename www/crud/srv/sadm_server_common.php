@@ -26,17 +26,17 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_02 - Jacques Duplessis
 #       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
-#
+##@2018_10_01 v2.2 Remove Alert Group Field
 # ==================================================================================================
  
 
 #===================================================================================================
-#                                      GLOBAL Variables
-#===================================================================================================
+#                                      GLOBAL Variables//
+#======================================================//===========================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.1" ;                                                        # Current version number
-$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
+$DEBUG = False ;                                       // Debug Activated True/False
+$SVER  = "2.2" ;                                       // Current version number
+$URL_CREATE = '/crud/srv/sadm_server_create.php';      // Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
@@ -341,7 +341,7 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'CREATE') { $wrow['srv_monitor'] = True ; }           # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # Only Display / No Change
-       if ($wrow['src_monitor'] == 1) {                                 # If server is Monitored
+       if ($wrow['srv_monitor'] == 1) {                                 # If server is Monitored
           echo "\n<input type='radio' name='scr_monitor' value='1' ";   # 1=Monitored in scr_monitor
           echo "onclick='javascript: return false;' checked> Yes";      # And select Monitored Yes 
           echo "\n<input type='radio' name='scr_monitor' value='0' ";   # 0=No to scr_monitor
@@ -368,13 +368,73 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n</div>\n";                                                  # << End of double_input
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
-    
+ 
+    # Server Alert Group
+    $scr_alert_group="";
+    #
+    # echo "\n<div class='double_label'>Alert Group</div>";               # Display Name of Column
+    # echo "\n<div class='double_input'>";                                # Class for Column Input
+    # switch ($smode) {
+    #     case 'DISPLAY' :                                                # In Display/Delete Mode
+    #             echo "\n<input type='text' name='scr_alert_group' readonly "; # Input Box is ReadOnly
+    #             echo "maxlength='15' size='1' ";                        # Input Size & Box Size
+    #             echo "value='" . $wrow['srv_alert_group'] . "'/>";
+    #             break ;                                                 # End of Display/Delete Mode
+    #     case 'CREATE' : 
+    #             echo "\n<select name='scr_alert_group' size=1>";        # Combo Box 1 Item Display
+    #             $fh = fopen(SADM_ALERT_FILE , "r");                     # Set AlertGroup Filename
+    #             if ($fh) {                                              # If Successfully Open
+    #                 while (($line = fgets($fh)) !== false) {            # If Still Line to read
+    #                     if (strpos(trim($line),'#') === 0)              # If 1st Non-WhiteSpace is #
+    #                        continue;                                    # Go Read the next line
+    #                     list($gname,$gtype,$gvalue) = explode (' ',$line); # Split Alert Group Line 
+    #                     if (trim($gname) == "default") {                # It is the default
+    #                         echo "\n<option selected>" ;                # Make it the Selected Item
+    #                     }else{                                          # If not The Default
+    #                         echo "\n<option>";                          # Just make part of list
+    #                     }
+    #                     echo trim($gname) . "</option>";                # Display Item
+    #                 }
+    #                 fclose($fh);                                        # Close Alert Group
+    #             } else {
+    #                 echo "<BR>\nError opening Alert Group File " . SADM_ALERT_FILE . "<BR>";
+    #             }
+    #             echo "\n</select>";                                     # End of Select Combo Box
+    #             break ;                                                 # End of Display/Delete Mode
+    #     case 'UPDATE' : 
+    #             echo "\n<select name='scr_alert_group' size=1>";        # Size of Select Box
+    #             $fh = fopen(SADM_ALERT_FILE , "r");                     # Set AlertGroup Filename
+    #             if ($fh) {                                              # If Successfully Open
+    #                 while (($line = fgets($fh)) !== false) {            # If Still Line to read
+    #                     if (strpos(trim($line),'#') === 0)              # If 1st Non-WhiteSpace is #
+    #                        continue;                                    # Go Read the next line
+    #                     list($gname,$gtype,$gvalue) = explode (',',$line); # Split Alert Group Line
+    #                     if (trim($gname) == $wrow['srv_alert_group']) { # If it is the default
+    #                         echo "\n<option selected>" ;                # Make it the Selected Item
+    #                     }else{                                          # If not The Default
+    #                         echo "\n<option>";                          # Just make part of list
+    #                     }
+    #                     echo trim($gname) . "</option>";                # Display Item
+    #                 }
+    #                 fclose($fh);                                        # Close Alert Group
+    #             } else {
+    #                 echo "<BR>\nError opening Alert Group File " . SADM_ALERT_FILE . "<BR>";
+    #             }
+    #             echo "\n</select>";                                     # End of Select Combo Box
+    #             break ;                                                 # End of Display/Delete Mode
+    # }
+    # echo "\n</div>";                                                    # << End of double_input
+    # echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+
+
+
+
     # Display Performance Graph for this server
     echo "\n<div class='double_label'>Show Performance Graph</div>";    # Display Name of Column
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'CREATE') { $wrow['srv_graph'] = True ; }             # Default Value = Active
     if ($smode == 'DISPLAY') {                                          # Only Display / No Change
-       if ($wrow['src_monitor'] == 1) {                                 # If Display Perf Graph
+       if ($wrow['srv_graph'] == 1) {                                   # If Display Perf Graph
           echo "\n<input type='radio' name='scr_graph' value='1' ";     # 1=Show Graph in scr_graph
           echo "onclick='javascript: return false;' checked> Yes";      # And select Show Graph Yes 
           echo "\n<input type='radio' name='scr_graph' value='0' ";     # 0=No to scr_graph

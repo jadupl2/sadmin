@@ -24,59 +24,68 @@
 #   1.0      Initial Version - May 2016 - Jacques Duplessis
 #   1.5      Adapted to work with XFS Filesystem
 #   2.0      Major rewrite
-# 2017_09_01 JDuplessis 
-#   V2.1  - For Now Remove RPM Option from main Menu (May put it back later)
-# 2017_09_27 JDuplessis 
-#   V2.1a - Don't send email when script terminate with error
-# 2017_10_07 JDuplessis 
-#   V2.2  - Correct typo error and correct problem when creating filesystem (when changing type)
-# 2018_01_03 JDuplessis 
-#   V2.3  - Correct Main Menu Display Problem 
-# 2018_05_14 JDuplessis 
-#   V2.4  - Fix Problem with echo command on MacOS
-# 2018_05_14 JDuplessis 
-#   V2.5  - Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
+# 2017_09_01 V2.1 For Now Remove RPM Option from main Menu (May put it back later)
+# 2017_09_27 V2.1a Don't send email when script terminate with error
+# 2017_10_07 V2.2 Correct typo error and correct problem when creating filesystem (when changing type)
+# 2018_01_03 V2.3 Correct Main Menu Display Problem 
+# 2018_05_14 V2.4 Fix Problem with echo command on MacOS
+# 2018_05_14 V2.5 Add SADM_USE_RCH Variable to use or not a RCH FIle (Set to 'N' for this Script)
+# 2018_09_20 v2.6 Update code to align with latest Library
+#
 #=================================================================================================== 
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
 
 
-
-#
-#===========  S A D M I N    T O O L S    E N V I R O N M E N T   D E C L A R A T I O N  ===========
-# If You want to use the SADMIN Libraries, you need to add this section at the top of your script
-# You can run $SADMIN/lib/sadmlib_test.sh for viewing functions and informations avail. to you.
-# --------------------------------------------------------------------------------------------------
-if [ -z "$SADMIN" ] ;then echo "Please assign SADMIN Env. Variable to install directory" ;exit 1 ;fi
-if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be located"   ;exit 1 ;fi
-#
-# YOU CAN CHANGE THESE VARIABLES - They Influence the execution of functions in SADMIN Library
-SADM_VER='2.5'                             ; export SADM_VER            # Your Script Version
-SADM_LOG_TYPE="L"                          ; export SADM_LOG_TYPE       # S=Screen L=LogFile B=Both
-SADM_LOG_APPEND="Y"                        ; export SADM_LOG_APPEND     # Append to Existing Log ?
-SADM_MULTIPLE_EXEC="Y"                     ; export SADM_MULTIPLE_EXEC  # Run many copy at same time
-SADM_USE_RCH="N"                           ; export SADM_USE_RCH        # Upd Record History File
-#
-# DON'T CHANGE THESE VARIABLES - Need to be defined prior to loading the SADMIN Library
-SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
-SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
-SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
-SADM_TPID="$$"                             ; export SADM_TPID           # Script PID
-SADM_EXIT_CODE=0                           ; export SADM_EXIT_CODE      # Script Exit Return Code
-SADM_BASE_DIR=${SADMIN:="/sadmin"}         ; export SADM_BASE_DIR       # SADMIN Root Base Dir.
-#
-[ -f ${SADMIN}/lib/sadmlib_std.sh ]  && . ${SADMIN}/lib/sadmlib_std.sh  # Load SADMIN Std Library
-[ -f ${SADMIN}/lib/sadmlib_screen.sh ]  && . ${SADMIN}/lib/sadmlib_screen.sh  # Load SADM Screen Lib
-#
-# The Default Value for these Variables are defined in $SADMIN/cfg/sadmin.cfg file
-# But some can overriden here on a per script basis
-# --------------------------------------------------------------------------------------------------
-# An email can be sent at the end of the script depending on the ending status 
-# 0=No Email, 1=Email when finish with error, 2=Email when script finish with Success, 3=Allways
-SADM_MAIL_TYPE=1                           ; export SADM_MAIL_TYPE      # 0=No 1=OnErr 2=OnOK  3=All
-#SADM_MAIL_ADDR="your_email@domain.com"    ; export SADM_MAIL_ADDR      # Email to send log
+#===================================================================================================
+#               Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
+    # Test if 'SADMIN' environment variable is defined
+    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+        then echo "Please set 'SADMIN' Environment Variable to the install directory." 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # Test if 'SADMIN' Shell Library is readable 
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+        then echo "SADMIN Library can't be located"     # Without it, it won't work 
+             exit 1                                     # Exit to Shell with Error
+    fi
+
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
+
+    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    export SADM_PN=${0##*/}                             # Current Script name
+    export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
+    export SADM_TPID="$$"                               # Current Script PID
+    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
+#
+#---------------------------------------------------------------------------------------------------
+#
+    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
+    # But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
+    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+    #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
+#
+#===================================================================================================
+#
+[ -f ${SADMIN}/lib/sadmlib_screen.sh ]  && . ${SADMIN}/lib/sadmlib_screen.sh  # Load SADM Screen Lib
+
+
+
 
 #===================================================================================================
 #            M A I N      S E C T I O N   -   P R O G R A M   S T A R T    H E R E 
@@ -122,29 +131,30 @@ NORMAL="\033[0;39m"
 # and setf instead of setaf) which use different numbers, not given here.
 
 # Text mode commands
-tput bold    # Select bold mode
-tput dim     # Select dim (half-bright) mode
-tput smul    # Enable underline mode
-tput rmul    # Disable underline mode
-tput rev     # Turn on reverse video mode
-tput smso    # Enter standout (bold) mode
-tput rmso    # Exit standout mode
+#tput bold    # Select bold mode
+#tput dim     # Select dim (half-bright) mode
+#tput smul    # Enable underline mode
+#tput rmul    # Disable underline mode
+#tput rev     # Turn on reverse video mode
+#tput smso    # Enter standout (bold) mode
+#tput rmso    # Exit standout mode
 
 
 #===================================================================================================
 #            M A I N      S E C T I O N   -   P R O G R A M   S T A R T    H E R E 
 #===================================================================================================
 #
-    # User root you must be 
-    if ! [ $(id -u) -eq 0 ]                                             # Only ROOT can run Script
-        then printf "\nThis script must be run by the 'root' user"      # Advise User Message
-             printf "\nTry sudo \$SADMIN/bin/%s" "$SADM_PN"             # Suggest using 'sudo'
-             printf "\nProcess aborted\n\n"                             # Abort advise message
-             exit 1                                                     # Exit To O/S
-    fi
-
+    # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
+
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
+    if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
+        then echo "Script can only be run by the 'root' user"           # Advise User Message
+             echo "Process aborted"                                     # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S with Error
+    fi
 
     stty_orig=`stty -g`                                                 # Save stty setting    
     #stty erase "^H"                                                    # Make sure backspace work
@@ -154,7 +164,7 @@ tput rmso    # Exit standout mode
     # Display Menu and Process request
     while :
         do
-        sadm_display_heading "Main Menu"
+        sadm_display_heading "SADMIN Main Menu"
         #menu_array="Filesystem_Tools RPM_DataBase_Tools"
         menu_array="Filesystem_Tools "
         sadm_display_menu "$menu_array"
