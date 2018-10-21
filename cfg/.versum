@@ -225,7 +225,7 @@ bf82a41e589f5e7a1bd4d005d2015431  ./www/view/sys/sadm_subnet.php
 2c6604580a06889b0f4333f6621029d9  ./bin/sadm_backup_sdcard.sh
 3787e4fa404c434478ed4b694c194997  ./bin/sadm_backupdb.sh
 d065fa1ac8ffc4fb0be55b72c4252cf2  ./bin/sadm_cfg2html.sh
-6d112981210b737160ad8f63bd65df2d  ./bin/sadm_client_housekeeping.sh
+cf35a8c2ef8d6db84b4c34ee126b47ce  ./bin/sadm_client_housekeeping.sh
 4a36f91c0533677bbf9d248fc0f07d41  ./bin/sadm_client_sunset.sh
 740a23a253bf7e79e2050abd43d1dbcb  ./bin/sadm_create_mksysb.sh
 fcf714bd7319f435ea33e389eed542bf  ./bin/sadm_create_sysinfo.sh
