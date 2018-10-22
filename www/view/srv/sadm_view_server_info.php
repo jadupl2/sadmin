@@ -30,7 +30,8 @@
 #       V2.2 Rework page design and button at bottom of page
 #   2018_04_07 JDuplessis
 #       V2.3 Change Page & Fixes some bugs
-#@2018_10_01 v2.4 Alert Group was remove from server view (Unnecessary)
+# 2018_10_01 v2.4 Alert Group was remove from server view (Unnecessary)
+#@2018_10_22 v2.5 Change for shorter field label
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -45,7 +46,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -156,7 +157,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # SADMIN Install Root Directory
-    echo "\n\n<div class='server_left_label'>SADMIN Install Dir.</div>";
+    echo "\n\n<div class='server_left_label'>Install Directory</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_sadmin_dir'])) { echo "&nbsp" ; }else{ echo $wrow['srv_sadmin_dir'] ; }
     echo "</div>";
@@ -252,7 +253,7 @@ function display_left_side ($wrow) {
     echo "</div>";
 
     # Last Update Date 
-    echo "\n\n<div class='server_left_label'>Last Automatic Upd.</div>";
+    echo "\n\n<div class='server_left_label'>Last Auto Update</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_date_update'])) { 
         echo "&nbsp" ; 
@@ -262,7 +263,7 @@ function display_left_side ($wrow) {
     echo "</div>";
     
     # Last O/S Update Date 
-    echo "\n\n<div class='server_left_label'>Last O/S Update</div>";
+    echo "\n\n<div class='server_left_label'>Last O/S Upd. Date</div>";
     echo "\n<div class='server_left_data'>";
     if (empty($wrow['srv_date_osupdate'])) { 
         echo "&nbsp" ; 
@@ -405,13 +406,13 @@ function display_right_side ($wrow) {
     echo "</div>";
        
     # Server Auto Update
-    echo "\n\n<div class='server_right_label'>Update O/S Automatically</div>";
+    echo "\n\n<div class='server_right_label'>O/S Upd. Automatically</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_update_auto'] == True) { echo "Yes" ; }else{ echo "No" ; }
     echo "</div>";
     
     # Month that O/S Update Can Occurs
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Mth</div>";
+    echo "\n\n<div class='server_right_label'>O/S Upd. Allowed Months</div>";
     echo "\n<div class='server_right_data'>";
     $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
     if ($wrow['srv_update_month'] == "YNNNNNNNNNNNN" ) {
@@ -427,7 +428,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Date in the Month that O/S Update can Occur
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Date</div>";
+    echo "\n\n<div class='server_right_label'>O/S Upd. Allowed Dates</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_update_dom'] == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"){ # If it's to run every Day
         echo "Any Date";                                                # Then use a Star
@@ -442,7 +443,7 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Day of the week that O/S Update can Occur
-    echo "\n\n<div class='server_right_label'>Update O/S Allowed Days</div>";
+    echo "\n\n<div class='server_right_label'>O/S Upd. Allowed Days</div>";
     echo "\n<div class='server_right_data'>";
     $days = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
     if ($wrow['srv_update_dow'] == "YNNNNNNN") {                        # If it's to run every Day
@@ -458,7 +459,7 @@ function display_right_side ($wrow) {
     echo "</div>";
     
     # Time of the O/S Update
-    echo "\n\n<div class='server_right_label'>Update O/S Time</div>";
+    echo "\n\n<div class='server_right_label'>O/S Upd. Time</div>";
     echo "\n<div class='server_right_data'>";
     echo sprintf("%02d",$wrow['srv_update_hour']); 
     echo ":" ;
@@ -466,17 +467,17 @@ function display_right_side ($wrow) {
     echo "</div>";
 
     # Server Maintenance Mode
-    echo "\n\n<div class='server_right_label'>Maintenance Mode</div>";
+    echo "\n\n<div class='server_right_label'>Maint. Mode</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_maintenance'] == True)  { echo "Active" ; }else{ echo "Inactive" ; }
     echo "</div>";
 
     # Maintenance Mode Start and Stop TimeStamp
-    echo "\n\n<div class='server_right_label'>Maintenance Period Start</div>";
+    echo "\n\n<div class='server_right_label'>Maint. Period Start</div>";
     echo "\n<div class='server_right_data'>";
     echo $wrow['srv_maint_date_start'] ;
     echo "\n</div>";
-    echo "\n\n<div class='server_right_label'>Maintenance Period End</div>";
+    echo "\n\n<div class='server_right_label'>Maint. Period End</div>";
     echo "\n<div class='server_right_data'>";
     echo $wrow['srv_maint_date_end'] ;
     echo "\n</div>";    
