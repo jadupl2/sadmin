@@ -25,7 +25,8 @@
 # 2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
 # 2018_09_18    v2.23 Error reported was stating > instead of >=
 # 2018_09_21    v2.24 Ping System 3 times before signaling an Error
-#@2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
+# 2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
+#@2018_10_16    v2.26 Change email sent when smon configuration isn't found.
 #===================================================================================================
 #
 
@@ -42,7 +43,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.25";                                       # Version Number
+my $VERSION_NUMBER      = "2.26";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
@@ -165,12 +166,13 @@ sub load_sadmin_cfg {
     # Check if ${SADMIN}/cfg/sadmin.cfg, if not copy ${SADMIN}/cfg/.sadmin.cfg to sadmin.cfg
     if ( ! -e "$SADMIN_CFG_FILE"  ) {                                   # If sadmin.cfg not exist
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
-        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
-        my $mail_mess1 = "SADMIN configuration file $SADMIN_CFG_FILE on ${HOSTNAME} wasn't found.\n";
-        my $mail_mess2 = "The file was recreated A new file were created based on the template file ${$SADMIN_STD_FILE}.\n";
-        my $mail_mess3 = "You need to review it, to reflect your need.\n";
-        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
-        my $mail_subject = "SADM: WARNING $SADMIN_CFG_FILE not found on $HOSTNAME";
+        my $mail_mess0 = sprintf("This message was send by the SADMIN System Monitor.\n");
+        my $mail_mess1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess2 = "SADMIN configuration file $SADMIN_CFG_FILE on ${HOSTNAME} wasn't found.\n";
+        my $mail_mess3 = "The file was recreated based on the template file ${$SADMIN_STD_FILE}.\n";
+        my $mail_mess4 = "You need to review it, to reflect your need.\n";
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}${mail_mess4}";
+        my $mail_subject = "SADM WARNING: $SADMIN_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command
         @cmd = ("$CMD_CP $SADMIN_STD_FILE $SADMIN_CFG_FILE");           # cp template to sadmin.cfg
@@ -246,11 +248,12 @@ sub load_smon_file {
     # Check if `hostname`.smon already exist, if not copy .template.smon to `hostname`.smon
     if ( ! -e "$SYSMON_CFG_FILE"  ) {                                   # If hostname.smon not exist
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
-        my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
-        my $mail_mess1 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
-        my $mail_mess2 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
-        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}";
-        my $mail_subject = "SADM: INFO $SYSMON_CFG_FILE not found on $HOSTNAME";
+        my $mail_mess0 = sprintf("This message was send by the SADMIN System Monitor.\n");
+        my $mail_mess1 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
+        my $mail_mess2 = "SysMon configuration file $SYSMON_CFG_FILE for ${HOSTNAME} wasn't found.\n";
+        my $mail_mess3 = "A new one was created based on the template file ${SYSMON_STD_FILE}.\n";
+        my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
+        my $mail_subject = "SADM INFO: $SYSMON_CFG_FILE not found on $HOSTNAME";
         @cmd = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
         $return_code = 0xffff & system @cmd ;                           # Perform Mail Command
 #        @cmd = ("$CMD_CP $SYSMON_STD_FILE $SYSMON_CFG_FILE");           # cp template standard.smon
