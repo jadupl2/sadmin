@@ -10,53 +10,54 @@
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_11_05  V2.0 Create log file earlier to prevent error message
-# 2016_04_17  V2.1 Added Support for Linux Mint
-# 2016_04_19  V2.2 Minor Modifications concerning Trimming the Log File
-# 2017_07_03  V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
-# 2017_07_17  V2.4 Split Second line of log header into two lines/ Change Timming Line
-# 2017_08_12  V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
-# 2017_08_27  V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
-# 2017_09_23  V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not
-# 2017_09_29  V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
-# 2017_12_18  V2.9 Function were changed to run on MacOS and Some Restructuration was done
-# 2017_12_23  V2.10 SSH Command line construction added at the end of script
-# 2017_12_30  V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
-# 2018_01_03  V2.12 Added Check for facter command , if present use it get get hardware info
-# 2018_01_05  V2.13 Remove Warning when command can't be found for compatibility
-# 2018_01_23  V2.14 Add arc directory in $SADMIN/www for archiving purpose
-# 2018_01_25  V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_07  V2.16 Bug Fix when determining if server is a virtual or physical
-# 2018_02_08  V2.17 Correct 'if' statement compatibility problem with 'dash' shell
-# 2018_02_14  V2.18 Add Documentation Directory
-# 2018_02_22  V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
-# 2018_05_03  V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
-# 2018_05_06  V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
-# 2018_05_14  V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
-# 2018_05_23  V2.23 Remove some variables and logic modifications
-# 2018_05_26  V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
-# 2018_05_27  V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
-# 2018_05_28  V2.26 Added Loading of backup parameters coming from sadmin.cfg
-# 2018_06_04  V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
-# 2018_06_10  V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
-# 2018_06_14  V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
-# 2018_07_07  V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
-# 2018_07_16  V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
-# 2018_07_24  v2.32 Show Kernel version instead of O/S Codename in log header
-# 2018_08_16  v2.33 Remove Change Owner & Protection Error Message while not running with root.
-# 2018_09_04  v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
-# 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
-# 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
-# 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
-# 2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
-# 2018_09_22  v2.39 Change Alert Message Format
-# 2018_09_23  v2.40 Added alert_sysadmin function
-# 2018_09_25  v2.41 Enhance Email Standard Alert Message
-# 2018_09_26  v2.42 Send Alert Include Message Subject now
-# 2018_09_27  v2.43 Now Script log can be sent to Slack Alert
-# 2018_09_30  v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
-#@2018_10_04  v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
-#@2018_10_15  v2.46 Remove repetitive lines in Slack Message and Email Alert
+# 2016_11_05 V2.0 Create log file earlier to prevent error message
+# 2016_04_17 V2.1 Added Support for Linux Mint
+# 2016_04_19 V2.2 Minor Modifications concerning Trimming the Log File
+# 2017_07_03 V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
+# 2017_07_17 V2.4 Split Second line of log header into two lines/ Change Timming Line
+# 2017_08_12 V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
+# 2017_08_27 V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
+# 2017_09_23 V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not
+# 2017_09_29 V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
+# 2017_12_18 V2.9 Function were changed to run on MacOS and Some Restructuration was done
+# 2017_12_23 V2.10 SSH Command line construction added at the end of script
+# 2017_12_30 V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2018_01_03 V2.12 Added Check for facter command , if present use it get get hardware info
+# 2018_01_05 V2.13 Remove Warning when command can't be found for compatibility
+# 2018_01_23 V2.14 Add arc directory in $SADMIN/www for archiving purpose
+# 2018_01_25 V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_07 V2.16 Bug Fix when determining if server is a virtual or physical
+# 2018_02_08 V2.17 Correct 'if' statement compatibility problem with 'dash' shell
+# 2018_02_14 V2.18 Add Documentation Directory
+# 2018_02_22 V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
+# 2018_05_03 V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
+# 2018_05_06 V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
+# 2018_05_14 V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
+# 2018_05_23 V2.23 Remove some variables and logic modifications
+# 2018_05_26 V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
+# 2018_05_27 V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
+# 2018_05_28 V2.26 Added Loading of backup parameters coming from sadmin.cfg
+# 2018_06_04 V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
+# 2018_06_10 V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
+# 2018_06_14 V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
+# 2018_07_07 V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
+# 2018_07_16 V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
+# 2018_07_24 v2.32 Show Kernel version instead of O/S Codename in log header
+# 2018_08_16 v2.33 Remove Change Owner & Protection Error Message while not running with root.
+# 2018_09_04 v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
+# 2018_09_07 v2.35 Alerting System now support using Slack (slack.com).
+# 2018_09_16 v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
+# 2018_09_18 v2.37 Alert mechanism Update, Enhance Performance, fixes
+# 2018_09_20 v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
+# 2018_09_22 v2.39 Change Alert Message Format
+# 2018_09_23 v2.40 Added alert_sysadmin function
+# 2018_09_25 v2.41 Enhance Email Standard Alert Message
+# 2018_09_26 v2.42 Send Alert Include Message Subject now
+# 2018_09_27 v2.43 Now Script log can be sent to Slack Alert
+# 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
+# 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
+# 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
+# 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -74,7 +75,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.46"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.47"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1967,34 +1968,34 @@ sadm_stop() {
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
     #wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
-    case $SADM_ALERT_TYPE in
-      1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
-             then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
-                  wmess="Script execution time is $sadm_elapse"
-                  sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
-           fi
-          ;;
-      2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
-             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
-                  wmess="Script execution time is $sadm_elapse"
-                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-          fi
-          ;;
-      3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
-            then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
-                 wmess="Script execution time is $sadm_elapse"
-                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-            else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
-                 wmess="Script execution time is $sadm_elapse"
-                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
-          fi
-          ;;
-      4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
-          wmess="Correct problem in your script."
-          sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-          ;;
-    esac
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
+    # case $SADM_ALERT_TYPE in
+    #   1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
+    #          then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
+    #               wmess="Script execution time is $sadm_elapse"
+    #               sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
+    #        fi
+    #       ;;
+    #   2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
+    #          then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
+    #               wmess="Script execution time is $sadm_elapse"
+    #               sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #       fi
+    #       ;;
+    #   3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
+    #         then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
+    #              wmess="Script execution time is $sadm_elapse"
+    #              sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #         else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
+    #              wmess="Script execution time is $sadm_elapse"
+    #              sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
+    #       fi
+    #       ;;
+    #   4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
+    #       wmess="Correct problem in your script."
+    #       sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #       ;;
+    # esac
+    # if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
 
 
     # Normally we Delete the PID File when exiting the script.
