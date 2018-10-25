@@ -57,7 +57,7 @@
 # 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
 # 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
-# 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
+#@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
