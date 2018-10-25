@@ -40,7 +40,8 @@
 # 2018_06_10  v3.7 Change name to sadm_osupdate_farm.sh - and change client script name
 # 2018_07_01  v3.8 Use SADMIN dir. of client from DB & allow running multiple instance at once
 # 2018_07_11  v3.9 Solve problem when running update on SADMIN server (Won't start)
-#@2018_09_19  v3.10 Include Alert Group
+# 2018_09_19  v3.10 Include Alert Group
+#@2018_10_24  v3.11 Adjustment needed to call sadm_osupdate.sh with or without '-r' (reboot) option.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -67,7 +68,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.10'                              # Current Script Version
+    export SADM_VER='3.11'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -177,7 +178,7 @@ update_server_db()
 # --------------------------------------------------------------------------------------------------
 process_servers()
 {
-    sadm_writelog "PROCESS LINUX SERVERS"
+    #sadm_writelog "PROCESS LINUX SERVERS"
     SQL1="SELECT srv_name, srv_ostype, srv_domain, srv_update_auto, "
     SQL2="srv_update_reboot, srv_sporadic, srv_active, srv_sadmin_dir from server "
     if [ "$ONE_SERVER" != "" ] 
@@ -245,9 +246,9 @@ process_servers()
                          then wsubject="SADM: WARNING O/S Update - Server $server_name (O/S Update OFF)" 
                               echo "Server O/S Update is OFF"  | mail -s "$wsubject" $SADM_MAIL_ADDR
                      fi
-                else WREBOOT=" N"                                       # Default is no reboot
+                else WREBOOT=""                                         # Default is no reboot
                      if [ "$server_update_reboot" = "1" ]               # If Requested in Database
-                        then WREBOOT="Y"                                # Set Reboot flag to ON
+                        then WREBOOT=" -r"                              # Set Reboot flag to ON
                      fi                                                 # This reboot after Update
                      sadm_writelog "Starting $USCRIPT on ${server_name}.${server_domain}"
                      if [ "${server_name}.${server_domain}" != "$SADM_SERVER" ]
@@ -268,7 +269,7 @@ process_servers()
             sadm_writelog " "
             done < $SADM_TMP_FILE1
     fi
-    sadm_writelog " "
+    #sadm_writelog " "
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Total Error is $ERROR_COUNT and Warning at $WARNING_COUNT"
     return $ERROR_COUNT
