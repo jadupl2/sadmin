@@ -28,7 +28,7 @@
 # 2018_09_19    v2.8 Update Default Alert Group
 # 2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
 # 2018_10_02    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
-#@2018_10_20    v3.1 Show user what to do when can't get last O/S update date.
+# 2018_10_20    v3.1 Show user what to do when can't get last O/S update date.
 #@2018_10_21    v3.2 More info were added about the system and network in report file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -129,7 +129,8 @@ HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux 
 OSUPDATE_DATE=""                                ; export OSUPDATE_DATE  # Date of Last O/S Update 
 OSUPDATE_STATUS=""                              ; export OSUPDATE_STATUS # Status (S,F,R) O/S Update 
 LSBRELEASE=""                                   ; export LSBRELEASE     # lsb_release Location
-
+MIITOOL=""                                      ; export MIITOOL        # mii-tool command location 
+ETHTOOL=""                                      ; export ETHTOOL        # ethtool command location 
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -241,12 +242,14 @@ pre_validation()
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path 
                 command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path 
                 command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path 
-                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH  # Profiler Cmd Path 
+                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH # Profiler Cmd Path 
                 command_available "ipconfig"    ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path 
                 command_available "lshw"        ; LSHW=$SADM_CPATH      # lshw Cmd Path 
-                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # lshw Cmd Path 
-                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH # hostnamectl command Path 
-                command_available "lsb_release" ; LSBRELEASE=$SADM_CPATH # hostnamectl command Path 
+                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # nmcli Cmd Path 
+                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH   # hostnamectl Cmd Path 
+                command_available "lsb_release" ; LSBRELEASE=$SADM_CPATH    # lsb_release Cmd Path 
+                command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path 
+                command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path 
     fi
 
     # Aix and Linux Common Commands
@@ -325,7 +328,7 @@ set_last_osupdate_date()
     fi
 
     # Get Last Update Date from Return History File
-    sadm_writelog "Getting last o/s update date from $RCHFILE ..."
+    sadm_writelog "Getting last O/S Update date from $RCHFILE ..."
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
     if [ $? -ne 0 ] 
         then sadm_writelog " "
@@ -532,6 +535,30 @@ create_linux_config_files()
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
     sadm_writelog "Creating $NET_FILE ..."
+    for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"` 
+        do 
+        if [ "$MIITOOL" != "" ] 
+            then echo "#"   >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 echo "# Command: $MIITOOL $w"  >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 $MIITOOL $w  >> $NET_FILE
+            else sadm_writelog "Missing command mii-tool"
+        fi
+        done
+    
+    for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"` 
+        do 
+        if [ "$ETHTOOL" != "" ] 
+            then echo "#"   >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 echo "# Command: $ETHTOOL $w"  >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 $ETHTOOL $w  >> $NET_FILE
+            else sadm_writelog "Missing command ethtool"
+        fi
+        done
+
     if [ "$NMCLI" != "" ]
         then echo "#"   >> $NET_FILE
              for w in `$NMCLI -t device | awk -F: '{ print $1 }'| grep -v lo ` 
@@ -541,6 +568,7 @@ create_linux_config_files()
                 echo "# Command: $NMCLI device show $w"  >> $NET_FILE
                 echo "#${DASH_LINE}"  >> $NET_FILE 
                 $NMCLI device show $w  >> $NET_FILE
+
                 echo "#"   >> $NET_FILE
                 echo "#${DASH_LINE}"  >> $NET_FILE 
                 echo "# Command: $NMCLI -p -f general device show $w" >> $NET_FILE
@@ -572,6 +600,7 @@ create_linux_config_files()
              $IFCONFIG -a >> $NET_FILE
              echo "#" >> $NET_FILE
     fi
+    
     if [ "$NETSTAT" != "" ]
         then echo "#"       >> $NET_FILE
              echo "#${DASH_LINE}"  >> $NET_FILE 
@@ -581,6 +610,7 @@ create_linux_config_files()
              $NETSTAT -rn   >> $NET_FILE
              echo "#"       >> $NET_FILE
     fi
+    
     if [ "$NETWORKSETUP" != "" ]
         then echo "#"   >> $NET_FILE
              echo "#${DASH_LINE}"  >> $NET_FILE 
@@ -590,6 +620,7 @@ create_linux_config_files()
              $NETWORKSETUP -listallhardwareports >> $NET_FILE 2>&1
              echo "#"   >> $NET_FILE
     fi   
+
     if [ "$IPCONFIG" != "" ]
         then FirstTime=0 ; index=0
              while [ $index -le 10 ]                                    # Process from en0 to en9
@@ -624,6 +655,8 @@ create_linux_config_files()
     if [ -r '/etc/sshd.conf' ]   ; then print_file "/etc/sshd.conf"     "$NET_FILE" ; fi 
     if [ -r '/etc/shells' ]      ; then print_file "/etc/shells"        "$NET_FILE" ; fi 
     if [ -r '/etc/ntp.conf' ]    ; then print_file "/etc/ntp.conf"      "$NET_FILE" ; fi 
+
+
 
     # Collect System Information -------------------------------------------------------------------
     write_file_header "System Information" "$SYSTEM_FILE"
@@ -662,6 +695,7 @@ create_linux_config_files()
              $HOSTINFO      >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
+
     if [ "$SWVERS" != "" ]
         then echo "#"       >> $SYSTEM_FILE
              echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
@@ -671,6 +705,7 @@ create_linux_config_files()
              $SWVERS        >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
+
     if [ "$LSBRELEASE" != "" ]
         then echo "#"       >> $SYSTEM_FILE
              echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
@@ -680,6 +715,7 @@ create_linux_config_files()
              $LSBRELEASE -a        >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
+
     if [ "$SYSTEMPROFILER" != "" ]
         then echo "#"       >> $SYSTEM_FILE
              echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
@@ -802,7 +838,6 @@ create_summary_file()
 {
 
     sadm_writelog "Creating $HWD_FILE ..."
-    sadm_writelog " "
     echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
     echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
