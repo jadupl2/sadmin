@@ -25,8 +25,9 @@
 # 2018_06_09    v1.13 Add Help and Version Function - Change Startup Order
 # 2018_06_13    v1.14 Change all files in $SADMIN/cfg to 664.
 # 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
-#@2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
+# 2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
 # 2018_09_28    v1.17 Code Optimize and Cleanup
+#@2018_10_27    v1.18 Remove old dir. not use anymore (if exist)  
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -50,7 +51,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.17'                              # Current Script Version
+    export SADM_VER='1.18'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -168,7 +169,20 @@ dir_housekeeping()
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
 
-
+    # Remove Old Ver.1 Dir. Not use anymore 
+    if [ -d "${SADM_DAT_DIR}/sar" ]
+        then sadm_writelog "Directory ${SADM_DAT_DIR}/sar should exist anymore."
+             sadm_writelog "I am deleting it now." 
+             rm -fr ${SADM_DAT_DIR}/sar 
+    fi
+    
+    # Remove Old Ver.1 Dir. Not use anymore 
+    if [ -d "${SADM_BASE_DIR}/jac" ]
+       then sadm_writelog "Directory ${SADM_BASE_DIR}/jac should exist anymore."
+            sadm_writelog "I am deleting it now." 
+            rm -fr ${SADM_BASE_DIR}/jac 
+    fi 
+    
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
@@ -270,6 +284,34 @@ dir_housekeeping()
                      sadm_writelog "Total Error Count at $ERROR_COUNT"
              fi
     fi
+
+
+    # Remove Directory that should only be there on the SADMIN Server not the client.
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]
+       then sadm_writelog "${SADM_TEN_DASH}"
+            sadm_writelog "Remove useless Directories on client (if any) ..."
+            #
+            # Remove Database Backup Directory on SADMIN Client if it exist
+            if [ -d "$SADM_DBB_DIR" ]
+                then sadm_writelog "Directory $SADM_DBB_DIR should exist only on SADMIN server."
+                     sadm_writelog "I am deleting it now." 
+                     rm -fr $SADM_DBB_DIR 
+            fi 
+            # Remove Network Scan Directory on SADMIN Client if it exist
+            if [ -d "$SADM_NET_DIR" ]
+                then sadm_writelog "Directory $SADM_NET_DIR should exist only on SADMIN server."
+                     sadm_writelog "I am deleting it now." 
+                     rm -fr $SADM_NET_DIR 
+            fi 
+            # Remove Web Site Directory on SADMIN Client if it exist
+            if [ -d "$SADM_WWW_DIR" ]
+                then sadm_writelog "Directory $SADM_WWW_DIR should exist only on SADMIN server."
+                     sadm_writelog "I am deleting it now." 
+                     rm -fr $SADM_WWW_DIR 
+            fi 
+            sadm_writelog "${SADM_TEN_DASH}"
+    fi 
+    
     return $ERROR_COUNT
 }
 
@@ -309,14 +351,6 @@ file_housekeeping()
             #
             afile="$SADM_CFG_DIR/alert_history.txt"
             if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/.version"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            #afile="$SADM_CFG_DIR/.versum"
-            #if [ -f $afile ] ; then rm -f $afile >/dev/null 2>&1 ; fi
-            #
-            sadm_writelog "${SADM_TEN_DASH}"
     fi
 
     # Make sure crontab for SADMIN client have proper permission and owner
@@ -462,8 +496,8 @@ file_housekeeping()
     # Reset privilege on SADMIN SYS Directory files
     if [ -d "$SADM_CFG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_CFG_DIR -type f -exec chmod -R 774 {} \;"       # Change Files Privilege
-             find $SADM_CFG_DIR -type f -exec chmod -R 664 {} \; >/dev/null 2>&1     # Change Files Privilege
+             sadm_writelog "find $SADM_CFG_DIR -type f -exec chmod -R 664 {} \;" # Change Files Priv
+             find $SADM_CFG_DIR -type f -exec chmod -R 664 {} \; >/dev/null 2>&1 # Change Files Priv
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
