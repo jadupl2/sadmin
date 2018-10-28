@@ -58,6 +58,7 @@
 # 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
 #@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
+#@2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -75,7 +76,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.47"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.48"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1754,7 +1755,7 @@ sadm_start() {
         then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
     fi
 
-    # Check Directories that are present only on SADMIN Server
+    # Check Directories that are present ONLY ON SADMIN SERVER
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
              [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
@@ -1780,12 +1781,6 @@ sadm_start() {
                 then chmod 0775 $SADM_WWW_DAT_DIR
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
              fi
-             # $SADMIN/www/doc Dir.
-             #[ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
-             #if [ $(id -u) -eq 0 ]
-             #   then chmod 0775 $SADM_WWW_DOC_DIR
-             #        chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
-             #fi
              # $SADMIN/www/lib Dir.
              [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
              if [ $(id -u) -eq 0 ]
@@ -1855,7 +1850,7 @@ sadm_start() {
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
-             chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
+             [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
              echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP 2" >>$SADM_RCHLOG
@@ -1925,8 +1920,8 @@ sadm_stop() {
                 then sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines"
              fi
              sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
-             chmod 664 ${SADM_RCHLOG}                                   # Writable by O/G Readable W
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
+             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
+             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} # Change RCH Owner
     fi
 
     # Write Alert Choice & The Log
@@ -1967,6 +1962,7 @@ sadm_stop() {
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
+
     #wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
     # case $SADM_ALERT_TYPE in
     #   1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
@@ -2135,14 +2131,14 @@ sadm_send_alert() {
     fi
 
     # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] || [ "$alert_type" = "I" ]
-        then refno="000000"                                             # Ref# when not on SADM Srv
+    refno="000000"                                                      # Default Ref# is 000000
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ "$alert_type" = "E" ] # Get Ref# Only for Error
         else href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
              href=$(($href+1))                                          # Increment Alert Ref. No.
              printf "%d" $href > $SADM_ALERT_SEQ                        # Update Alert Ref. No. File
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
     fi
-
+    
     # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail
         then adate=`date`                                               # Save Actual Date and Time
