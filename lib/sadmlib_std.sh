@@ -59,6 +59,7 @@
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
 #@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 #@2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
+#@2018_10_29 v2.49 Correct Type Error causing occasionnal crash
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -76,7 +77,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.48"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.49"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -2133,7 +2134,7 @@ sadm_send_alert() {
     # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
     refno="000000"                                                      # Default Ref# is 000000
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ "$alert_type" = "E" ] # Get Ref# Only for Error
-        else href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
+        then href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
              href=$(($href+1))                                          # Increment Alert Ref. No.
              printf "%d" $href > $SADM_ALERT_SEQ                        # Update Alert Ref. No. File
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
