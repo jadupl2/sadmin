@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 12, 2018 at 08:32 AM
+-- Generation Time: Oct 30, 2018 at 10:54 AM
 -- Server version: 5.5.60-MariaDB
 -- PHP Version: 5.4.16
 
@@ -82,7 +82,9 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_maint` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Activate Maintenance Mode',
   `srv_maint_date_start` datetime NOT NULL COMMENT 'Start Date/Time of Maint. Mode',
   `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
-  `srv_sadmin_dir` varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client'
+  `srv_sadmin_dir` varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
+  `srv_ssh_port` int(2) NOT NULL DEFAULT '22' COMMENT 'SSH Port to access server',
+  `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server'
 ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 --
@@ -90,8 +92,6 @@ CREATE TABLE IF NOT EXISTS `server` (
 --
 
 TRUNCATE TABLE `server`;
--- --------------------------------------------------------
-
 --
 -- Table structure for table `server_category`
 --
@@ -120,7 +120,7 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 (3, 'Dev', 'Development Environment', 1, '2017-11-07 05:00:00', 1),
 (5, 'Poc', 'Proof Of Concept env.', 1, '2017-11-07 05:00:00', 0),
 (6, 'Prod', 'Production Environment', 1, '2017-11-07 05:00:00', 0),
-(11, 'Temporary', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
+(11, 'Temp', 'Temporary Server', 1, '2017-12-06 16:23:26', 0);
 
 -- --------------------------------------------------------
 
@@ -179,8 +179,6 @@ CREATE TABLE IF NOT EXISTS `server_network` (
 --
 
 TRUNCATE TABLE `server_network`;
---
-
 --
 -- Indexes for dumped tables
 --
