@@ -60,6 +60,7 @@
 #@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 #@2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
 #@2018_10_29 v2.49 Correct Type Error causing occasionnal crash
+#@2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -77,7 +78,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.49"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.50"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -865,6 +866,9 @@ sadm_get_hostname() {
 sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
         "LINUX") wdomainname=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                 if [ "${SADM_HOSTNAME}" = "$wdomainname" ]
+                    then wdomainname=`dnsdomainname`
+                 fi
                  ;;
         "AIX")   wdomainname=`namerslv -s | grep domain | awk '{ print $2 }'`
                  ;;
@@ -2140,7 +2144,9 @@ sadm_send_alert() {
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
     fi
     
+    # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail
         then adate=`date`                                               # Save Actual Date and Time
              if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi
@@ -2163,7 +2169,9 @@ sadm_send_alert() {
              return $RC                                                 # Return to Caller
     fi
 
+    # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [S]lack then send ALERT TO SLACK with the WebHook.---------------------
+    # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "S" ]                                    # If Alert Type is Slack
         then
              # Search Slack Channel file for selected channel
@@ -2179,22 +2187,25 @@ sadm_send_alert() {
                 then sadm_writelog "Slack Channel=$alert_group_member Slack Webhook=$slack_hook_url"
              fi
 
-             # If Alert is coming from a script
-             mdate="`date`"                                              # Ready to Insert Date
+             # Setting first line of Alert, based upon Alert Type.
              if [ "$alert_type" = "E" ] ; then ws="*SADM ERROR: ${alert_subject}*"   ; fi
              if [ "$alert_type" = "W" ] ; then ws="*SADM WARNING: ${alert_subject}*" ; fi
              if [ "$alert_type" = "I" ] ; then ws="*SADM INFO: ${alert_subject}*"    ; fi
              if [ "$alert_type" = "S" ] ; then ws="*SADM SCRIPT: ${alert_subject}*"  ; fi
-             if [ "$alert_type" = "S" ] || [ "$alert_type" = "I" ]      # Alert [S]cript or [I]nfo
-                then text="${ws}\n{$mdate}"                             # Insert Alert Subject
-                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     text="${text}\n$alert_message"                     # Insert Alert Message
-                else text="${ws}\n{$mdate}"                             # Insert Alert Subject
-                     text="${text}\nReference No.${refno}"              # Insert Alert Reference No.
-                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     text="${text}\n${alert_message}"                   # Insert Alert Message
-             fi
+             #
+             mdate="`date`"                                             # Ready to Insert Date
+             text="${ws}\n{$mdate}"                                     # Insert Subject & Date/Time
 
+             # If Ref. Number is not 000000 then insert Reference No.
+             if [ "$refno" != "000000" ]                                # If no Reference Number
+                then text="${text}\nReference No.${refno}"              # If Error insert Ref. No.
+             fi
+             # Alert Provenance
+             text="${text}\nOn server ${alert_server}."                 # Insert Server with Alert
+             # Alert Message
+             if [ "${alert_subject}" != "${alert_message}"]             # If Subject != Message
+                then text="${text}\n${alert_message}"                   # Insert Alert Message
+             fi 
              # Test for attachment
              if [ "$alert_attach" != "" ]                               # If Attachment Specified
                 then text_tail=`tail -50 ${alert_attach}`
