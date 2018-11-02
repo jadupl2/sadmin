@@ -93,6 +93,7 @@ NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
+    ERROR_COUNT=0
     sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_writelog " "
     
@@ -105,10 +106,17 @@ main_process()
 
     sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
     ntpdate -u $NTP_SERVER >> /dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" ;fi
+    if [ $? -ne 0 ] 
+        then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
+             ERROR_COUNT=$(($ERROR_COUNT+1))
+    fi
              
     sadm_writelog "  Start 'nmon' System Monitor"
     ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
+    if [ $? -ne 0 ] 
+        then sadm_writelog "  Error starting 'nmon' System Monitor." 
+             ERROR_COUNT=$(($ERROR_COUNT+1))
+    fi
 
     # Special Operation for some particular System
     sadm_writelog " "
@@ -116,11 +124,23 @@ main_process()
     case "$SADM_HOSTNAME" in
         "raspi4" )      sadm_writelog "  systemctl restart rpcbind"
                         systemctl restart rpcbind >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'rpcbind' NFS Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         sadm_writelog "  systemctl restart nfs-kernel-server"
                         systemctl restart nfs-kernel-server >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'nfs-kernel-server' NFS Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         ;;
         "nomad" )       sadm_writelog "  Start SysInfo Web Server"
                         /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'Sysinfo httpd' Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         ;;
         "holmes" )      umount /run/media/jacques/5f5a5d54-7c43-4122-8055-ec8bbc2d08d5  >/dev/null 2>&1
                         umount /run/media/jacques/C113-470B >/dev/null 2>&1
@@ -131,9 +151,9 @@ main_process()
     esac
 
     sadm_writelog " "
-    return 0                                                            # Return Default return code
+    return $ERROR_COUNT                                              # Return Default return code
 }
-
+ 
 # --------------------------------------------------------------------------------------------------
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------
