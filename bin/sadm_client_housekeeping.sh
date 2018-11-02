@@ -28,6 +28,7 @@
 # 2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
 # 2018_09_28    v1.17 Code Optimize and Cleanup
 #@2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
+#@2018_11_02    v1.19 Code Maint. & Comment
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -51,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.18'                              # Current Script Version
+    export SADM_VER='1.19'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -735,7 +736,7 @@ file_housekeeping()
              #fi
     fi
 
-    sadm_writelog "FQDN = $(sadm_get_fqdn) - SADM_SERVER = $SADM_SERVER"
+    #sadm_writelog "FQDN = $(sadm_get_fqdn) - SADM_SERVER = $SADM_SERVER"
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     file_housekeeping                                                   # Do File HouseKeeping
