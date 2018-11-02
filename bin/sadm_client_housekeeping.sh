@@ -27,7 +27,7 @@
 # 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
 # 2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
 # 2018_09_28    v1.17 Code Optimize and Cleanup
-#@2018_10_27    v1.18 Remove old dir. not use anymore (if exist)  
+#@2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -169,20 +169,20 @@ dir_housekeeping()
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
 
-    # Remove Old Ver.1 Dir. Not use anymore 
+    # Remove Old Ver.1 Dir. Not use anymore
     if [ -d "${SADM_DAT_DIR}/sar" ]
         then sadm_writelog "Directory ${SADM_DAT_DIR}/sar should exist anymore."
-             sadm_writelog "I am deleting it now." 
-             rm -fr ${SADM_DAT_DIR}/sar 
+             sadm_writelog "I am deleting it now."
+             rm -fr ${SADM_DAT_DIR}/sar
     fi
-    
-    # Remove Old Ver.1 Dir. Not use anymore 
+
+    # Remove Old Ver.1 Dir. Not use anymore
     if [ -d "${SADM_BASE_DIR}/jac" ]
        then sadm_writelog "Directory ${SADM_BASE_DIR}/jac should exist anymore."
-            sadm_writelog "I am deleting it now." 
-            rm -fr ${SADM_BASE_DIR}/jac 
-    fi 
-    
+            sadm_writelog "I am deleting it now."
+            rm -fr ${SADM_BASE_DIR}/jac
+    fi
+
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
     if [ $ERROR_COUNT -ne 0 ] ; then sadm_writelog "Total Error Count at $ERROR_COUNT" ;fi
@@ -294,24 +294,24 @@ dir_housekeeping()
             # Remove Database Backup Directory on SADMIN Client if it exist
             if [ -d "$SADM_DBB_DIR" ]
                 then sadm_writelog "Directory $SADM_DBB_DIR should exist only on SADMIN server."
-                     sadm_writelog "I am deleting it now." 
-                     rm -fr $SADM_DBB_DIR 
-            fi 
+                     sadm_writelog "I am deleting it now."
+                     rm -fr $SADM_DBB_DIR
+            fi
             # Remove Network Scan Directory on SADMIN Client if it exist
             if [ -d "$SADM_NET_DIR" ]
                 then sadm_writelog "Directory $SADM_NET_DIR should exist only on SADMIN server."
-                     sadm_writelog "I am deleting it now." 
-                     rm -fr $SADM_NET_DIR 
-            fi 
+                     sadm_writelog "I am deleting it now."
+                     rm -fr $SADM_NET_DIR
+            fi
             # Remove Web Site Directory on SADMIN Client if it exist
             if [ -d "$SADM_WWW_DIR" ]
                 then sadm_writelog "Directory $SADM_WWW_DIR should exist only on SADMIN server."
-                     sadm_writelog "I am deleting it now." 
-                     rm -fr $SADM_WWW_DIR 
-            fi 
+                     sadm_writelog "I am deleting it now."
+                     rm -fr $SADM_WWW_DIR
+            fi
             sadm_writelog "${SADM_TEN_DASH}"
-    fi 
-    
+    fi
+
     return $ERROR_COUNT
 }
 
@@ -698,11 +698,10 @@ file_housekeeping()
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
 
-# Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem
 
-# If current user is not 'root', exit to O/S with error code 1 (Optional)
+    # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root
         then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
              sadm_writelog "Process aborted"                            # Abort advise message
@@ -710,7 +709,7 @@ file_housekeeping()
              exit 1                                                     # Exit To O/S with Error
     fi
 
-# Check if 'sadmin' group exist - If not create it.
+    # Check if 'sadmin' group exist - If not create it.
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
         then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
@@ -723,7 +722,7 @@ file_housekeeping()
              #fi
     fi
 
-# Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
+    # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
         then sadm_writelog "User $SADM_USER not present"                # Advise user will create
@@ -736,12 +735,11 @@ file_housekeeping()
              #fi
     fi
 
+    sadm_writelog "FQDN = $(sadm_get_fqdn) - SADM_SERVER = $SADM_SERVER"
     dir_housekeeping                                                    # Do Dir HouseKeeping
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     file_housekeeping                                                   # Do File HouseKeeping
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
     SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR))                          # ExitCode = DIR+File Errors
-
-# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
