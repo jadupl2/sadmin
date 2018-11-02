@@ -48,6 +48,7 @@
 # 2017_06_06 v2.1 NFS Server Name, Mount Point and Nb of copy to keep are taken from sadmin.cfg
 # 2018_09_14 v2.2 ExitCode was reporting error on some occasion, even when backup was ok.
 #@2018_09_19 v2.3 Include Usage of Alert Group 
+#@2018_11_02_v2.4 Produce new log every time
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -73,9 +74,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.3'                               # Current Script Version
+    export SADM_VER='2.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
