@@ -26,6 +26,7 @@
 # 2018_09_19    V3.5 Updated to include the Alert Group
 # 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
 #@2018_10_18    V3.7 Only send alert when exit with error.
+#@2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.7'                               # Current Script Version
+    export SADM_VER='3.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -105,6 +106,7 @@ main_process()
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
     sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
+    sleep 2
     ntpdate -u $NTP_SERVER >> /dev/null 2>&1
     if [ $? -ne 0 ] 
         then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
