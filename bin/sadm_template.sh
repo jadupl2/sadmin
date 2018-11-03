@@ -38,7 +38,7 @@ trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIG
 
 
 #===================================================================================================
-#               Setup SADMIN Global Variables and Load SADMIN Shell Library
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
     if [ -z "$SADMIN" ]                                 # Test If SADMIN Environment Var. is present
@@ -292,7 +292,7 @@ main_process()
     #process_servers                                                    # Process All Active Servers
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
 
-# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+# SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Remove TMP files ...
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
