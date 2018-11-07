@@ -428,7 +428,7 @@ class sadmtools():
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Open Database Password File, Read 'sadmin' and 'squery' user from .dbpass file
-        if self.get_fqdn() == self.cfg_server:                          # Only run on SADMIN
+        if self.get_fqdn() == self.cfg_server and self.usedb :          # Only on SADMIN & Use DB
             try:
                 FH_DBPWD = open(self.dbpass_file,'r')                   # Open DB Password File
             except IOError as e:                                        # If Can't open DB Pwd  file
