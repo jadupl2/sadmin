@@ -29,7 +29,8 @@
 # 2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
 # 2018_10_02    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
 # 2018_10_20    v3.1 Show user what to do when can't get last O/S update date.
-#@2018_10_21    v3.2 More info were added about the system and network in report file.
+# 2018_10_21    v3.2 More info were added about the system and network in report file.
+#@2018_11_07    v3.3 System Report show only last 10 booting date/time
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.2'                               # Current Script Version
+    export SADM_VER='3.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -680,10 +681,11 @@ create_linux_config_files()
 
     echo "#"       >> $SYSTEM_FILE
     echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
-    echo "# Command: last| grep -i boot" >> $SYSTEM_FILE
+    echo "# Last Ten reboot date and time." >> $SYSTEM_FILE
+    echo "# Command: last | grep -i boot | head -10 | nl" >> $SYSTEM_FILE
     echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
     echo "#"       >> $SYSTEM_FILE
-    last| grep -i boot     >> $SYSTEM_FILE
+    last| grep -i boot | head -10 | nl    >> $SYSTEM_FILE
     echo "#"       >> $SYSTEM_FILE
 
     if [ "$HOSTINFO" != "" ]
