@@ -24,7 +24,8 @@
 # 2018_09_18 v1.5 Email when using -m command line switch include ow the Alert Group
 # 2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
 # 2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
-#@2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
+# 2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
+#@2018_10_07 v1.9 Add message when searching for a particular server (-s option)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
@@ -50,7 +51,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.8'                               # Current Script Version
+    export SADM_VER='1.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -199,7 +200,8 @@ load_array()
 
     # If Option -s was used on the command line to get the report for only the one specified.
     if [ "$SERVER_NAME" != "" ]                                         # CmdLine -s 1 server Report
-        then grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
+        then sadm_writelog "Searching for $SERVER_NAME in RCH files."   # Search ServerName in RCH
+             grep -i "$SERVER_NAME" $SADM_TMP_FILE1 > $SADM_TMP_FILE2   # Keep only that server
              cp  $SADM_TMP_FILE2  $SADM_TMP_FILE1                       # That become working file
     fi
 
