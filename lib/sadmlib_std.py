@@ -28,10 +28,11 @@
 # 2018_05_28    V2.15 Added Loading of backup parameters coming from sadmin.cfg
 # 2018_06_04    V2.16 Added User Directory creation & Database Backup Directory
 # 2018_06_05    v2.17 Added www/tmp/perf Directory (Used to Store Performance Graph)
-# 2018_06_25    sadmlib_std.py  v2.18 Correct problem trying to open DB on client.
-# 2018_07_22    sadmlib_std.py  v2.19 When using 'writelog' don't print date/time only in log.
-#@2018_09_19    sadmlib_std.py  v2.20 Add alert group to RCH file.
-#
+# 2018_06_25    sadmlib_std.py v2.18 Correct problem trying to open DB on client.
+# 2018_07_22    sadmlib_std.py v2.19 When using 'writelog' don't print date/time only in log.
+# 2018_09_19    sadmlib_std.py v2.20 Add alert group to RCH file.
+#@2018_10_07    sadmlib_std.py v2.21 Was trying to use Database even if was not on SADMIN Server
+# 
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -428,7 +429,7 @@ class sadmtools():
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Open Database Password File, Read 'sadmin' and 'squery' user from .dbpass file
-        if self.get_fqdn() == self.cfg_server:                          # Only run on SADMIN
+        if self.get_fqdn() == self.cfg_server and self.usedb :          # Only on SADMIN & Use DB
             try:
                 FH_DBPWD = open(self.dbpass_file,'r')                   # Open DB Password File
             except IOError as e:                                        # If Can't open DB Pwd  file
