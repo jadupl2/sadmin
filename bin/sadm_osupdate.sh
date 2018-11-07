@@ -25,7 +25,8 @@
 # 2018_06_09    v3.6 Change name of this script from sadm_osupdate_client to sadm_client_osupdate
 # 2018_06_10    v3.7 Switch back to old name 
 # 2018_07_11    v3.8 Code cleanup
-#@2018_09_19    v3.9 Include Alert Group 
+# 2018_09_19    v3.9 Include Alert Group 
+#@2018_10_24    v3.10 Command line option -d -r -h -v added.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -83,6 +84,7 @@
 # --------------------------------------------------------------------------------------------------
 #                               Script Variables definition
 # --------------------------------------------------------------------------------------------------
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 # Command to issue the shutdown / Reboot after the update if requested
 REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot Command
@@ -90,6 +92,27 @@ REBOOT_CMD="/sbin/shutdown -r now"          ; export REBOOT_CMD         # Reboot
 # Default to no reboot after an update
 WREBOOT="N"                                 ; export WREBOOT            # Def. NoReboot after update
 
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-r   (Reboot server after update, if needed and if allowed in Database)"
+    printf "\n\t-n   (Backup with NO compression)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -222,9 +245,6 @@ run_up2date()
 
 }
 
-
-
-
 # --------------------------------------------------------------------------------------------------
 #                 Function to update the server with yum command
 # --------------------------------------------------------------------------------------------------
@@ -300,22 +320,37 @@ run_apt_get()
              exit 1                                                     # Exit To O/S
     fi
 
-
-    # If Parameter #1 received is "Y", then server will reboot after update (Default No Reboot)
-    if [ $# -eq 1 ]                                                     # If one Param. Recv.
-        then WREBOOT=`sadm_toupper $1`                                  # Make sure it is UpperCase
-             if [ "$WREBOOT" = "Y" ]                                    # Unless Recv. Param #1=Y
-                then sadm_writelog "Reboot requested after successfull update" 
-                     WREBOOT="Y" 
-                else sadm_writelog "Reboot isn't requested after update"
-             fi
+    # Switch for Help Usage (-h) or Activate Debug Level (-d[1-9])
+    WREBOOT="N"                                                         # No Reboot by Default
+    while getopts "hvnrd:" opt ; do                                      # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       # No stop after each page
+            r) WREBOOT="Y"                                              # Reboot after Upd. if allow
+               sadm_writelog "Reboot requested after successfull update"                
+               ;;
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ]                                           # If Debug is Activated
+        then printf "\nDebug activated, Level ${DEBUG_LEVEL}"           # Display Debug Level
+             printf "\nBackup compression is $COMPRESS"                 # Show Status of compression
     fi
 
     # Check if Actual Server is the Main SADMIN server - No automatic Reboot for that server
     SADM_SRV_NAME=`echo $SADM_SERVER | awk -F\. '{ print $1 }'`         # Need a No FQDM of SADM Srv
     if [ "$HOSTNAME" = "$SADM_SRV_NAME" ]                               # We are on SADM Master Srv
-        then sadm_writelog "Automatic reboot cancelled for this server"
-             sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
+        then sadm_writelog "No Automatic reboot on the SADMIN Main server ($SADM_SERVER)"
+             sadm_writelog "Automatic reboot cancelled for this server"
              sadm_writelog "You will need to reboot system at your choosen time."
              sadm_writelog " "
              WREBOOT="N"

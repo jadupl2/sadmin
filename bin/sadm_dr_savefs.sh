@@ -1,6 +1,6 @@
 #! /bin/sh
 #===================================================================================================
-# Shellscript   :  sadm_dr_fs_save_info.sh - 
+# Shellscript   :  sadm_dr_savefs.sh - 
 # Description   :  Collect Filesystem & VG Info in order to Recreate filesystem in case of Disaster
 # Version       :  1.0
 # Author        :  jacques duplessis
@@ -91,7 +91,8 @@
 # 2018_06_04    v2.1 Change to Adapt to SADMIN New Libr (Support xfs)
 # 2018_06_09    v2.2 Add Help and Version function & Change Startup Order
 # 2018_07_11    v2.3 Was not showing if debug was activated or not
-#@2018_09_16    v2.4 Added Default Alert Group
+# 2018_09_16    v2.4 Added Default Alert Group
+#@2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -113,7 +114,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.4'                               # Current Script Version
+    export SADM_VER='2.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -355,10 +356,10 @@ save_lvm_info()
     fi 
     
     echo "# SADMIN - Filesystem Info. for system $(sadm_get_hostname).$(sadm_get_domainname)"  > $DRFILE
-    echo "# File was created by sadm_dr_fs_save_info.sh on `date`"                       >> $DRFILE
-    echo "# This file is use in a Disaster Recovery situation"                        >> $DRFILE
-    echo "# The data below is use by sadm_dr_fs_recreate.sh to recreate filesystems"     >> $DRFILE
-    echo "# ---------------------------------------------------------------------"    >> $DRFILE
+    echo "# File was created by ${SADM_PN} on `date`"                                >> $DRFILE
+    echo "# This file is use in a Disaster Recovery situation"                       >> $DRFILE
+    echo "# The data below is use by sadm_dr_recreatefs.sh to recreate filesystems"  >> $DRFILE
+    echo "# ---------------------------------------------------------------------"   >> $DRFILE
     echo "# " >> $DRFILE
     cat  $SADM_TMP_FILE2 >> $DRFILE
     return 0

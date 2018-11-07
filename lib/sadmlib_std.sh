@@ -10,53 +10,57 @@
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
-# 2016_11_05  V2.0 Create log file earlier to prevent error message
-# 2016_04_17  V2.1 Added Support for Linux Mint
-# 2016_04_19  V2.2 Minor Modifications concerning Trimming the Log File
-# 2017_07_03  V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
-# 2017_07_17  V2.4 Split Second line of log header into two lines/ Change Timming Line
-# 2017_08_12  V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
-# 2017_08_27  V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
-# 2017_09_23  V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not
-# 2017_09_29  V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
-# 2017_12_18  V2.9 Function were changed to run on MacOS and Some Restructuration was done
-# 2017_12_23  V2.10 SSH Command line construction added at the end of script
-# 2017_12_30  V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
-# 2018_01_03  V2.12 Added Check for facter command , if present use it get get hardware info
-# 2018_01_05  V2.13 Remove Warning when command can't be found for compatibility
-# 2018_01_23  V2.14 Add arc directory in $SADMIN/www for archiving purpose
-# 2018_01_25  V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
-# 2018_02_07  V2.16 Bug Fix when determining if server is a virtual or physical
-# 2018_02_08  V2.17 Correct 'if' statement compatibility problem with 'dash' shell
-# 2018_02_14  V2.18 Add Documentation Directory
-# 2018_02_22  V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
-# 2018_05_03  V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
-# 2018_05_06  V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
-# 2018_05_14  V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
-# 2018_05_23  V2.23 Remove some variables and logic modifications
-# 2018_05_26  V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
-# 2018_05_27  V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
-# 2018_05_28  V2.26 Added Loading of backup parameters coming from sadmin.cfg
-# 2018_06_04  V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
-# 2018_06_10  V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
-# 2018_06_14  V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
-# 2018_07_07  V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
-# 2018_07_16  V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
-# 2018_07_24  v2.32 Show Kernel version instead of O/S Codename in log header
-# 2018_08_16  v2.33 Remove Change Owner & Protection Error Message while not running with root.
-# 2018_09_04  v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
-# 2018_09_07  v2.35 Alerting System now support using Slack (slack.com).
-# 2018_09_16  v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
-# 2018_09_18  v2.37 Alert mechanism Update, Enhance Performance, fixes
-# 2018_09_20  v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
-# 2018_09_22  v2.39 Change Alert Message Format
-# 2018_09_23  v2.40 Added alert_sysadmin function
-# 2018_09_25  v2.41 Enhance Email Standard Alert Message
-# 2018_09_26  v2.42 Send Alert Include Message Subject now
-# 2018_09_27  v2.43 Now Script log can be sent to Slack Alert
-# 2018_09_30  v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
-#@2018_10_04  v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
-#@2018_10_15  v2.46 Remove repetitive lines in Slack Message and Email Alert
+# 2016_11_05 V2.0 Create log file earlier to prevent error message
+# 2016_04_17 V2.1 Added Support for Linux Mint
+# 2016_04_19 V2.2 Minor Modifications concerning Trimming the Log File
+# 2017_07_03 V2.3 Cosmetic change (Use only 50 Dash line at start & end of script)
+# 2017_07_17 V2.4 Split Second line of log header into two lines/ Change Timming Line
+# 2017_08_12 V2.5 Print FQDN instead of hostname and SADM Lib Ver. in header of the log
+# 2017_08_27 V2.6 If Log not in Append Mode, then no need to Trim - Change Log footer message accordingly
+# 2017_09_23 V2.7 Add SQLite3 Dir & Name Plus Correct Typo Error in sadm_stop when testing for log trimming or not
+# 2017_09_29 V2.8 Correct chown on ${SADMIN}/dat/net and Test creation and chown on www directories
+# 2017_12_18 V2.9 Function were changed to run on MacOS and Some Restructuration was done
+# 2017_12_23 V2.10 SSH Command line construction added at the end of script
+# 2017_12_30 V2.11 Combine sadmlib_server into sadmlib_std , so onle library from then on.
+# 2018_01_03 V2.12 Added Check for facter command , if present use it get get hardware info
+# 2018_01_05 V2.13 Remove Warning when command can't be found for compatibility
+# 2018_01_23 V2.14 Add arc directory in $SADMIN/www for archiving purpose
+# 2018_01_25 V2.15 Add SADM_RRDTOOL to sadmin.cfg for php page using it
+# 2018_02_07 V2.16 Bug Fix when determining if server is a virtual or physical
+# 2018_02_08 V2.17 Correct 'if' statement compatibility problem with 'dash' shell
+# 2018_02_14 V2.18 Add Documentation Directory
+# 2018_02_22 V2.19 Add SADM_HOST_TYPE field in sadmin.cfg
+# 2018_05_03 V2.20 Password for Database Standard User (sadmin and squery) now read from .dbpass file
+# 2018_05_06 V2.21 Change name of crontab file in etc/cron.d to sadm_server_osupdate
+# 2018_05_14 V2.22 Add Options not to use or not the RC File, to show or not the Log Header and Footer
+# 2018_05_23 V2.23 Remove some variables and logic modifications
+# 2018_05_26 V2.24 Added Variables SADM_RPT_FILE and SADM_USERNAME for users
+# 2018_05_27 V2.25 Get Read/Write & Read/Only User Database Password, only if on SADMIN Server.
+# 2018_05_28 V2.26 Added Loading of backup parameters coming from sadmin.cfg
+# 2018_06_04 V2.27 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf creation.
+# 2018_06_10 V2.28 SADM_CRONTAB file change name (/etc/cron.d/sadm_osupdate)
+# 2018_06_14 V2.29 Added test to make sure that /etc/environment contains "SADMIN=${SADMIN}" line
+# 2018_07_07 V2.30 Move .sadm_osupdate crontab work file to $SADMIN/cfg
+# 2018_07_16 V2.31 Fix sadm_stop function crash, when no parameter (exit Code) is recv., assume 1
+# 2018_07_24 v2.32 Show Kernel version instead of O/S Codename in log header
+# 2018_08_16 v2.33 Remove Change Owner & Protection Error Message while not running with root.
+# 2018_09_04 v2.34 Load SlackHook and Smon Alert Type from sadmin.cfg, so avail. to all scripts.
+# 2018_09_07 v2.35 Alerting System now support using Slack (slack.com).
+# 2018_09_16 v2.36 Alert Group added to ReturnCodeHistory file to alert script owner if not default
+# 2018_09_18 v2.37 Alert mechanism Update, Enhance Performance, fixes
+# 2018_09_20 v2.38 Fix Alerting problem with Slack, Change chown bug and Set default alert group to 'default'
+# 2018_09_22 v2.39 Change Alert Message Format
+# 2018_09_23 v2.40 Added alert_sysadmin function
+# 2018_09_25 v2.41 Enhance Email Standard Alert Message
+# 2018_09_26 v2.42 Send Alert Include Message Subject now
+# 2018_09_27 v2.43 Now Script log can be sent to Slack Alert
+# 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
+# 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
+# 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
+#@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
+#@2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
+#@2018_10_29 v2.49 Correct Type Error causing occasionnal crash
+#@2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -74,7 +78,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.46"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.50"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -862,6 +866,9 @@ sadm_get_hostname() {
 sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
         "LINUX") wdomainname=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                 if [ "${SADM_HOSTNAME}" = "$wdomainname" ]
+                    then wdomainname=`dnsdomainname`
+                 fi
                  ;;
         "AIX")   wdomainname=`namerslv -s | grep domain | awk '{ print $2 }'`
                  ;;
@@ -1753,7 +1760,7 @@ sadm_start() {
         then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
     fi
 
-    # Check Directories that are present only on SADMIN Server
+    # Check Directories that are present ONLY ON SADMIN SERVER
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
         then # ($SADMIN/dat/net) If Network/Subnet Info Directory doesn't exist, create it.
              [ ! -d "$SADM_NET_DIR" ] && mkdir -p $SADM_NET_DIR
@@ -1779,12 +1786,6 @@ sadm_start() {
                 then chmod 0775 $SADM_WWW_DAT_DIR
                      chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DAT_DIR
              fi
-             # $SADMIN/www/doc Dir.
-             #[ ! -d "$SADM_WWW_DOC_DIR" ] && mkdir -p $SADM_WWW_DOC_DIR
-             #if [ $(id -u) -eq 0 ]
-             #   then chmod 0775 $SADM_WWW_DOC_DIR
-             #        chown ${SADM_WWW_USER}:${SADM_WWW_GROUP} $SADM_WWW_DOC_DIR
-             #fi
              # $SADMIN/www/lib Dir.
              [ ! -d "$SADM_WWW_LIB_DIR" ] && mkdir -p $SADM_WWW_LIB_DIR
              if [ $(id -u) -eq 0 ]
@@ -1854,7 +1855,7 @@ sadm_start() {
     SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
-             chmod 664 $SADM_RCHLOG                                     # Change protection on RCH
+             [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
              [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}
              WDOT=".......... ........ ........"                        # End Time & Elapse = Dot
              echo "${SADM_HOSTNAME} $SADM_STIME $WDOT $SADM_INST $SADM_ALERT_GROUP 2" >>$SADM_RCHLOG
@@ -1924,8 +1925,8 @@ sadm_stop() {
                 then sadm_writelog "Trim History $SADM_RCHLOG to ${SADM_MAX_RCLINE} lines"
              fi
              sadm_trimfile "$SADM_RCHLOG" "$SADM_MAX_RCLINE"            # Trim file to Desired Nb.
-             chmod 664 ${SADM_RCHLOG}                                   # Writable by O/G Readable W
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG}            # Change RCH file Owner
+             [ $(id -u) -eq 0 ] && chmod 664 ${SADM_RCHLOG}             # R/W Owner/Group R by World
+             [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_RCHLOG} # Change RCH Owner
     fi
 
     # Write Alert Choice & The Log
@@ -1966,35 +1967,36 @@ sadm_stop() {
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
+
     #wmess=`cat $SADM_LOG`                                       # Log = Message of Alert
-    case $SADM_ALERT_TYPE in
-      1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
-             then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
-                  wmess="Script execution time is $sadm_elapse"
-                  sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
-           fi
-          ;;
-      2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
-             then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
-                  wmess="Script execution time is $sadm_elapse"
-                  sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-          fi
-          ;;
-      3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
-            then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
-                 wmess="Script execution time is $sadm_elapse"
-                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-            else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
-                 wmess="Script execution time is $sadm_elapse"
-                 sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
-          fi
-          ;;
-      4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
-          wmess="Correct problem in your script."
-          sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
-          ;;
-    esac
-    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
+    # case $SADM_ALERT_TYPE in
+    #   1)  if [ "$SADM_EXIT_CODE" -ne 0 ]                                # Alert On Error Only
+    #          then wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}" # Format Subject
+    #               wmess="Script execution time is $sadm_elapse"
+    #               sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
+    #        fi
+    #       ;;
+    #   2)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Alert On Success Only
+    #          then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"        # Format Subject
+    #               wmess="Script execution time is $sadm_elapse"
+    #               sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #       fi
+    #       ;;
+    #   3)  if [ "$SADM_EXIT_CODE" -eq 0 ]                                # Always send an Alert
+    #         then wsub="SUCCESS of $SADM_PN on ${SADM_HOSTNAME}"         # Format Subject
+    #              wmess="Script execution time is $sadm_elapse"
+    #              sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #         else wsub="$SADM_PN reported an error on ${SADM_HOSTNAME}"    # Format Subject
+    #              wmess="Script execution time is $sadm_elapse"
+    #              sadm_send_alert "I" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" "$SADM_LOG"
+    #       fi
+    #       ;;
+    #   4)  wsub="Invalid alert type '$SADM_ALERT_TYPE' on $SADM_HOSTNAME" # Format Subject
+    #       wmess="Correct problem in your script."
+    #       sadm_send_alert "E" "$SADM_HOSTNAME" "$SADM_ALERT_GROUP" "$wsub" "$wmess" ""
+    #       ;;
+    # esac
+    # if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "wsub = $wsub" ; fi
 
 
     # Normally we Delete the PID File when exiting the script.
@@ -2134,15 +2136,17 @@ sadm_send_alert() {
     fi
 
     # If we are on the SADMIN Server assign a Reference No. else set it to "000000"
-    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ] || [ "$alert_type" = "I" ]
-        then refno="000000"                                             # Ref# when not on SADM Srv
-        else href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
+    refno="000000"                                                      # Default Ref# is 000000
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ "$alert_type" = "E" ] # Get Ref# Only for Error
+        then href=`cat $SADM_ALERT_SEQ`                                 # Get Last Alert Ref. No.
              href=$(($href+1))                                          # Increment Alert Ref. No.
              printf "%d" $href > $SADM_ALERT_SEQ                        # Update Alert Ref. No. File
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
     fi
-
+    
+    # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
+    # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert by Mail
         then adate=`date`                                               # Save Actual Date and Time
              if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi
@@ -2165,7 +2169,9 @@ sadm_send_alert() {
              return $RC                                                 # Return to Caller
     fi
 
+    # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [S]lack then send ALERT TO SLACK with the WebHook.---------------------
+    # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "S" ]                                    # If Alert Type is Slack
         then
              # Search Slack Channel file for selected channel
@@ -2181,22 +2187,25 @@ sadm_send_alert() {
                 then sadm_writelog "Slack Channel=$alert_group_member Slack Webhook=$slack_hook_url"
              fi
 
-             # If Alert is coming from a script
-             mdate="`date`"                                              # Ready to Insert Date
+             # Setting first line of Alert, based upon Alert Type.
              if [ "$alert_type" = "E" ] ; then ws="*SADM ERROR: ${alert_subject}*"   ; fi
              if [ "$alert_type" = "W" ] ; then ws="*SADM WARNING: ${alert_subject}*" ; fi
              if [ "$alert_type" = "I" ] ; then ws="*SADM INFO: ${alert_subject}*"    ; fi
              if [ "$alert_type" = "S" ] ; then ws="*SADM SCRIPT: ${alert_subject}*"  ; fi
-             if [ "$alert_type" = "S" ] || [ "$alert_type" = "I" ]      # Alert [S]cript or [I]nfo
-                then text="${ws}\n{$mdate}"                             # Insert Alert Subject
-                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     text="${text}\n$alert_message"                     # Insert Alert Message
-                else text="${ws}\n{$mdate}"                             # Insert Alert Subject
-                     text="${text}\nReference No.${refno}"              # Insert Alert Reference No.
-                     text="${text}\nOn server ${alert_server}."         # Insert Server with Alert
-                     text="${text}\n${alert_message}"                   # Insert Alert Message
-             fi
+             #
+             mdate="`date`"                                             # Ready to Insert Date
+             text="${ws}\n{$mdate}"                                     # Insert Subject & Date/Time
 
+             # If Ref. Number is not 000000 then insert Reference No.
+             if [ "$refno" != "000000" ]                                # If no Reference Number
+                then text="${text}\nReference No.${refno}"              # If Error insert Ref. No.
+             fi
+             # Alert Provenance
+             text="${text}\nOn server ${alert_server}."                 # Insert Server with Alert
+             # Alert Message
+             if [ "${alert_subject}" != "${alert_message}"]             # If Subject != Message
+                then text="${text}\n${alert_message}"                   # Insert Alert Message
+             fi 
              # Test for attachment
              if [ "$alert_attach" != "" ]                               # If Attachment Specified
                 then text_tail=`tail -50 ${alert_attach}`

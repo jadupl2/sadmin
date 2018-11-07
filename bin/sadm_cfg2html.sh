@@ -17,6 +17,7 @@
 # 2018_06_03    v3.0 Adapt to new Shell Library, small corrections
 # 2018_06_11    v3.1 Change Name to sadm_cfg2html.sh
 # 2018_09_16    v3.2 Added Alert Group Script default
+#@2018_09_16    v3.3 Added prefix 'cfg2html_' to files produced by cfg2html in $SADMIN/dat/dr.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.2'                               # Current Script Version
+    export SADM_VER='3.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -197,10 +198,10 @@ show_version()
 
     # Uniformize name of cfg2html so that the domain name is not include in the name
     if [ `hostname` != `hostname -s` ]
-        then mv ${SADM_DR_DIR}/$(hostname).err  ${SADM_DR_DIR}/`hostname -s`.err
-             mv ${SADM_DR_DIR}/$(hostname).html ${SADM_DR_DIR}/`hostname -s`.html
-             mv ${SADM_DR_DIR}/$(hostname).txt  ${SADM_DR_DIR}/`hostname -s`.txt
-             mv ${SADM_DR_DIR}/$(hostname).partitions.save ${SADM_DR_DIR}/`hostname -s`.partitions.save
+        then mv ${SADM_DR_DIR}/$(hostname).err  ${SADM_DR_DIR}/cfg2html_`hostname -s`.err
+             mv ${SADM_DR_DIR}/$(hostname).html ${SADM_DR_DIR}/cfg2html_`hostname -s`.html
+             mv ${SADM_DR_DIR}/$(hostname).txt  ${SADM_DR_DIR}/cfg2html_`hostname -s`.txt
+             mv ${SADM_DR_DIR}/$(hostname).partitions.save ${SADM_DR_DIR}/cfg2html_`hostname -s`.partitions.save
     fi
 
     # Aix version of cfg2html leave unnecessary file every time it run - Here we delete those

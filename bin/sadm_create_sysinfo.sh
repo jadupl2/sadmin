@@ -27,7 +27,9 @@
 # 2018_06_11    v2.7 Change name to sadm_create_sysinfo.sh
 # 2018_09_19    v2.8 Update Default Alert Group
 # 2018_09_20    v2.9 Change Error Message when can't find last Update date in when RCH file missing
-#@2018_10_02    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
+# 2018_10_02    v3.0 The O/S Update Status was not reported correctly (because of rch format change)
+# 2018_10_20    v3.1 Show user what to do when can't get last O/S update date.
+#@2018_10_21    v3.2 More info were added about the system and network in report file.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -47,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.0'                               # Current Script Version
+    export SADM_VER='3.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -81,6 +83,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
 
 # Name of all Output Files
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"   ; export HPREFIX        # Output File Loc & Name
@@ -125,8 +128,9 @@ NMCLI=""                                        ; export NMCLI          # Linux 
 HOSTNAMECTL=""                                  ; export HOSTNAMECTL    # Linux HostNameCTL Command 
 OSUPDATE_DATE=""                                ; export OSUPDATE_DATE  # Date of Last O/S Update 
 OSUPDATE_STATUS=""                              ; export OSUPDATE_STATUS # Status (S,F,R) O/S Update 
-#
-
+LSBRELEASE=""                                   ; export LSBRELEASE     # lsb_release Location
+MIITOOL=""                                      ; export MIITOOL        # mii-tool command location 
+ETHTOOL=""                                      ; export ETHTOOL        # ethtool command location 
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -238,11 +242,14 @@ pre_validation()
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path 
                 command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path 
                 command_available "sw_vers"     ; SWVERS=$SADM_CPATH    # sw_ver Cmd Path 
-                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH  # Profiler Cmd Path 
+                command_available "system_profiler" ; SYSTEMPROFILER=$SADM_CPATH # Profiler Cmd Path 
                 command_available "ipconfig"    ; IPCONFIG=$SADM_CPATH  # ipconfig Cmd Path 
                 command_available "lshw"        ; LSHW=$SADM_CPATH      # lshw Cmd Path 
-                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # lshw Cmd Path 
-                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH # hostnamectl command Path 
+                command_available "nmcli"       ; NMCLI=$SADM_CPATH     # nmcli Cmd Path 
+                command_available "hostnamectl" ; HOSTNAMECTL=$SADM_CPATH   # hostnamectl Cmd Path 
+                command_available "lsb_release" ; LSBRELEASE=$SADM_CPATH    # lsb_release Cmd Path 
+                command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path 
+                command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path 
     fi
 
     # Aix and Linux Common Commands
@@ -309,18 +316,26 @@ set_last_osupdate_date()
     # Verify if the o/s update rch file exist
     RCHFILE="${SADM_RCH_DIR}/$(sadm_get_hostname)_sadm_osupdate.rch" 
     if [ ! -r "$RCHFILE" ]
-        then sadm_writelog "Missing O/S Update RCH file ($RCHFILE)"
+        then sadm_writelog " "
+             sadm_writelog "Missing O/S Update RCH file ($RCHFILE)"
              sadm_writelog "Can't determine last O/S Update Date & Status"
+             sadm_writelog "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server."
+             sadm_writelog "You will then get a valid 'rch' file ${RCHFILE}."
              OSUPDATE_DATE=""
              OSUPDATE_STATUS="U"
+             sadm_writelog " "
              return 1
     fi
 
     # Get Last Update Date from Return History File
-    sadm_writelog "Getting last o/s update date from $RCHFILE ..."
+    sadm_writelog "Getting last O/S Update date from $RCHFILE ..."
     OSUPDATE_DATE=`tail -1 ${RCHFILE} |awk '{printf "%s %s", $4,$5}'`
     if [ $? -ne 0 ] 
-        then sadm_writelog "Can't determine last O/S Update Date ..."
+        then sadm_writelog " "
+             sadm_writelog "Can't determine last O/S Update Date ..."
+             sadm_writelog "You should run 'sadm_osupdate_farm.sh -s $(sadm_get_hostname)' on $SADM_SERVER to update this server."
+             sadm_writelog "You will then get a valid 'rch' file ${RCHFILE}."
+             sadm_writelog " "
              return 1
     fi
 
@@ -343,6 +358,35 @@ set_last_osupdate_date()
     return 0
 }
 
+# ==================================================================================================
+#               Print File Received (P1) to file received (P2) 
+# ==================================================================================================
+print_file ()
+{
+    # Parameters received should always by two - If not write error to log and return to caller
+    if [ $# -ne 2 ]
+        then sadm_writelog "Error: Function ${FUNCNAME[0]} didn't receive 2 parameters"
+             sadm_writelog "Function received $* and this isn't valid"
+             return 1
+    fi
+
+    wfile=$1                                                            # What file to print
+    wout=$2                                                             # Where to print the file
+    
+    # Check if file to print is readable
+    if [ ! -r $wfile ]                                                  # If file not readable
+        then sadm_writelog "File to print '$wfile' can be found."       # Inform User
+             return 1
+    fi 
+
+    echo " " >> $wout
+    echo "#${DASH_LINE}"  >> $wout 
+    echo "# File: $wfile " >> $wout                                      # Include name of the file
+    echo "#${DASH_LINE}"  >> $wout 
+    grep -Evi "^#|^$" $wfile >> $wout                                    # Output file to Desire file
+    return 0
+}
+
 
 # ==================================================================================================
 #               Create Misc. Linux config file for Disaster Recovery Purpose
@@ -355,28 +399,36 @@ create_linux_config_files()
     sadm_writelog "Creating $DISKS_FILE ..."
     if [ "$LSBLK" != "" ]
         then echo "#"   >> $DISKS_FILE
-             echo "# $LSBLK Command" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
+             echo "# Command: $LSBLK -dn" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
              echo "#"   >> $DISKS_FILE
              $LSBLK -dn >> $DISKS_FILE
              echo "#"   >> $DISKS_FILE
     fi
     if [ "$SADM_PARTED" != "" ]
         then echo "#"   >> $DISKS_FILE
-             echo "# $SADM_PARTED Command" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
+             echo "# Command: $SADM_PARTED -l |grep '^Disk' |grep -vE 'mapper|Disk Flags:'" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
              echo "#"   >> $DISKS_FILE
              $SADM_PARTED -l |grep "^Disk" |grep -vE "mapper|Disk Flags:" >> $DISKS_FILE 2>&1
              echo "#"   >> $DISKS_FILE
     fi
     if [ "$DF" != "" ]
         then echo "#"   >> $DISKS_FILE
-             echo "# df -h Command" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
+             echo "# Command: df -h" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
              echo "#"   >> $DISKS_FILE
              $DF -h >> $DISKS_FILE 2>&1
              echo "#"   >> $DISKS_FILE
     fi
     if [ "$SFDISK" != "" ]
         then echo "#"   >> $DISKS_FILE
-             echo "#  sfdisk -uM -l | grep -iEv \"^$|mapper\" Command" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
+             echo "# Command: sfdisk -uM -l | grep -iEv \"^$|mapper\"" >> $DISKS_FILE
+             echo "#${DASH_LINE}"  >> $DISKS_FILE 
              echo "#"   >> $DISKS_FILE
              $SFDISK -uM -l | grep -iEv "^$|mapper" >> $DISKS_FILE 2>&1
              echo "#"   >> $DISKS_FILE
@@ -384,7 +436,9 @@ create_linux_config_files()
     if [ $(sadm_get_ostype) = "DARWIN"   ]                              # If running in OSX
         then if [ "$DISKUTIL" != "" ]
                 then echo "#"   >> $DISKS_FILE
-                     echo "#  $DISKUTIL list " >> $DISKS_FILE
+                     echo "#${DASH_LINE}"  >> $DISKS_FILE 
+                     echo "# Command: $DISKUTIL list " >> $DISKS_FILE
+                     echo "#${DASH_LINE}"  >> $DISKS_FILE 
                      echo "#"   >> $DISKS_FILE
                      $DISKUTIL list >> $DISKS_FILE 2>&1
                      echo "#"   >> $DISKS_FILE
@@ -397,63 +451,81 @@ create_linux_config_files()
     sadm_writelog "Creating $LVM_FILE ..."
     if [ "$PVS" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $PVS Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $PVS" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $PVS       >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$PVSCAN" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $PVSCAN Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $PVSCAN" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $PVSCAN    >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$PVDISPLAY" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $PVDISPLAY Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command $PVDISPLAY" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $PVDISPLAY >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$VGS" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $VGS Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $VGS" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $VGS       >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$VGSCAN" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $VGSCAN Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $VGSCAN" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $VGSCAN    >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$VGDISPLAY" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $VGDISPLAY Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $VGDISPLAY" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $VGDISPLAY >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$LVS" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $LVS Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $LVS" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $LVS       >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$LVSCAN" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $LVSCAN Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $LVSCAN" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $LVSCAN    >> $LVM_FILE
              echo "#"   >> $LVM_FILE
     fi
     if [ "$VGDISPLAY" != "" ]
         then echo "#"   >> $LVM_FILE
-             echo "# $LVDISPLAY Command" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
+             echo "# Command: $LVDISPLAY" >> $LVM_FILE
+             echo "#${DASH_LINE}"  >> $LVM_FILE 
              echo "#"   >> $LVM_FILE
              $LVDISPLAY >> $LVM_FILE
              echo "#"   >> $LVM_FILE
@@ -463,45 +535,92 @@ create_linux_config_files()
     # Collect Network Information ------------------------------------------------------------------
     write_file_header "Network Information" "$NET_FILE"
     sadm_writelog "Creating $NET_FILE ..."
+    for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"` 
+        do 
+        if [ "$MIITOOL" != "" ] 
+            then echo "#"   >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 echo "# Command: $MIITOOL $w"  >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 $MIITOOL $w  >> $NET_FILE
+            else sadm_writelog "Missing command mii-tool"
+        fi
+        done
+    
+    for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"` 
+        do 
+        if [ "$ETHTOOL" != "" ] 
+            then echo "#"   >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 echo "# Command: $ETHTOOL $w"  >> $NET_FILE
+                 echo "#${DASH_LINE}"  >> $NET_FILE 
+                 $ETHTOOL $w  >> $NET_FILE
+            else sadm_writelog "Missing command ethtool"
+        fi
+        done
+
     if [ "$NMCLI" != "" ]
         then echo "#"   >> $NET_FILE
-             echo "#  $NMCLI -p -f general device show" >> $NET_FILE
+             for w in `$NMCLI -t device | awk -F: '{ print $1 }'| grep -v lo ` 
+                do 
+                echo "#"   >> $NET_FILE
+                echo "#${DASH_LINE}"  >> $NET_FILE 
+                echo "# Command: $NMCLI device show $w"  >> $NET_FILE
+                echo "#${DASH_LINE}"  >> $NET_FILE 
+                $NMCLI device show $w  >> $NET_FILE
+
+                echo "#"   >> $NET_FILE
+                echo "#${DASH_LINE}"  >> $NET_FILE 
+                echo "# Command: $NMCLI -p -f general device show $w" >> $NET_FILE
+                echo "#${DASH_LINE}"  >> $NET_FILE 
+                $NMCLI -p -f general device show $w >> $NET_FILE
+                done
              echo "#"   >> $NET_FILE
-             $NMCLI -p -f general device show >> $NET_FILE 2>&1
-             echo "#"   >> $NET_FILE
-             echo "#  $NMCLI dev status" >> $NET_FILE
-             echo "#"   >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $NMCLI dev status" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              $NMCLI dev status >> $NET_FILE 2>&1
              echo "#"   >> $NET_FILE
     fi   
     if [ "$IP" != "" ]
         then echo "#" >> $NET_FILE
-             echo "# $IP Command" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $IP" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#" >> $NET_FILE
              $IP addr >> $NET_FILE
              echo "#" >> $NET_FILE
     fi
     if [ "$IFCONFIG" != "" ]
         then echo "#" >> $NET_FILE
-             echo "# $IFCONFIG -a Command" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $IFCONFIG -a" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#" >> $NET_FILE
              $IFCONFIG -a >> $NET_FILE
              echo "#" >> $NET_FILE
     fi
+    
     if [ "$NETSTAT" != "" ]
         then echo "#"       >> $NET_FILE
-             echo "# $NETSTAT -rn Command" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $NETSTAT -rn" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#"       >> $NET_FILE
              $NETSTAT -rn   >> $NET_FILE
              echo "#"       >> $NET_FILE
     fi
+    
     if [ "$NETWORKSETUP" != "" ]
         then echo "#"   >> $NET_FILE
-             echo "#  $NETWORKSETUP -listallhardwareports " >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $NETWORKSETUP -listallhardwareports " >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#"   >> $NET_FILE
              $NETWORKSETUP -listallhardwareports >> $NET_FILE 2>&1
              echo "#"   >> $NET_FILE
     fi   
+
     if [ "$IPCONFIG" != "" ]
         then FirstTime=0 ; index=0
              while [ $index -le 10 ]                                    # Process from en0 to en9
@@ -509,7 +628,9 @@ create_linux_config_files()
                 $IPCONFIG getpacket en${index} >/dev/null 2>&1          # Get Info about Interface 
                 if [ $? -eq 0 ]                                         # If Device in use
                     then echo "#"   >> $NET_FILE
-                         echo "#  $IPCONFIG getpacket en${index} " >> $NET_FILE
+                         echo "#${DASH_LINE}"  >> $NET_FILE 
+                         echo "# Command: $IPCONFIG getpacket en${index} " >> $NET_FILE
+                         echo "#${DASH_LINE}"  >> $NET_FILE 
                          echo "#"   >> $NET_FILE
                          $IPCONFIG getpacket en${index} >> $NET_FILE 2>&1
                          echo "#"   >> $NET_FILE
@@ -518,41 +639,106 @@ create_linux_config_files()
                 done
     fi
 
+    if [ -d "/etc/sysconfig/network-scripts" ]
+        then for xfile in `ls -1 /etc/sysconfig/network-scripts/ifcfg*` 
+                do 
+                if [ "$xfile" != "/etc/sysconfig/network-scripts/ifcfg-lo" ] 
+                    then print_file "$xfile" "$NET_FILE" 
+                fi
+                done
+    fi
+    if [ -r '/etc/network/interfaces' ] ; then print_file "/etc/network/interfaces" "$NET_FILE" ; fi 
+    if [ -r '/etc/hosts' ]       ; then print_file "/etc/hosts"         "$NET_FILE" ; fi 
+    if [ -r '/etc/resolv.conf' ] ; then print_file "/etc/resolv.conf"   "$NET_FILE" ; fi 
+    if [ -r '/etc/host.conf' ]   ; then print_file "/etc/host.conf"     "$NET_FILE" ; fi 
+    if [ -r '/etc/ssh.conf' ]    ; then print_file "/etc/ssh.conf"      "$NET_FILE" ; fi 
+    if [ -r '/etc/sshd.conf' ]   ; then print_file "/etc/sshd.conf"     "$NET_FILE" ; fi 
+    if [ -r '/etc/shells' ]      ; then print_file "/etc/shells"        "$NET_FILE" ; fi 
+    if [ -r '/etc/ntp.conf' ]    ; then print_file "/etc/ntp.conf"      "$NET_FILE" ; fi 
+
+
 
     # Collect System Information -------------------------------------------------------------------
     write_file_header "System Information" "$SYSTEM_FILE"
     sadm_writelog "Creating $SYSTEM_FILE ..."
+
+    echo "#"       >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "# Command: uname -a" >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "#"       >> $SYSTEM_FILE
+    uname -a     >> $SYSTEM_FILE
+    echo "#"       >> $SYSTEM_FILE
+
+    echo "#"       >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "# Command: uptime" >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "#"       >> $SYSTEM_FILE
+    uptime     >> $SYSTEM_FILE
+    echo "#"       >> $SYSTEM_FILE
+
+    echo "#"       >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "# Command: last| grep -i boot" >> $SYSTEM_FILE
+    echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+    echo "#"       >> $SYSTEM_FILE
+    last| grep -i boot     >> $SYSTEM_FILE
+    echo "#"       >> $SYSTEM_FILE
+
     if [ "$HOSTINFO" != "" ]
         then echo "#"       >> $SYSTEM_FILE
-             echo "# $HOSTINFO Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $HOSTINFO" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
              echo "#"       >> $SYSTEM_FILE
              $HOSTINFO      >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
+
     if [ "$SWVERS" != "" ]
         then echo "#"       >> $SYSTEM_FILE
-             echo "# $SWVERS Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $SWVERS" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
              echo "#"       >> $SYSTEM_FILE
              $SWVERS        >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
+
+    if [ "$LSBRELEASE" != "" ]
+        then echo "#"       >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $LSBRELEASE -a" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "#"           >> $SYSTEM_FILE
+             $LSBRELEASE -a        >> $SYSTEM_FILE
+             echo "#"       >> $SYSTEM_FILE
+    fi
+
     if [ "$SYSTEMPROFILER" != "" ]
         then echo "#"       >> $SYSTEM_FILE
-             echo "# $SYSTEMPROFILER SPSoftwareDataType Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $SYSTEMPROFILER SPSoftwareDataType Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
              echo "#"       >> $SYSTEM_FILE
              $SYSTEMPROFILER SPSoftwareDataType      >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
     if [ "$HOSTNAMECTL" != "" ]
         then echo "#"       >> $SYSTEM_FILE
-             echo "# $HOSTNAMECTL Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $HOSTNAMECTL" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
              echo "#"       >> $SYSTEM_FILE
              $HOSTNAMECTL   >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
     fi
     if [ "$LSHW" != "" ]
         then echo "#"       >> $SYSTEM_FILE
-             echo "# $LSHW -short Command" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
+             echo "# Command: $LSHW -short" >> $SYSTEM_FILE
+             echo "#${DASH_LINE}"  >> $SYSTEM_FILE 
              echo "#"       >> $SYSTEM_FILE
              $LSHW -short   >> $SYSTEM_FILE
              echo "#"       >> $SYSTEM_FILE
@@ -571,8 +757,10 @@ create_aix_config_files()
     sadm_writelog "Creating $DISKS_FILE ..."
     if [ "$DF" != "" ]
         then echo "#" >> $DISKS_FILE
-             echo "# $DF -m Command" >> $DISKS_FILE
-             echo "#" >> $LVM_FILE
+             echo "#${DASH_LINE}"       >> $DISKS_FILE 
+             echo "# Command: $DF -m"    >> $DISKS_FILE
+             echo "#${DASH_LINE}"       >> $DISKS_FILE 
+             echo "#" >> $DISKS_FILE
              $DF -m >> "$DISKS_FILE"
              echo "#" >> $DISKS_FILE
     fi
@@ -581,26 +769,35 @@ create_aix_config_files()
     write_file_header "Logical Volume" "$LVM_FILE"
     sadm_writelog "Creating $LVM_FILE ..."
     if [ "$LSPV" != "" ]
-        then    echo "# $LSPV Command" >> $LVM_FILE
+        then    echo "#${DASH_LINE}"  >> $LVM_FILE 
+                echo "# Command: $LSPV" >> $LVM_FILE
+                echo "#${DASH_LINE}"  >> $LVM_FILE 
                 echo "#" >> $LVM_FILE
                 $LSPV  >>$LVM_FILE 2>&1
                 echo "#" >> $LVM_FILE
                 $LSPV | awk '{ print $1 }' | while read PV
                     do
                     echo " " >>$LVM_FILE 2>&1
+                    echo "# Command: $LSPV  $PV" >>$LVM_FILE 2>&1
                     $LSPV  $PV          >>$LVM_FILE 2>&1
                     done
                 echo "" >> $LVM_FILE
+                echo "# Command: lsdev -Cc disk" >>$LVM_FILE 2>&1
                 lsdev -Cc disk >>$LVM_FILE 2>&1
                 echo "#" >> $LVM_FILE
+                echo "# Command: $PVS" >>$LVM_FILE 2>&1
                 $PVS >> "$LVM_FILE"
                 echo "#" >> $LVM_FILE
     fi
     if [ "$LSVG" != "" ]
-        then    echo "# $LSPV Command" >> $LVM_FILE
+        then    echo "#${DASH_LINE}"  >> $LVM_FILE 
+                echo "# Command: $LSVG" >> $LVM_FILE
+                echo "#${DASH_LINE}"  >> $LVM_FILE 
                 echo "#" >> $LVM_FILE
+                echo "# Command: lsvg -o | lsvg -i" >> $LVM_FILE
                 lsvg -o | lsvg -i >> $LVM_FILE
                 echo "#" >> $LVM_FILE
+                echo "# Command: $LSVG \| xargs $LSVG -l"   >> $LVM_FILE 2>&1
                 $LSVG | xargs $LSVG -l   >> $LVM_FILE 2>&1
                 echo "#" >> $LVM_FILE
     fi
@@ -611,14 +808,18 @@ create_aix_config_files()
     sadm_writelog "Creating $NET_FILE ..."
     if [ "$NETSTAT" != "" ]
         then echo "#"       >> $NET_FILE
-             echo "# $NETSTAT -rn Command" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $NETSTAT -rn" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#"       >> $NET_FILE
              $NETSTAT -rn   >> $NET_FILE
              echo "#"       >> $NET_FILE
     fi
     if [ "$IFCONFIG" != "" ]
         then echo "#" >> $NET_FILE
-             echo "# $IFCONFIG -a Command" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
+             echo "# Command: $IFCONFIG -a" >> $NET_FILE
+             echo "#${DASH_LINE}"  >> $NET_FILE 
              echo "#" >> $NET_FILE
              $IFCONFIG -a >> $NET_FILE
              echo "#" >> $NET_FILE
@@ -635,17 +836,15 @@ create_aix_config_files()
 # ==================================================================================================
 create_summary_file()
 {
-    set_last_osupdate_date                                              # Get Last O/S Update Date
-    if [ $? -ne 0 ] 
-        then sadm_writelog "Can't determine last O/S Update Date & Status ..."
-             SADM_EXIT_CODE=1
-    fi
 
     sadm_writelog "Creating $HWD_FILE ..."
-    sadm_writelog " "
     echo "# $SADM_CIE_NAME - SysInfo Report File - `date`"                           >  $HWD_FILE
     echo "# This file will be use to update the SADMIN Database"                     >> $HWD_FILE
     echo "#                                                    "                     >> $HWD_FILE
+
+    set_last_osupdate_date                                              # Get Last O/S Update Date
+    if [ $? -ne 0 ] ; then    SADM_EXIT_CODE=1 ; fi
+
     echo "SADM_OS_TYPE                          = $(sadm_get_ostype)"                >> $HWD_FILE
     echo "SADM_UPDATE_DATE                      = $(date "+%Y-%m-%d %H:%M:%S")"      >> $HWD_FILE
     echo "SADM_HOSTNAME                         = $(sadm_get_hostname)"              >> $HWD_FILE
@@ -673,6 +872,7 @@ create_summary_file()
     echo "SADM_OSUPDATE_DATE                    = ${OSUPDATE_DATE}"                  >> $HWD_FILE
     echo "SADM_OSUPDATE_STATUS                  = ${OSUPDATE_STATUS}"                >> $HWD_FILE
     echo "SADM_ROOT_DIRECTORY                   = ${SADMIN}"                         >> $HWD_FILE
+    return $SADM_EXIT_CODE
 }
 
 

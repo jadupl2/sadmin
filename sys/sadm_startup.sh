@@ -26,6 +26,7 @@
 # 2018_09_19    V3.5 Updated to include the Alert Group
 # 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
 #@2018_10_18    V3.7 Only send alert when exit with error.
+#@2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.7'                               # Current Script Version
+    export SADM_VER='3.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -93,6 +94,7 @@ NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada
 # --------------------------------------------------------------------------------------------------
 main_process()
 {
+    ERROR_COUNT=0
     sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_writelog " "
     
@@ -104,11 +106,19 @@ main_process()
     rm -f ${SADM_BASE_DIR}/sysmon.lock >> $SADM_LOG 2>&1
 
     sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
+    sleep 2
     ntpdate -u $NTP_SERVER >> /dev/null 2>&1
-    if [ $? -ne 0 ] ; then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" ;fi
+    if [ $? -ne 0 ] 
+        then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
+             ERROR_COUNT=$(($ERROR_COUNT+1))
+    fi
              
     sadm_writelog "  Start 'nmon' System Monitor"
     ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
+    if [ $? -ne 0 ] 
+        then sadm_writelog "  Error starting 'nmon' System Monitor." 
+             ERROR_COUNT=$(($ERROR_COUNT+1))
+    fi
 
     # Special Operation for some particular System
     sadm_writelog " "
@@ -116,11 +126,23 @@ main_process()
     case "$SADM_HOSTNAME" in
         "raspi4" )      sadm_writelog "  systemctl restart rpcbind"
                         systemctl restart rpcbind >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'rpcbind' NFS Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         sadm_writelog "  systemctl restart nfs-kernel-server"
                         systemctl restart nfs-kernel-server >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'nfs-kernel-server' NFS Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         ;;
         "nomad" )       sadm_writelog "  Start SysInfo Web Server"
                         /sysinfo/bin/start_httpd.sh >> $SADM_LOG 2>&1
+                        if [ $? -ne 0 ] 
+                            then sadm_writelog "  Error starting 'Sysinfo httpd' Service." 
+                                 ERROR_COUNT=$(($ERROR_COUNT+1))
+                        fi
                         ;;
         "holmes" )      umount /run/media/jacques/5f5a5d54-7c43-4122-8055-ec8bbc2d08d5  >/dev/null 2>&1
                         umount /run/media/jacques/C113-470B >/dev/null 2>&1
@@ -131,9 +153,9 @@ main_process()
     esac
 
     sadm_writelog " "
-    return 0                                                            # Return Default return code
+    return $ERROR_COUNT                                              # Return Default return code
 }
-
+ 
 # --------------------------------------------------------------------------------------------------
 # 	                          	S T A R T   O F   M A I N    P R O G R A M
 # --------------------------------------------------------------------------------------------------

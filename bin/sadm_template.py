@@ -210,13 +210,14 @@ def main():
        st.stop (1)                                                      # Close and Trim Log/Email
        sys.exit(1)                                                      # Exit with Error Code
     
-# Test if script is running on the SADMIN Server, If not abort script (Optional code)
+# (Optional Section) - Test if script is running on the SADMIN Server, If not abort script 
 #    if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
 #        st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
 #        st.writelog("Process aborted")                                  # Abort advise message
 #        st.stop(1)                                                      # Close and Trim Log
 #        sys.exit(1)                                                     # Exit To O/S
         
+    # If we are on the SADMIN server and we decided to access the Database
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
     
