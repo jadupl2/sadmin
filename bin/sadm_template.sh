@@ -153,17 +153,6 @@ process_servers()
         sadm_writelog " "                                               # Blank Line
         sadm_writelog "`printf %10s |tr " " "-"`"                       # Ten Dashes Line    
         sadm_writelog "Processing ($xcount) $fqdn_server"               # Server Count & FQDN Name 
-        if [ $DEBUG_LEVEL -gt 5 ]                                       # If Debug Activated
-            then if [ "$server_monitor" = "1" ]                         # Monitor Flag is at True
-                    then sadm_writelog "$fqdn_server Monitoring ON"     # Show Monitor Status ON
-                    else sadm_writelog "$fqdn_server Monitoring OFF"    # Show Monitor Status OFF
-                 fi
-                 if [ "$server_sporadic" = "1" ]                        # Sporadic Flag is at True
-                    then sadm_writelog "$fqdn_server Sporadic ON"       # Show Server is Sporadic
-                    else sadm_writelog "$fqdn_server Sporadic OFF"      # Show Non Sporadic Server
-                 fi
-                 sadm_writelog "SADMIN Root Dir. is $server_rootdir"    # Show SADMIN Root Dir.
-        fi
 
         # Check if server name can be resolve - If not, we won't be able to SSH to it.
         if ! host  $fqdn_server >/dev/null 2>&1                         # If hostname not resolvable
