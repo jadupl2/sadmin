@@ -29,7 +29,8 @@
 # 2018_05_15 V1.8 Add log_header and log_footer to produce or not the log Header and Footer.
 # 2018_05_20 V1.9 Restructure the code and added comments
 # 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
-#@2018_10_02 V2.1 Add Debug variable to get more verbosity 
+# 2018_10_02 V2.1 Add Debug variable to get more verbosity 
+#@2018_11_07 V2.2 Use Database by Default (Only on SADMIN server)
 # 
 # --------------------------------------------------------------------------------------------------
 #
@@ -69,10 +70,10 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.1"                 # Current Script Version
+    st.ver              = "2.2"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
-    st.log_append       = True                  # Append Existing Log or Create New One
+    st.log_append       = False                 # Append Existing Log or Create New One
     st.use_rch          = True                  # Generate entry in Result Code History (.rch) 
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
@@ -190,6 +191,7 @@ def process_servers(wconn,wcur,st):
 #===================================================================================================
 def main_process(st):
     st.writelog ("Starting Main Process ...")                           # Inform User Starting Main
+
     return (st.exit_code)                                               # Return Err. Code To Caller
 
 
