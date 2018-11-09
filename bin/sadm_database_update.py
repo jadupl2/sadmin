@@ -53,6 +53,8 @@ except ImportError as e:
 wdict           = {}                                                    # Dict for Server Columns
 
 
+
+
 #===================================================================================================
 # Setup SADMIN Global Variables and Load SADMIN Python Library
 #===================================================================================================
@@ -404,18 +406,24 @@ def main():
     # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.  
     st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
 
-    # Test if script is running on the SADMIN Server, If not abort script (Optional code)
+    # If Script should only be run on the SADMIN Server 
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
         st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
         
-    (conn,cur) = st.dbconnect()                                         # Connect to SADMIN Database
+    # If we are on SADMIN server & use Database (st.usedb=True), open connection to Server Database
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+
     st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
-    st.dbclose()                                                        # Close the Database
+
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
+
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
