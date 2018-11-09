@@ -30,7 +30,8 @@
 # 2018_05_20 V1.9 Restructure the code and added comments
 # 2018_05_26 V2.0 Revisited - Align with New Version of SADMIN Library
 # 2018_10_02 V2.1 Add Debug variable to get more verbosity 
-#@2018_11_07 V2.2 Use Database by Default (Only on SADMIN server)
+# 2018_11_07 V2.2 Use Database by Default (Only on SADMIN server)
+#@2018_11_09 V2.3 Database Connection Error Improve
 # 
 # --------------------------------------------------------------------------------------------------
 #
@@ -70,7 +71,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.2"                 # Current Script Version
+    st.ver              = "2.3"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -219,15 +220,16 @@ def main():
 #        st.stop(1)                                                      # Close and Trim Log
 #        sys.exit(1)                                                     # Exit To O/S
         
-    # If we are on the SADMIN server and we decided to access the Database
+    # If on SADMIN server & use Database (st.usedb=True), open connection to Server Database
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-    
+
     # Main Processing
     #st.exit_code = process_servers(conn,cur,st)                        # Process All Active Servers 
     # OR 
     st.exit_code = main_process(st)                                     # Process Not Using Database
  
+    # If on SADMIN server & use Database (st.usedb=True), close connection to Server Database
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
