@@ -29,7 +29,8 @@
 # 2018_06_03    v3.0 Adapt to new SADMIN Python Library
 # 2018_06_09    v3.1 Last O/S Update Data & Status Taken from sysinfo.txt file in dr Dir.to Upd DB.
 # 2018_06_11    v3.2 Change name for sadm_database_update.py
-#@2018_10_02    v3.3 Add Debug Variable and verbosity to script
+# 2018_10_02    v3.3 Add Debug Variable and verbosity to script
+#@2018_11_09    v3.4 Database Connection Error Improve
 #
 #===================================================================================================
 #
@@ -73,7 +74,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.3"                 # Current Script Version
+    st.ver              = "3.4"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
