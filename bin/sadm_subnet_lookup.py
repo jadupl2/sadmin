@@ -21,7 +21,8 @@
 # 2018-04-26    v1.7 Show Some Messages only with DEBUG Mode ON & Bug fixes
 # 2018-06_06    v1.8 Small Corrections 
 # 2018-06_09    v1.9 Change Script name to sadm_subnet_lookup
-#@2018-09_22    v2.0 Fix Problem with Updating Last Ping Date
+# 2018-09_22    v2.0 Fix Problem with Updating Last Ping Date
+#@2018-11_09    v2.1 DataBase Connect/Disconnect revised.
 # --------------------------------------------------------------------------------------------------
 # 
 try :
@@ -61,7 +62,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.0"                 # Current Script Version
+    st.ver              = "2.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -448,10 +449,16 @@ def main():
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
         
-    (conn,cur) = st.dbconnect()                                         # Connect to SADMIN Database
+    # If we are on SADMIN server & use Database (st.usedb=True), open connection to Server Database
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+
     st.exit_code = main_process(conn,cur,st)                            # Use Subnet in sadmin.cfg 
-    st.dbclose()                                                        # Close the Database
+
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        st.dbclose()                                                    # Close the Database
     st.stop(st.exit_code)                                               # Close SADM Environment
+    sys.exit(st.exit_code)                                              # Exit To O/S
     
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
