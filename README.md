@@ -1,4 +1,4 @@
-# SADMIN Tools 0.91.0
+# SADMIN Tools 0.92.0
 
 If you are a Unix system administrator who is taking care of multiple servers, you probably
 created some scripts to help you keeping your environment stable. With SADMIN you can be alerted
@@ -19,16 +19,16 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 - Use it to add, update and delete server in your server farm inventory.
 - View performance graph of your servers up to two years in the past.
-- If you want, you can automatically update your server O/S at the time and day you scheduled.
-- Have server configuration on hand, useful in case of a Disaster Recovery.
-- View your servers farm subnet utilization and [see what IP are free](http://wsadmin.maison.ca/img/web_network_page.png) to use.
-- View the status of all the scripts that run in your server farm.
-- View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
-- There's still a lot more to come.
-
-**Templates Scripts (Shell and Python)**
-
-- Make a copy of the [template script](http://wsadmin.maison.ca/doc/man/man_sadm_template.php), modify it to your need and enjoy :
+- If you want, you can automatically updv2.22 Refine test before connecting to Databaseate your server O/S at the time and day you scheduled.
+- Have server configuration on hand, usev2.22 Refine test before connecting to Databaseful in case of a Disaster Recovery.
+- View your servers farm subnet utilizatv2.22 Refine test before connecting to Databaseion and [see what IP are free](http://wsadmin.maison.ca/img/web_networv2.22 Refine test before connecting to Databasek_page.png) to use.
+- View the status of all the scripts thav2.22 Refine test before connecting to Databaset run in your server farm.
+- View the log (*.log) and/or history fiv2.22 Refine test before connecting to Databasele (*.rch) without having to go on each server to see them.
+- There's still a lot more to come.v2.22 Refine test before connecting to Database
+v2.22 Refine test before connecting to Database
+**Templates Scripts (Shell and Python)**v2.22 Refine test before connecting to Database
+v2.22 Refine test before connecting to Database
+- Make a copy of the [template script](hv2.22 Refine test before connecting to Databasettp://wsadmin.maison.ca/doc/man/man_sadm_template.php), modify it to your need and enjoy :
   - All your scripts will have a log.
     - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
     - All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
