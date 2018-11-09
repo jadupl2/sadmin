@@ -31,7 +31,8 @@
 # 2018_06_25    sadmlib_std.py v2.18 Correct problem trying to open DB on client.
 # 2018_07_22 v2.19 When using 'writelog' don't print date/time only in log.
 # 2018_09_19 v2.20 Add alert group to RCH file.
-#@2018_11_07 v2.21 Was trying to connect to Database, even if was not on SADMIN Server
+# 2018_11_07 v2.21 Was trying to connect to Database, even if was not on SADMIN Server
+#@2018_11_09 v2.22 Refine test before connecting to Database
 # 
 #==================================================================================================
 try :
@@ -104,7 +105,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.21"                                # This Library Version
+        self.libver             = "2.22"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -264,12 +265,22 @@ class sadmtools():
     def dbconnect(self):       
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
+
+        # No Connection is possible if not on the SADMIN Server or user decided not to use Database
+        if self.get_fqdn() != self.cfg_server or not self.usedb :       # Only on SADMIN & Use DB
+           print ("You are trying to connect to Database and aren't on SADMIN Server %s " % (self.cfg_server))
+           print ("Or st.usedb attribute is set to False")
+           sys.exit(1)                                                 # Exit Pgm with Error Code 1
+
+        # Setup Database Connection
         conn_string  = "'%s', " % (self.cfg_dbhost)
         conn_string += "'%s', " % (self.cfg_rw_dbuser)
         conn_string += "'%s', " % (self.cfg_rw_dbpwd)
         conn_string += "'%s'"   % (self.cfg_dbname)
         if (self.debug > 3) :                                           # Debug Display Conn. Info
             print ("Connect(%s)" % (conn_string))
+
+        # Try to connect to Database
         try :
             #self.conn = pymysql.connect(conn_string)
             self.conn=pymysql.connect(self.cfg_dbhost,self.cfg_rw_dbuser,self.cfg_rw_dbpwd,self.cfg_dbname)
@@ -281,7 +292,6 @@ class sadmtools():
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
 
         # Define a cursor object using cursor() method
-        # ------------------------------------------------------------------------------------------
         try :
             self.cursor = self.conn.cursor()                            # Create Database cursor
         #except AttributeError pymysql.InternalError as error:
@@ -290,8 +300,11 @@ class sadmtools():
             print ("Error creating cursor for %s" % (self.dbname))      # Inform User print DB Name 
             print (">>>>>>>>>>>>>",self.enum,self.emsg)                 # Print Error No. & Message
             sys.exit(1)                                                 # Exit Pgm with Error Code 1
+
         return(self.conn,self.cursor)
- 
+
+
+
     #-----------------------------------------------------------------------------------------------
     # CLOSE THE DATABASE ---------------------------------------------------------------------------
     # return (0) if no error - return (1) if error encountered
@@ -428,9 +441,8 @@ class sadmtools():
             if "SADM_NETWORK5"               in CFG_NAME: self.cfg_network5        = CFG_VALUE
         FH_CFG_FILE.close()                                                 # Close Config File
 
-        # Open Database Password File, Read 'sadmin' and 'squery' user from .dbpass file
-#        if self.get_fqdn() == self.cfg_server and self.usedb :          # Only on SADMIN & Use DB
-        if self.get_fqdn() == self.cfg_server :          # Only on SADMIN & Use DB
+        # Get Database User Password get .dbpass file (Read 'sadmin' and 'squery' user pwd)
+        if self.get_fqdn() == self.cfg_server :                         # Only on SADMIN & Use DB
             try:
                 FH_DBPWD = open(self.dbpass_file,'r')                   # Open DB Password File
             except IOError as e:                                        # If Can't open DB Pwd  file
