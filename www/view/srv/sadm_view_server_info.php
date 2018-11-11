@@ -531,7 +531,7 @@ function display_top_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='View System Information'>";# Tool Tips
-        echo "<button type='button'>System Information</button></a>";               # Display Button
+        echo "<button type='button'>System Info</button></a>";          # Display Button
     }
 
     # Display Button to Display Network Information
@@ -539,8 +539,8 @@ function display_top_buttons ($wrow) {
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_network.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
-        echo "' data-toggle='tooltip' title='Network Information'>";    # Tool Tips
-        echo "<button type='button'>Network Information</button></a>";              # Display Button
+        echo "' data-toggle='tooltip' title='Network Info'>";           # Tool Tips
+        echo "<button type='button'>Network Info</button></a>";         # Display Button
     }
 
     # Display Button to Display System Summary Information
@@ -548,8 +548,8 @@ function display_top_buttons ($wrow) {
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_sysinfo.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
-        echo "' data-toggle='tooltip' title='System Summary Info'>";    # Tool Tips
-        echo "<button type='button'>Server Summary</button></a>";              # Display Button
+        echo "' data-toggle='tooltip' title='System Summary'>";         # Tool Tips
+        echo "<button type='button'>Server Summary</button></a>";       # Display Button
     }
 
 
@@ -559,7 +559,7 @@ function display_top_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $url ;                                     # Build URL 
         echo "' data-toggle='tooltip' title='CFG2HTML Information'>";   # Tool Tips
-        echo "<button type='button'>Server cfg2html</button></a>";             # Display Button
+        echo "<button type='button'>cfg2html Info</button></a>";        # Display Button
     }
 
     # Display Button to Display Disks Information
@@ -568,7 +568,7 @@ function display_top_buttons ($wrow) {
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
         echo "' data-toggle='tooltip' title='Disk Information'>";       # Tool Tips
-        echo "<button type='button'>Disk(s) Information</button></a>";                # Display Button
+        echo "<button type='button'>Disk(s) Info</button></a>";         # Display Button
     }
 
     # Display Button to Display LVM Information
@@ -576,13 +576,13 @@ function display_top_buttons ($wrow) {
     $fname = SADM_WWW_DAT_DIR . "/" . $wrow['srv_name'] ."/dr/". $wrow['srv_name'] . "_lvm.txt";
     if (file_exists($fname)) {                                          # If FileName Received exist
         echo "\n<a href='" . $wname . "?filename=". $fname ;            # Build URL 
-        echo "' data-toggle='tooltip' title='LVM Information'>";        # Tool Tips
+        echo "' data-toggle='tooltip' title='LVM Info'>";               # Tool Tips
         echo "<button type='button'>LVM</button></a>";                  # Display Button
     }
 
     # Display the Update Button
     echo "\n<a href=" . $URL_UPDATE . "?sel=" . $wrow['srv_name'] .">";
-    echo "\n<button type='button'>Update Static Information</button></a>";
+    echo "\n<button type='button'>Update Server Info</button></a>";
     echo "\n\n<br>                                          ";
 }
 
