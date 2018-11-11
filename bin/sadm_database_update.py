@@ -20,7 +20,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 #===================================================================================================
 # Change Log
-# March 2017    v2.3 Change field separator in HOSTNAME_sysinfo.txt file from : to = 
+# March 2017    v2.3 Change field separator in HOSTNAME_sysinfo.txt file from : to =
 # April 2017    v2.4 Change exception Error Message more verbose
 # 2017_11_23    v2.6 Move from PostGres to MySQL, New SADM Python Library and Performance Enhanced.
 # 2017_12_07    v2.7 Correct Problem dealing with srv_date_update on newly added server.
@@ -66,10 +66,10 @@ def setup_sadmin():
         SADM = os.environ.get('SADMIN')                     # Getting SADMIN Root Dir.
         sys.path.insert(0,os.path.join(SADM,'lib'))         # Add SADMIN to sys.path
         import sadmlib_std as sadm                          # Import SADMIN Python Libr.
-    except ImportError as e:                                # If Error importing SADMIN 
+    except ImportError as e:                                # If Error importing SADMIN
         print ("Error Importing SADMIN Module: %s " % e)    # Advise USer of Error
         sys.exit(1)                                         # Go Back to O/S with Error
-    
+
     # Create Instance of SADMIN Tool
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
@@ -77,14 +77,14 @@ def setup_sadmin():
     st.ver              = "3.4"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
-    st.log_append       = True                  # Append Existing Log or Create New One
-    st.use_rch          = True                  # Generate entry in Return Code History (.rch) 
+    st.log_append       = False                 # Append Existing Log or Create New One
+    st.use_rch          = True                  # Generate entry in Return Code History (.rch)
     st.log_header       = True                  # Show/Generate Header in script log (.log)
     st.log_footer       = True                  # Show/Generate Footer in script log (.log)
-    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB 
+    st.usedb            = True                  # True=Open/Use Database,False=Don't Need to Open DB
     st.dbsilent         = False                 # Return Error Code & False=ShowErrMsg True=NoErrMsg
     st.exit_code        = 0                     # Script Exit Code for you to use
-    st.debug            = 0                     # Increase verbosity 0 to 9 
+    st.debug            = 0                     # Increase verbosity 0 to 9
 
     # Override Default define in $SADMIN/cfg/sadmin.cfg
     #st.cfg_alert_type    = 1                    # 0=NoMail 1=OnlyOnError 2=OnlyOnSucces 3=Allways
@@ -92,9 +92,9 @@ def setup_sadmin():
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
     #st.cfg_max_logline  = 5000                 # When Script End Trim log file to 5000 Lines
     #st.cfg_max_rchline  = 100                  # When Script End Trim rch file to 100 Lines
-    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server 
+    #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server
 
-    # Start SADMIN Tools - Initialize 
+    # Start SADMIN Tools - Initialize
     st.start()                                  # Create dir. if needed, Open Log, Update RCH file..
     return(st)                                  # Return Instance Obj. To Caller
 
@@ -152,7 +152,7 @@ def update_row(st,wconn, wcur, wdict):
     # Execute the SQL Update Statement
     try:
         if st.debug > 4: st.writelog("sql=%s" % (sql))
-        wcur.execute(sql)                                               # Update Server Data 
+        wcur.execute(sql)                                               # Update Server Data
         wconn.commit()                                                  # Commit the transaction
         st.writelog("[OK] %s update Succeeded" % (wdict['srv_name']))   # Advise User Update is OK
         return (0)                                                      # return (0) Insert Worked
@@ -162,7 +162,7 @@ def update_row(st,wconn, wcur, wdict):
         if st.debug > 4: st.writelog("sql=%s" % (sql))
         wconn.rollback()                                                # RollBack Transaction
         return (1)                                                      # return (1) to indicate Err
-    except Exception as error: 
+    except Exception as error:
         enum, emsg = error.args                                         # Get Error No. & Message
         st.writelog("[ERROR] (%s) %s " % (enum,error))                  # Print Error No. & Message
         if st.debug > 4: st.writelog("sql=%s" % (sql))
@@ -195,10 +195,10 @@ def process_servers(wconn,wcur,st):
         self.enum, self.emsg = error.args                               # Get Error No. & Message
         print (">>>>>>>>>>>>>",self.enum,self.emsg)                     # Print Error No. & Message
         return (1)
-    
+
     # Process each server
     lineno = 1
-    total_error = 0 
+    total_error = 0
     for row in rows:
         #st.writelog ("%02d %s" % (lineno, row))
         wname       = row[0]                                            # Extract Server Name
@@ -224,7 +224,7 @@ def process_servers(wconn,wcur,st):
             st.writelog ("Error opening file %s \r\n" % sysfile)        # Print FileName
             st.writelog ("Error Number : {0}\r\n.format(e.errno)")      # Print Error Number
             st.writelog ("error({0}):{1}".format(e.errno, e.strerror))
-            st.writelog (repr(e))           
+            st.writelog (repr(e))
             st.writelog( "Error Text   : {0}\r\n.format(e.strerror)")   # Print Error Message
             return 1                                                    # Return Error to Caller
         if st.debug > 4: st.writelog ("File %s opened" % sysfile)       # Opened Sysinfo file Msg
@@ -404,21 +404,21 @@ def main():
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
-    # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.  
+    # Import SADMIN Module, Create SADMIN Tool Instance, Initialize Log and rch file.
     st = setup_sadmin()                                                 # Setup Var. & Load SADM Lib
 
-    # If Script should only be run on the SADMIN Server 
+    # If Script should only be run on the SADMIN Server
     if st.get_fqdn() != st.cfg_server:                                  # Only run on SADMIN
         st.writelog("This script can only be run on SADMIN server (%s)" % (st.cfg_server))
         st.writelog("Process aborted")                                  # Abort advise message
         st.stop(1)                                                      # Close and Trim Log
         sys.exit(1)                                                     # Exit To O/S
-        
+
     # If we are on SADMIN server & use Database (st.usedb=True), open connection to Server Database
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
 
-    st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers 
+    st.exit_code = process_servers(conn,cur,st)                         # Process Actives Servers
 
     if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
         st.dbclose()                                                    # Close the Database
