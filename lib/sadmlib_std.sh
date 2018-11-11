@@ -57,10 +57,11 @@
 # 2018_09_30 v2.44 Some Alert Message was too long (Corrupting history file), have shorthen them.
 # 2018_10_04 v2.45 Error reported by scripts, issue multiple alert within same day (now once a day)
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
-#@2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
-#@2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
-#@2018_10_29 v2.49 Correct Type Error causing occasionnal crash
+# 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
+# 2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
+# 2018_10_29 v2.49 Correct Type Error causing occasionnal crash
 #@2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
+#@2018_11_09 v2.51 Add Link in Slack Message to view script log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -78,7 +79,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.50"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.51"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -2211,6 +2212,15 @@ sadm_send_alert() {
                 then text_tail=`tail -50 ${alert_attach}`
                      text="${text}\n\n*-----Attachment-----*\n${text_tail}"
              fi
+
+            if [ "$alert_type" = "S" ] 
+                then SNAME=`echo ${alert_subject} |awk '{ print $1 }'`   # Get Script Name
+                     LOGFILE="${alert_server}_${SNAME}.log"             # Assemble log Script Name
+                     LOGNAME="${SADM_WWW_DAT_DIR}/${alert_server}/log/${LOGFILE}"  # Add Dir. Path 
+                     URL_VIEW_FILE='/view/log/sadm_view_file.php'       # View File Content URL
+                     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+                     text="${text}\nLink to the script log:\n${LOGURL}" # Insert Log URL In Mess
+            fi
 
              slack_text="$text"                                         # Set Alert Text
              escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
