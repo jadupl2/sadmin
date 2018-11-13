@@ -35,6 +35,7 @@
 # 2018_06_03    v2.2 Adapt to new version of Shell Library and small ameliorations
 # 2018_06_09    v2.3 Change & Standardize scripts name called by this script & Change Startup Order
 # 2018_09_16    v2.4 Added Default Alert Group
+#@2018_11_13    v2.5 Adapted for MacOS (Don't run Aix/Linux scripts)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.4'                               # Current Script Version
+    export SADM_VER='2.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -159,16 +160,20 @@ main_process()
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Save Filesystem Information of current filesystem ($SADMIN/dat/dr/hostname_fs_save_info.dat)
-    run_command "sadm_dr_savefs.sh"                                     # Client Save LVM FS Info
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If Not on MacOS 
+        then run_command "sadm_dr_savefs.sh"                            # Client Save LVM FS Info
+             if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi  # Incr. Error Counter
+    fi
 
     # Collect System Information and store it in $SADMIN/dat/dr (Used for Disaster Recovery)
     run_command "sadm_create_sysinfo.sh"                                # Create Client Sysinfo file
     if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
 
     # Create HTML file containing System Info.(files,hardware,software) $SADMIN/dat/dr/hostname.html
-    run_command "sadm_cfg2html.sh"                                      # Produce cfg2html html file
-    if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi     # Increase Error Counter
+    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If Not on MacOS 
+        then run_command "sadm_cfg2html.sh"                             # Produce cfg2html html file
+             if [ $? -ne 0 ] ;then SADM_EXIT_CODE=$(($SADM_EXIT_CODE+1)) ;fi  # Incr. Error Counter
+    fi
 
     return $SADM_EXIT_CODE                                              # Return No Error to Caller
 }
