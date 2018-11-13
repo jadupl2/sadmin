@@ -70,16 +70,16 @@
 #       3- A backup of the structure of each VG is taken and store in ${SADM_BASE_DIR}/dat/dr.
 #          File is in backup/restore format.
 #                       root@aixb50(/sadmin/dat/dr)# file aixb50_datavg.savevg
-#                        aixb50_datavg.savDEBUG_LEVELevg: backup/restore format file
-#                       root@aixb50(/sadmiDEBUG_LEVELn/dat/dr)#
-#           DEBUG_LEVEL
-#          Both of the files created are qDEBUG_LEVELuite small, since no users files is included in the backup
-#               -rw-rw-r--    1 sadmin   sDEBUG_LEVELadmin          215 Dec 01 12:10 aixb50_pvinfo.txt
-#               -rw-rw-r--    1 sadmin   sDEBUG_LEVELadmin        51200 Dec 01 12:10 aixb50_datavg.savevg
-#DEBUG_LEVEL
-#       4- When the backup of a VG is doneDEBUG_LEVEL the line line that was added in the exclude file 
-#          is removed. DEBUG_LEVEL
-#DEBUG_LEVEL
+#                        aixb50_datavg.savevg: backup/restore format file
+#                       root@aixb50(/sadmin/dat/dr)#
+#           
+#          Both of the files created are quite small, since no users files is included in the backup
+#               -rw-rw-r--    1 sadmin   sadmin          215 Dec 01 12:10 aixb50_pvinfo.txt
+#               -rw-rw-r--    1 sadmin   sadmin        51200 Dec 01 12:10 aixb50_datavg.savevg
+#
+#       4- When the backup of a VG is done the line line that was added in the exclude file 
+#          is removed. 
+#
 #
 #===================================================================================================
 #
@@ -92,7 +92,8 @@
 # 2018_06_09    v2.2 Add Help and Version function & Change Startup Order
 # 2018_07_11    v2.3 Was not showing if debug was activated or not
 # 2018_09_16    v2.4 Added Default Alert Group
-#@2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
+# 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
+#@2018_11_13    v2.6 Debug is now OFF by default
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -114,7 +115,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -151,7 +152,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
 PRVFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.prev ;export PRVFILE # Yesterday Output file
-DEBUG=true                                        ; export DEBUG        # DEBUG increase Verbose 
+DEBUG=False                                       ; export DEBUG        # DEBUG increase Verbose 
 LVMVER=0                                          ; export LVMVER       # LVM Version on server (1/2)
 LVSCAN=" "                                        ; export LVSCAN       # Full path to lvscan cmd
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
