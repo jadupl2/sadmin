@@ -1,5 +1,5 @@
 d32239bcb673463ab874e80d47fae504  ./LICENSE
-634328969c515a6ded60c211d314456c  ./README.md
+f15d6039c7619c78dfa93050d12087d3  ./README.md
 67c466184f2f7f7ddf2dda05a2e69225  ./cfg/.backup_exclude.txt
 e5db5ee2ff5e05a162a8a818c5665210  ./cfg/.backup_list.txt
 10347fd8b11661cff09b4d482f663047  ./cfg/.release
@@ -29,8 +29,8 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 6709342efab4644a0217a37e7314ee5c  ./doc/setup examples/Server_Install_Example.pdf
 6bfa994a25bb3aa37122fe4ffd41d73d  ./lib/sadmlib_fs.sh
 f694e76402c9ae7bbf6383b15ec6373d  ./lib/sadmlib_screen.sh
-f7324fc5a28df1dc97335d7f8c30c7f8  ./lib/sadmlib_std.py
-da42f027a5091fdb45090da93237ad3c  ./lib/sadmlib_std.sh
+6d704ac6781a5b7215c852488335eea6  ./lib/sadmlib_std.py
+eca2741fcf5e40e0649560179dda9966  ./lib/sadmlib_std.sh
 3a47604ed48c9b842772013e72f98995  ./pkg/DataTables/DataTables-1.10.11.zip
 5d6e38017d15726fbb5c4efc7c42e347  ./pkg/DataTables/DataTables-1.10.12.zip
 70dbf5308decd9d49b36b4c69bcc2a71  ./pkg/cfg2html/cfg2html
@@ -217,7 +217,7 @@ fb49b382ff9c0c5f951c4efba2fcd4c9  ./www/view/perf/sadm_server_perf_menu.php
 9b3090ebd5a8d75e0849b571edc0d511  ./www/view/rch/sadm_view_rch_summary.php
 24320b0bc103b4477f1308fd057d3e28  ./www/view/rch/sadm_view_rchfile.php
 1937060cc3e9b4dba9fa36fc8608cf69  ./www/view/sadm_view_template.php
-142443770cc1fdd15479890ac2e389ba  ./www/view/srv/sadm_view_server_info.php
+07c15c26a5c7c7b3d930dba76fbe1d26  ./www/view/srv/sadm_view_server_info.php
 4ad7d5df529b5c01c15b7c24426351b1  ./www/view/srv/sadm_view_servers.php
 bf82a41e589f5e7a1bd4d005d2015431  ./www/view/sys/sadm_subnet.php
 2594fabecd1e62c60d68fad53c786665  ./www/view/sys/sadm_view_cfg2html.php
@@ -227,16 +227,16 @@ bf82a41e589f5e7a1bd4d005d2015431  ./www/view/sys/sadm_subnet.php
 7742c7a0b5ae36527f18f180abf07f1e  ./bin/sadm_backup.sh
 2c6604580a06889b0f4333f6621029d9  ./bin/sadm_backup_sdcard.sh
 3787e4fa404c434478ed4b694c194997  ./bin/sadm_backupdb.sh
-97e8d159b4cc6154cae208b1d82889e1  ./bin/sadm_cfg2html.sh
+4838b9751e73057a14877c35e417c8f9  ./bin/sadm_cfg2html.sh
 9e7ec48a950d6527e9d902a7ca43f751  ./bin/sadm_client_housekeeping.sh
-4a36f91c0533677bbf9d248fc0f07d41  ./bin/sadm_client_sunset.sh
+f7ac860679ab2de503984613664d37ea  ./bin/sadm_client_sunset.sh
 740a23a253bf7e79e2050abd43d1dbcb  ./bin/sadm_create_mksysb.sh
-31b85c772d9544435324d38593d20349  ./bin/sadm_create_sysinfo.sh
+bb882998913a8093297e1c7233020f49  ./bin/sadm_create_sysinfo.sh
 098565aa5b2f05d2da7b1aa3f9633265  ./bin/sadm_daily_farm_fetch.sh
-69699b7d5c86eda9747e30a3cb59a28b  ./bin/sadm_database_update.py
+5fe6757d8667d8b519fc6a8a34e96870  ./bin/sadm_database_update.py
 86d6ef5e98fa76aeee73f2cd33fcde8c  ./bin/sadm_df.sh
 d2682c56750ae61ea1e69b43d1ecc9cc  ./bin/sadm_dr_recreatefs.sh
-770944ae3954ddacc72f130b3935e1b7  ./bin/sadm_dr_savefs.sh
+a4e44b2c8a2e3520cdfd1085f299d120  ./bin/sadm_dr_savefs.sh
 d4324c394503da3fb7f777ace47a2d1f  ./bin/sadm_fetch_clients.sh
 d75fb1273b401030e633c288d8ec2475  ./bin/sadm_fs_incr.sh
 851eb489a0b5de3c4f23411cfdaf4c06  ./bin/sadm_nmon_rrd_update.sh
@@ -249,12 +249,12 @@ f9accc4349ccec503febc32f8e3d2f8d  ./bin/sadm_rear_backup.sh
 8063cd5a186c958f14277c12aba61e24  ./bin/sadm_server_housekeeping.sh
 135f31cda56bfdac594a08fb8dab1c54  ./bin/sadm_server_sunrise.sh
 3b485dc8561715db37dc0bad3508c1d4  ./bin/sadm_service_ctrl.sh
-81073bc15803d0194727e6fb1d0f99f4  ./bin/sadm_subnet_lookup.py
-b7f75149fb3126faedd92ea7e802448f  ./bin/sadm_support_request.sh
+8ba26471110b2bb783f20bbde8fa27c4  ./bin/sadm_subnet_lookup.py
+d9b2b401dd704e86d9f0d5847b5a9c84  ./bin/sadm_support_request.sh
 4bee0034dc7390d2a285d983558a2bd3  ./bin/sadm_sysmon.pl
 4bbf7cfe917ae16626352e4293565720  ./bin/sadm_sysmon_cli.sh
 5636816219e11e39ac47d2eef6e78807  ./bin/sadm_sysmon_tui.pl
-75f5cb65bc5ddf73c13bd7a052573040  ./bin/sadm_template.py
+dc0d5f67e793bbe7ea30fe63d957cffa  ./bin/sadm_template.py
 837a78b4c8e200659c2db0c7dd1274b3  ./bin/sadm_template.sh
 cc864870ed2c43950982f927a77ec372  ./bin/sadm_template_menus.sh
 dfa0fc320317974c58bfd7d6777a4801  ./bin/sadm_ui.sh

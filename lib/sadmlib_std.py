@@ -32,7 +32,8 @@
 # 2018_07_22 v2.19 When using 'writelog' don't print date/time only in log.
 # 2018_09_19 v2.20 Add alert group to RCH file.
 # 2018_11_07 v2.21 Was trying to connect to Database, even if was not on SADMIN Server
-#@2018_11_09 v2.22 Refine test before connecting to Database
+# 2018_11_09 v2.22 Refine test before connecting to Database
+#@2018_11_13 v2.23 Change for support of MacOS Mojave
 #
 #==================================================================================================
 try :
@@ -105,7 +106,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.22"                                # This Library Version
+        self.libver             = "2.23"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
