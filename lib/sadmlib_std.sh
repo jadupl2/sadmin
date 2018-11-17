@@ -802,6 +802,7 @@ sadm_get_oscodename() {
                     if [ "$wver"  = "10.11" ] ; then woscodename="El Capitan"       ;fi
                     if [ "$wver"  = "10.12" ] ; then woscodename="Sierra"           ;fi
                     if [ "$wver"  = "10.13" ] ; then woscodename="High Sierra"      ;fi
+                    if [ "$wver"  = "10.14" ] ; then woscodename="Mojave"           ;fi
                     ;;
         "LINUX")    woscodename=`$SADM_LSB_RELEASE -sc`
                     ;;

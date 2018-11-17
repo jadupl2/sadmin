@@ -740,6 +740,7 @@ class sadmtools():
             if (self.get_osmajorversion() == "10.11") : oscodename="El Capitan"
             if (self.get_osmajorversion() == "10.12") : oscodename="Sierra"
             if (self.get_osmajorversion() == "10.13") : oscodename="High Sierra"
+            if (self.get_osmajorversion() == "10.14") : oscodename="Mojave"
         if self.os_type == "LINUX":
             wcmd = "%s %s" % (self.lsb_release,"-sc")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
