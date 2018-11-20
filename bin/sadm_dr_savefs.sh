@@ -158,7 +158,8 @@ LVSCAN=" "                                        ; export LVSCAN       # Full p
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
 
 # Variables used for AIX Support
-VG_LIST=""                                        ; export VG_LIST      # Contain List of Active VG             SAVEVGFILE=""                                     ; export SAVEVGFILE   # FileName of savevg backup 
+VG_LIST=""                                        ; export VG_LIST      # Contain List of Active VG
+SAVEVGFILE=""                                     ; export SAVEVGFILE   # FileName of savevg backup 
 PVNAME="hdisk"                                    ; export PVNAME       # Hard Disk name in Aix
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"     ; export HPREFIX      # Output File Loc & Name
 PVINFO_FILE="${HPREFIX}_pvinfo.txt"               ; export PVINFO_FILE  # Output for Aix PV info   
