@@ -31,6 +31,7 @@
 # 2018_04_27 V1.2 Change Default Shell to Bash for running this script
 # 2018_08_10 v1.3 Remove O/S Version Restriction and added /etc/environment printing.
 #@2018_11_16 v1.4 Restructure for performance and flexibility.
+#@2018_11_21 v1.5 Output file include content of log directory.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -59,7 +60,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.4'                               # Your Current Script Version
+    export SADM_VER='1.5'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -216,12 +217,13 @@ main_process()
 
     # Compress File
     BACDIR=`pwd`
-    cd $SADM_LOG_DIR
+    SRQ_FILE="${SADM_TMP_DIR}/${SADM_HOSTNAME}_${SADM_INST}.tgz"
+    cd $SADM_BASE_DIR
     if [ $DEBUG_LEVEL -gt 0 ] 
         then echo "tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG}"
     fi
-    tar -cvzf ${SADM_TMP_DIR}/${SADM_INST}.tgz ${SADM_LOG} 2>1 >/dev/null
-    echo "Please attach this file in the support email request : ${SADM_TMP_DIR}/${SADM_INST}.tgz"
+    tar -cvzf $SRQ_FILE log 2>1 >/dev/null
+    echo "Please attach this file in the support email request : $SRQ_FILE"
     echo " "                                                            # Insert Blank Line
     cd $BACDIR
 
