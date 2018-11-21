@@ -32,6 +32,7 @@
 # 2018_10_21    v3.2 More info were added about the system and network in report file.
 # 2018_11_07    v3.3 System Report show only last 10 booting date/time
 #@2018_11_13    v3.4 Restructure script for Performance
+#@2018_11_20    v3.5 Added some Aix lsattr command for system information.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -51,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_VER='3.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -136,7 +137,7 @@ ETHTOOL=""                                      ; export ETHTOOL        # ethtoo
 UNAME=""                                        ; export UNAME          # uname  command location
 UPTIME=""                                       ; export UPTIME         # uptime command location
 LAST=""                                         ; export LAST           # last command location
-
+LSATTR=""                                       ; export LSATTR         # lsattr command location
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -230,6 +231,7 @@ pre_validation()
     if [ $(sadm_get_ostype) = "AIX" ]
         then    command_available "lspv"        ; LSPV=$SADM_CPATH      # Cmd Path or Blank !found
                 command_available "lsvg"        ; LSVG=$SADM_CPATH      # Cmd Path or Blank !found
+                command_available "lsattr"      ; LSATTR=$SADM_CPATH    # Cmd Path or Blank !found
                 command_available "prtconf"     ; PRTCONF=$SADM_CPATH   # Cmd Path or Blank !found
         else    command_available "lvs"         ; LVS=$SADM_CPATH       # Cmd Path or Blank !found
                 command_available "lvscan"      ; LVSCAN=$SADM_CPATH    # Cmd Path or Blank !found
@@ -620,6 +622,9 @@ create_linux_config_files()
 # ==================================================================================================
 create_aix_config_files()
 {
+    if [ "$FACTER" != "" ]  ; then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"   ; fi
+    if [ "$PRTCONF" != "" ] ; then create_command_output "prtconf" "$PRTCONF" "$SYSTEM_FILE"  ; fi
+
     # Collect Disk Information ---------------------------------------------------------------------
     write_file_header "Disks Information" "$DISKS_FILE"
     sadm_writelog "Creating $DISKS_FILE ..."
@@ -669,10 +674,20 @@ create_aix_config_files()
              execute_command "$CMD" "$NET_FILE" 
     fi
 
-    if [ "$FACTER" != "" ]  ; then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"   ; fi
-    if [ "$PRTCONF" != "" ] ; then create_command_output "prtconf" "$PRTCONF" "$SYSTEM_FILE"  ; fi
-}
 
+    # Collect System Information -------------------------------------------------------------------
+    if [ "$LSATTR" != "" ]
+        then CMD="$LSATTR -El sys0 -a realmem"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
+    if [ "$LSATTR" != "" ]
+        then CMD="$LSATTR -E -l sys0"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
+    
+}
 
 
 # ==================================================================================================

@@ -19,7 +19,7 @@
 #       1- Check if lvm package is installed on server.
 #           If not script display error and exit with error code 1
 #           If it is installed check if V1 (Rhel3) or V2 is installed
-#           Get the path to lvscan command
+#           Get the path to some lvm commands
 #
 #       2- Run the LVSCAN command and process each line , one by one.
 #           Gather all info needed to recreate the filesystem (or swap) needed in case of disaster
@@ -93,7 +93,8 @@
 # 2018_07_11    v2.3 Was not showing if debug was activated or not
 # 2018_09_16    v2.4 Added Default Alert Group
 # 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
-#@2018_11_13    v2.6 Debug is now OFF by default
+# 2018_11_13    v2.6 Debug is now OFF by default
+#@2018_11_20    v2.7 Bug fix with xfs, restructure code and no longer support RHEL3,RHEL4.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -115,7 +116,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -158,7 +159,8 @@ LVSCAN=" "                                        ; export LVSCAN       # Full p
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
 
 # Variables used for AIX Support
-VG_LIST=""                                        ; export VG_LIST      # Contain List of Active VG             SAVEVGFILE=""                                     ; export SAVEVGFILE   # FileName of savevg backup 
+VG_LIST=""                                        ; export VG_LIST      # Contain List of Active VG
+SAVEVGFILE=""                                     ; export SAVEVGFILE   # FileName of savevg backup 
 PVNAME="hdisk"                                    ; export PVNAME       # Hard Disk name in Aix
 HPREFIX="${SADM_DR_DIR}/$(sadm_get_hostname)"     ; export HPREFIX      # Output File Loc & Name
 PVINFO_FILE="${HPREFIX}_pvinfo.txt"               ; export PVINFO_FILE  # Output for Aix PV info   
@@ -171,7 +173,7 @@ SAVEVG="savevg -e -i -v -fVGDATAFILE_PLACE_HOLDER"
 show_usage()
 {
     printf "\n${SADM_PN} usage :"
-    printf "\n\t-d   (Show Additionnal Debug Information)"
+    printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
@@ -186,38 +188,52 @@ show_version()
 }
 
 
-
 # --------------------------------------------------------------------------------------------------
 #          Determine if LVM is installed and what version of lvm is installed (1 or 2)
 # --------------------------------------------------------------------------------------------------
 #
 check_lvm_version()
 {
-    LVMVER=0                                                            # Assume lvm not install
-    sadm_writelog "Currently verifying if 'lvm2' package is installed"
+    sadm_writelog "Verifying if 'lvm2' package is installed ..."
     
-    # Check if LVM Version 2 is installed
-    case "$(sadm_get_osname)" in                                        # Test OS Name
-      "REDHAT"|"CENTOS"|"FEDORA")   sadm_writelog "rpm -qa lvm-2"
-                                    rpm -qa '^lvm-2' > /dev/null 2>&1   # Query RPM DB
-                                    if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
-                                    ;; 
-      "UBUNTU"|"DEBIAN"         )   sadm_writelog "dpkg --status lvm2"
-                                    dpkg --status lvm2 > /dev/null 2>&1 # Query pkg list
-                                    if [ $? -eq 0 ] ; then LVMVER=2 ;fi # Found LVM V2     
-                                    ;; 
-      "*"                       )   sadm_writelog "OS Not Supported yet ($(sadm_get_osname))"
-                                    ;; 
-    esac
-    LVSCAN=`which lvscan`                                               # LVM1 Path (RHEL 4 and Up)
-    if [ $? -ne 0 ] ; then LVMVER=0 ; fi                                # If cannot locate lvscan 
-    
-    # If LVM Not Installed
-    if [ $LVMVER -eq 0 ]                                                # lvm wasn't found on server
-        then sadm_writelog "The lvm2 package is not installed"          # Advise user no lvm package
-             sadm_writelog "No value running this script, Script Terminated" # No LVM - No Script
+    # Check if LVM package installed with RPM if command is there
+    which rpm > /dev/null 2>&1
+    if [ $? -eq 0 ] ; then CRPM=`which rpm`  ; else CRPM=""  ; fi
+    if [ "$CRPM" != "" ]    
+        then rpm -q 'lvm2' > /dev/null 2>&1                             # Query RPM DB
+             if [ $? -eq 0 ] ; then CLVM=1 ; else CLVM=0 ; fi 
+    fi 
+
+    # Check if LVM package installed with DPKG if command is there
+    which dpkg > /dev/null 2>&1
+    if [ $? -eq 0 ] ; then CDPKG=`which dpkg` ; else CDPKG="" ; fi
+    if [ "$CDPKG" != "" ]    
+        then dpkg --status lvm2 > /dev/null 2>&1                        # Query pkg list
+             if [ $? -eq 0 ] ; then CLVM=1 ; else CLVM=0 ; fi 
+    fi 
+
+    if [ "$CRPM" = "" ] && [ "$CDPKG" = "" ] 
+        then sadm_writelog "OS Not Supported yet ($(sadm_get_osname))"
+             sadm_writelog "Command 'rpm' and 'dpkg' not found" 
+             return 1                                                   # Return Error to caller
     fi
-    return $LVMVER                                                      # Return LVM Version
+
+   # If LVM Not Installed
+    if [ $CLVM -eq 0 ]                                                  # lvm wasn't found on server
+        then sadm_writelog "The lvm2 package is not installed"          # Advise user no lvm package
+             sadm_writelog "No value running this script, script terminated ..." 
+             return 1                                                   # Return Error to caller
+        else LVSCAN=`which lvscan`                                      # LVM1 Path (RHEL 4 and Up)
+             if [ $? -ne 0 ]                                            # If cannot locate lvscan 
+                then sadm_writelog "Command 'lvscan' not found" 
+                     sadm_writelog "No value running this script, Script Terminated" 
+                     CLVM=0 
+                     return 1                                           # Return Error to caller
+             fi                         
+    fi
+
+    sadm_writelog "[OK] lvm2 package is installed ..."
+    return 0                                                            # Return No Error to caller
 }
 
 
@@ -233,30 +249,29 @@ save_lvm_info()
     
     sadm_writelog "There are `wc -l $SADM_TMP_FILE1 | awk '{ print $1 }'` Logical volume reported by lvscan"
     sadm_writelog "Output file is $DRFILE" 
-    #sadm_writelog " " ; sadm_writelog " "
+    sadm_writelog " "
     
 
     cat $SADM_TMP_FILE1 | while read LVLINE                             # process all LV detected
         do
-        if [ $DEBUG ] 
+        if [ $DEBUG_LEVEL -gt 5 ] 
             then    sadm_writelog " " ; sadm_writelog "$SADM_DASH"; 
                     sadm_writelog "Processing this line              = $LVLINE"   # Display lvm line processing
         fi 
 
         # Get logical volume name
         LVNAME=$( echo $LVLINE |awk '{ print $2 }' | tr -d "\'" | awk -F"/" '{ print$4 }' )
-        if [ $DEBUG ] ; then sadm_writelog "Logical Volume Name               = $LVNAME"  ; fi         
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "Logical Volume Name               = $LVNAME"  ; fi         
 
         
         # Get Volume Group Name
         VGNAME=$( echo $LVLINE | awk '{ print $2 }' | tr -d "\'" | awk -F"/" '{ print$3 }' )
-        if [ $DEBUG ] ; then sadm_writelog "Volume Group Name                 = $VGNAME"  ; fi         
-
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "Volume Group Name                 = $VGNAME"  ; fi         
         
         # Get logical Volume Size
         LVWS1=$( echo $LVLINE | awk -F'[' '{ print $2 }' )     # Del Everything before [
         LVWS2=$( echo $LVWS1   | awk -F']' '{ print $1 }' )    # Del everything after ]
-        LVFLT=$( echo $LVWS2   | awk '{ print $1 }' )          # Get LVM Size
+        LVFLT=$( echo $LVWS2   | awk '{ print $1 }' | tr -d '<' )
         LVUNIT=$(  echo $LVWS2 | awk '{ print $2 }' )          # Size Unit (MB/GB/MiB/GiB)
         if [ $LVUNIT = "GB" ] || [ $LVUNIT = "GiB" ]           # If GB/GiB Unit
             then LVINT=`echo "$LVFLT * 1024" | /usr/bin/bc  | awk -F'.' '{ print $1 }'`
@@ -264,7 +279,7 @@ save_lvm_info()
             else LVINT=$( echo $LVFLT | awk -F'.' '{ print $1 }' )
                  LVSIZE=$LVINT                                  # Keep Size in MB
         fi
-        if [ $DEBUG ]
+        if [ $DEBUG_LEVEL -gt 5 ]
             then sadm_writelog "Logical Volume Size               = $LVFLT"
                  sadm_writelog "Logical Volume Unit Used          = $LVUNIT"
                  sadm_writelog "Calculated LV size in MB          = $LVSIZE MB"
@@ -274,7 +289,7 @@ save_lvm_info()
         # Construct from LVSCAN Device the device name used in FSTAB
         LVPATH1=$(echo $LVLINE | awk '{ printf "%s ",$2 }' | tr -d "\'")
         LVPATH2="/dev/mapper/${VGNAME}-${LVNAME}"
-        if [ $DEBUG ] 
+        if [ $DEBUG_LEVEL -gt 5 ] 
             then sadm_writelog "LVM Device returned by lvscan     = $LVPATH1" 
                  sadm_writelog "LVM We need to find in $FSTAB = $LVPATH2" 
         fi
@@ -286,7 +301,7 @@ save_lvm_info()
         if [ "$WT" = "swap" ] || [ "$WT" = "ext4" ] || [ "$WT" = "ext3" ] || [ "$WT" = "xfs" ] || [ "$WT" = "ext2" ] 
            then LVTYPE="$WT"
         fi
-        if [ $DEBUG ] ; then sadm_writelog "File system Type                  = ${LVTYPE}" ; fi
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "File system Type                  = ${LVTYPE}" ; fi
 
         
         # Get mount point from FSTAB
@@ -294,12 +309,12 @@ save_lvm_info()
            then LVMOUNT="" ; LVLEN=0
            else LVMOUNT=`grep -iE "^${LVPATH1} |^${LVPATH2} " $FSTAB  | awk '{ print $2 }'`
         fi
-        if [ $DEBUG ] ; then sadm_writelog "Mount Point                       = $LVMOUNT" ; fi
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "Mount Point                       = $LVMOUNT" ; fi
         
         
         # Get the lenght of mount pointt
         LVLEN=${#LVMOUNT}
-        if [ $DEBUG ] ; then sadm_writelog "Lenght of Mount Point Name        = $LVLEN" ; fi
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "Lenght of Mount Point Name        = $LVLEN" ; fi
 
     
         # Get Owner and Group of the Filesystem or Swap Space
@@ -308,7 +323,7 @@ save_lvm_info()
             else LVGROUP=`ls -ld $LVMOUNT | awk '{ printf "%s", $4 }'`
                  LVOWNER=`ls -ld $LVMOUNT | awk '{ printf "%s", $3 }'`
         fi
-        if [ $DEBUG ] 
+        if [ $DEBUG_LEVEL -gt 5 ] 
             then sadm_writelog "Filesystem Group Owner            = $LVGROUP" 
                  sadm_writelog "Filesystem Owner                  = $LVOWNER"
         fi
@@ -318,7 +333,7 @@ save_lvm_info()
         if [ "$LVTYPE" = "swap" ]
            then LVPROT="0000"
            else LVLS=`ls -ld $LVMOUNT`
-                if [ $DEBUG ] ; then sadm_writelog "ls -ld returned                   = $LVLS" ; fi
+                if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "ls -ld returned                   = $LVLS" ; fi
                 user_bit=0 ; group_bit=0 ; other_bit=0 ; stick_bit=0
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,2,1) }'`  = "r" ] ; then user_bit=`expr $user_bit + 4`   ; fi
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,3,1) }'`  = "w" ] ; then user_bit=`expr $user_bit + 2`   ; fi
@@ -337,7 +352,7 @@ save_lvm_info()
                 if [ `echo $LVLS | awk '{ printf "%1s", substr($1,10,1) }'` = "t" ] ; then stick_bit=`expr $stick_bit + 1` ; fi
                 LVPROT="${stick_bit}${user_bit}${group_bit}${other_bit}"
         fi
-        if [ $DEBUG ] ; then sadm_writelog "Filesystem Protection             = $LVPROT" ; fi
+        if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "Filesystem Protection             = $LVPROT" ; fi
 
 
         # Write data collection in order that need to be recreated 
@@ -345,8 +360,8 @@ save_lvm_info()
         sadm_writelog "Line written to output file       = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
         done
         
-    sadm_writelog " " ; sadm_writelog "$SADM_DASH";
-    sadm_writelog "Backup of $DRFILE" 
+    sadm_writelog " " 
+    sadm_writelog "Backup of $DRFILE to $PRVFILE" 
     if [ -s $DRFILE ] ; then cp $DRFILE $PRVFILE ; fi                   # Make a backup of data file 
 
     # Sort output - Get rid of LVLEN at the same time (needed only for the sort)
@@ -373,23 +388,22 @@ save_lvm_info()
 #
 save_aix_info()
 {
-    sadm_writelog "Information about Volume group will be store in $SADM_DR_DIR"
+    sadm_writelog "Volume group information are store in $SADM_DR_DIR"  # Advise user Output Dir.
     SADM_EXIT_CODE=0                                                    # Start with Exit Code at 0 
 
     # Build a list Volume Group Excluding rootvg.
-    lsvg | grep -v rootvg | while read vg
+    lsvg | grep -v rootvg | while read vg                               # Loop through VG List
         do
-        VG_LIST="$VG_LIST $vg"
+        VG_LIST="$VG_LIST $vg"                                          # Add Current VG to List
         done
-    if [[ $VG_LIST = "" ]]
-        then sadm_writelog "nCould not find any VG to process..."
-             return 1
-        else sadm_writelog "This is all VGs that are detected : $VG_LIST"
+    if [[ $VG_LIST = "" ]]                                              # If no VG beside rootvg 
+        then sadm_writelog "nCould not find any VG to process..."       # Advise USer
+             return 1                                                   # Return Error to Caller
+        else sadm_writelog "List of Volume Group detected : $VG_LIST"   # List VG's Detected
     fi
 
     sadm_writelog "Writing Physical volume name into ${PVINFO_FILE}"
-    cp /dev/null ${PVINFO_FILE}
-    lspv >> ${PVINFO_FILE}
+    lspv > ${PVINFO_FILE}                                               # Save Physical Volume List
 
     # Get the disk usage of the VG on Disk
     for VG in $VG_LIST
@@ -448,10 +462,11 @@ save_aix_info()
 # --------------------------------------------------------------------------------------------------
 
 # Evaluate Command Line Switch Options Upfront
-# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set DEBUG Level 
+# (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    DEBUG_LEVEL=0                                                       # 0=NoDebug Higher=+Verbose
     while getopts "hvd:" opt ; do                                       # Loop to process Switch
         case $opt in
-            d) DEBUG=True                                               # Get Debug Activated
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -465,7 +480,7 @@ save_aix_info()
                ;;
         esac                                                            # End of case
     done                                                                # End of while
-    if [ $DEBUG ] ; then printf "\nDebug activated\n" ; fi
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
 
 # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
@@ -481,15 +496,22 @@ save_aix_info()
 
 
     if [ $(sadm_get_ostype) = "AIX" ]                                   # For AIX O/S Save all VGs
-        then save_aix_info                                              # Save All VGs Information
-             SADM_EXIT_CODE=$?                                          # Save Return Code
+       then save_aix_info                                               # Save All VGs Information
+            SADM_EXIT_CODE=$?                                           # Save Return Code
     fi
 
     if [ $(sadm_get_ostype) = "LINUX" ]                                 # Operations for Linux O/S
-        then check_lvm_version                                          # Get LVM Version in $LVMVER
-             if [ $? -eq 0 ] ; then sadm_stop 0 ; exit 0 ; fi           # LVM Not install - Exit
-             save_lvm_info                                              # Save info about all lvm's
-             SADM_EXIT_CODE=$?                                          # Save Return Code
+       then check_lvm_version                                           # Check if lvm2 Package Inst
+            if [ $? -eq 0 ]                                             # Was LVM Package installed?
+                then save_lvm_info                                      # Save info about all lvm's
+                     SADM_EXIT_CODE=$?                                  # Save Return Code
+                else SADM_EXIT_CODE=0                                   # No LVM Not an Error
+            fi
+    fi
+
+    if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
+       then sadm_writelog "This script is not supported on MacOS"       # Advise User
+            SADM_EXIT_CODE=0                                            # Save Return Code
     fi
 
 # SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested

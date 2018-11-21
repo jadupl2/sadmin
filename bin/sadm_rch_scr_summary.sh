@@ -25,8 +25,8 @@
 # 2018_09_23 v1.6 Added email to sysadmin when rch have invalid format
 # 2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
 # 2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
-#@2018_10_07 v1.9 Add message when searching for a particular server (-s option)
-#
+# 2018_10_07 v1.9 Add message when searching for a particular server (-s option)
+#@2018_11_21 v1.10 Add Change some Email header Titles.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -51,7 +51,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.9'                               # Current Script Version
+    export SADM_VER='1.10'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -365,7 +365,7 @@ mail_report()
         done 
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
         then sort -t' ' -rk8,8 $SADM_TMP_FILE1 > $SADM_TMP_FILE2        # Sort File by Return Code
-             rch2html "$SADM_TMP_FILE2" "List of scripts that 'Failed'" # Print RCH File in HTML
+             rch2html "$SADM_TMP_FILE2" "Latest scripts Errors"         # Print RCH File in HTML
     fi
 
     # Produce Report for Today ---------------------------------------------------------------------
@@ -383,7 +383,7 @@ mail_report()
         done 
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
         then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
-             rch2html "$SADM_TMP_FILE2" "List of scripts executed Today ($DATE1)" 
+             rch2html "$SADM_TMP_FILE2" "Scripts executed Today ($DATE1)" 
     fi 
 
     # Produce Report for Yesterday -----------------------------------------------------------------
@@ -401,7 +401,7 @@ mail_report()
         done 
     if [ -s "$SADM_TMP_FILE1" ]                                         # If Input file Size > 0 
         then sort -t' ' -k3,3 $SADM_TMP_FILE1 > $SADM_TMP_FILE2         # Sort File by Start time
-             rch2html "$SADM_TMP_FILE2" "List of scripts executed Yesterday ($DATE1)" 
+             rch2html "$SADM_TMP_FILE2" "Scripts that was executed Yesterday ($DATE1)" 
     fi 
 
     # Produce Report for 2 days ago ----------------------------------------------------------------

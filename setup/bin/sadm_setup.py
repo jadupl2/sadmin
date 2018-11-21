@@ -320,7 +320,7 @@ def update_client_crontab_file(logfile,sroot) :
     hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & run cfg2html\n")
     hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
     hcron.write ("#\n")
-    hcron.write ("# Run SADMIN System Monitoring every 5 minutes\n")
+    hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
     chostname = socket.gethostname().split('.')[0]
     hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
     hcron.write ("#\n")
