@@ -94,7 +94,7 @@
 # 2018_09_16    v2.4 Added Default Alert Group
 # 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
 # 2018_11_13    v2.6 Debug is now OFF by default
-#@2018_11_20    v2.7 Bug fix with xfs, restructure code and no longer support RHEL3,RHEL4.
+#@2018_11_20    v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -102,43 +102,43 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 
 
 #===================================================================================================
-# Setup SADMIN Global Variables and Load SADMIN Shell Library
+# SADMIN Section - Setup SADMIN Global Variables and Load SADMIN Shell Library
 #===================================================================================================
 #
-    # TEST IF SADMIN LIBRARY IS ACCESSIBLE
-    if [ -z "$SADMIN" ]                                 # If SADMIN Environment Var. is not define
+    if [ -z "$SADMIN" ]                                 # Test If SADMIN Environment Var. is present
         then echo "Please set 'SADMIN' Environment Variable to the install directory." 
              exit 1                                     # Exit to Shell with Error
     fi
-    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADM Shell Library not readable
+
+    if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ]            # SADMIN Shell Library not readable ?
         then echo "SADMIN Library can't be located"     # Without it, it won't work 
              exit 1                                     # Exit to Shell with Error
     fi
 
-    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
-
-    # DON'T CHANGE THESE VARIABLES - They are used to pass information to SADMIN Standard Library.
+    # You can use variable below BUT DON'T CHANGE THEM - They are used by SADMIN Standard Library.
     export SADM_PN=${0##*/}                             # Current Script name
     export SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`   # Current Script name, without the extension
     export SADM_TPID="$$"                               # Current Script PID
-    export SADM_EXIT_CODE=0                             # Current Script Exit Return Code
+    export SADM_EXIT_CODE=0                             # Current Script Default Exit Return Code
+    export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
-    # Load SADMIN Standard Shell Library 
+    # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
+    export SADM_VER='2.7'                               # Your Current Script Version
+    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
+    export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
+    export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
+    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
-
-    # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
-    #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
-    #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
+#---------------------------------------------------------------------------------------------------
+# Value for these variables are taken from SADMIN config file ($SADMIN/cfg/sadmin.cfg file).
+# But they can be overriden here on a per script basis.
+    #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
+    #export SADM_ALERT_GROUP="default"                  # AlertGroup Used for Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
+    #export SADM_MAX_LOGLINE=1000                       # At end of script Trim log to 1000 Lines
     #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server 
 #===================================================================================================
@@ -185,6 +185,38 @@ show_version()
     printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
     printf " - Kernel Version $(sadm_get_kernel_version)"
     printf "\n\n" 
+}
+
+# --------------------------------------------------------------------------------------------------
+#  Make a copy of /etc/fstab in $SADMIN/dat/dr (Keep 2 copies - Today and Yesterday).
+# --------------------------------------------------------------------------------------------------
+#
+fstab_backup()
+{
+    FSTAB="/etc/fstab"
+    PREVIOUS_FSTAB_BACKUP="${SADM_DR_DIR}/${SADM_HOSTNAME}_fstab.prev"
+    LAST_FSTAB_BACKUP="${SADM_DR_DIR}/${SADM_HOSTNAME}_fstab"
+    ECODE=0
+    
+    if [ -r "$LAST_FSTAB_BACKUP" ]                          
+        then cp $LAST_FSTAB_BACKUP $PREVIOUS_FSTAB_BACKUP 
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] Copying $LAST_FSTAB_BACKUP to $PREVIOUS_FSTAB_BACKUP"
+                     ECODE=1
+                else sadm_writelog "[SUCCESS] Copying $LAST_FSTAB_BACKUP to $PREVIOUS_FSTAB_BACKUP"
+             fi 
+    fi
+    
+    if [ -r "$FSTAB" ]
+        then cp $FSTAB $LAST_FSTAB_BACKUP 
+             if [ $? -ne 0 ] 
+                then sadm_writelog "[ERROR] copying $FSTAB to $LAST_FSTAB_BACKUP"
+                     ECODE=1
+                else sadm_writelog "[SUCCESS] Copying $FSTAB to $LAST_FSTAB_BACKUP"
+             fi 
+    fi
+    
+    return $ECODE
 }
 
 
@@ -498,6 +530,8 @@ save_aix_info()
     if [ $(sadm_get_ostype) = "AIX" ]                                   # For AIX O/S Save all VGs
        then save_aix_info                                               # Save All VGs Information
             SADM_EXIT_CODE=$?                                           # Save Return Code
+            fstab_backup                                                # Make copy of fstab 
+            if [ $? -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi                # Set Result Code if Error
     fi
 
     if [ $(sadm_get_ostype) = "LINUX" ]                                 # Operations for Linux O/S
@@ -507,6 +541,8 @@ save_aix_info()
                      SADM_EXIT_CODE=$?                                  # Save Return Code
                 else SADM_EXIT_CODE=0                                   # No LVM Not an Error
             fi
+            fstab_backup                                                # Make copy of fstab 
+            if [ $? -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi                # Set Result Code if Error
     fi
 
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
