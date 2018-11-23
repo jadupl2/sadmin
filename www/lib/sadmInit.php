@@ -10,16 +10,17 @@
 #   SCCS-Id. :  @(#) template.sh 1.0 2015/08/14
 # --------------------------------------------------------------------------------------------------
 # Change Log
-#   2017_11_11  V2.1 Switching from PostGres to MySQL
-#   2017_12_31  V2.2 Define New Variable loaded from sadmin.cfg 
-#   2018_01_10  V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
-#   2018_01_25  V2.4 Add RRD Tools Variable 
-#   2018_03_13  V2.5 Get Root directory of SADMIN from /etc/environment
-#   2018_04_02  V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
-#   2018_04_04  V2.8 Message when error while reading sadmin.cfg and sadmin.sh
-#   2018_05_04  V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
-#   2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
-#   2018_06_10  V3.1 Change name of O/S Update script 
+# 2017_12_31  V2.2 Define New Variable loaded from sadmin.cfg 
+# 2017_11_11  V2.1 Switching from PostGres to MySQL
+# 2018_01_10  V2.3 Correct Problem When SADMIN Env. Variable was not pointing to /sadmin  
+# 2018_01_25  V2.4 Add RRD Tools Variable 
+# 2018_03_13  V2.5 Get Root directory of SADMIN from /etc/environment
+# 2018_04_02  V2.6 Get SADMIN Environment Variable from /etc/profile.d/samin.sh now
+# 2018_04_04  V2.8 Message when error while reading sadmin.cfg and sadmin.sh
+# 2018_05_04  V2.9 User/Password for Database access moved from sadmin.cfg to .dbpass file
+# 2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
+# 2018_06_10  V3.1 Change name of O/S Update script 
+#@2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -27,24 +28,24 @@ $DEBUG=False ;
     # Setting the HOSTNAME Variable
     list($HOSTNAME) = explode ('.', gethostname());                     # HOSTNAME without domain
 
-    # Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
-    define("SADM_ENV" , "/etc/profile.d/sadmin.sh") ;                   # Name O/S Environment file
-    if (!is_readable(SADM_ENV)) {                                       # If file nt readable
+    # Check the Existence of SADMIN Environment file (/etc/environment)
+    define("SADM_ENV" , "/etc/environment") ;                           # Name O/S Environment file
+    if (!is_readable(SADM_ENV)) {                                       # Can't read environment 
         exit ("SADMIN environment file " . SADM_ENV . " wasn't found or not readable") ;
     }
 
-    $handle = fopen(SADM_ENV , "r");                                        # Open O/S Environment file
-    if ($handle) {                                                          # If Successfully Open
-        while (($line = fgets($handle)) !== false) {                        # If Still Line to read                                                 # Increase Line Number
+    $handle = fopen(SADM_ENV , "r");                                    # Open O/S Environment file
+    if ($handle) {                                                      # If Successfully Open
+        while (($line = fgets($handle)) !== false) {                    # If Still Line to read                                                 # Increase Line Number
             #$line = trim($line);
             #if ($DEBUG) { echo "\n<br>line = " . $line . " <br>" ; }
             $pos = strpos($line,'=');
             if ($pos !== false) {
-                if (strpos(trim($line),'#') === 0)                          # if 1st Non-WhiteSpace is #
-                    { continue; }                                           # Skip comment line
-                list($fname,$fvalue) = explode ('=',$line);                 # Split Line by Name & Value
-                #if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
-                #if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
+                if (strpos(trim($line),'#') === 0)                      # if 1st Non-WhiteSpace is #
+                    { continue; }                                       # Skip comment line
+                list($fname,$fvalue) = explode ('=',$line);             # Split Line by Name & Value
+                if ($DEBUG) { echo "\n<br>fname = " . $fname .   " Trim = " . trim($fname) . "<br>" ; }
+                if ($DEBUG) { echo "\n<br>fvalue = " . $fvalue . " Trim = " . trim($fvalue) . "<br>" ; }
                 if (trim($fname) == "SADMIN")        { define("SADM_BASE_DIR", trim($fvalue)); }
                 if (trim($fname) == "export SADMIN") { define("SADM_BASE_DIR", trim($fvalue)); }
             }
@@ -112,7 +113,7 @@ define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File N
 define("SADM_UPDATE_SCRIPT", "sadm_osupdate_farm.sh -s ");              # O/S Update Script Name
 
 
-# Check the Existence of SADMIN Environment file (/etc/profile.d/sadmin.sh)
+# Check the Existence of SADMIN Environment file (sadmin.cfg)
 if (!is_readable(SADM_CFG_FILE)) {
     exit ("The SADMIN configuration file " . SADM_CFG_FILE . " wasn't found or not readable") ;
 }
