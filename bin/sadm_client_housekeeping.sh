@@ -27,8 +27,9 @@
 # 2018_07_30    v1.15 Make sure sadmin crontab files in /etc/cron.d have proper owner & permission.
 # 2018_09_16    v1.16 Include Cleaning of alert files needed only on SADMIN server.
 # 2018_09_28    v1.17 Code Optimize and Cleanup
-#@2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
-#@2018_11_02    v1.19 Code Maint. & Comment
+# 2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
+# 2018_11_02    v1.19 Code Maint. & Comment
+#@2018_11_23    v1.20 An error is signal when the 'sadmin' account is lock, preventing cron to run.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.19'                              # Current Script Version
+    export SADM_VER='1.20'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -116,6 +117,45 @@ show_version()
     printf " - Kernel Version $(sadm_get_kernel_version)"
     printf "\n\n"
 }
+
+
+
+# --------------------------------------------------------------------------------------------------
+#             Check Daily if sadmin Account is lock (Disabling crontab script to work) 
+# --------------------------------------------------------------------------------------------------
+check_sadmin_account()
+{
+    lock_error=0
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Check status of account '$SADM_USER' ..." 
+
+    if [ $(sadm_get_ostype) = "LINUX" ]
+        then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1
+             if [ $? -eq 0 ] 
+                then sadm_writelog "[ERROR] Account $SADM_USER is locked and need to be unlock ..."
+                     sadm_writelog "Please check the account and use 'passwd -l $SADM_USER' to unlock it."
+                     lock_error=1
+             fi
+    fi
+  
+    if [ $(sadm_get_ostype) = "AIX" ]
+        then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
+             if [ $? -eq 0 ] 
+                then sadm_writelog "[ERROR] Account $SADM_USER is locked and need to be unlock ..."
+                     sadm_writelog "Please check the account and unlock it with these commands ;"
+                     sadm_writelog "chsec -f /etc/security/lastlog -a 'unsuccessful_login_count=0' -s $SADM_USER"
+                     sadm_writelog "chuser 'account_locked=false' $SADM_USER"
+                     lock_error=1
+             fi
+    fi
+
+    if [ $lock_error -eq 0 ] ; then sadm_writelog "[OK] No problem with '$SADM_USER' account." ; fi
+    sadm_writelog "${SADM_TEN_DASH}"
+    return $lock_error
+}
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -741,6 +781,9 @@ file_housekeeping()
     DIR_ERROR=$?                                                        # ReturnCode = Nb. of Errors
     file_housekeeping                                                   # Do File HouseKeeping
     FILE_ERROR=$?                                                       # ReturnCode = Nb. of Errors
-    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR))                          # ExitCode = DIR+File Errors
+    check_sadmin_account                                                # Check sadmin Acc. if Lock
+    ACC_ERROR=$?                                                        # Return 1 if Locked 
+
+    SADM_EXIT_CODE=$(($DIR_ERROR+$FILE_ERROR+$ACC_ERROR))               # Error= DIR+File+Lock Func.
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
