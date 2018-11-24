@@ -41,7 +41,8 @@
 # 2018_07_21    v3.4 Remove Some validation of SADMIN Server Name
 # 2018_07_30    v3.5 Add line 'Defaults !requiretty' to sudo file,so script can use sudo in crontab.
 # 2018_08_29    v3.6 http://sadmin.YourDomain is now the standard to access sadmin web Site.
-#@2018_10_28    v3.7 Linefeed was missing in file '/etc/sudoers.d/033_sadmin-nopasswd'
+# 2018_10_28    v3.7 Linefeed was missing in file '/etc/sudoers.d/033_sadmin-nopasswd'
+#@2018_11_24    v3.8 Added -e '' options for sadmin user creation
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -57,7 +58,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.7"                                             # Setup Version Number
+sver                = "3.8"                                             # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1681,7 +1682,7 @@ def setup_sadmin_config_file(sroot):
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
-            cmd += " -c'%s' %s" % ("SADMIN Tools User",wcfg_user)       # Add comment and user name
+            cmd += " -c'%s' %s -e ''" % ("SADMIN Tools User",wcfg_user) # Comment,user name,noexpire
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
