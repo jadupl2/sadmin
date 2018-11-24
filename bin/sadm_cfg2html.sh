@@ -197,7 +197,7 @@ show_version()
     SADM_EXIT_CODE=$?
     sadm_writelog "Return code of the command is $SADM_EXIT_CODE"
 
-    # Uniformize name of cfg2html so that the domain name is not include in the name
+    # Uniformize name of cfg2html output files so that the domain name is not include in the name.
     if [ `hostname` != `hostname -s` ]
         then mv ${SADM_DR_DIR}/$(hostname).err  ${SADM_DR_DIR}/cfg2html_`hostname -s`.err
              mv ${SADM_DR_DIR}/$(hostname).html ${SADM_DR_DIR}/cfg2html_`hostname -s`.html
