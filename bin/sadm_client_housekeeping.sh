@@ -30,6 +30,7 @@
 # 2018_10_27    v1.18 Remove old dir. not use anymore (if exist)
 # 2018_11_02    v1.19 Code Maint. & Comment
 #@2018_11_23    v1.20 An error is signal when the 'sadmin' account is lock, preventing cron to run.
+#@2018_11_24    v1.21 Check SADM_USER status, give more precise explanation & corrective cmd if lock.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.20'                              # Current Script Version
+    export SADM_VER='1.21'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -129,12 +130,30 @@ check_sadmin_account()
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Check status of account '$SADM_USER' ..." 
 
-    if [ $(sadm_get_ostype) = "LINUX" ]
-        then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1
-             if [ $? -eq 0 ] 
-                then sadm_writelog "[ERROR] Account $SADM_USER is locked and need to be unlock ..."
-                     sadm_writelog "Please check the account and use 'passwd -l $SADM_USER' to unlock it."
-                     lock_error=1
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux Operating System
+        then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
+             if [ $? -eq 0 ]                                            # If Account is Lock
+                then upass=`grep "^$SADM_USER" /etc/shadow | awk -F: '{ print $2 }'` # Get pwd hash
+                     if [ "$upass" = "!!" ]                             # if passwd is '!!'' = NoPwd
+                        then sadm_writelog "[ERROR] User $SADM_USER has no password" 
+                             sadm_writelog "This is not secure, please assign one !!"
+                             lock_error=1                               # Set Error Flag ON
+                        else first2char=`echo $upass | cut -c1-2`       # Get passwd first two Char.
+                             if [ "$first2char" = "!!" ]                # First 2 Char are '!!' 
+                                then sadm_writelog "[ERROR] Account $SADM_USER is locked"
+                                     sadm_writelog "Use 'passwd -u $SADM_USER' to unlock it."
+                                     lock_error=1                       # Set Error Flag ON
+                                else firstchar=`echo $upass | cut -c1`  # Get passwd first Char.
+                                     if [ "$firstchar" = "!" ]          # First Char is "!'
+                                        then sadm_writelog "[ERROR] Account $SADM_USER is locked"
+                                             sadm_writelog "Use 'usermod -U $SADM_USER' to unlock it."
+                                             lock_error=1               # Set Error Flag ON
+                                        else sadm_writelog "We use 'passwd -S $SADM_USER' to check if user account is lock"
+                                             sadm_writelog "You need to fix that, so the account unlock"
+                                             lock_error=1               # Set Error Flag ON
+                                     fi                                            
+                             fi 
+                     fi 
              fi
     fi
   
@@ -754,6 +773,7 @@ file_housekeeping()
     grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
     if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
         then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
+             sadm_writelog "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg"
              #sadm_writelog "Creating the ${SADM_GROUP} group"           # Advise user will create
              #groupadd ${SADM_GROUP}                                     # Create SADM_GROUP
              #if [ $? -ne 0 ]                                            # Error creating Group
@@ -766,7 +786,8 @@ file_housekeeping()
     # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
     grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
     if [ $? -ne 0 ]                                                     # NO Not There
-        then sadm_writelog "User $SADM_USER not present"                # Advise user will create
+        then sadm_writelog "User $SADM_USER not present"                # usr in sadmin.cfg not found
+             sadm_writelog "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg"
              #sadm_writelog "The user will now be created"               # Advise user will create
              #useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
              #if [ $? -ne 0 ]                                            # Error creating user
