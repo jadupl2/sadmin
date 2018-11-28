@@ -34,7 +34,8 @@
 # 2018_09_18  v2.20 Alert Minors fixes
 # 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
 # 2018_09_26  v2.22 Reformat Error message for alerting systsem
-#@2018_10_04  v2.23 Supplemental message about o/s update crontab modification
+# 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
+#@2018_11_28  v2.24 Added Fetch to MacOS Client 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -71,7 +72,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.23'                              # Current Script Version
+    export SADM_VER='2.24'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -494,7 +495,6 @@ check_for_alert()
     #   Error;holmes;2018.09.16;11:02;linux;FILESYSTEM;Filesystem /usr at 85% > 85%;sprod;sprod
     #   Error;raspi0;2018.09.16;11:00;linux;CPU;CPU at 100 pct for more than 240 min;mail;sadmin
     # ----------
-    sadm_writelog " "
     sadm_writelog "Check All Servers SysMon Report Files for Warning and Errors"
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; 
     find $SADM_WWW_DAT_DIR -type f -name '*.rpt' -exec cat {} \; > $SADM_TMP_FILE1
@@ -526,6 +526,7 @@ check_for_alert()
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
 
 
     # ----------
@@ -557,6 +558,8 @@ check_for_alert()
                 done 
         else sadm_writelog  "No error reported by any scripts files (*.rch)" 
     fi
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
+    sadm_writelog " "                                                   # Separation Blank Line
 
 }
 
@@ -618,28 +621,34 @@ check_for_alert()
     LINUX_ERROR=$?                                                      # Save Nb. Errors in process
     process_servers "aix"                                               # Process Active Aix
     AIX_ERROR=$?                                                        # Save Nb. Errors in process
+    process_servers "darwin"                                            # Process Active MacOS
+    MAC_ERROR=$?                                                        # Save Nb. Errors in process
 
     # Print Total Script Errors
     sadm_writelog " "                                                   # Separation Blank Line
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash line
-    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR))                         # Exit Code=AIX+Linux Errors
+    SADM_EXIT_CODE=$(($AIX_ERROR+$LINUX_ERROR+$MAC_ERROR))              # ExitCode=AIX+Linux+Mac Err
     sadm_writelog "Total Linux error(s)  : ${LINUX_ERROR}"              # Display Total Linux Errors
     sadm_writelog "Total Aix error(s)    : ${AIX_ERROR}"                # Display Total Aix Errors
+    sadm_writelog "Total Mac error(s)    : ${MAC_ERROR}"                # Display Total Mac Errors
     sadm_writelog "Script Total Error(s) : ${SADM_EXIT_CODE}"           # Display Total Script Error
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
 
-    # Being root we can modify O/S Update crontab - Can't while in web interface
-    work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'`          # Work crontab sha1sum
-    real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'`          # Real crontab sha1sum
-    if [ "$work_sha1" != "$real_sha1" ]                                 # Work Different than Real ?
-        then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}                       # Put in place New Crontab
-             chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set Permission on crontab
-             sadm_writelog "O/S Update crontab was updated ..."
-        else
-             sadm_writelog "No changes made to O/S Update schedule ..."
-             sadm_writelog "No need to update O/S Update crontab ..."
-    fi
+    # Linux ONLY - Being root we can modify O/S Update crontab - Can't while in web interface
+    if [ $(sadm_get_ostype) = "LINUX" ] 
+        then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # Work crontab sha1sum
+             real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Real crontab sha1sum
+             if [ "$work_sha1" != "$real_sha1" ]                        # Work Different than Real ?
+                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}               # Put in place New Crontab
+                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set contab Perm.
+                     sadm_writelog "O/S Update crontab was updated ..." # Advise user
+                else sadm_writelog "No changes made to O/S Update schedule ..."
+                     sadm_writelog "No need to update O/S Update crontab ..."
+             fi
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash lineHistory
+             sadm_writelog " "                                          # Separation Blank Line
+    fi 
 
     # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
     check_for_alert                                                     # Report Alert if Any
