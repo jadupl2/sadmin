@@ -1098,6 +1098,7 @@ main_process()
 {
     ERROR_COUNT=0                                                       # Set Error counter to zero
     NMON_COUNT=0                                                        # Process NMON file counter 
+    
     # Produce a list of all Yesterday nmon file (sorted) or use file passed with -f command line
     YESTERDAY=`date -d "1 day ago" '+%y%m%d'`                           # Get Yesterday Date
     if [ "$CMD_FILE" != "" ] 
@@ -1246,7 +1247,7 @@ main_process()
     main_process                                                        # Execute the main process
     SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
 
-# SADMIN CLosing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
+# SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Send email if requested
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
     
