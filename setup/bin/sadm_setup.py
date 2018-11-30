@@ -387,7 +387,7 @@ def update_server_crontab_file(logfile,sroot) :
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
-    hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients.\n")
+    hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients (*/5 don't work on Aix).\n")
     hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * sadmin sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
     hcron.write ("#\n")
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
