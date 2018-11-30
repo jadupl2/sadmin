@@ -857,7 +857,7 @@ class sadmtools():
         nlines = int(nlines)                                                # Making sure nlines=integer
 
         # Debug Information
-        if self.debug > 8 : print ("Trimming %s to %s lines." %  (fname, str(nlines)))
+        if self.debug > 8 : print ("Trim %s to %s lines." %  (fname, str(nlines)))
 
         # Check if fileName to trim exist
         if (not os.path.exists(fname)):                                     # If fileName doesn't exist
@@ -1200,7 +1200,7 @@ class sadmtools():
             FH_RCH_FILE.write ("%s\n" % (rch_line))                     # Write Line to RCH Log
             FH_RCH_FILE.close()                                         # Close RCH File
             if (self.log_footer) :                                      # Want to Produce log Footer
-                self.writelog ("Trimming %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
+                self.writelog ("Trim %s to %s lines." %  (self.rch_file, str(self.cfg_max_rchline)))
 
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
@@ -1234,7 +1234,7 @@ class sadmtools():
 
         # Advise user the Log will be trimm
         if (self.log_footer) :                                          # Want to Produce log Footer
-            self.writelog ("Trimming %s to %s lines." %  (self.log_file, str(self.cfg_max_logline)))
+            self.writelog ("Trim %s to %s lines." %  (self.log_file, str(self.cfg_max_logline)))
 
         # Write Script Log Footer
         now = time.strftime("%c")                                       # Get Current Date & Time
