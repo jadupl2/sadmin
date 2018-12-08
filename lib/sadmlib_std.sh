@@ -60,9 +60,10 @@
 # 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 # 2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
 # 2018_10_29 v2.49 Correct Type Error causing occasionnal crash
-#@2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
-#@2018_11_09 v2.51 Add Link in Slack Message to view script log.
-#@2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
+# 2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
+# 2018_11_09 v2.51 Add Link in Slack Message to view script log.
+# 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
+#@2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -80,7 +81,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.52"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.53"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -868,16 +869,21 @@ sadm_get_hostname() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
-        "LINUX") wdomainname=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
-                 if [ "${SADM_HOSTNAME}" = "$wdomainname" ]
-                    then wdomainname=`dnsdomainname`
+        "LINUX") host ${SADM_HOSTNAME} >/dev/null 2>&1 
+                 if [ $? -eq 0 ] 
+                    then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                    else which `dnsdomainname` > /dev/null 2>&1
+                         if [ $? -eq 0 ] 
+                            then wdom=`dnsdomainname`
+                            else wdom="$SADM_DOMAIN"
+                         fi
                  fi
                  ;;
-        "AIX")   wdomainname=`namerslv -s | grep domain | awk '{ print $2 }'`
+        "AIX")   wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
                  ;;
     esac
-    if [ "$wdomainname" = "" ] ; then wdomainname="$SADM_DOMAIN" ; fi
-    echo "$wdomainname"
+    if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi
+    echo "$wdom"
 }
 
 
