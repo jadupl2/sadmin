@@ -95,6 +95,7 @@
 # 2018_10_28    v2.5 Change reference to script use for re-creating filesystem.
 # 2018_11_13    v2.6 Debug is now OFF by default
 #@2018_11_20    v2.7 Bug fix, make copy of fstab, restructure code, remove support for RHEL3,RHEL4.
+#@2018_12_08    v2.8 Fix bug with Debuging Level.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -123,7 +124,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.7'                               # Your Current Script Version
+    export SADM_VER='2.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -153,7 +154,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # --------------------------------------------------------------------------------------------------
 DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
 PRVFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.prev ;export PRVFILE # Yesterday Output file
-DEBUG=False                                       ; export DEBUG        # DEBUG increase Verbose 
+DEBUG_LEVEL=0                                     ; export DEBUG_LEVEL  # DEBUG increase Verbose 
 LVMVER=0                                          ; export LVMVER       # LVM Version on server (1/2)
 LVSCAN=" "                                        ; export LVSCAN       # Full path to lvscan cmd
 FSTAB="/etc/fstab"                                ; export FSTAB        # File containing mount point
@@ -389,7 +390,9 @@ save_lvm_info()
 
         # Write data collection in order that need to be recreated 
         echo "$LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT" >> $SADM_TMP_FILE3
-        sadm_writelog "Line written to output file       = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
+         if [ $DEBUG_LEVEL -gt 5 ] 
+            then sadm_writelog "Line written to output file = $LVLEN:$VGNAME:$LVMOUNT:$LVNAME:$LVTYPE:$LVSIZE:$LVGROUP:$LVOWNER:$LVPROT"
+        fi
         done
         
     sadm_writelog " " 
@@ -403,7 +406,8 @@ save_lvm_info()
         else touch $SADM_TMP_FILE2
     fi 
     
-    echo "# SADMIN - Filesystem Info. for system $(sadm_get_hostname).$(sadm_get_domainname)"  > $DRFILE
+    echo "# ---------------------------------------------------------------------"   > $DRFILE
+    echo "# SADMIN - Filesystem Info. for system $(sadm_get_hostname).$(sadm_get_domainname)"  >> $DRFILE
     echo "# File was created by ${SADM_PN} on `date`"                                >> $DRFILE
     echo "# This file is use in a Disaster Recovery situation"                       >> $DRFILE
     echo "# The data below is use by sadm_dr_recreatefs.sh to recreate filesystems"  >> $DRFILE
