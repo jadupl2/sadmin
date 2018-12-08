@@ -50,6 +50,7 @@
 #                   - THe Filsystem (and Raw) within VG are recreated automatically,with proper perm
 #                   - You need to restore the content of the filesystems from your usual backup.
 # 2018_06_04    v2.1 Correction for new Library
+#@2018_12_08    v2.2 Fix bug with Debuging Level. 
 #            
 #
 #===================================================================================================
@@ -72,9 +73,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.1'                               # Current Script Version
+    export SADM_VER='2.2'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
-    export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
+    export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
     export SADM_LOG_FOOTER="Y"                          # Show/Generate Footer in script log (.log)
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
@@ -108,7 +109,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #              V A R I A B L E S    U S E D     I N    T H I S   S C R I P T
 # --------------------------------------------------------------------------------------------------
 DRFILE=$SADM_DR_DIR/$(sadm_get_hostname)_fs_save_info.dat   ;export DRFILE  # Output file of program
-Debug=true                                      ; export Debug          # Debug increase Verbose
+DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # DEBUG increase Verbose 
 STDERR="${SADM_TMP_DIR}/stderr.$$"              ; export STDERR         # Output of Standard Error
 STDOUT="${SADM_TMP_DIR}/stdout.$$"              ; export STDOUT         # Output of Standard Output
 FSTAB=/etc/fstab                                ; export FSTAB          # Filesystem Table Name
@@ -139,7 +140,7 @@ DISK_LIST=""                                    ; export DISK_LIST      # Restor
 #
 linux_setup()
 {
-    sadm_writelog "Validate Program Requirements before proceeding ..."
+    sadm_writelog "Validating Program Requirements before proceeding ..."
     sadm_writelog " "
 
     # Check if Input File exist
@@ -160,7 +161,7 @@ linux_setup()
         then LVCREATE=`which lvcreate`
         else sadm_writelog "Error : The command 'lvcreate' was not found" ; return 1
     fi
-    export LVCREATE   ; if [ $Debug ] ; then sadm_writelog "COMMAND LVCREATE  : $LVCREATE" ; fi
+    export LVCREATE   ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND LVCREATE  : $LVCREATE" ; fi
 
 
     TUNE2FS=`which tune2fs >/dev/null 2>&1`
@@ -168,7 +169,7 @@ linux_setup()
         then TUNE2FS=`which tune2fs`
         else sadm_writelog "Error : The command 'tune2fs' was not found" ; return 1
     fi
-    export TUNE2FS    ; if [ $Debug ] ; then sadm_writelog "COMMAND TUNE2FS   : $TUNE2FS" ; fi
+    export TUNE2FS    ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND TUNE2FS   : $TUNE2FS" ; fi
 
 
     MKFS_EXT2=`which mkfs.ext2 >/dev/null 2>&1`
@@ -176,7 +177,7 @@ linux_setup()
         then MKFS_EXT2=`which mkfs.ext2`
         else sadm_writelog "Error : The command 'mkfs.ext2' was not found" ; return 1
     fi
-    export MKFS_EXT2  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT2 : $MKFS_EXT2" ; fi
+    export MKFS_EXT2  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKFS_EXT2 : $MKFS_EXT2" ; fi
 
 
     MKFS_EXT3=`which mkfs.ext3 >/dev/null 2>&1`
@@ -184,7 +185,7 @@ linux_setup()
         then MKFS_EXT3=`which mkfs.ext3`
         else sadm_writelog "Error : The command 'mkfs.ext3' was not found" ; return 1
     fi
-    export MKFS_EXT3  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT3 : $MKFS_EXT3" ; fi
+    export MKFS_EXT3  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKFS_EXT3 : $MKFS_EXT3" ; fi
 
 
     MKFS_EXT4=`which mkfs.ext4 >/dev/null 2>&1`
@@ -192,7 +193,7 @@ linux_setup()
         then MKFS_EXT4=`which mkfs.ext4`
         else sadm_writelog "Error : The command 'mkfs.ext4' was not found" ; return 1
     fi
-    export MKFS_EXT4  ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_EXT4 : $MKFS_EXT4" ; fi
+    export MKFS_EXT4  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKFS_EXT4 : $MKFS_EXT4" ; fi
 
 
     MKFS_XFS=`which mkfs.xfs >/dev/null 2>&1`
@@ -202,7 +203,7 @@ linux_setup()
         else MKFS_XFS=""
              XFS_ENABLE="N"
     fi
-    export MKFS_XFS   ; if [ $Debug ] ; then sadm_writelog "COMMAND MKFS_XFS  : $MKFS_XFS" ; fi
+    export MKFS_XFS   ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKFS_XFS  : $MKFS_XFS" ; fi
 
 
     FSCK_EXT2=`which fsck.ext2 >/dev/null 2>&1`
@@ -210,7 +211,7 @@ linux_setup()
         then FSCK_EXT2=`which fsck.ext2`
         else sadm_writelog "Error : The command 'fsck.ext2' was not found" ; return 1
     fi
-    export FSCK_EXT2  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT2 : $FSCK_EXT2" ; fi
+    export FSCK_EXT2  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND FSCK_EXT2 : $FSCK_EXT2" ; fi
 
 
     FSCK_EXT3=`which fsck.ext3 >/dev/null 2>&1`
@@ -218,7 +219,7 @@ linux_setup()
         then FSCK_EXT3=`which fsck.ext3`
         else sadm_writelog "Error : The command 'fsck.ext3' was not found" ; return 1
     fi
-    export FSCK_EXT3  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT3 : $FSCK_EXT3" ; fi
+    export FSCK_EXT3  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND FSCK_EXT3 : $FSCK_EXT3" ; fi
 
 
     FSCK_EXT4=`which fsck.ext4 >/dev/null 2>&1`
@@ -226,7 +227,7 @@ linux_setup()
         then FSCK_EXT4=`which fsck.ext4`
         else sadm_writelog "Error : The command 'fsck.ext4' was not found" ; return 1
     fi
-    export FSCK_EXT4  ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_EXT4 : $FSCK_EXT4" ; fi
+    export FSCK_EXT4  ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND FSCK_EXT4 : $FSCK_EXT4" ; fi
 
 
     FSCK_XFS=`which fsck.xfs >/dev/null 2>&1`
@@ -236,7 +237,7 @@ linux_setup()
         else FSCK_XFS=""
              XFS_ENABLE="N"
     fi
-    export FSCK_XFS   ; if [ $Debug ] ; then sadm_writelog "COMMAND FSCK_XFS  : $FSCK_XFS" ; fi
+    export FSCK_XFS   ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND FSCK_XFS  : $FSCK_XFS" ; fi
 
 
     MKDIR=`which mkdir >/dev/null 2>&1`
@@ -244,7 +245,7 @@ linux_setup()
         then MKDIR=`which mkdir`
         else sadm_writelog "Error : The command 'mkdir' was not found" ; return 1
     fi
-    export MKDIR      ; if [ $Debug ] ; then sadm_writelog "COMMAND MKDIR     : $MKDIR" ; fi
+    export MKDIR      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKDIR     : $MKDIR" ; fi
 
 
     MOUNT=`which mount >/dev/null 2>&1`
@@ -252,7 +253,7 @@ linux_setup()
         then MOUNT=`which mount`
         else sadm_writelog "Error : The command 'mount' was not found" ; return 1
     fi
-    export MOUNT      ; if [ $Debug ] ; then sadm_writelog "COMMAND MOUNT     : $MOUNT" ; fi
+    export MOUNT      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MOUNT     : $MOUNT" ; fi
 
 
     CHMOD=`which chmod >/dev/null 2>&1`
@@ -260,7 +261,7 @@ linux_setup()
         then CHMOD=`which chmod`
         else sadm_writelog "Error : The command 'chmod' was not found" ; return 1
     fi
-    export CHMOD      ; if [ $Debug ] ; then sadm_writelog "COMMAND CHMOD     : $CHMOD" ; fi
+    export CHMOD      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND CHMOD     : $CHMOD" ; fi
 
 
     CHOWN=`which chown >/dev/null 2>&1`
@@ -268,7 +269,7 @@ linux_setup()
         then CHOWN=`which chown`
         else sadm_writelog "Error : The command 'chown' was not found" ; return 1
     fi
-    export CHOWN      ; if [ $Debug ] ; then sadm_writelog "COMMAND CHOWN     : $CHOWN" ; fi
+    export CHOWN      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND CHOWN     : $CHOWN" ; fi
 
     
     MKSWAP=`which mkswap >/dev/null 2>&1`
@@ -276,7 +277,7 @@ linux_setup()
         then MKSWAP=`which mkswap`
         else sadm_writelog "Error : The command 'mkswap' was not found" ; return 1
     fi
-    export MKSWAP      ; if [ $Debug ] ; then sadm_writelog "COMMAND MKSWAP    : $MKSWAP" ; fi
+    export MKSWAP      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND MKSWAP    : $MKSWAP" ; fi
     
     
     SWAPON=`which swapon >/dev/null 2>&1`
@@ -284,7 +285,7 @@ linux_setup()
         then SWAPON=`which swapon`
         else sadm_writelog "Error : The command 'swapon' was not found" ; return 1
     fi
-    export SWAPON      ; if [ $Debug ] ; then sadm_writelog "COMMAND SWAPON    : $SWAPON" ; fi
+    export SWAPON      ; if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "COMMAND SWAPON    : $SWAPON" ; fi
 
     return 0
 }
@@ -482,7 +483,8 @@ ask_linux_user_vg()
         sadm_writelog " "
         sadm_writelog "This is a list of the volume group that are present in $DRFILE"
         sort $SADM_TMP_FILE1 | tee $SADM_LOG                            # List VG in Input File
-        sadm_writelog "Enter the volume group that you want to recreate the filesystems : \c"
+        sadm_writelog " "
+        sadm_writelog "Enter the volume group name that you want to recreate the filesystems : "
         read VG                                                         # Accept Volume Group Name
         grep -i $VG $SADM_TMP_FILE1 > /dev/null ; RC1=$?                # VG in input DAta File ?
         grep -i $VG $SADM_TMP_FILE2 > /dev/null ; RC2=$?                # VG Exist on System ?
