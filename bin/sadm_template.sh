@@ -279,7 +279,7 @@ main_process()
     main_process                                                        # Main Process
     # OR                                                                # Use line below or above
     #process_servers                                                    # Process All Active Servers
-    SADM_EXIT_CODE=$?                                                   # Save Nb. Errors in process
+    SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
 
 # SADMIN Closing procedure - Close/Trim log and rch file, Remove PID File, Remove TMP files ...
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
