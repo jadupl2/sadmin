@@ -37,7 +37,8 @@
 # 2018_06_22    V2.2 New File were not copied and Rollback Dir. was not populated in some conditions
 # 2018_06_23    V2.4 Lot of adjustements,enhancements and change name to sadm_updater.
 # 2018_06_24    V2.5 Rollback dir. moved to setup/update, performance boost, bug fixes
-#@2018_09_19    V2.6 Alert Group Utilisation
+# 2018_09_19    V2.6 Alert Group Utilisation
+#@2018_12_08    V2.7 On client, don't check for change in web directories.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -xs
@@ -62,7 +63,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -360,6 +361,12 @@ main_process()
 
         # System Startup and Shutdown script are never update once installed - So skip them here.
         if [ "$updfile" = "./sys/sadm_startup.sh" ] || [ "$updfile" = "./sys/sadm_shutdown.sh" ]
+            then continue
+        fi
+
+        # Check if first 6 char. is "./www/" (Mean web Dir.) and on SADMIN client skip line
+        first6=`echo "$updfile" | cut -c1-6`
+        if [ "$SADM_HOST_TYPE" = "C" ] &&  [ "$first6" = "./www/" ]
             then continue
         fi
 
