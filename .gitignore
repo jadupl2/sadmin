@@ -64,6 +64,8 @@ log/*
 !log/.gitkeep
 tmp/*
 !tmp/.gitkeep
+sys/*
+!sys/.gitkeep
 
 # Exclude $SADMIN/usr except $SADMIN/usr/bin,lib,sysmon_scripts and doc
 usr/cfg/*
