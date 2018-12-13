@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 30, 2018 at 10:54 AM
+-- Generation Time: Dec 13, 2018 at 04:46 PM
 -- Server version: 5.5.60-MariaDB
 -- PHP Version: 5.4.16
 
@@ -82,20 +82,15 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_maint` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Activate Maintenance Mode',
   `srv_maint_date_start` datetime NOT NULL COMMENT 'Start Date/Time of Maint. Mode',
   `srv_maint_date_end` datetime NOT NULL COMMENT 'End date/Time of Maintenance Mode',
-  `srv_sadmin_dir` varchar(30) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
+  `srv_sadmin_dir` varchar(45) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
   `srv_ssh_port` int(2) NOT NULL DEFAULT '22' COMMENT 'SSH Port to access server',
   `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server'
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
---
--- Truncate table before insert `server`
---
 
-TRUNCATE TABLE `server`;
 --
 -- Table structure for table `server_category`
 --
-
 DROP TABLE IF EXISTS `server_category`;
 CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_id` int(11) NOT NULL COMMENT 'Category ID',
@@ -106,11 +101,6 @@ CREATE TABLE IF NOT EXISTS `server_category` (
   `cat_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Default Category ?'
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Category Table';
 
---
--- Truncate table before insert `server_category`
---
-
-TRUNCATE TABLE `server_category`;
 --
 -- Dumping data for table `server_category`
 --
@@ -127,7 +117,6 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 --
 -- Table structure for table `server_group`
 --
-
 DROP TABLE IF EXISTS `server_group`;
 CREATE TABLE IF NOT EXISTS `server_group` (
   `grp_id` int(11) NOT NULL COMMENT 'Server Group ID',
@@ -138,11 +127,6 @@ CREATE TABLE IF NOT EXISTS `server_group` (
   `grp_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Default Group'
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Group Table';
 
---
--- Truncate table before insert `server_group`
---
-
-TRUNCATE TABLE `server_group`;
 --
 -- Dumping data for table `server_group`
 --
@@ -174,14 +158,6 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
---
--- Truncate table before insert `server_network`
---
-
-TRUNCATE TABLE `server_network`;
---
--- Indexes for dumped tables
---
 
 --
 -- Indexes for table `server`
@@ -219,7 +195,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=36;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=37;
 --
 -- AUTO_INCREMENT for table `server_category`
 --
