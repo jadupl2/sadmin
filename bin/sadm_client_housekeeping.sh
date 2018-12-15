@@ -31,6 +31,7 @@
 # 2018_11_02    v1.19 Code Maint. & Comment
 #@2018_11_23    v1.20 An error is signal when the 'sadmin' account is lock, preventing cron to run.
 #@2018_11_24    v1.21 Check SADM_USER status, give more precise explanation & corrective cmd if lock.
+#@2018_12_15    v1.22 Fix Error Message on MacOS trying to find SADMIN User in /etc/passwd.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.21'                              # Current Script Version
+    export SADM_VER='1.22'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -770,31 +771,35 @@ file_housekeeping()
     fi
 
     # Check if 'sadmin' group exist - If not create it.
-    grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1                  # $SADMIN Group Defined ?
-    if [ $? -ne 0 ]                                                     # SADM_GROUP not Defined
-        then sadm_writelog "Group ${SADM_GROUP} not present"            # Advise user will create
-             sadm_writelog "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg"
-             #sadm_writelog "Creating the ${SADM_GROUP} group"           # Advise user will create
-             #groupadd ${SADM_GROUP}                                     # Create SADM_GROUP
-             #if [ $? -ne 0 ]                                            # Error creating Group
-             #   then sadm_writelog "Error when creating group ${SADM_GROUP}"
+    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If not on MacOS
+        then grep "^${SADM_GROUP}:"  /etc/group >/dev/null 2>&1         # $SADMIN Group Defined ?
+             if [ $? -ne 0 ]                                            # SADM_GROUP not Defined
+                then sadm_writelog "Group ${SADM_GROUP} not present"    # Advise user will create
+                     sadm_writelog "Create group or change 'SADM_GROUP' value in $SADMIN/sadmin.cfg"
+                     #sadm_writelog "Creating the ${SADM_GROUP} group"  # Advise user will create
+                     #groupadd ${SADM_GROUP}                            # Create SADM_GROUP
+                     #if [ $? -ne 0 ]                                   # Error creating Group
+                     #   then sadm_writelog "Error when creating group ${SADM_GROUP}"
                      sadm_writelog "Process Aborted"                    # Abort got be created
                      sadm_stop 1                                        # Terminate Gracefully
-             #fi
+                    #fi
+             fi
     fi
 
     # Check is 'sadmin' user exist user - if not create it and make it part of 'sadmin' group.
-    grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1                   # $SADMIN User Defined ?
-    if [ $? -ne 0 ]                                                     # NO Not There
-        then sadm_writelog "User $SADM_USER not present"                # usr in sadmin.cfg not found
-             sadm_writelog "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg"
-             #sadm_writelog "The user will now be created"               # Advise user will create
-             #useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
-             #if [ $? -ne 0 ]                                            # Error creating user
-             #   then sadm_writelog "Error when creating user ${SADM_USER}"
+    if [ "$(sadm_get_ostype)" != "DARWIN" ]                             # If not on MacOS
+        then grep "^${SADM_USER}:" /etc/passwd >/dev/null 2>&1          # $SADMIN User Defined ?
+             if [ $? -ne 0 ]                                            # NO Not There
+                then sadm_writelog "User $SADM_USER not present"        # usr in sadmin.cfg not found
+                     sadm_writelog "Create user or change 'SADM_USER' value in $SADMIN/sadmin.cfg"
+                     #sadm_writelog "The user will now be created"      # Advise user will create
+                     #useradd -d '/sadmin' -c 'SADMIN user' -g $SADM_GROUP -e '' $SADM_USER
+                     #if [ $? -ne 0 ]                                   # Error creating user
+                     #   then sadm_writelog "Error when creating user ${SADM_USER}"
                      sadm_writelog "Process Aborted"                    # Abort got be created
                      sadm_stop 1                                        # Terminate Gracefully
-             #fi
+                     #fi
+             fi
     fi
 
     #sadm_writelog "FQDN = $(sadm_get_fqdn) - SADM_SERVER = $SADM_SERVER"
