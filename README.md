@@ -1,4 +1,4 @@
-# SADMIN Tools version 0.93.0
+# SADMIN Tools version 0.94.0
 
 If you are a Unix system administrator and taking care of multiple servers, you probably created some scripts to help you keeping your environment under control. SADMIN surely can help you, improve and standardize the administration of your server farm. With SADMIN you can be alerted
 when something goes wrong, when a script fail or just to let you know that your script ran with
