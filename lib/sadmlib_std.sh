@@ -64,6 +64,7 @@
 # 2018_11_09 v2.51 Add Link in Slack Message to view script log.
 # 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
 #@2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
+#@2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -81,7 +82,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.53"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.54"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -869,18 +870,18 @@ sadm_get_hostname() {
 # --------------------------------------------------------------------------------------------------
 sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
-        "LINUX") host ${SADM_HOSTNAME} >/dev/null 2>&1 
-                 if [ $? -eq 0 ] 
-                    then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
-                    else which `dnsdomainname` > /dev/null 2>&1
-                         if [ $? -eq 0 ] 
-                            then wdom=`dnsdomainname`
-                            else wdom="$SADM_DOMAIN"
-                         fi
-                 fi
-                 ;;
-        "AIX")   wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
-                 ;;
+        "LINUX"|"DARWIN")   host ${SADM_HOSTNAME} >/dev/null 2>&1 
+                            if [ $? -eq 0 ] 
+                                then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
+                                else which `dnsdomainname` > /dev/null 2>&1
+                                     if [ $? -eq 0 ] 
+                                        then wdom=`dnsdomainname`
+                                        else wdom="$SADM_DOMAIN"
+                                     fi
+                            fi
+                            ;;
+        "AIX")              wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
+                            ;;
     esac
     if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi
     echo "$wdom"
@@ -1616,11 +1617,11 @@ sadm_load_config_file() {
         done < $SADM_CFG_FILE
 
     # Get Tead/Write and Read/Only User Password from pasword file (If on SADMIN Server)
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
+    SADM_RW_DBPWD=""                                                    # Default Write Pwd is Blank
+    SADM_RO_DBPWD=""                                                    # Default ReadOnly Pwd Blank
+    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ] && [ -r "$DBPASSFILE" ]  # If on Server & pwd file
         then SADM_RW_DBPWD=`grep "^${SADM_RW_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RW PWD
              SADM_RO_DBPWD=`grep "^${SADM_RO_DBUSER}," $DBPASSFILE |awk -F, '{ print $2 }'` # RO PWD
-        else SADM_RW_DBPWD=""
-             SADM_RO_DBPWD=""
     fi
 
     return 0
