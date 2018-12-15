@@ -26,7 +26,8 @@
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
 #   2018_02_02 - Jacques Duplessis
 #       V2.1 Added Column to specify if performance graph are to be displayed (Sporadic Server...)
-##@2018_10_01 v2.2 Remove Alert Group Field
+# 2018_10_01 v2.2 Remove Alert Group Field
+#@2018_12_15 v2.3 Add 'Darwin' as a choice for Operating System Type.
 # ==================================================================================================
  
 
@@ -35,7 +36,7 @@
 #======================================================//===========================
 #
 $DEBUG = False ;                                       // Debug Activated True/False
-$SVER  = "2.2" ;                                       // Current version number
+$SVER  = "2.3" ;                                       // Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';      // Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -113,6 +114,7 @@ function display_srv_form ($con,$wrow,$mode) {
         case 'CREATE' : echo "\n<select name='scr_ostype' size=1>";
                         echo "\n<option value='linux' selected>linux</option>";
                         echo "\n<option value='aix'>aix</option>";
+                        echo "\n<option value='darwin'>darwin</option>";
                         break ;
         default       : if ($smode == "UPDATE") {
                             echo "\n<select name='scr_ostype' size=1>";
@@ -122,9 +124,22 @@ function display_srv_form ($con,$wrow,$mode) {
                         if ($wrow['srv_ostype'] == 'linux') {
                             echo "\n<option value='linux' selected>linux</option>";
                             echo "\n<option value='aix'>aix</option>";
-                        }else{
-                            echo "\n<option value='linux'>linux</option>";
+                            echo "\n<option value='darwin'>darwin</option>";
+                        }
+                        if ($wrow['srv_ostype'] == 'aix') {
                             echo "\n<option value='aix' selected>aix</option>";
+                            echo "\n<option value='linux'>linux</option>";
+                            echo "\n<option value='darwin'>darwin</option>";
+                        }
+                        if ($wrow['srv_ostype'] == 'darwin') {
+                            echo "\n<option value='darwin' selected>darwin</option>";
+                            echo "\n<option value='linux'>linux</option>";
+                            echo "\n<option value='aix'>aix</option>";
+                        }else{
+                            echo "\n<option value='unknown' selected>unknown</option>";
+                            echo "\n<option value='linux'>linux</option>";
+                            echo "\n<option value='darwin'>darwin</option>";
+                            echo "\n<option value='aix'>aix</option>";
                         }
                         break;
     }
@@ -274,12 +289,12 @@ function display_srv_form ($con,$wrow,$mode) {
     echo "\n<div class='double_input'>";                                # Class for Column Input
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_sadmin_dir' readonly ";     # Set Name and Read Only
-       echo " maxlength='15' size='17' ";                               # Set Max. Length
+       echo " maxlength='45' size='47' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_sadmin_dir' ";              # Set Name & Col. is require
        echo " placeholder='SADMIN Directory' ";                         # Set Default
-       echo " maxlength='15' size='17' ";                               # Set Max. Length
+       echo " maxlength='45' size='47' ";                               # Set Max. Length
        echo " value='" . sadm_clean_data($wrow['srv_sadmin_dir']). "'/>"; # Show Current Value
     }
     echo "\n</div>";                                                    # << End of double_input
