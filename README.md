@@ -34,7 +34,7 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
     - Of course, they can be [viewed from the command line](https://www.sadmin.ca/img/file_log_format.png).
     - Control if you want to [append or create a new log](https://www.sadmin.ca/img/helloWorldVariables2.png) at each execution.
     - You decide the maximum of lines you want to keep in the log.
-  - Execution Date/Time, Elapse time and result will be recorded (*.rch file) :
+  - [Scripts execution history file](https://www.sadmin.ca/img/file_rch_format.png) ([R]esult [C]ode [H]istory) :
     - Script execution date and time (Start and Ending) will be recorded.
     - Execution elapse time is calculated and included in the history file (*.rch).
     - Script ending status is also recorded (Success, Failed).
