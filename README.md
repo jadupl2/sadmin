@@ -59,9 +59,6 @@ If you like one these features, then will certainly find a couple of more intere
 
 
 ## SADMIN is working on most popular Linux distributions
-
-****
-
 - The SADMIN client have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
 - The SADMIN server should work on any Linux distribution but it's only supported on Redhat, CentOS, Fedora and Debian, Ubuntu and Raspbian distribution.
 - In less than 15 minutes, you can install and start using the tools.
@@ -75,7 +72,7 @@ If you like one these features, then will certainly find a couple of more intere
 - Take a look at our [changelog](https://www.sadmin.ca/www/changelog.php) and see the latest features and bug fixes.
 - You can clone the project from [GitHub](https://github.com/jadupl2/sadmin)
 
-```bash
+```shell
 # git clone https://github.com/jadupl2/sadmin.git
 ```
 
@@ -100,9 +97,7 @@ If you like one these features, then will certainly find a couple of more intere
 
 ## Installing SADMIN Tools
 
-****
-
-```bash
+```shell
     Change directory to /opt
     # cd /opt
 
@@ -130,28 +125,21 @@ If you like one these features, then will certainly find a couple of more intere
 - If you are installing a 'SADMIN server', the setup program will install and configure for you the 'Mariadb' (Database) and the Apache Web Server. When installation is finished you will have a working Web SADMIN environment.
 
 After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below (The dot and the space are important), This will
-make sure "SADMIN" environment variable is define.\
-```bash
-# . /etc/profile.d/sadmin.sh
+make sure "SADMIN" environment variable is define.
+```shell
+# sudo . /etc/profile.d/sadmin.sh
 ```
 
 
 
 ## SADMIN Support
-
-****
-
-Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your
-problem or question and sent to <support@sadmin.ca>.\
+Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
+problem or question and sent to <support@sadmin.ca>.
 We will get back to you as soon as possible.
 
 ## Authors
-
-****
-
 [Jacques Duplessis](mailto:support@sadmin.com) - *Initial work*.
 
 
 ## License
-****
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
