@@ -14,13 +14,13 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 **Web interface to ease your work**
 
-- Use it to add, update and delete server in your server farm inventory.
-- View performance graph of your servers up to two years in the past.
-- If you want, you can automatically update your server O/S at the time and day you scheduled.
+- Use it to [add](https://www.sadmin.ca/img/crud_create_server.png), update and delete server in your server farm inventory.
+- View [performance graph](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your servers up to two years in the past.
+- If you want, you can automatically [update your server O/S at the time and day you scheduled](https://www.sadmin.ca/img/sadm_osupdate_screen.png).
 - Have server configuration on hand, useful in case of a Disaster Recovery.
 - View your servers farm subnet utilization and [see what IP are free](https://www.sadmin.ca/img/web_network_page.png) to use.
-- View the status of all the scripts that run in your server farm.
-- View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
+- View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
+  - View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
 - There's still a lot more to come.
 
 **Templates Scripts (Shell and Python)**
@@ -28,11 +28,11 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 - Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php), modify it to your need and enjoy :
   - All your scripts will have a log.
     - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
-    - All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
+    - All logs, will have the [same format](https://www.sadmin.ca/img/helloWorld.sh_10.png) (Header,Footer, Date/Time Stamp,...).
     - They will be recorded in the same location ($SADMIN/log).
-    - View-able from a Web Interface.
-    - View-able from the command line.
-    - Control if you want to append or create a new log at each execution.
+    - [Logs can be viewed from the Web Interface](https://www.sadmin.ca/img/file_log_web_view.png).
+    - Of course, they can be [viewed from the command line](https://www.sadmin.ca/img/file_log_format.png).
+    - Control if you want to [append or create a new log](https://www.sadmin.ca/img/helloWorldVariables2.png) at each execution.
     - You decide the maximum of lines you want to keep in the log.
   - Execution Date/Time, Elapse time and result will be recorded (*.rch file) :
     - Script execution date and time (Start and Ending) will be recorded.
