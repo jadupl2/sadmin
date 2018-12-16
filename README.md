@@ -40,9 +40,9 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
     - Script ending status is also recorded (Success, Failed).
     - You can receive an email if the script end with Success or Failure (Or no Mail).
     - If the script is currently running they will have a status of "Running".
-    - You will able to view the History file from the Web Interface.
-    - And you can also look at them from the command line.
-    - You control the maximum of lines you want to keep in the RCH file.
+    - You will able to [view the History file from the Web Interface](https://www.sadmin.ca/img/file_rch_web_view.png).
+    - Of course, you can also [view your [R]esult [C]ode [H]istory file from the command line](https://www.sadmin.ca/img/file_rch_format.png).
+    - You control the [maximum of lines you want to keep in the RCH file](https://www.sadmin.ca//doc/man/file_sadmin_cfg.php#SADM_MAX_RCHLINE).
     - If you don't want to use the RCH file, you have the option to disable it.
 - With the "srch" command, you can even have a status of all your scripts that ran in your server farm.
 - Use SADMIN wrapper and run your existing using the SADMIN tools
