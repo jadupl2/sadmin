@@ -25,7 +25,7 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 **Templates Scripts (Shell and Python)**
 
-- Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template.php), modify it to your need and enjoy :
+- Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php), modify it to your need and enjoy :
   - All your scripts will have a log.
     - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
     - All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
