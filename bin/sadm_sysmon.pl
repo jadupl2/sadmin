@@ -49,7 +49,7 @@ my %df_array            = ();                                           # Array 
 my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
 $OSNAME                 =~ tr/A-Z/a-z/;                                 # Make OSName in lowercase
 my $HOSTNAME            = `hostname -s`; chomp $HOSTNAME;               # HostName of current System
-my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "5";                # debugging purpose set to 5
+my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "6";                # debugging purpose set to 5
 my $start_time = $end_time = 0;                                         # Use to Calc execution Time
 my $WORK                = 0;                                            # For temp usage
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
