@@ -63,8 +63,9 @@
 # 2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
 # 2018_11_09 v2.51 Add Link in Slack Message to view script log.
 # 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
-#@2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
-#@2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
+# 2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
+# 2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
+# 2018_12_18 v2.55 Add ways to get CPU type on MacOS
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -82,7 +83,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.54"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.55"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1278,7 +1279,7 @@ sadm_get_kernel_bitmode() {
                    ;;
         "AIX")     wkernel_bitmode=`getconf KERNEL_BITMODE`
                    ;;
-         "DARWIN") wkernel_bitmode=64
+         "DARWIN") wkernel_bitmode=`getconf LONG_BIT`
                    ;;
     esac
     echo "$wkernel_bitmode"
@@ -1295,6 +1296,8 @@ sadm_get_kernel_version() {
                     wkernel_version=`uname -r`
                     ;;
         "AIX")      wkernel_version=`uname -r`
+                    ;;
+        "DARWIN")   wkernel_version=`uname -r`
                     ;;
         *)          wkernel_version=`uname -r`
                     ;;
