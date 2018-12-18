@@ -366,7 +366,7 @@ main_process()
 
         # Check if first 6 char. is "./www/" (Mean web Dir.) and on SADMIN client skip line
         first6=`echo "$updfile" | cut -c1-6`
-        if [ "$SADM_HOST_TYPE" = "C" ] &&  [ "$first6" = "./www/" ]
+        if [ "$SADM_HOST_TYPE" = "C" ] && [ "$first6" = "./www/" ] 
             then continue
         fi
 
