@@ -14,35 +14,35 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 **Web interface to ease your work**
 
-- Use it to add, update and delete server in your server farm inventory.
-- View performance graph of your servers up to two years in the past.
-- If you want, you can automatically update your server O/S at the time and day you scheduled.
+- Use it to [add](https://www.sadmin.ca/img/crud_create_server.png), update and delete server in your server farm inventory.
+- View [performance graph](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your servers up to two years in the past.
+- If you want, you can automatically [update your server O/S at the time and day you scheduled](https://www.sadmin.ca/img/sadm_osupdate_screen.png).
 - Have server configuration on hand, useful in case of a Disaster Recovery.
-- View your servers farm subnet utilization and [see what IP are free](http://wsadmin.maison.ca/img/web_networvk_page.png) to use.
-- View the status of all the scripts that run in your server farm.
-- View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
+- View your servers farm subnet utilization and [see what IP are free](https://www.sadmin.ca/img/web_network_page.png) to use.
+- View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
+  - View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
 - There's still a lot more to come.
 
 **Templates Scripts (Shell and Python)**
 
-- Make a copy of the [template script](http://wsadmin.maison.ca/doc/man/man_sadm_template.php), modify it to your need and enjoy :
+- Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php), modify it to your need and enjoy :
   - All your scripts will have a log.
     - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
-    - All logs, will have the same format (Header,Footer, Date/Time Stamp,...).
+    - All logs, will have the [same format](https://www.sadmin.ca/img/helloWorld.sh_10.png) (Header,Footer, Date/Time Stamp,...).
     - They will be recorded in the same location ($SADMIN/log).
-    - View-able from a Web Interface.
-    - View-able from the command line.
-    - Control if you want to append or create a new log at each execution.
+    - [Logs can be viewed from the Web Interface](https://www.sadmin.ca/img/file_log_web_view.png).
+    - Of course, they can be [viewed from the command line](https://www.sadmin.ca/img/file_log_format.png).
+    - Control if you want to [append or create a new log](https://www.sadmin.ca/img/helloWorldVariables2.png) at each execution.
     - You decide the maximum of lines you want to keep in the log.
-  - Execution Date/Time, Elapse time and result will be recorded (*.rch file) :
+  - [Scripts execution history file](https://www.sadmin.ca/img/file_rch_format.png) ([R]esult [C]ode [H]istory) :
     - Script execution date and time (Start and Ending) will be recorded.
     - Execution elapse time is calculated and included in the history file (*.rch).
     - Script ending status is also recorded (Success, Failed).
     - You can receive an email if the script end with Success or Failure (Or no Mail).
     - If the script is currently running they will have a status of "Running".
-    - You will able to view the History file from the Web Interface.
-    - And you can also look at them from the command line.
-    - You control the maximum of lines you want to keep in the RCH file.
+    - You will able to [view the History file from the Web Interface](https://www.sadmin.ca/img/file_rch_web_view.png).
+    - Of course, you can also [view your [R]esult [C]ode [H]istory file from the command line](https://www.sadmin.ca/img/file_rch_format.png).
+    - You control the [maximum of lines you want to keep in the RCH file](https://www.sadmin.ca//doc/man/file_sadmin_cfg.php#SADM_MAX_RCHLINE).
     - If you don't want to use the RCH file, you have the option to disable it.
 - With the "srch" command, you can even have a status of all your scripts that ran in your server farm.
 - Use SADMIN wrapper and run your existing using the SADMIN tools
@@ -59,9 +59,6 @@ If you like one these features, then will certainly find a couple of more intere
 
 
 ## SADMIN is working on most popular Linux distributions
-
-****
-
 - The SADMIN client have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
 - The SADMIN server should work on any Linux distribution but it's only supported on Redhat, CentOS, Fedora and Debian, Ubuntu and Raspbian distribution.
 - In less than 15 minutes, you can install and start using the tools.
@@ -75,7 +72,7 @@ If you like one these features, then will certainly find a couple of more intere
 - Take a look at our [changelog](https://www.sadmin.ca/www/changelog.php) and see the latest features and bug fixes.
 - You can clone the project from [GitHub](https://github.com/jadupl2/sadmin)
 
-```bash
+```shell
 # git clone https://github.com/jadupl2/sadmin.git
 ```
 
@@ -100,9 +97,7 @@ If you like one these features, then will certainly find a couple of more intere
 
 ## Installing SADMIN Tools
 
-****
-
-```bash
+```shell
     Change directory to /opt
     # cd /opt
 
@@ -130,28 +125,21 @@ If you like one these features, then will certainly find a couple of more intere
 - If you are installing a 'SADMIN server', the setup program will install and configure for you the 'Mariadb' (Database) and the Apache Web Server. When installation is finished you will have a working Web SADMIN environment.
 
 After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below (The dot and the space are important), This will
-make sure "SADMIN" environment variable is define.\
-```bash
-# . /etc/profile.d/sadmin.sh
+make sure "SADMIN" environment variable is define.
+```shell
+# sudo . /etc/profile.d/sadmin.sh
 ```
 
 
 
 ## SADMIN Support
-
-****
-
-Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting log to an email with a description of your
-problem or question and sent to <support@sadmin.ca>.\
+Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
+problem or question and sent to <support@sadmin.ca>.
 We will get back to you as soon as possible.
 
 ## Authors
-
-****
-
 [Jacques Duplessis](mailto:support@sadmin.com) - *Initial work*.
 
 
 ## License
-****
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
