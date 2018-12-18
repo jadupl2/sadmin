@@ -167,7 +167,7 @@ SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Defaul
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
-SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # SADMIN [S]erver/[C]lient
+SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # [S]erver/[C]lient/[D]ev.
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
 SADM_GROUP="sadmin"                         ; export SADM_GROUP         # sadmin group account
 SADM_WWW_USER="apache"                      ; export SADM_WWW_USER      # /sadmin/www owner
