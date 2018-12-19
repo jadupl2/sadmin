@@ -33,6 +33,7 @@
 # 2018_11_24    v1.21 Check SADM_USER status, give more precise explanation & corrective cmd if lock.
 # 2018_12_15    v1.22 Fix Error Message on MacOS trying to find SADMIN User in /etc/passwd.
 # 2018_12_18    v1.23 Don't delete SADMIN server directories if SADM_HOST_TYPE='D' in sadmin.cfg
+# 2018_12_19    v1.24 Fix typo Error & Enhance log output
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.23'                              # Current Script Version
+    export SADM_VER='1.24'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -360,7 +361,7 @@ dir_housekeeping()
                      rm -fr $SADM_DBB_DIR
             fi
             # Remove Network Scan Directory on SADMIN Client if it exist
-            if [ -d "$SADM_NET_DIR" ] && [ "$SADM_HOST_TYPE = "C" ]
+            if [ -d "$SADM_NET_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
                 then sadm_writelog "Directory $SADM_NET_DIR should exist only on SADMIN server."
                      sadm_writelog "I am deleting it now."
                      rm -fr $SADM_NET_DIR
@@ -457,7 +458,9 @@ file_housekeeping()
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
-        then sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure README.md have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
              chmod 664 ${SADM_BASE_DIR}/README.md
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
              lsline=`ls -l ${SADM_BASE_DIR}/README.md`
@@ -466,7 +469,9 @@ file_housekeeping()
 
     # Set Owner and Permission for license file
     if [ -f ${SADM_BASE_DIR}/LICENSE ]
-        then sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/LICENSE"
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure LICENSE have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/LICENSE"
              chmod 664 ${SADM_BASE_DIR}/LICENSE
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/LICENSE
              lsline=`ls -l ${SADM_BASE_DIR}/LICENSE`
