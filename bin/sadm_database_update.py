@@ -30,8 +30,9 @@
 # 2018_06_09    v3.1 Last O/S Update Data & Status Taken from sysinfo.txt file in dr Dir.to Upd DB.
 # 2018_06_11    v3.2 Change name for sadm_database_update.py
 # 2018_10_02    v3.3 Add Debug Variable and verbosity to script
-#@2018_11_09    v3.4 Database Connection Error Improve
-#
+# 2018_11_09    v3.4 Database Connection Error Improve
+#@2018_12_19    v3.5 Fix update problem when O/S Update Date was blank.
+# 
 #===================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -74,7 +75,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.4"                 # Current Script Version
+    st.ver              = "3.5"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -273,6 +274,8 @@ def process_servers(wconn,wcur,st):
                 if "SADM_OSUPDATE_DATE"     in CFG_NAME: wdict['srv_date_osupdate']     = CFG_VALUE
                 if "SADM_OSUPDATE_STATUS"   in CFG_NAME: wdict['srv_update_status']     = CFG_VALUE
                 if "SADM_ROOT_DIRECTORY"    in CFG_NAME: wdict['srv_sadmin_dir']        = CFG_VALUE
+                if wdict['srv_date_osupdate'] == '' :
+                   wdict['srv_date_osupdate'] = "0000-00-00 00:00:00"   # Def. O/S Update Date
 
                 # PHYSICAL OR VIRTUAL SERVER
                 if "SADM_SERVER_TYPE" in CFG_NAME:
@@ -281,7 +284,7 @@ def process_servers(wconn,wcur,st):
                     else:
                         wdict['srv_vm'] = 1
 
-                 # RUNNING KERNEL IS 32 OR 64 BITS                srv_date_osupdate='%s',     srv_update_status='%s', \         ZERO - TO SPOT ERROR)
+                 # RUNNING KERNEL IS 32 OR 64 BITS                
                 try:
                     if "SADM_KERNEL_BITMODE" in CFG_NAME: wdict['srv_kernel_bitmode'] = int(CFG_VALUE)
                 except ValueError as e:
