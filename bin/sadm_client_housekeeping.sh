@@ -185,29 +185,29 @@ check_sadmin_account()
 # --------------------------------------------------------------------------------------------------
 set_dir()
 {
-    VAL_DIR=$1
-    VAL_OCTAL=$2
-    VAL_OWNER=$3
-    VAL_GROUP=$4
-    RETURN_CODE=0
+    VAL_DIR=$1                                                          # Directory Name
+    VAL_OCTAL=$2                                                        # chmod octal value
+    VAL_OWNER=$3                                                        # Directory Owner 
+    VAL_GROUP=$4                                                        # Directory Group name
+    RETURN_CODE=0                                                       # Reset Error Counter
 
-    if [ -d "$VAL_DIR" ]
+    if [ -d "$VAL_DIR" ]                                                # If Directory Exist
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Change $VAL_DIR to $VAL_OCTAL"
+             sadm_writelog "chmod $VAL_OCTAL $VAL_DIR"
              chmod $VAL_OCTAL $VAL_DIR
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
                      RETURN_CODE=1                                      # Error = Return Code to 1
              fi
-             sadm_writelog "Change chmod gou-s $VAL_DIR"
-             chmod gou-s $VAL_DIR
-             if [ $? -ne 0 ]
-                then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
-                     ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
-                     RETURN_CODE=1                                      # Error = Return Code to 1
-             fi
-             sadm_writelog "Change $VAL_DIR owner to ${VAL_OWNER}:${VAL_GROUP}"
+             #sadm_writelog "Change chmod gou-s $VAL_DIR"
+             #chmod gou-s $VAL_DIR
+             #if [ $? -ne 0 ]
+             #   then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
+             #        ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
+             #        RETURN_CODE=1                                      # Error = Return Code to 1
+             #fi
+             sadm_writelog "chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR"
              chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
@@ -355,7 +355,7 @@ dir_housekeeping()
             sadm_writelog "Remove useless Directories on client (if any) ..."
             #
             # Remove Database Backup Directory on SADMIN Client if it exist
-            if [ -d "$SADM_DBB_DIR" ] && [ "$SADM_HOST_TYPE = "C" ]
+            if [ -d "$SADM_DBB_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
                 then sadm_writelog "Directory $SADM_DBB_DIR should exist only on SADMIN server."
                      sadm_writelog "I am deleting it now."
                      rm -fr $SADM_DBB_DIR
@@ -367,7 +367,7 @@ dir_housekeeping()
                      rm -fr $SADM_NET_DIR
             fi
             # Remove Web Site Directory on SADMIN Client if it exist
-            if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE = "C" ]
+            if [ -d "$SADM_WWW_DIR" ] && [ "$SADM_HOST_TYPE" = "C" ]
                 then sadm_writelog "Directory $SADM_WWW_DIR should exist only on SADMIN server."
                      sadm_writelog "I am deleting it now."
                      rm -fr $SADM_WWW_DIR
@@ -584,7 +584,7 @@ file_housekeeping()
     # Reset privilege on SADMIN SYS Directory files
     if [ -d "$SADM_SYS_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \;" # Change Files Priv
+             sadm_writelog "find $SADM_SYS_DIR -type f -exec chmod -R 770 {} \;" # Change Files Priv
              find $SADM_SYS_DIR -type f -exec chmod -R 774 {} \; >/dev/null 2>&1 # Change Files Priv
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
