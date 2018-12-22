@@ -31,8 +31,9 @@
 # 2018_10_20    v3.1 Show user what to do when can't get last O/S update date.
 # 2018_10_21    v3.2 More info were added about the system and network in report file.
 # 2018_11_07    v3.3 System Report show only last 10 booting date/time
-#@2018_11_13    v3.4 Restructure script for Performance
-#@2018_11_20    v3.5 Added some Aix lsattr command for system information.
+# 2018_11_13    v3.4 Restructure script for Performance
+# 2018_11_20    v3.5 Added some Aix lsattr command for system information.
+#@2018_12_22    v3.6 Minor fix for MacOS
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.5'                               # Current Script Version
+    export SADM_VER='3.6'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -85,7 +86,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=6                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
 
 # Name of all Output Files
@@ -138,6 +139,7 @@ UNAME=""                                        ; export UNAME          # uname 
 UPTIME=""                                       ; export UPTIME         # uptime command location
 LAST=""                                         ; export LAST           # last command location
 LSATTR=""                                       ; export LSATTR         # lsattr command location
+SYSCTL=""                                       ; export SYSCTL         # sysctl command location
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -258,9 +260,10 @@ pre_validation()
                 command_available "lsb_release" ; LSBRELEASE=$SADM_CPATH    # lsb_release Cmd Path
                 command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
                 command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
+                command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
     fi
 
-    # Aix and Linux Common Commands
+    # Aix, Linux and MacOS Common Commands
     command_available "df"          ; DF=$SADM_CPATH                    # Cmd Path or Blank !found
     command_available "netstat"     ; NETSTAT=$SADM_CPATH               # Cmd Path or Blank !found
     command_available "ifconfig"    ; IFCONFIG=$SADM_CPATH              # Cmd Path or Blank !found
