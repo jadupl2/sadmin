@@ -27,7 +27,7 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 - Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php), modify it to your need and enjoy :
   - All your scripts will have a log.
-    - All your logs will have a standardize name (${HOST}_${SCRIPT}.log)
+    - All your logs will have a standardize name (hostname_scriptname.log)
     - All logs, will have the [same format](https://www.sadmin.ca/img/helloWorld.sh_10.png) (Header,Footer, Date/Time Stamp,...).
     - They will be recorded in the same location ($SADMIN/log).
     - [Logs can be viewed from the Web Interface](https://www.sadmin.ca/img/file_log_web_view.png).
@@ -134,12 +134,16 @@ make sure "SADMIN" environment variable is define.
 
 ## SADMIN Support
 Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
-problem or question and sent to <support@sadmin.ca>.
+problem or question and sent it to <support@sadmin.ca>.
 We will get back to you as soon as possible.
 
 ## Authors
-[Jacques Duplessis](mailto:support@sadmin.com) - *Initial work*.
+[Jacques Duplessis](mailto:support@sadmin.ca) - *Initial work*.
 
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Copyright and license
+The SADMIN is a collection of free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
+
+The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the [LICENSE](LICENSE) file for details.
