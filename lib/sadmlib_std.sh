@@ -907,7 +907,8 @@ sadm_get_host_ip() {
                     ;;
         "AIX")      whost_ip=`host ${SADM_HOSTNAME}.$(sadm_get_domainname) |head -1 |awk '{ print $3 }'`
                     ;;
-        "DARWIN")   whost_ip=`ifconfig |grep inet | grep broadcast | awk '{ print $2 }'`
+        "DARWIN")   whost_ip=`host ${SADM_HOSTNAME} |awk '{ print $4 }' |head -1`
+                    #whost_ip=`ifconfig |grep inet | grep broadcast | awk '{ print $2 }'`
                     ;;
     esac
     echo "$whost_ip"
@@ -1121,6 +1122,23 @@ sadm_server_memory() {
 
 # --------------------------------------------------------------------------------------------------
 #                             RETURN THE SERVER NUMBER OF PHYSICAL CPU
+# Note for MacOS
+#imac:bin root# sysctl machdep.cpu.core_count   
+#machdep.cpu.core_count: 4
+#
+#machdep.cpu.core_count: 4
+#machdep.cpu.thread_count: 4
+#   973	hw.ncpu: 4
+#   974	hw.byteorder: 1234
+#   975	hw.memsize: 12884901888
+#   976	hw.activecpu: 4
+#   977	hw.physicalcpu: 4
+#   978	hw.physicalcpu_max: 4
+#   979	hw.logicalcpu: 4
+#   980	hw.logicalcpu_max: 4
+#   981	hw.cputype: 7
+#   982	hw.cpusubtype: 4
+#   983	hw.cpu64bit_capable: 1
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() {
     case "$(sadm_get_ostype)" in
