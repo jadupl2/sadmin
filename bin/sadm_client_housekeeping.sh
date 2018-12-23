@@ -34,6 +34,7 @@
 # 2018_12_15    v1.22 Fix Error Message on MacOS trying to find SADMIN User in /etc/passwd.
 # 2018_12_18    v1.23 Don't delete SADMIN server directories if SADM_HOST_TYPE='D' in sadmin.cfg
 # 2018_12_19    v1.24 Fix typo Error & Enhance log output
+#@2018_12_22    v1.25 Minor change - More Debug info.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.24'                              # Current Script Version
+    export SADM_VER='1.25'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -194,7 +195,7 @@ set_dir()
     if [ -d "$VAL_DIR" ]                                                # If Directory Exist
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "chmod $VAL_OCTAL $VAL_DIR"
-             chmod $VAL_OCTAL $VAL_DIR
+             chmod $VAL_OCTAL $VAL_DIR  >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chmod' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
@@ -208,7 +209,7 @@ set_dir()
              #        RETURN_CODE=1                                      # Error = Return Code to 1
              #fi
              sadm_writelog "chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR"
-             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR
+             chown ${VAL_OWNER}:${VAL_GROUP} $VAL_DIR >>$SADM_LOG 2>&1
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on 'chown' operation for $VALDIR"
                      ERROR_COUNT=$(($ERROR_COUNT+1))                    # Add Return Code To ErrCnt
