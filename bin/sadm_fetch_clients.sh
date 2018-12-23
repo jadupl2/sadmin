@@ -654,4 +654,4 @@ check_for_alert()
     check_for_alert                                                     # Report Alert if Any
 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
-    exit $SADM_EXIT_CODE                                                # Exit With Global Error code (0/1)
+    exit $SADM_EXIT_CODE                                                # Exit With Error code (0/1)
