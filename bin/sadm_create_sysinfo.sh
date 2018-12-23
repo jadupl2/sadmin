@@ -86,7 +86,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=6                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
 
 # Name of all Output Files
