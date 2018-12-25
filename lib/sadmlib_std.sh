@@ -1226,8 +1226,7 @@ sadm_server_thread_per_core() {
                     ;;
         "AIX")      sadm_server_thread_per_core=1
                     ;;
-        "DARWIN")   w=`sysctl -n machdep.cpu.thread_count`
-                    #sadm_server_thread_per_core=`echo "$w / $(sadm_server_core_per_socket) " | $SADM_BC`
+        "DARWIN")   sadm_server_thread_per_core=`sysctl -n machdep.cpu.thread_count`
                     ;;
     esac
     echo "$sadm_server_thread_per_core"
