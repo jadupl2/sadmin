@@ -1226,7 +1226,10 @@ sadm_server_thread_per_core() {
                     ;;
         "AIX")      sadm_server_thread_per_core=1
                     ;;
-        "DARWIN")   sadm_server_thread_per_core=`sysctl -n machdep.cpu.thread_count`
+        "DARWIN")   wlcpu=`sysctl -n hw.logicalcpu`
+                    wnbcpu=`sysctl -n hw.ncpu`
+                    sadm_server_thread_per_core=`echo "$wlcpu / $wnbcpu" | $SADM_BC | tr -d ' '`
+                    #sadm_server_thread_per_core=`sysctl -n machdep.cpu.thread_count`
                     ;;
     esac
     echo "$sadm_server_thread_per_core"
