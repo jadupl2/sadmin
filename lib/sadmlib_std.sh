@@ -66,6 +66,7 @@
 # 2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
 # 2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
 # 2018_12_18 v2.55 Add ways to get CPU type on MacOS
+#@2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -83,7 +84,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.55"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.56"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -1122,23 +1123,6 @@ sadm_server_memory() {
 
 # --------------------------------------------------------------------------------------------------
 #                             RETURN THE SERVER NUMBER OF PHYSICAL CPU
-# Note for MacOS
-#imac:bin root# sysctl machdep.cpu.core_count   
-#machdep.cpu.core_count: 4
-#
-#machdep.cpu.core_count: 4
-#machdep.cpu.thread_count: 4
-#   973	hw.ncpu: 4
-#   974	hw.byteorder: 1234
-#   975	hw.memsize: 12884901888
-#   976	hw.activecpu: 4
-#   977	hw.physicalcpu: 4
-#   978	hw.physicalcpu_max: 4
-#   979	hw.logicalcpu: 4
-#   980	hw.logicalcpu_max: 4
-#   981	hw.cputype: 7
-#   982	hw.cpusubtype: 4
-#   983	hw.cpu64bit_capable: 1
 # --------------------------------------------------------------------------------------------------
 sadm_server_nb_cpu() {
     case "$(sadm_get_ostype)" in
@@ -1147,9 +1131,9 @@ sadm_server_nb_cpu() {
                     ;;
         "AIX")      wnbcpu=`lsdev -C -c processor | wc -l | tr -d ' '`
                     ;;
-        "DARWIN")   syspro="system_profiler SPHardwareDataType"
-                    wnbcpu=`$syspro | grep "Number of Processors"| awk -F: '{print$2}' | tr -d ' '`
-                    #wnbcpu=`sysctl -n hw.ncpu`
+        "DARWIN")   #syspro="system_profiler SPHardwareDataType"
+                    #wnbcpu=`$syspro | grep "Number of Processors"| awk -F: '{print$2}' | tr -d ' '`
+                    wnbcpu=`sysctl -n hw.ncpu`
                     ;;
     esac
     echo "$wnbcpu"
@@ -1213,8 +1197,9 @@ sadm_server_core_per_socket() {
                     ;;
         "AIX")      wcps=1
                     ;;
-        "DARWIN")   syspro="system_profiler SPHardwareDataType"
-                    wcps=`$syspro | grep -i "Number of Cores"| awk -F: '{print$2}' | tr -d ' '`
+        "DARWIN")   #syspro="system_profiler SPHardwareDataType"
+                    #wcps=`$syspro | grep -i "Number of Cores"| awk -F: '{print$2}' | tr -d ' '`
+                    wcps=`sysctl -n machdep.cpu.core_count`
                     ;;
     esac
     echo "$wcps"
@@ -1241,8 +1226,10 @@ sadm_server_thread_per_core() {
                     ;;
         "AIX")      sadm_server_thread_per_core=1
                     ;;
-        "DARWIN")   w=`sysctl -n machdep.cpu.thread_count`
-                    sadm_server_thread_per_core=`echo "$w / $(sadm_server_core_per_socket) " | $SADM_BC`
+        "DARWIN")   wlcpu=`sysctl -n hw.logicalcpu`
+                    wnbcpu=`sysctl -n hw.ncpu`
+                    sadm_server_thread_per_core=`echo "$wlcpu / $wnbcpu" | $SADM_BC | tr -d ' '`
+                    #sadm_server_thread_per_core=`sysctl -n machdep.cpu.thread_count`
                     ;;
     esac
     echo "$sadm_server_thread_per_core"
@@ -1297,7 +1284,7 @@ sadm_get_kernel_bitmode() {
                    ;;
         "AIX")     wkernel_bitmode=`getconf KERNEL_BITMODE`
                    ;;
-         "DARWIN") wkernel_bitmode=`getconf LONG_BIT`
+        "DARWIN")  wkernel_bitmode=`getconf LONG_BIT`
                    ;;
     esac
     echo "$wkernel_bitmode"
