@@ -67,6 +67,7 @@
 # 2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
 # 2018_12_18 v2.55 Add ways to get CPU type on MacOS
 #@2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
+#@2018_12_27 v2.57 If Startup and Shutdown scripts doesn't exist, create them from template.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -84,7 +85,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.56"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.57"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -124,7 +125,7 @@ SADM_WWW_NET_DIR="$SADM_WWW_DAT_DIR/${SADM_HOSTNAME}/net"   ; export SADM_WWW_NE
 SADM_WWW_TMP_DIR="$SADM_WWW_DIR/tmp"                        ; export SADM_WWW_TMP_DIR  # web tmp dir
 SADM_WWW_PERF_DIR="$SADM_WWW_TMP_DIR/perf"                  ; export SADM_WWW_PERF_DIR # web perf dir
 
-# SADM CONFIG FILE, LOGS AND TEMP FILES USER CAN USE
+# SADM CONFIG FILES, LOGS AND TEMP FILES USER CAN USE
 SADM_PID_FILE="${SADM_TMP_DIR}/${SADM_INST}.pid"            ; export SADM_PID_FILE   # PID file name
 SADM_CFG_FILE="$SADM_CFG_DIR/sadmin.cfg"                    ; export SADM_CFG_FILE   # Cfg file name
 SADM_ALERT_FILE="$SADM_CFG_DIR/alert_group.cfg"             ; export SADM_ALERT_FILE # AlertGrp File
@@ -135,6 +136,11 @@ SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_
 SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
 SADM_ALERT_SEQ="$SADM_CFG_DIR/alert_history.seq"            ; export SADM_ALERT_SEQ  # History Seq#
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
+SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
+SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"            ; export SADM_SYS_STARTUP # Startup File
+SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"             ; export SADM_SYS_START  # Startup Template
+SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"          ; export SADM_SYS_SHUTDOWN # Shutdown 
+SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"             ; export SADM_SYS_SHUT   # Shutdown Template
 SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
 SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HIDDEN # Cfg file name
@@ -1777,6 +1783,19 @@ sadm_start() {
     if [ $(id -u) -eq 0 ]
         then chmod 0775 $SADM_UMON_DIR ; chown ${SADM_USER}:${SADM_GROUP} $SADM_UMON_DIR
     fi
+
+    # If System Startup Script does not exist - Create it from the startup template script
+    [ ! -r "$SADM_SYS_STARTUP" ] && cp $SADM_SYS_START $SADM_SYS_STARTUP
+    if [ $(id -u) -eq 0 ]
+        then chmod 0774 $SADM_SYS_STARTUP ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_STARTUP
+    fi
+
+    # If System Shutdown Script does not exist - Create it from the shutdown template script
+    [ ! -r "$SADM_SYS_SHUTDOWN" ] && cp $SADM_SYS_SHUT $SADM_SYS_SHUTDOWN
+    if [ $(id -u) -eq 0 ]
+        then chmod 0774 $SADM_SYS_SHUTDOWN ; chown ${SADM_USER}:${SADM_GROUP} $SADM_SYS_SHUTDOWN
+    fi
+
 
     # Check Directories that are present ONLY ON SADMIN SERVER
     if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]
