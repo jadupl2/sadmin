@@ -26,10 +26,10 @@
 # 2018_09_18    v2.23 Error reported was stating > instead of >=
 # 2018_09_21    v2.24 Ping System 3 times before signaling an Error
 # 2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
-#@2018_10_16    v2.26 Change email sent when smon configuration isn't found.
+# 2018_10_16    v2.26 Change email sent when smon configuration isn't found.
+#@2018_12_29    v2.27 Enhance Performance checking service, chown & chmod only if running as root.
 #===================================================================================================
 #
-
 use English;
 use DateTime;
 use File::Basename;
@@ -43,13 +43,14 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.26";                                       # Version Number
+my $VERSION_NUMBER      = "2.27";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
-my $OSNAME              = `uname -s`; chomp $OSNAME;                    # Get O/S Name
+my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
+my $SADM_UID            = `id -u`      ; chomp($SADM_UID);              # Current User UID Number
 $OSNAME                 =~ tr/A-Z/a-z/;                                 # Make OSName in lowercase
 my $HOSTNAME            = `hostname -s`; chomp $HOSTNAME;               # HostName of current System
-my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "6";                # debugging purpose set to 5
+my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "5";                # debugging purpose set to 5
 my $start_time = $end_time = 0;                                         # Use to Calc execution Time
 my $WORK                = 0;                                            # For temp usage
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
@@ -322,8 +323,10 @@ sub unload_smon_file {
     unlink "$SYSMON_CFG_FILE" ;                                         # Delete Cur `hostname`.smon
     if (!rename "$SADM_TMP_FILE1", "$SYSMON_CFG_FILE")                  # Rename to `hostname`.smon
        { print "Could not rename $SADM_TMP_FILE1 to $SYSMON_CFG_FILE: $!\n" }
-    system ("chmod 664 $SYSMON_CFG_FILE");                              # Make file rw for gou
-    system ("chown ${SADM_USER}:${SADM_GROUP} ${SYSMON_CFG_FILE}");     # Assign User/Group SADMIN
+    if ($SADM_UID == 0) {                                               # If current User is root
+        system ("chmod 664 $SYSMON_CFG_FILE");                          # Make file rw for User/Grp
+        system ("chown ${SADM_USER}:${SADM_GROUP} ${SYSMON_CFG_FILE}"); # File own by sadmin Usr/Grp
+    }
 }
 
 
@@ -780,50 +783,40 @@ sub check_http {
 
 
 #---------------------------------------------------------------------------------------------------
-# Check if the specified service is running
+# CHECK IF THE SPECIFIED SERVICE IS RUNNING
 #   - Service can have different name depending of the version of linux your using.
-#       - Can specify multiple name 'service_syslog|rsyslog|syslogd' for same service
-#   - If it's not running try to start it 2 times
-#   - If it can't be started then trigger an alert
-#slam_master.pl:            if ($alias ne "none" and $alias ne $hostname)
-# launchctl list | grep ssh
+#       - So you can specify multiple name 'service_syslog,rsyslog,syslogd' for same service
+#   - If it's not running try to start to a maximum of 2 times per day (reset when date change).
+#   - If it can't be started then an alert is trigger.
+#
+# On MacOS (eventually will add it):
+# $ launchctl list | grep ssh
+#  603	0	com.openssh.ssh-agent
 #---------------------------------------------------------------------------------------------------
 sub check_service {
     if ( $OSNAME eq "darwin" ) { return ; }                             # Not Yet Supported on MacOS
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split service Line
-    my $SERVICE = $dummy[1];                                            # Get Service name Part
+    my $SERVICE = $dummy[1];                                            # Get Service Name(s) Part
     print "\n\nChecking service $SERVICE";                              # Show Service Name(s)
-
 
     #----- From the sysmon_array extract the service name
     my $service_count = 0 ;                                             # Service Running counter
-#    my @service = split ('\|', $SERVICE );                              # Put All Srv. name in array
-    my @service = split (',', $SERVICE );                               # Put All Srv. name in array
+    my @service = split (',', $SERVICE );                               # Put Service name in array
     foreach my $srv (@service) {                                        # For each service in array
         if ($SYSMON_DEBUG >= 6) { print "\nChecking the service $srv"; }
         $srv_name = $srv ;                                              # Save Current Service name
-        if ( $CMD_SYSTEMCTL eq "") {                                    # If not using systemctl
-            my $CMD = "service $srv status" ;                           # Get SysV Service Status
-            print "\n  - ${CMD} ... " ;                                 # Show CMD to be executed
-            if ( system("$CMD >/dev/null 2>&1") == 0 ) {                # If Service is running
-                $service_ok = 1 ;                                       # Set Service Increment
-                $srv_name = $srv ;                                      # Save name of running serv.
-                print "[RUNNING]";                                      # Show Service is running
-            }else{                                                      # If service not running
-                $service_ok = 0 ;                                       # Set Service Increment
-                print "[NOT RUNNING]";                                  # Show Service isn't running
-            }
-        }else{                                                          # If host using systemd
-            my $CMD = "systemctl status ${srv}.service" ;               # Cmd to get service status
-            print "\n  - ${CMD} ... ";                                  # Show CMD to be executed
-            if ( system("$CMD >/dev/null 2>&1") == 0 ) {                # If Service is running
-                $service_ok = 1 ;                                       # Set Service Increment
-                $srv_name = $srv ;                                      # Save name of running serv.
-                print "[RUNNING]";                                      # Show Service is running
-            }else{                                                      # If service not running
-                $service_ok = 0 ;                                       # Set Service Increment
-                print "[NOT RUNNING]";                                  # Show Service isn't running
-            }
+        my $CMD = "systemctl status ${srv}.service" ;                   # Cmd to get service status
+        if ( $CMD_SYSTEMCTL eq "" ) {                                   # If host not using systemd
+            my $CMD = "service ${srv} status" ;                         # Get SysV Service Status
+        }
+        print "\n  - $CMD ... " ;                                       # Show CMD to be executed
+        if ( system("$CMD >/dev/null 2>&1") == 0 ) {                    # If Service is running
+            $service_ok = 1 ;                                           # Set Service Increment
+            $srv_name = $srv ;                                          # Save name of running serv.
+            print "[RUNNING]";                                          # Show Service is running
+        }else{                                                          # If service not running
+            $service_ok = 0 ;                                           # Set Service Increment
+            print "[NOT RUNNING]";                                      f# Show Service isn't running
         }
         $service_count = $service_count + $service_ok ;                 # Upd. Running Service total
     }
@@ -1113,32 +1106,31 @@ sub check_swap_space  {
 
 
 #---------------------------------------------------------------------------------------------------
-# Verify filesystem line in $SADM_RECORD->{SADM_ID} against value in @df_array
+# VERIFY FILESYSTEM LINE IN $SADM_RECORD->{SADM_ID} AGAINST VALUE IN @DF_ARRAY
 #---------------------------------------------------------------------------------------------------
 sub check_filesystems_usage  {
-    #$SADM_RECORD->{SADM_SCRIPT} = "sadm-fs-inc.sh";                    # Make sure FS auto increase
 
     #----- Try to locate the filesystem in SYSMON Array
+    #print "\n";                                                         # Blank line before we begin
     foreach $key (keys %df_array) {                                     # Process each FS in Array
         if ($key eq $SADM_RECORD->{SADM_ID}) {                          # If Cur FS = FS in Array
             @dummy = split /_/, $key ;                                  # Split FS Key & FS Name
             $fname = substr ($key,2,length($key)-1);                    # Get FS Name from Key
             $fpct  = $df_array{$key};                                   # Get % Used in DF Array
 
-    # Set Parameter of Current Evaluation, ready to be evaluated.
+            # Set Parameter of Current Evaluation, ready to be evaluated.
             $SADM_RECORD->{SADM_CURVAL} = sprintf "%d",$fpct;           # Save % Use in sysmon_array
-            $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                       # Current Value
+            $CVAL = $SADM_RECORD->{SADM_CURVAL} ;                       # Current Usage Pct. Value
             $WVAL = $SADM_RECORD->{SADM_WARVAL} ;                       # Warning Threshold Value
             $EVAL = $SADM_RECORD->{SADM_ERRVAL} ;                       # Error Threshold Value
             $TEST = $SADM_RECORD->{SADM_TEST}   ;                       # Test Operator (=,<=,!=,..)
             $MOD  = "$OSNAME"                   ;                       # Module Category
             $SMOD = "FILESYSTEM"                ;                       # Sub-Module Category
             $STAT = $fname                      ;                       # Current Value Returned
-            #print "\n\nFilesystem $fname at ${CVAL}% ... ";             # Print current usage
             $FSTAT = "[OK]";                                            # Default Status
-            if ($CVAL >= $WVAL) { $FSTAT = "[WARNING]" ;}
-            if ($CVAL >= $EVAL) { $FSTAT = "[ERROR]"   ;}
-            print "\n\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
+            if ($CVAL >= $WVAL) { $FSTAT = "[WARNING]" ;}               # If % Used >= to Warning
+            if ($CVAL >= $EVAL) { $FSTAT = "[ERROR]"   ;}               # If % Used >= to Error Val.
+            print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
         }
@@ -1168,7 +1160,7 @@ sub ping_ip  {
     $MOD  = "NETWORK"                   ;                               # Module Category
     $SMOD = "PING"                      ;                               # Sub-Module Category
     $STAT = $ipname                     ;                               # Current Value Returned
-    if ($CVAL == 0) {print " OK ($CVAL)" }else{ print " ERROR ($CVAL)"} # Print ping Result
+    if ($CVAL == 0) {print " OK ($CVAL)\n" }else{ print " ERROR ($CVAL)\n"} # Print ping Result
     check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);          # Go Evaluate Error/Alert
     return
 }
@@ -1186,7 +1178,7 @@ sub run_script {
     #(my $sfile_name, my $sfile_extension) = split /./, $sname ;        # Split name & extension
     $sname = "${SADM_SCR_DIR}/${sname}";                                # Full Path to Script
     print "\n\nExecution of script $sname is requested";                # Show User Script Name
-    if ($SYSMON_DEBUG >= 5) {                                           # Debug Level 6 Information
+    if ($SYSMON_DEBUG >= 6) {                                           # Debug Level 6 Information
         print "\nFilename: $sfile_name - Extension: $sfile_extension";  # Show Splitted Name/Ext.
     }
 
@@ -1502,7 +1494,7 @@ sub write_rpt_file {
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
         my $mail_mess2 = "SysMon executed the service restart script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name \n";
-        my $mail_mess3 = "This is the first time SysMon is restarting it today.";
+        my $mail_mess3 = "This is the first time SysMon is restarting this service today.";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
         @args = ("echo \"$mail_message\" | $CMD_MAIL -s \"$mail_subject\" $SADM_MAIL_ADDR");
@@ -1776,6 +1768,9 @@ sub end_of_sysmon {
 
     # Ending SysMon
     close SADMRPT;                                  # Close SysMon report file
-    system ("chmod 664 $SYSMON_RPT_FILE");          # Make SysMon Report file readable by everyone
+    
+    # Make SysMon Report File Readable by everyone (If current use is root).
+    if ($SADM_UID == 0) { system ("chmod 664 $SYSMON_RPT_FILE"); } 
+
     unload_smon_file;                               # Unload Update Array to hostname.smon file
     end_of_sysmon;                                  # Delete lock file - Print Elapse time
