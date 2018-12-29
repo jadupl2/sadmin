@@ -68,6 +68,7 @@
 # 2018_12_18 v2.55 Add ways to get CPU type on MacOS
 #@2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
 #@2018_12_27 v2.57 If Startup and Shutdown scripts doesn't exist, create them from template.
+#@2018_12_29 v2.58 Default logging ([B]oth) is now set to screen and log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -85,7 +86,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.57"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.58"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -257,6 +258,7 @@ sadm_isnumeric() {
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
+    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
              ;;
@@ -405,6 +407,7 @@ sadm_install_package()
 # --------------------------------------------------------------------------------------------------
 #
 sadm_check_requirements() {
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "sadm_check_requirement" ; fi
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
@@ -1451,6 +1454,7 @@ sadm_server_vg() {
 #            LOAD SADMIN CONFIGURATION FILE AND SET GLOBAL VARIABLES ACCORDINGLY
 # --------------------------------------------------------------------------------------------------
 sadm_load_config_file() {
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "sadm_load_config_file" ; fi
 
     # SADMIN Configuration file MUST be present.
     # If not, then create sadmin.cfg from .sadmin.cfg.
@@ -2319,6 +2323,7 @@ write_alert_history() {
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 #
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "main: grepping /etc/environment" ; fi
     grep "^SADMIN" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
         then echo "SADMIN=$SADMIN" >> /etc/environment                  # Then add it to the file
@@ -2328,3 +2333,4 @@ write_alert_history() {
     if [ $? -ne 0 ] ; then exit 1 ; fi                                  # If Requirement are not met
     export SADM_SSH_CMD="${SADM_SSH} -qnp${SADM_SSH_PORT}"              # SSH Command to SSH CLient
     export SADM_USERNAME=$(whoami)                                      # Current User Name
+    if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "Library Loaded" ; fi
