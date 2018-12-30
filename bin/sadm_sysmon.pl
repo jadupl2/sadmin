@@ -28,6 +28,7 @@
 # 2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
 # 2018_10_16    v2.26 Change email sent when smon configuration isn't found.
 #@2018_12_29    v2.27 Enhance Performance checking service, chown & chmod only if running as root.
+#@2018_12_30    v2.28 Fix problem when checking service using Sys V method.
 #===================================================================================================
 #
 use English;
@@ -43,7 +44,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.27";                                       # Version Number
+my $VERSION_NUMBER      = "2.28";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -104,9 +105,8 @@ my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Locati
 my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
 my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command
-system ("which systemctl >/dev/null 2>&1");
-if ( $? == -1 )  { $CMD_SYSTEMCTL = ""; }else{ $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
-
+system ("which systemctl >/dev/null 2>&1"); 
+if ( $? != 0 )  { my $CMD_SYSTEMCTL = ""; }else{ my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
 
 
 # `hostname`.smon file layout, fields are separated by space (be carefull)
@@ -806,17 +806,15 @@ sub check_service {
         if ($SYSMON_DEBUG >= 6) { print "\nChecking the service $srv"; }
         $srv_name = $srv ;                                              # Save Current Service name
         my $CMD = "systemctl status ${srv}.service" ;                   # Cmd to get service status
-        if ( $CMD_SYSTEMCTL eq "" ) {                                   # If host not using systemd
-            my $CMD = "service ${srv} status" ;                         # Get SysV Service Status
+        if ( length($CMD_SYSTEMCTL) == 0 ) {                            # If host not using systemd
+            $CMD = "service ${srv} status" ;                            # Get SysV Service Status
         }
-        print "\n  - $CMD ... " ;                                       # Show CMD to be executed
         if ( system("$CMD >/dev/null 2>&1") == 0 ) {                    # If Service is running
             $service_ok = 1 ;                                           # Set Service Increment
             $srv_name = $srv ;                                          # Save name of running serv.
-            print "[RUNNING]";                                          # Show Service is running
+            print "\n  - $CMD ... [RUNNING]";                           # Show Service is running
         }else{                                                          # If service not running
             $service_ok = 0 ;                                           # Set Service Increment
-            print "[NOT RUNNING]";                                      f# Show Service isn't running
         }
         $service_count = $service_count + $service_ok ;                 # Upd. Running Service total
     }
