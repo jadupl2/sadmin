@@ -35,7 +35,8 @@
 # 2018_09_26  v2.21 Include Subject Field in Alert and Add Info field from SysMon
 # 2018_09_26  v2.22 Reformat Error message for alerting systsem
 # 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
-#@2018_11_28  v2.24 Added Fetch to MacOS Client 
+# 2018_11_28  v2.24 Added Fetch to MacOS Client 
+#@2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.24'                              # Current Script Version
+    export SADM_VER='2.25'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -350,16 +351,18 @@ process_servers()
              return 0                                                   # Return Error to Caller
     fi 
 
-    # Create Crontab File Header
-    echo "# "                                                        > $SADM_CRON_FILE 
-    echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
-    echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
-    echo "# "                                                       >> $SADM_CRON_FILE 
-    echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
-    echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
-    echo "# "                                                       >> $SADM_CRON_FILE 
-    echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
-    echo "# "                                                       >> $SADM_CRON_FILE
+    # Create Crontab File Header (Auto O/S Update only work on Linux)
+    if [ "$WOSTYPE" = "linux" ] 
+        then echo "# "                                                        > $SADM_CRON_FILE 
+             echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
+             echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
+             echo "# "                                                       >> $SADM_CRON_FILE 
+             echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_CRON_FILE
+             echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_CRON_FILE
+             echo "# "                                                       >> $SADM_CRON_FILE 
+             echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
+             echo "# "                                                       >> $SADM_CRON_FILE
+    fi
 
     xcount=0; ERROR_COUNT=0;
     while read wline                                                    # Data in File then read it
@@ -394,7 +397,7 @@ process_servers()
         fi
 
         # Create Crontab Entry for this server in crontab work file
-        if [ "$db_updauto" -eq 1 ]                                      # If O/S Update Scheduled
+        if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
             then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
         
