@@ -37,6 +37,7 @@
 # 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
 # 2018_11_28  v2.24 Added Fetch to MacOS Client 
 #@2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
+#@2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -73,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.25'                              # Current Script Version
+    export SADM_VER='2.26'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -106,9 +107,9 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 cscript="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export cscript        # Scrit to run in crontab
-
+REBOOT_SEC=900                                  ; export REBOOT_SEC     # O/S Upd Reboot Nb Sec.wait
 
 
 # --------------------------------------------------------------------------------------------------
@@ -401,6 +402,19 @@ process_servers()
             then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
         
+        # Test to prevent false Alert when the server is rebooting after a O/S Update.
+        # Wait 15 minutes (900 Seconds) before signaling a problem.
+        rch_osupd_name="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_sadm_osupdate.rch"
+        if [ -r "$rch_osupd_name" ] 
+            then rch_epoch=`stat --printf='%Y\n' $rch_osupd_name`
+                 cur_epoch=$(sadm_get_epoch_time)
+                 upd_elapse=`echo $cur_epoch - $rch_epoch | $SADM_BC`
+                  if [ $DEBUG_LEVEL -gt 0 ] 
+                        then sadm_writelog "Last O/S Update done $upd_elapse sec. ago ($rch_osupd_name)." 
+                  fi
+        fi
+
+
         # TEST SSH TO SERVER
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server for date
@@ -422,15 +436,21 @@ process_servers()
                     if [ $RC -ne 0 ]                                    # If Error doing ssh
                         then if [ $RETRY -lt 3 ]                        # If less than 3 retry
                                 then sadm_writelog "[ RETRY $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                                else sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
-                                     ERROR_COUNT=$(($ERROR_COUNT+1))    # Consider Error -Incr Cntr
-                                     sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
-                                     SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
-                                     sadm_writelog "$SMSG"              # Display Error Msg
-                                     echo "$SMSG" >> $SADM_ELOG         # Log Err. to Email Log
-                                     echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
-                                     echo "----------" >> $SADM_ELOG 
-                                     continue
+                                else if "$upd_elapse" -gt "$REBOOT_SEC" ] 
+                                        then sadm_writelog "[ ERROR $RETRY ] $SADM_SSH_CMD $fqdn_server date"
+                                             ERROR_COUNT=$(($ERROR_COUNT+1))    # Consider Error -Incr Cntr
+                                             sadm_writelog "Total ${WOSTYPE} error(s) is now $ERROR_COUNT"
+                                             SMSG="[ ERROR ] Can't SSH to server '${fqdn_server}'"  
+                                             sadm_writelog "$SMSG"              # Display Error Msg
+                                             echo "$SMSG" >> $SADM_ELOG         # Log Err. to Email Log
+                                             echo "COMMAND : $SADM_SSH_CMD $fqdn_server date" >> $SADM_ELOG
+                                             echo "----------" >> $SADM_ELOG 
+                                             continue
+                                        else sadm_writelog "Waiting for reboot to finish after O/S Update."
+                                             sadm_writelog "O/S Update started $upd_elapse seconds ago."
+                                             sadm_writelog "Will continue with next server."
+                                             continue 
+                                     fi
                              fi
                         else sadm_writelog "[ OK ] $SADM_SSH_CMD $fqdn_server date"
                              break
