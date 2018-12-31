@@ -32,7 +32,9 @@
 # 2018_08_10 v1.3 Remove O/S Version Restriction and added /etc/environment printing.
 # 2018_11_16 v1.4 Restructure for performance and flexibility.
 # 2018_11_21 v1.5 Output file include content of log directory.
-#@2018_12_11 v1.6 Include Shell and Python Library Demo in log and SADM_USER info.
+#@2018_12_11 v1.6 Include Shell and Python Library Demo output in log and SADM_USER info.
+#@2018_12_31 Added: sadm_support_request.sh v1.7 - Include system information files from dat/dr dir.
+#@2018_12_31 Added: sadm_support_request.sh v1.8 - Remove blank line & Comment Line (#) from output.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
@@ -61,7 +63,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Your Current Script Version
+    export SADM_VER='1.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -115,13 +117,6 @@ show_version()
 
 
 
-
-#===================================================================================================
-#                               Script environment variables
-#===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-
-
 #===================================================================================================
 #                              Print File received as parameter
 #===================================================================================================
@@ -136,7 +131,7 @@ print_file()
             echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
             echo "Content of $wfile"    >> $SADM_LOG
             echo "$SADM_FIFTY_DASH"     >> $SADM_LOG
-            cat $wfile                  >> $SADM_LOG
+            grep -Ev "^#|^[[:space:]]*$" $wfile >> $SADM_LOG
             echo " "                    >> $SADM_LOG                    # Insert Blank Line
             echo " "                    >> $SADM_LOG                    # Insert Blank Line
             return 0                                                    # Return No Error to Caller
@@ -183,6 +178,7 @@ run_command()
 #===================================================================================================
 main_process()
 {
+
     print_file "/etc/environment" 
     print_file "/etc/profile.d/sadmin.sh" 
     print_file "$SADM_CFG_FILE"
@@ -192,8 +188,11 @@ main_process()
     print_file "/etc/cron.d/sadm_osupdate"
     print_file "/etc/selinux/config"
     print_file "/etc/hosts"
+    print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_system.txt"
+    print_file "${SADM_DR_DIR}/${SADM_HOSTNAME}_sysinfo.txt"
     print_file "/etc/httpd/conf.d/sadmin.conf"
     print_file "$SADM_SETUP_DIR/log/sadm_setup.log"
+
 
     # Run the Shell Library Demo 
     sadm_writelog " "                                                   # Blank LIne
@@ -220,7 +219,7 @@ main_process()
              print_file "${CMDLOG}"                                     # Print log 
              if [ -r "${CMDLOG}" ] ; then rm -f ${CMDLOG} >/dev/null 2>&1 ; fi   # Remove log
     fi
-
+    
     return 0
 }
 
