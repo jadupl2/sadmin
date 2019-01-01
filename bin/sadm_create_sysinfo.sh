@@ -34,6 +34,7 @@
 # 2018_11_13    v3.4 Restructure script for Performance
 # 2018_11_20    v3.5 Added some Aix lsattr command for system information.
 #@2018_12_22    v3.6 Minor fix for MacOS
+#@2019_01_01    Added: sadm_create_sysinfo.sh v3.7 - Use 'scutil' for more Network Info. on MacOS
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -53,7 +54,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.6'                               # Current Script Version
+    export SADM_VER='3.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -140,6 +141,7 @@ UPTIME=""                                       ; export UPTIME         # uptime
 LAST=""                                         ; export LAST           # last command location
 LSATTR=""                                       ; export LSATTR         # lsattr command location
 SYSCTL=""                                       ; export SYSCTL         # sysctl command location
+SCUTIL=""                                       ; export SCUTIL         # MacOS to list DNS Param.
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -261,6 +263,7 @@ pre_validation()
                 command_available "mii-tool"    ; MIITOOL=$SADM_CPATH   # mii-tool Cmd Path
                 command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
                 command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
+                command_available "scutil"      ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
     fi
 
     # Aix, Linux and MacOS Common Commands
@@ -534,6 +537,19 @@ create_linux_config_files()
              execute_command "$CMD" "$NET_FILE" 
     fi
 
+    # MacOS List Ethernet Interface and IP
+    if [ "$SCUTIL" != "" ]                            
+        then CMD="$SCUTIL --nwi "
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    # MacOS DNS Info
+    if [ "$SCUTIL" != "" ]                            
+        then CMD="$SCUTIL --dns "
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    # Network Device ifnormation
     if [ "$IPCONFIG" != "" ]
         then FirstTime=0 ; index=0
              while [ $index -le 10 ]                                    # Process from en0 to en9
