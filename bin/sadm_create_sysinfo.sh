@@ -37,6 +37,7 @@
 #@2019_01_01    Added: sadm_create_sysinfo v3.7 - Use scutil for more Network Info. on MacOS
 #@2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
 #@2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems.
+#@2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -56,7 +57,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.9'                               # Current Script Version
+    export SADM_VER='3.10'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -101,6 +102,7 @@ DISKS_FILE="${HPREFIX}_diskinfo.txt"            ; export DISKS_FILE     # disk I
 LVM_FILE="${HPREFIX}_lvm.txt"                   ; export LVM_FILE       # lvm Information File
 NET_FILE="${HPREFIX}_network.txt"               ; export NET_FILE       # Network Information File
 SYSTEM_FILE="${HPREFIX}_system.txt"             ; export SYSTEM_FILE    # System Information File
+LSHW_FILE="${HPREFIX}_lshw.html"                ; export LSHW_FILE      # System Hardware in HTML 
 
 # Path to Command used in this Script
 LVS=""                                          ; export LVS            # LV Summary Cmd with Path
@@ -143,6 +145,8 @@ LAST=""                                         ; export LAST           # last c
 LSATTR=""                                       ; export LSATTR         # lsattr command location
 SYSCTL=""                                       ; export SYSCTL         # sysctl command location
 SCUTIL=""                                       ; export SCUTIL         # MacOS to list DNS Param.
+LSSCSI=""                                       ; export LSSCSI         # List SCSI Device Info.
+LSPCI=""                                        ; export LSPCI          # List PCI Components
 
 # --------------------------------------------------------------------------------------------------
 #       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
@@ -264,6 +268,8 @@ pre_validation()
                 command_available "ethtool"     ; ETHTOOL=$SADM_CPATH   # ethtool Cmd Path
                 command_available "sysctl"      ; SYSCTL=$SADM_CPATH    # Cmd Path or Blank !found
                 command_available "scutil"      ; SCUTIL=$SADM_CPATH    # CmdPath="" if not found
+                command_available "lsscsi"      ; LSSCSI=$SADM_CPATH    # CmdPath="" if not found
+                command_available "lspci"       ; LSPCI=$SADM_CPATH     # CmdPath="" if not found
     fi
 
     # Aix, Linux and MacOS Common Commands
@@ -494,7 +500,7 @@ create_linux_config_files()
     if [ -d "/sys/class/net" ] && [ "$MIITOOL" != "" ]
         then for w in `ls -1 /sys/class/net  --color=never | grep -v "^lo"`
                 do
-                CMD="$MIITOOL $w" 
+                CMD="$MIITOOL $w 2>/dev/null" 
                 execute_command "$CMD" "$NET_FILE"
                 done
     fi
@@ -599,6 +605,11 @@ create_linux_config_files()
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
+    if [ "$LSPCI" != "" ]
+        then CMD="$LSPCI -k 2>/dev/null"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
     if [ "$UPTIME" != "" ]
         then CMD="$UPTIME"
              execute_command "$CMD" "$SYSTEM_FILE" 
@@ -616,6 +627,11 @@ create_linux_config_files()
 
     if [ "$SWVERS" != "" ]
         then CMD="$SWVERS"
+             execute_command "$CMD" "$SYSTEM_FILE" 
+    fi
+
+    if [ "$LSHW" != "" ]
+        then CMD="$LSHW -C system"
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
@@ -639,6 +655,12 @@ create_linux_config_files()
              execute_command "$CMD" "$SYSTEM_FILE" 
     fi
 
+    # Create List of Hardware in HTML
+    if [ "$LSHW" != "" ]
+        then sadm_writelog "Creating $LSHW_FILE ..."
+             $LSHW -html > $LSHW_FILE                                   # Create Hardware HTML File
+    fi
+
     if [ "$FACTER" != "" ] 
         then create_command_output "facter"  "$FACTER"  "$FACTER_FILE"  
     fi
@@ -659,6 +681,14 @@ create_aix_config_files()
 
     if [ "$DF" != "" ]
         then CMD="$DF -m"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
+    # List SCSI Devices, Queue_Depth, Timeout, ...
+    if [ "$LSSCSI" != "" ]
+        then CMD="$LSSCSI -L"
+             execute_command "$CMD" "$DISKS_FILE" 
+             CMD="$LSSCSI -lsd"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
