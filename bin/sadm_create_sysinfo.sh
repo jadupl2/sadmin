@@ -36,6 +36,7 @@
 #@2018_12_22    v3.6 Minor fix for MacOS
 #@2019_01_01    Added: sadm_create_sysinfo v3.7 - Use scutil for more Network Info. on MacOS
 #@2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
+#@2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -55,7 +56,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.8'                               # Current Script Version
+    export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -114,7 +115,6 @@ PVDISPLAY=""                                    ; export PVDISPLAY      # PV Dis
 NETSTAT=""                                      ; export NETSTAT        # netstat Cmd with Path
 IP=""                                           ; export IP             # ip Cmd with Path
 DF=""                                           ; export DF             # df Cmd with Path
-SFDISK=""                                       ; export SFDISK         # sfdisk Cmd with Path
 IFCONFIG=""                                     ; export IFCONFIG       # ifconfig Cmd with Path
 FACTER=""                                       ; export FACTER         # facter Cmd with Path
 DMIDECODE=""                                    ; export DMIDECODE      # dmidecode Cmd with Path
@@ -250,7 +250,6 @@ pre_validation()
                 command_available "ip"          ; IP=$SADM_CPATH        # Cmd Path or Blank !found
                 command_available "dmidecode"   ; DMIDECODE=$SADM_CPATH # Cmd Path or Blank !found
                 command_available "lsblk"       ; LSBLK=$SADM_CPATH     # Cmd Path or Blank !found
-                command_available "sfdisk"      ; SFDISK=$SADM_CPATH    # Cmd Path or Blank !found
                 command_available "diskutil"    ; DISKUTIL=$SADM_CPATH  # Cmd Path or Blank !found
                 command_available "networksetup" ; NETWORKSETUP=$SADM_CPATH  # NetworkSetup Cmd Path
                 command_available "hostinfo"    ; HOSTINFO=$SADM_CPATH  # HostInfo Cmd Path
@@ -444,7 +443,9 @@ create_linux_config_files()
     sadm_writelog "Creating $DISKS_FILE ..."
 
     if [ "$LSBLK" != "" ] 
-        then CMD="$LSBLK -dn" 
+        then CMD="$LSBLK -p" 
+             execute_command "$CMD" "$DISKS_FILE" 
+             CMD="$LSBLK -pf" 
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
@@ -455,11 +456,6 @@ create_linux_config_files()
 
     if [ "$DF" != "" ]
         then CMD="df -h"
-             execute_command "$CMD" "$DISKS_FILE" 
-    fi
-
-    if [ "$SFDISK" != "" ]
-        then CMD="sfdisk -uM -l | grep -iEv '^$|mapper'"
              execute_command "$CMD" "$DISKS_FILE" 
     fi
 
