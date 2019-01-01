@@ -34,7 +34,8 @@
 # 2018_11_13    v3.4 Restructure script for Performance
 # 2018_11_20    v3.5 Added some Aix lsattr command for system information.
 #@2018_12_22    v3.6 Minor fix for MacOS
-#@2019_01_01    Added: sadm_create_sysinfo.sh v3.7 - Use 'scutil' for more Network Info. on MacOS
+#@2019_01_01    Added: sadm_create_sysinfo v3.7 - Use scutil for more Network Info. on MacOS
+#@2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -54,7 +55,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.7'                               # Current Script Version
+    export SADM_VER='3.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -469,6 +470,12 @@ create_linux_config_files()
              fi
     fi
 
+    # List Disks Name, Size, Manufacturer, Serial, Model, ...
+    if [ "$LSHW" != "" ]
+        then CMD="$LSHW -C disk"
+             execute_command "$CMD" "$DISKS_FILE" 
+    fi
+
 
     # Collect LVM Information ----------------------------------------------------------------------
     write_file_header "Logical Volume" "$LVM_FILE"
@@ -549,7 +556,13 @@ create_linux_config_files()
              execute_command "$CMD" "$NET_FILE" 
     fi
 
-    # Network Device ifnormation
+    # Linux Network Device Info (Speed,Mac,IPAddr,Vendor,...)
+    if [ "$LSHW" != "" ]                            
+        then CMD="$LSHW -C network"
+             execute_command "$CMD" "$NET_FILE" 
+    fi
+
+    # Network Device information
     if [ "$IPCONFIG" != "" ]
         then FirstTime=0 ; index=0
              while [ $index -le 10 ]                                    # Process from en0 to en9
