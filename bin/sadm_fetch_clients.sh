@@ -38,6 +38,7 @@
 # 2018_11_28  v2.24 Added Fetch to MacOS Client 
 #@2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
 #@2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
+#@2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -74,7 +75,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.26'                              # Current Script Version
+    export SADM_VER='2.27'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -258,7 +259,8 @@ update_crontab ()
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
-    cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    cline="$cline $SADM_USER sudo $cscript -s $cserver >/dev/null 2>&1";   
     #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
