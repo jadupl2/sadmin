@@ -44,6 +44,7 @@
 # 2018_10_28    v3.7 Linefeed was missing in file '/etc/sudoers.d/033_sadmin-nopasswd'
 # 2018_11_24    v3.8 Added -e '' options for sadmin user creation
 #@2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
+#@2019_01_03    Changed: sadm_setup.py V3.10 - Adapt crontab for MacOS and Aix, Setup Postfix
 #===================================================================================================
 # 
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -59,7 +60,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.9"                                             # Setup Version Number
+sver                = "3.10"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -255,6 +256,15 @@ def oscommand(command) :
     return (returncode,out,err)
 
 
+# ----------------------------------------------------------------------------------------------
+# RETURN THE OS TYPE (LINUX,AIX or DARWIN ) -- ALWAYS RETURNED IN UPPERCASE
+# ----------------------------------------------------------------------------------------------
+def get_ostype():
+    ccode, cstdout, cstderr = oscommand("uname -s")
+    wostype=cstdout.upper()
+    return wostype
+
+
 #===================================================================================================
 #                              MAKE SURE SADMIN LINE IS IN /etc/hosts FILE
 #===================================================================================================
@@ -282,18 +292,32 @@ def update_host_file(wdomain,wip) :
 #===================================================================================================
 #                            MAKE SURE SADMIN CLIENT CRONTAB FILE IS IN PLACE
 #===================================================================================================
-def update_client_crontab_file(logfile,sroot) :
+def update_client_crontab_file(logfile,sroot,wostype,wuser) :
 
-    writelog('')
-    writelog('--------------------')
-    writelog ('Creating SADMIN client crontab file (/etc/cron.d/sadm_client)','bold')
-    ccron_file = '/etc/cron.d/sadm_client'                              # Client Crontab File
+    # Setup crontab filename
+    if wostype == "LINUX" :                                             # Under Linux
+        ccron_file = "/etc/cron.d/sadm_client"                          # Client Crontab File Name
+        if not os.path.exists("/etc/cron.d") :                          # Test if Dir. Exist
+            writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
+    if wostype == "AIX" :                                               # Under AIX
+        ccron_file = "/var/spool/cron/crontabs/%s" % (wuser)            # Client Crontab File Name
+        if not os.path.exists("/var/spool/cron/crontabs") :             # Test if Dir. Exist
+            writelog("Crontab Directory /var/spool/cron/crontabs doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
+    if wostype == "DARWIN" :                                            # Under MacOS 
+        ccron_file = "/var/at/tabs/%s" % (wuser)                        # Crontab File on MacOS
+        if not os.path.exists("/var/at/tabs") :                         # Test if Dir. Exist
+            writelog("Crontab Directory /var/at/tabs doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
 
     # Check if crontab directory exist - Procedure may not be supported on this O/S
-    if not os.path.exists("/etc/cron.d"):
-        writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
-        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
-        return(1)
+    writelog('')
+    writelog('--------------------')
+    writelog ('Creating SADMIN client crontab file ($ccron_file)','bold')
 
     # If SADMIN old crontab file exist, delete it and recreate it
     try:                                                                # In case old file exist
@@ -313,23 +337,25 @@ def update_client_crontab_file(logfile,sroot) :
     hcron.write ("# SADMIN Client Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("PATH=%s\n" % (os.environ["PATH"])
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
+    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
     hcron.write ("# Run Daily before midnight\n")
-    hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & run cfg2html\n")
-    hcron.write ("23 23 * * *  sadmin sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n")
+    hcron.write ("# Housekeeping, Save Filesystem Info, Create SysInfo & Set Files/Dir. Owner\n")
+    hcron.write ("23 23 * * *  %s sudo ${SADMIN}/bin/sadm_client_sunset.sh > /dev/null 2>&1\n" % (wuser))
     hcron.write ("#\n")
     hcron.write ("# Run SADMIN System Monitoring every 5 minutes (*/5 Don't work on Aix)\n")
     chostname = socket.gethostname().split('.')[0]
-    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * sadmin sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (chostname))
+    hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (wuser,chostname))
     hcron.write ("#\n")
     hcron.close                                                         # Close SADMIN Crontab file
 
     # Change Client Crontab file permission to 644
-    cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
+    cmd = "chmod 600 %s" % (ccron_file)                                 # chmod 644 on ccron_file
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chmod on ccron_file
     if (ccode == 0):                                                    # If chmod went ok
         writelog( "  - Client Crontab Permission changed successfully") # Show success
@@ -339,7 +365,9 @@ def update_client_crontab_file(logfile,sroot) :
 
     # Change Client Crontab file Owner and Group
     cmd = "chown %s.%s %s" % ('root','root',ccron_file)                 # chowner on ccron_file
-    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on ccron_file
+    if wostype == "DARWIN" :                                            # Under MacOS 
+        cmd = "chown %s.%s %s" % ('root','wheel',ccron_file)            # chownn ccron_file on MacOS
+    ccode,cstdout,cstderr = oscommand(cmd)                              # Execute chown on cron file
     if (ccode == 0):                                                    # If chown went ok
         writelog( "  - Ownership of client crontab changed successfully") # Show success to user
     else:                                                               # Did not went well
@@ -352,47 +380,74 @@ def update_client_crontab_file(logfile,sroot) :
 #===================================================================================================
 #                            MAKE SURE SADMIN SERVER CRONTAB FILE IS IN PLACE
 #===================================================================================================
-def update_server_crontab_file(logfile,sroot) :
+def update_server_crontab_file(logfile,sroot,wostype,wuser) :
+
+    # Setup crontab on Linux 
+    if wostype == "LINUX" :                                             # Under Linux
+        ccron_file = "/etc/cron.d/sadm_server"                          # Server Crontab File Name
+        if not os.path.exists("/etc/cron.d") :                          # Test if Dir. Exist
+            writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
+        try:                                                            # In case old file exist
+            os.remove(ccron_file)                                       # Remove old crontab file
+        except :                                                        # If not then it's OK
+            pass                                                        # If don't exist continue
+        try :                                                           # Try Create New cron file
+            hcron = open(ccron_file,'w')                                # Open Server Crontab file
+        except :                                                        # If could not create output
+            writelog("Error Opening %s file" % (ccron_file),'bold')     # Advise Usr couldn't create
+            writelog("Could not create SADMIN crontab file")            # Crontab file not created
+            return(1)
+
+    # Setup crontab on Aix - Crontab Entries for SADMIN Client and Server goes in the same file.
+    if wostype == "AIX" :                                               # Under AIX
+        ccron_file = "/var/spool/cron/crontabs/%s" % (wuser)            # Client/Server Crontab File
+        if not os.path.exists("/var/spool/cron/crontabs") :             # Test if Dir. Exist
+            writelog("Crontab Directory /var/spool/cron/crontabs doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
+        try :                                                           # Try Create New cron file
+            hcron = open(ccron_file,'a+')                               # Open Append Server Crontab
+        except :                                                        # If could not create output
+            writelog("Error Opening %s file" % (ccron_file),'bold')     # Advise Usr couldn't create
+            writelog("Could not append crontab file")                   # Crontab file not appended
+            return(1)
+
+    # Setup crontab on Aix - Crontab Entries for SADMIN Client and Server goes in the same file.
+    if wostype == "DARWIN" :                                            # Under MacOS 
+        ccron_file = "/var/at/tabs/%s" % (wuser)                        # Crontab File on MacOS
+        if not os.path.exists("/var/at/tabs") :                         # Test if Dir. Exist
+            writelog("Crontab Directory /var/at/tabs doesn't exist ?",'bold')
+            writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
+            return(1)                                                   # Return to Caller with Err.
+        try :                                                           # Try Create New cron file
+            hcron = open(ccron_file,'a+')                               # Open Append Server Crontab
+        except :                                                        # If could not create output
+            writelog("Error Opening %s file" % (ccron_file),'bold')     # Advise Usr couldn't create
+            writelog("Could not append crontab file")                   # Crontab file not appended
+            return(1)
 
     writelog('')
     writelog('--------------------')
-    writelog ('Creating SADMIN server crontab file (/etc/cron.d/sadm_server)','bold')
-    ccron_file = '/etc/cron.d/sadm_server'                              # Server Crontab File
-
-    # Check if crontab directory exist - Procedure may not be supported on this O/S
-    if not os.path.exists("/etc/cron.d"):
-        writelog("Crontab Directory /etc/cron.d doesn't exist ?",'bold')
-        writelog('Send log (%s) and submit problem to support@sadmin.ca' % (logfile),'bold')
-        return(1)
-
-    # If SADMIN old crontab file exist, delete it and recreate it
-    try:                                                                # In case old file exist
-        os.remove(ccron_file)                                           # Remove old crontab file
-    except :                                                            # If not then it's OK
-        pass                                                            # If don't exist continue
-        
-    # Create the SADMIN Server Crontab file
-    try : 
-        hcron = open(ccron_file,'w')                                    # Open Crontab file
-    except :                                                            # If could not create output
-        writelog("Error Opening %s file" % (ccron_file),'bold')         # Advise Usr couldn't create
-        writelog("Could not create SADMIN crontab file")                # Crontab file not created
-        return(1)
+    writelog("Creating SADMIN server crontab file (%s)" % (ccron_file),'bold')
 
     # Populate SADMIN Server Crontab File
     hcron.write ("# SADMIN Server Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
-    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("PATH=%s\n" % (os.environ["PATH"])
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
+    hcron.write ("# Min, Hrs, Date, Mth, Day, User, Script\n")
+    hcron.write ("# 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat\n")
+    hcron.write ("# \n")
     hcron.write ("# Rsync all *.rch,*.log,*.rpt files from all actives clients (*/5 don't work on Aix).\n")
-    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * sadmin sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n")
+    hcron.write ("4,9,14,19,24,29,34,39,44,49,54,59 * * * * %s sudo ${SADMIN}/bin/sadm_fetch_clients.sh >/dev/null 2>&1\n" % (wuser))
     hcron.write ("#\n")
     hcron.write ("# Early morning daily run, Collect Perf data - Update Database, Housekeeping\n")
-    hcron.write ("05 05 * * * sadmin sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n")
+    hcron.write ("05 05 * * * %s sudo ${SADMIN}/bin/sadm_server_sunrise.sh >/dev/null 2>&1\n" % (wuser))
     hcron.write ("#\n")
     #hcron.write ("# Morning report sent to Sysadmin by Email\n")
     #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
@@ -483,15 +538,23 @@ def special_install(lpacktype,sosname,logfile) :
 
 
 #===================================================================================================
-#                            MAKE SURE SADMIN SUDO FILE IS IN PLACE
+# MAKE SURE SADMIN SUDO FILE IS IN PLACE
 #===================================================================================================
-def update_sudo_file(logfile) :
+def update_sudo_file(logfile,wuser) :
+"""[Create SADMIN user sudo file.]
 
+Arguments:
+    logfile {[string]} -- [Name of the script]
+    wuser {[string]} -- [Name of the SADMIN user]
+
+Returns:
+    Nothing
+"""
     writelog('')
     writelog('--------------------')
-    writelog("Creating 'sadmin' user sudo file",'bold')
-    writelog ('  - Creating SADMIN sudo file (/etc/sudoers.d/033_sadmin-nopasswd)')
-    sudofile = '/etc/sudoers.d/033_sadmin-nopasswd'
+    writelog("Creating '%s' user sudo file" % (wuser),'bold')
+    writelog("  - Creating SADMIN sudo file (/etc/sudoers.d/033_%s-nopasswd) % (wuser)")
+    sudofile = "/etc/sudoers.d/033_%s-nopasswd" & (wuser)
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
     if not os.path.exists("/etc/sudoers.d"):
@@ -514,7 +577,7 @@ def update_sudo_file(logfile) :
         sys.exit(1) 
     hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
-    hsudo.write ("\nsadmin ALL=(ALL) NOPASSWD: ALL\n")                  # No Passwd for SADMIN
+    hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
     hsudo.close                                                         # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
@@ -1254,7 +1317,7 @@ def set_sadmin_env(ver):
         print ("Directory %s doesn't exist." % (sadm_base_dir))         # Advise User
         sys.exit(1)                                                     # Exit with Error Code
 
-    # Validate That Directory specify contain the Shell SADMIN Library (Indicate Dir. is the good one)
+    # Validate That Directory specify contain the Shell SADMIN Library 
     libname="%s/lib/sadmlib_std.sh" % (sadm_base_dir)                   # Set Full Path to Shell Lib
     if os.path.exists(libname)==False:                                  # If SADMIN Lib Not Found
         printBold ("The directory %s isn't the SADMIN directory" % (sadm_base_dir)) # Reject Msg
@@ -1269,9 +1332,11 @@ def set_sadmin_env(ver):
     SADM_TMPFILE='/etc/profile.d/sadmin.tmp'                            # SADMIN New Env. Temp File
     SADM_ORGFILE='/etc/profile.d/sadmin.org'                            # SADMIN Original  Env. File
     SADM_INIFILE="%s/setup/etc/sadmin.sh" % (sadm_base_dir)             # Init. Sadmin Env File
-    if os.path.exists(SADM_PROFILE)==False:                             # If sadmin.sh Not Found
+
+    # If /etc/profile.d/sadmin.sh script don't exist, use template $SADMIN/setup/etc/sadmin.sh.
+    if os.path.exists(SADM_PROFILE)==False:                             # /etc/profile.d/admin.sh
         try:
-            shutil.copyfile(SADM_INIFILE,SADM_PROFILE)                  # Copy Initial sadmin.sh 
+            shutil.copyfile(SADM_INIFILE,SADM_PROFILE)                  # Copy Template of sadmin.sh 
         except IOError as e:
             writelog("Unable to copy %s to %s" % (SADM_INIFILE,SADM_PROFILE)) # Advise user 
             sys.exit(1)                                                 # Exit to O/S With Error
@@ -1279,20 +1344,29 @@ def set_sadmin_env(ver):
             writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
 
-    # Open the current /etc/profile.d/sadmin.sh 
+    # Form the two lines that need to be in /etc/profile.d/sadmin.sh file
+    ppath = os.environ.get('PATH')                                      # Get Current O/S PATH 
+    pline = "PATH=%s:%s/bin:%s/usr/bin\n" % (ppath,sadm_base_dir,sadm_base_dir) # PATH EnvVar. Line
+    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # SADMIN EnvVar. Line Needed
+
+    # Open the current /etc/profile.d/sadmin.sh in read mode
+    # If file don't exist, create it and add line for PATH and one for SADMIN assigment.
     try : 
         fi = open(SADM_PROFILE,'r')                                     # Open SADMIN Env. Setting 
     except FileNotFoundError as e :                                     # If Env file doesn't exist
         fi = open(SADM_PROFILE,'w')                                     # Open in Write Mode(Create)
+        fi.write (eline)                                                # Write line to output file
+        fi.write (pline)                                                # Write line to output file
         fi.close()                                                      # Just to create file
         fi = open(SADM_PROFILE,'r')                                     # Re-open in read mode
 
     # Open the new sadmin.sh tmp file to make sure SADMIN variable is set properly
     fo = open(SADM_TMPFILE,'w')                                         # Environment Output File
     fileEmpty=True                                                      # Env. file assume empty
-    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
     for line in fi:                                                     # Read Input file until EOF
         if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
+           line = "%s" % (eline)                                        # Replace line with latest
+        if line.startswith('PATH=') :                                   # line Start with 'SADMIN='?
            line = "%s" % (eline)                                        # Replace line with latest
         fo.write (line)                                                 # Write line to output file
         fileEmpty=False                                                 # File was not empty flag
@@ -1308,7 +1382,7 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_PROFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
-    # Make sure line SADMIN=$sadm_base_dir is in /etc/environment
+    # Setup /etc/environnment Work Files 
     SADM_ENVFILE='/etc/environment'                                     # System Environment File
     SADM_TMPFILE='/etc/environment.tmp'                                 # System Env. Temp File
     SADM_ORGFILE='/etc/environment.org'                                 # System Original Env. FIle
@@ -1316,7 +1390,7 @@ def set_sadmin_env(ver):
     # If not already done, make a copy of /etc/environment to /etc/environment.org
     if os.path.exists(SADM_ORGFILE)==False:                             # If Original Copy not exist
         try:
-            shutil.copyfile(SADM_ENVFILE,SADM_ORGFILE)                  # Save Original Copy of file
+            shutil.copyfile(SADM_ENVFILE,SADM_ORGFILE)                  # Put Template in place
         except IOError as e:
             writelog("Unable to copy %s to %s" % (SADM_ENVFILE,SADM_ORGFILE)) # Advise user 
             sys.exit(1)                                                 # Exit to O/S With Error
@@ -1325,15 +1399,18 @@ def set_sadmin_env(ver):
             sys.exit(1)                                                 # Exit to O/S with Error
 
     # Open the current /etc/environment
+    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Needed in /etc/environment
     try : 
         fi = open(SADM_ENVFILE,'r')                                     # Open SADMIN Env. Setting 
     except FileNotFoundError as e :                                     # If Env file doesn't exist
         fi = open(SADM_ENVFILE,'w')                                     # Open in Write Mode(Create)
+        fi.write (eline)                                                # Write SADMIN=Install Dir.
         fi.close()                                                      # Just to create file
         fi = open(SADM_ENVFILE,'r')                                     # Re-open in read mode
+
+    # Make sure /etc/environment have line SADMIN= Installation Directory
     fo = open(SADM_TMPFILE,'w')                                         # Environment TMP File
     fileEmpty=True                                                      # Env. file assume empty
-    eline = "SADMIN=%s\n" % (sadm_base_dir)                             # Line needed in sadmin.sh.
     for line in fi:                                                     # Read Input file until EOF
         if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
            line = "%s" % (eline)                                        # Replace line with latest
@@ -1341,8 +1418,7 @@ def set_sadmin_env(ver):
         fileEmpty=False                                                 # File was not empty flag
     fi.close                                                            # File read now close it
     if (fileEmpty) :                                                    # If Input file was empty
-        line = "%s\n" % (eline)                                         # Add line with needed line
-        fo.write (line)                                                 # Write 'export SADMIN=' Line
+        fo.write (eline)                                                # Write 'export SADMIN=' Line
     fo.close                                                            # Close the output file
     try:                                                                # Will try rename env. file
         os.remove(SADM_ENVFILE)                                         # Remove current sadmin.cfg
@@ -1586,20 +1662,74 @@ def accept_field(sroot,sname,sdefault,sprompt,stype="A",smin=0,smax=3):
     return wdata
 
 
+
 #===================================================================================================
-#            Ask Important Info that need to be accurate in the $SADMIN/cfg/sadmin.cfg file
+# SETUP POSTFIX CONFIGURATION FILE (/ETC/POSTFIX/MAIN.CF)
 #===================================================================================================
 #
-def setup_sadmin_config_file(sroot):
+def setup_postfix(sroot,wostype,wrelay):
+    if wostype != "LINUX" :                                             # Configure Only on Linux
+        return
+
+    pfile="/etc/postfix/main.cf"                                        # Postfix Config FileName
+    pfile_org="/etc/postfix/main.cf.org"                                # Backup of original main.cf
+    pfile_tmp="/etc/postfix/main.tmp"                                   # Temp will become cf file
+    if not os.path.isfile(pfile):                                       # If main.cf don't exist
+        return                                                          # Will not create one
+
+    # Make a Backup of main.cf - If main.cf.org don't exist, copy main.cfg to main.cf.org
+    if not os.path.isfile(pfile_org):                                   # If main.cf.org don't exist
+        try:
+            shutil.copyfile(pfile,pfile_org)                            # Backup original main.cf
+        except IOError as e:
+            writelog("Error copying Postfix %s config file. %s" % (pfile,e)) 
+            sys.exit(1)                                                 # Exit to O/S With Error
+        except:
+            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            sys.exit(1)          
+
+
+    writelog "Updating relayhost in postfix configuration file (%s) ..." % (pfile))
+    fi = open(pfile,'r')                                                # Current Postfix main.cf
+    fo = open(pfile_tmp,'w')                                            # Open new tmp main.cf file
+    norelay=True                                                        # Assume no relayhost is set
+    for line in fi:                                                     # Read Input file until EOF
+        if line.startswith('relayhost=') :                              # line Start with relayhost?
+            line = "relayhost=%s" % (wrelay)                            # Replace with new relayhost
+            norelay=False                                               # RelayHost was Set
+        fo.write (line)                                                 # Write line to output file
+    fi.close                                                            # File read now close it
+    if (norelay) :                                                      # If no relayhost was set
+        line = "relayhost=%s" % (wrelay)                                # Insert new relayhost line
+        fo.write (line)                                                 # Write line to output file
+    fo.close                                                            # Close the output file
+
+    # Delete main.cf and copy main.cf.tmp to main.cf
+    try:                                                                # Will try rename env. file
+        os.remove(pfile)                                                # Remove current main.cf
+        os.rename(pfile_tmp,pfile)                                      # Rename tmp to main.cf
+    except:
+        print ("Error removing or renaming %s" % (pfile))               # Show User if error
+        sys.exit(1)                                                     # Exit to O/S with Error
+    return()
+
+
+
+#===================================================================================================
+# ASK IMPORTANT INFO THAT NEED TO BE ACCURATE IN THE $SADMIN/CFG/SADMIN.CFG FILE
+#===================================================================================================
+#
+def setup_sadmin_config_file(sroot,wostype):
+"""[Ask important info that need to be accurate in the $sadmin/cfg/sadmin.cfg file]
+    It Return SADMIN ServerName, ServerIP, DefaultDomain, SysAdminEmail, SadminUser, SadminGroup
+
+Arguments:
+    sroot {[string]} -- [Install Directory Path]
+    wostype {[string]} -- [O/S Type (LINUX,AIX,DARWIN)]
+"""    
     global stype                                                        # C=Client S=Server Install
 
-# Get OS Type (Linux, Aix, Darwin, OpenBSD)
-    ccode, cstdout, cstderr = oscommand("uname -s")                     # Get O/S Type
-    wostype=cstdout.upper()                                             # OSTYPE = LINUX or AIX
-    if (DEBUG):                                                         # If Debug Activated
-        writelog ("Current OStype is: %s" % (wostype))                  # Print the O/S Type
-
-# Is the current server a SADMIN [S]erver or a [C]lient
+    # Is the current server a SADMIN [S]erver or a [C]lient
     sdefault = "C"                                                      # This is the default value
     sname    = "SADM_HOST_TYPE"                                         # Var. Name in sadmin.cfg
     sprompt  = "Host will be a SADMIN [S]erver or a [C]lient"           # Prompt for Answer
@@ -1610,7 +1740,7 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type)            # Update Value in sadmin.cfg
     stype = wcfg_host_type                                              # Save Host Intallation type
 
-# Accept the Company Name
+    # Accept the Company Name
     sdefault = ""                                                       # This is the default value
     sprompt  = "Enter your Company Name"                                # Prompt for Answer
     wcfg_cie_name = ""                                                  # Clear Cie Name
@@ -1618,7 +1748,7 @@ def setup_sadmin_config_file(sroot):
         wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME",sdefault,sprompt)# Accept Cie Name
     update_sadmin_cfg(sroot,"SADM_CIE_NAME",wcfg_cie_name)              # Update Value in sadmin.cfg
 
-# Accept SysAdmin Email address
+    # Accept SysAdmin Email address
     sdefault = ""                                                       # No default value
     sprompt  = "Enter System Administrator Email"                       # Prompt for Answer
     wcfg_mail_addr = ""                                                 # Clear Email Address
@@ -1638,8 +1768,8 @@ def setup_sadmin_config_file(sroot):
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
         update_alert_group_default(sroot,wcfg_mail_addr)                # Upd. AlertGroup Def. Email 
 
-
-# Accept the Email type to use at the end of each script execution
+    # Accept the Email type to use at the end of each script execution
+    # 0=No Alert Sent, 1=On Error Only, 2=On Success Only, 3=Always send alert    
     sdefault = 1                                                        # Default value 1
     sprompt  = "Enter default email type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_ALERT_TYPE",sdefault,sprompt,"I",0,3)
@@ -1655,7 +1785,6 @@ def setup_sadmin_config_file(sroot):
     sprompt  = "Default domain name"                                    # Prompt for Answer
     wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
-
 
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
@@ -1684,20 +1813,32 @@ def setup_sadmin_config_file(sroot):
         break                                                           # Ok Name pass the test
     update_sadmin_cfg(sroot,"SADM_SERVER",wcfg_server)                  # Update Value in sadmin.cfg
 
+
+    # Accept PostFix RelayHost
+    sdefault = ""                                                       # No Default Value
+    sprompt  = "Enter Postfix Internet mail relayhost (for postfix)"    # Prompt for Relay Host
+    wcfg_prelay = ""                                                    # Clear Field
+    while (wcfg_prelay == ""):                                          # Until something entered
+        wcfg_prelay = accept_field(sroot,"SADM_RELAYHOST",sdefault,sprompt) # Accept RelayHost
+    setup_postfix(sroot,wostype,wcfg_prelay)                            # Set relayhost in main.cf
+
+
     # Accept the maximum number of lines we want in every log produce
-    sdefault = 1000                                                     # No Default value 
-    sprompt  = "Maximum number of lines in LOG file"                    # Prompt for Answer
-    wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",sdefault,sprompt,"I",1,10000)
-    update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)        # Update Value in sadmin.cfg
+    #sdefault = 500                                                      # No Default value 
+    #sprompt  = "Maximum number of lines in LOG file"                    # Prompt for Answer
+    #wcfg_max_logline = accept_field(sroot,"SADM_MAX_LOGLINE",sdefault,sprompt,"I",1,10000)
+    #update_sadmin_cfg(sroot,"SADM_MAX_LOGLINE",wcfg_max_logline)        # Update Value in sadmin.cfg
 
     # Accept the maximum number of lines we want in every RCH file produce
-    sdefault = 100                                                      # No Default value 
-    sprompt  = "Maximum number of lines in RCH file"                    # Prompt for Answer
-    wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
-    update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
+    #sdefault = 125                                                      # No Default value 
+    #sprompt  = "Maximum number of lines in RCH file"                    # Prompt for Answer
+    #wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
+    #update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
 
     # Accept the Default User Group
     sdefault = "sadmin"                                                 # Set Default value 
+    if wostype == "DARWIN" :                                            # Under MacOS
+        sdefault = "staff"                                              # Set MacOS Default Group
     sprompt  = "Enter SADMIN User Group"                                # Prompt for Answer
     wcfg_group=accept_field(sroot,"SADM_GROUP",sdefault,sprompt)        # Accept Defaut SADMIN Group
     found_grp = False                                                   # Not in group file Default
@@ -1713,6 +1854,10 @@ def setup_sadmin_config_file(sroot):
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
             ccode,cstdout,cstderr = oscommand("mkgroup %s" % (wcfg_group))    # Add Group on Aix
+        if wostype == "DARWIN" :                                        # Under MacOS
+            writelog ("Group %s doesn't exist, create it and rerun this script")
+            writelog ("We can't create group for the moment")           # Advise USer
+            sys.exit(1)                                                 # Exit to O/S  
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
@@ -1735,6 +1880,10 @@ def setup_sadmin_config_file(sroot):
         if wostype == "AIX" :                                           # Under AIX
             cmd = "chuser pgrp='%s' %s" % (wcfg_group,wcfg_user)        # Build chuser command
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+        if wostype == "DARWIN" :                                        # Under MacOS
+            writelog ("User %s doesn't exist, create it and rerun this script")
+            writelog ("We can't create user for the moment")            # Advise USer
+            sys.exit(1)                                                 # Exit to O/S  
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
@@ -1754,6 +1903,7 @@ def setup_sadmin_config_file(sroot):
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
+    writelog ("Please wait while we set owner and group in %s directory ..." % (sroot))
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
         writelog (" ")                                                  # White Line
@@ -1781,27 +1931,28 @@ def setup_sadmin_config_file(sroot):
         wcfg_network1b = accept_field(sroot,"SADM_NETMASK1",sdefault,sprompt,"I",1,30) # NetMask
         update_sadmin_cfg(sroot,"SADM_NETWORK1","%s/%s" % (wcfg_network1a,wcfg_network1b))
     
-    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr)              # Return to Caller
+    return(wcfg_server,SADM_IP,wcfg_domain,wcfg_mail_addr,wcfg_user,wcfg_group) # Return to Caller
 
 
 #===================================================================================================
-#         DETERMINE THE LINUX INSTALLATION PACKAGE TYPE AND OPEN THE SCRIPT LOG FILE 
+# DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S AND OPEN THE SCRIPT LOG FILE 
 #===================================================================================================
 #
 def getpacktype(sroot):
 
-    # Determine type of software package based on command present on system 
-    packtype=""                                                         # Set Initial Packaging Type
+    # Determine type of software package format based on command present on system 
+    packtype=""                                                         # Initial Packaging is None
     if (locate_command('rpm')   != "") : packtype="rpm"                 # Is rpm command on system ?
     if (locate_command('dpkg')  != "") : packtype="deb"                 # is deb command on system ?
     if (locate_command('lslpp') != "") : packtype="aix"                 # Is lslpp cmd on system ?
+    if (locate_command('launchctl') != "") : packtype="dmg"             # launchctl MacOS on system?
     if (packtype == ""):                                                # If unknow/unsupported O/S
-        writelog ('None of these commands are found (rpm, pkg or lslpp absent)')
+        writelog ('None of these commands are found (rpm, pkg, dmg or lslpp absent)')
         writelog ('No supported package type is detected')
         writelog ('Process aborted')
         sys.exit(1)                                                     # Exit to O/S  
 
-    # Get O/S Name   
+    # Get O/S Distribution Name                                         # CentOS,Redhat,
     cmd = "lsb_release -si"                                             # Get OSName with lsb_release
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
@@ -1887,10 +2038,9 @@ def end_message(sroot,sdomain,sserver,stype):
 def main():
     global fhlog                                                        # Script Log File Handler
 
-    #os.system('clear')                                                 # Clear the screen
     print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
     print ("---------------------------------------------------------------------------")
-    
+   
     # Insure that this script can only be run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        print ("This script must be run by the 'root' user")             # Advise User Message / Log
@@ -1898,29 +2048,52 @@ def main():
        print ("Process aborted")                                        # Process Aborted Msg
        sys.exit(1)                                                      # Exit with Error Code
 
+    # Set SADMIN Env. Var, populate /etc/environment and /etc/profile.d/sadmin.sh
     sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
-    (fhlog,logfile) = open_logfile(sroot)                               # OpenLog Return File Handle
-    if (DEBUG) : ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
+    if (DEBUG) : 
+        writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
 
-    create_sadmin_config_file(sroot)                                    # Create Initial sadmin.cfg
+    # Create Script Log, Return Log FileHandle and LogName
+    (fhlog,logfile) = open_logfile(sroot)                               # Return File Handle/LogName
+    if (DEBUG) : 
+        writelog ("Log file open and set to %s" % (logfile))            # Show LogFile Name
+
+
+    # Get OS Type (Linux, Aix, Darwin, OpenBSD)
+    wostype=get_ostype()                                                # OSTYPE = LINUX/AIX/DARWIN
+    if (DEBUG):                                                         # If Debug Activated
+        writelog ("Current OStype is: %s" % (wostype))                  # Print the O/S Type
+
+
+    # Create Initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
+    create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
+
+    # Get the Distribution Package Format (rpm or deb)
     (packtype,sosname) = getpacktype(sroot)                             # PackType (deb,rpm)/OSName
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
 
-    (userver,uip,udomain,uemail) = setup_sadmin_config_file(sroot)      # Ask Config questions
+    # Go and Ask Setup Question to user 
+    # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, Sadmin User and Group).
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot) # Ask Config questions
+
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
-    update_sudo_file(logfile)                                           # Create the sudo file
-    update_client_crontab_file(logfile,sroot)                           # Create Client Crontab File 
 
-    # SADMIN Server 
+    # Create SADMIN User sudo file
+    update_sudo_file(logfile,uuser)                                     # Create User sudo file
+
+    # Create SADMIN User crontab file
+    update_client_crontab_file(logfile,sroot,wostype,uuser)             # Create SADM User Crontab 
+
+    # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
         satisfy_requirement('S',sroot,packtype,logfile,sosname)         # Verify/Install Server Req.
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
-        update_server_crontab_file(logfile,sroot)                       # Create Server Crontab File 
+        update_server_crontab_file(logfile,sroot,wostype,uuser)         # Create Server Crontab File 
         rrdtool_path = locate_command("rrdtool")                        # Get rrdtool path
         update_sadmin_cfg(sroot,"SADM_RRDTOOL",rrdtool_path,False)      # Update Value in sadmin.cfg
 
