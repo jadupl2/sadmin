@@ -1,0 +1,5 @@
+# sadmin.cfg SADM_MAIL_ADDR Documentation
+# Revise 2019_01_05
+# ----------------------------------------------------------------------------
+This field specify the email relay host name.
+It's use by SADMIN Tools to send various email and alert.
