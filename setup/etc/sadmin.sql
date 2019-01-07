@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 13, 2018 at 04:46 PM
+-- Generation Time: Jan 07, 2019 at 11:19 AM
 -- Server version: 5.5.60-MariaDB
 -- PHP Version: 5.4.16
 
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_date_creation` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Server Creation Date',
   `srv_date_edit` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Edit Date',
   `srv_date_update` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Last Update Date',
-  `srv_date_osupdate` datetime DEFAULT NULL COMMENT 'Date of Update',
+  `srv_date_osupdate` datetime DEFAULT '0000-00-00 00:00:00' COMMENT 'Date of Update',
   `srv_kernel_version` varchar(30) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Kernel Version',
   `srv_kernel_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Kernel is 32 or 64 bits',
   `srv_hwd_bitmode` smallint(11) NOT NULL DEFAULT '64' COMMENT 'Hardware is 32 or 64 bits',
@@ -68,7 +68,10 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_ips_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'All Server IPS',
   `srv_disks_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Disks Size Info',
   `srv_vgs_info` varchar(1024) COLLATE utf8_unicode_ci NOT NULL COMMENT 'Volume Groups INfo',
-  `srv_backup` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Execute Backup Script',
+  `srv_backup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Execute Backup 0=No 1=Yes',
+  `srv_backup_month` varchar(13) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNN' COMMENT 'Backup Month YNNYNNYNNYNN',
+  `srv_backup_dom` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN' COMMENT 'Backup DayofMonth YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN',
+  `srv_backup_dow` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'YNNNNNNN' COMMENT 'Backup DayOfWeek YNNNNNNN',
   `srv_backup_hour` smallint(6) NOT NULL DEFAULT '1' COMMENT 'Start Hour of Backuo',
   `srv_backup_minute` smallint(6) NOT NULL DEFAULT '0' COMMENT 'Start Minute of Backup',
   `srv_update_auto` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'O/S Update Auto Schedule',
@@ -85,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `srv_sadmin_dir` varchar(45) COLLATE utf8_unicode_ci NOT NULL DEFAULT '/opt/sadmin' COMMENT 'SADMIN Root Dir. on Client',
   `srv_ssh_port` int(2) NOT NULL DEFAULT '22' COMMENT 'SSH Port to access server',
   `ssh_sudo_user` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'sadmin' COMMENT 'ssh sudo user to server'
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Server Table Information';
 
 
 --
@@ -117,6 +120,7 @@ INSERT INTO `server_category` (`cat_id`, `cat_code`, `cat_desc`, `cat_active`, `
 --
 -- Table structure for table `server_group`
 --
+
 DROP TABLE IF EXISTS `server_group`;
 CREATE TABLE IF NOT EXISTS `server_group` (
   `grp_id` int(11) NOT NULL COMMENT 'Server Group ID',
@@ -158,7 +162,6 @@ CREATE TABLE IF NOT EXISTS `server_network` (
   `net_date_update` datetime NOT NULL COMMENT 'Date Last Change'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
 --
 -- Indexes for table `server`
 --
@@ -195,7 +198,7 @@ ALTER TABLE `server_network`
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=37;
+  MODIFY `srv_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Server ID',AUTO_INCREMENT=38;
 --
 -- AUTO_INCREMENT for table `server_category`
 --
