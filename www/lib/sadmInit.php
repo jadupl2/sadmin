@@ -21,6 +21,7 @@
 # 2018_05_28  V3.0 Added Load Backup Parameters coming from sadmin.cfg now
 # 2018_06_10  V3.1 Change name of O/S Update script 
 #@2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
+#@2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -99,14 +100,18 @@ define("SADM_WWW_NET_DIR"  , SADM_WWW_DAT_DIR . "/${HOSTNAME}/net");    # Web ne
 
 
 # SADMIN FILES DEFINITION
-define("SADM_CFG_FILE"     , SADM_CFG_DIR . "/sadmin.cfg");             # SADM Config File
-define("SADM_ALERT_FILE"   , SADM_CFG_DIR . "/alert_group.cfg");        # SADM Alert Group File
-define("SADM_DBPASS_FILE"  , SADM_CFG_DIR . "/.dbpass") ;               # Name of Database Usr Pwd
-define("SADM_REL_FILE"     , SADM_CFG_DIR . "/.release") ;              # Name of the Release File
-define("SADM_CRON_FILE"    , SADM_WWW_LIB_DIR . "/.crontab.txt");       # SADM Crontab File
-define("SADM_WWW_TMP_FILE1", SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
-define("SADM_WWW_TMP_FILE2", SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
-define("SADM_WWW_TMP_FILE3", SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
+define("SADM_CFG_FILE"            , SADM_CFG_DIR     . "/sadmin.cfg");          # Config File
+#define("SADM_BACKUP_LIST"         , SADM_CFG_DIR     . "/backup_list.txt");     # BackupList File
+define("SADM_BACKUP_LIST_INIT"    , SADM_CFG_DIR     . "/.backup_list.txt");    # BackupList Init
+#define("SADM_BACKUP_EXCLUDE"      , SADM_CFG_DIR     . "/backup_exclude.txt");  # Backup Exclude File
+define("SADM_BACKUP_EXCLUDE_INIT" , SADM_CFG_DIR     . "/.backup_exclude.txt"); # Backup Exclude Init
+define("SADM_ALERT_FILE"          , SADM_CFG_DIR     . "/alert_group.cfg");     # Alert Grp File
+define("SADM_DBPASS_FILE"         , SADM_CFG_DIR     . "/.dbpass") ;            # Name Db Usr Pwd
+define("SADM_REL_FILE"            , SADM_CFG_DIR     . "/.release") ;           # Name Release File
+define("SADM_CRON_FILE"           , SADM_WWW_LIB_DIR . "/.crontab.txt");       # SADM Crontab File
+define("SADM_WWW_TMP_FILE1"       , SADM_WWW_TMP_DIR . "www_tmpfile1_" . getmypid() ); # SADM Temp File1
+define("SADM_WWW_TMP_FILE2"       , SADM_WWW_TMP_DIR . "www_tmpfile2_" . getmypid() ); # SADM Temp File1
+define("SADM_WWW_TMP_FILE3"       , SADM_WWW_TMP_DIR . "www_tmpfile3_" . getmypid() ); # SADM Temp File1
 define("SADM_WWW_NETDEV"   , "netdev.txt");                             # File Network Interface lst
 
 #
