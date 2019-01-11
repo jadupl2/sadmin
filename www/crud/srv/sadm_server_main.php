@@ -26,6 +26,7 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
+# 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -37,13 +38,16 @@ require_once      ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php')
 ?>
 <script>
     $(document).ready(function() {
+
+
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[12, 25, 50, 100, -1], [12, 25, 50, ,100, "All"]],
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, ,100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
             "info"      : true
         } );
+
     } );
 </script>
 
@@ -55,7 +59,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$SVER          = "2.0" ;                                                # Current version number
+$SVER          = "2.1" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_OSUPDATE  = '/crud/srv/sadm_server_osupdate.php';                  # Update Page URL
@@ -76,21 +80,22 @@ function setup_table() {
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="95%">';   
+    #echo '<table id="sadmTable" class="display" cell-border compact row-border wrap width="95%">';   
+    #echo '<table  id="sadmTable" cell-border compact row-border wrap width="95%">';   
+    echo '<table id="sadmTable" class="display" row-border wrap width="100%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
-    echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
-    echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
-    echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
+    #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
+    echo "\n<th>Name</th>";                                # Left Align Header & Body
+    echo "\n<th>O/S</th>";                                 # Left Align Header & Body
+    echo "\n<th>Description</th>";                       # Center Header Only
     echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
     echo "\n<th>Group</th>";                                            # Identify Default Group
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
     echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                             # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -99,7 +104,8 @@ function setup_table() {
     # PAGE TABLE FOOTER
     echo "\n<tfoot>";
     echo "\n<tr>";
-    echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
+    #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
+    echo "\n<th>Name</th>";                                # Left Align Header & Body
     #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
@@ -108,7 +114,6 @@ function setup_table() {
     echo "\n<th dt-center>Status</th>";                                 # Center Header & Body
     echo "\n<th dt-center>Sporadic</th>";                               # Center Header & Body
     echo "\n<th dt-center>VM</th>";                                     # Center Header & Body
-    echo "\n<th>Info</th>";                                             # Update Button Placement
     echo "\n<th>Update</th>";                                           # Update Button Placement
     echo "\n<th>Delete</th>";                                           # Delete or X button Column
     echo "\n</tr>";
@@ -124,35 +129,45 @@ function display_data($con,$row) {
     global $URL_UPDATE, $URL_DELETE, $URL_INFO, $URL_MENU, $URL_OSUPDATE;
 
     echo "\n<tr>";
-    echo "\n<td><a href='" . $URL_INFO . "?host=" . $row['srv_name'];   # Display Server Name
+    
+    # Server Name with Link to Server information page
+    echo "\n<td dt-center><a href='" . $URL_INFO . "?host=" . $row['srv_name'];   # Display Server Name
     echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
-    echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
-    #echo "\n<td>"            . "None"   . "</td>";            
+    echo $row['srv_ip'] . " - " . $row['srv_model'] . " - " . $row['srv_serial'] ;
+    echo "'>" .$row['srv_name']. "</a></td>";
+
+    # Server O/S Name
     echo "\n<td dt-nowrap>"  . $row['srv_osname'] . "</td>";            # Display O/S Name
+    
+    # Server Description
     echo "\n<td dt-nowrap>"  . $row['srv_desc']   . "</td>";            # Display Description
+    
+    # Server Category
     echo "\n<td dt-center>"  . $row['srv_cat']    . "</td>";            # Display Category
+    
+    # Server Group
     echo "\n<td dt-center>"  . $row['srv_group']  . "</td>";            # Display Group
+
+    # Server is Active ?
     if ($row['srv_active'] == TRUE ) {                                  # Is Server Active
         echo "\n<td style='text-align: center'>Active</td>";            # If so display Active
     }else{                                                              # If not Activate
         echo "\n<td style='text-align: center'>Inactive</td>";          # Display Inactive in Cell
     }
+
+    # Sporadic Status
     if ($row['srv_sporadic'] == TRUE ) {                                # Is Server Sporadic
         echo "\n<td style='text-align: center'>Yes</td>";               # If so display Yes
     }else{                                                              # If not Sporadic
         echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
     }
+
+    # Virtual or Physical Server
     if ($row['srv_vm'] == TRUE ) {                                      # Is VM Server 
         echo "\n<td style='text-align: center'>Yes</td>";               # If so display Yes
     }else{                                                              # If not Sporadic
         echo "\n<td style='text-align: center'>No</td>";                # Display No in Cell
     }
-
-    # DISPLAY THE INFO BUTTON
-    echo "\n<td style='text-align: center'>";                           # Align Button in Center row
-    echo "\n<a href='" . $URL_INFO . '?host=' . $row['srv_name'] . "'>";
-    echo "\n<button type='button'>Info</button></a>";                   # Display Update Button
-    echo "\n</td>";
 
     # DISPLAY THE UPDATE BUTTON
     echo "\n<td style='text-align: center'>";                           # Align Button in Center row
