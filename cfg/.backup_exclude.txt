@@ -1,5 +1,4 @@
 # Exclude these files and directories from SADMIN Backup.
-# 
 iso 
 sysmon.lock 
 .cache/*
