@@ -33,6 +33,7 @@
 #       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
 #   2018_04_17 - Jacques Duplessis
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
+# 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # ==================================================================================================
 #
 
@@ -83,7 +84,7 @@ function std_page_footer($wcon="") {
     echo "\n</div> <!-- End of sadmRightColumn   -->" ;                 # End of Left Content Page       
     echo "\n</div> <!-- End of sadmPageContents  -->" ;                 # End of Content Page
     echo "\n\n<div id='sadmFooter'>";
-    echo "\nCopyright &copy; 2015-2018 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
+    echo "\nCopyright &copy; 2015-2019 - www.sadmin.ca - Suggestions, Questions or Report a problem at ";
     echo '<a href="mailto:support@sadmin.ca">support@sadmin.ca</a></small>';
     echo "\n</div> <!-- End of Div sadmFooter -->";
 
