@@ -90,7 +90,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
 $SVER  = "2.2" ;                                                        # Current version number
-$URL_MAIN   = '/view/sys/sadm_view_schedule.php';                       # Maintenance Main Page URL
+$URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
@@ -469,7 +469,7 @@ function display_osschedule($con,$wrow,$mode) {
     # Display Buttons (Update/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
     echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
-    echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'><button type='button'> Cancel ";
+    echo "\n<div class='second_button'><a href='" . $URL_MAIN . $row['srv_name'] . "'><button type='button'> Cancel ";
     echo "</button></a>\n</div>";
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
