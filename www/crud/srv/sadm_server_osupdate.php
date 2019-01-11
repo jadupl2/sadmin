@@ -29,6 +29,7 @@
 #   2017_12_31 - Jacques Duplessis
 #       V2.1 Update O/S Update Page now update the SADM_USER crontab 
 #   2018_07_22  v2.2 After updating a server browser will go back on page ready to edit another one.
+# 2019_01_11 Change: v2.3 Cancel button now bring you to update menu.
 #
 # ==================================================================================================
 #
@@ -415,6 +416,9 @@ function display_osschedule($con,$wrow,$mode) {
         #}
 
         # Back to Server List Page
+        $redirect="/crud/srv/sadm_server_menu.php?sel=" . $_POST['scr_name'];
+        #header("Location: " . $redirect . " ");
+        #exit();
         ?> <script> location.replace("/view/sys/sadm_view_schedule.php"); </script><?php
         exit;
     }
