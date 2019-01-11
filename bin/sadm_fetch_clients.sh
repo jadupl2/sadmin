@@ -39,6 +39,7 @@
 #@2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
 #@2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
 #@2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
+#@2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -75,7 +76,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.27'                              # Current Script Version
+    export SADM_VER='2.28'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -109,7 +110,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-cscript="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export cscript        # Scrit to run in crontab
+cscript="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export cscript        # OSUpdate Script in crontab
+bscript="${SADM_BIN_DIR}/sadm_backup.sh"        ; export bscript        # Backup Script in crontab
 REBOOT_SEC=900                                  ; export REBOOT_SEC     # O/S Upd Reboot Nb Sec.wait
 
 
@@ -156,7 +158,7 @@ show_version()
 # Example of line generated
 # 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
 # ==================================================================================================
-update_crontab () 
+update_osupdate_crontab () 
 {
     cserver=$1                                                          # Server Name (NOT FQDN)
     cscript=$2                                                          # Update Script to Run
@@ -268,6 +270,140 @@ update_crontab ()
 }
 
 
+# ==================================================================================================
+# Update the crontab work file based on the parameters received
+#
+# (1) cserver   Name odf server to update the o/s/
+# (2) cscript   The name of the script to executed
+# (3) cmin      Minute when the update will begin (00-59)
+# (4) chour     Hour when the update should begin (00-23)
+# (5) cmonth    13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
+#               Position 0 = Y Then ALL Months are Selected
+#               Position 1-12 represent the month that are selected (Y or N)             
+#               Default is YNNNNNNNNNNNN meaning will run every month 
+# (6) cdom      32 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
+#               Position 0 = Y Then ALL Date in the month are Selected
+#               Position 1-31 Indicate (Y) date of the month that script will run or not (N)
+# (7) cdow      8 Characters (either a Y or a N) 
+#               If Position 0 = Y then will run every day of the week
+#               Position 1-7 Indicate a week day () Starting with Sunday
+#               Default is all Week (YNNNNNNN)
+# ---------
+# Example of line generated
+# 15 04 * * 06 root /sadmin/bin/sadm_osupdate_farm.sh -s nano >/dev/null 2>&1
+# ==================================================================================================
+update_backup_crontab () 
+{
+    cserver=$1                                                          # Server Name (NOT FQDN)
+    cscript=$2                                                          # Update Script to Run
+    cmin=$3                                                             # Crontab Minute
+    chour=$4                                                            # Crontab Hour
+    cmonth=$5                                                           # Crontab Mth (YNNNN) Format
+    cdom=$6                                                             # Crontab DOM (YNNNN) Format
+    cdow=$7                                                             # Crontab DOW (YNNNN) Format
+
+    # To Display Parameters received - Used for Debugging Purpose ----------------------------------
+    if [ $DEBUG_LEVEL -gt 5 ] 
+        then sadm_writelog "I'm in update crontab"
+             sadm_writelog "cserver  = $cserver"                        # Server to run script
+             sadm_writelog "cscript  = $cscript"                        # Script to execute
+             sadm_writelog "cmonth   = $cmonth"                         # Month String YNYNYNYNYNY..
+             sadm_writelog "cdom     = $cdom"                           # Day of MOnth String YNYN..
+             sadm_writelog "cdow     = $cdow"                           # Day of Week String YNYN...
+             sadm_writelog "chour    = $chour"                          # Hour to run script
+             sadm_writelog "cmin     = $cmin"                           # Min. to run Script
+             sadm_writelog "cronfile = $SADM_CRON_FILE"                 # Name of Output file
+    fi
+    
+    # Begin constructing our crontab line ($cline) - Based on Hour and Min. Received ---------------
+    cline=`printf "%02d %02d" "$cmin" "$chour"`                         # Hour & Min. of Execution
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct DATE of the month (1-31) to run and add it to crontab line ($cline) ----------------
+    flag_dom=0
+    if [ "$cdom" = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" ]                 # If it's to run every Date
+        then cline="$cline *"                                           # Then use a Star for Date
+        else fdom=""                                                    # Clear Final Date of Month
+             for i in $(seq 2 32)
+                do    
+                wchar=`expr substr $cdom $i 1`
+                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdom[$i] = $wchar" ; fi
+                xmth=`expr $i - 1`                                      # Date = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Date Set to Yes 
+                    then if [ $flag_dom -eq 0 ]                         # If First Date to Run 
+                            then fdom=`printf "%02d" "$xmth"`           # Add Date to Final DOM
+                                 flag_dom=1                             # No Longer the first date
+                            else wdom=`printf "%02d" "$xmth"`           # Format the Date number
+                                 fdom=`echo "${fdom},${wdom}"`          # Combine Final+New Date
+                         fi
+                fi                                                      # If Date is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fdom"                                       # Add DOM in Crontab Line
+    fi
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct the month(s) (1-12) to run the script and add it to crontab line ($cline) ----------
+    flag_mth=0
+    if [ "$cmonth" = "YNNNNNNNNNNNN" ]                                  # 1st Char=Y = run every Mth
+        then cline="$cline *"                                           # Then use a Star for Month
+        else fmth=""                                                    # Clear Final Date of Month
+             for i in $(seq 2 13)                                       # Check Each Mth 2-13 = 1-12
+                do                                                      # Get Y or N for the Month                 wchar=`expr substr "$cmonth" $i 1`
+                wchar=`expr substr $cmonth $i 1`
+                xmth=`expr $i - 1`                                      # Mth = Index -1 ,Cron Mth
+                if [ "$wchar" = "Y" ]                                   # If Month Set to Yes 
+                    then if [ $flag_mth -eq 0 ]                         # If 1st Insert in Cron Line
+                            then fmth=`printf "%02d" "$xmth"`           # Add Month to Final Months
+                                 flag_mth=1                             # No Longer the first Month
+                            else wmth=`printf "%02d" "$xmth"`           # Format the Month number
+                                 fmth=`echo "${fmth},${wmth}"`          # Combine Final+New Months
+                         fi
+                fi                                                      # If Month is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fmth"                                       # Add Month in Crontab Line
+    fi
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+
+
+    # Construct the day of the week (0-6) to run the script and add it to crontab line ($cline) ----
+    flag_dow=0
+    if [ "$cdow" = "YNNNNNNN" ]                                         # 1st Char=Y Run all dayWeek
+        then cline="$cline *"                                           # Then use Star for All Week
+        else fdow=""                                                    # Final Day of Week Flag
+             for i in $(seq 2 8)                                        # Check Each Day 2-8 = 0-6
+                do                                                      # Day of the week (dow)
+                wchar=`expr substr "$cdow" $i 1`                        # Get Char of loop
+                if [ $DEBUG_LEVEL -gt 5 ] ; then echo "cdow[$i] = $wchar" ; fi
+                if [ "$wchar" = "Y" ]                                   # If Day is Yes 
+                    then xday=`expr $i - 2`                             # Adjust Indx to Crontab Day
+                         if [ $DEBUG_LEVEL -gt 5 ] ; then echo "xday = $xday" ; fi
+                         if [ $flag_dow -eq 0 ]                         # If First Day to Insert
+                            then fdow=`printf "%02d" "$xday"`           # Add day to Final Day
+                                 flag_dow=1                             # No Longer the first Insert
+                            else wdow=`printf "%02d" "$xday"`           # Format the day number
+                                 fdow=`echo "${fdow},${wdow}"`          # Combine Final+New Day
+                         fi
+                fi                                                      # If DOW is set to No
+                done                                                    # End of For Loop
+             cline="$cline $fdow"                                       # Add DOW in Crontab Line
+    fi
+    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+    
+    
+    # Add User, script name and script parameter to crontab line -----------------------------------
+    # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
+    # $SADM_TMP_DIR
+    #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
+    #cline="$cline $SADM_USER sudo $cscript -s $cserver >/dev/null 2>&1";   
+    cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$bscript\" >/dev/null 2>&1";   
+    #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
+    if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
+
+    echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
+}
+
 #===================================================================================================
 #                Function use to rsync remote SADM client with local directories
 #===================================================================================================
@@ -328,11 +464,12 @@ process_servers()
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
     SQL="SELECT srv_name,srv_ostype,srv_domain,srv_monitor,srv_sporadic,srv_active,srv_sadmin_dir," 
     SQL="${SQL} srv_update_minute,srv_update_hour,srv_update_dom,srv_update_month,srv_update_dow,"
-    SQL="${SQL} srv_update_auto "
+    SQL="${SQL} srv_update_auto,srv_backup,srv_backup_month,srv_backup_dom,srv_backup_dow,"
+    SQL="${SQL} srv_backup_hour,srv_backup_minute "
     SQL="${SQL} from server"
     SQL="${SQL} where srv_ostype = '${WOSTYPE}' and srv_active = True "
     SQL="${SQL} order by srv_name; "                                    # Order Output by ServerName
-    
+
     WAUTH="-u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "                       # Set Authentication String 
     CMDLINE="$SADM_MYSQL $WAUTH "                                       # Join MySQL with Authen.
     CMDLINE="$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -N -e '$SQL' | tr '/\t/' '/,/'" # Build CmdLine
@@ -354,9 +491,10 @@ process_servers()
              return 0                                                   # Return Error to Caller
     fi 
 
-    # Create Crontab File Header (Auto O/S Update only work on Linux)
+    # Create Crontab File Header 
     if [ "$WOSTYPE" = "linux" ] 
-        then echo "# "                                                        > $SADM_CRON_FILE 
+        then # Header for O/S Update Crontab File
+             echo "# "                                                        > $SADM_CRON_FILE 
              echo "# SADMIN - Operating System Update Schedule"              >> $SADM_CRON_FILE 
              echo "# Please don't edit manually, SADMIN generated."          >> $SADM_CRON_FILE 
              echo "# "                                                       >> $SADM_CRON_FILE 
@@ -365,8 +503,17 @@ process_servers()
              echo "# "                                                       >> $SADM_CRON_FILE 
              echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_CRON_FILE
              echo "# "                                                       >> $SADM_CRON_FILE
+             # Header for Backup Crontab File
+             echo "# "                                                        > $SADM_BACKUP_NEWCRON 
+             echo "# SADMIN Client Backup Schedule"                          >> $SADM_BACKUP_NEWCRON 
+             echo "# Please don't edit manually, SADMIN generated."          >> $SADM_BACKUP_NEWCRON 
+             echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
+             echo "# Min, Hrs, Date, Mth, Day, User, Script"                 >> $SADM_BACKUP_NEWCRON
+             echo "# Day 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat"          >> $SADM_BACKUP_NEWCRON
+             echo "# "                                                       >> $SADM_BACKUP_NEWCRON 
+             echo "SADMIN=$SADM_BASE_DIR"                                    >> $SADM_BACKUP_NEWCRON
+             echo "# "                                                       >> $SADM_BACKUP_NEWCRON
     fi
-
     xcount=0; ERROR_COUNT=0;
     while read wline                                                    # Data in File then read it
         do                                                              # Line by Line
@@ -382,10 +529,30 @@ process_servers()
         db_updhrs=`      echo $wline|awk -F, '{ print $9 }'`            # crontab Update Hrs field
         db_upddom=`      echo $wline|awk -F, '{ print $10 }'`           # crontab Update DOM field
         db_updmth=`      echo $wline|awk -F, '{ print $11 }'`           # crontab Update Mth field
-        db_upddow=`      echo $wline|awk -F, '{ print $12 }'`           # crontab Update DOW field        
-        db_updauto=`     echo $wline|awk -F, '{ print $13 }'`           # crontab Update DOW field        
+        db_upddow=`      echo $wline|awk -F, '{ print $12 }'`           # crontab Update DOW field 
+        db_updauto=`     echo $wline|awk -F, '{ print $13 }'`           # crontab Update DOW field 
+        backup_auto=`    echo $wline|awk -F, '{ print $14 }'`           # crontab Backup 1=Yes 0=No 
+        backup_mth=`     echo $wline|awk -F, '{ print $15 }'`           # crontab Backup Mth field
+        backup_dom=`     echo $wline|awk -F, '{ print $16 }'`           # crontab Backup DOM field
+        backup_dow=`     echo $wline|awk -F, '{ print $17 }'`           # crontab Backup DOW field 
+        backup_hrs=`     echo $wline|awk -F, '{ print $18 }'`           # crontab Backup Hrs field
+        backup_min=`     echo $wline|awk -F, '{ print $19 }'`           # crontab Backup Min field
+
         sadm_writelog "${SADM_TEN_DASH}"                                # Print 10 Dash line
         sadm_writelog "Processing [$xcount] ${fqdn_server}"             # Print Counter/Server Name
+
+        # To Display Database Column we will used, for debugging
+        if [ $DEBUG_LEVEL -gt 7 ] 
+            then sadm_writelog "Column Name and Value before processing them."
+                 sadm_writelog "server_name   = $server_name"           # Server Name to run script
+                 sadm_writelog "backup_auto   = $backup_auto"           # Run Backup ? 1=Yes 0=No 
+                 sadm_writelog "backup_mth    = $backup_mth"            # Month String YNYNYNYNYNY..
+                 sadm_writelog "backup_dom    = $backup_dom"            # Day of MOnth String YNYN..
+                 sadm_writelog "backup_dow    = $backup_dow"            # Day of Week String YNYN...
+                 sadm_writelog "backup_hrs    = $backup_hrs"            # Hour to run script
+                 sadm_writelog "backup_min    = $backup_min"            # Min. to run Script
+                 sadm_writelog "fqdn_server   = $fqdn_server"           # Name of Output file
+        fi
 
         # IF SERVER NAME CAN'T BE RESOLVED - SIGNAL ERROR AND CONTINUE WITH NEXT SERVER
         if ! host  $fqdn_server >/dev/null 2>&1
@@ -399,11 +566,16 @@ process_servers()
                 continue                                                # skip this server
         fi
 
-        # Create Crontab Entry for this server in crontab work file
+        # Generate Crontab Entry for this server in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
-            then update_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+            then update_osupdate_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
-        
+
+        # Generate Crontab Entry for this server in Backup crontab work file
+        if [ "$WOSTYPE" = "linux" ] && [ $backup_auto -eq 1 ]          # If Backup set to Yes 
+            then update_backup_crontab "$server_name" "$bscript" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
+        fi
+                
         # Test to prevent false Alert when the server is rebooting after a O/S Update.
         # Wait 15 minutes (900 Seconds) before signaling a problem.
         rch_osupd_name="${SADM_WWW_DAT_DIR}/${server_name}/rch/${server_name}_sadm_osupdate.rch"
@@ -469,6 +641,15 @@ process_servers()
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
+        # MAKE SURE CFG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local Receiving Dir.
+        RDIR="${server_dir}/cfg"                                        # Remote log Directory
+        if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
+            then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
+            else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
+        fi
+        if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+
         # MAKE SURE LOG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
@@ -492,7 +673,6 @@ process_servers()
            then sadm_writelog " "                                       # Separation Blank Line
                 sadm_writelog "** Total ${WOSTYPE} error(s) is now $ERROR_COUNT" # Show Err. Count
         fi
-              
 
         done < $SADM_TMP_FILE1
 
@@ -660,11 +840,11 @@ check_for_alert()
     sadm_writelog "${SADM_TEN_DASH}"                                    # Print 10 Dash lineHistory
     sadm_writelog " "                                                   # Separation Blank Line
 
-    # Linux ONLY - Being root we can modify O/S Update crontab - Can't while in web interface
+    # Update O/S Update Crontab if we need too -  Linux ONLY - Can't while in web interface
     if [ $(sadm_get_ostype) = "LINUX" ] 
-        then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # Work crontab sha1sum
-             real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Real crontab sha1sum
-             if [ "$work_sha1" != "$real_sha1" ]                        # Work Different than Real ?
+        then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # New crontab sha1sum
+             real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Actual crontab sha1sum
+             if [ "$work_sha1" != "$real_sha1" ]                        # New Different than Actual?
                 then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}               # Put in place New Crontab
                      chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set contab Perm.
                      sadm_writelog "O/S Update crontab was updated ..." # Advise user
@@ -672,6 +852,21 @@ check_for_alert()
                      sadm_writelog "No need to update O/S Update crontab ..."
              fi
              sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash lineHistory
+             sadm_writelog " "                                          # Separation Blank Line
+    fi 
+
+    # Update Client Backup Crontab, if we need too -  Linux ONLY - Can't while in web interface
+    if [ $(sadm_get_ostype) = "LINUX" ] 
+        then work_sha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{ print $1 }'` # New crontab sha1sum
+             real_sha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{ print $1 }'` # Actual crontab sha1sum
+             if [ "$work_sha1" != "$real_sha1" ]                        # New Different than Actual?
+                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
+                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
+                     sadm_writelog "Clients backup schedule crontab was updated ..." # Advise user
+                else sadm_writelog "No changes made to Backup schedule ..."
+                     sadm_writelog "No need to update Backup crontab ..."
+             fi
+             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
              sadm_writelog " "                                          # Separation Blank Line
     fi 
 
