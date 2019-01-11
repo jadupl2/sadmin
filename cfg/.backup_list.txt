@@ -1,37 +1,14 @@
-# V1.1 Initial Backup List 
-#  Notes :
-#   - Socket Files are automatically excluded
+# V1.2 Inital Backup List 
+## Notes : 
+#  - Socket Files are automatically excluded
 #
 /home 
 /etc 
 /root
 /etc/profile.d/sadmin.sh
-/var/adsmlog 
 /var/named 
 /var/www 
 /var/ftp 
 /var/lib/mysql 
 /var/spool/cron
-/sadmin 
-#
-/cadmin
-/wsadmin 
-/psadmin 
-#
-/mystuff 
-/install 
-#
-/storix 
-/sysadmin 
-/sysinfo 
-/aix_data 
-/gitrepos 
-/wiki
-/os 
-/www 
-/scom 
-/slam 
-/linternux 
-/useradmin 
-/svn 
-/stbackups
+/opt/sadmin 
