@@ -10,7 +10,7 @@
     <center><table border=0 bgcolor="#124f44" cellspacing="1" cellpadding="5" width=90% >
     <tr>
         <td bgcolor="#124f44" rowspan="2" align="center" valign="middle">
-            <img width=80 height=80 src=/images/sadmin_logo.png>
+            <a href="/index.php"><img width=80 height=80 src=/images/sadmin_logo.png></a>
         </td>
         <td bgcolor="#124f44" align="center">
             <img width=200 height=40 src=/images/sadmin_text.png>
