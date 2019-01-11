@@ -30,8 +30,8 @@
 # 2018_07_09 v2.2 Change SideBar Layout
 # 2018_07_21 v2.3 If an RCH is malformed (Less than 8 fields) it is ignored 
 # 2018_09_16 v2.4 Add Alert Group in RCH Array
-#@2018_09_22 v2.5 Failed Script counter was wrong
-#
+# 2018_09_22 v2.5 Failed Script counter was wrong
+#@2019_01_05 Improvement: v2.6 Add SideBar link to view all servers CPU performance on one page.
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');       # Load PHP sadmin Library
@@ -44,7 +44,7 @@ echo "\n\n<div class='SideBar'>";
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
+$SVER  = "2.6" ;                                                        # Current version number
 $URL_SERVER   = '/view/srv/sadm_view_servers.php';                      # Show Servers List URL
 $URL_OSUPDATE = "/view/sys/sadm_view_schedule.php";                     # View O/S Update URL 
 $URL_MONITOR  = "/view/sys/sadm_view_sysmon.php";                       # View System Monitor URL 
@@ -55,7 +55,7 @@ $URL_RCH_SUMM = '/view/rch/sadm_view_rch_summary.php';                  # Return
 #$URL_NETWORK  = '/view/sys/sadm_subnet.php';                            # Network Scan Result URL
 $URL_NETWORK  = '/view/net/sadm_view_subnet.php';                       # Network Scan Result URL
 $URL_PERF     = '/view/perf/sadm_server_perf_menu.php';                 # Performance Graph Menu URL
-
+$URL_PERF_DAY = '/view/perf/sadm_server_perf_adhoc_all.php';            # Yesterday Servers CPU Perf
 
 // ================================================================================================
 //                   Build Array Used by SideBar for Scripts Status 
@@ -322,13 +322,27 @@ function SideBar_OS_Summary() {
 
 	# ---------------------------   SERVERS STATUS SIDEBAR      ------------------------------------
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
+
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_OSUPDATE . "'>OS Update Sched.</a></div>";  # URL To View O/S Upd. Page
+
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>SysMon Alerts</a></div>";      # URL to System Monitor Page
+
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_PERF    . "'>Perf. Graph</a></div>";        # URL to System Monitor Page
+    #echo "\n\n<form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>";
+    echo "\n\n<form action='$URL_PERF_DAY' method='POST'>";
+    echo '<input type="hidden" name="wtype" value="cpu">';
+    echo '<input type="hidden" name="wperiod" value="yesterday">';
+    echo '<input type="hidden" name="wservers" value="all_servers">';
+    echo '<input type="hidden" name="wcat" value="all_cat">';
+    echo '<a href="#" onclick="this.parentNode.submit();">Perf. All Servers</a>';
+    echo "</form></div>";
+    
+    echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
+    echo "<a href='" . $URL_PERF    . "'>Adhoc Perf. Graph</a></div>";        # URL to System Monitor Page
     echo "\n<hr/>";                                                     # Print Horizontal Line
+    
     
 
 	# ----------------------------------   Network SIDEBAR   ---------------------------------------
