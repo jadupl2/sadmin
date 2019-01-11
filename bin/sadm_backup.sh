@@ -29,7 +29,7 @@
 #  2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
 #  2018_01_02  V2.3 Small Corrections and added comments
 #  2018_02_09  V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
-#  2018_02_09  V2.5 Fisrt Production Version
+#  2018_02_09  V2.5 First Production Version
 #  2018_02_10  V2.6 Switch to bash instead of sh (Problem with Dash and array)
 #              V2.7 Create Backup Link in the latest directory
 #              V2.8 Add Exclude File Variable
@@ -44,12 +44,14 @@
 #  2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
 #  2018_05_28  V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
 #  2018_05_31  V3.7 List of files and directories to backup and to exclude from it come from a
-#                   user defined files respectivaly name 'backup_list.txt' and 'backup_exclude.txt'
+#                   user defined files respectively name 'backup_list.txt' and 'backup_exclude.txt'
 #                   in $SADMIN/cfg Directory.
 #  2018_06_02  V3.8 Add -v switch to display script version & Some minor corrections
 #  2018_06_18  v3.9 Backup compression is ON by default now (-n if don't want compression)
-#  2018_09_16  v3.10 Insert Aler Group Default
-#@ 2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
+#  2018_09_16  v3.10 Insert Alert Group Default
+#  2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
+#@ 2019_01_10  Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
+#@ 2019_01_11  Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -70,7 +72,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.11'                               # Current Script Version
+    export SADM_VER='3.13'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -88,12 +90,12 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But some can overriden here on a per script basis.
+    # But some can overridden here on a per script basis.
     #export SADM_ALERT_TYPE=1                            # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                   # AlertGroup Used to Alert (alert_group.cfg)
-    #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
-    #export SADM_MAX_LOGLINE=1000                       # When Script End Trim log file to 1000 Lines
-    #export SADM_MAX_RCLINE=125                         # When Script End Trim rch file to 125 Lines
+    #export SADM_MAIL_ADDR="your_email@domain.com"       # Email to send log (To Override sadmin.cfg)
+    #export SADM_MAX_LOGLINE=1000                        # When Script End Trim log to 1000 Lines
+    #export SADM_MAX_RCLINE=125                          # When Script End Trim rch to 125 Lines
     #export SADM_SSH_CMD="${SADM_SSH} -qnp ${SADM_SSH_PORT} " # SSH Command to Access Server
 #===================================================================================================
 
@@ -116,22 +118,24 @@ LOCAL_MOUNT="/mnt/backup"           ; export LOCAL_MOUNT                # Local 
 ARCHIVE_DIR=""                      ; export ARCHIVE_DIR                # Will be filled by Script
 BACKUP_DIR=""                       ; export BACKUP_DIR                 # Will be Final Backup Dir.
 
-# Active Backup File List and Initial File Backup List
-export CFG_BACKUP_FILE="${SADMIN}/cfg/backup_list.txt"                  # Active Backup List
-export CFG_BACKUP_INIT="${SADMIN}/cfg/.backup_list.txt"                 # Initial Backup List
+# Active Backup File List and Initial File Backup List are defined in SADM Library (sadmlib_std.sh)
+# They can be overwritten here.
+# export SADM_BACKUP_LIST="${SADMIN}/cfg/backup_list.txt"               # Active Backup List
+# export SADM_BACKUP_LIST_INIT="${SADMIN}/cfg/.backup_list.txt"         # Initial Backup List
+#
+# Active Backup Exclude List and Initial Exclude List File defined in SADM Library (sadmlib_std.sh)
+# They can be overwritten here.
+#export SADM_BACKUP_EXCLUDE="${SADMIN}/cfg/backup_exclude.txt"          # Active Backup Exclude List
+#export SADM_BACKUP_EXCLUDE_INIT="${SADMIN}/cfg/.backup_exclude.txt"    # Initial Backup Excl. List
 
-# Active Backup Exclude List and Initial Exclude List File
-export CFG_EXCLUDE_LIST="${SADMIN}/cfg/backup_exclude.txt"              # Active Backup Exclude List
-export CFG_EXCLUDE_INIT="${SADMIN}/cfg/.backup_exclude.txt"             # Initial Backup Excl. List
-
-# The Backup Parameters are taken from SADMIN Configuration file ($SADMIN/cfg/sadmin.cfg)
+# The Backup Information are taken from SADMIN Configuration file ($SADMIN/cfg/sadmin.cfg)
 # (Example below)
 # $SADM_BACKUP_NFS_SERVER          NFS Backup IP or Server Name        : .batnas.maison.ca.
 # $SADM_BACKUP_NFS_MOUNT_POINT     NFS Backup Mount Point              : ./volume1/backup_linux.
-# $SADM_DAILY_BACKUP_TO_KEEP       Nb. of Daily Backup to keep         : .3. ..
-# $SADM_WEEKLY_BACKUP_TO_KEEP      Nb. of Weekly Backup to keep        : .3.
-# $SADM_MONTHLY_BACKUP_TO_KEEP     Nb. of Monthly Backup to keep       : .2.
-# $SADM_YEARLY_BACKUP_TO_KEEP      Nb. of Yearly Backup to keep        : .1.
+# $SADM_DAILY_BACKUP_TO_KEEP       Nb. of Daily Backup to keep         : .4. ..
+# $SADM_WEEKLY_BACKUP_TO_KEEP      Nb. of Weekly Backup to keep        : .4.
+# $SADM_MONTHLY_BACKUP_TO_KEEP     Nb. of Monthly Backup to keep       : .4.
+# $SADM_YEARLY_BACKUP_TO_KEEP      Nb. of Yearly Backup to keep        : .2.
 # $SADM_WEEKLY_BACKUP_DAY          Weekly Backup Day (1=Mon,...,7=Sun) : .5.
 # $SADM_MONTHLY_BACKUP_DATE        Monthly Backup Date (1-28)          : .1.
 # $SADM_YEARLY_BACKUP_MONTH        Month to take Yearly Backup (1-12)  : .12.
@@ -183,6 +187,7 @@ show_version()
 #===================================================================================================
 backup_setup()
 {
+    sadm_writelog " "                                                   # Insert Blank LIne in Log
     sadm_writelog "----------"                                          # Insert Sperator Dash Line
     sadm_writelog "Setup Backup Environment ..."                        # Advise User were Starting
 
@@ -377,33 +382,32 @@ backup_setup()
 
 
     # Make Sure backup file list exist.
-    if [ ! -f "$CFG_BACKUP_FILE" ]
-        then if [ -f "$CFG_BACKUP_INIT" ]                               # If Def. Backup List Exist
-                then sadm_writelog "Backup File List ($CFG_BACKUP_FILE) doesn't exist."
-                     sadm_writelog "Using Default Backup List ($CFG_BACKUP_INIT) file."
-                     cp $CFG_BACKUP_INIT $CFG_BACKUP_FILE >>$SADM_LOG 2>&1
-                else sadm_writelog "No Backup List File ($CFG_BACKUP_FILE) or Default ($CFG_BACKUP_INIT)"
+    if [ ! -f "$SADM_BACKUP_LIST" ]
+        then if [ -f "$SADM_BACKUP_LIST_INIT" ]                         # If Def. Backup List Exist
+                then sadm_writelog "Backup File List ($SADM_BACKUP_LIST) doesn't exist."
+                     sadm_writelog "Using Default Backup List ($SADM_BACKUP_LIST_INIT) file."
+                     cp $SADM_BACKUP_LIST_INIT $SADM_BACKUP_LIST >>$SADM_LOG 2>&1
+                else sadm_writelog "No Backup List File ($SADM_BACKUP_LIST) or Default ($SADM_BACKUP_LIST_INIT)"
                      sadm_writelog "Aborting Backup"
-                     sadm_writelog "Put Dir & files to backup in $CFG_BACKUP_FILE and retry"
+                     sadm_writelog "Put Dir & files to backup in $SADM_BACKUP_LIST and retry"
                      return 1                                           # Return Error to Caller
              fi
     fi
 
     # Make Sure backup exclude list file exist.
-    if [ ! -f "$CFG_EXCLUDE_LIST" ]
-        then if [ -f "$CFG_EXCLUDE_INIT" ]                              # If Def. Backup List Exist
-                then sadm_writelog "Backup Exclude List File ($CFG_EXCLUDE_LIST) doesn't exist."
-                     sadm_writelog "Using Default Backup Exclude List ($CFG_EXCLUDE_INIT) file."
-                     cp $CFG_EXCLUDE_INIT $CFG_EXCLUDE_LIST >>$SADM_LOG 2>&1
-                else sadm_writelog "No Backup Exclude list ($CFG_EXCLUDE_LIST) or Default ($CFG_EXCLUDE_INIT)"
+    if [ ! -f "$SADM_BACKUP_EXCLUDE" ]
+        then if [ -f "$SADM_BACKUP_EXCLUDE_INIT" ]                      # If Def. Backup List Exist
+                then sadm_writelog "Backup Exclude List File ($SADM_BACKUP_EXCLUDE) doesn't exist."
+                     sadm_writelog "Using Default Backup Exclude List ($SADM_BACKUP_EXCLUDE_INIT) file."
+                     cp $SADM_BACKUP_EXCLUDE_INIT $SADM_BACKUP_EXCLUDE >>$SADM_LOG 2>&1
+                else sadm_writelog "No Backup Exclude list ($SADM_BACKUP_EXCLUDE) or Default ($SADM_BACKUP_EXCLUDE_INIT)"
                      sadm_writelog "Aborting Backup"
-                     sadm_writelog "Put Dir & files to exclude in $CFG_EXCLUDE_LIST and retry"
+                     sadm_writelog "Put Dir & files to exclude in $SADM_BACKUP_EXCLUDE and retry"
                      return 1                                           # Return Error to Caller
              fi
     fi
 
     # Show Backup Preferences
-    sadm_writelog " "
     sadm_writelog "You have chosen to : "
     if [ "$COMPRESS" = 'ON' ]
         then sadm_writelog " - Compress the backup file"
@@ -417,8 +421,8 @@ backup_setup()
     sadm_writelog " - Do the monthy backup on the $SADM_MONTHLY_BACKUP_DATE of every month"
     sadm_writelog " - Do the yearly backup on the $SADM_YEARLY_BACKUP_DATE of ${MTH_NAME[$SADM_YEARLY_BACKUP_MONTH]} every year"
     sadm_writelog " - Backup Directory is ${BACKUP_DIR}"
-    sadm_writelog " - Using Backup list file $CFG_BACKUP_FILE"
-    sadm_writelog " - Using Backup exclude list file $CFG_EXCLUDE_LIST"
+    sadm_writelog " - Using Backup list file $SADM_BACKUP_LIST"
+    sadm_writelog " - Using Backup exclude list file $SADM_BACKUP_EXCLUDE"
     return 0
 }
 
@@ -429,22 +433,24 @@ backup_setup()
 create_backup()
 {
     sadm_writelog " "                                                   # Blank Line in Log
-    sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 80 Equal Char.
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 10 Equal Char.
     sadm_writelog "Starting the Backup Process"                         # Advise Backup Process Begin
-    sadm_writelog " "                                                   # Blank Line
+    #sadm_writelog " "                                                   # Blank Line
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
     TOTAL_ERROR=0                                                       # Make Sure Variable is at 0
 
     while read backup_line                                              # Loop Until EOF Backup List
         do
         FC=`echo $backup_line | cut -c1`                                # Get First Char. of Line
-        if [ "$FC" = "#" ] || [ ${#backup_line} -eq 0 ] ; then continue ; fi  # Skip Comment/Blk Line
+        backup_line=`echo $backup_line | tr -d '\r'`                    # Remove EndOfLine CR if any 
+        if [ "$FC" = "#" ] || [ ${#backup_line} -eq 0 ]                 # Line begin with # or Empty
+            then continue                                               # Skip, Go read Next Line
+        fi  
 
-        #
         # Check if File or Directory to Backup and if they Exist
         sadm_writelog "${SADM_TEN_DASH}"                                # Line of 10 Dash in Log
-        if [ -d ${backup_line} ]                                        # Dir. To Backup Exist
-            then sadm_writelog "Directory to Backup : ${backup_line}"   # Print Current File
+        if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
+            then sadm_writelog "Directory to Backup  : ${backup_line}"   # Current Processing Line
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
                     then sadm_writelog "File to Backup : $backup_line"  # Print Current File
                         else MESS="[SKIPPING] $backup_line doesn't exist on $(sadm_get_fqdn)"
@@ -474,7 +480,7 @@ create_backup()
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then cd $backup_line                                         # Ok then Change Dir into it
-                sadm_writelog "Current directory is `pwd`"              # Print Current Dir.
+                sadm_writelog "Current directory is : `pwd`"            # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
@@ -484,7 +490,7 @@ create_backup()
                         then continue                                   # Blank or Comment = NxtLine
                     fi
                     echo "$excl_line" >> /tmp/exclude                   # Add Line to Exclude List
-                    done < $CFG_EXCLUDE_LIST                            # Read Backup Exclude File
+                    done < $SADM_BACKUP_EXCLUDE                            # Read Backup Exclude File
                 if [ $DEBUG_LEVEL -gt 0 ]                               # If Debug Show Exclude List
                     then sadm_writelog "Content of exclude file"        # Show User what's coming
                          cat /tmp/exclude| while read ln ;do sadm_writelog "$ln" ;done # Show Excl.
@@ -511,19 +517,19 @@ create_backup()
                  sadm_writelog "$MESS"                                  # Advise User - Log Info
                  RC=0                                                   # Make Sure Return Code is 0
         fi
-        sadm_writelog " "                                               # Blank Line in Log
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
 
         # Create link to backup in the server latest directory
         cd ${LATEST_DIR}
-        sadm_writelog "Current directory is `pwd`"             # Print Current Dir.
-        sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"
-        ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1
-        if [ $? -ne 0 ]                                                 # If Error trying to mount
+        sadm_writelog "Current directory is : `pwd`"                    # Print Current Dir.
+        sadm_writelog "Create Link to latest backup of ${backup_line}"  # Show User what were doing
+        sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"     # Show Command we'll execute
+        ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
+        if [ $? -ne 0 ]                                                 # If Error trying to link
             then sadm_writelog "[ERROR] Creating Link Backup in latest Directory"
         fi
         rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
-        done < $CFG_BACKUP_FILE                                         # For Loop Read Backup List
+        done < $SADM_BACKUP_LIST                                         # For Loop Read Backup List
 
 
     # End of Backup
@@ -543,7 +549,7 @@ clean_backup_dir()
     TOTAL_ERROR=0                                                       # Reset Total of error
     sadm_writelog " "                                                   # Blank Line in Log
     sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 10 Equal Char.
-    sadm_writelog "Applying chosen policy to ${ARCHIVE_DIR} directory"  # Msg to user
+    sadm_writelog "Applying chosen retention policy to ${ARCHIVE_DIR} directory"  # Msg to user
     CUR_PWD=`pwd`                                                       # Save Current Working Dir.
 
     # Enter Server Backup Directory
@@ -611,11 +617,13 @@ mount_nfs()
 umount_nfs()
 {
     sadm_writelog " "                                                   # Blank Line
+    sadm_writelog "${SADM_TEN_DASH}"                                    # Line of 10 Equal Char.
     sadm_writelog "Unmounting NFS mount directory $LOCAL_MOUNT"         # Advise user we umount
     umount $LOCAL_MOUNT >> $SADM_LOG 2>&1                               # Umount Just to make sure
     if [ $? -ne 0 ]                                                     # If Error trying to mount
         then sadm_writelog "[ERROR] Umounting NFS Dir. $LOCAL_MOUNT"    # Error - Advise User
              return 1                                                   # End Function with error
+        else sadm_writelog "[SUCCESS] Umounting NFS Dir. $LOCAL_MOUNT"  # Succeeded to Unmount NFS
     fi
     return 0
 }
