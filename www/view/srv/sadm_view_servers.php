@@ -26,8 +26,9 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-#@ 2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
-
+#  2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
+#@ 2018_12_15   v2.2 Show Server memory, number of CPU and cpu Speed on home page.
+#@ 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -35,12 +36,12 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 
-# DataTable Initialisation Function
+# DataTable Initialization Function
 ?>
 <script>
     $(document).ready(function() {
         $('#sadmTable').DataTable( {
-            "lengthMenu": [[12, 25, 50, 100, -1], [12, 25, 50, 100, "All"]],
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "bJQueryUI" : true,
             "paging"    : true,
             "ordering"  : true,
@@ -55,16 +56,17 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$WVER  = "2.1" ;                                                        # Current version number
-$URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
-$URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
-$URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
-$URL_HOME   = '/index.php';                                             # Site Main Page
-$URL_SERVER = '/view/srv/sadm_view_servers.php';                        # View Servers List
-$URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
-$CREATE_BUTTON = False ;                                                # Yes Display Create Button
+$DEBUG          = False ;                                               # Debug Activated True/False
+$WVER           = "2.3" ;                                               # Current version number
+$URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
+$URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
+$URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
+$URL_MAIN       = '/crud/srv/sadm_server_main.php';                     # Maintenance Main Page URL
+$URL_HOME       = '/index.php';                                         # Site Main Page
+$URL_SERVER     = '/view/srv/sadm_view_servers.php';                    # View Servers List
+$URL_HOST_INFO  = '/view/srv/sadm_view_server_info.php';                # Display Host Info URL
+$URL_PERF       = '/view/perf/sadm_server_perf.php';                    # Servers Perf Graph
+$CREATE_BUTTON  = False ;                                               # Yes Display Create Button
 
 
 
@@ -77,23 +79,21 @@ function setup_table() {
     
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" compact row-border wrap width="95%">';   
+    echo '<table id="sadmTable" class="display" compact row-border no-wrap width="95%">';   
     
     # PAGE TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
     echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
-    #echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
-    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
-    echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
+    echo "\n<th class='dt-head-left'>O/S Ver.</th>";                    # Left Align Header Only
+    echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
+    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
     echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    #echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    #echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
+    echo "\n<th class='dt-head-center'>Perf</th>";                      # Center Header & Body
     echo "\n</tr>";
     echo "\n</thead>\n";
     
@@ -102,16 +102,14 @@ function setup_table() {
     echo "\n<tr>";
     echo "\n<th class='dt-head-left'>Name</th>";                        # Left Align Header & Body
     echo "\n<th class='dt-head-left'>Description</th>";                 # Left Header Only
-    #echo "\n<th class='dt-head-center'>Alert</th>";                     # Center Header Only
-    echo "\n<th class='dt-head-center'>O/S</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Ver</th>";                       # Center Header Only
-    echo "\n<th class='dt-head-center'>Cat</th>";                       # Center Header & Body
-    echo "\n<th class='dt-head-center'>Group</th>";                     # Center Header & Body
+    echo "\n<th class='dt-head-left'>O/S Ver.</th>";                    # Left Align Header Only
+    echo "\n<th class='dt-head-left'>Cat.</th>";                        # Left Align Cat
+    echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
+    echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
     echo "\n<th class='dt-head-center'>Status</th>";                    # Center Header & Body
     echo "\n<th class='dt-head-center'>Sporadic</th>";                  # Center Header & Body
     echo "\n<th class='dt-head-center'>VM</th>";                        # Center Header & Body
-    #echo "\n<th class='dt-head-center'>Memory</th>";                    # Center Header & Body
-    #echo "\n<th class='dt-head-center'>CPU</th>";                       # Center Header & Body
+    echo "\n<th class='dt-head-center'>Perf</th>";                      # Center Header & Body
     echo "\n</tr>";
     echo "\n</tfoot>\n";
 }
@@ -121,10 +119,15 @@ function setup_table() {
 #===================================================================================================
 #                               DISPLAY ROW DATE RECEIVED ON ONE LINE        
 #===================================================================================================
-function display_data($con,$row) {
-    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER ;
+function display_data($count,$con,$row) {
+    global $URL_UPDATE, $URL_DELETE, $URL_HOST_INFO, $URL_SERVER, $URL_PERF ;
 
     echo "\n<tr>";
+
+    # Line Counter
+    # echo "\n<td class='dt-left'>"    . $count   . "</td>";              # Display Line Counter
+
+    # Server Name
     echo "\n<td class='dt-left'>" ;
     echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'];
     echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
@@ -134,23 +137,34 @@ function display_data($con,$row) {
     echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
 
     # Display Server Alert
-    #echo "\n<td class='dt-center'>" ."None". "</td>";                   # Display Server Alert
+    #echo "\n<td class='dt-center'>" ."None". "</td>";                  # Display Server Alert
     
-    # Display O/S Name
-    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=os";  
-    echo "&value=" . $row['srv_osname']  ."'>"  . $row['srv_osname'] . "</a></td>";
+    # Display O/S Name and O/S Version
+    $os_name_ver = $row['srv_osname'] . "</a> " . $row['srv_osversion'];
+    echo "\n<td class='dt-left'><a href='" . $URL_SERVER . "?selection=os";  
+    echo "&value=" . $row['srv_osname']  ."'>"  . $os_name_ver . "</td>";
     
-    # Display O/S Version
-    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
-    echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
+    // # Display O/S Name and O/S Version
+    // echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=os";  
+    // echo "&value=" . $row['srv_osname']  ."'>"  . $row['srv_osname'] . "</a></td>";
     
+    // # Display O/S Version
+    // echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=osv";  
+    // echo "&value=" . $row['srv_osversion']  ."'>"  . $row['srv_osversion'] . "</a></td>";
+
     # Display Server Category
-    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=cat";
+    echo "\n<td class='dt-left'><a href='" . $URL_SERVER . "?selection=cat";
     echo "&value=" . $row['srv_cat']  ."'>"  . $row['srv_cat'] . "</a></td>";
 
+    # Display Server Memory
+    echo "\n<td class='dt-center'>" . $row['srv_memory'] ." MB </td>";
+
+    # Display Server Number of CPU and Speed
+    echo "\n<td class='dt-center'>" . $row['srv_nb_cpu'] . " X " . $row['srv_cpu_speed'] ."Mhz</td>";
+
     # Display Server Group
-    echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";
-    echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a></td>";
+    #echo "\n<td class='dt-center'><a href='" . $URL_SERVER . "?selection=group";
+    #echo "&value=" . $row['srv_group']  ."'>"  . $row['srv_group'] . "</a></td>";
 
     # Display if server is Active or Inactive
     if ($row['srv_active'] == TRUE ) {                                  # Is Server Active
@@ -178,6 +192,17 @@ function display_data($con,$row) {
         echo "\n<td class='dt-center'>";
         echo "<a href='" .$URL_SERVER. "?selection=all_physical'>No</a></td>";
     }
+
+    # Show Performance Graph
+    if ($row['srv_graph'] == TRUE ) {                                   # If Show Perf. Active 
+        $RRD_FILE = SADM_WWW_RRD_DIR ."/".$row['srv_name']."/".$row['srv_name'].".rrd"; # Host RRD File
+        if (file_exists($RRD_FILE)) {
+            echo "\n<td class='dt-center'>";
+            echo "<a href='" .$URL_PERF. "?host=" .$row['srv_name']. "'>Graph</a></td>";
+        } else { echo "\n<td class='dt-center'>No Data</td>"; }
+    } else { echo "\n<td class='dt-center'>Not Act.</td>"; }                                                           
+    
+
 
     # Display Memory 
     #echo "\n<td class='dt-center'>" . $row['srv_memory'] . " MB</td>";     # Display Server Alert
@@ -280,9 +305,9 @@ function display_data($con,$row) {
     }
     if ($DEBUG) { echo "<br>SQL is " . $sql ; }                         # Under Debug Display Param.
     
-    # Perform the SQL Requested ANd Display Data
+    # Perform the SQL Requested And Display Data
     if ( ! $result=mysqli_query($con,$sql)) {                           # Execute SQL Select
-        $err_line = (__LINE__ -1) ;                                     # Error on preceeding line
+        $err_line = (__LINE__ -1) ;                                     # Error on preceding line
         $err_msg1 = "Server (" . $wkey . ") not found.\n";              # Row was not found Msg.
         $err_msg2 = strval(mysqli_errno($con)) . ") " ;                 # Insert Err No. in Message
         $err_msg3 = mysqli_error($con) . "\nAt line "  ;                # Insert Err Msg and Line No 
@@ -296,8 +321,9 @@ function display_data($con,$row) {
     echo "\n<tbody>\n";                                                 # Start of Table Body
 
     # LOOP THROUGH RETREIVED DATA AND DISPLAY EACH ROW
+    $count = 0 ;                                                        # Init server counter to 0
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
-        display_data($con,$row);                                        # Display Row Data
+        display_data(++$count,$con,$row);                               # Display Row Data
     }
 
     echo "\n</tbody>\n</table>\n";                                      # End of tbody,table
