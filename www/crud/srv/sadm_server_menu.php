@@ -24,7 +24,7 @@
 # ChangeLog
 #   2017_12_09 - Jacques Duplessis
 #       V1.0 Initial version - Server Edit Menu to Split Server Table Edition Add lot of comments in code and enhance code performance 
-#
+# 2019_01_11 Feature: v1.2 Add menu item for updating backup schedule,
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -71,20 +71,21 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #                                       Local Variables
 #===================================================================================================
 #
-$DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.0" ;                                                        # Current version number
-$URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
-$URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
-$URL_OSUPDATE = '/crud/srv/sadm_server_osupdate.php';                   # O/S Update Page URL
-$URL_HOME   = '/index.php';                                             # Site Main Page
-$CREATE_BUTTON = False ;                                                # Don't Show Create Button
+$DEBUG          = False ;                                               # Debug Activated True/False
+$SVER           = "1.2" ;                                               # Current version number
+$URL_MAIN       = '/crud/srv/sadm_server_main.php';                     # Maintenance Main Page URL
+$URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
+$URL_OSUPDATE   = '/crud/srv/sadm_server_osupdate.php';                 # O/S Update Page URL
+$URL_BACKUP     = '/crud/srv/sadm_server_backup.php';                   # O/S Update Page URL
+$URL_HOME       = '/index.php';                                         # Site Main Page
+$CREATE_BUTTON  = False ;                                               # Don't Show Create Button
 
 
 // ================================================================================================
 //                      DISPLAY SERVER UPDATE MENU 
 // ================================================================================================
 function display_menu($wkey) {
-    global $URL_UPDATE, $URL_OSUPDATE ;
+    global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP;
 
     echo "\n\n<div class='menu'>\n";                             # Start simple_menu
     
@@ -95,6 +96,9 @@ function display_menu($wkey) {
     echo "\n<p>";
     echo "\n<a href='" . $URL_OSUPDATE . "?sel=" . $wkey ;
     echo "'>- Edit O/S Update Schedule</a></p>";
+    echo "\n<p>";
+    echo "\n<a href='" . $URL_BACKUP . "?sel=" . $wkey ;
+    echo "'>- Edit Backup Schedule</a></p>";
     #echo "\n<br>";
     echo "\n</div>";                                                    # << End of menu_item
 
