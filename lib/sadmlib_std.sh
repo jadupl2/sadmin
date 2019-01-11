@@ -69,6 +69,7 @@
 #@2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
 #@2018_12_27 v2.57 If Startup and Shutdown scripts doesn't exist, create them from template.
 #@2018_12_29 v2.58 Default logging ([B]oth) is now set to screen and log.
+#@2019_01_11 Added: v2.59 Include definitions for backup & exclude list, avail to user.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -86,7 +87,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.58"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.59"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -137,13 +138,18 @@ SADM_ALERT_HIST="$SADM_CFG_DIR/alert_history.txt"           ; export SADM_ALERT_
 SADM_ALERT_HINI="$SADM_CFG_DIR/.alert_history.txt"          ; export SADM_ALERT_HINI # History Init
 SADM_ALERT_SEQ="$SADM_CFG_DIR/alert_history.seq"            ; export SADM_ALERT_SEQ  # History Seq#
 SADM_REL_FILE="$SADM_CFG_DIR/.release"                      ; export SADM_REL_FILE   # Release Ver.
-SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_SYS_STARTUP="$SADM_SYS_DIR/sadm_startup.sh"            ; export SADM_SYS_STARTUP # Startup File
 SADM_SYS_START="$SADM_SYS_DIR/.sadm_startup.sh"             ; export SADM_SYS_START  # Startup Template
 SADM_SYS_SHUTDOWN="$SADM_SYS_DIR/sadm_shutdown.sh"          ; export SADM_SYS_SHUTDOWN # Shutdown 
 SADM_SYS_SHUT="$SADM_SYS_DIR/.sadm_shutdown.sh"             ; export SADM_SYS_SHUT   # Shutdown Template
 SADM_CRON_FILE="$SADM_CFG_DIR/.sadm_osupdate"               ; export SADM_CRON_FILE  # Work crontab
 SADM_CRONTAB="/etc/cron.d/sadm_osupdate"                    ; export SADM_CRONTAB    # Final crontab
+SADM_BACKUP_NEWCRON="$SADM_CFG_DIR/.sadm_backup"            ; export SADM_BACKUP_NEWCRON # Tmp Cron
+SADM_BACKUP_CRONTAB="/etc/cron.d/sadm_backup"               ; export SADM_BACKUP_CRONTAB # Act Cron
+SADM_BACKUP_LIST="$SADM_CFG_DIR/backup_list.txt"            ; export SADM_BACKUP_LIST
+SADM_BACKUP_LIST_INIT="$SADM_CFG_DIR/.backup_list.txt"      ; export SADM_BACKUP_LIST_INIT
+SADM_BACKUP_EXCLUDE="$SADM_CFG_DIR/backup_exclude.txt"      ; export SADM_BACKUP_EXCLUDE
+SADM_BACKUP_EXCLUDE_INIT="$SADM_CFG_DIR/.backup_exclude.txt" ;export SADM_BACKUP_EXCLUDE_INIT
 SADM_CFG_HIDDEN="$SADM_CFG_DIR/.sadmin.cfg"                 ; export SADM_CFG_HIDDEN # Cfg file name
 SADM_TMP_FILE1="${SADM_TMP_DIR}/${SADM_INST}_1.$$"          ; export SADM_TMP_FILE1  # Temp File 1
 SADM_TMP_FILE2="${SADM_TMP_DIR}/${SADM_INST}_2.$$"          ; export SADM_TMP_FILE2  # Temp File 2
@@ -258,7 +264,7 @@ sadm_isnumeric() {
 sadm_writelog() {
     SADM_SMSG="$@"                                                      # Screen Mess no Date/Time
     SADM_LMSG="$(date "+%C%y.%m.%d %H:%M:%S") $@"                       # Log Message with Date/Time
-    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi
+    if [ "$SADM_LOG_TYPE" = "" ] ; then SADM_LOG_TYPE="B" ; fi          # Log Type Default is Both
     case "$SADM_LOG_TYPE" in                                            # Depending of LOG_TYPE
         s|S) printf "%-s\n" "$SADM_SMSG"                                # Write Msg To Screen
              ;;
