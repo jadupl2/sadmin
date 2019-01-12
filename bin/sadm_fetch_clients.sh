@@ -40,6 +40,7 @@
 #@2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
 #@2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
 #@2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
+#@2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -76,7 +77,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.28'                              # Current Script Version
+    export SADM_VER='2.29'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -450,6 +451,8 @@ rsync_function()
 }
 
 
+
+
 # --------------------------------------------------------------------------------------------------
 #                      Process servers O/S selected by parameter received (aix/linux)
 # --------------------------------------------------------------------------------------------------
@@ -641,15 +644,48 @@ process_servers()
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
 
+        
         # MAKE SURE CFG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
-        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # Local Receiving Dir.
-        RDIR="${server_dir}/cfg"                                        # Remote log Directory
+        LDIR="${SADM_WWW_DAT_DIR}/${server_name}/cfg"                   # cfg Local Receiving Dir.
+        RDIR="${server_dir}/cfg"                                        # Remote cfg Directory
+        
+        # Check if server backup list was modified (if backup_list_tmp exist) and update actual.
+        if [ -r "$LDIR/backup_list.tmp" ]                               # If backup list was modify
+           then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
+                   then rsync $LDIR/backup_list.tmp ${server_name}:$RDIR/backup_list.txt # Rem.Rsync
+                   else rsync $LDIR/backup_list.tmp $SADM_CFG_DIR/backup_list.txt  # Local Rsync 
+                fi
+                RC=$?                                                   # Save Command Return Code
+                if [ $RC -eq 0 ]                                        # If copy to client Worked
+                    then sadm_writelog "[OK] Modified Backup list updated on ${server_name}"
+                         rm -f $LDIR/backup_list.tmp                    # Remove modified Local copy
+                    else sadm_writelog "[ERROR] Syncing backup list with ${server_name}"
+                fi
+        fi
+
+        # Check if backup exclude list was modified (if backup_list_tmp exist) & update actual
+        if [ -r "$LDIR/backup_exclude.tmp" ]                            # Backup Exclude list modify
+           then if [ "$fqdn_server" != "$SADM_SERVER" ]                 # If Not on SADMIN Server
+                   then rsync $LDIR/backup_exclude.tmp ${server_name}:$RDIR/backup_exclude.txt # Rem.Rsync
+                   else rsync $LDIR/backup_exclude.tmp $SADM_CFG_DIR/backup_exclude.txt  # Local Rsync 
+                fi
+                RC=$?                                                   # Save Command Return Code
+                if [ $RC -eq 0 ]                                        # If copy to client Worked
+                    then sadm_writelog "[OK] Modified Backup Exclude list updated on ${server_name}"
+                         rm -f $LDIR/backup_exclude.tmp                 # Remove modified Local copy
+                    else sadm_writelog "[ERROR] Syncing Backup Exclude list with ${server_name}"
+                fi
+        fi
+
+        # Rsync the $SADMIN/cfg Directory - Get Server cfg Dir. and update local cfg directory.
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Try SSH 
             then rsync_function "${fqdn_server}:${RDIR}/" "${LDIR}/"    # Remote to Local rsync
             else rsync_function "${RDIR}/" "${LDIR}/"                   # Local Rsync if on Master
         fi
         if [ $RC -ne 0 ] ; then ERROR_COUNT=$(($ERROR_COUNT+1)) ; fi    # rsync error, Incr Err Cntr
+        chown -R $SADM_WWW_USER:$SADM_WWW_GROUP ${SADM_WWW_DAT_DIR}/${server_name}                                   # Files in Dir. Modifiable
 
+        
         # MAKE SURE LOG RECEIVING DIRECTORY EXIST ON THIS SERVER & RSYNC
         LDIR="${SADM_WWW_DAT_DIR}/${server_name}/log"                   # Local Receiving Dir.
         RDIR="${server_dir}/log"                                        # Remote log Directory
