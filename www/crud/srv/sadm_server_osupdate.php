@@ -174,7 +174,7 @@ function display_osschedule($con,$wrow,$mode) {
     # srv_update_month Char Array will contain 'Y' if month is choosen and 'N' if not.
     # ----------------------------------------------------------------------------------------------
     echo "\n\n<div class='osupdate_label'>Month(s) to run the O/S Update</div>";
-    $mth_name = array('Every Months','January','February','March','April','May','June','July','August',
+    $mth_name = array('Any Months','January','February','March','April','May','June','July','August',
                 'September','October','November','December');
     echo "\n<div class='osupdate_input'>";
     echo "<select name='scr_update_month[]' multiple='multiple' size=6>";
@@ -214,7 +214,7 @@ function display_osschedule($con,$wrow,$mode) {
                         if (substr($wrow['srv_update_dom'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo ">" . sprintf("%02d",$i);
-                        if ($i == 0) { echo " To run on every date" ;}
+                        if ($i == 0) { echo " To run on any date of the month" ;}
                         if ($i == 1) { echo " To run on 1st of the month" ;}
                         if ($i == 2) { echo " To run on 2nd of the month" ;}
                         if ($i == 3) { echo " To run on 3rd of the month" ;}
@@ -248,7 +248,7 @@ function display_osschedule($con,$wrow,$mode) {
                         if (substr($wrow['srv_update_dow'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo "/>" . $days[$i];
-                        if ($i == 0) { echo "  (To run every day of the week)" ;} 
+                        if ($i == 0) { echo "  (To run any day of the week)" ;} 
                         echo "</option>";
                     }
                     break;
