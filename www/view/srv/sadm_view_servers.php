@@ -29,6 +29,7 @@
 #  2018_08_10   v2.1 Remove Alert field on page - Not yet ready for release
 #@ 2018_12_15   v2.2 Show Server memory, number of CPU and cpu Speed on home page.
 #@ 2019_01_06 Feature: v2.3 Add link to see Performance Graph of yesterday.
+#@ 2019_01_14 Feature: v2.4 See Server Model and Serial No. when mouse over server name.
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -57,7 +58,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG          = False ;                                               # Debug Activated True/False
-$WVER           = "2.3" ;                                               # Current version number
+$WVER           = "2.4" ;                                               # Current version number
 $URL_CREATE     = '/crud/srv/sadm_server_create.php';                   # Create Page URL
 $URL_UPDATE     = '/crud/srv/sadm_server_update.php';                   # Update Page URL
 $URL_DELETE     = '/crud/srv/sadm_server_delete.php';                   # Delete Page URL
