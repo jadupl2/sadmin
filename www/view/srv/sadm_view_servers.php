@@ -130,9 +130,14 @@ function display_data($count,$con,$row) {
     # Server Name
     echo "\n<td class='dt-left'>" ;
     echo "<a href='" . $URL_HOST_INFO . "?host=" . $row['srv_name'];
-    echo "' data-toggle='tooltip' title='" . $row['srv_desc'] . " - ";
-    echo $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
-         
+    echo "' data-toggle='tooltip' title='";
+    if ($row['srv_model']  != "") { echo "Model "  . $row['srv_model']  . " - " ;} 
+    if ($row['srv_serial'] != "") { echo "Serial " . $row['srv_serial'] . " - " ;} 
+    echo "IP " . $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
+
+    #echo "' data-toggle='tooltip' title='Model " . $row['srv_model'] . " - Serial ";
+    #echo $row['srv_serial'] . " - IP " . $row['srv_ip'] ."'>" .$row['srv_name']. "</a></td>";
+
     # Display Server Desc.
     echo "\n<td class='dt-left'>"    . $row['srv_desc']   . "</td>";    # Display Description
 

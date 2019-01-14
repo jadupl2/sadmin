@@ -35,41 +35,26 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
 <style media="screen" type="text/css">
 .backup_page {
+    background-color:   #fff5c3;
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   98%;
-    /* height          :   800px; */
-    text-align      :   left;
     color           :   black;
-    background-color:   #fff5c3;
+    width           :   98%;
+    text-align      :   left;
     /* margin-left     :   15px;
     margin-right    :   auto; */
-    border          :   2px solid #000000;
-    border-width    :   1px;
-    border-style    :   solid;
-    border-color    :   #000000;
-    border-radius   :   10px;
+    border       : 2px solid #000000;   border-width : 1px;     border-style : solid;   
+    border-color : #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
 .backup_left_side   { width : 47%;  float : left;   margin : 10px 0px 10px 10px;    }
 .backup_right_side  { width : 47%;  float : right;  margin : 5px 30px 10px 0px;     }
 
-/* Attribute for Column Name at the left of the form */
-.left_label {
-    float           :   left;
-    width           :   45%;
-    /* background-color:   Yellow;  */
-    font-weight     :   bold;    
+/* Attribute for Label Column Name at the left of each side of the form */
+.left_label         { float : left; width : 45%;    font-weight : bold; }
+.right_label        { float : left; width : 85%;    font-weight : bold; }
 
-}
-/* Attribute for Column Name at the right of the form */
-.right_label {
-    float           :   left;
-    width           :   85%;
-    /* background-color:   green;  */
-    font-weight     :   bold;    
 
-}
 /* Attribute for column Input at the right of the screen in the form */
 .left_input {
     margin-bottom   :   4px;
