@@ -443,6 +443,7 @@ create_backup()
         do
         FC=`echo $backup_line | cut -c1`                                # Get First Char. of Line
         backup_line=`echo $backup_line | tr -d '\r'`                    # Remove EndOfLine CR if any 
+        backup_line=`echo $backup_line | sed 's/[[:blank:]]*$//'`       # Remove Blank & Tab if any 
         if [ "$FC" = "#" ] || [ ${#backup_line} -eq 0 ]                 # Line begin with # or Empty
             then continue                                               # Skip, Go read Next Line
         fi  
@@ -450,10 +451,10 @@ create_backup()
         # Check if File or Directory to Backup and if they Exist
         sadm_writelog "${SADM_TEN_DASH}"                                # Line of 10 Dash in Log
         if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
-            then sadm_writelog "Directory to Backup  : ${backup_line}"   # Current Processing Line
+            then sadm_writelog "Directory to Backup : [${backup_line}]" # Current Processing Line
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
                     then sadm_writelog "File to Backup : $backup_line"  # Print Current File
-                        else MESS="[SKIPPING] $backup_line doesn't exist on $(sadm_get_fqdn)"
+                        else MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
                              sadm_writelog "$MESS"                      # Advise User - Log Info
                              continue                                   # Go Read Nxt Line to backup
                     fi
@@ -480,7 +481,7 @@ create_backup()
         # Backup Directory
         if [ -d ${backup_line} ]                                        # Dir to Backup Exist ?
            then cd $backup_line                                         # Ok then Change Dir into it
-                sadm_writelog "Current directory is : `pwd`"            # Print Current Dir.
+                sadm_writelog "Current directory is: [`pwd`]"           # Print Current Dir.
                 # Build Backup Exclude list
                 find . -type s -print > /tmp/exclude                    # Put all Sockets in exclude
                 while read excl_line                                    # Loop Until EOF Excl. File
