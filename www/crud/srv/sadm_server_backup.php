@@ -54,7 +54,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 .left_label         { float : left; width : 45%;    font-weight : bold; }
 .right_label        { float : left; width : 85%;    font-weight : bold; }
 
-
+ 
 /* Attribute for column Input at the right of the screen in the form */
 .left_input {
     margin-bottom   :   4px;
