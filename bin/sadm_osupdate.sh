@@ -26,7 +26,8 @@
 # 2018_06_10    v3.7 Switch back to old name 
 # 2018_07_11    v3.8 Code cleanup
 # 2018_09_19    v3.9 Include Alert Group 
-#@2018_10_24    v3.10 Command line option -d -r -h -v added.
+# 2018_10_24    v3.10 Command line option -d -r -h -v added.
+#@2019_01_16 Improvement: sadm_os_update.sh v3.11 Add 'apt-get autoremove' when 'deb' package is use.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -50,7 +51,7 @@
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.9'                               # Current Script Version
+    export SADM_VER='3.11'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -284,14 +285,16 @@ run_apt_get()
 {
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Starting $(sadm_get_osname) update process ..."
+    
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
+        sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' upgrade"
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
        then sadm_writelog "Return Code of \"apt-get -y upgrade\" is $RC"
             return $RC
     fi
+    
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade"
     apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade >>$SADM_LOG 2>&1
@@ -300,8 +303,18 @@ run_apt_get()
         then sadm_writelog "Return Code of \"apt-get -y dist-upgrade\" is $RC"
              return $RC
     fi
+    
     sadm_writelog "${SADM_TEN_DASH}"
-    sadm_writelog "Success execution of apt-get upgrade & apt-get dist-upgrade"
+    sadm_writelog "Running : apt-get autoremove"
+    apt-get autoremove >>$SADM_LOG 2>&1
+    RC=$?
+    if [ "$RC" -ne 0 ]
+        then sadm_writelog "Return Code of \"apt-get autoremove\" is $RC"
+             return $RC
+    fi
+    
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog "Success execution of apt-get upgrade & apt-get dist-upgrade & apt-get autoremove"
     return 0
 }
 
@@ -358,7 +371,7 @@ run_apt_get()
 
 
     UPDATE_AVAILABLE=0                                                  # Assume No Upd. Available
-    check_available_update                                              # Check if Update is Avail.
+    check_available_update                                              # Update Avail./apt-get upd
     RC=$?                                                               # 0=UpdAvail 1=NoUpd 2=Error
     if [ "$RC" -eq 0 ]                                                  # If Update are Available
        then UPDATE_AVAILABLE=1                                          # Set Upd to be done Flag ON
