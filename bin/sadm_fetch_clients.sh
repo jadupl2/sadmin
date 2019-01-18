@@ -41,6 +41,7 @@
 #@2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
 #@2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
 #@2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
+#@2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -77,7 +78,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.29'                              # Current Script Version
+    export SADM_VER='2.30'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -111,8 +112,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 # Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
-cscript="${SADM_BIN_DIR}/sadm_osupdate_farm.sh" ; export cscript        # OSUpdate Script in crontab
-bscript="${SADM_BIN_DIR}/sadm_backup.sh"        ; export bscript        # Backup Script in crontab
+OS_SCRIPT="${SADM_BIN_DIR}/sadm_osupdate_farm.sh"; export OS_SCRIPT     # OSUpdate Script in crontab
+BA_SCRIPT="${SADM_BIN_DIR}/sadm_backup.sh"      ; export BA_SCRIPT      # Backup Script in crontab
 REBOOT_SEC=900                                  ; export REBOOT_SEC     # O/S Upd Reboot Nb Sec.wait
 
 
@@ -396,10 +397,7 @@ update_backup_crontab ()
     # Add User, script name and script parameter to crontab line -----------------------------------
     # SCRIPT WILL RUN ONLY IF LOCATED IN $SADMIN/BIN 
     # $SADM_TMP_DIR
-    #cline="$cline root $cscript -s $cserver >/dev/null 2>&1";   
-    #cline="$cline $SADM_USER sudo $cscript -s $cserver >/dev/null 2>&1";   
-    cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$bscript\" >/dev/null 2>&1";   
-    #cline="$cline root $cscript -s $cserver > ${SADM_TMP_DIR}/sadm_osupdate_${cserver}.log 2>&1";   
+    cline="$cline $SADM_USER sudo $SADM_SSH_CMD $cserver \"$cscript\" >/dev/null 2>&1";   
     if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "cline=.$cline.";fi  # Show Cron Line Now
 
     echo "$cline" >> $SADM_BACKUP_NEWCRON                               # Output Line to Crontab cfg
@@ -569,14 +567,14 @@ process_servers()
                 continue                                                # skip this server
         fi
 
-        # Generate Crontab Entry for this server in O/S Update crontab work file
+        # On Linux & AutoUpdate is ON, Generate Crontab for server in O/S Update crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ "$db_updauto" -eq 1 ]          # If O/S Update Scheduled
-            then update_osupdate_crontab "$server_name" "$cscript" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
+            then update_osupdate_crontab "$server_name" "$OS_SCRIPT" "$db_updmin" "$db_updhrs" "$db_updmth" "$db_upddom" "$db_upddow"
         fi
 
         # Generate Crontab Entry for this server in Backup crontab work file
         if [ "$WOSTYPE" = "linux" ] && [ $backup_auto -eq 1 ]          # If Backup set to Yes 
-            then update_backup_crontab "$server_name" "$bscript" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
+            then update_backup_crontab "$server_name" "$BA_SCRIPT" "$backup_min" "$backup_hrs" "$backup_mth" "$backup_dom" "$backup_dow"
         fi
                 
         # Test to prevent false Alert when the server is rebooting after a O/S Update.
