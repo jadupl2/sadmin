@@ -26,7 +26,7 @@
 #   Version 2.0 - October 2017 
 #       - Replace PostGres Database with MySQL 
 #       - Web Interface changed for ease of maintenance and can concentrate on other things
-# 2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
+#@2019_01_11 Added: v2.1 Add Model and Serial No. in bubble while on server name.
 #
 # ==================================================================================================
 require_once      ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');      # Load sadmin.cfg & Set Env.
@@ -88,7 +88,7 @@ function setup_table() {
     echo "\n<thead>";
     echo "\n<tr>";
     #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th>Name</th>";                                # Left Align Header & Body
+    echo "\n<th dt-center>Name</th>";                                # Left Align Header & Body
     echo "\n<th>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th>Description</th>";                       # Center Header Only
     echo "\n<th dt-center>Cat</th>";                                    # Center Header & Body
@@ -105,7 +105,7 @@ function setup_table() {
     echo "\n<tfoot>";
     echo "\n<tr>";
     #echo "\n<th dt-head-left>Name</th>";                                # Left Align Header & Body
-    echo "\n<th>Name</th>";                                # Left Align Header & Body
+    echo "\n<th dt-center>Name</th>";                                # Left Align Header & Body
     #echo "\n<th dt-head-left>Alert</th>";                              # Left Align Header & Body
     echo "\n<th dt-head-left>O/S</th>";                                 # Left Align Header & Body
     echo "\n<th dt-head-center>Description</th>";                       # Center Header Only
