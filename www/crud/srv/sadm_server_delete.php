@@ -10,6 +10,10 @@
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
+# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+#        You will have a better experience, if you set screen width to have at least 100 Characters.
+# 
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
@@ -22,13 +26,11 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2017_03_09 - Jacques Duplessis
-#       V1.8 Add lot of comments in code and enhance code performance 
-#   2017_11_15 - Jacques Duplessis
-#       V2.0 Restructure and modify to used to new web interface and MySQL Database.
+# 2017_03_09 Documentation: sadm_server_delete.php v1.8 Comments code and enhance code performance.
+# 2017_11_15 Improve: sadm_server_delete.php v2.0 Restructure & modify web interface & MySQL DB.
+#@2019_01_15 New: sadm_server_delete.php v2.1 Option to create server data archive before delete.
 #
 # ==================================================================================================
-#
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
@@ -36,99 +38,68 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Heading & SideBar
 require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 
-
 #===================================================================================================
 #                                       Local Variables
 #===================================================================================================
-#
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_main.php';                         # Maintenance Main Page URL
+$URL_DEL    = '/crud/srv/sadm_server_delete_action.php';                # Confirm Delete Server Page
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
 
-
-
-# ==================================================================================================
-# SECOND EXECUTION OF PAGE AFTER THE UPDATE BUTTON IS PRESS
-# ==================================================================================================
-    # Form is submitted - Process the Update of the selected row
-    if (isset($_POST['submitted'])) {
-        if ($DEBUG) { echo "<br>Submitted for " . $_POST['scr_code'];}  # Debug Info Start Submit
-        foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
-
-        # Ok no server is using this server - Construct SQL to Delete selected row
-        $sql = "DELETE FROM server ";                                   # Construct SQL Statement 
-        $sql = $sql . "WHERE srv_name = '".$_POST['scr_name'] . "'; ";  # Construct SQL Statement 
-        if ($DEBUG) { echo "<br>Delete SQL Command = $sql"; }           # In Debug display SQL Stat.
-
-        # Execute the Row Update SQL
-        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute Update Row SQL
-            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
-            $err_msg1 = "Row wasn't deleted\nError (";                  # Advise User Message 
-            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
-            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
-            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
-            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
-        }else{                                                          # Update done with success
-            #$err_msg = "Group '" . $_POST['scr_code'] ."' updated"; # Advise user of success Msg
-            #sadm_alert ($err_msg) ;                                    # Msg. Error Box for User
-        }
-
-        # Back to the List Page
-        ?> <script>location.replace("/crud/srv/sadm_server_main.php");</script><?php
-        exit;
-    }
-    
  
-# ==================================================================================================
-# INITIAL PAGE EXECUTION - DISPLAY FORM WITH CORRESPONDING ROW DATA
-# ==================================================================================================
+#===================================================================================================
+# EXECUTION START HERE - DISPLAY FORM WITH CORRESPONDING ROW DATA
+#===================================================================================================
 
     # CHECK IF THE KEY RECEIVED EXIST IN THE DATABASE AND RETRIEVE THE ROW DATA
     if ($DEBUG) { echo "<br>Post isn't Submitted"; }                    # Display Debug Information    
     if ((isset($_GET['sel'])) and ($_GET['sel'] != ""))  {              # If Key Rcv and not Blank   
         $wkey = $_GET['sel'];                                           # Save Key Rcv to Work Key
         if ($DEBUG) { echo "<br>Key received is '" . $wkey ."'"; }      # Under Debug Show Key Rcv.
-        $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'";  
-        if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Display SQL Stat.   
-        if ( ! $result=mysqli_query($con,$sql)) {                       # Execute SQL Select
-            $err_line = (__LINE__ -1) ;                                 # Error on preceeding line
-            $err_msg1 = "Group (" . $wkey . ") not found.\n";           # Row was not found Msg.
-            $err_msg2 = strval(mysqli_errno($con)) . ") " ;             # Insert Err No. in Message
-            $err_msg3 = mysqli_error($con) . "\nAt line "  ;            # Insert Err Msg and Line No 
-            $err_msg4 = $err_line . " in " . basename(__FILE__);        # Insert Filename in Mess.
-            sadm_alert ($err_msg1 . $err_msg2 . $err_msg3 . $err_msg4); # Display Msg. Box for User
-            exit;                                                       # Exit - Should not occurs
-        }else{                                                          # If row was found
-            $row = mysqli_fetch_assoc($result);                         # Read the Associated row
+        $sql = "SELECT * FROM server WHERE srv_name = '" . $wkey . "'"; # SQL to Read Server Rcv Row
+        if ($DEBUG) { echo "<br>SQL = $sql"; }                          # In Debug Show SQL Command
+        $KeyExist=False;                                                # Assume Key not Found in DB
+        if ($result=mysqli_query($con,$sql)) {                          # Execute SQL Select
+            if($result->num_rows >= 1) {                                # Number of Row Match Key
+              $row = mysqli_fetch_assoc($result);                       # Read the Associated row
+              $KeyExist=True;                                           # Key Does Exist in Database
+            }
+        }
+        if (! $KeyExist) {                                              # If Key was not found
+            $err_line = (__LINE__ -1) ;                                 # Error on line No.
+            $err_msg1 = "Server '" . $wkey . "' not found.";            # Row was not found Msg.
+            $err_msg2 = "\nAt line " .$err_line. " in " .basename(__FILE__); # Insert Filename 
+            sadm_alert ($err_msg1 . $err_msg2);                         # Display Msg. Box for User
+            echo "<script>location.replace('" . $URL_MAIN . "');</script>"; # Backup to Server List
         }
     }else{                                                              # If No Key Rcv or Blank
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        ?>
-        <script>location.replace("/crud/srv/sadm_server_main.php");</script>
-        <?php                                                           # Back 2 List Page
-        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
-        exit ; 
+        echo "<script>location.replace('" . $URL_MAIN . "');</script>"; # Backup to Server List.
     }
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
-    display_std_heading("NotHome","Delete Server","","",$SVER);          # Display Content Heading
+    display_std_heading("NotHome","Delete Server","","",$SVER);         # Display Content Heading
     
     # Start of Form - Display row data and press 'Delete' or 'Cancel' Button
     echo "<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
-    display_srv_form ($con,$row,"Display");                              # Display No Change Allowed
+    display_srv_form ($con,$row,"Display");                             # Display No Change Allowed
     
     # Set the Submitted Flag On - We are done with the Form Data
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
-    
+ 
     # Display Buttons (Delete/Cancel) at the bottom of the form
     echo "\n\n<div class='two_buttons'>";
-    echo "\n<div class='first_button'><button type='submit'> Delete </button></div>";
-    echo "\n<div class='second_button'>";
-    echo "<a href='" . $URL_MAIN . "'>";
-    echo "<button type='button'> Cancel </button></a>\n</div>";
+    echo "\n <div class='first_button'>";
+    echo "\n   <a href='" . $URL_DEL . "?sel=" .$wkey. "'>";
+    echo "     <button type='button'> Delete </button></a>";
+    echo "\n </div>";
+    echo "\n <div class='second_button'>";
+    echo "\n   <a href='" . $URL_MAIN . "'>";
+    echo "     <button type='button'> Cancel </button></a>";
+    echo "\n </div>";
     echo "\n<div style='clear: both;'> </div>";                         # Clear - Move Down Now
     echo "\n</div>\n\n";
     
