@@ -10,6 +10,10 @@
 #
 #   Copyright (C) 2016 Jacques Duplessis <jacques.duplessis@sadmin.ca>
 #
+# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+#        You will have a better experience, if you set screen width to have at least 100 Characters.
+# 
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
 #   version 2 of the License, or (at your option) any later version.
@@ -24,7 +28,7 @@
 # ChangeLog
 #   2017_12_09 - Jacques Duplessis
 #       V1.0 Initial version - Server Edit Menu to Split Server Table Edition Add lot of comments in code and enhance code performance 
-# 2019_01_11 Feature: v1.2 Add menu item for updating backup schedule,
+#@2019_01_11 Feature: v1.2 Add menu item for updating backup schedule,
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -87,9 +91,9 @@ $CREATE_BUTTON  = False ;                                               # Don't 
 function display_menu($wkey) {
     global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP;
 
-    echo "\n\n<div class='menu'>\n";                             # Start simple_menu
+    echo "\n\n<div class='menu'>\n";                                    # Start simple_menu
     
-    echo "\n<div class='menu_item'>\n";                             # Start simple_menu
+    echo "\n<div class='menu_item'>\n";                                 # Start simple_menu
     echo "\n<p>";
     echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wkey ; 
     echo "'>- Edit Static information</a></p>";
@@ -139,7 +143,7 @@ function display_menu($wkey) {
         exit ; 
     }
     $title="Update Information for " . $wkey . " server";
-    echo "<center><strong>" . $title . "</strong></center>";
+    echo "<h1><center><strong>" . $title . "</strong></center></h1>";
     display_menu($wkey);                                                # Display Form Default Value
     echo "\n<br>";                                                      # Blank Line After Button
     std_page_footer($con)                                               # Close MySQL & HTML Footer
