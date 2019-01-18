@@ -33,7 +33,7 @@
 #       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
 #   2018_04_17 - Jacques Duplessis
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
-# 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
+#@2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # ==================================================================================================
 #
 
@@ -202,8 +202,8 @@ function getEachIpInRange ($cidr) {
 # ==================================================================================================
 #
 function update_crontab ($pscript,$paction = "U",$pmonth = "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN",
-                        $pdom = "YNNNNNNNNNNNN",$pdow="NNNNNNNY",$phour=01,$pmin=00) 
-{
+                        $pdom = "YNNNNNNNNNNNN",$pdow="NNNNNNNY",$phour=01,$pmin=00) {
+
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
     $DEBUG = False;
     if ($DEBUG) { 
