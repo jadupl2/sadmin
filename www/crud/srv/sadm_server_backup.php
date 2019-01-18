@@ -22,8 +22,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#@2019_01_01 V1.1  Added: Each server backup schedule, can now be changed using the web interface.
-#@2019_01_12 V1.2  Feature: Client Backup List and Exclude list can be modified with Web Interface.
+#@2019_01_01 Added: sadm_server_backup.php v1.1 Each server backup schedule, can now be changed using the web interface.
+#@2019_01_12 Feature: sadm_server_backup.php v1.2 Client Backup List and Exclude list can be modified with Web Interface.
 #
 # ==================================================================================================
 #
@@ -41,10 +41,8 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :   black;
     width           :   98%;
     text-align      :   left;
-    /* margin-left     :   15px;
-    margin-right    :   auto; */
-    border       : 2px solid #000000;   border-width : 1px;     border-style : solid;   
-    border-color : #000000;             border-radius: 10px;
+    border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
+    border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
 .backup_left_side   { width : 47%;  float : left;   margin : 10px 0px 10px 10px;    }
@@ -53,32 +51,15 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 /* Attribute for Label Column Name at the left of each side of the form */
 .left_label         { float : left; width : 45%;    font-weight : bold; }
 .right_label        { float : left; width : 85%;    font-weight : bold; }
-
  
 /* Attribute for column Input at the right of the screen in the form */
-.left_input {
-    margin-bottom   :   4px;
-    margin-left     :   40%;
-    background-color:    #D3E397;
-    width           :   60%;
-    border-width    :   1px;
-    border-style    :   solid;
-    border-color    :   #000000;
+.left_input         { margin-bottom : 4px;  margin-left : 40%;  background-color : #D3E397;
+                      width : 60%;  border-width: 1px;  border-style : solid;  border-color : #000000;
 }
 /* Attribute for column Input at the right of the screen in the form */
-.right_input {
-    float           :   left;
-    margin-bottom   :   4px;
-    margin-right    :   14px;
-    /* margin-left     :   40%; */
-    padding-left    :   5px;
-    padding-right    :   5px;
-    padding-top    :   5px;
-    background-color:    #D3E397;
-    /* width           :   60%; */
-    border-width    :   1px;
-    border-style    :   solid;
-    border-color    :   #000000;
+.right_input        { margin-bottom : 4px;  margin-right : 14px;     background-color:    #D3E397;
+                      float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
+                      border-width: 1px;  border-style : solid;  border-color : #000000;
 }
 .deux_boutons   { width : 96%;  margin-top  : 10px;     } 
 .premier_bouton { width : 19%;  float : left;   margin-left : 30%;  text-align : right ; }
@@ -285,12 +266,13 @@ function display_left_side($con,$wrow,$mode) {
                         echo "\n<option value='$i'" ;
                         if (substr($wrow['srv_backup_dom'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
-                        echo ">" . sprintf("%02d",$i);
-                        if ($i == 0) { echo " To run on any date of the month" ;}
-                        if ($i == 1) { echo " To run on 1st of the month" ;}
-                        if ($i == 2) { echo " To run on 2nd of the month" ;}
-                        if ($i == 3) { echo " To run on 3rd of the month" ;}
-                        if ($i >= 4) { echo " To run on " . $i . "th of the month" ;}
+#                        echo ">" . sprintf("%02d",$i);
+                        echo ">";
+                        if ($i == 0) { echo " Run on any date of the month" ;}
+                        if ($i == 1) { echo " Run on 1st of the month" ;}
+                        if ($i == 2) { echo " Run on 2nd of the month" ;}
+                        if ($i == 3) { echo " Run on 3rd of the month" ;}
+                        if ($i >= 4) { echo " Run on " . $i . "th of the month" ;}
                         echo "</option>";
                     }     
                     break;
@@ -323,7 +305,7 @@ function display_left_side($con,$wrow,$mode) {
                         if (substr($wrow['srv_backup_dow'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo "/>" . $days[$i];
-                        if ($i == 0) { echo "  (To run any day of the week)" ;} 
+                        if ($i == 0) { echo "  (Run every day of the week)" ;} 
                         echo "</option>";
                     }
                     break;
