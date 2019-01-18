@@ -36,7 +36,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 ?>
   <style media="screen" type="text/css">
     .backup_page {
-        background-color:   #fff5c3;
+    background-color:   #fff5c3;
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
     color           :   black;
@@ -47,25 +47,24 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     line-height     :   1.7;    
 }
 .backup_left_side   { width : 47%;  float : left;   margin : 10px 0px 10px 10px;    }
-.backup_right_side  { width : 47%;  float : right;  margin : 5px 30px 10px 0px;     }
-/* Attribute for Label Column Name at the left of each side of the form */
 .left_label         { float : left; width : 45%;    font-weight : bold; }
-.right_label        { float : left; width : 85%;    font-weight : bold; }
-/* Attribute for column Input at the right of the screen in the form */
 .left_input         { margin-bottom : 4px;  margin-left : 40%;  background-color : #D3E397;
-                      width : 60%;  border-width: 1px;  border-style : solid;  border-color : #000000;
+                      width : 60%; border-width: 1px;  border-style : solid;  border-color : #000000;
 }
-/* Attribute for column Input at the right of the screen in the form */
+
+.backup_right_side  { width : 47%;  float : right;  margin : 5px 30px 10px 0px;     }
+.right_label        { float : left; width : 85%;    font-weight : bold; }
 .right_input        { margin-bottom : 4px;  margin-right : 14px;     background-color:    #D3E397;
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
                       border-width: 1px;  border-style : solid;  border-color : #000000;
 }                      
+
 .deux_boutons   { width : 96%;  margin-top  : 10px;     } 
 .premier_bouton { width : 19%;  float : left;   margin-left : 30%;  text-align : right ; }
 .second_bouton  { width : 19%;  float : right;  margin-right: 30%;  text-align : left  ; }
-  </style>
+</style>
 
-  <?php
+<?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    #</Head><body>Heading/SideBar
 require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 
@@ -263,7 +262,7 @@ function display_left_side($con,$wrow,$mode) {
     # If 1st Char is "Y" then this means that backup can run in any of the 12 months.
     # If 1st Char is "N" then each of the following 12 months specify the month backup can run (Y).
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Month(s) to run the Backup</div>";
+    echo "\n\n<div class='left_label'>Month to run Backup</div>";
     $mth_name = array('Any Months','January','February','March','April','May','June','July','August',
         'September','October','November','December');
     echo "\n<div class='left_input'>";
@@ -289,7 +288,7 @@ function display_left_side($con,$wrow,$mode) {
 
     # Date Number in the month (dom) to run the Backup
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Date to run the Backup</div>";
+    echo "\n\n<div class='left_label'>Date of Backup</div>";
     echo "\n<div class='left_input'>";
     echo "\n<select name='scr_backup_dom[]' multiple='multiple' size=5>";
     switch ($mode) {
@@ -322,7 +321,7 @@ function display_left_side($con,$wrow,$mode) {
     # If 1st Char is "N" then each of the following 7 days specify the day the backup run (Y).
     # 2nd to 8th Char. represent a day in the week.
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Day of week to run Backup</div>";
+    echo "\n\n<div class='left_label'>Day to run Backup</div>";
     echo "\n<div class='left_input'>";
     $days = array('All','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
 
@@ -351,7 +350,7 @@ function display_left_side($con,$wrow,$mode) {
     # ----------------------------------------------------------------------------------------------
     # Hour to Run the Backup
     # ----------------------------------------------------------------------------------------------
-    echo "\n\n<div class='left_label'>Time to run the Backup</div>";
+    echo "\n\n<div class='left_label'>Time of Backup</div>";
     echo "\n<div class='left_input'>";
     echo " Hour ";
     echo "\n<select name='scr_backup_hour' size=1>";
