@@ -33,8 +33,8 @@
 # 2018_05_28    V2.7 Add Backup Parameters now in sadmin.cfg
 # 2018_06_04    v2.8 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05    v2.9 Added setup, www/tmp/perf Directory Environment Variables 
-#@2018_12_03    v3.0 Remove dot before and after the result column and minor changes.
-#
+# 2018_12_03    v3.0 Remove dot before and after the result column and minor changes.
+#@2019_01_19    v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
 #===================================================================================================
 #
 try :
@@ -71,7 +71,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.0"                 # Current Script Version
+    st.ver              = "3.1"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -126,90 +126,90 @@ def printheader(st,col1,col2,col3=" "):
 def print_functions(st):
     printheader (st,"Calling Functions","Description","  This System Result")
 
-    pexample="st.get_release()"                                        # Example Calling Function
+    pexample="st.get_release()"                                         # Variable Name
     pdesc="SADMIN Release Number (XX.XX)"                               # Function Description
     presult=st.get_release()                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_ostype()"                                         # Example Calling Function
+    pexample="st.get_ostype()"                                          # Variable Name
     pdesc="OS Type (Uppercase,LINUX,AIX,DARWIN)"                        # Function Description
     presult=st.get_ostype()                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_osversion()"                                      # Example Calling Function
+    pexample="st.get_osversion()"                                       # Variable Name
     pdesc="Return O/S Version (Ex: 7.2, 6.5)"                           # Function Description
     presult=st.get_osversion()                                          # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_osmajorversion()"                                 # Example Calling Function
+    pexample="st.get_osmajorversion()"                                  # Variable Name
     pdesc="Return O/S Major Version (Ex 7, 6)"                          # Function Description
     presult=st.get_osmajorversion()                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_osminorversion()"                                 # Example Calling Function
+    pexample="st.get_osminorversion()"                                  # Variable Name
     pdesc="Return O/S Minor Version (Ex 2, 3)"                          # Function Description
     presult=st.get_osminorversion()                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_osname()"                                         # Example Calling Function
+    pexample="st.get_osname()"                                          # Variable Name
     pdesc="O/S Name (REDHAT,CENTOS,UBUNTU,...)"                         # Function Description
     presult=st.get_osname()                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_oscodename()"                                     # Example Calling Function
+    pexample="st.get_oscodename()"                                      # Variable Name
     pdesc="O/S Project Code Name"                                       # Function Description
     presult=st.get_oscodename()                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_kernel_version()"                                 # Example Calling Function
+    pexample="st.get_kernel_version()"                                  # Example Calling Function
     pdesc="O/S Running Kernel Version"                                  # Function Description
     presult=st.get_kernel_version()                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_kernel_bitmode()"                                 # Example Calling Function
+    pexample="st.get_kernel_bitmode()"                                  # Example Calling Function
     pdesc="O/S Kernel Bit Mode (32 or 64)"                              # Function Description
     presult=st.get_kernel_bitmode()                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.hostname"                                             # Example Calling Function
+    pexample="st.hostname"                                              # Variable Name
     pdesc="Current Host Name"                                           # Function Description
     presult=st.hostname                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_host_ip()"                                        # Example Calling Function
+    pexample="st.get_host_ip()"                                         # Example Calling Function
     pdesc="Current Host IP Address"                                     # Function Description
     presult=st.get_host_ip()                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_domainname()"                                     # Example Calling Function
+    pexample="st.get_domainname()"                                      # Example Calling Function
     pdesc="Current Host Domain Name"                                    # Function Description
     presult=st.get_domainname()                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_fqdn()"                                           # Example Calling Function
+    pexample="st.get_fqdn()"                                            # Example Calling Function
     pdesc="Fully Qualified Domain Host Name"                            # Function Description
     presult=st.get_fqdn()                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    #pexample="st.get_serial()"                                         # Example Calling Function
+    #pexample="st.get_serial()"                                          # Example Calling Function
     #pdesc="Get System serial Number"                                    # Function Description
     #presult=st.get_serial()                                             # Return Value(s)
     #printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.get_epoch_time()"                                     # Example Calling Function
+    pexample="st.get_epoch_time()"                                      # Example Calling Function
     pdesc="Get Current Epoch Time"                                      # Function Description
     presult=st.get_epoch_time()                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     wepoch= st.get_epoch_time()
-    pexample="st.epoch_to_date(%d)" % (wepoch)                         # Example Calling Function
+    pexample="st.epoch_to_date(%d)" % (wepoch)                          # Example Calling Function
     pdesc="Convert epoch time to date"                                  # Function Description
     presult=st.epoch_to_date(wepoch)                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     WDATE=st.epoch_to_date(wepoch)                                      # Set Test Date
     print ("      WDATE=%s" % (WDATE))                                  # Print Test Date    
-    pexample="st.date_to_epoch(WDATE)"                                 # Example Calling Function
+    pexample="st.date_to_epoch(WDATE)"                                  # Example Calling Function
     pdesc="Convert Date to epoch time"                                  # Function Description
     presult=st.date_to_epoch(WDATE)                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -217,7 +217,7 @@ def print_functions(st):
     DATE1="2018.06.30 10:00:44" ; DATE2="2018.06.30 10:00:03"           # Set Date to Calc Elapse
     print ("      DATE1=%s" % (DATE1))                                  # Print Date1 Used for Ex.
     print ("      DATE2=%s" % (DATE2))                                  # Print Date2 Used for Ex.
-    pexample="st.elapse_time(DATE1,DATE2)"                             # Example Calling Function
+    pexample="st.elapse_time(DATE1,DATE2)"                              # Example Calling Function
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=st.elapse_time(DATE1,DATE2)                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -228,15 +228,25 @@ def print_functions(st):
 # Print SADMIN Function available to Users
 #===================================================================================================
 def print_python_function(st):
-    printheader (st,"SADMIN Python specific functions","Description","  This System Result")
+    printheader (st,"SADMIN PYTHON SPECIFIC FUNCTIONS","Description","  This System Result")
 
-    pexample="st.silentremove('file')"                                 # Example Calling Function
+    pexample="st.dbsilent"                                              # Variable Name
+    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
+    presult=st.dbsilent                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+                 
+    pexample="st.usedb"                                                 # Variable Name
+    pdesc="Script need (Open/Close) Database ?"                         # Function Description
+    presult=st.usedb                                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.silentremove('file')"                                  # Example Calling Function
     pdesc="Silent File Del, No Err if not exist"                        # Function Description
     presult=st.silentremove('file')                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.writelog(msg,'nonl'|'bold')"                          # Example Calling Function
-    pdesc="Write Msg to Log or Screen or Both"                          # Function Description
+    pexample="st.writelog(msg,'nonl'|'bold')"                           # Example Calling Function
+    pdesc="Write Log (nonl=NoNewLine)"                                  # Function Description
     st.log_type="L"
     presult=st.writelog('Message','bold')                               # Return Value(s)
     st.log_type="B"
@@ -252,77 +262,62 @@ def print_python_function(st):
 def print_user_variables(st):
     printheader (st,"User Var. that affect SADMIN behavior","Description","  This System Result")
 
-    pexample="st.ver"                                                  # Example Calling Function
+    pexample="st.ver"                                                   # Variable Name
     pdesc="Get/Set Script Version Number"                               # Function Description
     presult=st.ver                                                      # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.pn"                                                   # Example Calling Function
+    pexample="st.pn"                                                    # Variable Name
     pdesc="Get script name"                                             # Function Description
     presult=st.pn                                                       # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.inst"                                                 # Example Calling Function
+    pexample="st.inst"                                                  # Variable Name
     pdesc="Get script name without extension"                           # Function Description
     presult=st.inst                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.username"                                             # Example Calling Function
+    pexample="st.username"                                              # Variable Name
     pdesc="Get current user name"                                       # Function Description
     presult=st.username                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.tpid"                                                 # Example Calling Function
+    pexample="st.tpid"                                                  # Variable Name
     pdesc="Get Current Process ID"                                      # Function Description
     presult=st.tpid                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.multiple_exec"                                        # Example Calling Function
+    pexample="st.multiple_exec"                                         # Variable Name
     pdesc="Get/Set Allow running multiple copy"                         # Function Description
     presult=st.multiple_exec                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.use_rch"                                              # Example Calling Function
+    pexample="st.use_rch"                                               # Variable Name
     pdesc="Get/Set Gen. entry in .rch file"                             # Function Description
     presult=st.use_rch                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
-         
-    pexample="st.dbsilent"                                             # Example Calling Function
-    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
-    presult=st.dbsilent                                                 # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
-    pexample="st.usedb"                                                # Example Calling Function
-    pdesc="Set Script need Database ?"                                  # Function Description
-    presult=st.usedb                                                    # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-                 
-    pexample="st.log_type"                                             # Example Calling Function
+    pexample="st.log_type"                                              # Variable Name
     pdesc="Set Output to [S]creen [L]og [B]oth"                         # Function Description
     presult=st.log_type                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
-    pexample="st.log_append"                                           # Example Calling Function
+    pexample="st.log_append"                                            # Variable Name
     pdesc="Get/Set Append Log or Create New One"                        # Function Description
     presult=st.log_append                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
-    pexample="st.log_header"                                           # Example Calling Function
+    pexample="st.log_header"                                            # Variable Name
     pdesc="Get/Set Generate Header in log"                              # Function Description
     presult=st.log_header                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                  
-    pexample="st.log_footer"                                           # Example Calling Function
-    pdesc="Get/Set Generate Footer in  log"                             # Function Description
-    presult=st.log_footer                                               # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
-                 
-    pexample="st.log_footer"                                           # Example Calling Function
+    pexample="st.log_footer"                                            # Variable Name
     pdesc="Get/Set Generate Footer in  log"                             # Function Description
     presult=st.log_footer                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
                        
-    pexample="st.exit_code"                                            # Example Calling Function
+    pexample="st.exit_code"                                             # Variable Name
     pdesc="Get/Set Script Exit Return Code"                             # Function Description
     presult=st.exit_code                                                # Current Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -336,112 +331,112 @@ def print_user_variables(st):
 def print_client_directory(st):
     printheader (st,"Client Directories Var. Avail.","Description","  This System Result")
 
-    pexample="st.base_dir"                                             # Example Calling Function
+    pexample="st.base_dir"                                              # Variable Name
     pdesc="SADMIN Root Directory"                                       # Function Description
     presult=st.base_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.bin_dir"                                              # Example Calling Function
+    pexample="st.bin_dir"                                               # Variable Name
     pdesc="SADMIN Scripts Directory"                                    # Function Description
     presult=st.bin_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.tmp_dir"                                              # Example Calling Function
+    pexample="st.tmp_dir"                                               # Variable Name
     pdesc="SADMIN Temporary file(s) Directory"                          # Function Description
     presult=st.tmp_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.lib_dir"                                              # Example Calling Function
+    pexample="st.lib_dir"                                               # Variable Name
     pdesc="SADMIN Shell & Python Library Dir."                          # Function Description
     presult=st.lib_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.log_dir"                                              # Example Calling Function
+    pexample="st.log_dir"                                               # Variable Name
     pdesc="SADMIN Script Log Directory"                                 # Function Description
     presult=st.log_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.cfg_dir"                                              # Example Calling Function
+    pexample="st.cfg_dir"                                               # Variable Name
     pdesc="SADMIN Configuration Directory"                              # Function Description
     presult=st.cfg_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.sys_dir"                                              # Example Calling Function
+    pexample="st.sys_dir"                                               # Variable Name
     pdesc="Server Startup/Shutdown Script Dir."                         # Function Description
     presult=st.sys_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.doc_dir"                                              # Example Calling Function
+    pexample="st.doc_dir"                                               # Variable Name
     pdesc="SADMIN Documentation Directory"                              # Function Description
     presult=st.doc_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.pkg_dir"                                              # Example Calling Function
+    pexample="st.pkg_dir"                                               # Variable Name
     pdesc="SADMIN Packages Directory"                                   # Function Description
     presult=st.pkg_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.dat_dir"                                              # Example Calling Function
+    pexample="st.dat_dir"                                               # Variable Name
     pdesc="Server Data Directory"                                       # Function Description
     presult=st.dat_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.nmon_dir"                                             # Example Calling Function
+    pexample="st.nmon_dir"                                              # Variable Name
     pdesc="Server NMON - Data Collected Dir."                           # Function Description
     presult=st.nmon_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.dr_dir"                                               # Example Calling Function
+    pexample="st.dr_dir"                                                # Variable Name
     pdesc="Server Disaster Recovery Info Dir."                          # Function Description
     presult=st.dr_dir                                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.rch_dir"                                              # Example Calling Function
+    pexample="st.rch_dir"                                               # Variable Name
     pdesc="Server Return Code History Dir."                             # Function Description
     presult=st.rch_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.net_dir"                                              # Example Calling Function
+    pexample="st.net_dir"                                               # Variable Name
     pdesc="Server Network Information Dir."                             # Function Description
     presult=st.net_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.rpt_dir"                                              # Example Calling Function
+    pexample="st.rpt_dir"                                               # Variable Name
     pdesc="SYStem MONitor Report Directory"                             # Function Description
     presult=st.rpt_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.dbb_dir"                                              # Example Calling Function
+    pexample="st.dbb_dir"                                               # Variable Name
     pdesc="Database Backup Directory"                                   # Function Description
     presult=st.dbb_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.setup_dir"                                            # Example Calling Function
+    pexample="st.setup_dir"                                             # Variable Name
     pdesc="SADMIN Installation/Update Setup Dir."                       # Function Description
     presult=st.setup_dir                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.usr_dir"                                              # Example Calling Function
+    pexample="st.usr_dir"                                               # Variable Name
     pdesc="User/System specific directory"                              # Function Description
     presult=st.usr_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.ubin_dir"                                             # Example Calling Function
+    pexample="st.ubin_dir"                                              # Variable Name
     pdesc="User/System specific bin/script Dir."                        # Function Description
     presult=st.ubin_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.ulib_dir"                                             # Example Calling Function
+    pexample="st.ulib_dir"                                              # Variable Name
     pdesc="User/System specific library Dir."                           # Function Description
     presult=st.ulib_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.udoc_dir"                                             # Example Calling Function
+    pexample="st.udoc_dir"                                              # Variable Name
     pdesc="User/System specific documentation"                          # Function Description
     presult=st.udoc_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
-    pexample="st.umon_dir"                                             # Example Calling Function
+    pexample="st.umon_dir"                                              # Variable Name
     pdesc="User/System specific SysMon Scripts"                         # Function Description
     presult=st.umon_dir                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -453,32 +448,32 @@ def print_client_directory(st):
 def print_server_directory(st):
     printheader (st,"Server Directories Var. Avail.","Description","  This System Result")
 
-    pexample="st.www_dir"                                              # Example Calling Function
+    pexample="st.www_dir"                                               # Variable Name
     pdesc="SADMIN Web Site Root Directory"                              # Function Description
     presult=st.www_dir                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
        
-    pexample="st.www_doc_dir"                                          # Example Calling Function
+    pexample="st.www_doc_dir"                                           # Variable Name
     pdesc="SADMIN Web Site Root Directory"                              # Function Description
     presult=st.www_doc_dir                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
        
-    pexample="st.www_dat_dir"                                          # Example Calling Function
+    pexample="st.www_dat_dir"                                           # Variable Name
     pdesc="SADMIN Web Site Systems Data Dir."                           # Function Description
     presult=st.www_dat_dir                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
        
-    pexample="st.www_lib_dir"                                          # Example Calling Function
+    pexample="st.www_lib_dir"                                           # Variable Name
     pdesc="SADMIN Web Site PHP Library Dir."                            # Function Description
     presult=st.www_lib_dir                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
            
-    pexample="st.www_tmp_dir"                                          # Example Calling Function
+    pexample="st.www_tmp_dir"                                           # Variable Name
     pdesc="SADMIN Web Temp Working Directory"                           # Function Description
     presult=st.www_tmp_dir                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
        
-    pexample="st.www_perf_dir"                                         # Example Calling Function
+    pexample="st.www_perf_dir"                                          # Variable Name
     pdesc="Web Performance Server Graph Dir."                           # Function Description
     presult=st.www_perf_dir                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -488,58 +483,113 @@ def print_server_directory(st):
 #===================================================================================================
 # Print Files Variables Available to Users
 #===================================================================================================
-def print_file(st):
+def print_file_variable(st):
     printheader (st,"SADMIN FILES VARIABLES AVAIL.","Description","  This System Result")
 
-    pexample="st.pid_file"                                             # Example Calling Function
+    pexample="st.pid_file"                                              # Variable Name
     pdesc="Current script PID file"                                     # Function Description
     presult=st.pid_file                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_file"                                             # Example Calling Function
+    pexample="st.cfg_file"                                              # Variable Name
     pdesc="SADMIN Configuration File"                                   # Function Description
     presult=st.cfg_file                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_hidden"                                           # Example Calling Function
-    pdesc="SADMIN Initial Configuration File"                           # Function Description
-    presult=st.cfg_hidden                                               # Return Value(s)
+    pexample="st.cfg_hidden"                                            # Name of Variable
+    pdesc="SADMIN Initial Configuration File"                           # Variable Description
+    presult=st.cfg_hidden                                               # Actual Content of Variable
     printline (st,pexample,pdesc,presult)                               # Print Example Line
-    
-    pexample="st.tmp_file1"                                            # Example Calling Function
+
+    pexample="st.alert_file"                                            # Name of Variable
+    pdesc="Alert Group Definition File Name"                            # Variable Description
+    presult=st.alert_file                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.alert_init"                                            # Name of Variable
+    pdesc="Alert Group Initial File (Template)"                         # Variable Description
+    presult=st.alert_init                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.slack_file"                                            # Name of Variable
+    pdesc="Alert - Slack Channel File"                                  # Variable Description
+    presult=st.slack_file                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.slack_init"                                            # Name of Variable
+    pdesc="Alert - Slack Channel (Template)"                            # Variable Description
+    presult=st.slack_init                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.alert_hist"                                            # Name of Variable
+    pdesc="Alert - History File"                                        # Variable Description
+    presult=st.alert_hist                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.alert_hini"                                            # Name of Variable
+    pdesc="Alert - History Initial File"                                # Variable Description
+    presult=st.alert_hini                                               # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.alert_seq"                                             # Name of Variable
+    pdesc="Alert - Reference Counter"                                   # Variable Description
+    presult=st.alert_seq                                                # Actual Content of Variable
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.tmp_file1"                                             # Variable Name
     pdesc="User usable Temp Work File 1"                                # Function Description
     presult=st.tmp_file1                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.tmp_file2"                                            # Example Calling Function
+    pexample="st.tmp_file2"                                             # Variable Name
     pdesc="User usable Temp Work File 2"                                # Function Description
     presult=st.tmp_file2                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.tmp_file3"                                            # Example Calling Function
+    pexample="st.tmp_file3"                                             # Name of Variable
     pdesc="User usable Temp Work File 3"                                # Function Description
     presult=st.tmp_file3                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.log_file"                                             # Example Calling Function
+    pexample="st.log_file"                                              # Name of Variable
     pdesc="Script Log File"                                             # Function Description
     presult=st.log_file                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.rch_file"                                             # Example Calling Function
+    pexample="st.rch_file"                                               # Variable Name
     pdesc="Script Return Code History File"                             # Function Description
     presult=st.rch_file                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.dbpass_file"                                          # Example Calling Function
+    pexample="st.dbpass_file"                                            # Variable Name
     pdesc="SADMIN Database User Password File"                          # Function Description
     presult=st.dbpass_file                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.rpt_file"                                             # Example Calling Function
+    pexample="st.rpt_file"                                               # Variable Name
     pdesc="SYStem MONitor report file"                                  # Function Description
     presult=st.rpt_file                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
+    
+    pexample="st.backup_list"                                           # Name Of variable
+    pdesc="Backup List File Name"                                       # Variable Description
+    presult=st.backup_list                                              # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
+    
+    pexample="st.backup_list_init"                                      # Name Of variable
+    pdesc="Initial Backup List (Template)"                              # Variable Description
+    presult=st.backup_list_init                                         # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
+    
+    pexample="st.backup_exclude"                                        # Name Of variable
+    pdesc="Backup Exclude List File Name"                               # Variable Description
+    presult=st.backup_exclude                                           # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
+    
+    pexample="st.backup_exclude_init"                                   # Name Of variable
+    pdesc="Initial Backup Exclude (Template)"                           # Variable Description
+    presult=st.backup_exclude_init                                      # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
 
 #===================================================================================================
 # Print sadmin.cfg Variables available to users
@@ -548,242 +598,247 @@ def print_sadmin_cfg(st):
 
     printheader (st,"SADMIN CONFIG FILE VARIABLES","Description","  This System Result")
 
-    pexample="st.cfg_server"                                           # Example Calling Function
+    pexample="st.cfg_server"                                            # Variable Name
     pdesc="SADMIN SERVER NAME (FQDN)"                                   # Function Description
     presult=st.cfg_server                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_host_type"                                        # Example Calling Function
+    pexample="st.cfg_host_type"                                         # Variable Name
     pdesc="SADMIN [C]lient or [S]erver"                                 # Function Description
     presult=st.cfg_host_type                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mail_addr"                                        # Example Calling Function
+    pexample="st.cfg_mail_addr"                                         # Variable Name
     pdesc="SADMIN Administrator Default Email"                          # Function Description
     presult=st.cfg_mail_addr                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_alert_type"                                        # Example Calling Function
+    pexample="st.cfg_alert_type"                                         # Variable Name
     pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Function Description
     presult=st.cfg_alert_type                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_cie_name"                                         # Example Calling Function
+    pexample="st.cfg_alert_group"                                         # Variable Name
+    pdesc="Default Alert Group"                                         # Function Description
+    presult=st.cfg_alert_group                                            # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.cfg_cie_name"                                          # Variable Name
     pdesc="Your Company Name"                                           # Function Description
     presult=st.cfg_cie_name                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_domain"                                           # Example Calling Function
+    pexample="st.cfg_domain"                                            # Variable Name
     pdesc="Server Creation Default Domain"                              # Function Description
     presult=st.cfg_domain                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_user"                                             # Example Calling Function
+    pexample="st.cfg_user"                                              # Variable Name
     pdesc="SADMIN User Name"                                            # Function Description
     presult=st.cfg_user                                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_group"                                            # Example Calling Function
+    pexample="st.cfg_group"                                             # Variable Name
     pdesc="SADMIN Group Name"                                           # Function Description
     presult=st.cfg_group                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_www_user"                                         # Example Calling Function
+    pexample="st.cfg_www_user"                                          # Variable Name
     pdesc="User that Run Apache Web Server"                             # Function Description
     presult=st.cfg_www_user                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_www_group"                                        # Example Calling Function
+    pexample="st.cfg_www_group"                                         # Variable Name
     pdesc="Group that Run Apache Web Server"                            # Function Description
     presult=st.cfg_www_group                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_dbname"                                           # Example Calling Function
+    pexample="st.cfg_dbname"                                            # Variable Name
     pdesc="SADMIN Database Name"                                        # Function Description
     presult=st.cfg_dbname                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_dbhost"                                           # Example Calling Function
+    pexample="st.cfg_dbhost"                                            # Variable Name
     pdesc="SADMIN Database Host"                                        # Function Description
     presult=st.cfg_dbhost                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_dbport"                                           # Example Calling Function
+    pexample="st.cfg_dbport"                                            # Variable Name
     pdesc="SADMIN Database Host TCP Port"                               # Function Description
     presult=st.cfg_dbport                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rw_dbuser"                                        # Example Calling Function
+    pexample="st.cfg_rw_dbuser"                                         # Variable Name
     pdesc="SADMIN Database Read/Write User"                             # Function Description
     presult=st.cfg_rw_dbuser                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rw_dbpwd"                                         # Example Calling Function
+    pexample="st.cfg_rw_dbpwd"                                          # Variable Name
     pdesc="SADMIN Database Read/Write User Pwd"                         # Function Description
     presult=st.cfg_rw_dbpwd                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_ro_dbuser"                                        # Example Calling Function
+    pexample="st.cfg_ro_dbuser"                                         # Variable Name
     pdesc="SADMIN Database Read Only User"                              # Function Description
     presult=st.cfg_ro_dbuser                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_ro_dbpwd"                                         # Example Calling Function
+    pexample="st.cfg_ro_dbpwd"                                          # Variable Name
     pdesc="SADMIN Database Read Only User Pwd"                          # Function Description
     presult=st.cfg_ro_dbpwd                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rrdtool"                                          # Example Calling Function
+    pexample="st.cfg_rrdtool"                                           # Variable Name
     pdesc="RRDTOOL Binary Location"                                     # Function Description
     presult=st.cfg_rrdtool                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_ssh_port"                                         # Example Calling Function
+    pexample="st.cfg_ssh_port"                                          # Variable Name
     pdesc="SSH Port to communicate with client"                         # Function Description
     presult=st.cfg_ssh_port                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_nmon_keepdays"                                    # Example Calling Function
+    pexample="st.cfg_nmon_keepdays"                                     # Variable Name
     pdesc="Nb. of days to keep nmon perf. file"                         # Function Description
     presult=st.cfg_nmon_keepdays                                        # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rch_keepdays"                                     # Example Calling Function
+    pexample="st.cfg_rch_keepdays"                                      # Variable Name
     pdesc="Nb. days to keep unmodified rch file"                        # Function Description
     presult=st.cfg_rch_keepdays                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_log_keepdays"                                     # Example Calling Function
+    pexample="st.cfg_log_keepdays"                                      # Variable Name
     pdesc="Nb. days to keep unmodified log file"                        # Function Description
     presult=st.cfg_log_keepdays                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_max_rchline"                                      # Example Calling Function
+    pexample="st.cfg_max_rchline"                                       # Variable Name
     pdesc="Trim rch file to this max. of lines"                         # Function Description
     presult=st.cfg_max_rchline                                          # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_max_logline"                                      # Example Calling Function
+    pexample="st.cfg_max_logline"                                       # Variable Name
     pdesc="Trim log to this maximum of lines"                           # Function Description
     presult=st.cfg_max_logline                                          # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_network1"                                         # Example Calling Function
+    pexample="st.cfg_network1"                                          # Variable Name
     pdesc="Network/Netmask 1 inv. IP/Name/Mac"                          # Function Description
     presult=st.cfg_network1                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_network2"                                         # Example Calling Function
+    pexample="st.cfg_network2"                                          # Variable Name
     pdesc="Network/Netmask 2 inv. IP/Name/Mac"                          # Function Description
     presult=st.cfg_network2                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_network3"                                         # Example Calling Function
+    pexample="st.cfg_network3"                                          # Variable Name
     pdesc="Network/Netmask 3 inv. IP/Name/Mac"                          # Function Description
     presult=st.cfg_network3                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_network4"                                         # Example Calling Function
+    pexample="st.cfg_network4"                                          # Variable Name
     pdesc="Network/Netmask 4 inv. IP/Name/Mac"                          # Function Description
     presult=st.cfg_network4                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_network5"                                         # Example Calling Function
+    pexample="st.cfg_network5"                                          # Variable Name
     pdesc="Network/Netmask 5 inv. IP/Name/Mac"                          # Function Description
     presult=st.cfg_network5                                             # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_nfs_server"                                # Example Calling Function
+    pexample="st.cfg_mksysb_nfs_server"                                 # Variable Name
     pdesc="AIX MKSYSB NFS Server IP or Name"                            # Function Description
     presult=st.cfg_mksysb_nfs_server                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_nfs_mount_point"                           # Example Calling Function
+    pexample="st.cfg_mksysb_nfs_mount_point"                            # Variable Name
     pdesc="AIX MKSYSB NFS Mount Point"                                  # Function Description
     presult=st.cfg_mksysb_nfs_mount_point                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_mksysb_backup_to_keep"                            # Example Calling Function
+    pexample="st.cfg_mksysb_backup_to_keep"                             # Variable Name
     pdesc="AIX MKSYSB NFS Backup - Nb .to keep"                         # Function Description
     presult=st.cfg_mksysb_backup_to_keep                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rear_nfs_server"                                  # Example Calling Function
+    pexample="st.cfg_rear_nfs_server"                                   # Variable Name
     pdesc="Rear NFS Server IP or Name"                                  # Function Description
     presult=st.cfg_rear_nfs_server                                      # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rear_nfs_mount_point"                             # Example Calling Function
+    pexample="st.cfg_rear_nfs_mount_point"                              # Variable Name
     pdesc="Rear NFS Mount Point"                                        # Function Description
     presult=st.cfg_rear_nfs_mount_point                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rear_backup_to_keep"                              # Example Calling Function
+    pexample="st.cfg_rear_backup_to_keep"                               # Variable Name
     pdesc="Rear NFS Backup - Nb. to keep"                               # Function Description
     presult=st.cfg_rear_backup_to_keep                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_backup_nfs_server"                                # Example Calling Function
+    pexample="st.cfg_backup_nfs_server"                                 # Variable Name
     pdesc="NFS Backup IP or Server Name"                                # Function Description
     presult=st.cfg_backup_nfs_server                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_backup_nfs_mount_point"                           # Example Calling Function
+    pexample="st.cfg_backup_nfs_mount_point"                            # Variable Name
     pdesc="NFS Backup Mount Point"                                      # Function Description
     presult=st.cfg_backup_nfs_mount_point                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_daily_backup_to_keep"                             # Example Calling Function
+    pexample="st.cfg_daily_backup_to_keep"                              # Variable Name
     pdesc="Daily Backup to Keep"                                        # Function Description
     presult=st.cfg_daily_backup_to_keep                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_weekly_backup_to_keep"                            # Example Calling Function
+    pexample="st.cfg_weekly_backup_to_keep"                             # Variable Name
     pdesc="Weekly Backup to Keep"                                       # Function Description
     presult=st.cfg_weekly_backup_to_keep                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_monthly_backup_to_keep"                           # Example Calling Function
+    pexample="st.cfg_monthly_backup_to_keep"                            # Variable Name
     pdesc="Monthly Backup to Keep"                                      # Function Description
     presult=st.cfg_monthly_backup_to_keep                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_yearly_backup_to_keep"                            # Example Calling Function
+    pexample="st.cfg_yearly_backup_to_keep"                             # Variable Name
     pdesc="Yearly Backup to keep"                                       # Function Description
     presult=st.cfg_yearly_backup_to_keep                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_weekly_backup_day"                                # Example Calling Function
+    pexample="st.cfg_weekly_backup_day"                                 # Variable Name
     pdesc="Weekly Backup Day (1=Mon,7=Sun)"                             # Function Description
     presult=st.cfg_weekly_backup_day                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_monthly_backup_date"                              # Example Calling Function
+    pexample="st.cfg_monthly_backup_date"                               # Variable Name
     pdesc="Monthly Backup Date (1-28)"                                  # Function Description
     presult=st.cfg_monthly_backup_date                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_yearly_backup_month"                              # Example Calling Function
+    pexample="st.cfg_yearly_backup_month"                               # Variable Name
     pdesc="Yearly Backup Month (1-12)"                                  # Function Description
     presult=st.cfg_yearly_backup_month                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_yearly_backup_date"                               # Example Calling Function
+    pexample="st.cfg_yearly_backup_date"                                # Variable Name
     pdesc="Yearly Backup Date (1-31)"                                   # Function Description
     presult=st.cfg_yearly_backup_date                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_storix_nfs_server"                                # Example Calling Function
+    pexample="st.cfg_storix_nfs_server"                                 # Variable Name
     pdesc="Storix NFS Server IP or Name"                                # Function Description
     presult=st.cfg_storix_nfs_server                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_storix_nfs_mount_point"                           # Example Calling Function
+    pexample="st.cfg_storix_nfs_mount_point"                            # Variable Name
     pdesc="Storix NFS Mount Point"                                      # Function Description
     presult=st.cfg_storix_nfs_mount_point                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_storix_backup_to_keep"                            # Example Calling Function
+    pexample="st.cfg_storix_backup_to_keep"                             # Variable Name
     pdesc="Storix NFS Backup - Nb. to Keep"                             # Function Description
     presult=st.cfg_storix_backup_to_keep                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
@@ -796,73 +851,83 @@ def print_command_path(st):
     
     printheader (st,"COMMAND PATH USE BY SADMIN STD. LIBR.","Description","  This System Result")
 
-    pexample="st.lsb_release"                                          # Example Calling Function
-    pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Function Description
+    pexample="st.lsb_release"                                           # Variable Name
+    pdesc="Cmd. 'lsb_release', Get O/S Version"                         # Variable Description
     presult=st.lsb_release                                              # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.dmidecode"                                            # Example Calling Function
-    pdesc="Cmd. 'dmidecode', Get model & type"                          # Function Description
+    pexample="st.dmidecode"                                             # Variable Name
+    pdesc="Cmd. 'dmidecode', Get model & type"                          # Variable Description
     presult=st.dmidecode                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.facter"                                               # Example Calling Function
-    pdesc="Cmd. 'facter', Get System Info"                              # Function Description
+    pexample="st.facter"                                                # Variable Name
+    pdesc="Cmd. 'facter', Get System Info"                              # Variable Description
     presult=st.facter                                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.bc"                                                   # Example Calling Function
-    pdesc="Cmd. 'bc', Do some Math."                                    # Function Description
+    pexample="st.bc"                                                    # Variable Name
+    pdesc="Cmd. 'bc', Do some Math."                                    # Variable Description
     presult=st.bc                                                       # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.fdisk"                                                # Example Calling Function
-    pdesc="Cmd. 'fdisk', Get Partition Info"                            # Function Description
+    pexample="st.fdisk"                                                 # Variable Name
+    pdesc="Cmd. 'fdisk', Get Partition Info"                            # Variable Description
     presult=st.fdisk                                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.which"                                                # Example Calling Function
-    pdesc="Cmd. 'which', Get Command location"                          # Function Description
+    pexample="st.which"                                                 # Variable Name
+    pdesc="Cmd. 'which', Get Command location"                          # Variable Description
     presult=st.which                                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.perl"                                                 # Example Calling Function
-    pdesc="Cmd. 'perl', epoch time Calc."                               # Function Description
+    pexample="st.perl"                                                  # Variable Name
+    pdesc="Cmd. 'perl', epoch time Calc."                               # Variable Description
     presult=st.perl                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.mail"                                                 # Example Calling Function
-    pdesc="Cmd. 'mail', Send SysAdmin Email"                            # Function Description
+    pexample="st.mail"                                                  # Variable Name
+    pdesc="Cmd. 'mail', Send SysAdmin Email"                            # Variable Description
     presult=st.mail                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.lscpu"                                                # Example Calling Function
-    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Function Description
+    pexample="st.mutt"                                                  # Variable Name
+    pdesc="Cmd. 'mutt', Used to Send Email"                             # Variable Description
+    presult=st.mutt                                                     # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
+    
+    pexample="st.curl"                                                  # Variable Name
+    pdesc="Cmd. 'curl', To send alert to Slack"                         # Variable Description
+    presult=st.curl                                                     # Variable Content
+    printline (st,pexample,pdesc,presult)                               # Print Variable Line
+
+    pexample="st.lscpu"                                                 # Variable Name
+    pdesc="Cmd. 'lscpu', Socket & thread info"                          # Variable Description
     presult=st.lscpu                                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.nmon"                                                 # Example Calling Function
-    pdesc="Cmd. 'nmon', Collect Perf Statistic"                         # Function Description
+    pexample="st.nmon"                                                  # Variable Name
+    pdesc="Cmd. 'nmon', Collect Perf Statistic"                         # Variable Description
     presult=st.nmon                                                     # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.parted"                                               # Example Calling Function
-    pdesc="Cmd. 'parted', Get Disk Real Size"                           # Function Description
+    pexample="st.parted"                                                # Variable Name
+    pdesc="Cmd. 'parted', Get Disk Real Size"                           # Variable Description
     presult=st.parted                                                   # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.ethtool"                                              # Example Calling Function
-    pdesc="Cmd. 'ethtool', Get System IP Info"                          # Function Description
+    pexample="st.ethtool"                                               # Variable Name
+    pdesc="Cmd. 'ethtool', Get System IP Info"                          # Variable Description
     presult=st.ethtool                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.ssh"                                                  # Example Calling Function
-    pdesc="Cmd. 'ssh', SSH to SADMIN client"                            # Function Description
+    pexample="st.ssh"                                                   # Variable Name
+    pdesc="Cmd. 'ssh', SSH to SADMIN client"                            # Variable Description
     presult=st.ssh                                                      # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
-    pexample="st.ssh_cmd"                                              # Example Calling Function
-    pdesc="Cmd. 'ssh', SSH to Connect to client"                        # Function Description
+    pexample="st.ssh_cmd"                                               # Variable Name
+    pdesc="Cmd. 'ssh', SSH to Connect to client"                        # Variable Description
     presult=st.ssh_cmd                                                  # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
     
@@ -921,6 +986,29 @@ def print_env(st):
         printline (st,pexample,pdesc,presult)                               # Print Env. Line
 
 
+#===================================================================================================
+# Print Database Information
+#===================================================================================================
+def print_db_variables(st):
+    printheader (st,"Database Information","Description","  This System Result")
+         
+    pexample="st.dbsilent"                                              # Variable Name
+    pdesc="When DBerror, No ErrMsg (Just ErrNo)"                        # Function Description
+    presult=st.dbsilent                                                 # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+                 
+    pexample="st.usedb"                                                 # Variable Name
+    pdesc="Script need (Open/Close) Database ?"                         # Function Description
+    presult=st.usedb                                                    # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    # Test Database Connection
+    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
+        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
+        st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
+        st.writelog ("Closing Database connection")                     # Show we are closing DB
+        st.dbclose()                                                    # Close the Database
+        st.writelog (" ")                                               # Blank Line
 
 #===================================================================================================
 #                                  M A I N     P R O G R A M
@@ -939,27 +1027,16 @@ def main():
     
     # Print All Demo Informations
     print_user_variables(st)                                            # Show User Avail. Variables
-    print_python_function(st)                                           # Show Python Specific func.
     print_functions(st)                                                 # Display Env. Variables
-
+    print_python_function(st)                                           # Show Python Specific func.
     print_start_stop(st)                                                # Show Stop/Start Function
     print_sadmin_cfg(st)                                                # Show sadmin.cfg Variables
     print_client_directory(st)                                          # Show Client Dir. Variables
     print_server_directory(st)                                          # Show Server Dir. Variables
-    print_file(st)                                                      # Show Files Variables
+    print_file_variable(st)                                             # Show Files Variables
     print_command_path(st)                                              # Show Command Path
+    print_db_variables(st)                                              # Show Database Information
     #print_env(st)                                                       # Show Env. Variables
-
-    # Test Database Connection
-    if ((st.get_fqdn() == st.cfg_server) and (st.usedb)):               # On SADMIN srv & usedb True
-        (conn,cur) = st.dbconnect()                                     # Connect to SADMIN Database
-        printheader (st,"Database Connection Test","Description","  This System Result")        
-        st.writelog ("Database connection succeeded")                   # Show COnnect to DB Worked
-        st.writelog (" ")                                               # Blank Line
-        st.writelog ("Closing Database connection")                     # Show we are closing DB
-        st.dbclose()                                                    # Close the Database
-        st.writelog (" ")                                               # Blank Line
-
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
 
