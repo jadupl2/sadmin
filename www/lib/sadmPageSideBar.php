@@ -324,7 +324,7 @@ function SideBar_OS_Summary() {
     echo "\n<div class='SideBarTitle'>Server Info</div>";               # SideBar Section Title
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
-    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Sched.</a></div>";  # URL To View O/S Upd. Page
+    echo "<a href='" . $URL_OSUPDATE . "'>OS Update Sched</a></div>";   # URL To View O/S Upd. Page
 
     echo "\n<div class='SideBarItem'>";                                 # SideBar Item Div Class
     echo "<a href='" . $URL_MONITOR . "'>SysMon Alerts</a></div>";      # URL to System Monitor Page
