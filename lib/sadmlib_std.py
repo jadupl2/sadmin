@@ -33,7 +33,8 @@
 # 2018_09_19 v2.20 Add alert group to RCH file.
 # 2018_11_07 v2.21 Was trying to connect to Database, even if was not on SADMIN Server
 # 2018_11_09 v2.22 Refine test before connecting to Database
-#@2018_11_13 v2.23 Change for support of MacOS Mojave
+# 2018_11_13 v2.23 Change for support of MacOS Mojave
+#@2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
 #
 #==================================================================================================
 try :
@@ -176,6 +177,10 @@ class sadmtools():
         self.alert_seq          = self.cfg_dir + '/alert_history.seq'   # Alert Reference Counter
         #self.crontab_work       = self.www_lib_dir + '/.crontab.txt'   # Work crontab
         #self.crontab_file       = '/etc/cron.d/sadmin'                 # Final crontab
+        self.backup_list        = self.cfg_dir + '/backup_list.txt'     # FileName & Dir. to Backup
+        self.backup_list_init   = self.cfg_dir + '/.backup_list.txt'    # Initial File/Dir. 2 Backup
+        self.backup_exclude     = self.cfg_dir + '/backup_exclude.txt'  # Exclude File/Dir 2 Exclude
+        self.backup_exclude_init= self.cfg_dir + '/.backup_exclude.txt' # Initial File/Dir 2 Exclude
         self.rel_file           = self.cfg_dir + '/.release'            # SADMIN Release Version No.
         self.dbpass_file        = self.cfg_dir + '/.dbpass'             # SADMIN DB User/Pwd file
         self.pid_file           = "%s/%s.pid" % (self.tmp_dir, self.inst) # Process ID File
@@ -938,7 +943,7 @@ class sadmtools():
     # ----------------------------------------------------------------------------------------------
     def check_requirements(self):
         global which,lsb_release,uname,bc,fdisk,facter,mail,ssh,dmidecode,perl
-        global nmon,lscpu,ethtool,parted
+        global nmon,lscpu,ethtool,parted,curl,mutt
 
         requisites_status=True                                          # Assume Requirement all Met
 
@@ -1007,8 +1012,18 @@ class sadmtools():
 
         # Get the location of ethtool command
         if (self.os_type == "LINUX"):                                   # On Linux
-            self.ethtool =self.locate_command('ethtool')                # Locate the lscpu command
+            self.ethtool =self.locate_command('ethtool')                # Locate the ethtool command
             if self.ethtool == "" : requisites_status=False             # if blank didn't find it
+
+        # Get the location of mutt command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.mutt =self.locate_command('mutt')                      # Locate the mutt command
+            if self.mutt == "" : requisites_status=False                # if blank didn't find it
+
+        # Get the location of curl command
+        if (self.os_type == "LINUX"):                                   # On Linux
+            self.curl =self.locate_command('curl')                      # Locate the curl command
+            if self.curl == "" : requisites_status=False                # if blank didn't find it
 
         return requisites_status                                        # Requirement Met True/False
 
