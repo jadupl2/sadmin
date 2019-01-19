@@ -1,11 +1,9 @@
-# V1.2 Inital Backup List 
-## Notes : 
-#  - Socket Files are automatically excluded
+# V1.3 Initial Backup List 
+# Notes: Socket Files are automatically excluded
 #
 /home 
 /etc 
 /root
-/etc/profile.d/sadmin.sh
 /var/named 
 /var/www 
 /var/ftp 
