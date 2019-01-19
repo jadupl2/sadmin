@@ -1,4 +1,6 @@
-# Exclude these files and directories from Backup
+# V1.3 Initial Backup List 
+# Exclude these files & directories from Backup
+#
 *.iso 
 sysmon.lock 
 .cache/*
