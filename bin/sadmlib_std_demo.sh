@@ -21,7 +21,8 @@
 # 2018_06_04    v3.3 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05    v3.4 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf Display
 # 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
-#@2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
+# 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
+#@2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -43,7 +44,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.6'                               # Current Script Version
+    export SADM_VER='3.7'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -180,24 +181,7 @@ print_user_variables()
     pdesc="Script Exit Return Code"                                     # Description
     presult="$SADM_EXIT_CODE"                                           # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    pexample="\$SADM_ALERT_TYPE"                                        # Variable Name
-    pdesc="0=No 1=OnError 2=OnSuccess 3=Allways"                        # Description
-    presult="$SADM_ALERT_TYPE"                                          # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    pexample="\$SADM_ALERT_GROUP"                                       # Variable Name
-    pdesc="Alert Group (alert_group.cfg)"                               # Description
-    presult="$SADM_ALERT_GROUP"                                         # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    pexample="\$SADM_MAIL_ADDR"                                         # Variable Name
-    pdesc="SysAdmin Email"                                              # Description
-    presult="$SADM_MAIL_ADDR"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
-    
-    
+  
 
 }
 
@@ -310,7 +294,7 @@ print_functions()
 #===================================================================================================
 print_bash_functions()
 {
-    printheader "SADMIN Bash Shell Specific Functions" "Description" "  This System Result"
+    printheader "SADMIN BASH SHELL SPECIFIC FUNCTIONS" "Description" "  This System Result"
 
     pexample="\$(sadm_server_type)"                                     # Example Calling Function
     pdesc="Host is Physical or Virtual (P/V)"                           # Function Description
@@ -561,7 +545,7 @@ print_server_directory()
 #===================================================================================================
 # Print Files Variables Available to Users
 #===================================================================================================
-print_file()
+print_file_variable()
 {
     printheader "SADMIN FILES VARIABLES AVAIL." "Description" "  This System Result"
             
@@ -655,6 +639,27 @@ print_file()
     presult="$SADM_RPT_FILE"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
                 
+    pexample="\$SADM_BACKUP_LIST"                                       # Variable Name
+    pdesc="Backup List File Name"                                       # Variable Description
+    presult="$SADM_BACKUP_LIST"                                         # Variable Content 
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+                
+    pexample="\$SADM_BACKUP_LIST_INIT"                                  # Variable Name
+    pdesc="Initial Backup List (Template)"                              # Variable Description
+    presult="$SADM_BACKUP_LIST_INIT"                                    # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+                
+    pexample="\$SADM_BACKUP_EXCLUDE"                                    # Variable Name
+    pdesc="Backup Exclude List File Name"                               # Variable Description
+    presult="$SADM_BACKUP_EXCLUDE"                                      # Variable Content
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+                
+    pexample="\$SADM_BACKUP_EXCLUDE_INIT"                               # Variable Name
+    pdesc="Initial Backup Exclude (Template)"                           # Variable Description
+    presult="$SADM_BACKUP_EXCLUDE_INIT"                                 # Variable Actual Content
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+                
+
 }
 
 
@@ -1003,6 +1008,32 @@ print_command_path()
 }
 
 
+#===================================================================================================
+# Print Database Information
+#===================================================================================================
+print_db_variables()
+{
+    printheader "Database Information" "Description" "  This System Result"
+
+    CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
+
+    printf "\n\nShow SADMIN Tables:\n"
+    SQL="show tables; "                                                 # Show Table SQL
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    printf "\n\nShow Category Table Content:\n"
+    SQL="select * from server_category; "                               # Show Table SQL
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    printf "\n\nShow Group Table Content:\n"
+    SQL="select * from server_group; "                               # Show Table SQL
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+
+    printf "\n\nShow Server Table Content:\n"
+    SQL="select srv_name, srv_desc, srv_osname, srv_osversion from server ; "                                  # Show Table SQL
+    $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+}
+
 
 #===================================================================================================
 # Print sadm_start and sadm_stop Function Used by SADMIN Tools
@@ -1070,8 +1101,9 @@ print_start_stop()
     print_sadmin_cfg                                                    # List Sadmin Cfg File Var.
     print_client_directory                                              # List Client Dir. Var. 
     print_server_directory                                              # List Server Dir. Var. 
-    print_file                                                          # List Files Var. of SADMIN
+    print_file_variable                                                 # List Files Var. of SADMIN
     print_command_path                                                  # List Command PAth
+    print_db_variables                                                  # List Database Variables
     printf "\n\n"                                                       # End of report Line Feeds
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
