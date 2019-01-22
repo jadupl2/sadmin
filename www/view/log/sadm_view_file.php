@@ -22,35 +22,45 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#   2018_01_04 JDuplessis
-#       V1.0 Initial Version 
-#   2018_05_06 JDuplessis
-#       V1.1 Change the look of the web page (Simplify code)
+# 2018_01_04 JDuplessis V1.0 Initial Version 
+# 2018_05_06 JDuplessis V1.1 Change the look of the web page (Simplify code)
+#@2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript</Head>
+
+
 ?>
+<link href="https://fonts.googleapis.com/css?family=Space+Mono|Ubuntu+Mono" rel="stylesheet"> 
 <style>
-pre, code{
-    direction: ltr;
-    text-align: left;
+
+div.data_frame {
+    /* font-family     :   Geneva, sans-serif; */
+    font-family: 'Ubuntu Mono', 'Space Mono', Geneva, sans-serif, monospace;
+
+    /* font-family: 'Space Mono', monospace; */
+
+
+    background-color:   #2d3139;
+    color           :    white;
+    margin-left     :   5px;
+    width           :   85%;
+    border          :   1px solid #000000;
+    text-align      :   left;
+    padding         :   1%;
+    border-width    :   5px;
+    border-style    :   solid;
+    border-color    :   #6b6c6f;
+    border-radius   :   10px;
 }
-pre {border: solid 1px blue;
-    font-size: 1.0 em;
-    color: blue;
+code {
+    font-size:0.9em;
     margin: 10px;
-    padding:10px;
-    background: #FFFFB3;
-    white-space: pre-wrap;       /* Since CSS 2.1 */
-    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-    white-space: -pre-wrap;      /* Opera 4-6 */
-    white-space: -o-pre-wrap;    /* Opera 7 */
-    word-wrap: break-word;       /* Internet Explorer 5.5+ */     
-}
-code {font-size:0.9em;
-    color: #003399
+    background: #2f3743;
+    text-align: left;
+    color           : white;
 }
 </style>
 <?php
@@ -62,7 +72,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.1" ;                                                         # Current version number
+$SVER  = "1.2" ;                                                         # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -74,20 +84,22 @@ function display_file ($WNAME)
 
     # Display Table Heading
     $TITRE = basename($WNAME);                                          # Build the Table Heading
-    echo "\n<h3><strong>" .$TITRE. "</strong></h3>";                    # Print 1st Row Heading
-    
+    echo "\n\n<div class='data_frame'>                 <!-- Start of Server Data DIV -->";
+    echo "\n<center><h2><strong><i>" .$TITRE. "</i></strong></h2></center>";   # Print 1st Row Heading
+
     $count=0;                                                           # Set Line Counter to Zero
+    #echo file_get_contents($WNAME);
     $fh = fopen($WNAME,"r") or exit("Unable to open file : " . $WNAME); # Load File In Memory
-    echo "<pre><code>";
+    echo "<code>";
     while(!feof($fh)) {                                                 # Read till End Of File
         $wline = fgets($fh);                                            # Read Line By Line    
         if (strlen($wline) > 0) {                                       # Don't process empty Line
             $count+=1;                                                  # Increase Line Counter
-            $pline = sprintf("%6d - %s\n" , $count,trim($wline));       # Format Line
-            echo $pline;                                                # Print Log Line
+            $pline = sprintf("%06d - %s\n" , $count,trim($wline));      # Format Line
+            echo "<br>" . $pline  ;                                     # Print Log Line
         }
     }
-    echo "</code></pre>";
+    echo "</br></code></div>";                                          # End Data Frame
     fclose($fh);                                                        # Close Log
     return ;
 }
