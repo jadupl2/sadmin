@@ -35,20 +35,21 @@
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load PHP sadmin Library
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head> CSS, JavaScript
+
 ?>
-<style media="screen" type="text/css">
+<style>
+a { color: #E95420; } /* CSS link color */
+/* Menu Frame */
 .menu {
     font-family     :   Verdana, Geneva, sans-serif;
-    background-color:   #fff5c3;
-    color           :   black;
-    width           :   30%;
-    margin-top      :   1%;
+    background-color:   #2d3139;
+    color           :    white;
     margin-left     :   auto;
     margin-right    :   auto;
-    border          :   2px solid #000000;
-    font-size       :   14px;
+    width           :   45%;
+    border          :   1px solid #000000;
     text-align      :   left;
-    padding         :   1%,1%,1%,1%;
+    padding         :   2%;
     border-width    :   1px;
     border-style    :   solid;
     border-color    :   #000000;
@@ -58,13 +59,16 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 /* Attribute for Column Name at the left of the form */
 .menu_item {
     font-size       :   14px;
-    margin-left     :   20px;
-    margin-bottom   :   20px;
-    /* background-color:   Yellow; */
+    background-color:   #2d3139;
+    /* margin-left     :   40px; */
+    margin-left     :   auto;
+    margin-right     :   auto;
+    color           :    white;
+    margin-bottom   :   5px;
     font-weight     :   bold;    
-
-}
+    width           :   55%;
 </style>
+
 <?php
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head> Heading & SideBar
 require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
@@ -89,23 +93,27 @@ $CREATE_BUTTON  = False ;                                               # Don't 
 //                      DISPLAY SERVER UPDATE MENU 
 // ================================================================================================
 function display_menu($wkey) {
-    global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP;
+    global $URL_UPDATE, $URL_OSUPDATE, $URL_BACKUP, $URL_MAIN;
 
-    echo "\n\n<div class='menu'>\n";                                    # Start simple_menu
+    echo "\n\n<div class='menu'>\n";                                    # Start Menu
     
-    echo "\n<div class='menu_item'>\n";                                 # Start simple_menu
+    echo "\n<div class='menu_item'>\n";                                 # Start Menu Item
     echo "\n<p>";
     echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wkey ; 
-    echo "'>- Edit Static information</a></p>";
+    echo "'>Edit Static information</a></p>";
+
     echo "\n<p>";
     echo "\n<a href='" . $URL_OSUPDATE . "?sel=" . $wkey ;
-    echo "'>- Edit O/S Update Schedule</a></p>";
+    echo "'>Edit O/S Update Schedule</a></p>";
+
     echo "\n<p>";
     echo "\n<a href='" . $URL_BACKUP . "?sel=" . $wkey ;
-    echo "'>- Edit Backup Schedule</a></p>";
-    #echo "\n<br>";
-    echo "\n</div>";                                                    # << End of menu_item
+    echo "'>Edit Backup Schedule</a></p>";
 
+    echo "\n<br>";
+    echo "\n<p>\n<a href='" . $URL_MAIN . "'>Back to Server List</a></p>";
+
+    echo "\n</div>";                                                    # << End of menu_item
     echo "\n</div>";                                                    # << End of menu
     echo "\n<br>\n\n";                                                  # Blank Lines
 }
@@ -136,14 +144,11 @@ function display_menu($wkey) {
     }else{                                                              # If No Key Rcv or Blank
         $err_msg = "No Key Received - Please Advise" ;                  # Construct Error Msg.
         sadm_alert ($err_msg) ;                                         # Display Error Msg. Box
-        ?>
-        <script>location.replace("/crud/srv/sadm_server_main.php");</script>
-        <?php                                                           # Back 2 List Page
-        #echo "<script>location.replace('" . URL_MAIN . "');</script>";
+        echo "<script>location.replace(" .$URL_MAIN. ");</script>";
         exit ; 
     }
     $title="Update Information for " . $wkey . " server";
-    echo "<h1><center><strong>" . $title . "</strong></center></h1>";
+    echo "<h1><center><i><strong>" . $title . "</strong></i></center></h1>";
     display_menu($wkey);                                                # Display Form Default Value
     echo "\n<br>";                                                      # Blank Line After Button
     std_page_footer($con)                                               # Close MySQL & HTML Footer
