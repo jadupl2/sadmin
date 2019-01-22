@@ -121,13 +121,13 @@ function show_subnet($wsubnet,$woption,$con) {
             echo "\n<tr>";
             #echo "\n<td class='dt-center'>" .$linecount. "</td>";           # Show LineCounter
             echo "\n<td class='dt-center'>" .$row['net_ip_wzero']. "</td>"; # Show Current IP With 
-            echo "\n<td class='dt-center'>" .$row['net_hostname']."</td>";  # Show DNS Name of IP
             if ($row['net_ping'] == 0) {                                    # If IP Not Pingable
                 echo "\n<td class='dt-center'>No</td>";                     # Display No
             }else{                                                          # If IP Pingable
                 echo "\n<td class='dt-center'>Yes</td>";                    # Display Yes
             }
-            echo "\n<td class='dt-center'>" .ucfirst($wstate). "</td>";     # Show State IP/HostName
+            echo "\n<td class='dt-center'>" .$row['net_hostname']."</td>";  # Show DNS Name of IP
+            #echo "\n<td class='dt-center'>" .ucfirst($wstate). "</td>";     # Show State IP/HostName
             if ($row['net_date_ping'] == "0000-00-00 00:00:00") {           # If No Date Last Ping
                 echo "\n<td class='dt-center'>None</td>";                   # Show None to User
             }else{                                                          # If Ping Worked Once
@@ -152,21 +152,22 @@ function show_heading() {
 
     # TABLE CREATION
     echo "<div id='SimpleTable'>";                                      # Width Given to Table
-    echo '<table id="sadmTable" class="display" cellspacing="0" style="width:100%">';   
-    #echo '<table id="sadmTable" class="cell-border" class="hover" compact row-border wrap width="95%">';   
+    #echo '<table id="sadmTable" class="display" cellspacing="0" style="width:80%">';   
+    echo '<table id="sadmTable" class="cell-border" class="hover" compact row-border wrap width="80%">';   
     #echo '<table id="sadmTable" class="display"      compact row-border wrap width="95%">';    
+    
     # TABLE HEADING
     echo "\n<thead>";
     echo "\n<tr>";
     #echo "\n<th class='dt-head-center'>No</th>";
     echo "\n<th class='dt-head-center'>IP Address</th>";
-    echo "\n<th class='dt-head-center'>Hostname</th>";
     echo "\n<th class='dt-head-center'>Ping</th>";
-    echo "\n<th class='dt-head-center'>State</th>";
+    echo "\n<th class='dt-head-center'>Hostname</th>";
+    #echo "\n<th class='dt-head-center'>State</th>";
     echo "\n<th class='dt-head-center'>LastPing</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
     #echo "\n<th class='dt-head-center'>Manufacturer</th>";
-    echo "\n<th class='dt-head-center'>LastChange</th>";
+    echo "\n<th class='dt-head-center'>Mac/Hostname Change</th>";
     echo "\n</tr>";
     echo "\n</thead>";
 
@@ -175,13 +176,13 @@ function show_heading() {
     echo "\n<tr>";
     #echo "\n<th class='dt-head-center'>No</th>";
     echo "\n<th class='dt-head-center'>IP Address</th>";
-    echo "\n<th class='dt-head-center'>Hostname</th>";
     echo "\n<th class='dt-head-center'>Ping</th>";
-    echo "\n<th class='dt-head-center'>State</th>";
+    echo "\n<th class='dt-head-center'>Hostname</th>";
+    #echo "\n<th class='dt-head-center'>State</th>";
     echo "\n<th class='dt-head-center'>LastPing</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
     #echo "\n<th class='dt-head-center'>Manufacturer</th>";
-    echo "\n<th class='dt-head-center'>LastChange</th>";
+    echo "\n<th class='dt-head-center'>Mac/Hostname Change</th>";
     echo "\n</tr>";
     echo "\n</tfoot>";
 
