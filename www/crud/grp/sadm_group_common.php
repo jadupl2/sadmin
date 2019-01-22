@@ -24,7 +24,7 @@
 # ChangeLog
 #   2017_11_15 - Jacques Duplessis
 #       V2.0 Restructure and modify to used to new web interface and MySQL Database.
-#
+#@2019_01_22 v2.1 New Design & New Dark Theme.
 # ==================================================================================================
  
 
@@ -33,7 +33,7 @@
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.0" ;                                                        # Current version number
+$SVER  = "2.1" ;                                                        # Current version number
 $URL_CREATE = '/crud/grp/sadm_group_create.php';                        # Create Page URL
 $URL_UPDATE = '/crud/grp/sadm_group_update.php';                        # Update Page URL
 $URL_DELETE = '/crud/grp/sadm_group_delete.php';                        # Delete Page URL
@@ -59,10 +59,12 @@ function display_grp_form ($wrow,$mode) {
     if ($smode == 'CREATE') {                                           # If Create Allow Input
         echo "\n<input type='text' name='scr_code' size='11' ";         # Set Name for field & Size
         echo " maxlength='11' placeholder='Grp. Code' ";                # Set Default & Max Len
+        echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
         echo " required value='" . sadm_clean_data($wrow['grp_code']);  # Field is required
         echo "' >";                                                     # End of Input 
     }else{
        echo "\n<input type='text' name='scr_code' readonly size='11' "; # Set Name for Field & Size
+       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['grp_code']). "' >";     # Show Current  Value
     }
     echo "\n</div>";                                                    # << End of grp_input
@@ -75,11 +77,13 @@ function display_grp_form ($wrow,$mode) {
     if ($smode == 'DISPLAY') {                                          # If Only Display no input
        echo "\n<input type='text' name='scr_desc' readonly ";           # Set Name and Read Only
        echo " maxlength='25' size='27' ";                               # Set Max. Length
+       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['grp_desc']). "'/>";     # Show Current Value
     }else{
        echo "\n<input type='text' name='scr_desc' required ";           # Set Name & Col. is require
        echo " placeholder='Enter Group Desc.'";                         # Set Default
        echo " maxlength='25' size='27' ";                               # Set Max. Length
+       echo "style='background-color:#454c5e; border: solid 1px #454c5e; color:#ffffff; '";
        echo " value='" . sadm_clean_data($wrow['grp_desc']). "'/>";     # Show Current Value
     }
     echo "\n</div>";                                                    # << End of simple_input
@@ -152,11 +156,11 @@ function display_grp_form ($wrow,$mode) {
     echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
     
    # LAST UPDATE DATE 
-    echo "<div class='simple_label'>Last Update Date</div>";            # Display Name of Column
-    echo "<div class='simple_input'>";                                  # Class for Column Input
-    echo sadm_clean_data($wrow['grp_date']);                            # Display Last Update Date
-    echo "</div>";                                                      # << End of simple_input
-    echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
+    // echo "<div class='simple_label'>Last Update Date</div>";            # Display Name of Column
+    // echo "<div class='simple_input'>";                                  # Class for Column Input
+    // echo sadm_clean_data($wrow['grp_date']);                            # Display Last Update Date
+    // echo "</div>";                                                      # << End of simple_input
+    // echo "\n<div style='clear: both;'> </div>";                         # Clear Move Down Now
     
     echo "<br></div><br>";                                              # << End of simple_form
 }
