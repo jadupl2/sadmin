@@ -342,13 +342,9 @@ def scan_network(st,snet,wconn,wcur) :
             # If Ip is Pingable
             if (hactive == 1) :                                         # If IP is pingable
                 wdateping = wdate                                       # Update Last Ping Date
-                st.writelog("%-17s - Ping Date Updated" % (hip))        # Advise User
+                st.writelog("%-17s - Ping work - Last change date updated." % (hip)) # Advise User
 
-            #if ((old_ping != hactive) and (hactive != 0)) :
-            #    st.writelog("IP %s ping was %s now is %s" % (hip,old_ping,hactive))
-            #    wdatechange = wdate
-
-            # If MAC Change
+            # If MAC have changed and new MAC is not blank then update last change date.
             if (old_mac != hmac) :                                      # If MAC Change
                 if (hmac == "") :                                       # If No New MAC
                     st.writelog("%-17s - Leave old mac at '%s' since new mac is '%s'" % (hip,old_mac,hmac))
@@ -357,7 +353,7 @@ def scan_network(st,snet,wconn,wcur) :
                     st.writelog("%-17s - Mac Address changed from '%s' to '%s'" % (hip,old_mac,hmac))
                     wdatechange = wdate                                 # MAC Changed Upd. Date Chng
 
-            # If HostName Changed
+            # If HostName of the IP have changed, update last change date.
             if (old_hostname != hname):
                 st.writelog("%-17s - Host Name changed from '%s' to '%s'" % (hip,old_hostname,hname))
                 wdatechange = wdate                                     # MAC Changed Upd. Date Chng
