@@ -50,9 +50,9 @@ a { color: #E95420; } /* CSS link color */
     border          :   1px solid #000000;
     text-align      :   left;
     padding         :   2%;
-    border-width    :   1px;
+    border-width    :   10px;
     border-style    :   solid;
-    border-color    :   #000000;
+    border-color    :   #124f44;;
     border-radius   :   10px;
     line-height     :   1.7;    
 }
@@ -67,6 +67,7 @@ a { color: #E95420; } /* CSS link color */
     margin-bottom   :   5px;
     font-weight     :   bold;    
     width           :   55%;
+}
 </style>
 
 <?php
@@ -100,18 +101,18 @@ function display_menu($wkey) {
     echo "\n<div class='menu_item'>\n";                                 # Start Menu Item
     echo "\n<p>";
     echo "\n<a href='" . $URL_UPDATE . "?sel=" . $wkey ; 
-    echo "'>Edit Static information</a></p>";
+    echo "'>Edit static information</a></p>";
 
     echo "\n<p>";
     echo "\n<a href='" . $URL_OSUPDATE . "?sel=" . $wkey ;
-    echo "'>Edit O/S Update Schedule</a></p>";
+    echo "'>Edit O/S update schedule</a></p>";
 
     echo "\n<p>";
     echo "\n<a href='" . $URL_BACKUP . "?sel=" . $wkey ;
-    echo "'>Edit Backup Schedule</a></p>";
+    echo "'>Edit backup schedule</a></p>";
 
     echo "\n<br>";
-    echo "\n<p>\n<a href='" . $URL_MAIN . "'>Back to Server List</a></p>";
+    echo "\n<p>\n<a href='" . $URL_MAIN . "'>Back to system list</a></p>";
 
     echo "\n</div>";                                                    # << End of menu_item
     echo "\n</div>";                                                    # << End of menu
@@ -147,7 +148,7 @@ function display_menu($wkey) {
         echo "<script>location.replace(" .$URL_MAIN. ");</script>";
         exit ; 
     }
-    $title="Update Information for " . $wkey . " server";
+    $title="Update Information for '" . $wkey . "." . $row['srv_domain'] . "' server";
     echo "<h1><center><i><strong>" . $title . "</strong></i></center></h1>";
     display_menu($wkey);                                                # Display Form Default Value
     echo "\n<br>";                                                      # Blank Line After Button

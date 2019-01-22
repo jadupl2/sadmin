@@ -41,16 +41,17 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     color           :    white;    
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    width           :   80%;
+    width           :   90%;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
 .backup_left_side   { width : 54%;  float : left;   margin : 10px 0px 10px 10px;    }
-.left_label         { float : left; width : 32%;    text-align: right; font-weight : bold; }
-.left_input         { margin-bottom : 5px;  margin-left : 35%;  background-color : #454c5e;
-                      width : 37%; border-width: 1px;  border-style : solid;  border-color : #000000;
+.left_label         { float : left; width : 45%;    text-align: right; font-weight : bold; }
+.left_input         { margin-bottom : 5px;  margin-left : 50%;  background-color : #454c5e;
+                      width : 40%; border-width: 1px;  border-style : solid;  border-color : #000000;
+                      padding-left: 6px;
 }
 
 .backup_right_side  { width : 40%;  float : right;  margin : 5px 30px 10px 0px;     }
@@ -303,7 +304,7 @@ function display_left_side($con,$wrow,$mode) {
                         if ($mode == 'D') { echo " disabled" ; }
 #                        echo ">" . sprintf("%02d",$i);
                         echo ">";
-                        if ($i == 0) { echo " Run on any date of the month" ;}
+                        if ($i == 0) { echo " Any date of the month" ;}
                         if ($i == 1) { echo " Run on 1st of the month" ;}
                         if ($i == 2) { echo " Run on 2nd of the month" ;}
                         if ($i == 3) { echo " Run on 3rd of the month" ;}
@@ -339,7 +340,7 @@ function display_left_side($con,$wrow,$mode) {
                         if (substr($wrow['srv_backup_dow'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo "/>" . $days[$i];
-                        if ($i == 0) { echo "  (Run every day of the week)" ;}
+                        if ($i == 0) { echo "  (Every day of the week)" ;}
                         echo "</option>";
                     }
                     break;
@@ -425,7 +426,7 @@ function display_right_side($con,$wrow,$mode) {
     echo "\n</div>";
     
     # Files and Directories to Exclude from Backup
-    echo "\n\n<div class='right_label'>Backup Exclude List (Excluded Files & Dir.)</div>";
+    echo "\n\n<div class='right_label'>Backup Exclude List (Files & Dir.)</div>";
     echo "\n<div class='right_input'>";
     echo "  <textarea rows='12' cols='50' name='backupexclude' form='backup'>";
     $BEHASH = Read_BackupExclude($wrow);

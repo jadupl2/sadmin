@@ -45,7 +45,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     font-family     :   Verdana, Geneva, sans-serif;
     background-color:   #2d3139;
     color           :    white;    
-    width           :   45%;
+    width           :   55%;
     margin-top      :   1%;
     margin-left     :   auto;
     margin-right    :   auto;
@@ -216,12 +216,12 @@ function display_osschedule($con,$wrow,$mode) {
                         echo "\n<option value='$i'" ;
                         if (substr($wrow['srv_update_dom'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
-                        echo ">" . sprintf("%02d",$i);
-                        if ($i == 0) { echo " To run on any date of the month" ;}
-                        if ($i == 1) { echo " To run on 1st of the month" ;}
-                        if ($i == 2) { echo " To run on 2nd of the month" ;}
-                        if ($i == 3) { echo " To run on 3rd of the month" ;}
-                        if ($i >= 4) { echo " To run on " . $i . "th of the month" ;}
+                        echo ">" ;
+                        if ($i == 0) { echo " Any date of the month" ;}
+                        if ($i == 1) { echo " 1st of the month" ;}
+                        if ($i == 2) { echo " 2nd of the month" ;}
+                        if ($i == 3) { echo " 3rd of the month" ;}
+                        if ($i >= 4) { echo " " . $i . "th of the month" ;}
                         echo "</option>";
                     }     
                     break;
@@ -230,7 +230,6 @@ function display_osschedule($con,$wrow,$mode) {
     echo "\n</div>";
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
     
-
     # ----------------------------------------------------------------------------------------------
     # Day in the week (dow) to update the O/S
     # ----------------------------------------------------------------------------------------------
@@ -251,7 +250,7 @@ function display_osschedule($con,$wrow,$mode) {
                         if (substr($wrow['srv_update_dow'],$i,1) == "Y") {echo " selected";}
                         if ($mode == 'D') { echo " disabled" ; }
                         echo "/>" . $days[$i];
-                        if ($i == 0) { echo "  (To run any day of the week)" ;} 
+                        if ($i == 0) { echo "  (Run any day of the week)" ;} 
                         echo "</option>";
                     }
                     break;
