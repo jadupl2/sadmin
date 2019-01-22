@@ -30,6 +30,7 @@
 #       V2.1 Update O/S Update Page now update the SADM_USER crontab 
 #   2018_07_22  v2.2 After updating a server browser will go back on page ready to edit another one.
 # 2019_01_11 Change: v2.3 Cancel button now bring you to update menu.
+#@2019_01_21 Change: v2.4 Added Dark Theme
 #
 # ==================================================================================================
 #
@@ -42,17 +43,16 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
 <style media="screen" type="text/css">
 .osupdate_form {
     font-family     :   Verdana, Geneva, sans-serif;
-    /* background-color:   #8ee9d4; */
-    background-color:   #fff5c3;
-    color           :   black;
+    background-color:   #2d3139;
+    color           :    white;    
     width           :   45%;
     margin-top      :   1%;
     margin-left     :   auto;
     margin-right    :   auto;
     border          :   2px solid #000000;
     font-size       :   12px;
-    text-align      :   left;
-    padding         :   2%;
+    text-align      :   right;
+    padding         :   1%;
     border-width    :   1px;
     border-style    :   solid;
     border-color    :   #000000;
@@ -64,16 +64,19 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>
     float           :   left;
     width           :   48%;
     /* background-color:   Yellow; */
-    font-weight     :   bold;    
+    font-weight     :   bold; 
+    margin-right: 12px;   
 
 }
 /* Attribute for column Input at the right of the screen in the form */
 .osupdate_input {
+    background-color:    #454c5e;
+    color           :   white;
     float           :   left;
     margin-bottom   :   8px;
-    color           :   black;
-    background-color:    #D3E397;
-    width           :   48%;
+    margin-left     :   5px;
+    text-align      :   left;
+    width           :   40%;
     border-width    :   1px;
     border-style    :   solid;
     border-color    :   #000000;
@@ -90,7 +93,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.2" ;                                                        # Current version number
+$SVER  = "2.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -110,28 +113,28 @@ function display_osschedule($con,$wrow,$mode) {
 
     
     # UPDATE THE O/S MANUALLY OR SCHEDULED (AUTOMATICALLY) ? ---------------------------------------
-    echo "\n\n<div class='osupdate_label'>O/S Update Method</div>";
+    echo "\n\n<div class='osupdate_label'>Activate O/S Update Schedule</div>";
     echo "\n<div class='osupdate_input'>";
     if ($mode == 'C') { $wrow['srv_update_auto'] = False ; }             # Default Regularly
     switch ($mode) {
         case 'D' : if ($wrow['srv_update_auto'] == True) {
                         echo "\n<input type='radio' name='scr_update_auto' value='1' ";
-                        echo "onclick='javascript: return false;' checked> Scheduled  ";
+                        echo "onclick='javascript: return false;' checked> Yes  ";
                         echo "\n<input type='radio' name='scr_update_auto' value='0' ";
-                        echo "onclick='javascript: return false;'> Manual";
+                        echo "onclick='javascript: return false;'> No";
                     }else{
                         echo "\n<input type='radio' name='scr_update_auto' value='1' ";
-                        echo "onclick='javascript: return false;'> Scheduled  ";
+                        echo "onclick='javascript: return false;'> Yes  ";
                         echo "\n<input type='radio' name='scr_update_auto' value='0' ";
-                        echo "onclick='javascript: return false;' checked > Manual ";
+                        echo "onclick='javascript: return false;' checked > No ";
                     }
                     break;
         default   : if ($wrow['srv_update_auto'] == True) {
-                        echo "\n<input type='radio' name='scr_update_auto' value='1' checked > Scheduled ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0'> Manual  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='1' checked > Yes ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0'> No  ";
                     }else{
-                        echo "\n<input type='radio' name='scr_update_auto' value='1'> Scheduled  ";
-                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > <b>Manual</b>";
+                        echo "\n<input type='radio' name='scr_update_auto' value='1'> Yes  ";
+                        echo "\n<input type='radio' name='scr_update_auto' value='0' checked > <b>No</b>";
                     }
                     break;
     }
@@ -460,7 +463,7 @@ function display_osschedule($con,$wrow,$mode) {
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     display_std_heading("NotHome","O/S Update Schedule","","",$SVER);   # Display Content Heading
     $title="Operating System Update Schedule for " . $wkey . " server";
-    echo "<center><strong>" . $title . "</strong></center>";
+    echo "<center><strong><h3><i>" . $title . "</i></h3></strong></center>";
 
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_osschedule($con,$row,"Update");                             # Display Form Default Value
