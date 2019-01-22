@@ -156,6 +156,8 @@ $CREATE_BUTTON = False ;                                                # Don't 
     echo "<input type='hidden' value='1' name='submitted' />";          # hidden use On Nxt Page Exe
     
     # Display Buttons (Update/Cancel) at the bottom of the form
+
+
     echo "\n\n<div class='two_buttons'>";
     echo "\n<div class='first_button'><button type='submit'> Update </button></div>";
     echo "\n<div class='second_button'><a href='" . $URL_MAIN . "'><button type='button'> Cancel ";
