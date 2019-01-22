@@ -34,6 +34,7 @@
 #   2018_04_17 - Jacques Duplessis
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
 #@2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
+#@2019_01_21 v2.6 Add function from From Schedule to Text.
 # ==================================================================================================
 #
 
@@ -487,7 +488,70 @@ function accept_key($server_key) {
 }
 
 
+#===================================================================================================
+# Convert Data for a schedule to one line text
+# wdom =  Date of the month the schedule will run 
+#         Value receive is a string of 32 Char. 
+#         If 1st Char is "Y" then schedule can run at any date "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN". 
+#         If 1st Char isn't a "Y" the next chars represent the 31 days in a month (Y=Run N=Not Run).
+#
+#===================================================================================================
+function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
+{
 
+    # Date in the month the Schedule will run
+    $part1 = "Run ";                                                    # Result Date to Run
+    if (substr($wdom,0,1) == "Y") {                                     # If DOM begin with Y=AnyDate
+        $part1 = "";                                                    # Backup run every date
+    }else{                                                              # If not Get date it Run
+        for ($i = 1; $i < 32; $i = $i + 1) {
+            if ((substr($wdom,$i,1) == "Y") && ($i == 1)) { $part1 = $part1 . "1st," ;}
+            if ((substr($wdom,$i,1) == "Y") && ($i == 2)) { $part1 = $part1 . "2nd," ;}
+            if ((substr($wdom,$i,1) == "Y") && ($i == 3)) { $part1 = $part1 . "3rd," ;}
+            if ((substr($wdom,$i,1) == "Y") && ($i > 3))  { $part1 = $part1 . $i . "th," ;}
+        }
+        $part1 = rtrim($part1, ',') ;                                   # Remove Trailing Comma
+        if ($part1 != "") { $part1 = $part1 . " of " ; }                # At least one date specify
+    }
+
+    # Month that the Schedule will Run
+    $mth_name = array('any month, 
+                     ','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+    $part2 = "";
+    if (substr($wmth,0,1) == "Y") {                                     # If Mth begin with Y=AnyMth
+        $part2="";
+        if ($part1 != "") { $part2 = $mth_name[0]; }                    # Schedule
+    }else{                                                              # If Month No. is Specify
+        for ($i = 1; $i < 13; $i = $i + 1) {
+            if (substr($wmth,$i,1) == "Y") { $part2 = $part2 . $mth_name[$i] . "," ; }
+        }
+    }
+    $part2 = rtrim($part2, ',') . " " ;                                 # Remove Trailing Comma
+
+    # Days of the week the schedule will run
+    $part3 = "";                                                        # Result Day(s) Schedule run
+    if (substr($wdow,0,1) == "Y") {                                     # If DOW begin with Y=AllWeek
+        $part3 = "Every day";                                           # Schedule run every day
+    }else{                                                              # If not Get Days it Run
+        if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;}
+        if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;}
+        if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;}
+        if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;}
+        if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;}
+        if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;}
+        if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;}
+    }
+    $part3 = rtrim($part3, ',') ." " ;                                  # Remove Trailing Comma
+
+    # Insert Hours and Minutes
+    $part4a = sprintf("%02d", $whrs);
+    $part4b = sprintf("%02d", $wmin);
+    $part4 = "at ${part4a}:${part4b}";
+
+    # Combine the three part
+    #return ("1=" . $part1 . " 2=". $part2 . " 3=".$part3 . " 4=".$part4);
+    return ($part1 . $part2 . $part3 . $part4);
+}
 
 // ================================================================================================
 //                   Display Content of file receive as parameter
