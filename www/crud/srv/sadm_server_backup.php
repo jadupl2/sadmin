@@ -25,6 +25,7 @@
 #@2019_01_01 Added: sadm_server_backup.php v1.1 Each server backup schedule, can now be changed using the web interface.
 #@2019_01_12 Feature: sadm_server_backup.php v1.2 Client Backup List and Exclude list can be modified with Web Interface.
 #@2019_01_18 Added: sadm_server_backup.php v1.3 Hash of Backup List & Exclude list to check if were modified.
+#@2019_01_22 Added: sadm_server_backup.php v1.4 Add Dark Theme
 #
 # ==================================================================================================
 #
@@ -35,31 +36,31 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmLib.php');            # Load P
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageHeader.php');     # <head>CSS,JavaScript
 ?>
   <style media="screen" type="text/css">
-    .backup_page {
-    background-color:   #fff5c3;
+.backup_page {
+    background-color:   #2d3139;
+    color           :    white;    
     font-family     :   Verdana, Geneva, sans-serif;
     font-size       :   0.9em;
-    color           :   black;
-    width           :   98%;
+    width           :   80%;
     text-align      :   left;
     border          :   2px solid #000000;   border-width : 1px;     border-style : solid;   
     border-color    :   #000000;             border-radius: 10px;
     line-height     :   1.7;    
 }
-.backup_left_side   { width : 47%;  float : left;   margin : 10px 0px 10px 10px;    }
-.left_label         { float : left; width : 45%;    font-weight : bold; }
-.left_input         { margin-bottom : 4px;  margin-left : 40%;  background-color : #D3E397;
-                      width : 60%; border-width: 1px;  border-style : solid;  border-color : #000000;
+.backup_left_side   { width : 54%;  float : left;   margin : 10px 0px 10px 10px;    }
+.left_label         { float : left; width : 32%;    text-align: right; font-weight : bold; }
+.left_input         { margin-bottom : 5px;  margin-left : 35%;  background-color : #454c5e;
+                      width : 37%; border-width: 1px;  border-style : solid;  border-color : #000000;
 }
 
-.backup_right_side  { width : 47%;  float : right;  margin : 5px 30px 10px 0px;     }
+.backup_right_side  { width : 40%;  float : right;  margin : 5px 30px 10px 0px;     }
 .right_label        { float : left; width : 85%;    font-weight : bold; }
-.right_input        { margin-bottom : 4px;  margin-right : 14px;     background-color:    #D3E397;
+.right_input        { margin-bottom : 4px;  margin-right : 14px;     background-color:    #454c5e;
                       float : left;  padding-left : 5px;  padding-right : 5px;  padding-top : 5px;
                       border-width: 1px;  border-style : solid;  border-color : #000000;
 }                      
 
-.deux_boutons   { width : 96%;  margin-top  : 10px;     } 
+.deux_boutons   { width : 80%;  margin-top  : 10px;     } 
 .premier_bouton { width : 19%;  float : left;   margin-left : 30%;  text-align : right ; }
 .second_bouton  { width : 19%;  float : right;  margin-right: 30%;  text-align : left  ; }
 </style>
@@ -75,7 +76,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -230,7 +231,7 @@ function display_left_side($con,$wrow,$mode) {
     $smode = strtoupper($mode);                                         # Make Sure Mode is Upcase
     
     # WANT TO SCHEDULE A BACKUP REGULARLY (Yes/No) ?
-    echo "\n\n<div class='left_label'>Schedule a Backup</div>";
+    echo "\n\n<div class='left_label'>Activate Backup Schedule</div>";
     echo "\n<div class='left_input'>";
     if ($mode == 'C') { $wrow['srv_backup'] = False ; }             # Default 
     switch ($mode) {
@@ -569,7 +570,7 @@ if (isset($_POST['submitted'])) {
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
     display_std_heading("NotHome","Backup Schedule","","",$SVER);   # Display Content Heading
     $title="Backup Schedule for server '" . $row['srv_name'] . "." . $row['srv_domain'] . "'";
-        echo "<strong><h2><center>" . $title . "</center></h2></strong>";
+    echo "<strong><h2>" . $title . "</h2></strong>";
     
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' id='backup' method='POST'>";
     display_backup_schedule($con,$row,"Update");                             # Display Form Default Value
