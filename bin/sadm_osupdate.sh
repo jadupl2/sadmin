@@ -306,10 +306,10 @@ run_apt_get()
     
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Running : apt-get autoremove"
-    apt-get autoremove >>$SADM_LOG 2>&1
+    apt-get autoremove -y >>$SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then sadm_writelog "Return Code of \"apt-get autoremove\" is $RC"
+        then sadm_writelog "Return Code of \"apt-get autoremove -y\" is $RC"
              return $RC
     fi
     
