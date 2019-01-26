@@ -43,10 +43,11 @@
 # 2018_08_29    v3.6 http://sadmin.YourDomain is now the standard to access sadmin web Site.
 # 2018_10_28    v3.7 Linefeed was missing in file '/etc/sudoers.d/033_sadmin-nopasswd'
 # 2018_11_24    v3.8 Added -e '' options for sadmin user creation
-#@2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
-#@2019_01_03    Changed: sadm_setup.py V3.10 - Adapt crontab for MacOS and Aix, Setup Postfix
-#===================================================================================================
-# 
+# 2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
+# 2019_01_03    Changed: sadm_setup.py V3.10 - Adapt crontab for MacOS and Aix, Setup Postfix
+#@2019_01_25    Fix: v3.11 Fix problem with crash and multiple change to simplify process.
+# ==================================================================================================
+#
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
 try :
     import os,time,sys,pdb,socket,datetime,glob,fnmatch,shutil,getpass  # Import Std Python3 Modules
@@ -60,7 +61,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.10"                                            # Setup Version Number
+sver                = "3.11"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -114,6 +115,8 @@ req_client = {
                     'deb':'gawk',                           'drepo':'base'},
     'facter'     :{ 'rpm':'facter',                         'rrepo':'epel',  
                     'deb':'facter',                         'drepo':'base'},
+    'ruby-libs'  :{ 'rpm':'ruby-libs',                      'rrepo':'epel',  
+                    'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
     #'fdisk'      :{ 'rpm':'util-linux',     1                'rrepo':'base',  
@@ -337,7 +340,7 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# SADMIN Client Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("PATH=%s\n" % (os.environ["PATH"])
+    hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
@@ -436,7 +439,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     hcron.write ("# SADMIN Server Crontab File \n")
     hcron.write ("# Please don't edit manually, SADMIN Tools generated file\n")
     hcron.write ("# \n")
-    hcron.write ("PATH=%s\n" % (os.environ["PATH"])
+    hcron.write ("PATH=%s\n" % (os.environ["PATH"]))
     hcron.write ("SADMIN=%s\n" % (sroot))
     hcron.write ("# \n")
     hcron.write ("# \n")
@@ -541,20 +544,13 @@ def special_install(lpacktype,sosname,logfile) :
 # MAKE SURE SADMIN SUDO FILE IS IN PLACE
 #===================================================================================================
 def update_sudo_file(logfile,wuser) :
-"""[Create SADMIN user sudo file.]
 
-Arguments:
-    logfile {[string]} -- [Name of the script]
-    wuser {[string]} -- [Name of the SADMIN user]
-
-Returns:
-    Nothing
-"""
     writelog('')
     writelog('--------------------')
     writelog("Creating '%s' user sudo file" % (wuser),'bold')
-    writelog("  - Creating SADMIN sudo file (/etc/sudoers.d/033_%s-nopasswd) % (wuser)")
-    sudofile = "/etc/sudoers.d/033_%s-nopasswd" & (wuser)
+    sudofile = "/etc/sudoers.d/033_%s-nopasswd" % (wuser)
+    writelog("  - Creating SADMIN sudo file (%s)" % (sudofile))
+
 
     # Check if sudoers directory exist - Procedure may not be supported on this O/S
     if not os.path.exists("/etc/sudoers.d"):
@@ -1438,7 +1434,7 @@ def set_sadmin_env(ver):
 #           Make sure $SADMIN/cfg/sadmin.cfg exist, if not cp .sadmin.cfg to sadmin.cfg
 #===================================================================================================
 #
-def create_sadmin_config_file(sroot):
+def create_sadmin_config_file(sroot,sostype):
     cfgfile="%s/cfg/sadmin.cfg" % (sroot)                               # Set Full Path to cfg File
     cfgfileo="%s/cfg/.sadmin.cfg" % (sroot)                             # Template for sadmin.cfg
     if os.path.exists(cfgfile)==False:                                  # If sadmin.cfg Not Found
@@ -1460,7 +1456,7 @@ def create_sadmin_config_file(sroot):
 #  1st = Root Dir. of SADMIN, 2nd = Name of setting, 3rd = Value of the setting, 4th = Show Upd. line
 # ===================================================================================================
 #
-def update_alert_group_default(sroot,semail,show=True):
+def update_alert_group_default(sroot,semail):
     """
     Create $SADMIN/.alert_group.cfg & alert_group.cfg based on $SADMIN/setup/etc/alert_group.def file
     Change the default group value to be the sysadmin email address.
@@ -1471,15 +1467,14 @@ def update_alert_group_default(sroot,semail,show=True):
     """    
     winput  = sroot + "/setup/etc/alert_group.def"                      # AlertGroup Base Def. File
     woutput = "%s/cfg/.alert_group.cfg" % (sroot)                       # AlertGroup New Default File
-    wlive   = "%s/cfg/alert_group.cfg" % (sroot)                        # AlertGroup New Live File
     if (DEBUG) :
         writelog ("In update_alert_group_default - Setting Email to %s \n" % (semail))
-        writelog ("\nwinput=%s\nwoutput=%s\wlive=%s" % (winput,woutput,wbak_file))
+        writelog ("\nwinput=%s\nwoutput=%s" % (winput,woutput))
 
     fi = open(winput,'r')                                               # Open Base AlertGroup File
     fo = open(woutput,'w')                                              # AlertGroup New Default File
     lineNotFound=True                                                   # Assume '^default ' != in file
-    cline = "default    m %s\n" % (sname,semail)                        # Line to Insert in AlertGrp
+    cline = "default    m %s\n" % (semail)                              # Line to Insert in AlertGrp
 
     # Replace Line Starting with default with a new one with sysadmin email.
     for line in fi:                                                     # Read sadmin.cfg until EOF
@@ -1493,21 +1488,6 @@ def update_alert_group_default(sroot,semail,show=True):
         fo.write (line)                                                 # Write 'SNAME = semail Line
     fo.close                                                            # Close the output file
 
-    # Create the Actual (Live) Alert Group file.
-    # Copy "$SADMIN/cfg/.alert_group.cfg" to "$SADMIN/cfg/alert_group.cfg" 
-    if os.path.exists(woutput) :                                        # AlertGroup Template Exist
-        try:
-            shutil.copyfile(woutput,wlive)                              # Copy Template to Live
-        except IOError as e:
-            writelog("Error copying Alert Group Template '%s'. %s" % (woutput,e)) 
-            sys.exit(1)                                                 # Exit to O/S With Error
-        except:
-            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
-            sys.exit(1)          
-    
-    if (show) : 
-        writelog ("Default AlertGroup set '%s'" % (semail,'bold')       # Bold Attr. Name in sadmin
-
 
 
 #===================================================================================================
@@ -1516,13 +1496,7 @@ def update_alert_group_default(sroot,semail,show=True):
 # ===================================================================================================
 #
 def update_sadmin_cfg(sroot,sname,svalue,show=True):
-    """
-    [Update the SADMIN configuration File.]
-    Arguments:
-    sroot  {[string]}   --  [SADMIN root install directory]
-    sname  {[string]}   --  [Name of variable in sadmin.cfg to change value]
-    svalue {[string]}   --  [New value of the variable]
-    """    
+
     wcfg_file = sroot + "/cfg/sadmin.cfg"                               # Actual sadmin config file
     wtmp_file = "%s/cfg/sadmin.tmp" % (sroot)                           # Tmp sadmin config file
     wbak_file = "%s/cfg/sadmin.bak" % (sroot)                           # Backup sadmin config file
@@ -1689,7 +1663,7 @@ def setup_postfix(sroot,wostype,wrelay):
             sys.exit(1)          
 
 
-    writelog "Updating relayhost in postfix configuration file (%s) ..." % (pfile))
+    writelog ("Updating relayhost in postfix configuration file (%s) ..." % (pfile))
     fi = open(pfile,'r')                                                # Current Postfix main.cf
     fo = open(pfile_tmp,'w')                                            # Open new tmp main.cf file
     norelay=True                                                        # Assume no relayhost is set
@@ -1720,13 +1694,13 @@ def setup_postfix(sroot,wostype,wrelay):
 #===================================================================================================
 #
 def setup_sadmin_config_file(sroot,wostype):
-"""[Ask important info that need to be accurate in the $sadmin/cfg/sadmin.cfg file]
-    It Return SADMIN ServerName, ServerIP, DefaultDomain, SysAdminEmail, SadminUser, SadminGroup
-
-Arguments:
-    sroot {[string]} -- [Install Directory Path]
-    wostype {[string]} -- [O/S Type (LINUX,AIX,DARWIN)]
-"""    
+#"""[Ask important info that need to be accurate in the $sadmin/cfg/sadmin.cfg file]
+#    It Return SADMIN ServerName, ServerIP, DefaultDomain, SysAdminEmail, SadminUser, SadminGroup
+#
+#Arguments:
+#    sroot {[string]} -- [Install Directory Path]
+#    wostype {[string]} -- [O/S Type (LINUX,AIX,DARWIN)]
+#"""    
     global stype                                                        # C=Client S=Server Install
 
     # Is the current server a SADMIN [S]erver or a [C]lient
@@ -1768,10 +1742,10 @@ Arguments:
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
         update_alert_group_default(sroot,wcfg_mail_addr)                # Upd. AlertGroup Def. Email 
 
-    # Accept the Email type to use at the end of each script execution
+    # Accept the Alert type to use at the end of each script execution
     # 0=No Alert Sent, 1=On Error Only, 2=On Success Only, 3=Always send alert    
     sdefault = 1                                                        # Default value 1
-    sprompt  = "Enter default email type"                               # Prompt for Answer
+    sprompt  = "Enter default alert type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_ALERT_TYPE",sdefault,sprompt,"I",0,3)
     update_sadmin_cfg(sroot,"SADM_ALERT_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
 
@@ -2075,7 +2049,7 @@ def main():
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, Sadmin User and Group).
-    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot) # Ask Config questions
+    (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
 
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
