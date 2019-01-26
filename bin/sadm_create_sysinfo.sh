@@ -90,7 +90,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables
 #===================================================================================================
-DEBUG_LEVEL=6                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                                   ; export DEBUG_LEVEL    # 0=NoDebug Higher=+Verbose
 DASH_LINE=`printf %79s |tr " " "-"`             ; export DASH_LINE      # 79 minus sign line
 
 # Name of all Output Files
@@ -761,7 +761,7 @@ create_summary_file()
 
     if [ $(sadm_get_ostype) = "LINUX" ]                                 # O/S Upd RCH Only on Linux
         then set_last_osupdate_date                                     # Get Last O/S Update Date
-             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=1 ; fi               # Exit Script with Error
+             if [ $? -ne 0 ] ; then SADM_EXIT_CODE=0 ; fi               # Exit Script with Error
         else OSUPDATE_DATE=""                                           # For Mac & Aix 
              OSUPDATE_STATUS="U"                                        # Status Unknown
     fi 
