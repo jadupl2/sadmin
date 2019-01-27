@@ -42,6 +42,7 @@
 #@2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
 #@2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
 #@2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
+#@2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -78,7 +79,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.30'                              # Current Script Version
+    export SADM_VER='2.31'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -876,32 +877,40 @@ check_for_alert()
 
     # Update O/S Update Crontab if we need too -  Linux ONLY - Can't while in web interface
     if [ $(sadm_get_ostype) = "LINUX" ] 
-        then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # New crontab sha1sum
-             real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Actual crontab sha1sum
-             if [ "$work_sha1" != "$real_sha1" ]                        # New Different than Actual?
-                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}               # Put in place New Crontab
-                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set contab Perm.
-                     sadm_writelog "O/S Update crontab was updated ..." # Advise user
-                else sadm_writelog "No changes made to O/S Update schedule ..."
-                     sadm_writelog "No need to update O/S Update crontab ..."
+        then if [ -f ${SADM_CRON_FILE} ] 
+                then work_sha1=`sha1sum ${SADM_CRON_FILE} | awk '{ print $1 }'` # New crontab sha1sum
+                     if [ -f ${SADM_CRONTAB} ]                                  # Current Crontab exist ?
+                        then real_sha1=`sha1sum ${SADM_CRONTAB}   | awk '{ print $1 }'` # Actual crontab sha1sum
+                             if [ "$work_sha1" != "$real_sha1" ]                # New Different than Actual?
+                                then cp ${SADM_CRON_FILE} ${SADM_CRONTAB}       # Put in place New Crontab
+                                     chmod 644 $SADM_CRONTAB ; chown root:root ${SADM_CRONTAB}  # Set contab Perm.
+                                     sadm_writelog "O/S Update crontab was updated ..." # Advise user
+                                else sadm_writelog "No changes made to O/S Update schedule ..."
+                                     sadm_writelog "No need to update O/S Update crontab ..."
+                             fi
+                             sadm_writelog "${SADM_TEN_DASH}"                   # Print 10 Dash lineHistory
+                             sadm_writelog " "                                  # Separation Blank Line
+                     fi
              fi
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash lineHistory
-             sadm_writelog " "                                          # Separation Blank Line
     fi 
 
     # Update Client Backup Crontab, if we need too -  Linux ONLY - Can't while in web interface
     if [ $(sadm_get_ostype) = "LINUX" ] 
-        then work_sha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{ print $1 }'` # New crontab sha1sum
-             real_sha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{ print $1 }'` # Actual crontab sha1sum
-             if [ "$work_sha1" != "$real_sha1" ]                        # New Different than Actual?
-                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
-                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
-                     sadm_writelog "Clients backup schedule crontab was updated ..." # Advise user
-                else sadm_writelog "No changes made to Backup schedule ..."
-                     sadm_writelog "No need to update Backup crontab ..."
+        then if [ -f ${SADM_BACKUP_NEWCRON} ] 
+                then work_sha1=`sha1sum ${SADM_BACKUP_NEWCRON} |awk '{ print $1 }'` # New crontab sha1sum
+                     if [ -f ${SADM_BACKUP_CRONTAB} ]
+                        then real_sha1=`sha1sum ${SADM_BACKUP_CRONTAB} |awk '{ print $1 }'` # Actual crontab sha1sum
+                             if [ "$work_sha1" != "$real_sha1" ]                # New Different than Actual?
+                                then cp ${SADM_BACKUP_NEWCRON} ${SADM_BACKUP_CRONTAB}   # Put in place New Crontab
+                                     chmod 644 $SADM_BACKUP_CRONTAB ; chown root:root ${SADM_BACKUP_CRONTAB}
+                                     sadm_writelog "Clients backup schedule crontab was updated ..." # Advise user
+                                else sadm_writelog "No changes made to Backup schedule ..."
+                                     sadm_writelog "No need to update Backup crontab ..."
+                             fi
+                             sadm_writelog "${SADM_TEN_DASH}"                   # Print 10 Dash line
+                             sadm_writelog " "                                  # Separation Blank Line
+                     fi
              fi
-             sadm_writelog "${SADM_TEN_DASH}"                           # Print 10 Dash line
-             sadm_writelog " "                                          # Separation Blank Line
     fi 
 
     # Check All *.rpt files (For Warning and Errors) and all *.rch (For Errors) & Issue Alerts
