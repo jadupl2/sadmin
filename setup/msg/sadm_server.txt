@@ -1,10 +1,7 @@
 # sadmin.cfg SADM_SERVER Documentation
-# Revise 2018_03_15
+# Revise 2019_01_26
 # ----------------------------------------------------------------------------
 Enter the name of the SADMIN Server - (MUST be a fully qualified).
   - Can't be an alias in the DNS, it must be the real name of the server.
-  - SADMIN server in /etc/hosts must not use a loopback address, but a real IP.
-  - If you use /etc/hosts, put the FQDN name first like below:
+  - If you use /etc/hosts for name resolution, put the FQDN name first like below:
       192.168.1.17    batserver.batcave.com batserver
-
-
