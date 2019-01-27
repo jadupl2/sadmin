@@ -28,6 +28,7 @@
 # 2018_04_03 V1.4 Bug Fixes and add detail to log for support purpose 
 # 2018_05_01 V1.5 Show Full O/S Version in Log
 # 2018_06_29 V1.6 Change Log File Name & Appearance Changes 
+#@2019_01_29 V1.7 Change: Make sure /etc/hosts contains the IP and FQDN of current server
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -36,7 +37,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.6'                             ; export SADM_VER            # Your Script Version
+SADM_VER='1.7'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -113,6 +114,36 @@ check_python()
     return 0                                                            # Return No Error to Caller
 }
 
+
+#===================================================================================================
+#     Check if lsb_release command is installed, if not install it, if can't then abort script 
+#===================================================================================================
+check_hostname()
+{
+    echo -n "Make sure server is defined in /etc/hosts ... " | tee -a $SLOG
+
+    # Get current IP Address of Server
+    S_IPADDR=`ip addr show | grep global | head -1 | awk '{ print $2 }' |awk -F/ '{ print $1 }'`
+
+    # Get Hostname as per name resolution of IP Address
+    S_HOSTNAME=`host $S_IPADDR | head -1 | awk '{ print $NF }' | cut -d. -f1` 
+
+    # Get Domain Name f IP Address
+    S_DOMAIN=`host $S_IPADDR |head -1 |awk '{ print $NF }' |awk -F\. '{printf "%s.%s\n", $2, $3}'` 
+
+    # Insert Server into /etc/hosts (If not already there)
+    grep -Eiv "^${S_IPADDR}|${S_HOSTNAME}" /etc/hosts > /tmp/hosts.$$
+    echo "$S_IPADDR    ${S_HOSTNAME}.${S_DOMAIN}    ${S_HOSTNAME}" >> /tmp/hosts.$$
+
+    # Make Backup of /etc/hosts in /etc/host.org (If not already exist)
+    if [ ! -f /etc/hosts.org ] ; then cp /etc/hosts /etc/hosts.org ; fi
+
+    # Put New /etc/hosts in Place.
+    cp /tmp/hosts.$$ /etc/hosts ; chmod 644 /etc/hosts ; chown root:root /etc/hosts 
+    rm -f /tmp/hosts.$$
+    
+    echo " Done " | tee -a $SLOG
+}
 
 #===================================================================================================
 #     Check if lsb_release command is installed, if not install it, if can't then abort script 
@@ -216,6 +247,9 @@ EOF
 
     # Make sure python3 exist, if not install it
     check_python                                                        # python3 must be found
+
+    # Check name resolution for this host
+    check_hostname
 
     # Ok Python3 and lsb_release command are installed - Proceeed with Main Setup Script
     echo "We will now proceed with main setup program ($SCRIPT)" >> $SLOG 
