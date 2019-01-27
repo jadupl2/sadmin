@@ -281,14 +281,14 @@ def update_host_file(wdomain,wip) :
     except :
         writelog("Error Opening /etc/hosts file")
         sys.exit(1)
-    eline = "%s      sadmin  sadmin.%s" % (wip,wdomain)                 # Line that should be hosts
+    eline = "%s    sadmin.%s   sadmin " % (wip,wdomain)                 # Line that should be hosts
     found_line = False                                                  # Assume sadmin line not in
     for line in hf:                                                     # Read Input file until EOF
         if (eline.rstrip() == line.rstrip()):                           # Line already there    
             found_line = True                                           # Line is Found 
     if not found_line:                                                  # If line was not found
         hf.write ("%s\n" % (eline))                                     # Write SADMIN line to hosts
-    hf.close                                                            # Close /etc/hosts file
+    hf.close()                                                          # Close /etc/hosts file
     return()                                                            # Return Cmd Path
 
 
@@ -320,8 +320,7 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     # Check if crontab directory exist - Procedure may not be supported on this O/S
     writelog('')
     writelog('--------------------')
-    writelog ('Creating SADMIN client crontab file ($ccron_file)','bold')
-
+    writelog ("Creating SADMIN client crontab file (%s)" % (ccron_file),'bold')
     # If SADMIN old crontab file exist, delete it and recreate it
     try:                                                                # In case old file exist
         os.remove(ccron_file)                                           # Remove old crontab file
@@ -355,7 +354,7 @@ def update_client_crontab_file(logfile,sroot,wostype,wuser) :
     chostname = socket.gethostname().split('.')[0]
     hcron.write ("2,7,12,17,22,27,32,37,42,47,52,57 * * * * %s sudo ${SADMIN}/bin/sadm_sysmon.pl >${SADMIN}/log/%s_sadm_sysmon.log 2>&1\n" % (wuser,chostname))
     hcron.write ("#\n")
-    hcron.close                                                         # Close SADMIN Crontab file
+    hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Client Crontab file permission to 644
     cmd = "chmod 600 %s" % (ccron_file)                                 # chmod 644 on ccron_file
@@ -455,7 +454,7 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
     #hcron.write ("# Morning report sent to Sysadmin by Email\n")
     #hcron.write ("03 08 * * * ${SADMIN}/bin/sadm_rch_scr_summary.sh -m >/dev/null 2>&1\n")
     #hcron.write ("#\n")
-    hcron.close                                                         # Close SADMIN Crontab file
+    hcron.close()                                                       # Close SADMIN Crontab file
 
     # Change Server Crontab file permission to 644
     cmd = "chmod 644 %s" % (ccron_file)                                 # chmod 644 on ccron_file
@@ -574,7 +573,7 @@ def update_sudo_file(logfile,wuser) :
     hsudo.write ('Defaults  !requiretty')                               # Session don't require tty
     hsudo.write ('\nDefaults  env_keep += "SADMIN"')                    # Keep Env. Var. SADMIN 
     hsudo.write ("\n%s ALL=(ALL) NOPASSWD: ALL\n" % (wuser))            # No Passwd for SADMIN User
-    hsudo.close                                                         # Close SADMIN sudo  file
+    hsudo.close()                                                       # Close SADMIN sudo  file
 
     # Change sudo file permission to 440
     cmd = "chmod 440 %s" % (sudofile)                                   # chmod 440 on sudofile
@@ -1059,7 +1058,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         dbpwd  = open(dpfile,'w')                                       # Create Database Pwd File
         dbpwd.write("sadmin,%s\n" % (rw_passwd))                        # Create R/W user & Password
         dbpwd.write("squery,%s\n" % (ro_passwd))                        # Create R/O user & Password
-        dbpwd.close                                                     # Close DB Password File
+        dbpwd.close()                                                   # Close DB Password File
     else:
         writelog ("Leaving Database Password File as it is (%s)" % (dpfile)) # Advise user 
         
@@ -1097,8 +1096,8 @@ def setup_webserver(sroot,spacktype,sdomain,semail):
     # Set the name of Web Server Service depending on Linux O/S
     sservice = "httpd"
     if (spacktype == "deb" ) : sservice = "apache2" 
-    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close        # Touch Apache SADMIN log
-    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close        # Touch Apache SADMIN log
+    open("/var/log/%s/sadmin_error.log"  % (sservice),'a').close()      # Touch Apache SADMIN log
+    open("/var/log/%s/sadmin_access.log" % (sservice),'a').close()      # Touch Apache SADMIN log
     
     # Start Web Server
     cmd = "systemctl restart %s" % (sservice)
@@ -1278,8 +1277,8 @@ def update_apache_config(sroot,sfile,sname,svalue):
     for line in fi:                                                     # Read sadmin.cfg until EOF
         sline = line.replace(sname,svalue)
         fo.write (sline)                                                # Write line to output file
-    fi.close                                                            # File read now close it
-    fo.close                                                            # Close the output file
+    fi.close()                                                          # File read now close it
+    fo.close()                                                          # Close the output file
 
     # Rename Apache Current file to .bak
     try:                                                                # Will try rename env. file
@@ -1366,11 +1365,11 @@ def set_sadmin_env(ver):
            line = "%s" % (eline)                                        # Replace line with latest
         fo.write (line)                                                 # Write line to output file
         fileEmpty=False                                                 # File was not empty flag
-    fi.close                                                            # File read now close it
+    fi.close()                                                          # File read now close it
     if (fileEmpty) :                                                    # If Input file was empty
         line = "%s\n" % (eline)                                         # Add line with needed line
         fo.write (line)                                                 # Write 'export SADMIN=' Line
-    fo.close                                                            # Close the output file
+    fo.close()                                                          # Close the output file
     try:                                                                # Will try rename env. file
         os.remove(SADM_PROFILE)                                         # Remove current sadmin.cfg
         os.rename(SADM_TMPFILE,SADM_PROFILE)                            # Rename tmp to real one
@@ -1412,10 +1411,10 @@ def set_sadmin_env(ver):
            line = "%s" % (eline)                                        # Replace line with latest
         fo.write (line)                                                 # Write line to output file
         fileEmpty=False                                                 # File was not empty flag
-    fi.close                                                            # File read now close it
+    fi.close()                                                          # File read now close it
     if (fileEmpty) :                                                    # If Input file was empty
         fo.write (eline)                                                # Write 'export SADMIN=' Line
-    fo.close                                                            # Close the output file
+    fo.close()                                                          # Close the output file
     try:                                                                # Will try rename env. file
         os.remove(SADM_ENVFILE)                                         # Remove current sadmin.cfg
         os.rename(SADM_TMPFILE,SADM_ENVFILE)                            # Rename tmp to real one
@@ -1465,8 +1464,8 @@ def update_alert_group_default(sroot,semail):
     sname  {[string]}   --  [Name of variable in sadmin.cfg to change value]
     semail {[string]}   --  [New value of the variable]
     """    
-    winput  = sroot + "/setup/etc/alert_group.def"                      # AlertGroup Base Def. File
-    woutput = "%s/cfg/.alert_group.cfg" % (sroot)                       # AlertGroup New Default File
+    winput  = "%s/cfg/.alert_group.cfg" % (sroot)                       # AlertGroup Base Def. File
+    woutput = "%s/cfg/alert_group.cfg" % (sroot)                        # AlertGroup New Default File
     if (DEBUG) :
         writelog ("In update_alert_group_default - Setting Email to %s \n" % (semail))
         writelog ("\nwinput=%s\nwoutput=%s" % (winput,woutput))
@@ -1482,11 +1481,11 @@ def update_alert_group_default(sroot,semail):
            line = "%s" % (cline)                                        # Change Line with new one
            lineNotFound=False                                           # Line was found in file
         fo.write (line)                                                 # Write line to output file
-    fi.close                                                            # File read now close it
+    fi.close()                                                          # File read now close it
     if (lineNotFound) :                                                 # Line wasn't found in file
         line = "%s\n" % (cline)                                         # Add needed line
         fo.write (line)                                                 # Write 'SNAME = semail Line
-    fo.close                                                            # Close the output file
+    fo.close()                                                          # Close the output file
 
 
 
@@ -1515,11 +1514,11 @@ def update_sadmin_cfg(sroot,sname,svalue,show=True):
            line = "%s" % (cline)                                        # Change Line with new one
            lineNotFound=False                                           # Line was found in file
         fo.write (line)                                                 # Write line to output file
-    fi.close                                                            # File read now close it
+    fi.close()                                                          # File read now close it
     if (lineNotFound) :                                                 # SNAME wasn't found in file
         line = "%s\n" % (cline)                                         # Add needed line
         fo.write (line)                                                 # Write 'SNAME = SVALUE Line
-    fo.close                                                            # Close the output file
+    fo.close()                                                          # Close the output file
 
     # Rename sadmin.cfg sadmin.bak
     try:                                                                # Will try rename env. file
@@ -1672,11 +1671,11 @@ def setup_postfix(sroot,wostype,wrelay):
             line = "relayhost=%s" % (wrelay)                            # Replace with new relayhost
             norelay=False                                               # RelayHost was Set
         fo.write (line)                                                 # Write line to output file
-    fi.close                                                            # File read now close it
+    fi.close()                                                          # File read now close it
     if (norelay) :                                                      # If no relayhost was set
         line = "relayhost=%s" % (wrelay)                                # Insert new relayhost line
         fo.write (line)                                                 # Write line to output file
-    fo.close                                                            # Close the output file
+    fo.close()                                                          # Close the output file
 
     # Delete main.cf and copy main.cf.tmp to main.cf
     try:                                                                # Will try rename env. file
@@ -1695,7 +1694,7 @@ def setup_postfix(sroot,wostype,wrelay):
 #
 def setup_sadmin_config_file(sroot,wostype):
 #"""[Ask important info that need to be accurate in the $sadmin/cfg/sadmin.cfg file]
-#    It Return SADMIN ServerName, ServerIP, DefaultDomain, SysAdminEmail, SadminUser, SadminGroup
+#    It Return SADMIN ServerName, ServerIP, Default, SysAdminEmail, SadminUser, SadminGroup
 #
 #Arguments:
 #    sroot {[string]} -- [Install Directory Path]
@@ -1747,17 +1746,21 @@ def setup_sadmin_config_file(sroot,wostype):
     sdefault = 1                                                        # Default value 1
     sprompt  = "Enter default alert type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_ALERT_TYPE",sdefault,sprompt,"I",0,3)
-    update_sadmin_cfg(sroot,"SADM_ALERT_TYPE",wcfg_mail_type)            # Update Value in sadmin.cfg
+    update_sadmin_cfg(sroot,"SADM_ALERT_TYPE",wcfg_mail_type)           # Update Value in sadmin.cfg
 
     # Accept the Default Domain Name
     try :
-        sdefault = socket.getfqdn().split('.', 1)[1]                    # Set Current  Default value 
+        sdefault = socket.getfqdn(socket.gethostname(  )).split('.',1)[1] # Get Domain Name of host
     except (IndexError) as error :
         sdefault = ""
-    #sdefault = socket.gethostname().split('.', 1)[1]                   # Set Current  Default value 
-    #sdefault = os.uname()[1].split('.', 1)[1]                          # Set Current  Default value 
-    sprompt  = "Default domain name"                                    # Prompt for Answer
-    wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)    # Accept Default Domain Name
+    while True:   
+        sprompt  = "Enter default domain name"                          # Prompt for Domain Name
+        wcfg_domain = accept_field(sroot,"SADM_DOMAIN",sdefault,sprompt)# Accept Default Domain Name
+        if (len(wcfg_domain) < 1):                                      # If DomainName is Blank
+            writelog ("  ")
+            writelog ("ERROR : You must specify a domain name")         # Advise USer
+            continue                                                    # Go Re-Accept Domain Name
+        break                                                           # Ok Name pass the test
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
 
     # Accept the SADMIN FQDN Server name
@@ -1768,15 +1771,17 @@ def setup_sadmin_config_file(sroot,wostype):
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
         ccode,SADM_IP,cstderr = oscommand("host %s |awk '{ print $4 }' |head -1" % (wcfg_server))
+        #writelog ("wcfg_server = %s SADM_IP = %s ccode = %s cstderr = %s" % (wcfg_server,SADM_IP,ccode,cstderr))
         digit1=SADM_IP.split('.')[0]                                    # 1st Digit=127 = Invalid
-        if (digit1 == "127"):                                           # If Resolve to loopback IP
+        if ((digit1 == "127") or (SADM_IP.count(".") != 3)):            # If Resolve to loopback IP
             writelog ("  ")
+            #writelog ("SADM_IP.count %s" % (SADM_IP.count(".")))
             writelog ("*** ERROR ***")
-            writelog ("SADMIN server name can't resolve to localhost (%s)" %(SADM_IP))
-            writelog ("SADMIN clients would not be able to get to the SADMIN Server")
-            writelog ("SADMIN Server name must resolve to an IP other than in 127.0.0.0/24 subnet")
-            writelog ("You may need to press CTRL-C to abort installation and correct the situation")
-            writelog ("Once resolve, just execute the setup program again or enter a valid hostname")
+            writelog ("SADMIN server name '%s' can't be resolve." %(wcfg_server))
+            writelog ("SADMIN clients would not be able to get to the SADMIN Server.")
+            writelog ("SADMIN Server name must resolve to an IP other than in 127.0.0.0/24 subnet.")
+            writelog ("You may need to press CTRL-C to abort installation and correct the situation.")
+            writelog ("Once resolve, just execute the setup program again or enter a valid hostname.")
             continue                                                    # Go Re-Accept Server Name
         sname=wcfg_server.split('.')                                    # Split Server Name in Array
         if (len(sname) != 3):                                           # If not 3 Fields not FQDN
