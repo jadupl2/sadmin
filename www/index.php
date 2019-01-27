@@ -1,1 +1,1 @@
-/sadmin/www/view/srv/sadm_view_servers.php
+view/srv/sadm_view_servers.php
