@@ -35,6 +35,7 @@
 # 2018_12_18    v1.23 Don't delete SADMIN server directories if SADM_HOST_TYPE='D' in sadmin.cfg
 # 2018_12_19    v1.24 Fix typo Error & Enhance log output
 #@2018_12_22    v1.25 Minor change - More Debug info.
+#@2019_01_28 Change: v1.26 Add readme.pdf and readme.html to housekeeping
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -58,7 +59,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.25'                              # Current Script Version
+    export SADM_VER='1.26'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -232,20 +233,6 @@ dir_housekeeping()
     sadm_writelog "CLIENT DIRECTORIES HOUSEKEEPING STARTING"
     sadm_writelog " "
     ERROR_COUNT=0                                                       # Reset Error Count
-
-    # Remove Old Ver.1 Dir. Not use anymore
-    if [ -d "${SADM_DAT_DIR}/sar" ]
-        then sadm_writelog "Directory ${SADM_DAT_DIR}/sar should not exist anymore."
-             sadm_writelog "I am deleting it now."
-             rm -fr ${SADM_DAT_DIR}/sar
-    fi
-
-    # Remove Old Ver.1 Dir. Not use anymore
-    if [ -d "${SADM_BASE_DIR}/jac" ]
-       then sadm_writelog "Directory ${SADM_BASE_DIR}/jac should not exist anymore."
-            sadm_writelog "I am deleting it now."
-            rm -fr ${SADM_BASE_DIR}/jac
-    fi
 
     set_dir "$SADM_BASE_DIR"      "0775" "$SADM_USER" "$SADM_GROUP"     # set Priv SADMIN Base Dir
     ERROR_COUNT=$(($ERROR_COUNT+$?))                                    # Cumulate Err.Counter
@@ -456,6 +443,18 @@ file_housekeeping()
              sadm_writelog "$lsline"
     fi
 
+    # Make sure crontab for Backup have proper permission and owner
+    afile="/etc/cron.d/sadm_backup"
+    if [ -f "$afile" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for Backup have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline"
+    fi
 
     # Set Owner and Permission for Readme file
     if [ -f ${SADM_BASE_DIR}/README.md ]
@@ -468,6 +467,28 @@ file_housekeeping()
              sadm_writelog "$lsline"
     fi
 
+    # Set Owner and Permission for Readme.html file
+    if [ -f ${SADM_BASE_DIR}/README.html ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure README.html have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
+             chmod 664 ${SADM_BASE_DIR}/README.md
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+             lsline=`ls -l ${SADM_BASE_DIR}/README.md`
+             sadm_writelog "$lsline"
+    fi
+    
+    # Set Owner and Permission for Readme.pdf file
+    if [ -f ${SADM_BASE_DIR}/README.pdf ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure README.pdf have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
+             chmod 664 ${SADM_BASE_DIR}/README.md
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
+             lsline=`ls -l ${SADM_BASE_DIR}/README.md`
+             sadm_writelog "$lsline"
+    fi
+    
     # Set Owner and Permission for license file
     if [ -f ${SADM_BASE_DIR}/LICENSE ]
         then sadm_writelog "${SADM_TEN_DASH}"
@@ -561,7 +582,7 @@ file_housekeeping()
     fi
 
 
-    # Reset privilege on SADMIN SYS Directory files
+    # Reset privilege on SADMIN Configuration Directory files
     if [ -d "$SADM_CFG_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_CFG_DIR -type f -exec chmod -R 664 {} \;" # Change Files Priv
@@ -606,8 +627,8 @@ file_housekeeping()
     # Reset privilege on SADMIN Bin Directory files
     if [ -d "$SADM_BIN_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "find $SADM_BIN_DIR -type f -exec chmod -R 770 {} \;"       # Change Files Privilege
-             find $SADM_BIN_DIR -type f -exec chmod -R 775 {} \; >/dev/null 2>&1     # Change Files Privilege
+             sadm_writelog "find $SADM_BIN_DIR -type f -exec chmod -R 775 {} \;" # Chg Files Priv.
+             find $SADM_BIN_DIR -type f -exec chmod -R 775 {} \; >/dev/null 2>&1 # Chg Files Priv.
              if [ $? -ne 0 ]
                 then sadm_writelog "Error occured on the last operation."
                      ERROR_COUNT=$(($ERROR_COUNT+1))
@@ -624,7 +645,7 @@ file_housekeeping()
              fi
     fi
 
-    # Reset privilege on SADMIN Bin Directory files
+    # Reset privilege on SADMIN Library Directory files
     if [ -d "$SADM_LIB_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_LIB_DIR -type f -exec chmod -R 770 {} \;"
@@ -668,7 +689,7 @@ file_housekeeping()
     fi
 
 
-    # Remove files older than 7 days in SADMIN TEMP Directory
+    # Remove files older than 7 days in SADMIN TMP Directory
     if [ -d "$SADM_TMP_DIR" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "find $SADM_TMP_DIR  -type f -mtime +7 -exec rm -f {} \;"
@@ -681,7 +702,7 @@ file_housekeeping()
                      if [ $ERROR_COUNT -ne 0 ] ;then sadm_writelog "Total Error at $ERROR_COUNT" ;fi
              fi
              sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Delete pid files once a day - This prevent script not to run"
+             sadm_writelog "Delete pid files once a day - This prevent script from not running"
              sadm_writelog "find $SADM_TMP_DIR  -type f -name '*.pid' -exec rm -f {} \;"
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec ls -l {} \; | tee -a $SADM_LOG
              find $SADM_TMP_DIR  -type f -name "*.pid" -exec rm -f {} \; >/dev/null 2>&1
@@ -690,9 +711,9 @@ file_housekeeping()
     # Remove *.rch (Return Code History) files older than ${SADM_RCH_KEEPDAYS} days in SADMIN/DAT/RCH Dir.
     if [ -d "${SADM_RCH_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "You have chosen to keep *.rch files for ${SADM_RCH_KEEPDAYS} days (sadmin.cfg)."
-             sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR} and delete them"
-             sadm_writelog "List of rch file that will be deleted"
+             sadm_writelog "You chosen to keep *.rch files for ${SADM_RCH_KEEPDAYS} days (sadmin.cfg)."
+             sadm_writelog "Find any *.rch file older than ${SADM_RCH_KEEPDAYS} days in ${SADM_RCH_DIR} and delete them."
+             sadm_writelog "List of rch file that will be deleted."
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name '*.rch' -exec rm -f {} \;"
              find ${SADM_RCH_DIR} -type f -mtime +${SADM_RCH_KEEPDAYS} -name "*.rch" -exec rm -f {} \; | tee -a $SADM_LOG
@@ -707,9 +728,9 @@ file_housekeeping()
     # Remove any *.log in SADMIN LOG Directory older than ${SADM_LOG_KEEPDAYS} days
     if [ -d "${SADM_LOG_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "You have chosen to keep *.log files for ${SADM_LOG_KEEPDAYS} days (sadmin.cfg)."
-             sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR} and delete them"
-             sadm_writelog "List of log file that will be deleted"
+             sadm_writelog "You chosen to keep *.log files for ${SADM_LOG_KEEPDAYS} days (sadmin.cfg)."
+             sadm_writelog "Find any *.log file older than ${SADM_LOG_KEEPDAYS} days in ${SADM_LOG_DIR} and delete them,"
+             sadm_writelog "List of log file that will be deleted."
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec ls -l {} \; | tee -a $SADM_LOG
              sadm_writelog "find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name '*.log' -exec rm -f {} \;"
              find ${SADM_LOG_DIR} -type f -mtime +${SADM_LOG_KEEPDAYS} -name "*.log" -exec rm -f {} \; | tee -a $SADM_LOG
@@ -725,7 +746,7 @@ file_housekeeping()
     if [ -d "${SADM_NMON_DIR}" ]
         then sadm_writelog "${SADM_TEN_DASH}"
              sadm_writelog "You have chosen to keep *.nmon files for $SADM_NMON_KEEPDAYS days (sadmin.cfg)."
-             sadm_writelog "List of nmon file that will be deleted"
+             sadm_writelog "List of nmon file that will be deleted."
              sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name *.nmon -exec ls -l {} \;"
              find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name "*.nmon" -exec ls -l {} \; >> $SADM_LOG 2>&1
              sadm_writelog "find $SADM_NMON_DIR -mtime +${SADM_NMON_KEEPDAYS} -type f -name '*.nmon' -exec rm {} \;"
