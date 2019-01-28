@@ -35,7 +35,8 @@
 # 2018_11_09 v2.22 Refine test before connecting to Database
 # 2018_11_13 v2.23 Change for support of MacOS Mojave
 #@2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
-#
+#@2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
+# 
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -107,7 +108,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.23"                                # This Library Version
+        self.libver             = "2.25"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -452,13 +453,11 @@ class sadmtools():
         FH_CFG_FILE.close()                                                 # Close Config File
 
         # Get Database User Password get .dbpass file (Read 'sadmin' and 'squery' user pwd)
-        if self.get_fqdn() == self.cfg_server :                         # Only on SADMIN & Use DB
+        if ((self.get_fqdn() == self.cfg_server) and (self.cfg_host_type == "S")): # Only on SADMIN & Use DB
             try:
                 FH_DBPWD = open(self.dbpass_file,'r')                   # Open DB Password File
             except IOError as e:                                        # If Can't open DB Pwd  file
                 print ("Error opening file %s \r\n" % self.dbpass_file) # Print DBPass FileName
-                print ("Error Number : {0}\r\n.format(e.errno)")        # Print Error Number
-                print ("Error Text   : {0}\r\n.format(e.strerror)")     # Print Error Message
                 sys.exit(1)
             for dbline in FH_DBPWD :                                    # Loop until on all lines
                 wline = dbline.strip()                                  # Strip CR/LF & Trail spaces
