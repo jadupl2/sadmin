@@ -23,6 +23,7 @@
 # 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
 # 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
 #@2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
+#@2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +45,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.7'                               # Current Script Version
+    export SADM_VER='3.8'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -1103,7 +1104,7 @@ print_start_stop()
     print_server_directory                                              # List Server Dir. Var. 
     print_file_variable                                                 # List Files Var. of SADMIN
     print_command_path                                                  # List Command PAth
-    print_db_variables                                                  # List Database Variables
+    if [ "$SADM_HOST_TYPE" = "S" ] ; then print_db_variables ;fi        # On SADM Server List DB Var.
     printf "\n\n"                                                       # End of report Line Feeds
     SDAM_EXIT_CODE=0                                                    # For Test purpose
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
