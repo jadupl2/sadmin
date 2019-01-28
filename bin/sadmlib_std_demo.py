@@ -35,6 +35,7 @@
 # 2018_06_05    v2.9 Added setup, www/tmp/perf Directory Environment Variables 
 # 2018_12_03    v3.0 Remove dot before and after the result column and minor changes.
 #@2019_01_19    v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
+#@2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
 #===================================================================================================
 #
 try :
@@ -71,7 +72,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.1"                 # Current Script Version
+    st.ver              = "3.2"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -412,7 +413,7 @@ def print_client_directory(st):
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
     pexample="st.setup_dir"                                             # Variable Name
-    pdesc="SADMIN Installation/Update Setup Dir."                       # Function Description
+    pdesc="SADMIN Setup Directory."                                     # Function Description
     presult=st.setup_dir                                                # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
         
@@ -833,9 +834,9 @@ def print_sadmin_cfg(st):
     presult=st.cfg_storix_nfs_server                                    # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_storix_nfs_mount_point"                            # Variable Name
+    pexample="st.cfg_storix_mount_point"                            # Variable Name
     pdesc="Storix NFS Mount Point"                                      # Function Description
-    presult=st.cfg_storix_nfs_mount_point                               # Return Value(s)
+    presult=st.cfg_storix_mount_point                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.cfg_storix_backup_to_keep"                             # Variable Name
@@ -1035,8 +1036,9 @@ def main():
     print_server_directory(st)                                          # Show Server Dir. Variables
     print_file_variable(st)                                             # Show Files Variables
     print_command_path(st)                                              # Show Command Path
-    print_db_variables(st)                                              # Show Database Information
-    #print_env(st)                                                       # Show Env. Variables
+    if ((st.get_fqdn() == st.cfg_server) and (st.cfg_host_type == "S")): # Only on SADMIN & Use DB
+        print_db_variables(st)                                          # Show Database Information
+    #print_env(st)                                                      # Show Env. Variables
     st.stop(st.exit_code)                                               # Close SADM Environment
     sys.exit(st.exit_code)                                              # Exit To O/S
 
