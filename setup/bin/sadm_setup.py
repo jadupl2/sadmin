@@ -46,6 +46,7 @@
 # 2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
 # 2019_01_03    Changed: sadm_setup.py V3.10 - Adapt crontab for MacOS and Aix, Setup Postfix
 #@2019_01_25    Fix: v3.11 Fix problem with crash and multiple change to simplify process.
+#@2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -61,7 +62,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.11"                                            # Setup Version Number
+sver                = "3.12"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1872,6 +1873,10 @@ def setup_sadmin_config_file(sroot,wostype):
             cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
             cmd += " -c'%s' %s -e ''" % ("SADMIN Tools User",wcfg_user) # Comment,user name,noexpire
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
+            cmd = "echo 'nimdas' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
+            ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
+            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user)) 
+            writelog ("We suggest you change it after installation.")   # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
