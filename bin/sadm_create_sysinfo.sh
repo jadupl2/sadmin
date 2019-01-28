@@ -38,6 +38,7 @@
 #@2019_01_01    Added: sadm_create_sysinfo v3.8 - Use lshw to list Disks and Network Info on Linux.
 #@2019_01_01    Added: sadm_create_sysinfo v3.9 - Use lsblk to list Disks Partitions and Filesystems.
 #@2019_01_01    Added: sadm_create_sysinfo v3.10 - Added lspci, lsscsi and create hardware html list.
+#@2019_01_28 Added: v3.11 Change Header of files produced by this script.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -57,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.10'                              # Current Script Version
+    export SADM_VER='3.11'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Output goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Header in script log (.log)
@@ -299,9 +300,9 @@ write_file_header()
     WTITLE=$1
     WFILE=$2
     echo "# ${SADM_DASH}"       >$WFILE 2>&1
-    echo "# SADMIN Release $(sadm_get_release) - sadm_create_server_info V$SADM_VER" >>$WFILE 2>&1
+    echo "# SADMIN Release $(sadm_get_release) - $SADM_PN v$SADM_VER" >>$WFILE 2>&1
     echo "# $SADM_CIE_NAME - `date`"                 >>$WFILE 2>&1
-    echo "# Output of $WTITLE command on $(sadm_get_fqdn) - $SOSNAME V${SOSVER}" >>$WFILE
+    echo "# $WTITLE on $(sadm_get_fqdn) - $SOSNAME V${SOSVER}" >>$WFILE
     echo "# ${SADM_DASH}"                             >>$WFILE 2>&1
     echo "#"                                         >>$WFILE 2>&1
 }
