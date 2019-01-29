@@ -22,7 +22,7 @@
 * **Scripting tools**
   * The SADMIN server is the central place for monitoring scripts running on your systems.
   * View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
-  * Access script log from SADMIN server [Web interface](https://www.sadmin.ca/img/sadm_web_scripts_status.png) or from the [command line](https://www.sadmin.ca/img/file_log_format.png).
+  * Access script log from SADMIN server [Web interface](https://www.sadmin.ca/img/sadm_view_log.png) or from the [command line](https://www.sadmin.ca/img/file_log_format.png).
   * Choose to be alerted or note by ['Slack'](https://www.sadmin.ca/img/slack_warning.png) or by [email](https://www.sadmin.ca/img/mail_notification.png)  when a script failed or succeed,
   * Use our [Shell](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php) and/or [Python](https://www.sadmin.ca/doc/man/man_sadm_template_py.php) templates to create new scripts and benefit of SADMIN tools.
   * Use [SADMIN wrapper](https://www.sadmin.ca/doc/man/man_sadm_wrapper.php) and run your existing scripts using the SADMIN tools
