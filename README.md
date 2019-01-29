@@ -113,7 +113,7 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 
 ### Running the setup script
 * Setup ask several questions regarding your environment and store answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).  
-* Here's the [output running the setup script](https://www.sadmin.ca/doc/sadm_client_install_centos7.pdf) to install a SADMIN client on a CentOS 7 system.
+* Here's the [output running the setup script](https://www.sadmin.ca/doc/pdf/sadm_client_install_centos7.pdf) to install a SADMIN client on a CentOS 7 system.
 * This file is used by the web interface, the SADMIN scripts, libraries and the new scripts you will create.  
 * This configuration can be modified when ever you need to.  
 * The setup script can be run more than once, so don't worry if you made a mistake, just run it again.
