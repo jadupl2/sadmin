@@ -123,7 +123,7 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 * When installation is finished you will have a working Web SADMIN environment at 'http://sadmin'.
 
 After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below.  
-This will make sure "SADMIN" environment variable is define (The dot and the space are important).
+This will make sure "SADMIN" environment variable is define (The dot and the space are important).  
     `sudo . /etc/profile.d/sadmin.sh` 
 
 
