@@ -1,37 +1,34 @@
-# SADMIN Tools version 0.94.0
+# ![SADMIN Tools][1] SADMIN Tools - Version 0.95.0
 
-If you are a Unix system administrator and taking care of multiple servers, you probably created some scripts to help you keeping your environment under control. SADMIN surely can help you, improve and standardize the administration of your server farm. With SADMIN you can be alerted
-when something goes wrong, when a script fail or just to let you know that your script ran with
- success. You can received these alerts by email or on your mobile device using the '[Slack](https://slack.com/)'
- application. 
-
+If you are a Unix system administrator and taking care of multiple servers, you probably created some scripts to help you keeping your environment under control. SADMIN surely can help you, improve and standardize the administration of your server farm. With SADMIN you can be alerted when something goes wrong, when a script fail or just to let you know that your script ran with
+ success. You can received these alerts by email or on your mobile device using the '[Slack](https://slack.com/)' application. 
+Simple to install just download the tgz file or clone the git repository and run the setup.sh script.
 For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 
 [See our latest release changelog](https://www.sadmin.ca/www/changelog.php).
 
-## Some features of SADMIN Tools
+## Some features of SADMIN Tools  
  
 
-**Web interface to ease your work**
+### [Web interface](https://www.sadmin.ca/img/sadmin_web_interface.png) to ease your work  
 
-- Use it to [add](https://www.sadmin.ca/img/crud_create_server.png), update and delete server in your server farm inventory.
+- Use it to add, [update](https://www.sadmin.ca/img/sadm_server_update.png) and delete server in your server farm inventory.
 - View [performance graph](https://www.sadmin.ca/img/sadm_nmon_rrd_update_cpu_graph.png) of your servers up to two years in the past.
-- If you want, you can automatically [update your server O/S at the time and day you scheduled](https://www.sadmin.ca/img/sadm_osupdate_screen.png).
+- You can automatically [update your server O/S at the time and day you choose](https://www.sadmin.ca/img/sadm_osupdate_screen.png).
 - Have server configuration on hand, useful in case of a Disaster Recovery.
-- View your servers farm subnet utilization and [see what IP are free](https://www.sadmin.ca/img/web_network_page.png) to use.
+- View your network subnet utilization and [see what IP are free](https://www.sadmin.ca/img/web_network_page.png) to use.
 - View the [status of all your scripts](https://www.sadmin.ca/img/sadm_web_scripts_status.png) that run in your server farm.
-  - View the log (*.log) and/or history file (*.rch) without having to go on each server to see them.
+  - View the log (*.log) and/or history file (*.rch) without having to go on each server.
 - There's still a lot more to come.
 
-**Templates Scripts (Shell and Python)**
+### Templates Scripts ([Shell](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php) and [Python](https://www.sadmin.ca/doc/man/man_sadm_template_py.php))
 
-- Make a copy of the [template script](https://www.sadmin.ca/doc/man/man_sadm_template_sh.php), modify it to your need and enjoy :
+- Make a copy of the template script, modify it to your need and enjoy :
   - All your scripts will have a log.
     - All your logs will have a standardize name (hostname_scriptname.log)
     - All logs, will have the [same format](https://www.sadmin.ca/img/helloWorld.sh_10.png) (Header,Footer, Date/Time Stamp,...).
     - They will be recorded in the same location ($SADMIN/log).
-    - [Logs can be viewed from the Web Interface](https://www.sadmin.ca/img/file_log_web_view.png).
-    - Of course, they can be [viewed from the command line](https://www.sadmin.ca/img/file_log_format.png).
+    - [Logs can be viewed from the Web Interface](https://www.sadmin.ca/img/file_log_web_view.png) or [from the command line](https://www.sadmin.ca/img/file_log_format.png).
     - Control if you want to [append or create a new log](https://www.sadmin.ca/img/helloWorldVariables2.png) at each execution.
     - You decide the maximum of lines you want to keep in the log.
   - [Scripts execution history file](https://www.sadmin.ca/img/file_rch_format.png) ([R]esult [C]ode [H]istory) :
@@ -72,7 +69,7 @@ If you like one these features, then will certainly find a couple of more intere
 - Take a look at our [changelog](https://www.sadmin.ca/www/changelog.php) and see the latest features and bug fixes.
 - You can clone the project from [GitHub](https://github.com/jadupl2/sadmin)
 
-```shell
+```bash
 # git clone https://github.com/jadupl2/sadmin.git
 ```
 
@@ -147,3 +144,5 @@ The SADMIN is a collection of free software: you can redistribute it and/or modi
 The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
 See the [LICENSE](LICENSE) file for details.
+
+[1]: https://www.sadmin.ca/img/sadmin_small_logo.png
