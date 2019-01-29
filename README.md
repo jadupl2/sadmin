@@ -61,7 +61,7 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 
 ## Before you install
 
-* [SADMIN tools reside in one directory](https://www.sadmin.ca/doc/sadmin_directory_structure.pdf) (recommend '/opt/sadmin'), but you can install it in the directory of your choice.
+* [SADMIN tools reside in one directory](https://www.sadmin.ca/doc/pdf/sadmin_directory_structure.pdf) (recommend '/opt/sadmin'), but you can install it in the directory of your choice.
 * For **the server installation we recommended at least 2Gb** of free space and **1Gb for the client**.
 * The 'SADMIN' environment variable is critical for the SADMIN tools and contain the installation directory name.
 * The setup script will make sure that this environment variable is defined and persistent after a reboot.
