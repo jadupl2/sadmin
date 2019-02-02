@@ -145,4 +145,3 @@ The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT 
 See the [LICENSE](LICENSE) file for details.
 
 [1]: https://www.sadmin.ca/img/sadmin_small_logo.png
-
