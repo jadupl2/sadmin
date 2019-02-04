@@ -1,4 +1,4 @@
-# V1.3 Initial Backup List 
+# V1.4 Initial Backup List 
 # Exclude these files & directories from Backup
 #
 *.iso 
@@ -6,3 +6,4 @@ sysmon.lock
 .cache/*
 /tmp
 __pycache__/
+/temp

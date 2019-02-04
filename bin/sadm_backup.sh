@@ -1,14 +1,14 @@
 #!/bin/bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
-#   Title:      Backup & optionnaly compress directories or files spefified in the backup list file
+#   Title:      Backup & optionally compress directories or files specified in the backup list file
 #               ($SADMIN/cfg/backup_list.txt) as tar files (tar or tgz)
 #   Date:       28 August 2015
-#   Synopsis:   This script is used to create Backups files of all directories specifised in the
+#   Synopsis:   This script is used to create Backups files of all directories specified in the
 #               backup list file ($SADMIN/cfg/backup_list.txt) to the NFS server specified
 #               in $SADMIN/cfg/sadmin.cfg .
 #               Only the number of copies specified in the backup section of SADMIN configuration
-#               file ($SADMIN/cfg/samin.cfg) will be kept, old backup are deleted at the end of
+#               file ($SADMIN/cfg/sadmin.cfg) will be kept, old backup are deleted at the end of
 #               each backup.
 #               Should be run Daily (Recommended) .
 # --------------------------------------------------------------------------------------------------
@@ -24,34 +24,35 @@
 #   You should have received a copy of the GNU General Public License along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 # --------------------------------------------------------------------------------------------------
-#  2017_01_02  V1.2 Exclude *.iso added to tar command
-#  2017_10_02  V2.1 Added /wsadmin in the backup
-#  2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
-#  2018_01_02  V2.3 Small Corrections and added comments
-#  2018_02_09  V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
-#  2018_02_09  V2.5 First Production Version
-#  2018_02_10  V2.6 Switch to bash instead of sh (Problem with Dash and array)
-#              V2.7 Create Backup Link in the latest directory
-#              V2.8 Add Exclude File Variable
-#  2018_02_11  V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
-#  2018_02_14  V3.0 Removal of old backup according to policy are now working
-#  2018_02_16  V3.1 Minor Esthetics corrections
-#  2018_02_18  V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
-#                   This exit code means that some files were changed while being archived and so
-#                   the resulting archive does not contain the exact copy of the file set.
-#  2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
-#  2018_05_25  V3.4 Fix Problem with Archive Directory Name
-#  2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
-#  2018_05_28  V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
-#  2018_05_31  V3.7 List of files and directories to backup and to exclude from it come from a
-#                   user defined files respectively name 'backup_list.txt' and 'backup_exclude.txt'
-#                   in $SADMIN/cfg Directory.
-#  2018_06_02  V3.8 Add -v switch to display script version & Some minor corrections
-#  2018_06_18  v3.9 Backup compression is ON by default now (-n if don't want compression)
-#  2018_09_16  v3.10 Insert Alert Group Default
-#  2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
-#@ 2019_01_10  Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
-#@ 2019_01_11  Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
+# 2017_01_02  V1.2 Exclude *.iso added to tar command
+# 2017_10_02  V2.1 Added /wsadmin in the backup
+# 2017_12_27  V2.2 Adapt to new Library and Take NFS Server From SADMIN Config file Now
+# 2018_01_02  V2.3 Small Corrections and added comments
+# 2018_02_09  V2.4 Begin Testing new version with daily,weekly,monthly and yearly backup
+# 2018_02_09  V2.5 First Production Version
+# 2018_02_10  V2.6 Switch to bash instead of sh (Problem with Dash and array)
+#             V2.7 Create Backup Link in the latest directory
+#             V2.8 Add Exclude File Variable
+# 2018_02_11  V2.9 Fix Bug Creating Unnecessary Server Directory on local mount point
+# 2018_02_14  V3.0 Removal of old backup according to policy are now working
+# 2018_02_16  V3.1 Minor Esthetics corrections
+# 2018_02_18  V3.2 If tar exit with error 1, consider that it's not an error (nmon,log,rch,...).
+#                  This exit code means that some files were changed while being archived and so
+#                  the resulting archive does not contain the exact copy of the file set.
+# 2018_05_15  V3.3 Added LOG_HEADER, LOG_FOOTER, USE_RCH Variable to add flexibility to log control
+# 2018_05_25  V3.4 Fix Problem with Archive Directory Name
+# 2018_05_28  V3.5 Group Backup by Date in each server directories - Easier to Search and Manage.
+# 2018_05_28  V3.6 Backup Parameters now come from sadmin.cfg, no need to modify script anymore.
+# 2018_05_31  V3.7 List of files and directories to backup and to exclude from it come from a
+#                  user defined files respectively name 'backup_list.txt' and 'backup_exclude.txt'
+#                  in $SADMIN/cfg Directory.
+# 2018_06_02  V3.8 Add -v switch to display script version & Some minor corrections
+# 2018_06_18  v3.9 Backup compression is ON by default now (-n if don't want compression)
+# 2018_09_16  v3.10 Insert Alert Group Default
+# 2018_10_02  v3.11 Advise User & Trap Error when mounting NFS Mount point.
+# 2019_01_10 Changed: v3.12 Changed: Name of Backup List and Exclude file can be change.
+# 2019_01_11 Fixes: v3.13 Fix C/R problem after using the Web UI to change backup & exclude list.
+#@2019_02_01 Improve: v3.14 Reduce Output when no debug is activated.
 #===================================================================================================
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.13'                               # Current Script Version
+    export SADM_VER='3.14'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -451,10 +452,14 @@ create_backup()
         # Check if File or Directory to Backup and if they Exist
         sadm_writelog "${SADM_TEN_DASH}"                                # Line of 10 Dash in Log
         if [ -d "${backup_line}" ]                                      # Dir. To Backup Exist
-            then sadm_writelog "Directory to Backup : [${backup_line}]" # Current Processing Line
+            then if [ $DEBUG_LEVEL -gt 0 ] 
+                    then sadm_writelog "Directory to Backup : [${backup_line}]" # Processing Line
+                 fi
             else if [ -f "$backup_line" ] && [ -r "$backup_line" ]      # If File to Backup Readable
-                    then sadm_writelog "File to Backup : $backup_line"  # Print Current File
-                        else MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
+                    then if [ $DEBUG_LEVEL -gt 0 ] 
+                            then sadm_writelog "File to Backup : $backup_line"  # Print Current File
+                         fi
+                    else MESS="[SKIPPING] [$backup_line] doesn't exist on $(sadm_get_fqdn)"
                              sadm_writelog "$MESS"                      # Advise User - Log Info
                              continue                                   # Go Read Nxt Line to backup
                     fi
@@ -509,7 +514,21 @@ create_backup()
                 fi
         fi
 
-        if [ $RC -eq 1 ] ; then RC=0 ; fi                               # Change while backup is OK
+        # Error 1 = File(s) changed while backup running, don't report that as an error.
+        if [ $RC -eq 1 ] ; then RC=0 ; fi                               # File Changed while backup
+
+        # Create link to backup in the server latest directory
+        cd ${LATEST_DIR}
+        if [ $DEBUG_LEVEL -gt 0 ] 
+            then sadm_writelog "Current directory is : `pwd`"           # Print Current Dir.
+                 sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}" # Command we'll execute
+        fi
+        sadm_writelog "Create Link to latest backup of ${backup_line}"  # Show User what were doing
+        ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
+        if [ $? -ne 0 ]                                                 # If Error trying to link
+            then sadm_writelog "[ERROR] Creating Link Backup in latest Directory"
+        fi
+        
         if [ $RC -ne 0 ]                                                # If Error while Backup
             then MESS="[ERROR] ${RC} while creating $BACK_FILE"         # Advise Backup Error
                  sadm_writelog "$MESS"                                  # Advise User - Log Info
@@ -520,15 +539,6 @@ create_backup()
         fi
         TOTAL_ERROR=$(($TOTAL_ERROR+$RC))                               # Total = Cumulate RC Value
 
-        # Create link to backup in the server latest directory
-        cd ${LATEST_DIR}
-        sadm_writelog "Current directory is : `pwd`"                    # Print Current Dir.
-        sadm_writelog "Create Link to latest backup of ${backup_line}"  # Show User what were doing
-        sadm_writelog "ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}"     # Show Command we'll execute
-        ln -s ${LINK_DIR}/${BACK_FILE} ${BACK_FILE}  >>$SADM_LOG 2>&1   # Run Soft Link Command
-        if [ $? -ne 0 ]                                                 # If Error trying to link
-            then sadm_writelog "[ERROR] Creating Link Backup in latest Directory"
-        fi
         rm -f /tmp/exclude >/dev/null 2>&1                              # Remove socket tmp file
         done < $SADM_BACKUP_LIST                                         # For Loop Read Backup List
 
