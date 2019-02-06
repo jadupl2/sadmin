@@ -1,4 +1,20 @@
-# ![SADMIN Tools][1] SADMIN Tools - Version 0.95.0
+![SADMIN Tools][1] 
+# SADMIN Tools v0.95.2             <!-- omit in toc -->
+
+### Table of content
+- [Brief description](#brief-description)
+- [Run on most popular Linux distributions](#run-on-most-popular-linux-distributions)
+- [Download](#download)
+- [Before you install](#before-you-install)
+- [Installing SADMIN Tools](#installing-sadmin-tools)
+  - [Method 1 : Using the downloaded 'tgz' file](#method-1--using-the-downloaded-tgz-file)
+  - [Method 2 : Cloning our git repository](#method-2--cloning-our-git-repository)
+  - [Running the setup script](#running-the-setup-script)
+- [SADMIN Support](#sadmin-support)
+- [Authors](#authors)
+- [Copyright and license](#copyright-and-license)
+  
+---
 
 ## Brief description
 
@@ -41,6 +57,10 @@ For more information visit the SADMIN web site at <https://www.sadmin.ca>.
 [See our latest release changelog](https://www.sadmin.ca/www/changelog.php).  
 Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/www/quickstart.php) first.
 
+[Back To The Top](#brief-description)
+
+---
+
 ## Run on most popular Linux distributions
 
 * The **SADMIN client** have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
@@ -50,6 +70,9 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 * We have been working for more than two years on these tools and it's near version 1.0. 
 * We will continue to add and enhance the SADMIN tools over the years to come.  
 
+[Back To The Top](#brief-description)
+
+---
 
 ## Download
 
@@ -58,6 +81,9 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 * You can also clone the project from [GitHub](https://github.com/jadupl2/sadmin)
     * `git clone https://github.com/jadupl2/sadmin.git`  
 
+[Back To The Top](#brief-description)
+
+---
 
 ## Before you install
 
@@ -75,6 +101,9 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
     * On other distributions the packages needed are available in the distribution repository.
 * Instructions below assume you have chosen to install SADMIN tools in '/opt/sadmin' directory..
 
+[Back To The Top](#brief-description)
+
+---
 
 ## Installing SADMIN Tools
 
@@ -126,16 +155,25 @@ After the installation is terminated, you need to log out and log back in before
 This will make sure "SADMIN" environment variable is define (The dot and the space are important).  
     `sudo . /etc/profile.d/sadmin.sh` 
 
+[Back To The Top](#brief-description)
+
+---
 
 ## SADMIN Support
 Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
 problem or question and sent it to <support@sadmin.ca>.
 We will get back to you as soon as possible.
 
+[Back To The Top](#brief-description)
+
+---
 
 ## Authors
 [Jacques Duplessis](mailto:support@sadmin.ca) - *Initial work*.
 
+[Back To The Top](#brief-description)
+
+---
 
 ## Copyright and license
 The SADMIN is a collection of free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
@@ -143,5 +181,9 @@ The SADMIN is a collection of free software: you can redistribute it and/or modi
 The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
 See the [LICENSE](LICENSE) file for details.
+
+[Back To The Top](#brief-description)
+
+---
 
 [1]: https://www.sadmin.ca/img/sadmin_small_logo.png
