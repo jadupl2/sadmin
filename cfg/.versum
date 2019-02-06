@@ -2,12 +2,12 @@ d32239bcb673463ab874e80d47fae504  ./LICENSE
 04d00905fb9b9863d654980b59acf038  ./README.md
 c14641f8769251187f8ed6767de6755e  ./cfg/.backup_exclude.txt
 f08d31bc6515a00e9e3901233760ddd0  ./cfg/.backup_list.txt
-023dfb1fe96658532d4d27fcd1fa0979  ./cfg/.release
+a70a170207d8822bfccd627fad0006a5  ./cfg/.release
 495b30f55e34ab7874d6f55244918992  ./cfg/.sadmin.cfg
 66aa8437dc83ae22dc1e889ec7b40854  ./cfg/.sadmin.rc
 6eac88da5b19b134d75dabe56a3ee0d6  ./cfg/.sadmin.service
 5c72cf068f005ea6b749b1d1165b614c  ./cfg/.template.smon
-3b5af7751bd099d2377fb0811cde5bbd  ./cfg/.version
+3a6e44df4e3edade5e30d18366c32ec4  ./cfg/.version
 d41d8cd98f00b204e9800998ecf8427e  ./cfg/.versum
 8729cc27f8dc0bbbdc744bf9cad39a63  ./cfg/.alert_group.cfg
 ec38aa711a4bbfdedf6123408219c7ef  ./cfg/.alert_slack.cfg
@@ -32,7 +32,7 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 6bfa994a25bb3aa37122fe4ffd41d73d  ./lib/sadmlib_fs.sh
 f694e76402c9ae7bbf6383b15ec6373d  ./lib/sadmlib_screen.sh
 5a0154631f61d814a9799ac19189f4ce  ./lib/sadmlib_std.py
-4ebd7cecaeba0a3a0f967de02528abab  ./lib/sadmlib_std.sh
+d9bfc4375d8abef7f22581b89802119c  ./lib/sadmlib_std.sh
 3a47604ed48c9b842772013e72f98995  ./pkg/DataTables/DataTables-1.10.11.zip
 5d6e38017d15726fbb5c4efc7c42e347  ./pkg/DataTables/DataTables-1.10.12.zip
 70dbf5308decd9d49b36b4c69bcc2a71  ./pkg/cfg2html/cfg2html
