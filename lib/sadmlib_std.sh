@@ -66,11 +66,12 @@
 # 2018_12_08 v2.53 Fix problem determining domainname when DNS is server is down.
 # 2018_12_14 v2.54 Fix Error Message when DB pwd file don't exist on server & Get DomainName on MacOS
 # 2018_12_18 v2.55 Add ways to get CPU type on MacOS
-#@2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
-#@2018_12_27 v2.57 If Startup and Shutdown scripts doesn't exist, create them from template.
-#@2018_12_29 v2.58 Default logging ([B]oth) is now set to screen and log.
-#@2019_01_11 Added: v2.59 Include definitions for backup & exclude list, avail to user.
-#@2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
+# 2018_12_23 v2.56 Change way of getting CPU Information on MacOS 
+# 2018_12_27 v2.57 If Startup and Shutdown scripts doesn't exist, create them from template.
+# 2018_12_29 v2.58 Default logging ([B]oth) is now set to screen and log.
+# 2019_01_11 Added: v2.59 Include definitions for backup & exclude list, avail to user.
+# 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
+#@2019_02_05 Fix: v2.61 Correct type error. 
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -88,7 +89,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.60"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.61"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -428,7 +429,7 @@ sadm_check_requirements() {
 
     # Commands available on Linux O/S --------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
-       then sadm_check_command_availibility "lsb_release"               # lsb_release cmd available?
+       then "lsb_release"               # lsb_release cmd available?
             SADM_LSB_RELEASE=$SADM_VAR1
             sadm_check_command_availibility "dmidecode"                 # dmidecode cmd available?
             SADM_DMIDECODE=$SADM_VAR1
@@ -891,12 +892,12 @@ sadm_get_domainname() {
     case "$(sadm_get_ostype)" in
         "LINUX"|"DARWIN")   
             # Try to determine Domain Name with 'dnsdomainname' if it available.
-            which `dnsdomainname` > /dev/null 2>&1
+            which dnsdomainname > /dev/null 2>&1
             if [ $? -eq 0 ] ; then wdom=`dnsdomainname` ; fi
             if [ "$wdom" != "" ] ; then break ; fi
                             
             # Use 'facter' command if available.
-            which `facter` > /dev/null 2>&1
+            which facter > /dev/null 2>&1
             if [ $? -eq 0 ] ; then wdom=`facter | grep "^domain"|awk '{print $3}'` ;fi
             if [ "$wdom" != "" ] ; then break ; fi
 
