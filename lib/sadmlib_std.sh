@@ -429,7 +429,7 @@ sadm_check_requirements() {
 
     # Commands available on Linux O/S --------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
-       then "lsb_release"               # lsb_release cmd available?
+       then sadm_check_command_availibility "lsb_release"               # lsb_release cmd available?
             SADM_LSB_RELEASE=$SADM_VAR1
             sadm_check_command_availibility "dmidecode"                 # dmidecode cmd available?
             SADM_DMIDECODE=$SADM_VAR1
