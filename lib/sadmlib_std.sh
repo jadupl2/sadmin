@@ -72,6 +72,7 @@
 # 2019_01_11 Added: v2.59 Include definitions for backup & exclude list, avail to user.
 # 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
 #@2019_02_05 Fix: v2.61 Correct type error. 
+#@2019_02_06 Fix: v2.62 break error when finding system domain name.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -89,7 +90,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.61"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.62"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -891,32 +892,26 @@ sadm_get_domainname() {
     wdom=""
     case "$(sadm_get_ostype)" in
         "LINUX"|"DARWIN")   
-            # Try to determine Domain Name with 'dnsdomainname' if it available.
-            which dnsdomainname > /dev/null 2>&1
-            if [ $? -eq 0 ] ; then wdom=`dnsdomainname` ; fi
-            if [ "$wdom" != "" ] ; then break ; fi
-                            
-            # Use 'facter' command if available.
-            which facter > /dev/null 2>&1
-            if [ $? -eq 0 ] ; then wdom=`facter | grep "^domain"|awk '{print $3}'` ;fi
-            if [ "$wdom" != "" ] ; then break ; fi
+            wdom=""                                                     # Set Domain Default
+            which dnsdomainname > /dev/null 2>&1                        # Cmd dnsdomainname avail.?
+            if [ $? -eq 0 ] ; then wdom=`dnsdomainname` ; fi            # If Found Run & Save Domain
 
-            # Try with the host command 
-            # Command: 'host -4 holmes'
-            # Return : 'holmes.maison.ca has address 192.168.1.12'
-            host ${SADM_HOSTNAME} >/dev/null 2>&1 
-            if [ $? -eq 0 ] 
+            which facter > /dev/null 2>&1                               # Cmd facter available ?
+            if [ $? -eq 0 ] && [ $wdom = "" ]                           # Cmd facter & No domain yet
+                then wdom=`facter |grep "^domain"|awk '{print $3}'`     # Get Domain Return by facter
+            fi 
+
+            host -4 ${SADM_HOSTNAME} >/dev/null 2>&1                    # Try host Command
+            if [ $? -eq 0 ]                                             # Host Command worked ?
                then wdom=`host ${SADM_HOSTNAME} |head -1 |awk '{ print $1 }' |cut -d. -f2-3`
-
-                    # If DomainName is Hostname then didn't work, Use default Domain in sadmin.cfg
-                    if [ $wdom = ${SADM_HOSTNAME} ] ; then wdom="" ;fi
+                    if [ $wdom = ${SADM_HOSTNAME} ] ; then wdom="" ;fi  # If domain = host no domain
             fi
             ;;
         "AIX")              
             wdom=`namerslv -s | grep domain | awk '{ print $2 }'`
             ;;
     esac
-    if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi
+    if [ "$wdom" = "" ] ; then wdom="$SADM_DOMAIN" ; fi                 # No Domain = Def DomainName
     echo "$wdom"
 }
 
