@@ -1,13 +1,13 @@
 d32239bcb673463ab874e80d47fae504  ./LICENSE
-c622168bfc4c254f2a448e275ac1f7ad  ./README.md
-255982c99c84fc24d98c86743a1259e0  ./cfg/.backup_exclude.txt
+04d00905fb9b9863d654980b59acf038  ./README.md
+c14641f8769251187f8ed6767de6755e  ./cfg/.backup_exclude.txt
 f08d31bc6515a00e9e3901233760ddd0  ./cfg/.backup_list.txt
-05cdd140fce6597f98619e8bceb89bc7  ./cfg/.release
+023dfb1fe96658532d4d27fcd1fa0979  ./cfg/.release
 495b30f55e34ab7874d6f55244918992  ./cfg/.sadmin.cfg
 66aa8437dc83ae22dc1e889ec7b40854  ./cfg/.sadmin.rc
 6eac88da5b19b134d75dabe56a3ee0d6  ./cfg/.sadmin.service
 5c72cf068f005ea6b749b1d1165b614c  ./cfg/.template.smon
-2d09317bdb259370dac09b0332332039  ./cfg/.version
+3b5af7751bd099d2377fb0811cde5bbd  ./cfg/.version
 d41d8cd98f00b204e9800998ecf8427e  ./cfg/.versum
 8729cc27f8dc0bbbdc744bf9cad39a63  ./cfg/.alert_group.cfg
 ec38aa711a4bbfdedf6123408219c7ef  ./cfg/.alert_slack.cfg
@@ -32,7 +32,7 @@ a7d133e8af370e53c828746d6f754833  ./doc/setup examples/setup_centos7.pdf
 6bfa994a25bb3aa37122fe4ffd41d73d  ./lib/sadmlib_fs.sh
 f694e76402c9ae7bbf6383b15ec6373d  ./lib/sadmlib_screen.sh
 5a0154631f61d814a9799ac19189f4ce  ./lib/sadmlib_std.py
-813462b170b4946ff108898d2042e30c  ./lib/sadmlib_std.sh
+4ebd7cecaeba0a3a0f967de02528abab  ./lib/sadmlib_std.sh
 3a47604ed48c9b842772013e72f98995  ./pkg/DataTables/DataTables-1.10.11.zip
 5d6e38017d15726fbb5c4efc7c42e347  ./pkg/DataTables/DataTables-1.10.12.zip
 70dbf5308decd9d49b36b4c69bcc2a71  ./pkg/cfg2html/cfg2html
@@ -127,7 +127,7 @@ f6902d759ccfe6569c53d522d3b63c92  ./sys/sadm_startup.sh
 e959c23c36b47d537e68b76289340503  ./usr/mon/srestart.sh
 531ee68b0054dad5e8827d7ac8d641b9  ./usr/mon/stemplate.sh
 e382e0d018caa016a59a5a856a5ba8a1  ./usr/mon/swatch_nmon.sh
-f604ac67f505b5aeaf656c9cca796546  ./usr/mon/swatch_nmon.txt
+6cf9469574d264c9fc970068bf742c87  ./usr/mon/swatch_nmon.txt
 a4c926c5be861e400efaac5a6f91b4e3  ./usr/mon/stemplate.txt
 b1c99fd2f1351725136b7da7eb63be5f  ./www/crud/cat/sadm_category_common.php
 23da2417660c6d4a0c03e3da585698e0  ./www/crud/cat/sadm_category_create.php
@@ -237,7 +237,8 @@ bf82a41e589f5e7a1bd4d005d2015431  ./www/view/sys/sadm_subnet.php
 2594fabecd1e62c60d68fad53c786665  ./www/view/sys/sadm_view_cfg2html.php
 46c099efa5fbf5d628b92e90fe123912  ./www/view/sys/sadm_view_schedule.php
 62a63301a7cbdc916e38c349e9bc10ca  ./www/view/sys/sadm_view_sysmon.php
-f39f586e023d01fba6899b4f2238128c  ./bin/sadm_backup.sh
+8e3a8b0007fda0491ab17dddf1aed14a  ./www/sadm_test_image.php
+6e4b0fe72f04e2e530fd77cd8b020e8d  ./bin/sadm_backup.sh
 2c6604580a06889b0f4333f6621029d9  ./bin/sadm_backup_sdcard.sh
 3787e4fa404c434478ed4b694c194997  ./bin/sadm_backupdb.sh
 5553e961bfcc9c794640cf55d557ca37  ./bin/sadm_cfg2html.sh
