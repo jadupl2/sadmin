@@ -2,7 +2,7 @@
     <html>
     <head>
         <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-        <title>![SADMIN Tools][1] SADMIN Tools - Version 0.95.0</title>
+        <title>SADMIN Tools v0.95.2             <!-- omit in toc --></title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
@@ -21,7 +21,26 @@
         <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
     </head>
     <body>
-        <h1 id="sadmin-tools-sadmin-tools---version-0950"><img src="https://www.sadmin.ca/img/sadmin_small_logo.png" alt="SADMIN Tools"> SADMIN Tools - Version 0.95.0</h1>
+        <p><img src="https://www.sadmin.ca/img/sadmin_small_logo.png" alt="SADMIN Tools"></p>
+<h1 id="sadmin-tools-v0952-">SADMIN Tools v0.95.2             <!-- omit in toc --></h1>
+<h3 id="table-of-content">Table of content</h3>
+<ul>
+<li><a href="#brief-description">Brief description</a></li>
+<li><a href="#run-on-most-popular-linux-distributions">Run on most popular Linux distributions</a></li>
+<li><a href="#download">Download</a></li>
+<li><a href="#before-you-install">Before you install</a></li>
+<li><a href="#installing-sadmin-tools">Installing SADMIN Tools</a>
+<ul>
+<li><a href="#method-1--using-the-downloaded-tgz-file">Method 1 : Using the downloaded 'tgz' file</a></li>
+<li><a href="#method-2--cloning-our-git-repository">Method 2 : Cloning our git repository</a></li>
+<li><a href="#running-the-setup-script">Running the setup script</a></li>
+</ul>
+</li>
+<li><a href="#sadmin-support">SADMIN Support</a></li>
+<li><a href="#authors">Authors</a></li>
+<li><a href="#copyright-and-license">Copyright and license</a></li>
+</ul>
+<hr>
 <h2 id="brief-description">Brief description</h2>
 <p><strong>The SADMIN tools is a series of Web and command line tools that allow you to :</strong></p>
 <ul>
@@ -53,7 +72,7 @@
 <ul>
 <li>The SADMIN server is the central place for monitoring scripts running on your systems.</li>
 <li>View the <a href="https://www.sadmin.ca/img/sadm_web_scripts_status.png">status of all your scripts</a> that run in your server farm.</li>
-<li>Access script log from SADMIN server <a href="https://www.sadmin.ca/img/sadm_web_scripts_status.png">Web interface</a> or from the <a href="https://www.sadmin.ca/img/file_log_format.png">command line</a>.</li>
+<li>Access script log from SADMIN server <a href="https://www.sadmin.ca/img/sadm_view_logs.png">Web interface</a> or from the <a href="https://www.sadmin.ca/img/file_log_format.png">command line</a>.</li>
 <li>Choose to be alerted or note by <a href="https://www.sadmin.ca/img/slack_warning.png">'Slack'</a> or by <a href="https://www.sadmin.ca/img/mail_notification.png">email</a>  when a script failed or succeed,</li>
 <li>Use our <a href="https://www.sadmin.ca/doc/man/man_sadm_template_sh.php">Shell</a> and/or <a href="https://www.sadmin.ca/doc/man/man_sadm_template_py.php">Python</a> templates to create new scripts and benefit of SADMIN tools.</li>
 <li>Use <a href="https://www.sadmin.ca/doc/man/man_sadm_wrapper.php">SADMIN wrapper</a> and run your existing scripts using the SADMIN tools
@@ -82,6 +101,8 @@
 For more information visit the SADMIN web site at <a href="https://www.sadmin.ca">https://www.sadmin.ca</a>.<br>
 <a href="https://www.sadmin.ca/www/changelog.php">See our latest release changelog</a>.<br>
 Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstart.php">Quick start guide</a> first.</p>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="run-on-most-popular-linux-distributions">Run on most popular Linux distributions</h2>
 <ul>
 <li>The <strong>SADMIN client</strong> have been tested to work on Redhat, Fedora, CentOS, Debian, Ubuntu, Raspbian and Aix.
@@ -94,6 +115,8 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 <li>We have been working for more than two years on these tools and it's near version 1.0.</li>
 <li>We will continue to add and enhance the SADMIN tools over the years to come.</li>
 </ul>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="download">Download</h2>
 <ul>
 <li>Download the latest version of the SADMIN Project from our <a href="https://www.sadmin.ca/www/download.php">Download page</a>.</li>
@@ -104,9 +127,11 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 </ul>
 </li>
 </ul>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="before-you-install">Before you install</h2>
 <ul>
-<li><a href="https://www.sadmin.ca/doc/sadmin_directory_structure.pdf">SADMIN tools reside in one directory</a> (recommend '/opt/sadmin'), but you can install it in the directory of your choice.</li>
+<li><a href="https://www.sadmin.ca/doc/pdf/sadmin_directory_structure.pdf">SADMIN tools reside in one directory</a> (recommend '/opt/sadmin'), but you can install it in the directory of your choice.</li>
 <li>For <strong>the server installation we recommended at least 2Gb</strong> of free space and <strong>1Gb for the client</strong>.</li>
 <li>The 'SADMIN' environment variable is critical for the SADMIN tools and contain the installation directory name.</li>
 <li>The setup script will make sure that this environment variable is defined and persistent after a reboot.
@@ -132,6 +157,8 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 </li>
 <li>Instructions below assume you have chosen to install SADMIN tools in '/opt/sadmin' directory..</li>
 </ul>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="installing-sadmin-tools">Installing SADMIN Tools</h2>
 <h3 id="method-1--using-the-downloaded-tgz-file">Method 1 : Using the downloaded 'tgz' file</h3>
 <pre><code class="language-bash"><div>    Change directory to /opt
@@ -165,7 +192,7 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 <h3 id="running-the-setup-script">Running the setup script</h3>
 <ul>
 <li>Setup ask several questions regarding your environment and store answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).</li>
-<li>Here's the <a href="https://www.sadmin.ca/doc/sadm_client_install_centos7.pdf">output running the setup script</a> to install a SADMIN client on a CentOS 7 system.</li>
+<li>Here's the <a href="https://www.sadmin.ca/doc/pdf/sadm_client_install_centos7.pdf">output running the setup script</a> to install a SADMIN client on a CentOS 7 system.</li>
 <li>This file is used by the web interface, the SADMIN scripts, libraries and the new scripts you will create.</li>
 <li>This configuration can be modified when ever you need to.</li>
 <li>The setup script can be run more than once, so don't worry if you made a mistake, just run it again.</li>
@@ -175,18 +202,26 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 <li>When installation is finished you will have a working Web SADMIN environment at '<a href="http://sadmin">http://sadmin</a>'.</li>
 </ul>
 <p>After the installation is terminated, you need to log out and log back in before using SADMIN Tools or type the command below.<br>
-This will make sure &quot;SADMIN&quot; environment variable is define (The dot and the space are important).
+This will make sure &quot;SADMIN&quot; environment variable is define (The dot and the space are important).<br>
 <code>sudo . /etc/profile.d/sadmin.sh</code></p>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="sadmin-support">SADMIN Support</h2>
 <p>Should you ran into problem while installing or running the SADMIN tools, please run the 'sadm_support_request.sh', attach the resulting file to an email with a description of your
 problem or question and sent it to <a href="mailto:support@sadmin.ca">support@sadmin.ca</a>.
 We will get back to you as soon as possible.</p>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="authors">Authors</h2>
 <p><a href="mailto:support@sadmin.ca">Jacques Duplessis</a> - <em>Initial work</em>.</p>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 <h2 id="copyright-and-license">Copyright and license</h2>
 <p>The SADMIN is a collection of free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
 <p>The SADMIN Tools is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p>
 <p>See the <a href="LICENSE">LICENSE</a> file for details.</p>
+<p><a href="#brief-description">Back To The Top</a></p>
+<hr>
 
     </body>
     </html>
