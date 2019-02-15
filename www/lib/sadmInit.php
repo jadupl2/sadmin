@@ -22,6 +22,7 @@
 # 2018_06_10  V3.1 Change name of O/S Update script 
 #@2018_11_22  v3.2 Read SADMIN root directory from /etc/environment on all platform now.
 #@2019_01_11  Added: v3.3 Definitions of Backup List & Backup Exclude file.
+#@2019_02_11  Added: v3.4 Add $SADMIN/www to PHP Path
 # --------------------------------------------------------------------------------------------------
 $DEBUG=False ;  
 #
@@ -236,10 +237,11 @@ if (!is_readable(SADM_ALERT_FILE)) {
     }
 
 
-# ADD PHP LIBRARY DIRECTORY TO PATH
-//echo ini_get('include_path');
+# ADD Web site root and Library Directory to search path
+#echo ini_get('include_path');
+set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_DIR);
 set_include_path(get_include_path() . PATH_SEPARATOR . SADM_WWW_LIB_DIR);
-//echo ini_get('include_path');
+#echo ini_get('include_path');
 
     # Connect to MySQL DataBase
     if ($DEBUG) { 
