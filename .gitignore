@@ -87,6 +87,7 @@ usr/mon/*
 !usr/mon/swatch_nmon.txt
 
 # Want these WebSite directories to be part of project (but empty)
+www/test/*
 www/dat/*
 !www/dat/.gitkeep
 www/tmp/*
