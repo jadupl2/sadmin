@@ -12,11 +12,13 @@
 
     <script type="text/javascript"      charset="utf8" 	    src="/js/jquery.min.js"></script>
     <script type="text/javascript"      charset="utf8" 	    src="/js/jquery.dataTables.min.js"></script>
+    <!-- <script type="text/javascript"      charset="utf8" 	    src="/js/timepicker.min.js"></script> -->
 
     <link rel="icon" 		            type="image/x-icon" href="/images/favicon.ico" />
     <link rel="stylesheet" 	            type="text/css"     href="/css/jquery.dataTables.min.css"/>
+    <!-- <link rel="stylesheet" 	            type="text/css"     href="/css/timepicker.min.css"/> -->
     <link rel="stylesheet"              type="text/css"     href="/css/sadmin_v2.css"/>
 
-    <script language="JavaScript"       src="/js/calendar_eu.js"></script>
-    <link rel="stylesheet"              href="/css/calendar.css">
+    <!-- <script language="JavaScript"       src="/js/calendar_eu.js"></script>
+    <link rel="stylesheet"              href="/css/calendar.css"> -->
     
