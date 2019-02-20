@@ -26,6 +26,7 @@
 #       V 1.2 Performance & Restructure 
 #   2018_02_06 JDuplessis
 #       V 1.3 Enhance look and feel of the page
+#@ 2019_02_17 Change: v1.4 Convert date recv. YYYY-MM-DD to DD.MM.YYYY so we use HTML5 date input.
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -41,7 +42,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.3" ;                                                        # Current version number
+$SVER  = "1.4" ;                                                        # Current version number
 
 
 
@@ -180,7 +181,8 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
 
     # Graph Start Date was Set ?
     if (isset($_POST['sdate']) ) {                                      # Start Date Exist ?
-        $SDATE = str_replace ("-",".",$_POST['sdate']);                 # Replace - with . in date
+        $WDATE = explode("-",$_POST['sdate']);                          # Split Date in Array
+        $SDATE = $WDATE[2] . '.' . $WDATE[1] . '.' . $WDATE[0] ;        # YYYY-MM-DD to DD.MM.YYYY
     }else{                                                              # No Start Date 
         echo "The starting date was not received !";                    # Not Set ?, Inform User
         echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
@@ -189,7 +191,8 @@ function display_png ($WHOST,$WTYPE,$WTITLE)
 
     # Graph End Date was set ?
     if (isset($_POST['edate']) ) {                                      # End Date Exist ?
-        $EDATE = str_replace ("-",".",$_POST['edate']);                 # Replace - with . in date
+        $WDATE = explode("-",$_POST['edate']);                          # Split Date in Array
+        $EDATE = $WDATE[2] . '.' . $WDATE[1] . '.' . $WDATE[0] ;        # YYYY-MM-DD to DD.MM.YYYY
     }else{                                                              # No End Date
         echo "The ending date was not received !";                      # Not Set ?, Inform User
         echo "<a href='javascript:history.go(-1)'>Go back</a>";         # Back to Previous Page
