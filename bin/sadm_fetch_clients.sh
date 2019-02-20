@@ -43,6 +43,7 @@
 #@2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
 #@2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
 #@2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
+#@2019_02_19  Added: v2.32 To avoid seeing script always running in SysMon, copy rch file to web dir
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -79,7 +80,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.31'                              # Current Script Version
+    export SADM_VER='2.32'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -917,4 +918,5 @@ check_for_alert()
     check_for_alert                                                     # Report Alert if Any
 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
+    cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
     exit $SADM_EXIT_CODE                                                # Exit With Error code (0/1)
