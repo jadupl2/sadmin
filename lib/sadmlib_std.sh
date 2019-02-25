@@ -73,6 +73,7 @@
 # 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
 #@2019_02_05 Fix: v2.61 Correct type error. 
 #@2019_02_06 Fix: v2.62 break error when finding system domain name.
+#@2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -85,12 +86,13 @@ SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Curren
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
+SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES      # 80 spaces 
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.62"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.63"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
