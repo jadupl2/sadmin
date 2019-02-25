@@ -695,7 +695,7 @@ create_fs()
        
     # MAKE DIRECTORY MOUNT POINT
     sadm_writelog "Running : mkdir -p ${LVMOUNT}"
-    printf "mkdir -p ${LVMOUNT}"
+    printf "mkdir -p ${LVMOUNT} "
     mkdir -p ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
@@ -768,7 +768,7 @@ create_fs()
     
     # CHANGE PROTECTION OF FILESYSTEM
     sadm_writelog "Running : chmod ${LVPROT} ${LVMOUNT}"
-    printf "chmod ${LVPROT} ${LVMOUNT} s"
+    printf "chmod ${LVPROT} ${LVMOUNT} "
     chmod ${LVPROT} ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
