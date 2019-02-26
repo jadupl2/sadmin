@@ -30,7 +30,8 @@
 #       V2.1 Update O/S Update Page now update the SADM_USER crontab 
 #   2018_07_22  v2.2 After updating a server browser will go back on page ready to edit another one.
 # 2019_01_11 Change: v2.3 Cancel button now bring you to update menu.
-#@2019_01_21 Change: v2.4 Added Dark Theme
+# 2019_01_21 Change: v2.4 Added Dark Theme
+#@2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
 #
 # ==================================================================================================
 #
@@ -93,7 +94,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.4" ;                                                        # Current version number
+$SVER  = "2.5" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -460,9 +461,16 @@ function display_osschedule($con,$wrow,$mode) {
 
 
     # START OF FORM - DISPLAY FORM READY TO UPDATE DATA
+    $wserver = $row['srv_name'] . "." . $row['srv_domain'];
     display_std_heading("NotHome","O/S Update Schedule","","",$SVER);   # Display Content Heading
-    $title="Operating System Update Schedule for " . $wkey . " server";
+    #$title="Schedule for operating system update on '" . $wkey . "' system";
+    $title="Schedule for operating system update on '" . $wserver . "' system";
     echo "<center><strong><h3><i>" . $title . "</i></h3></strong></center>";
+
+    # Convert Crontab entry data to Text.
+    $STR_SCHEDULE = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+            $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
+    echo "<center><strong><h3><i>" . $STR_SCHEDULE . "</i></h3></strong></center>";
 
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_osschedule($con,$row,"Update");                             # Display Form Default Value

@@ -27,7 +27,7 @@
 #       V 1.1 Add Default Start/End Date for Adhoc graph 
 #   2018_05_06 JDuplessis
 #       V 1.2 Remove unnecessary variable
-#
+#@2019_01_17 Change: v1.3 Date Input now use HTML 5 Format 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -41,17 +41,34 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                        # Current version number
+$SVER  = "1.3" ;                                                        # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 $URL_HOST_INFO = '/view/srv/sadm_view_server_info.php';                 # Display Host Info URL
 $URL_VIEW_RCH  = '/view/rch/sadm_view_rchfile.php';                     # View RCH File Content URL
 
 #display_std_heading("NotHome","Performance","","",$SVER);           # Display Content Heading
 echo "<H2>Performance Graph for Unix servers</H2><br>\n" ; 
+?>
 
 
+<script type="text/javascript">
+  function checkForm(form)
+  {
+    var sdate = document.forms["gph_adoc"]["sdate"].value;
+    var edate = document.forms["gph_adoc"]["edate"].value;
+    // #document.write(sdate);
+    if (sdate > edate) {
+        alert ("Start date is greater than end date ?");
+        return false;
+    }
+    return true;
+  }
+</script>
+
+
+<?php
 # ==================================================================================================
-#				First Option - Display Same graph for all group of server selected
+# FIRST OPTION - DISPLAY SAME GRAPH FOR THE GROUP OF SERVER SELECTED
 # ==================================================================================================
 ?>
     <form action='/view/perf/sadm_server_perf_adhoc_all.php' method='POST'>
@@ -115,7 +132,7 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 <!-- ===============================================================================================
 				Second Option - Display AdHoc Graph for selected time period 
 ================================================================================================= -->
-<form name=gph_adoc action='/view/perf/sadm_server_perf_adhoc.php' method='POST'>
+<form name=gph_adoc action='/view/perf/sadm_server_perf_adhoc.php' onsubmit="return checkForm();" method='POST'>
 
 
 <!-- Accept the server name ==================================================================== -->
@@ -137,39 +154,33 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
     while ($row = mysqli_fetch_assoc($result)) {                        # Gather Result from Query
         echo "<option value=$row[srv_name]>$row[srv_name]</option>\n";
     }
-  echo "</select>\n";
-  echo " from date ";
+    echo "</select>\n";
+    echo " from date ";
 
+    # Accept the starting date =====================================================================
+    $SDMIN = mktime(0, 0, 0, date("m"), date("d"), date("Y")-2);        # Today -2 Years (EpochTime)
+    $SDMIN = date ("Y-m-d",$SDMIN);                                     # Start MinDate Epoch to YMD
+    $SDMAX = mktime(0, 0, 0, date("m"), date("d")-1, date("Y"));        # Yesterday in EpochTime
+    $SDMAX = date ("Y-m-d",$SDMAX);                                     # Maximum Ending Date 
+    $YESTERDAY2 = mktime(0, 0, 0, date("m"), date("d")-2,   date("Y")); # Yesterday in Epoch Time
+    $YESTERDAY2 = date ("Y-m-d",$YESTERDAY2);                           # Max Date Epoch to Y-M-D
+    if ($DEBUG) { echo "\nStart Date Min: $SDMIN - Date Max: $SDMAX - Default: $YESTERDAY2" ; } 
+    echo "<input type='date' name='sdate' value='$YESTERDAY2' required min='$SDMIN' max='$SDMAX'/>";
 
-# Accept the starting date =========================================================================
-    $YESTERDAY2 = mktime(0, 0, 0, date("m"), date("d")-2,   date("Y")); # Today -2 Days in EpochTime 
-    $YESTERDAY2 = date ("d-m-Y",$YESTERDAY2);                           # Today -2 Days in DD.MM.YY
-    echo "<input type='text' name='sdate' value='$YESTERDAY2' size='11' />";
-?>
-    <script language="JavaScript">
-    	new tcal ({ 
-    		'formname': 'gph_adoc',
-    		'controlname': 'sdate'
-    	});
-    </script>
-
-
-<!-- Accept the ending date ==================================================================== -->
-<?php 
+    # Accept the ending date =======================================================================
     echo " to " ; 
-    $YESTERDAY  = mktime(0, 0, 0, date("m"), date("d")-1,   date("Y")); # Return Yesterday EpochTime 
-    $YESTERDAY  = date ("d-m-Y",$YESTERDAY);                            # Yesterday Date DD.MM.YYY    
-    echo "<input type='text' name='edate' value='$YESTERDAY' size='11' />";
-?>
-    <script language="JavaScript">
-        new tcal ({ 
-            'formname': 'gph_adoc',
-            'controlname': 'edate'
-        });
-    </script>
+    $EDMIN = mktime(0, 0, 0, date("m"), date("d"), date("Y")-2);        # Today -2 Years (EpochTime)
+    $EDMIN = date ("Y-m-d",$EDMIN);                                     # Minimum Starting Date
+    $EDMAX = mktime(0, 0, 0, date("m"), date("d"), date("Y"));          # Today in EpochTime
+    $EDMAX = date ("Y-m-d",$EDMAX);                                     # Maximum Ending Date YMD
+    $YESTERDAY  = mktime(0, 0, 0, date("m"), date("d")-1, date("Y"));     # Return Yesterday EpochTime 
+    $YESTERDAY  = date ("Y-m-d",$YESTERDAY);                            # Yesterday Date YYYY-MM_DD    
+    if ($DEBUG) { echo "\nEnd Date Min: $EDMIN - Date Max: $EDMAX - Default: $YESTERDAY" ; } 
+    echo "<input type='date' name='edate' value='$YESTERDAY' required min='$EDMIN' max='$EDMAX' />";
 
-<!-- Accept the starting time ================================================================== -->
-    <?php echo " between " ; ?>
+    # Accept the starting time =====================================================================
+    echo " between " ; 
+    ?>
     <select name=stime >
         <option value="00:00">00:00</option>
         <option value="00:30">00:30</option>
@@ -276,14 +287,11 @@ echo "<H2>Performance Graph for Unix servers</H2><br>\n" ;
 
 
 <!-- Submit button ============================================================================= -->
-    <?php
-    echo '<input type="submit" value="Generate graph" />';
-    echo "<br><br>";
-    ?>
-    </form>
-    <hr><br>
-
-<?php 
+<?php
+    echo "\n<input type='submit' value='Generate graph' />";
+    echo "\n<br><br>";
+    echo "\n</form>";
+    echo "\n<hr><br>";
 
     echo "\n</div> <!-- End of SimpleTable          -->" ;              # End Of SimpleTable Div
     std_page_footer($con)                                               # Close MySQL & HTML Footer

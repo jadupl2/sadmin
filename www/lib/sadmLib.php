@@ -33,12 +33,18 @@
 #       V2.3 Added 3 functions for Network Information (netinfo, mask2cidr and cidr2mask)
 #   2018_04_17 - Jacques Duplessis
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
-#@2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
-#@2019_01_21 v2.6 Add function from From Schedule to Text.
+# 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
+# 2019_01_21 v2.6 Add function from From Schedule to Text.
+#@2019_02_16 v2.7 Change: Schedule to one line text, to make generated line more precise.
 # ==================================================================================================
 #
 
-
+#===================================================================================================
+#                                       Local Variables
+#===================================================================================================
+#
+$DEBUG  = False ;                                                        # Debug Activated True/False
+$LIBVER = "2.7" ;   
     
 
 #===================================================================================================
@@ -527,11 +533,17 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         }
     }
     $part2 = rtrim($part2, ',') . " " ;                                 # Remove Trailing Comma
+    
+
+    if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = "Every "; }
+
 
     # Days of the week the schedule will run
     $part3 = "";                                                        # Result Day(s) Schedule run
     if (substr($wdow,0,1) == "Y") {                                     # If DOW begin with Y=AllWeek
         $part3 = "Every day";                                           # Schedule run every day
+        if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = ""; }
+
     }else{                                                              # If not Get Days it Run
         if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;}
         if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;}
