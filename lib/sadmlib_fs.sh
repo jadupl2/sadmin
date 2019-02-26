@@ -17,6 +17,7 @@
 # 2018_05_18 v2.2 Adapted to be used by Auto Filesystem Increase
 # 2018_06_12 v2.3 Fix Problem with get_mntdata was not returning good lvsize (xfs only)
 # 2018_09_20 v2.4 Fix problem with filesystem commands options
+# 2019_02_25 Improvement: v2.5 Major code revamp and bug fix
 #===================================================================================================
 # 
 #
@@ -35,7 +36,7 @@ VGLIST="$SADM_TMP_DIR/vglist.$$"            ; export VGLIST             # Contai
 rm -f $VGLIST >/dev/null 2>&1                                           # Make sure file doesn't exist
 VGDIR="/etc/lvm/backup"                     ; export VGDIR              # List if VG 
 declare -a mount_array                                                  # Declare mount & unmount array 
-MAXLEN_LV=14                                ; export MAXLEN_LV          # Max Char for LV Name
+MAXLEN_LV=30                                ; export MAXLEN_LV          # Max Char for LV Name
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 #
 LVNAME=""			                        ; export LVNAME             # Logical Volume Name
@@ -80,6 +81,10 @@ setlvm_path() {
     if [ $? -eq 0 ] ; then LVCREATE=`which lvcreate`        ; else LVCREATE=""  ;fi
     export LVCREATE
 
+    which lvs >/dev/null 2>&1 
+    if [ $? -eq 0 ] ; then LVS=`which lvs`                  ; else LVS=""       ;fi
+    export LVS
+
     which lvextend >/dev/null 2>&1 
     if [ $? -eq 0 ] ; then LVEXTEND=`which lvextend`        ; else LVEXTEND=""  ;fi
     export LVEXTEND
@@ -120,6 +125,7 @@ setlvm_path() {
             sadm_writelog "FSCK_EXT3        = $FSCK_EXT3"
             sadm_writelog "FSCK_EXT4        = $FSCK_EXT4"
             sadm_writelog "LVCREATE         = $LVCREATE"
+            sadm_writelog "LVS              = $LVS"
             sadm_writelog "LVEXTEND         = $LVEXTEND"
             sadm_writelog "LVSCAN           = $LVSCAN"
             sadm_writelog "RESIZE2FS        = $RESIZE2FS"
@@ -142,7 +148,7 @@ create_vglist()
 
 
 #---------------------------------------------------------------------------------------------------
-# This function verify if a volume group exist on the system
+# Function that verify if a volume group exist on the system
 #---------------------------------------------------------------------------------------------------
 vgexist()
 {
@@ -155,19 +161,23 @@ vgexist()
 
 
 #---------------------------------------------------------------------------------------------------
-# This function verify if a logical volume exist on the system
+# Function that verify if a logical volume exist on the system
 #---------------------------------------------------------------------------------------------------
 lvexist()
 {
    lv2check=$1
-   grep -E "^\/dev" $FSTAB|awk '{ print $1 }'|awk -F/ '{ print $NF }'|grep "^${lv2check}$" >/dev/null
-   lvrc=$?
+   if [ "$LVS" != "" ] 
+        then $LVS --noheadings | awk '{ print $1 }' | grep "^$lv2check$"  >/dev/null
+             lvrc=$?   
+        else grep -E "^\/dev" $FSTAB|awk '{ print $1 }'|awk -F/ '{ print $NF }'|grep "^${lv2check}$" >/dev/null
+             lvrc=$?
+   fi 
    return $lvrc
 }
 
 
 # -------------------------------------------------------------------------------------
-# This function get the volume group information
+# Fnction to get the volume group information
 # -------------------------------------------------------------------------------------
 getvg_info()
 {
@@ -268,48 +278,48 @@ get_mntdata()
 
 
 #---------------------------------------------------------------------------------------------------
-#           This function validate if MetaData Collected is ok to create the filesystem 
+# Function validate if MetaData Collected is ok to create the filesystem 
 #---------------------------------------------------------------------------------------------------
 metadata_creation_valid()
 {
 
-# Volume Group must exist
+    # Volume Group must exist
    if ! vgexist $VGNAME
       then sadm_writelog "Filesystem Creation - Volume Group $VGNAME does not exist"
            return 1
    fi
 
-# Logical Volume name must not exist
+    # Logical Volume name must not exist
    if lvexist $LVNAME
       then sadm_writelog "The LV name ${LVNAME} already exist"
            return 1
    fi 
 
-# Logical Volume Name Length is zero 
+    # Logical Volume Name Length is zero 
    if [ ${#LVNAME} -eq 0 ] 
       then sadm_writelog "No Valid LV name is specify"
            return 1
    fi
 
-# Refuse First Character Blank for Logical Volume name 
+    # Refuse First Character Blank for Logical Volume name 
    if [ ${LVNAME:0:1} = " " ] 
       then sadm_writelog "First charecter of the Logical Volume name must not be blank"
            return 1
    fi
 
-# Logical Volume size must be at least 32 Mb
+    # Logical Volume size must be at least 32 Mb
    if [ ${LVSIZE} -lt 32 ] 
       then sadm_writelog "Filesystem size must greater then 32 MB"
            return 1
    fi
 
-# Logical Volume type must be ext3 ext4 or xfs 
+    # Logical Volume type must be ext3 ext4 or xfs 
    if [ $LVTYPE != "ext3" ] && [ $LVTYPE != "ext4" ] && [ $LVTYPE != "xfs" ] 
       then sadm_writelog "Filesystem type must be ext3, ext4 or xfs - Not $LVTYPE"
            return 1
    fi
 
-# Validate Mount Point
+    # Validate Mount Point
    if mntexist $LVMOUNT
       then sadm_writelog "Mount Point $LVMOUNT already exist"
            return 1
@@ -317,7 +327,6 @@ metadata_creation_valid()
 
    return 0
 }
-
 
 
 
@@ -330,87 +339,59 @@ mntvalid()
    mnt2valid=$1 
    mnt2validrc=0
    wchar=${mnt2valid:0:1}
-   if [ $wchar != "/" ] ; then mnt2validrc=1 ; fi 
+   if [ "$wchar" != "/" ] ; then mnt2validrc=1 ; fi 
    return ${mnt2validrc}
 }
 
 
 
-
 #---------------------------------------------------------------------------------------------------
-# Function called when an error occured when trying to create a filesystem
-#---------------------------------------------------------------------------------------------------
-report_error()
-{
-    WMESS=$1
-    WDATE=$(date "+%C%y.%m.%d %H:%M:%S")
-    sadm_writelog "$WMESS" 
-    echo -e "$WMESS"
-    echo -e "\a\aPress [ENTER] to continue - CTRL-C to Abort\c"
-    read dummy 
-}
-
-
-
-#---------------------------------------------------------------------------------------------------
-# Sort /etc/fstab so that all mounts points are in order.
-#---------------------------------------------------------------------------------------------------
-fix_fstab()
-{
-   awk '! /^#/ && !/^$/ { printf "%03d %s\n", length($2), $0 }' $FSTAB |sort > $WFSTAB
-   awk '{ printf "%-30s %-30s %s %s %-3s %-3s\n",$2,$3,$4,$5,$6,$7}' $WFSTAB > $FSTAB 
-   chmod 644 $FSTAB
-   chown root.root $FSTAB
-}
-
-
-
-
-
-
-
-
-#---------------------------------------------------------------------------------------------------
-#               Function called to Expand a filesystem
+# Expand Filesystem Function
 #---------------------------------------------------------------------------------------------------
 extend_fs()
 {
     sadm_writelog "Filesystem before increase"
-    echo "Filesystem before increase"
+    echo "${bold}${yellow}Filesystem before increase${reset}"
     df -h ${LVMOUNT} | tee -a $SADM_LOG 2>&1 
     echo " "
 
     sadm_writelog "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME"
-    echo "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME"
+    printf "$LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME "
     $LVEXTEND -L+${LVSIZE} /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1       # Extend the logical volume
     if [ $? -ne 0 ] 
-        then report_error "Error on lvextend /dev/$VGNAME/$LVNAME"
+        then sadm_writelog "Error on lvextend /dev/$VGNAME/$LVNAME"
+             sadm_print_status "ERROR" "Error on lvextend /dev/$VGNAME/$LVNAME"
              return 1
+        else sadm_print_status "OK" ""
     fi 
 
     if [ "$LVTYPE" = "ext3" ] || [ "$LVTYPE" = "ext4" ]                 # Ext3,Ext4 Resize Filesystem 
         then sadm_writelog "$RESIZE2FS     /dev/$VGNAME/$LVNAME" 
-             echo "$RESIZE2FS     /dev/$VGNAME/$LVNAME" 
+             printf "$RESIZE2FS /dev/$VGNAME/$LVNAME " 
              $RESIZE2FS  /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
              if [ $? -ne 0 ] 
-                then report_error "Error on resize2fs /dev/$VGNAME/$LVNAME" 
+                then sadm_writelog "Error on resize2fs /dev/$VGNAME/$LVNAME"
+                     sadm_print_status "ERROR" "Error on resize2fs /dev/$VGNAME/$LVNAME"
                      return 1
-             fi 
+                else sadm_print_status "OK" ""
+            fi 
     fi
 
     if [ "$LVTYPE" = "xfs" ]                                            # XFS Resize Filesystem 
         then sadm_writelog "$XFS_GROWFS ${LVMOUNT}" 
-             echo "$XFS_GROWFS ${LVMOUNT}" 
+             printf "$XFS_GROWFS ${LVMOUNT} " 
              $XFS_GROWFS ${LVMOUNT} >> $SADM_LOG 2>&1
              if [ $? -ne 0 ] 
-                then report_error "Error with $XFS_GROWFS ${LVMOUNT}" 
+                then sadm_writelog "Error with $XFS_GROWFS ${LVMOUNT}"
+                     sadm_print_status "ERROR" "Error with $XFS_GROWFS ${LVMOUNT}"
                      return 1
-             fi 
+                else sadm_print_status "OK" ""
+            fi              
     fi
 
     echo " "
     sadm_writelog "Filesystem after increase"
-    echo "Filesystem after increase"
+    echo "${bold}${yellow}Filesystem after increase${reset}"
     df -h ${LVMOUNT} | tee -a $SADM_LOG 2>&1 
     return 0
  
@@ -418,116 +399,144 @@ extend_fs()
 
 
 
-
-
-
 #---------------------------------------------------------------------------------------------------
-# Function called to write code to be run at the end to ; 
-#    o delete entries in /etc/fstab
-#    o Remove the old logical volume 
-#    o Remove mount point
+# Delete Filesystem Function
 #---------------------------------------------------------------------------------------------------
 remove_fs()
 {
 
-# Check filesystem is mounted - if it is umount it 
-# ------------------------------------------------------------------------------
+    # Make sure to unmount filesystem
     mount | grep "${LVMOUNT} "  > /dev/null 
     if [ $? -eq 0 ] 
        then sadm_writelog "Unmounting ${LVMOUNT} "
-            echo "Unmounting ${LVMOUNT} "
+            printf "Unmounting ${LVMOUNT} "
             umount ${LVMOUNT} >> $SADM_LOG 2>&1
             if [ $? -ne 0 ] 
-               then report_error "Error unmounting ${LVMOUNT}"
-                    return 1
+                then sadm_writelog "Error unmounting ${LVMOUNT}"
+                     sadm_print_status "ERROR" "Can't unmount ${LVMOUNT}\n"
+                     return 1
+                else sadm_print_status "OK" ""
             fi 
      fi
-
    
-# Remove the logical Volume
-# ------------------------------------------------------------------------------
-     sadm_writelog "$LVREMOVE -f /dev/${VGNAME}/${LVNAME} "
-     echo "$LVREMOVE -f /dev/${VGNAME}/${LVNAME}"
-     $LVREMOVE -f /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1 
-     if [ $? -ne 0 ] 
-        then report_error "Error removing /dev/${VGNAME}/${LVNAME} logical volume"
-             mount ${LVMOUNT} 
-             return 1
-     fi 
+    # Remove the logical Volume
+    sadm_writelog "$LVREMOVE -f /dev/${VGNAME}/${LVNAME} "              # Write command to Log
+    printf "$LVREMOVE -f /dev/${VGNAME}/${LVNAME} "                     # Inform user what we do
+    $LVREMOVE -f /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1             # Try to remove Logical Vol.
+    if [ $? -ne 0 ]                                                     # If Error while removing lv
+        then sadm_writelog "Error removing /dev/${VGNAME}/${LVNAME} logical volume"
+             sadm_print_status "ERROR" "Can't remove the logical volume ${LVMOUNT}"
+             mount ${LVMOUNT}                                           # Remount Filesystem
+             return 1                                                   # Return Error to caller
+        else sadm_print_status "OK" ""                                # Action succeeded
+    fi 
 
-# Remove entry in /etc/fstab
-# ------------------------------------------------------------------------------
-     echo "Removing \"$LVMOUNT \" from $FSTAB "
-     sadm_writelog "Removing \" $LVMOUNT \" from $FSTAB "
-#     grep "^/dev/" $FSTAB | grep -vi "${LVMOUNT} " > $WFSTAB
-     grep -vi " ${LVMOUNT} " $FSTAB > $WFSTAB
-     if [ $? -eq 1 ] 
-        then report_error "Error removing $LVMOUNT from $FSTAB"
-             return 1
-     fi 
-     cp $WFSTAB $FSTAB      
-     chmod 644 $FSTAB       
-     chown root.root $FSTAB 
+    # Create a TMP Work file from fstab without the lv to remove
+    sadm_writelog "Removing \" $LVMOUNT \" from $FSTAB "                # Write action to log
+    printf "Removing \"$LVMOUNT \" from $FSTAB "                        # Advise user what we do
+    grep -vi " ${LVMOUNT} " $FSTAB > $WFSTAB                            # New FSTAB work without LV
+    if [ $? -ne 0 ]                                                     # Error Creating FSTAB Work
+        then sadm_writelog "Error removing $LVMOUNT from $FSTAB"         # Unbale to create work file
+             sadm_print_status "ERROR" "Can't create new fstab temp file ($WFSTAB)."
+             mount ${LVMOUNT}                                           # Remount Filesystem
+             return 1                                                   # Return Error to caller
+        else sadm_print_status "OK" ""                                  # Action succeeded
+    fi 
+
+    # Erase actual fstab with the new fstab (the tmp file)
+    sadm_writelog "Copying $WFSTAB to $FSTAB"                           # Write action to log
+    printf "Copying new fstab file in place ($WFSTAB to $FSTAB) "       # Advise user what we do
+    cp $WFSTAB $FSTAB                                                   # Install new fstab 
+    if [ $? -ne 0 ]                                                     # Error Creating FSTAB Work
+        then sadm_writelog "Error copying $WFSTAB to $FSTAB"             # Unable to create work file
+             sadm_print_status "ERROR" "Error copying $WFSTAB to $FSTAB - Check /etc/fstab"
+             return 1                                                   # Return Error to caller
+        else sadm_print_status "OK" ""                                # Action succeeded
+    fi 
+
+    # Make sure /etc/fstab have the right owner and permission
+    sadm_writelog "Make sure $FSTAB is own by root user/group and permission are at 644" 
+    printf "Make sure $FSTAB is own by root user/group and permission are at 644 "
+    chmod 644 $FSTAB && chown root.root $FSTAB                          # Change Owner & Permission
+    if [ $? -ne 0 ]                                                     # Error Creating FSTAB Work
+        then sadm_writelog "Error change owner/group or permission on $FSTAB"  
+             sadm_print_status "ERROR" "Error change owner/group or permission on $FSTAB"
+             return 1                                                   # Return Error to caller
+        else sadm_print_status "OK" ""                                # Action succeeded
+    fi 
+
 }
 
 
 
-
-
 #---------------------------------------------------------------------------------------------------
-#                   Filesysten Check Function
+# Filesysten Check Function
 #---------------------------------------------------------------------------------------------------
 filesystem_fsck()
 {
-    
-# Filesystem got to be unmounted first
-# ------------------------------------------------------------------------------
+    # Filesystem got to be unmounted first
     mount | grep "${LVMOUNT} "  > /dev/null 
     if [ $? -eq 0 ] 
        then sadm_writelog "Unmounting ${LVMOUNT} "
+            printf "Unmounting ${LVMOUNT} "
             umount ${LVMOUNT}  >> $SADM_LOG 2>&1
             if [ $? -ne 0 ]
-               then report_error "Error unmounting ${LVMOUNT}"
-                    return 1
+                then sadm_writelog "Error unmounting ${LVMOUNT}"
+                     sadm_print_status "ERROR" "Can't unmount ${LVMOUNT}"  
+                     return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
             fi
     fi
 
     
-# Run filesystem check on filesystem
-# ------------------------------------------------------------------------------
+    # Run filesystem check on filesystem
     if [ "$LVTYPE" = "ext3" ]
        then sadm_writelog "$FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME"
+            printf "$FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME "
             $FSCK_EXT3 -fy /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
-            if [ $? -ne 0 ]
-               then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
+            RC=$?
+            if [ "$RC" -ne 0 ]
+               then sadm_writelog "Error $RC on fsck /dev/$VGNAME/$LVNAME"
+                    sadm_print_status "ERROR" "Error no.${RC} returned by $FSCK_EXT3"  
+                    return 1
+               else sadm_print_status "OK" ""                           # Action succeeded
             fi
     fi
     if [ "$LVTYPE" = "ext4" ]
        then sadm_writelog "$FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME"
+            printf "$FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME "
             $FSCK_EXT4 -fy /dev/$VGNAME/$LVNAME >> $SADM_LOG 2>&1
-            if [ $? -ne 0 ]
-               then report_error "Error on fsck /dev/$VGNAME/$LVNAME"
+            RC=$?
+            if [ "$RC" -ne 0 ]
+               then sadm_writelog "Error on fsck /dev/$VGNAME/$LVNAME"
+                    sadm_print_status "ERROR" "Error no.${RC} returned by $FSCK_EXT4"  
+                    return 1
+               else sadm_print_status "OK" ""                           # Action succeeded
             fi
     fi
-
     if [ "$LVTYPE" = "xfs" ]
         then sadm_writelog "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
+             printf "${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} "
              ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with fsck.ext4"
+                then sadm_writelog "Error $RC returned by ${XFS_REPAIR}"
+                     sadm_print_status "ERROR" "Error no.${RC} returned by $XFS_REPAIR"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
        
 
-# Remount unmounted filesystem
-# ------------------------------------------------------------------------------
+    # Remount unmounted filesystem
     sadm_writelog "Mounting ${LVMOUNT} "
+    printf "Mounting ${LVMOUNT} "
     mount ${LVMOUNT}
     if [ $? -ne 0 ]
-       then report_error "Error Mounting ${LVMOUNT}"
-            return 1
+        then sadm_writelog "Error Mounting ${LVMOUNT}"
+             sadm_print_status "ERROR" "Error no.${RC} remounting ${LVMOUNT}"  
+             return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
 
      return 0  
@@ -535,10 +544,8 @@ filesystem_fsck()
 
 
 
-
-
 #---------------------------------------------------------------------------------------------------
-#                   Create filesystem function
+# Create filesystem function
 #---------------------------------------------------------------------------------------------------
 create_fs()
 {
@@ -561,19 +568,16 @@ create_fs()
             sadm_writelog "\n-----------------------------"
     fi
     
-# If logical volume name is greater than MAXLEN_LV char - then remove char overflow 
-# ------------------------------------------------------------------------------
+    # If logical volume name is greater than MAXLEN_LV char - then remove char overflow 
     if [ ${#LVNAME} -gt ${MAXLEN_LV} ] 
-       then sadm_writelog "The Logical volume name ${LVNAME} ${#LVNAME} char is too long"
-            echo "The Logical volume name ${LVNAME} ${#LVNAME} char is too long"
+       then sadm_writelog "The Logical volume name ${LVNAME} is too long (max ${MAXLEN_LV})."
+            echo "The Logical volume name ${LVNAME} is too long (max ${MAXLEN_LV})."
             LVNAME=`echo "${LVNAME}" | cut -c1-${MAXLEN_LV}`
             sadm_writelog "It has been changed to ${LVNAME}"
             echo "It has been changed to ${LVNAME}"
     fi 
 
-
-# Check if logical volume name already exist - chop it and 2 numbers at the end
-# ------------------------------------------------------------------------------
+    # Check if logical volume name already exist - chop it and 2 numbers at the end
     grep -E "^\/dev" $FSTAB | awk '{ print $1 }' | awk -F/ '{ print $4 }'| grep $LVNAME >/dev/null 
     RC=$?
     if [ $RC -eq 0 ]
@@ -590,172 +594,197 @@ create_fs()
             echo "It has been changed with random number ${NUMBER} to ${LVNAME}"
      fi 
     
-
-# Check if mount point is already in /etc/fstab
-# ------------------------------------------------------------------------------
+    # Check if mount point is already in /etc/fstab
     grep "^/dev/" $FSTAB | awk '{ printf "%s \n", $2 }' | grep "^${LVMOUNT} ">/dev/null
     RC=$?
     if [ $RC -eq 0 ]
-       then report_error "The mount point $LVMOUNT already exist in $FSTAB"
+       then sadm_writelog "The mount point $LVMOUNT already exist in $FSTAB"
+            sadm_print_status "ERROR" "Mount point $LVMOUNT already exist in $FSTAB"  
             return 1
     fi 
 
 
-# CREATE LOGICAL VOLUME
-# ------------------------------------------------------------------------------
+    # CREATE LOGICAL VOLUME
     sadm_writelog "Running : ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
-    echo "Running : ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME}"
+    printf "${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME} "
     ${LVCREATE} -y -L${LVSIZE}M -n ${LVNAME} ${VGNAME} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with lvcreate\n"
+        then sadm_writelog "Error (${RC}) returned by lvcreate command."
+             sadm_print_status "ERROR" "Error (${RC}) returned by lvcreate command."  
              return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
 
 
-# CREATE FILESYSTEM ON LOGICAL VOLUME
-# ------------------------------------------------------------------------------
+    # CREATE FILESYSTEM ON LOGICAL VOLUME
     if [ "$LVTYPE" = "ext3" ]
         then sadm_writelog "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME}"
+             printf "${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} "
              ${MKFS_EXT3} -b4096 /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with mkfs.ext3"
+                then sadm_writelog "Error $RC with ${MKFS_EXT3}"
+                     sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_EXT3}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "ext4" ]
         then sadm_writelog "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME}"
+             printf "${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME} "
              ${MKFS_EXT4} -b4096 /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with mkfs.ext4"
+                then sadm_writelog "Error $RC with ${MKFS_EXT4}"
+                     sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_EXT4}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "xfs" ]
-        then sadm_writelog "Running : ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME}"
-             ${MKFS_XFS}  /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
+        then sadm_writelog "Running : ${MKFS_XFS} -f /dev/${VGNAME}/${LVNAME}"
+             printf "${MKFS_XFS} -f /dev/${VGNAME}/${LVNAME} "
+             ${MKFS_XFS} -f /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with mkfs.xfs"
+                then sadm_writelog "Error $RC with ${MKFS_XFS}"
+                     sadm_print_status "ERROR" "Error (${RC}) returned by ${MKFS_XFS}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
 
-
-# RUN FILESYSTEM CHECK ON THE NEWLY FILESYSTEM
-# ------------------------------------------------------------------------------
+    # RUN FILESYSTEM CHECK ON THE NEWLY FILESYSTEM
     if [ "$LVTYPE" = "ext3" ]
         then sadm_writelog "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME}"
+             printf "${FSCK_EXT3} -f /dev/${VGNAME}/${LVNAME} "
              ${FSCK_EXT3} -fy /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with fsck.ext3"
+                then sadm_writelog "Error $RC with ${FSCK_EXT3}"
+                     sadm_print_status "ERROR" "Error No.${RC} with ${FSCK_EXT3}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
     if [ "$LVTYPE" = "ext4" ]
         then sadm_writelog "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME}"
+             printf "${FSCK_EXT4} -f /dev/${VGNAME}/${LVNAME} "
              ${FSCK_EXT4} -fy /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with fsck.ext4"
+                then sadm_writelog "Error $RC with ${FSCK_EXT4}"
+                     sadm_print_status "ERROR" "Error No.${RC} with ${FSCK_EXT4}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
- 
     if [ "$LVTYPE" = "xfs" ]
         then sadm_writelog "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
-             echo "Running : ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME}"
+             printf "${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} "
              ${XFS_REPAIR} -n /dev/${VGNAME}/${LVNAME} >> $SADM_LOG 2>&1
              RC=$?
              if [ "$RC" -ne 0 ]
-                then report_error "Error $RC with fsck.ext4"
+                then sadm_writelog "Error $RC with ${XFS_REPAIR}"
+                     sadm_print_status "ERROR" "Error No.${RC} with ${XFS_REPAIR}"  
                      return 1
+                else sadm_print_status "OK" ""                          # Action succeeded
              fi
     fi
        
-
-
-
-# MAKE DIRECTORY MOUNT POINT
-# ------------------------------------------------------------------------------
+    # MAKE DIRECTORY MOUNT POINT
     sadm_writelog "Running : mkdir -p ${LVMOUNT}"
-    echo "Running : mkdir -p ${LVMOUNT}"
+    printf "mkdir -p ${LVMOUNT} "
     mkdir -p ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with mkdir"
+        then sadm_writelog "Error $RC with ${LVMOUNT}"
+             sadm_print_status "ERROR" "Error No.${RC} with ${LVMOUNT}"  
              return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
 
-
-# ADD MOUNT POINT TO /ETC/FSTAB
-# ------------------------------------------------------------------------------
+    # ADD MOUNT POINT TO /ETC/FSTAB
     sadm_writelog "Running : Adding mount point in $FSTAB"
-    echo "Running : Adding mount point in $FSTAB"
+    printf "Adding mount point to $FSTAB\n"
     if [ "$LVTYPE" = "ext3" ]
        then if [ "$(sadm_get_osmajorversion)" -lt 6 ]
                then echo "/dev/${VGNAME}/${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext3 defaults 1 2"}'>>$FSTAB
+                    echo "/dev/${VGNAME}/${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext3 defaults 1 2"}'
                else echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext3 defaults 1 2"}'>>$FSTAB
+                    echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext3 defaults 1 2"}'
             fi
     fi
     if [ "$LVTYPE" = "ext4" ]
        then echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext4 defaults 1 2"}'>>$FSTAB
+            echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"ext4 defaults 1 2"}'
     fi
     if [ "$LVTYPE" = "xfs" ]
        then echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"xfs  defaults 1 2"}'>>$FSTAB
+            echo "/dev/mapper/${VGNAME}-${LVNAME} ${LVMOUNT}" | awk '{ printf "%-30s %-30s %s\n",$1,$2,"xfs  defaults 1 2"}'
     fi
     sadm_writelog "Running : Sort /etc/fstab so that all mounts points are in the right order"
-    echo "Running : Sort /etc/fstab so that all mounts points are in the right order"
-    fix_fstab
+    printf "Sort /etc/fstab so that all mounts points are in the right order "
+    awk '! /^#/ && !/^$/ { printf "%03d %s\n", length($2), $0 }' $FSTAB |sort > $WFSTAB
+    awk '{ printf "%-30s %-30s %s %s %-3s %-3s\n",$2,$3,$4,$5,$6,$7}' $WFSTAB > $FSTAB 
+    sadm_print_status "OK" ""                                           # Action succeeded
 
-
-# MOUNT NEW FILESYSTEM
-# ------------------------------------------------------------------------------
+    # Make sure /etc/fstab have the right owner and permission
+    sadm_writelog "Make sure $FSTAB is own by root user/group and permission are at 644" 
+    printf "Make sure $FSTAB is own by root user/group and permission are at 644 "
+    chmod 644 $FSTAB && chown root.root $FSTAB                          # Change Owner & Permission
+    if [ $? -ne 0 ]                                                     # Error Creating FSTAB Work
+        then sadm_writelog "Error change owner/group or permission on $FSTAB"  
+             printf "${red} [ERROR]${reset} Error change owner/group or permission on $FSTAB\n"
+             sadm_print_status "ERROR" "Error change owner/group or permission on $FSTAB"  
+             return 1                                                   # Return Error to caller
+        else sadm_print_status "OK" ""                                # Action succeeded
+    fi 
+    
+    # MOUNT NEW FILESYSTEM
     sadm_writelog "Running : mount ${LVMOUNT}"
-    echo "Running : mount ${LVMOUNT}"
+    printf "mount ${LVMOUNT} "
     mount ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with mount"
+        then sadm_writelog "Error $RC with mounting ${LVMOUNT}"
+             sadm_print_status "ERROR" "Error No.${RC} with mounting ${LVMOUNT}"  
              return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
-
     
-# CHANGE OWNER OF FILESYSTEM
-# ------------------------------------------------------------------------------
+    # CHANGE OWNER OF FILESYSTEM
     sadm_writelog "Running : chown${LVOWNER}:${LVGROUP} ${LVMOUNT}"
-    echo "Running : chown ${LVOWNER}:${LVGROUP} ${LVMOUNT}"
+    printf "chown ${LVOWNER}:${LVGROUP} ${LVMOUNT} "
     chown ${LVOWNER}:${LVGROUP} ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with chown"
+        then sadm_writelog "Error $RC with chown"
+             sadm_print_status "ERROR" "Error No.${RC} with chown on ${LVMOUNT}"  
              return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
     
-
-# CHANGE PROTECTION OF FILESYSTEM
-# ------------------------------------------------------------------------------
+    # CHANGE PROTECTION OF FILESYSTEM
     sadm_writelog "Running : chmod ${LVPROT} ${LVMOUNT}"
-    echo "Running : chmod ${LVPROT} ${LVMOUNT}"
+    printf "chmod ${LVPROT} ${LVMOUNT} "
     chmod ${LVPROT} ${LVMOUNT} >> $SADM_LOG 2>&1
     RC=$?
     if [ "$RC" -ne 0 ]
-        then report_error "Error $RC with chmod"
+        then sadm_writelog "Error $RC with chmod"
+             sadm_print_status "ERROR" "Error No.${RC} with chmod on ${LVMOUNT}"  
              return 1
+        else sadm_print_status "OK" ""                                  # Action succeeded
     fi
+
     return 0
 }
 
-#---------------------------------------------------------------------------------------------------
 
+
+#---------------------------------------------------------------------------------------------------
+# 
 #---------------------------------------------------------------------------------------------------
 setlvm_path
 create_vglist

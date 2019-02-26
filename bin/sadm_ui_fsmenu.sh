@@ -21,6 +21,7 @@
 #   2.1      Revisited to work with LinuxMint - April 2017 - Jacques Duplessis
 #   2.2      Correct cannot change filesystem type (always goes back to xfs)
 #   2.3      Fix problem with filesystem increase
+# 2019_02_25 Improvement: v2.4 Code revamp and add color to menu.
 #===================================================================================================
 
 # Load Filesystem Library Tools
@@ -63,25 +64,25 @@ set_creation_default()
 }
 
 
-
 #===================================================================================================
 #                                   Create filesystem
 #===================================================================================================
 create_filesystem()
 {
-    set_creation_default
+    set_creation_default                                                # Set FS Creation Default
     while : 
         do 
         sadm_display_heading  "Create Filesystem"
-        sadm_writexy 06 05  "1- Volume group............................. $CR_VG "
-        sadm_writexy 07 05  "2- Logical volume name...................... $CR_LV "
-        sadm_writexy 08 05  "3- Logical volume size in MB................ $CR_MB "
-        sadm_writexy 09 05  "4- Filesystem mount point................... $CR_MP "
-        sadm_writexy 10 05  "5- Filesystem Type (ext3,ext4,xfs).......... $CR_FT "
-        sadm_writexy 14 05  "${bold}P${nrm}- Proceed with creation ..................."
-        sadm_writexy 15 05  "${bold}Q${nrm}- Quit this menu..........................."
-        sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-        sadm_writexy 21 38 " "
+        sadm_show_menuitem 06 03 1 "Volume group............................. $CR_VG "
+        sadm_show_menuitem 07 03 2 "Logical volume name...................... $CR_LV "
+        sadm_show_menuitem 08 03 3 "Logical volume size in MB................ $CR_MB "
+        sadm_show_menuitem 09 03 4 "Filesystem mount point................... $CR_MP "
+        sadm_show_menuitem 10 03 5 "Filesystem Type (ext3,ext4,xfs).......... $CR_FT "
+        sadm_show_menuitem 14 03 "P" "Proceed with creation ..................."
+        sadm_show_menuitem 15 03 "Q" "Quit this menu..........................."
+        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in       
                 1 )     sadm_accept_data 06 50 10 A $CR_VG              # Accept Volume Group
@@ -93,9 +94,9 @@ create_filesystem()
                 2 )     sadm_accept_data 07 50 14 A $CR_LV              # Accept Logical volume name
                         if lvexist $WDATA  
                             then sadm_mess "The LV name ${WDATA} already exist"
-                            else if [ "$WDATA" = "" ]
-                                    then sadm_mess "No Valid LV name is specify"
-                                    else  CR_LV=$WDATA
+                            else if [ "$WDATA" = "" ] || [[ ${WDATA:0:1} == "/" ]] ; 
+                                    then sadm_mess "Invalid LV name ..."
+                                    else CR_LV=$WDATA
                                  fi
                         fi
                         ;;
@@ -134,7 +135,8 @@ create_filesystem()
                                  if ! metadata_creation_valid
                                      then sadm_mess "Filesystem Data is wrong - Please correct data"
                                           RC=1
-                                     else create_fs
+                                     else echo " "                      # Blank line after heading
+                                          create_fs
                                           RC=$?
                                 fi
                                 if [ "$RC" -ne 0 ] 
@@ -146,13 +148,13 @@ create_filesystem()
                         ;;
               q|Q )     break 
                         ;;
+                * )     sadm_mess "Invalid response ..."                # Advise User if Incorrect
+                        ;;                        
         esac
         done  
 }
 
 
-
-                                                                                                                             
 #===================================================================================================
 #                            Run fsck on the selected filesystem
 #===================================================================================================
@@ -165,19 +167,20 @@ filesystem_check()
         do
         sadm_display_heading  "Filesystem Integrity Check"
         if [ $RM_FLAG -eq 1 ]
-           then sadm_writexy 07 08 "Logical Volume Name .....................: $LVNAME"
-                sadm_writexy 08 08 "Volume Group ............................: $VGNAME"
-                sadm_writexy 09 08 "Filesystem Type .........................: $LVTYPE"
-                sadm_writexy 10 08 "Filesystem Size in MB ...................: $LVSIZE"
-                sadm_writexy 11 08 "Filesystem Owner ........................: $LVOWNER"
-                sadm_writexy 12 08 "Filesystem Group ........................: $LVGROUP"
-                sadm_writexy 13 08 "Filesystem Protection ...................: $LVPROT"
+           then sadm_writexy 07 10 "Logical Volume Name .............: $LVNAME"
+                sadm_writexy 08 10 "Volume Group ....................: $VGNAME"
+                sadm_writexy 09 10 "Filesystem Type .................: $LVTYPE"
+                sadm_writexy 10 10 "Size of filesystem MB ...........: $LVSIZE"
+                sadm_writexy 11 10 "Owner of filesystem .............: $LVOWNER"
+                sadm_writexy 12 10 "Filesystem Group ................: $LVGROUP"
+                sadm_writexy 13 10 "Filesystem Permission ...........: $LVPROT"
         fi
-        sadm_writexy 05 05  "1- Mount Point to check..................... $RM_MP "
-        sadm_writexy 16 05  "P- Proceed with the filesystem check........"
-        sadm_writexy 17 05  "Q- Quit this menu..........................."
-        sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-        sadm_writexy 21 38 " "
+        sadm_show_menuitem 05 05 1   "Mount Point to check................... $RM_MP "
+        sadm_show_menuitem 16 05 "P" "Proceed with the filesystem check......"
+        sadm_show_menuitem 17 05 "Q" "Quit this menu........................."
+        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
             1 ) sadm_accept_data 05 50 30 A $RM_MP
@@ -205,13 +208,11 @@ filesystem_check()
                 ;;
           q|Q ) break
                 ;;
+            * ) sadm_mess "Invalid response ..."                        # Advise User if Incorrect
+                ;;                    
         esac
         done
 }
-                                                                                                                             
-
-
-
 
 
 #===================================================================================================
@@ -220,28 +221,29 @@ filesystem_check()
 delete_filesystem()
 {
     RM_MP="" ; export RM_MP
-    RM_ST="" ; export RM_ST
     RM_FLAG=0
     while :
 	    do
         sadm_display_heading  "Delete a Filesystem"                 
         if [ $RM_FLAG -eq 1 ] 
-           then sadm_writexy 07 08 "Logical Volume Name ..........: $LVNAME"
-                sadm_writexy 08 08 "Volume Group .................: $VGNAME"
-                sadm_writexy 09 08 "Filesystem Type ..............: $LVTYPE"
-                sadm_writexy 10 08 "Filesystem Size in MB ........: $LVSIZE"
-                sadm_writexy 11 08 "Filesystem Owner .............: $LVOWNER"
-                sadm_writexy 12 08 "Filesystem Group .............: $LVGROUP"
-                sadm_writexy 13 08 "Filesystem Protection ........: $LVPROT"
+           then sadm_writexy 07 09 "Logical Volume Name .........: $LVNAME"
+                sadm_writexy 08 09 "Volume Group ................: $VGNAME"
+                sadm_writexy 09 09 "Filesystem Type .............: $LVTYPE"
+                sadm_writexy 10 09 "Filesystem Size in MB .......: $LVSIZE"
+                sadm_writexy 11 09 "Filesystem Owner ............: $LVOWNER"
+                sadm_writexy 12 09 "Filesystem Group ............: $LVGROUP"
+                sadm_writexy 13 09 "Filesystem Permission .......: $LVPROT"
+
         fi
-        sadm_writexy 05 05  "1- Mount Point to delete......... $RM_MP "
-        sadm_writexy 16 05  "P- Proceed with the delete......."
-        sadm_writexy 17 05  "Q- Quit this menu................"
-        sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-        sadm_writexy 21 38 " "
+        sadm_show_menuitem 05 04 01  "Mount Point to delete......... $RM_MP "
+        sadm_show_menuitem 16 04 "P" "Proceed with the delete......."
+        sadm_show_menuitem 17 04 "Q" "Quit this menu................"
+        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
-            1 ) sadm_accept_data 05 39 40 A $RM_MP
+            1 ) sadm_accept_data 05 40 40 A $RM_MP
                 if ! mntexist $WDATA  
                    then sadm_mess "Mount Point $WDATA does not exist"
                    else RM_MP=$WDATA
@@ -250,19 +252,19 @@ delete_filesystem()
                         RM_FLAG=1
                 fi  
                 ;;
-              
-          p|P ) sadm_messok 22 01 "Do you want to delete $RM_MP filesystem"
+          p|P ) sadm_messok 22 01 "Do you really want to delete $RM_MP filesystem"
                 if [ "$?" = "1" ]
                    then sadm_display_heading  "Delete the filesystem"
+                        echo " "                                        # Blank line after heading
                         RM_FLAG=0
                         remove_fs 
                         RC=$?
                         if [ "$RC" -ne 0 ]
                            then sadm_mess "Error ($RC) occured while deleting the filesystem"
                            else sadm_mess "Filesystem deleted with success !"
-                                RM_MP="" ; export RM_MP
-                                RM_ST="" ; export RM_ST
+                                RM_MP="" 
                         fi
+                   else RM_MP="" 
                 fi
                 ;;
           q|Q ) break
@@ -270,10 +272,6 @@ delete_filesystem()
         esac
         done
 }
-
-
-
-
 
 
 #===================================================================================================
@@ -288,25 +286,25 @@ enlarge_filesystem()
         do
         sadm_display_heading  "Filesystem size increase"
         if [ $RM_FLAG -eq 1 ]
-           then sadm_writexy 07 08 "Logical Volume Name .....................: $LVNAME"
-                sadm_writexy 08 08 "Volume Group ............................: $VGNAME ($VGFREE MB Free)"
-                sadm_writexy 09 08 "Filesystem Type .........................: $LVTYPE"
-                sadm_writexy 10 08 "Filesystem Size in MB ...................: ${bold}${LVSIZE}${nrm}"
-                sadm_writexy 11 08 "Filesystem Owner ........................: $LVOWNER"
-                sadm_writexy 12 08 "Filesystem Group ........................: $LVGROUP"
-                sadm_writexy 13 08 "Filesystem Protection ...................: $LVPROT"
+           then sadm_writexy 07 08 "Logical Volume Name .................: $LVNAME"
+                sadm_writexy 08 08 "Filesystem Type .....................: $LVTYPE"
+                sadm_writexy 09 08 "Filesystem Size in MB ...............: ${LVSIZE}"
+                sadm_writexy 10 08 "Filesystem Owner ....................: $LVOWNER"
+                sadm_writexy 11 08 "Filesystem Group ....................: $LVGROUP"
+                sadm_writexy 12 08 "Filesystem Protection ...............: $LVPROT"
         fi
-        sadm_writexy 05 05  "1- Filesystem mount point to increase.......: $RM_MP "
-        sadm_writexy 15 05  "2- New Filesystem Size in MB................: ${bold}${RM_MB}${nrm}"
-        sadm_writexy 17 05  "P- Proceed with increasing the size........."
-        sadm_writexy 18 05  "Q- Quit this menu..........................."
-        sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-        sadm_writexy 21 38 " "
+        sadm_show_menuitem 05 03 1 "Filesystem mount point to increase...: $RM_MP "
+        sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${bold}${RM_MB}${nrm}"
+        sadm_show_menuitem 17 03 "P" "Proceed with increasing the size......"
+        sadm_show_menuitem 18 03 "Q" "Quit this menu........................"
+        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
-             1 ) sadm_accept_data 05 51 30 A $RM_MP                     # Accept Mount point to incr
+             1 ) sadm_accept_data 05 47 35 A $RM_MP                     # Accept Mount point to incr
                  if ! mntexist $WDATA
-                    then sadm_mess "Filesystem $WDATA does not exist"
+                    then sadm_mess "Filesystem $WDATA doesn't exist"
                     else RM_MP=$WDATA
                          LVMOUNT=$RM_MP
                          get_mntdata $LVMOUNT
@@ -315,7 +313,7 @@ enlarge_filesystem()
                          getvg_info "$VGNAME"
                  fi
                  ;;
-             2 ) sadm_accept_data 15 51 07 N $RM_MB                     # Accept new filsystem size
+             2 ) sadm_accept_data 15 47 07 N $RM_MB                     # Accept new filsystem size
                  if [ $WDATA -le $LVSIZE ] 
                     then sadm_mess "Size must be greater than ($LVSIZE) the actual size"
                     else RM_MB=$WDATA
@@ -325,10 +323,11 @@ enlarge_filesystem()
                  sadm_messok 22 01 "Do you want to increase $RM_MP filesystem by $wincr MB"
                  if [ "$?" = "1" ]
                     then sadm_display_heading  "Filesystem size increase"
+                         echo " "                                       # Blank line after heading
                          LVSIZE=$wincr
                          mount $LVMOUNT > /dev/null 2>&1
                          RM_FLAG=0
-                         extend_fs
+                         extend_fs                                      # Call Extend FS Function
                          RC=$?
                          if [ "$RC" -ne 0 ]
                             then sadm_mess "Error ($RC) occured while increasing the filesystem"
@@ -345,21 +344,18 @@ enlarge_filesystem()
 }
 
 
-
 #===================================================================================================
-#                           P R O G R A M    S T A R T    H E R E
+# P R O G R A M    S T A R T    H E R E
 #===================================================================================================
     while :
         do
         sadm_display_heading  "Filesystem - Maintenance"
-        sadm_writexy 05 20 "1- Create a filesystem..............."
-        sadm_writexy 07 20 "2- Increase filesystem size ........."
-        sadm_writexy 09 20 "3- Remove a filesystem..............."
-        sadm_writexy 11 20 "4- Filesystem Integrity check (fsck)."
-        sadm_writexy 15 20 "Q- Quit this menu...................."
-        sadm_writexy 21 29 "${rvs}Option ? ${nrm}_${right}"
-        sadm_writexy 21 38 " "
-        read REPONSE
+        menu_array=("Create a filesystem..............." \
+                    "Increase filesystem size ........." \
+                    "Remove a filesystem..............." \
+                    "Filesystem Integrity check (fsck)." )
+        sadm_display_menu "${menu_array[@]}"
+        REPONSE=$?
         case $REPONSE in
                 1)  create_filesystem
                     ;;
@@ -369,7 +365,7 @@ enlarge_filesystem()
                     ;;
                 4)  filesystem_check
                     ;;
-           Q | q )  break
+               99)  break
                     ;;
                 *)  sadm_mess "Invalid option - $REPONSE"
                     ;;

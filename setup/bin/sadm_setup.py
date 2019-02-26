@@ -45,9 +45,10 @@
 # 2018_11_24    v3.8 Added -e '' options for sadmin user creation
 # 2018_12_11    V3.9 When installing server, default alert group is set to sysadmin email.
 # 2019_01_03    Changed: sadm_setup.py V3.10 - Adapt crontab for MacOS and Aix, Setup Postfix
-#@2019_01_25    Fix: v3.11 Fix problem with crash and multiple change to simplify process.
-#@2019_01_28    Added: v3.12 For security reason, assign SADM_USER a password during installation.
-#@2019_01_29    Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
+# 2019_01_25 Fix: v3.11 Fix problem with crash and multiple change to simplify process.
+# 2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
+# 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
+#@2019_02_25 Added: v3.14 Reduce Output when error occurs when first time script are executed.
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -63,7 +64,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.13"                                            # Setup Version Number
+sver                = "3.14"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1946,7 +1947,8 @@ def getpacktype(sroot):
         if (cstdout == "REDHATENTERPRISEAS"): osname="REDHAT" 
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
-        writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+        #writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
+        writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
     return (packtype,osname)                                            # Return Packtype & O/S Name
 
 
