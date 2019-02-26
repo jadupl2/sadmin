@@ -2017,42 +2017,26 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 
-
 #===================================================================================================
-#                                  M A I N     P R O G R A M
+# Main Flow of Setup Script
 #===================================================================================================
-#
-def main():
-    global fhlog                                                        # Script Log File Handler
-
+def mainflow(sroot);
+    global fhlog                                                        # Script Log File Handler   
     print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
     print ("---------------------------------------------------------------------------")
    
-    # Insure that this script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not zero
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
-       print ("Process aborted")                                        # Process Aborted Msg
-       sys.exit(1)                                                      # Exit with Error Code
-
-    # Set SADMIN Env. Var, populate /etc/environment and /etc/profile.d/sadmin.sh
-    sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
-    if (DEBUG) : 
-        writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
-
-    # Create Script Log, Return Log FileHandle and LogName
+    # Create Script Log, Return Log FileHandle and log fileName
     (fhlog,logfile) = open_logfile(sroot)                               # Return File Handle/LogName
-    if (DEBUG) : 
+    if (DEBUG) :                                                        # If Debug Activated
+        writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
         writelog ("Log file open and set to %s" % (logfile))            # Show LogFile Name
 
-
-    # Get OS Type (Linux, Aix, Darwin, OpenBSD)
+    # Get OS Type (Linux, Aix, Darwin, OpenBSD) in UPPERCASE
     wostype=get_ostype()                                                # OSTYPE = LINUX/AIX/DARWIN
     if (DEBUG):                                                         # If Debug Activated
         writelog ("Current OStype is: %s" % (wostype))                  # Print the O/S Type
 
-
-    # Create Initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
+    # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
     # Get the Distribution Package Format (rpm or deb)
@@ -2061,13 +2045,13 @@ def main():
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
 
     # Go and Ask Setup Question to user 
-    # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, Sadmin User and Group).
+    # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
 
     satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
 
-    # Create SADMIN User sudo file
+    # Create SADMIN user sudo file
     update_sudo_file(logfile,uuser)                                     # Create User sudo file
 
     # Create SADMIN User crontab file
@@ -2111,8 +2095,27 @@ def main():
     # End of Setup
     end_message(sroot,udomain,userver,stype)                            # Last Message to User
     fhlog.close()                                                       # Close Script Log
-    sys.exit(0)                                                         # Exit to Operating System
 
+
+
+#===================================================================================================
+#                                  M A I N     P R O G R A M
+#===================================================================================================
+#
+def main():
+    global fhlog                                                        # Script Log File Handler
+
+    # Insure that this script is only run by the user root (Optional Code)
+    if not os.getuid() == 0:                                            # UID of user is not zero
+       print ("This script must be run by the 'root' user")             # Advise User Message / Log
+       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
+       print ("Process aborted")                                        # Process Aborted Msg
+       sys.exit(1)                                                      # Exit with Error Code
+
+    # Set SADMIN Environment Variable, populate /etc/environment and /etc/profile.d/sadmin.sh
+    sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
+    mainflow(sroot)                                                     # Script Main Flow Function
+    sys.exit(0)                                                         # Exit to Operating System
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()
