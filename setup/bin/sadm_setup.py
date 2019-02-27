@@ -483,7 +483,8 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
 
 #===================================================================================================
-#                                 Install pymysql module 
+# Install Python MySQL module Based on current System
+#python3-PyMySQL
 #===================================================================================================
 def special_install(lpacktype,sosname,logfile) :
 
@@ -491,7 +492,7 @@ def special_install(lpacktype,sosname,logfile) :
         writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
         return (False)                                                  # Return False to caller
 
-    # Check if the command 'pip3' is present on system - If not return to caller
+    # INSTALL PIP3 - IF 'pip3' ISN'T PRESENT ON SYSTEM 
     writelog("Checking for python pip3 command ... ",'nonl')
     if (locate_command('pip3') == "") :                                 # If pip3 command not found
         writelog("Installing python3 pip3")
@@ -507,9 +508,7 @@ def special_install(lpacktype,sosname,logfile) :
             writelog ('Installing python3-pip','nonl')                  # Show User Pkg Installing
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install python3-pip >>%s 2>&1" % (logfile)
-
-        # If RPM Package, RedHat/CentOS 6,7 Install pip3 form EPEL / Fedora Base Repo is OK --------
-        else:
+        else:                                                           # 
             if (sosname != "FEDORA"):                                   # On Redhat/CentOS
                 writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
                 icmd = "yum install --enablerepo=epel -y python34-pip >>%s 2>&1" % (logfile)
