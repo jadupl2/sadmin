@@ -2019,7 +2019,7 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 # Main Flow of Setup Script
 #===================================================================================================
-def mainflow(sroot);
+def mainflow(sroot):
     global fhlog                                                        # Script Log File Handler   
     print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
     print ("---------------------------------------------------------------------------")
