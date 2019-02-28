@@ -151,7 +151,8 @@ req_server = {
                     'deb':'arp-scan',                                       'drepo':'base'},
     'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                     'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
-    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+    'mysql'      :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
                     'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
 
@@ -772,7 +773,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
             writelog (" Done ")
             #writelog ("Installed successfully")
         else:
-            writelog   ("Error Code is %d - See log %s" % (ccode,logfile),'bold')
+            writelog   ("Error No.%d - See log %s" % (ccode,logfile),'bold')
 
 
 
@@ -2021,9 +2022,7 @@ def end_message(sroot,sdomain,sserver,stype):
 #===================================================================================================
 def mainflow(sroot):
     global fhlog                                                        # Script Log File Handler   
-    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
-    print ("---------------------------------------------------------------------------")
-   
+
     # Create Script Log, Return Log FileHandle and log fileName
     (fhlog,logfile) = open_logfile(sroot)                               # Return File Handle/LogName
     if (DEBUG) :                                                        # If Debug Activated
@@ -2103,7 +2102,9 @@ def mainflow(sroot):
 #
 def main():
     global fhlog                                                        # Script Log File Handler
-
+    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
+    print ("---------------------------------------------------------------------------")
+   
     # Insure that this script is only run by the user root (Optional Code)
     if not os.getuid() == 0:                                            # UID of user is not zero
        print ("This script must be run by the 'root' user")             # Advise User Message / Log
