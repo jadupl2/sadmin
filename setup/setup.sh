@@ -28,9 +28,10 @@
 # 2018_04_03 V1.4 Bug Fixes and add detail to log for support purpose 
 # 2018_05_01 V1.5 Show Full O/S Version in Log
 # 2018_06_29 V1.6 Change Log File Name & Appearance Changes 
-#@2019_01_27 V1.7 Change: v1.7 Make sure /etc/hosts contains the IP and FQDN of current server
-#@2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
-#@2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
+# 2019_01_27 V1.7 Change: v1.7 Make sure /etc/hosts contains the IP and FQDN of current server
+# 2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
+# 2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
+#@2019_02_28 Changes: 2.0 Initial adaptation for RHEL 8 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -39,7 +40,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='1.9'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -71,13 +72,20 @@ add_epel_repo()
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
     fi
 
+    # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
+    if [ "$SADM_OSVERSION" -eq 8 ] 
+        then echo " " 
+             echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+             yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
+    fi
+
     # Disable the EPEL Repository, Will Activate when needed only.
     echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
     yum-config-manager --disable epel >/dev/null 2>&1
 }
 
 #===================================================================================================
-#                      Check if python 3 is installed, if not install it 
+# Check if python 3 is installed, if not install it 
 #===================================================================================================
 check_python()
 {
@@ -163,6 +171,10 @@ check_lsb_release()
              if [ $? -eq 0 ] 
                 then echo "Running 'yum -y install redhat-lsb-core' ..." >>$SLOG
                      yum -y install redhat-lsb-core >>$SLOG  2>&1 ; fi 
+             which dnf >/dev/null 2>&1
+             if [ $? -eq 0 ] 
+                then echo "Running 'dnf-y install redhat-lsb-core' ..." >>$SLOG
+                     dnf-y install redhat-lsb-core >>$SLOG  2>&1 ; fi 
              which apt-get >/dev/null 2>&1
              if [ $? -eq 0 ] 
                 then echo "Running 'apt-get update'" >> $SLOG
