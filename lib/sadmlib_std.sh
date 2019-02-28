@@ -74,6 +74,7 @@
 #@2019_02_05 Fix: v2.61 Correct type error. 
 #@2019_02_06 Fix: v2.62 break error when finding system domain name.
 #@2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
+#@2019_02_28 Change: v2.64 Change for RHEL8 in getos function
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -92,7 +93,7 @@ SADM_VAR1=""                                ; export SADM_VAR1          # Temp D
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.63"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.64"                         ; export SADM_LIB_VER       # This Library Version
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -849,6 +850,7 @@ sadm_get_osname() {
         "LINUX")    wosname=`$SADM_LSB_RELEASE -si | tr '[:lower:]' '[:upper:]'`
                     if [ "$wosname" = "REDHATENTERPRISESERVER" ] ; then wosname="REDHAT" ; fi
                     if [ "$wosname" = "REDHATENTERPRISEAS" ]     ; then wosname="REDHAT" ; fi
+                    if [ "$wosname" = "REDHATENTERPRISE" ]       ; then wosname="REDHAT" ; fi
                     ;;
         "AIX")      wosname="AIX"
                     ;;
