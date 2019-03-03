@@ -31,7 +31,7 @@
 # 2019_01_27 V1.7 Change: v1.7 Make sure /etc/hosts contains the IP and FQDN of current server
 # 2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
 # 2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
-#@2019_02_28 Changes: 2.0 Initial adaptation for RHEL 8 
+#@2019_03_01 Updated: v2.0 Updated for RHEL/CensOS 8 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -53,7 +53,7 @@ SLOG="${SLOGDIR}/sadm_pre_setup.log"       ; export SLOG                # Script
 
 
 #===================================================================================================
-#                           Install EPEL Repository for Redhat / CentOS
+#  Install EPEL Repository for Redhat / CentOS
 #===================================================================================================
 add_epel_repo()
 {
@@ -63,6 +63,8 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
+             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             yum-config-manager --disable epel >/dev/null 2>&1
     fi
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
@@ -70,6 +72,8 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
+             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             yum-config-manager --disable epel >/dev/null 2>&1
     fi
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
@@ -77,11 +81,18 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
+             #
+             rpm -qi dnf-utils >/dev/null 2>&1                          # Check if dns-utils is install
+             if [ $? -ne 0 ] 
+                then echo "Installing dnf-utils" | tee -a $LOG
+                     dnf install -y dnf-utils >>$SLOG 2>&1
+             fi
+             #
+             echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
+             dnf config-manager --set-disabled epel >/dev/null 2>&1
     fi
 
-    # Disable the EPEL Repository, Will Activate when needed only.
-    echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
-    yum-config-manager --disable epel >/dev/null 2>&1
+
 }
 
 #===================================================================================================
