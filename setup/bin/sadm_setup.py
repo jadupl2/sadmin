@@ -493,14 +493,13 @@ def special_install(lpacktype,sosname,logfile) :
         writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
         return (False)                                                  # Return False to caller
 
-    # INSTALL PIP3 - IF 'pip3' ISN'T PRESENT ON SYSTEM 
+    # INSTALL PIP3 - IF 'pip3' ISN'T PRESENT ON SYSTEM (Installed by Default on RHEL/CentOS 8) -----
     writelog("Checking for python pip3 command ... ",'nonl')
     if (locate_command('pip3') == "") :                                 # If pip3 command not found
-        writelog("Installing python3 pip3")
-        # If Debian Package, Refresh The Local Repository ------------------------------------------
-        if (lpacktype == "deb"):                                         # Is Debian Style Package
+        writelog("Installing python3 pip3")                             # Inform User - install pip3
+        if (lpacktype == "deb"):                                        # Is Debian Style Package
             cmd =  "apt-get -y update >> %s 2>&1" % (logfile)           # Build Refresh Pack Cmd
-            writelog ("Running apt-get update...",'nonl')               # Show what we are running
+            writelog ("Running apt-get -y update...",'nonl')            # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
@@ -513,12 +512,12 @@ def special_install(lpacktype,sosname,logfile) :
             if (sosname != "FEDORA"):                                   # On Redhat/CentOS
                 writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
                 icmd = "yum install --enablerepo=epel -y python34-pip >>%s 2>&1" % (logfile)
-            else:
+            else:                                                       # On Fedora
                 writelog ('Installing python3-pip ... ','nonl')         # Inform User Pkg installing
                 icmd="yum install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
 
         # Install pip3 command 
-        #writelog (icmd)                                                 # Inform User Pkg installing
+        if (DEBUG): writelog (icmd)                                     # Inform User Pkg installing
         ccode, cstdout, cstderr = oscommand(icmd)                       # Run Install Cmd for pip3
         if (ccode == 0) :                                               # If no problem installing
             writelog (" Done ")                                         # Show user it is done
@@ -527,6 +526,7 @@ def special_install(lpacktype,sosname,logfile) :
             writelog ("stdout=%s stderr=%s" % (cstdout,cstderr))
     else:
         writelog("Done")
+
 
     # Install pymysql python3 module using pip3
     writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ",'nonl') 
