@@ -122,8 +122,6 @@ req_client = {
                     'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
-    #'fdisk'      :{ 'rpm':'util-linux',     1                'rrepo':'base',  
-    #                'deb':'util-linux',                     'drepo':'base'},
     'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
@@ -132,8 +130,10 @@ req_client = {
     #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime perl-libwww-perl', 'rrepo':'base',
-                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
+    'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
+                    'deb':'libdatetime-perl ',              'drepo':'base'},
+    'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
+                    'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'}
 }
