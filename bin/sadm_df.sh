@@ -59,7 +59,7 @@ red=$(tput setaf 1)                             ; export red            # Red co
 green=$(tput setaf 2)                           ; export green          # Green color
 yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
 blue=$(tput setaf 4)                            ; export blue           # Blue color
-magentae=$(tput setaf 5)                        ; export magenta        # Magenta color
+magenta=$(tput setaf 5)                         ; export magenta        # Magenta color
 cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
 white=$(tput setaf 7)                           ; export white          # White color
 
@@ -69,7 +69,7 @@ bred=$(tput setab 1)                             ; export bred            # Red 
 bgreen=$(tput setab 2)                           ; export bgreen          # Green color
 byellow=$(tput setab 3)                          ; export byellow         # Yellow color
 bblue=$(tput setab 4)                            ; export bblue           # Blue color
-bmagentae=$(tput setab 5)                        ; export bmagenta        # Magenta color
+bmagenta=$(tput setab 5)                         ; export bmagenta        # Magenta color
 bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
 
 
