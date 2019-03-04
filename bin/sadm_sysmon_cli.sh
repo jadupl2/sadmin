@@ -101,7 +101,6 @@ right=`tput cub1`                               ; export right          # cursor
 left=`tput cuf1`                                ; export left           # cursor left
 clr=`tput clear`                                ; export clr            # clear the screen
 blink=`tput blink`                              ; export blink          # turn blinking on
-screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
 reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
 
 # Color Foreground Text
