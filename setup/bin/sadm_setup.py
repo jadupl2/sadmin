@@ -699,7 +699,7 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
+def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
@@ -720,7 +720,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
             print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
             writelog ("Running apt-get update...",'nonl')               # Show what we are running
-            (ccode, cstdout, cstderr) = oscommand(cmd)                    # Run the apt-get command
+            (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
             else:                                                       # If we had error 
@@ -751,29 +751,40 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
             continue                                                    # Proceed with Next Package
 
         # Install Missing Packages
-        pline = "Installing %s ... " % (needed_packages)
-        writelog (pline,'nonl')        
-        if (packtype == "deb") : 
+        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
+        
+        # Setup command to install missing package
+        if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        if (packtype == "rpm") : 
-            if (needed_repo == "epel") and (sosname != "FEDORA"):
-                writelog (" from EPEL ... ",'nonl')
+        if (packtype == "rpm") :                                        # If Package type is '.rpm'
+            if (needed_repo == "epel") and (sosname != "FEDORA"):       # Repo needed is EPEL
+                writelog (" from EPEL ... ",'nonl')                 
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
-        if (DRYRUN):
-            writelog ("We would install %s with %s" % (needed_packages,icmd))
-            continue                                                    # Proceed with Next Package
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
         writelog ("-----------------------",'log')
+        
+        # Execute install Command 
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
             #writelog ("Installed successfully")
         else:
-            writelog   ("Error No.%d - See log %s" % (ccode,logfile),'bold')
+            if (needed_cmd == "nmon"):
+                package_path="%s/pkg/%s/%s/%s/%sBits/%s*.rpm"  % (sroot,needed_cmd,sosname.lower(),sosver,sosbits,needed_cmd)
+                writelog (" from local rpm ... ",'nonl')                 
+                if (DEBUG) : writelog("Installing package %s" % (package_path))
+                icmd = "yum install -y %s" % (package_path) 
+                ccode, cstdout, cstderr = oscommand(icmd)
+                if (ccode == 0) : 
+                    writelog (" Done ")
+                else: 
+                    writelog   ("Error %d, unable to install package." % (ccode),'bold')
+            else: 
+                writelog   ("Error %d, unable to install package." % (ccode),'bold')
 
 
 
@@ -1924,7 +1935,7 @@ def setup_sadmin_config_file(sroot,wostype):
 # DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S AND OPEN THE SCRIPT LOG FILE 
 #===================================================================================================
 #
-def getpacktype(sroot):
+def getpacktype(sroot,sostype):
 
     # Determine type of software package format based on command present on system 
     packtype=""                                                         # Initial Packaging is None
@@ -1944,12 +1955,39 @@ def getpacktype(sroot):
     if (ccode == 0):                                                    # Command Execution Went OK
         osname = cstdout.upper()
         if (cstdout == "REDHATENTERPRISESERVER"): osname="REDHAT" 
-        if (cstdout == "REDHATENTERPRISEAS"): osname="REDHAT" 
+        if (cstdout == "REDHATENTERPRISEAS")    : osname="REDHAT" 
+        if (cstdout == "REDHATENTERPRISE")      : osname="REDHAT"   
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
-        #writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
-    return (packtype,osname)                                            # Return Packtype & O/S Name
+
+    # Get O/S Major Version Number
+    if sostype == "LINUX" :
+        ccode, cstdout, cstderr = oscommand("lsb_release -sr")
+        osversion=cstdout
+        osver=osversion.split('.')[0]
+    if sostype == "AIX" :
+        ccode, cstdout, cstderr = oscommand("uname -v")
+        osver=cstdout
+    if sostype== "DARWIN":
+        wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
+        ccode, cstdout, cstderr = oscommand(wcmd)
+        osver=cstdout
+
+    # Get running kernel bits (32 or 64)
+    cstdout = 64
+    if sostype == "LINUX" :                                              # Under Linux
+        ccode, cstdout, cstderr = oscommand("getconf LONG_BIT")
+    if sostype == "AIX" :                                                # Under AIX
+        ccode, cstdout, cstderr = oscommand("getconf KERNEL_BITMODE")
+    osbits=cstdout
+
+    # Return :
+    # Package Type (deb,rpm,dmg,aix)
+    # O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
+    # O/S Major Version Number
+    # O/S Running in 32 or 64 bits (32,64)
+    return (packtype,osname,osver,osbits)                               # Return Packtype & O/S Name
 
 
 
@@ -2017,6 +2055,8 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 
+
+
 #===================================================================================================
 # Main Flow of Setup Script
 #===================================================================================================
@@ -2031,22 +2071,24 @@ def mainflow(sroot):
 
     # Get OS Type (Linux, Aix, Darwin, OpenBSD) in UPPERCASE
     wostype=get_ostype()                                                # OSTYPE = LINUX/AIX/DARWIN
-    if (DEBUG):                                                         # If Debug Activated
-        writelog ("Current OStype is: %s" % (wostype))                  # Print the O/S Type
+    if (DEBUG) : writelog ("Current OStype is: %s" % (wostype))         # Print O/S Type (LINUX,AIX)
 
     # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
-    # Get the Distribution Package Format (rpm or deb)
-    (packtype,sosname) = getpacktype(sroot)                             # PackType (deb,rpm)/OSName
+    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,...) 
+    # O/S Type (Linux,AIX,DARWIN) & O/S Major version number and Kernel running bit mode (32 or 64).
+    (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
+    if (DEBUG) : writelog("O/S Major version number is %s" % (sosver))  # Debug, Show O/S Version
+    if (DEBUG) : writelog("O/S is running in %sBits mode." % (sosbits)) # Debug, Show O/S Bits MOde
 
     # Go and Ask Setup Question to user 
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
 
-    satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
+    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
@@ -2058,7 +2100,7 @@ def mainflow(sroot):
     # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
-        satisfy_requirement('S',sroot,packtype,logfile,sosname)         # Verify/Install Server Req.
+        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits)  # Verify/Install Server Req.
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server

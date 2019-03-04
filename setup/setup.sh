@@ -32,6 +32,7 @@
 # 2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
 # 2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
 #@2019_03_01 Updated: v2.0 Updated for RHEL/CensOS 8 
+#@2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -40,7 +41,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                              ; export DEBUG_LEVEL         # 0=NoDebug Higher=+Verbose
-SADM_VER='2.0'                             ; export SADM_VER            # Your Script Version
+SADM_VER='2.1'                             ; export SADM_VER            # Your Script Version
 SADM_PN=${0##*/}                           ; export SADM_PN             # Script name
 SADM_HOSTNAME=`hostname -s`                ; export SADM_HOSTNAME       # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1` ; export SADM_INST           # Script name without ext.
@@ -63,8 +64,17 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't add EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
+             return 0
     fi
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
@@ -72,8 +82,17 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't add EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
+             return 0
     fi
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
@@ -81,6 +100,10 @@ add_epel_repo()
         then echo " " 
              echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't add EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
              #
              rpm -qi dnf-utils >/dev/null 2>&1                          # Check if dns-utils is install
              if [ $? -ne 0 ] 
@@ -90,9 +113,12 @@ add_epel_repo()
              #
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              dnf config-manager --set-disabled epel >/dev/null 2>&1
+             if [ $? -ne 0 ]
+                then echo "Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                     return 1
+             fi 
     fi
-
-
+    return 0 
 }
 
 #===================================================================================================
@@ -175,24 +201,27 @@ check_lsb_release()
     # Make sure lsb_release is installed
     echo -n "Checking if 'lsb_release' is installed ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
-    if [ $? -ne 0 ] 
-        then echo " " | tee -a $SLOG
-             echo -n "Installing lsb_release ... " | tee -a $SLOG
-             which yum >/dev/null 2>&1
-             if [ $? -eq 0 ] 
-                then echo "Running 'yum -y install redhat-lsb-core' ..." >>$SLOG
-                     yum -y install redhat-lsb-core >>$SLOG  2>&1 ; fi 
-             which dnf >/dev/null 2>&1
-             if [ $? -eq 0 ] 
-                then echo "Running 'dnf-y install redhat-lsb-core' ..." >>$SLOG
-                     dnf-y install redhat-lsb-core >>$SLOG  2>&1 ; fi 
-             which apt-get >/dev/null 2>&1
-             if [ $? -eq 0 ] 
-                then echo "Running 'apt-get update'" >> $SLOG
-                     apt-get update >/dev/null 2>&1
-                     echo "Running apt-get -y install lsb-release'" >>$SLOG
-                     apt-get -y install lsb-release >>$SLOG 2>&1
-             fi 
+    if [ $? -eq 0 ] ; then echo " Done " | tee -a $SLOG ; return ; fi 
+
+    echo " " | tee -a $SLOG
+    echo -n "Installing lsb_release ... " | tee -a $SLOG
+    
+    which yum >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "Running 'yum -y install redhat-lsb-core' ..." >>$SLOG
+             yum -y install redhat-lsb-core >>$SLOG  2>&1 
+    fi 
+    which dnf >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "Running 'dnf-y install redhat-lsb-core' ..." >>$SLOG
+             dnf-y install redhat-lsb-core >>$SLOG  2>&1
+    fi 
+    which apt-get >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "Running 'apt-get update'" >> $SLOG
+             apt-get update >/dev/null 2>&1
+             echo "Running apt-get -y install lsb-release'" >>$SLOG
+             apt-get -y install lsb-release >>$SLOG 2>&1
     fi 
     
     # lsb_release should now be installed, if not then abort installation
@@ -231,6 +260,13 @@ EOF
     echo "---------------------------------------------------------------------------"| tee -a $SLOG
     #echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
 
+    # Script must be run by root
+    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
+        then echo "Script can only be run user 'root'" | tee -a $SLOG   # Advise User should be root
+             echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
+             exit 1                                                     # Exit To O/S
+    fi
+
     # Only Supported on Linux
     SADM_OSTYPE=`uname -s | tr '[:lower:]' '[:upper:]'`                 # OS(AIX/LINUX/DARWIN/SUNOS)
     if [ "$SADM_OSTYPE" != LINUX ] 
@@ -245,16 +281,11 @@ EOF
     SADM_OSNAME=`lsb_release -si | tr '[:lower:]' '[:upper:]'`
     if [ "$SADM_OSNAME" = "REDHATENTERPRISESERVER" ] ; then SADM_OSNAME="REDHAT" ; fi
     if [ "$SADM_OSNAME" = "REDHATENTERPRISEAS" ]     ; then SADM_OSNAME="REDHAT" ; fi
+    if [ "$SADM_OSNAME" = "REDHATENTERPRISE" ]       ; then SADM_OSNAME="REDHAT" ; fi
     SADM_OSFULLVER=`lsb_release -sr| tr -d ' '`                         # Get O/S Full Version No.
     SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` # Use lsb_release 2 Get Ver
     echo "Your System is running $SADM_OSNAME Version $SADM_OSNAME ..." >> $SLOG
     
-    # Script must be run by root
-    if [ "$(whoami)" != "root" ]                                        # Is it root running script?
-        then echo "Script can only be run user 'root'" | tee -a $SLOG   # Advise User should be root
-             echo "Process aborted"  | tee -a $SLOG                     # Abort advise message
-             exit 1                                                     # Exit To O/S
-    fi
 
     # Support only Redhat/CentOS or Debian/Ubuntu
     if [ "${SADM_OSNAME}" == "REDHAT" ] || [ "${SADM_OSNAME}" == "CENTOS" ]
