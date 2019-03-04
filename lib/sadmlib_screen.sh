@@ -12,6 +12,7 @@
 # 2018_05_14    v1.3 Fix Display Problem under MacOS
 #@2018_09_20    v1.4 Show SADM Version instead of Release No.
 #@2019_02_25 Change: v1.5 Code revamp and new menu design.
+#@2019_03_03 Change: v1.6 Change Screen related variables
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -19,38 +20,38 @@
 
 
 # --------------------------------------------------------------------------------------------------
-#              V A R I A B L E S    L O C A L   T O     T H I S   S C R I P T
+# L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
-lib_screen_ver=1.5                              ; export lib_screen_ver
+#
+lib_screen_ver=1.6                              ; export lib_screen_ver
 
 # Screen related variables
-clreol=`tput el`                                ; export clreol         # Clr to end of lne
-clreos=`tput ed`                                ; export clreos         # Clr to end of scr
+clreol=$(tput el)                               ; export clreol         # Clr to end of lne
+clreos=$(tput ed)                               ; export clreos         # Clr to end of scr
 bold=$(tput bold)                               ; export bold           # bold attribute
-bell=`tput bel`                                 ; export bell           # Ring the bell
-reverse=`tput rev`                              ; export reverse        # rev. video attrib.
+bell=$(tput bel)                                ; export bell           # Ring the bell
+reverse=$(tput rev)                             ; export reverse        # rev. video attrib.
 underline=$(tput sgr 0 1)                       ; export underline      # UnderLine
-home=`tput home`                                ; export home           # home cursor
-up=`tput cuu1`                                  ; export up             # cursor up
-down=`tput cud1`                                ; export down           # cursor down
-right=`tput cub1`                               ; export right          # cursor right
-left=`tput cuf1`                                ; export left           # cursor left
-clr=`tput clear`                                ; export clr            # clear the screen
-blink=`tput blink`                              ; export blink          # turn blinking on
-screen_color="\E[44;38m"                        ; export screen_color   # (BG Blue FG White)
+home=$(tput home)                               ; export home           # home cursor
+up=$(tput cuu1)                                 ; export up             # cursor up
+down=$(tput cud1)                               ; export down           # cursor down
+right=$(tput cub1)                              ; export right          # cursor right
+left=$(tput cuf1)                               ; export left           # cursor left
+clr=$(tput clear)                               ; export clr            # clear the screen
+blink=$(tput blink)                             ; export blink          # turn blinking on
 reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
 
-# Color Foreground Text
+# Foreground Color
 black=$(tput setaf 0)                           ; export black          # Black color
 red=$(tput setaf 1)                             ; export red            # Red color
 green=$(tput setaf 2)                           ; export green          # Green color
 yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
 blue=$(tput setaf 4)                            ; export blue           # Blue color
-magenta=$(tput setaf 5)                        ; export magenta        # Magenta color
+magenta=$(tput setaf 5)                         ; export magenta        # Magenta color
 cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
 white=$(tput setaf 7)                           ; export white          # White color
 
-# Color Background Text
+# Background Color
 bblack=$(tput setab 0)                          ; export bblack         # Black color
 bred=$(tput setab 1)                            ; export bred           # Red color
 bgreen=$(tput setab 2)                          ; export bgreen         # Green color
