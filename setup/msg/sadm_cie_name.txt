@@ -1,5 +1,4 @@
 # sadmin.cfg SADM_CIE_NAME Documentation
-# Revise 2018_02_14
+# Revise 2019_03_06
 # ----------------------------------------------------------------------------
-This name will appear in the heading of the web interface and on some 
-report and email that SADMIN produce.
+This name will appear on the web interface and on some email that SADMIN produce.
