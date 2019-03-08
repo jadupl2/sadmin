@@ -701,9 +701,9 @@ class sadmtools():
             wcmd = "%s %s" % (self.lsb_release,"-si")
             ccode, cstdout, cstderr = self.oscommand(wcmd)
             osname=cstdout.upper()
-            if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
-            if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
-            if osname  == "REDHATENTERPRISE"       : osname="REDHAT"
+            if osname.upper() == "REDHATENTERPRISESERVER" : osname="REDHAT"
+            if osname.upper() == "REDHATENTERPRISEAS"     : osname="REDHAT"
+            if osname.upper() == "REDHATENTERPRISE"       : osname="REDHAT"
         if self.os_type == "AIX" :
             osname="AIX"
         return osname
