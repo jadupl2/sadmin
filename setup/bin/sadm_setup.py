@@ -7,7 +7,7 @@
 #   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
-#   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
+#   Copyright (C) 2016-2017 Jacques Duplessis f<duplessis.jacques@gmail.com>
 #
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -49,6 +49,8 @@
 # 2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
 #@2019_02_25 Added: v3.14 Reduce Output when error occurs when first time script are executed.
+#@2019_03_08 Change: v3.15 Change related to RHEL8 and change some text messages.
+# 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -64,7 +66,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.14"                                            # Setup Version Number
+sver                = "3.15"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -778,13 +780,16 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
                 writelog (" from local rpm ... ",'nonl')                 
                 if (DEBUG) : writelog("Installing package %s" % (package_path))
                 icmd = "yum install -y %s" % (package_path) 
+                writelog ("-----------------------",'log')
+                writelog (icmd,'log')
+                writelog ("-----------------------",'log')
                 ccode, cstdout, cstderr = oscommand(icmd)
                 if (ccode == 0) : 
                     writelog (" Done ")
                 else: 
-                    writelog   ("Error %d, unable to install package." % (ccode),'bold')
+                    writelog   ("Error, was unable to install package." % (ccode),'bold')
             else: 
-                writelog   ("Error %d, unable to install package." % (ccode),'bold')
+                writelog   ("Error, was unable to install package." % (ccode),'bold')
 
 
 
@@ -913,7 +918,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
     else:                                                               # If Using SystemV Init
         cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog ("ReStarting MariaDB Service - %s" % (cmd))                # Make Sure MariabDB Started
+    writelog ("ReStarting MariaDB Service - %s ... " % (cmd),'nonl')    # Make Sure MariabDB Started
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
         writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -929,9 +934,9 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl enable mariadb.service"                        # Enable MariaDB at BootTime
     else:                                                               # If Using System V
         cmd = "update-rc.d mysql enable"                                # On SystemV Debian,Ubuntu
-        if (sosname == "REDHAT") or (SOSNAME == "CENTOS") :             # RedHat/CentOS = chkconfig
+        if (sosname == "REDHAT") or (sosname == "CENTOS") :             # RedHat/CentOS = chkconfig
             cmd = "chkconfig mysql on"                                  # No MariabDB, MySQL
-    writelog ("Enabling MariaDB Service - %s" % (cmd))                  # Inform User
+    writelog ("Enabling MariaDB Service - %s ... " % (cmd),"nonl")      # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
         writelog ("Problem with enabling MariabDB Service.")            # Advise User
@@ -1016,6 +1021,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))                     # Show user was found
     else:                                                               # User sadmin was not found
+        writelog ("User don't exist.")                                  # Inform User
         sdefault = "Nimdas2018"                                         # Default sadmin Password 
         sprompt  = "Enter Read/Write 'sadmin' database user password"   # Prompt for Answer
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
@@ -1042,6 +1048,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     if (user_exist(uname,dbroot_pwd)):                                  # Check if squery Usr Exist
         print ("User '%s' already exist" % (uname))                     # Advise User that it exist
     else:
+        writelog ("User don't exist.")                                  # Inform User
         sdefault = "Squery18"                                           # Default Password 
         sprompt  = "Enter 'squery' database user password"              # Prompt for Answer
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# sadmin DB user pwd
@@ -1319,7 +1326,7 @@ def set_sadmin_env(ver):
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
         sadm_base_dir = os.environ.get('SADMIN')                        # Get SADMIN Base Directory
     else:                                                               # If Not Ask User Full Path
-        sadm_base_dir = input("Enter directory path where you install SADMIN : ")
+        sadm_base_dir = input("Enter directory path where SADMIN is installed : ")
 
     # Does Directory specify exist ? , if not exit to O/S with error
     if not os.path.exists(sadm_base_dir) :                              # Check if SADMIN Dir. Exist
@@ -1436,7 +1443,7 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_ENVFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
-    print ("SADMIN Environment variable now set to %s" % (sadm_base_dir))
+    print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
     print ("  - This will make 'SADMIN' environment variable set upon reboot")
@@ -1842,7 +1849,7 @@ def setup_sadmin_config_file(sroot,wostype):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group %s" % (wcfg_group))                      # Show creating the group
+        writelog ("Creating group %s" % (wcfg_group),'nonl')            # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -1851,8 +1858,10 @@ def setup_sadmin_config_file(sroot,wostype):
             writelog ("Group %s doesn't exist, create it and rerun this script")
             writelog ("We can't create group for the moment")           # Advise USer
             sys.exit(1)                                                 # Exit to O/S  
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error No
+        if (ccode == 0) :                                               # If Group Creation went well
+            writelog ('Done')                                           # Show action action result
+        else:                                                           # If Error creating group
+            writelog ("Error %s creating group %s" % (ccode,wcfg_group))# Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
 
     # Accept the Default User Name
@@ -1880,7 +1889,7 @@ def setup_sadmin_config_file(sroot,wostype):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
-        writelog ("Creating user %s" % (wcfg_user))                     # Create user on system
+        writelog ("Creating user %s ... " % (wcfg_user),'nonl')         # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             #cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
@@ -1888,18 +1897,21 @@ def setup_sadmin_config_file(sroot,wostype):
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
             cmd = "echo 'nimdas' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
-            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user)) 
-            writelog ("We suggest you change it after installation.")   # Inform user to change pwd
+            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user),'bold') 
+            writelog ("We suggest you change it after installation.",'bold') # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
+        if (ccode == 0) :                                               # If Group Creation went well
+            writelog ('Done')                                           # Show action action result
+        else:                                                           # If Error creating group
+            writelog ("Error %s creating user %s" % (ccode,wcfg_user))  # Show AddUser Cmd Error No 
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
+    writelog (" ")
     writelog ("Please wait while we set owner and group in %s directory ..." % (sroot))
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
@@ -2020,37 +2032,37 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
     writelog ("You need to logout and log back in before using SADMIN Tools,")
-    writelog ("or type the following command (The dot and the space are important)")
-    writelog (". /etc/profile.d/sadmin.sh",'bold')
+    writelog ("or type the following command : '. /etc/profile.d/sadmin.sh'")
     writelog ("This will define SADMIN environment variable.")
-    writelog ("===========================================================================")
+    writelog (" ")
     if (stype == "S") :
         writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM\n",'bold')
         writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
-        writelog ("Remember, 'sadmin.%s' to need to be defined in your DNS to be accessible from other servers." % (sdomain))
+        #writelog ("Remember, 'sadmin.%s' need to be defined in your DNS to be accessible from other servers." % (sdomain))
         writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
-        writelog ("  - There's still a lot more to come.")
-        writelog ("===========================================================================")
+        #writelog ("  - There's still a lot more to come.")
+        writelog (" ")
     writelog ("\nCREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES\n",'bold')
     writelog ("Create your own script using SADMIN tools templates, take a look & run them ")
     writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
     writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
     writelog (" ")
-    writelog ("Create your own shell script :")
+    writelog ("Create your own shell script starting with the included templates :")
     writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
+    writelog ("  # copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
     writelog (" ")
     writelog ("Modify it to your need, run it and see the result.") 
-    writelog ("===========================================================================")
-    writelog ("\nSEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
+    writelog (" ")
+    writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
-    writelog ("===========================================================================")
-    writelog ("\nUSE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT\n",'bold')
+    writelog (" ")
+    writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT\n",'bold')
     writelog ("  - # $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
@@ -2069,15 +2081,15 @@ def mainflow(sroot):
         writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
         writelog ("Log file open and set to %s" % (logfile))            # Show LogFile Name
 
-    # Get OS Type (Linux, Aix, Darwin, OpenBSD) in UPPERCASE
+    # Get O/S Type (Linux, Aix, Darwin or OpenBSD) returned in UPPERCASE
     wostype=get_ostype()                                                # OSTYPE = LINUX/AIX/DARWIN
     if (DEBUG) : writelog ("Current OStype is: %s" % (wostype))         # Print O/S Type (LINUX,AIX)
 
     # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
-    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,...) 
-    # O/S Type (Linux,AIX,DARWIN) & O/S Major version number and Kernel running bit mode (32 or 64).
+    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...) 
+    # O/S Major version number and the running kernel bit mode (32 or 64).
     (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
