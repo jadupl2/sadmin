@@ -34,8 +34,9 @@
 # 2018_11_07 v2.21 Was trying to connect to Database, even if was not on SADMIN Server
 # 2018_11_09 v2.22 Refine test before connecting to Database
 # 2018_11_13 v2.23 Change for support of MacOS Mojave
-#@2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
-#@2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
+# 2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
+# 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
+#@2019_03_08 Change: v2.26 Change require for RedHat 8.
 # 
 #==================================================================================================
 try :
@@ -702,6 +703,7 @@ class sadmtools():
             osname=cstdout.upper()
             if osname  == "REDHATENTERPRISESERVER" : osname="REDHAT"
             if osname  == "REDHATENTERPRISEAS"     : osname="REDHAT"
+            if osname  == "REDHATENTERPRISE"       : osname="REDHAT"
         if self.os_type == "AIX" :
             osname="AIX"
         return osname
