@@ -132,6 +132,8 @@ req_client = {
     #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
+    'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
+                    'deb':'sysstat',                        'drepo':'base'},
     'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
                     'deb':'libdatetime-perl ',              'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
@@ -776,20 +778,26 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
             #writelog ("Installed successfully")
         else:
             if (needed_cmd == "nmon"):
-                package_path="%s/pkg/%s/%s/%s/%sBits/%s*.rpm"  % (sroot,needed_cmd,sosname.lower(),sosver,sosbits,needed_cmd)
-                writelog (" from local rpm ... ",'nonl')                 
-                if (DEBUG) : writelog("Installing package %s" % (package_path))
-                icmd = "yum install -y %s" % (package_path) 
-                writelog ("-----------------------",'log')
-                writelog (icmd,'log')
-                writelog ("-----------------------",'log')
-                ccode, cstdout, cstderr = oscommand(icmd)
-                if (ccode == 0) : 
-                    writelog (" Done ")
-                else: 
-                    writelog   ("Error, was unable to install package." % (ccode),'bold')
+                package_dir="%s/pkg/%s/%s/%s/%sBits" % (sroot,needed_cmd,sosname.lower(),sosver,sosbits)
+                pcmd = "ls -1t %s | head -1" 
+                ccode, cstdout, cstderr = oscommand(pcmd)
+                if (ccode != 0) : 
+                    writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
+                else :
+                    package_path = "%s/%s" % (package_dir,cstdout)
+                    writelog (" from local rpm ... ",'nonl')                 
+                   if (DEBUG) : writelog("Installing package %s" % (package_path))
+                   icmd = "yum install -y %s" % (package_path) 
+                   writelog ("-----------------------",'log')
+                   writelog (icmd,'log')
+                   writelog ("-----------------------",'log')
+                   ccode, cstdout, cstderr = oscommand(icmd)
+                   if (ccode == 0) : 
+                        writelog (" Done ")
+                    else: 
+                        writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
             else: 
-                writelog   ("Error, was unable to install package." % (ccode),'bold')
+                writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
 
 
 
@@ -1081,6 +1089,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         dbpwd.write("squery,%s\n" % (ro_passwd))                        # Create R/O user & Password
         dbpwd.close()                                                   # Close DB Password File
     else:
+        writelog('----------')                                          # Separation Line
         writelog ("Leaving Database Password File as it is (%s)" % (dpfile)) # Advise user 
         
 
@@ -1091,7 +1100,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
     else:                                                               # If Using SystemV Init
         cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog ("ReStarting MariaDB Service - %s" % (cmd))                # Make Sure MariabDB Started
+    writelog('----------')                                              # Separation Line
+    writelog ("ReStarting MariaDB Service - %s ..." % (cmd),'nonl')     # Make Sure MariabDB Started
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
         writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -1966,9 +1976,9 @@ def getpacktype(sroot,sostype):
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
         osname = cstdout.upper()
-        if (cstdout == "REDHATENTERPRISESERVER"): osname="REDHAT" 
-        if (cstdout == "REDHATENTERPRISEAS")    : osname="REDHAT" 
-        if (cstdout == "REDHATENTERPRISE")      : osname="REDHAT"   
+        if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
+        if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
+        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"   
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
@@ -2031,15 +2041,15 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
-    writelog ("You need to logout and log back in before using SADMIN Tools,")
-    writelog ("or type the following command : '. /etc/profile.d/sadmin.sh'")
+    writelog ("You need to logout/login before using SADMIN Tools or type the following command :")
+    writelog (". /etc/profile.d/sadmin.sh",'bold')
     writelog ("This will define SADMIN environment variable.")
     writelog (" ")
     if (stype == "S") :
-        writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM\n",'bold')
+        writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
         writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
         #writelog ("Remember, 'sadmin.%s' need to be defined in your DNS to be accessible from other servers." % (sdomain))
-        writelog (" ")
+        #writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
@@ -2047,22 +2057,17 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
         #writelog ("  - There's still a lot more to come.")
         writelog (" ")
-    writelog ("\nCREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES\n",'bold')
-    writelog ("Create your own script using SADMIN tools templates, take a look & run them ")
-    writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
-    writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
     writelog (" ")
-    writelog ("Create your own shell script starting with the included templates :")
+    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
     writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
     writelog ("  # copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
-    writelog (" ")
     writelog ("Modify it to your need, run it and see the result.") 
     writelog (" ")
-    writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
+    writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
     writelog (" ")
-    writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT\n",'bold')
+    writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
     writelog ("  - # $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
