@@ -7,7 +7,7 @@
 #   Licence     :   You can redistribute it or modify under the terms of GNU General Public 
 #                   License, v.2 or above.
 # ==================================================================================================
-#   Copyright (C) 2016-2017 Jacques Duplessis f<duplessis.jacques@gmail.com>
+#   Copyright (C) 2016-2017 Jacques Duplessis <duplessis.jacques@gmail.com>
 #
 #   The SADMIN Tool is a free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
