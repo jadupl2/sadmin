@@ -779,20 +779,20 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
         else:
             if (needed_cmd == "nmon"):
                 package_dir="%s/pkg/%s/%s/%s/%sBits" % (sroot,needed_cmd,sosname.lower(),sosver,sosbits)
-                pcmd = "ls -1t %s | head -1" 
+                pcmd = "ls -1t %s | head -1" % (package_dir)
                 ccode, cstdout, cstderr = oscommand(pcmd)
                 if (ccode != 0) : 
                     writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
                 else :
                     package_path = "%s/%s" % (package_dir,cstdout)
                     writelog (" from local rpm ... ",'nonl')                 
-                   if (DEBUG) : writelog("Installing package %s" % (package_path))
-                   icmd = "yum install -y %s" % (package_path) 
-                   writelog ("-----------------------",'log')
-                   writelog (icmd,'log')
-                   writelog ("-----------------------",'log')
-                   ccode, cstdout, cstderr = oscommand(icmd)
-                   if (ccode == 0) : 
+                    writelog("Installing package %s" % (package_path))
+                    icmd = "yum install -y %s" % (package_path) 
+                    writelog ("-----------------------",'log')
+                    writelog (icmd,'log')
+                    writelog ("-----------------------",'log')
+                    ccode, cstdout, cstderr = oscommand(icmd)
+                    if (ccode == 0) : 
                         writelog (" Done ")
                     else: 
                         writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
@@ -2036,7 +2036,6 @@ def run_script(sroot,sname):
 #===================================================================================================
 #
 def end_message(sroot,sdomain,sserver,stype):
-    #os.system('clear')                                                 # Clear the screen
     sversion = get_sadmin_version(sroot)
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
@@ -2046,21 +2045,17 @@ def end_message(sroot,sdomain,sserver,stype):
     writelog ("This will define SADMIN environment variable.")
     writelog (" ")
     if (stype == "S") :
-        writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
+        writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
         writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
-        #writelog ("Remember, 'sadmin.%s' need to be defined in your DNS to be accessible from other servers." % (sdomain))
-        #writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
-        #writelog ("  - There's still a lot more to come.")
-        writelog (" ")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
-    writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog ("  # copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
+    writelog ("  - copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
+    writelog ("  - copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
     writelog ("Modify it to your need, run it and see the result.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
