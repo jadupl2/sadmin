@@ -105,8 +105,13 @@ my $CMD_IOSTAT          = `which iostat`     ;chomp($CMD_IOSTAT);       # Locati
 my $CMD_MPATHD          = `which multipathd` ;chomp($CMD_MPATHD);       # Location of multipathd cmd
 my $CMD_DMIDECODE       = `which dmidecode`  ;chomp($CMD_DMIDECODE);    # To check if we are in a VM
 my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Location of touch command
+
+# Determine if system use SysInit or SystemD 
 system ("which systemctl >/dev/null 2>&1"); 
-if ( $? != 0 )  { my $CMD_SYSTEMCTL = ""; }else{ my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
+if ( $? != 0 )  { 
+    my $CMD_SYSTEMCTL = "";                             
+}else{ 
+    my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
 
 
 # `hostname`.smon file layout, fields are separated by space (be carefull)
