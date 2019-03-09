@@ -27,12 +27,13 @@
 # 2018_09_21    v2.24 Ping System 3 times before signaling an Error
 # 2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
 # 2018_10_16    v2.26 Change email sent when smon configuration isn't found.
-#@2018_12_29    v2.27 Enhance Performance checking service, chown & chmod only if running as root.
-#@2018_12_30    v2.28 Fix problem when checking service using Sys V method.
+# 2018_12_29    v2.27 Enhance Performance checking service, chown & chmod only if running as root.
+# 2018_12_30    v2.28 Fix: problem when checking service using Sys V method.
+#@2019_03_09    v2.29 Removed: Remove DateTime Module (Not needed anymore)
 #===================================================================================================
 #
 use English;
-use DateTime;
+#use DateTime;  # Comment on 9 March 2019
 use File::Basename;
 use POSIX qw(strftime);
 use Time::Local;
@@ -44,7 +45,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.28";                                       # Version Number
+my $VERSION_NUMBER      = "2.29";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
