@@ -49,6 +49,8 @@
 # 2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
 #@2019_02_25 Added: v3.14 Reduce Output when error occurs when first time script are executed.
+#@2019_03_08 Change: v3.15 Change related to RHEL8 and change some text messages.
+# 
 # ==================================================================================================
 #
 # The following modules are needed by SADMIN Tools and they all come with Standard Python 3
@@ -64,7 +66,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.14"                                            # Setup Version Number
+sver                = "3.15"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -122,8 +124,6 @@ req_client = {
                     'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
-    #'fdisk'      :{ 'rpm':'util-linux',     1                'rrepo':'base',  
-    #                'deb':'util-linux',                     'drepo':'base'},
     'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
@@ -132,8 +132,12 @@ req_client = {
     #                 'deb':'python3-pip',                    'drepo':'base'},
     'perl'       :{ 'rpm':'perl',                           'rrepo':'base',  
                     'deb':'perl-base',                      'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime perl-libwww-perl', 'rrepo':'base',
-                    'deb':'libdatetime-perl libwww-perl',   'drepo':'base'},
+    'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
+                    'deb':'sysstat',                        'drepo':'base'},
+    'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
+                    'deb':'libdatetime-perl ',              'drepo':'base'},
+    'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
+                    'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
                     'deb':'util-linux',                     'drepo':'base'}
 }
@@ -151,7 +155,8 @@ req_server = {
                     'deb':'arp-scan',                                       'drepo':'base'},
     'php'        :{ 'rpm':'php php-common php-cli php-mysqlnd php-mbstring','rrepo':'base', 
                     'deb':'php php-mysql php-common php-cli ',              'drepo':'base'},
-    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+#    'mysql'      :{ 'rpm':'mariadb-server MySQL-python',                    'rrepo':'base',
+    'mysql'      :{ 'rpm':'mariadb-server ',                                'rrepo':'base',
                     'deb':'mariadb-server mariadb-client',                  'drepo':'base'}
 }
 
@@ -483,7 +488,8 @@ def update_server_crontab_file(logfile,sroot,wostype,wuser) :
 
 
 #===================================================================================================
-#                                 Install pymysql module 
+# Install Python MySQL module Based on current System
+#python3-PyMySQL
 #===================================================================================================
 def special_install(lpacktype,sosname,logfile) :
 
@@ -491,14 +497,13 @@ def special_install(lpacktype,sosname,logfile) :
         writelog ("Package type invalid (%s)" % (lpacktype),'bold')     # Advise User UnSupported
         return (False)                                                  # Return False to caller
 
-    # Check if the command 'pip3' is present on system - If not return to caller
+    # INSTALL PIP3 - IF 'pip3' ISN'T PRESENT ON SYSTEM (Installed by Default on RHEL/CentOS 8) -----
     writelog("Checking for python pip3 command ... ",'nonl')
     if (locate_command('pip3') == "") :                                 # If pip3 command not found
-        writelog("Installing python3 pip3")
-        # If Debian Package, Refresh The Local Repository ------------------------------------------
-        if (lpacktype == "deb"):                                         # Is Debian Style Package
+        writelog("Installing python3 pip3")                             # Inform User - install pip3
+        if (lpacktype == "deb"):                                        # Is Debian Style Package
             cmd =  "apt-get -y update >> %s 2>&1" % (logfile)           # Build Refresh Pack Cmd
-            writelog ("Running apt-get update...",'nonl')               # Show what we are running
+            writelog ("Running apt-get -y update...",'nonl')            # Show what we are running
             (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
@@ -507,18 +512,16 @@ def special_install(lpacktype,sosname,logfile) :
             writelog ('Installing python3-pip','nonl')                  # Show User Pkg Installing
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install python3-pip >>%s 2>&1" % (logfile)
-
-        # If RPM Package, RedHat/CentOS 6,7 Install pip3 form EPEL / Fedora Base Repo is OK --------
-        else:
+        else:                                                           # 
             if (sosname != "FEDORA"):                                   # On Redhat/CentOS
                 writelog('Installing python34-pip from EPEL ... ','nonl') # Need Help of EPEL Repo
                 icmd = "yum install --enablerepo=epel -y python34-pip >>%s 2>&1" % (logfile)
-            else:
+            else:                                                       # On Fedora
                 writelog ('Installing python3-pip ... ','nonl')         # Inform User Pkg installing
                 icmd="yum install -y python3-pip >>%s 2>&1" % (logfile) # Fedora pip3 install cmd
 
         # Install pip3 command 
-        #writelog (icmd)                                                 # Inform User Pkg installing
+        if (DEBUG): writelog (icmd)                                     # Inform User Pkg installing
         ccode, cstdout, cstderr = oscommand(icmd)                       # Run Install Cmd for pip3
         if (ccode == 0) :                                               # If no problem installing
             writelog (" Done ")                                         # Show user it is done
@@ -527,6 +530,7 @@ def special_install(lpacktype,sosname,logfile) :
             writelog ("stdout=%s stderr=%s" % (cstdout,cstderr))
     else:
         writelog("Done")
+
 
     # Install pymysql python3 module using pip3
     writelog ("Installing python3 PyMySQL module (pip3 install PyMySQL) ... ",'nonl') 
@@ -699,7 +703,7 @@ def locate_package(lpackages,lpacktype) :
 #                       S A T I S F Y    R E Q U I R E M E N T   F U N C T I O N 
 #===================================================================================================
 #
-def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
+def satisfy_requirement(stype,sroot,packtype,logfile,sosname,sosver,sosbits):
     global fhlog
 
     # Based on installation Type (Client or Server), Move client or server dict. in Work Dict.
@@ -720,7 +724,7 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
             print ("DryRun - Would run : %s" % (cmd))                   # Only shw cmd we would run
         else:                                                           # If running in normal mode
             writelog ("Running apt-get update...",'nonl')               # Show what we are running
-            (ccode, cstdout, cstderr) = oscommand(cmd)                    # Run the apt-get command
+            (ccode, cstdout, cstderr) = oscommand(cmd)                  # Run the apt-get command
             if (ccode == 0) :                                           # If command went ok
                 writelog (" Done ")                                     # Print DOne
             else:                                                       # If we had error 
@@ -751,29 +755,49 @@ def satisfy_requirement(stype,sroot,packtype,logfile,sosname):
             continue                                                    # Proceed with Next Package
 
         # Install Missing Packages
-        pline = "Installing %s ... " % (needed_packages)
-        writelog (pline,'nonl')        
-        if (packtype == "deb") : 
+        writelog ("Installing %s ... " % (needed_packages),'nonl')      # Show user what installing
+        
+        # Setup command to install missing package
+        if (packtype == "deb") :                                        # If Package type is '.deb'
             icmd = "DEBIAN_FRONTEND=noninteractive "                    # No Prompt While installing
             icmd += "apt-get -y install %s >>%s 2>&1" % (needed_packages,logfile)
-        if (packtype == "rpm") : 
-            if (needed_repo == "epel") and (sosname != "FEDORA"):
-                writelog (" from EPEL ... ",'nonl')
+        if (packtype == "rpm") :                                        # If Package type is '.rpm'
+            if (needed_repo == "epel") and (sosname != "FEDORA"):       # Repo needed is EPEL
+                writelog (" from EPEL ... ",'nonl')                 
                 icmd = "yum install --enablerepo=epel -y %s >>%s 2>&1" % (needed_packages,logfile)
             else:
                 icmd = "yum install -y %s >>%s 2>&1" % (needed_packages,logfile)
-        if (DRYRUN):
-            writelog ("We would install %s with %s" % (needed_packages,icmd))
-            continue                                                    # Proceed with Next Package
         writelog ("-----------------------",'log')
         writelog (icmd,'log')
         writelog ("-----------------------",'log')
+        
+        # Execute install Command 
         ccode, cstdout, cstderr = oscommand(icmd)
         if (ccode == 0) : 
             writelog (" Done ")
             #writelog ("Installed successfully")
         else:
-            writelog   ("Error Code is %d - See log %s" % (ccode,logfile),'bold')
+            if (needed_cmd == "nmon"):
+                package_dir="%s/pkg/%s/%s/%s/%sBits" % (sroot,needed_cmd,sosname.lower(),sosver,sosbits)
+                pcmd = "ls -1t %s | head -1" % (package_dir)
+                ccode, cstdout, cstderr = oscommand(pcmd)
+                if (ccode != 0) : 
+                    writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
+                else :
+                    package_path = "%s/%s" % (package_dir,cstdout)
+                    writelog (" from local rpm ... ",'nonl')                 
+                    writelog("Installing package %s" % (package_path))
+                    icmd = "yum install -y %s" % (package_path) 
+                    writelog ("-----------------------",'log')
+                    writelog (icmd,'log')
+                    writelog ("-----------------------",'log')
+                    ccode, cstdout, cstderr = oscommand(icmd)
+                    if (ccode == 0) : 
+                        writelog (" Done ")
+                    else: 
+                        writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
+            else: 
+                writelog   ("Error, was unable to install package %s." % (needed_cmd),'bold')
 
 
 
@@ -902,7 +926,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
     else:                                                               # If Using SystemV Init
         cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog ("ReStarting MariaDB Service - %s" % (cmd))                # Make Sure MariabDB Started
+    writelog ("ReStarting MariaDB Service - %s ... " % (cmd),'nonl')    # Make Sure MariabDB Started
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
         writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -918,9 +942,9 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl enable mariadb.service"                        # Enable MariaDB at BootTime
     else:                                                               # If Using System V
         cmd = "update-rc.d mysql enable"                                # On SystemV Debian,Ubuntu
-        if (sosname == "REDHAT") or (SOSNAME == "CENTOS") :             # RedHat/CentOS = chkconfig
+        if (sosname == "REDHAT") or (sosname == "CENTOS") :             # RedHat/CentOS = chkconfig
             cmd = "chkconfig mysql on"                                  # No MariabDB, MySQL
-    writelog ("Enabling MariaDB Service - %s" % (cmd))                  # Inform User
+    writelog ("Enabling MariaDB Service - %s ... " % (cmd),"nonl")      # Inform User
     ccode,cstdout,cstderr = oscommand(cmd)                              # Enable MariaDB Server
     if (ccode != 0):                                                    # Problem Enabling Service
         writelog ("Problem with enabling MariabDB Service.")            # Advise User
@@ -1005,6 +1029,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     if (user_exist(uname,dbroot_pwd)):
         print ("User '%s' already exist" % (uname))                     # Show user was found
     else:                                                               # User sadmin was not found
+        writelog ("User don't exist.")                                  # Inform User
         sdefault = "Nimdas2018"                                         # Default sadmin Password 
         sprompt  = "Enter Read/Write 'sadmin' database user password"   # Prompt for Answer
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
@@ -1031,6 +1056,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     if (user_exist(uname,dbroot_pwd)):                                  # Check if squery Usr Exist
         print ("User '%s' already exist" % (uname))                     # Advise User that it exist
     else:
+        writelog ("User don't exist.")                                  # Inform User
         sdefault = "Squery18"                                           # Default Password 
         sprompt  = "Enter 'squery' database user password"              # Prompt for Answer
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# sadmin DB user pwd
@@ -1063,6 +1089,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         dbpwd.write("squery,%s\n" % (ro_passwd))                        # Create R/O user & Password
         dbpwd.close()                                                   # Close DB Password File
     else:
+        writelog('----------')                                          # Separation Line
         writelog ("Leaving Database Password File as it is (%s)" % (dpfile)) # Advise user 
         
 
@@ -1073,7 +1100,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         cmd = "systemctl restart mariadb.service"                       # Systemd Restart MariaDB
     else:                                                               # If Using SystemV Init
         cmd = "/etc/init.d/mysql restart"                               # SystemV Restart MariabDB
-    writelog ("ReStarting MariaDB Service - %s" % (cmd))                # Make Sure MariabDB Started
+    writelog('----------')                                              # Separation Line
+    writelog ("ReStarting MariaDB Service - %s ..." % (cmd),'nonl')     # Make Sure MariabDB Started
     ccode,cstdout,cstderr = oscommand(cmd)                              # Restart MariaDB Server
     if (ccode != 0):                                                    # Problem Starting DB
         writelog ("Problem Starting MariabDB server... ")               # Advise User
@@ -1308,7 +1336,7 @@ def set_sadmin_env(ver):
     if "SADMIN" in os.environ:                                          # Is SADMIN Env. Var. Exist?
         sadm_base_dir = os.environ.get('SADMIN')                        # Get SADMIN Base Directory
     else:                                                               # If Not Ask User Full Path
-        sadm_base_dir = input("Enter directory path where you install SADMIN : ")
+        sadm_base_dir = input("Enter directory path where SADMIN is installed : ")
 
     # Does Directory specify exist ? , if not exit to O/S with error
     if not os.path.exists(sadm_base_dir) :                              # Check if SADMIN Dir. Exist
@@ -1425,7 +1453,7 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_ENVFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
-    print ("SADMIN Environment variable now set to %s" % (sadm_base_dir))
+    print ("Environment variable 'SADMIN' is now set to %s" % (sadm_base_dir))
     print ("  - Line below is now in %s & %s" % (SADM_PROFILE,SADM_ENVFILE)) 
     print ("    %s" % (eline),end='')                                   # SADMIN Line in sadmin.sh
     print ("  - This will make 'SADMIN' environment variable set upon reboot")
@@ -1831,7 +1859,7 @@ def setup_sadmin_config_file(sroot,wostype):
     if (found_grp == True):                                             # Group were found in file
         writelog("Group %s is an existing group" % (wcfg_group),'bold') # Existing group Advise User 
     else:
-        writelog ("Creating group %s" % (wcfg_group))                      # Show creating the group
+        writelog ("Creating group %s" % (wcfg_group),'nonl')            # Show creating the group
         if wostype == "LINUX" :                                         # Under Linux
             ccode,cstdout,cstderr = oscommand("groupadd %s" % (wcfg_group))   # Add Group on Linux
         if wostype == "AIX" :                                           # Under AIX
@@ -1840,8 +1868,10 @@ def setup_sadmin_config_file(sroot,wostype):
             writelog ("Group %s doesn't exist, create it and rerun this script")
             writelog ("We can't create group for the moment")           # Advise USer
             sys.exit(1)                                                 # Exit to O/S  
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error No
+        if (ccode == 0) :                                               # If Group Creation went well
+            writelog ('Done')                                           # Show action action result
+        else:                                                           # If Error creating group
+            writelog ("Error %s creating group %s" % (ccode,wcfg_group))# Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
 
     # Accept the Default User Name
@@ -1869,7 +1899,7 @@ def setup_sadmin_config_file(sroot,wostype):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
-        writelog ("Creating user %s" % (wcfg_user))                     # Create user on system
+        writelog ("Creating user %s ... " % (wcfg_user),'nonl')         # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             #cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
@@ -1877,18 +1907,21 @@ def setup_sadmin_config_file(sroot,wostype):
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
             cmd = "echo 'nimdas' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
-            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user)) 
-            writelog ("We suggest you change it after installation.")   # Inform user to change pwd
+            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user),'bold') 
+            writelog ("We suggest you change it after installation.",'bold') # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
-        if (DEBUG):                                                     # If Debug Activated
-            writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
+        if (ccode == 0) :                                               # If Group Creation went well
+            writelog ('Done')                                           # Show action action result
+        else:                                                           # If Error creating group
+            writelog ("Error %s creating user %s" % (ccode,wcfg_user))  # Show AddUser Cmd Error No 
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
+    writelog (" ")
     writelog ("Please wait while we set owner and group in %s directory ..." % (sroot))
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
@@ -1924,7 +1957,7 @@ def setup_sadmin_config_file(sroot,wostype):
 # DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S AND OPEN THE SCRIPT LOG FILE 
 #===================================================================================================
 #
-def getpacktype(sroot):
+def getpacktype(sroot,sostype):
 
     # Determine type of software package format based on command present on system 
     packtype=""                                                         # Initial Packaging is None
@@ -1943,13 +1976,40 @@ def getpacktype(sroot):
     ccode,cstdout,cstderr = oscommand(cmd)                              # Execute Script
     if (ccode == 0):                                                    # Command Execution Went OK
         osname = cstdout.upper()
-        if (cstdout == "REDHATENTERPRISESERVER"): osname="REDHAT" 
-        if (cstdout == "REDHATENTERPRISEAS"): osname="REDHAT" 
+        if (cstdout.upper() == "REDHATENTERPRISESERVER"): osname="REDHAT" 
+        if (cstdout.upper() == "REDHATENTERPRISEAS")    : osname="REDHAT" 
+        if (cstdout.upper() == "REDHATENTERPRISE")      : osname="REDHAT"   
     else:                                                               # If Problem with the cmd
         writelog("Problem running %s" % (cmd))                          # Infor User
-        #writelog("Error %d - %s - %s" % (ccode,cstdout,cstderr))        # Show Error#,Stdout,Stderr
         writelog("Error %d - %s " % (ccode,cstderr))                    # Show Error# and Stderror
-    return (packtype,osname)                                            # Return Packtype & O/S Name
+
+    # Get O/S Major Version Number
+    if sostype == "LINUX" :
+        ccode, cstdout, cstderr = oscommand("lsb_release -sr")
+        osversion=cstdout
+        osver=osversion.split('.')[0]
+    if sostype == "AIX" :
+        ccode, cstdout, cstderr = oscommand("uname -v")
+        osver=cstdout
+    if sostype== "DARWIN":
+        wcmd = "sw_vers -productVersion | awk -F '.' '{print $1 \".\" $2}'"
+        ccode, cstdout, cstderr = oscommand(wcmd)
+        osver=cstdout
+
+    # Get running kernel bits (32 or 64)
+    cstdout = 64
+    if sostype == "LINUX" :                                              # Under Linux
+        ccode, cstdout, cstderr = oscommand("getconf LONG_BIT")
+    if sostype == "AIX" :                                                # Under AIX
+        ccode, cstdout, cstderr = oscommand("getconf KERNEL_BITMODE")
+    osbits=cstdout
+
+    # Return :
+    # Package Type (deb,rpm,dmg,aix)
+    # O/S Name (AIX/CENTOS/REDHAT,UBUNTU,DEBIAN,RASPBIAN,...)
+    # O/S Major Version Number
+    # O/S Running in 32 or 64 bits (32,64)
+    return (packtype,osname,osver,osbits)                               # Return Packtype & O/S Name
 
 
 
@@ -1976,98 +2036,74 @@ def run_script(sroot,sname):
 #===================================================================================================
 #
 def end_message(sroot,sdomain,sserver,stype):
-    #os.system('clear')                                                 # Clear the screen
     sversion = get_sadmin_version(sroot)
     writelog ("\n\n\n\n\n")
     writelog ("SADMIN TOOLS - VERSION %s - Successfully Installed" % (sversion),'bold')
     writelog ("===========================================================================")
-    writelog ("You need to logout and log back in before using SADMIN Tools,")
-    writelog ("or type the following command (The dot and the space are important)")
+    writelog ("You need to logout/login before using SADMIN Tools or type the following command :")
     writelog (". /etc/profile.d/sadmin.sh",'bold')
     writelog ("This will define SADMIN environment variable.")
-    writelog ("===========================================================================")
+    writelog (" ")
     if (stype == "S") :
-        writelog ("\nUSE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM\n",'bold')
+        writelog ("USE THE WEB INTERFACE TO ADMINISTRATE YOUR LINUX SERVER FARM",'bold')
         writelog ("The Web interface is available at : http://sadmin.%s" % (sdomain))
-        writelog ("Remember, 'sadmin.%s' to need to be defined in your DNS to be accessible from other servers." % (sdomain))
-        writelog (" ")
         writelog ("  - Use it to add, update and delete server in your server farm.")
         writelog ("  - View performance graph of your servers up to two years in the past.")
         writelog ("  - If you want, you can schedule automatic O/S update of your servers.")
         writelog ("  - Have server configuration on hand, usefull in case of a Disaster Recovery.")
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
-        writelog ("  - There's still a lot more to come.")
-        writelog ("===========================================================================")
-    writelog ("\nCREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES\n",'bold')
-    writelog ("Create your own script using SADMIN tools templates, take a look & run them ")
-    writelog ("  - bash shell script      : %s/bin/sadm_template.sh " % (sroot))
-    writelog ("  - python script          : %s/bin/sadm_template.py " % (sroot))
     writelog (" ")
-    writelog ("Create your own shell script :")
-    writelog ("  # copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog (" ")
+    writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
+    writelog ("  - copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
+    writelog ("  - copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
     writelog ("Modify it to your need, run it and see the result.") 
-    writelog ("===========================================================================")
-    writelog ("\nSEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :\n",'bold')
+    writelog (" ")
+    writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
     writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
     writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
-    writelog ("===========================================================================")
-    writelog ("\nUSE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT\n",'bold')
+    writelog (" ")
+    writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
     writelog ("  - # $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 
 
+
 #===================================================================================================
-#                                  M A I N     P R O G R A M
+# Main Flow of Setup Script
 #===================================================================================================
-#
-def main():
-    global fhlog                                                        # Script Log File Handler
+def mainflow(sroot):
+    global fhlog                                                        # Script Log File Handler   
 
-    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
-    print ("---------------------------------------------------------------------------")
-   
-    # Insure that this script can only be run by the user root (Optional Code)
-    if not os.getuid() == 0:                                            # UID of user is not zero
-       print ("This script must be run by the 'root' user")             # Advise User Message / Log
-       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
-       print ("Process aborted")                                        # Process Aborted Msg
-       sys.exit(1)                                                      # Exit with Error Code
-
-    # Set SADMIN Env. Var, populate /etc/environment and /etc/profile.d/sadmin.sh
-    sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
-    if (DEBUG) : 
-        writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
-
-    # Create Script Log, Return Log FileHandle and LogName
+    # Create Script Log, Return Log FileHandle and log fileName
     (fhlog,logfile) = open_logfile(sroot)                               # Return File Handle/LogName
-    if (DEBUG) : 
+    if (DEBUG) :                                                        # If Debug Activated
+        writelog ("Directory SADMIN now set to %s" % (sroot))           # Show SADMIN Root Dir.
         writelog ("Log file open and set to %s" % (logfile))            # Show LogFile Name
 
-
-    # Get OS Type (Linux, Aix, Darwin, OpenBSD)
+    # Get O/S Type (Linux, Aix, Darwin or OpenBSD) returned in UPPERCASE
     wostype=get_ostype()                                                # OSTYPE = LINUX/AIX/DARWIN
-    if (DEBUG):                                                         # If Debug Activated
-        writelog ("Current OStype is: %s" % (wostype))                  # Print the O/S Type
+    if (DEBUG) : writelog ("Current OStype is: %s" % (wostype))         # Print O/S Type (LINUX,AIX)
 
-
-    # Create Initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
+    # Create initial $SADMIN/cfg/sadmin.cfg from template ($SADMIN/cfg/.sadmin.cfg)
     create_sadmin_config_file(sroot,wostype)                            # Create Initial sadmin.cfg
 
-    # Get the Distribution Package Format (rpm or deb)
-    (packtype,sosname) = getpacktype(sroot)                             # PackType (deb,rpm)/OSName
+    # Get the Distribution Package Type (rpm,deb,aix,dmg), O/S Name (REDHAT,CENTOS,UBUNTU,...) 
+    # O/S Major version number and the running kernel bit mode (32 or 64).
+    (packtype,sosname,sosver,sosbits) = getpacktype(sroot,wostype)      # Type(deb,rpm),OSName,OSVer
     if (DEBUG) : writelog("Package type on system is %s" % (packtype))  # Debug, Show Packaging Type 
     if (DEBUG) : writelog("O/S Name detected is %s" % (sosname))        # Debug, Show O/S Name
+    if (DEBUG) : writelog("O/S Major version number is %s" % (sosver))  # Debug, Show O/S Version
+    if (DEBUG) : writelog("O/S is running in %sBits mode." % (sosbits)) # Debug, Show O/S Bits MOde
 
     # Go and Ask Setup Question to user 
-    # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, Sadmin User and Group).
+    # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
 
-    satisfy_requirement('C',sroot,packtype,logfile,sosname)             # Verify/Install Client Req.
+    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
 
-    # Create SADMIN User sudo file
+    # Create SADMIN user sudo file
     update_sudo_file(logfile,uuser)                                     # Create User sudo file
 
     # Create SADMIN User crontab file
@@ -2076,7 +2112,7 @@ def main():
     # Functions excuted if only installing a SADMIN Server .
     if (stype == 'S') :                                                 # If install SADMIN Server
         update_host_file(udomain,uip)                                   # Update /etc/hosts file
-        satisfy_requirement('S',sroot,packtype,logfile,sosname)         # Verify/Install Server Req.
+        satisfy_requirement('S',sroot,packtype,logfile,sosname,sosver,sosbits)  # Verify/Install Server Req.
         firewall_rule()                                                 # Open Port 80 for HTTP
         setup_mysql(sroot,userver,udomain,sosname)                      # Setup/Load MySQL Database
         setup_webserver(sroot,packtype,udomain,uemail)                  # Setup & Start Web Server
@@ -2111,8 +2147,29 @@ def main():
     # End of Setup
     end_message(sroot,udomain,userver,stype)                            # Last Message to User
     fhlog.close()                                                       # Close Script Log
-    sys.exit(0)                                                         # Exit to Operating System
 
+
+
+#===================================================================================================
+#                                  M A I N     P R O G R A M
+#===================================================================================================
+#
+def main():
+    global fhlog                                                        # Script Log File Handler
+    print ("SADMIN Setup V%s" % (sver))                                 # Print Version Number
+    print ("---------------------------------------------------------------------------")
+   
+    # Insure that this script is only run by the user root (Optional Code)
+    if not os.getuid() == 0:                                            # UID of user is not zero
+       print ("This script must be run by the 'root' user")             # Advise User Message / Log
+       print ("Try sudo ./%s" % (pn))                                   # Suggest to use 'sudo'
+       print ("Process aborted")                                        # Process Aborted Msg
+       sys.exit(1)                                                      # Exit with Error Code
+
+    # Set SADMIN Environment Variable, populate /etc/environment and /etc/profile.d/sadmin.sh
+    sroot=set_sadmin_env(sver)                                          # Set SADMIN Var./Return Dir
+    mainflow(sroot)                                                     # Script Main Flow Function
+    sys.exit(0)                                                         # Exit to Operating System
 
 # This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':  main()

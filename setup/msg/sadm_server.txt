@@ -1,7 +1,7 @@
 # sadmin.cfg SADM_SERVER Documentation
-# Revise 2019_01_26
+# Revise 2019_03_06
 # ----------------------------------------------------------------------------
 Enter the name of the SADMIN Server - (MUST be a fully qualified).
   - Can't be an alias in the DNS, it must be the real name of the server.
   - If you use /etc/hosts for name resolution, put the FQDN name first like below:
-      192.168.1.17    batserver.batcave.com batserver
+      192.168.1.17    sadmin.batcave.com   sadmin 

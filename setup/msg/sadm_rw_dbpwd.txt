@@ -3,4 +3,3 @@
 #----------------------------------------------------------------------------
 This is the read/write user ("sadmin") password  in the SADMIN database.
 Give this password to people who you want to update server information.
-

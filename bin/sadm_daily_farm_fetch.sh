@@ -38,7 +38,8 @@
 # 2018_06_30    v3.0 Now get /etc/environment from client to know where SADMIN is install for rsync
 # 2018_07_16    v3.1 Remove verbose when doing rsync
 # 2018_08_24    v3.2 If couldn't get /etc/environment from client, change Email format.
-#@2018_09_16    v3.3 Added Default Alert Group
+# 2018_09_16    v3.3 Added Default Alert Group
+#@2019_02_27 Change: v3.4 Change error message when ping to system don't work
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -62,7 +63,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.3'                               # Current Script Version
+    export SADM_VER='3.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -205,7 +206,7 @@ process_servers()
         fi
 
         if [ $RC -ne 0 ]
-            then sadm_writelog "[ ERROR ] Will not be able to process that server."
+            then sadm_writelog "[ ERROR ] Ping to server failed - Unable to process system."
                  ERROR_COUNT=$(($ERROR_COUNT+1))
                  if [ "$ERROR_COUNT" -ne 0 ] ;then sadm_writelog "Error Count at $ERROR_COUNT" ;fi
                  continue

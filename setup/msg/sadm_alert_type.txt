@@ -1,10 +1,10 @@
 # sadmin.cfg SADM_ALERT_TYPE Documentation
-# Revise 2019_01_25
+# Revise 2019_03_06
 #----------------------------------------------------------------------------
-Default option for sending alert after a script is finish.
+Default type of alert send at the end of a script.
 Can be overridden by changing SADM_ALERT_TYPE in SADMIN section of your script.
 [0] = Never send alert.
-[1] = Send alert when script terminate with only (Default).
+[1] = Send alert when script terminate with error (Default).
 [2] = Send alert when script terminate with success.
 [3] = Always send alert when script finish.
 
