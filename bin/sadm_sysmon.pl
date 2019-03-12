@@ -1702,7 +1702,7 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^cpu_level/ ) {check_cpu_usage ;  }
 
         # Check Swap Space
-        if ($SADM_RECORD->{SADM_ID} eq "swap_space") {check_swap_space ; }
+        if ($SADM_RECORD->{SADM_ID} =~ /^swap_space/ ) {check_swap_space ; }
 
         # Check filesystem usage
         if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) {check_filesystems_usage ; }
@@ -1773,7 +1773,7 @@ sub end_of_sysmon {
     # Ending SysMon
     close SADMRPT;                                  # Close SysMon report file
     
-    # Make SysMon Report File Readable by everyone (If current use is root).
+    # Make SysMon Report File Readable by everyone (If current user is root).
     if ($SADM_UID == 0) { system ("chmod 664 $SYSMON_RPT_FILE"); } 
 
     unload_smon_file;                               # Unload Update Array to hostname.smon file
