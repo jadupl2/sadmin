@@ -10,9 +10,9 @@
 # 2017_09_01    v1.1 Added Display of SADM Release Number on second line of menu
 # 2017_10_09    v1.2 Change Menu Heading & Menu item display
 # 2018_05_14    v1.3 Fix Display Problem under MacOS
-#@2018_09_20    v1.4 Show SADM Version instead of Release No.
-#@2019_02_25 Change: v1.5 Code revamp and new menu design.
-#@2019_03_03 Change: v1.6 Change Screen related variables
+# 2018_09_20    v1.4 Show SADM Version instead of Release No.
+# 2019_02_25 Change: v1.5 Code revamp and new menu design.
+#@2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
