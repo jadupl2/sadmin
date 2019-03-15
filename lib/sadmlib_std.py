@@ -36,7 +36,7 @@
 # 2018_11_13 v2.23 Change for support of MacOS Mojave
 # 2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
 # 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
-#@2019_03_08 Change: v2.26 Change require for RedHat 8.
+#@2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
 # 
 #==================================================================================================
 try :

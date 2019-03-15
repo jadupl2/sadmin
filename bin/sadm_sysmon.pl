@@ -7,32 +7,33 @@
 #   Date     :  15 Janvier 2016
 #   Requires :  sh
 #===================================================================================================
-# 2017_12_30    V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
-# 2017_12_30    V2.8 Change name of template file from sysmon.std to template.smon
-# 2017_12_30    V2.9 Change Message Sent to user when host.cfg file not there and using template file
-# 2018_05_07    V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
-# 2018_05_14    V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement
-# 2018_05_27    v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
-# 2018_06_03    v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
-# 2018_06_12    v2.14 Correct Problem with fileincrease and Filesystem Warning double error
-# 2018_06_14    v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
-# 2018_07_11    v2.16 Uptime/Load Average take last 5 min. values instead of current.
-# 2018_07_12    v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
-# 2018_07_18    v2.18 Fix when filesystem exceed threshold try increase when no script specified
-# 2018_07_19    v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
-# 2018_07_21    v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
-# 2018_07_22    v2.21 Added Date and Time in mail messages sent.
-# 2018_09_14    v2.22 Take Default Alert Group from SADMIN configuration file.
-# 2018_09_18    v2.23 Error reported was stating > instead of >=
-# 2018_09_21    v2.24 Ping System 3 times before signaling an Error
-# 2018_10_16    v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
-# 2018_10_16    v2.26 Change email sent when smon configuration isn't found.
-#@2018_12_29    v2.27 Enhance Performance checking service, chown & chmod only if running as root.
-#@2018_12_30    v2.28 Fix problem when checking service using Sys V method.
+# 2017_12_30 V2.7 Change Config file extension to .smon & Defaut Virtual Machine presence to 'N'
+# 2017_12_30 V2.8 Change name of template file from sysmon.std to template.smon
+# 2017_12_30 V2.9 Change Message Sent to user when host.cfg file not there and using template file
+# 2018_05_07 V2.10 Bug Fixes - Code Revamp - Now read SADMIN config file
+# 2018_05_14 V2.11 MacOS/AIX Checking SwapSpac/Load Average/New Filesystem Enhancement
+# 2018_05_27 v2.12 Change Location of SysMon Scripts Directory to $SADMIN/usr/sysmon_scripts
+# 2018_06_03 v2.13 Change Location of SysMon Scripts Directory to $SADMIN/usr/mon
+# 2018_06_12 v2.14 Correct Problem with fileincrease and Filesystem Warning double error
+# 2018_06_14 v2.15 Load $SADMIN/sadmin.cfg before the hostname.smon file (So we know Email Address)
+# 2018_07_11 v2.16 Uptime/Load Average take last 5 min. values instead of current.
+# 2018_07_12 v2.17 Service Line now execute srestart.sh script to restart it & Alert Insertion
+# 2018_07_18 v2.18 Fix when filesystem exceed threshold try increase when no script specified
+# 2018_07_19 v2.19 Add Mail Mess when sadmin.cfg not found & Change Mess when host.smon not found
+# 2018_07_21 v2.20 Fix When executiong scripts from sysmon the log wasn't at proper place.
+# 2018_07_22 v2.21 Added Date and Time in mail messages sent.
+# 2018_09_14 v2.22 Take Default Alert Group from SADMIN configuration file.
+# 2018_09_18 v2.23 Error reported was stating > instead of >=
+# 2018_09_21 v2.24 Ping System 3 times before signaling an Error
+# 2018_10_16 v2.25 For initial host.smon file, default alert group are taken from host sadmin.cfg
+# 2018_10_16 v2.26 Change email sent when smon configuration isn't found.
+# 2018_12_29 v2.27 Enhance Performance checking service, chown & chmod only if running as root.
+# 2018_12_30 v2.28 Fix: problem when checking service using Sys V method.
+#@2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
 #===================================================================================================
 #
 use English;
-use DateTime;
+#use DateTime;  # Comment on 9 March 2019
 use File::Basename;
 use POSIX qw(strftime);
 use Time::Local;
@@ -44,7 +45,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.28";                                       # Version Number
+my $VERSION_NUMBER      = "2.29";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1496,7 +1497,7 @@ sub write_rpt_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
-        my $mail_mess2 = "SysMon executed the service restart script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name \n";
+        my $mail_mess2 = "SysMon executed the script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name to restart it.\n";
         my $mail_mess3 = "This is the first time SysMon is restarting this service today.";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";
@@ -1701,7 +1702,7 @@ sub loop_through_array {
         if ($SADM_RECORD->{SADM_ID} =~ /^cpu_level/ ) {check_cpu_usage ;  }
 
         # Check Swap Space
-        if ($SADM_RECORD->{SADM_ID} eq "swap_space") {check_swap_space ; }
+        if ($SADM_RECORD->{SADM_ID} =~ /^swap_space/ ) {check_swap_space ; }
 
         # Check filesystem usage
         if ($SADM_RECORD->{SADM_ID} =~ /^FS/ ) {check_filesystems_usage ; }
@@ -1772,7 +1773,7 @@ sub end_of_sysmon {
     # Ending SysMon
     close SADMRPT;                                  # Close SysMon report file
     
-    # Make SysMon Report File Readable by everyone (If current use is root).
+    # Make SysMon Report File Readable by everyone (If current user is root).
     if ($SADM_UID == 0) { system ("chmod 664 $SYSMON_RPT_FILE"); } 
 
     unload_smon_file;                               # Unload Update Array to hostname.smon file

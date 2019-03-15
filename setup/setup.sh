@@ -31,9 +31,9 @@
 # 2019_01_27 V1.7 Change: v1.7 Make sure /etc/hosts contains the IP and FQDN of current server
 # 2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
 # 2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
-#@2019_03_01 Updated: v2.0 Updated for RHEL/CensOS 8 
+#@2019_03_01 Updated: v2.0 Bug Fix and updated for RHEL/CensOS 8 
 #@2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
-#@2019_03_08 Updated: v2.2 Always Add EPEL repository When installing RHEL or CENTOS
+#@2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
