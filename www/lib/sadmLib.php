@@ -35,7 +35,7 @@
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
 # 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # 2019_01_21 v2.6 Add function from From Schedule to Text.
-#@2019_02_16 v2.7 Change: Schedule to one line text, to make generated line more precise.
+#@2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
 # ==================================================================================================
 #
 
