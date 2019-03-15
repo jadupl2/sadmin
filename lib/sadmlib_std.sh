@@ -73,8 +73,8 @@
 # 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
 #@2019_02_05 Fix: v2.61 Correct type error. 
 #@2019_02_06 Fix: v2.62 break error when finding system domain name.
-#@2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
-#@2019_02_28 Change: v2.64 Change for RHEL8 in getos function
+# 2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
+#@2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
