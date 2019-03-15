@@ -36,14 +36,14 @@
 # 2018_09_26  v2.22 Reformat Error message for alerting systsem
 # 2018_10_04  v2.23 Supplemental message about o/s update crontab modification
 # 2018_11_28  v2.24 Added Fetch to MacOS Client 
-#@2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
-#@2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
-#@2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
-#@2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
-#@2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
-#@2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
-#@2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
-#@2019_02_19  Added: v2.32 To avoid seeing script always running in SysMon, copy rch file to web dir
+# 2018_12_30  Fixed: v2.25 Problem updating O/S Update crontab when some MacOS clients were used.
+# 2018_12_30  Added: sadm_fetch_client.sh v2.26 - Diminish alert while system reboot after O/S Update.
+# 2019_01_05  Added: sadm_fetch_client.sh v2.27 - Using sudo to start o/s update in cron file.
+# 2019_01_11  Feature: sadm_fetch_client.sh v2.28 - Now update sadm_backup crontab when needed.
+# 2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
+# 2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
+# 2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
+#@2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
