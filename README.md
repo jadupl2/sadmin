@@ -1,5 +1,5 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v0.95.2             <!-- omit in toc -->
+# SADMIN Tools v0.96.0             <!-- omit in toc -->
 
 ### Table of content
 - [Brief description](#brief-description)
@@ -127,6 +127,7 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
     Run the setup program
     # /opt/sadmin/setup/setup.sh
 ```
+[Back To The Top](#brief-description)
 
 ### Method 2 : Cloning our git repository
 ```bash
@@ -139,6 +140,7 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
     Run the setup program
     # /opt/sadmin/setup/setup.sh
 ```
+[Back To The Top](#brief-description)
 
 ### Running the setup script
 * Setup ask several questions regarding your environment and store answers in the SADMIN configuration file ($SADMIN/cfg/sadmin.cfg).  
