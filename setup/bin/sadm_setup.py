@@ -50,6 +50,8 @@
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
 #@2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
 #@2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
+#@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
+#@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
 # 
 # ==================================================================================================
 #
@@ -66,7 +68,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.15"                                            # Setup Version Number
+sver                = "3.17"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -134,8 +136,8 @@ req_client = {
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
                     'deb':'sysstat',                        'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
-                    'deb':'libdatetime-perl ',              'drepo':'base'},
+    #'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
+    #                'deb':'libdatetime-perl ',              'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
                     'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -864,7 +866,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
     sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
-    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', ";
     sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
     sql += " srv_osname='%s'," % (osdist);
     sql += " srv_osversion='%s'," % (osver);
@@ -2126,7 +2128,7 @@ def mainflow(sroot):
     writelog ('--------------------')
     writelog ("Run Initial SADMIN Daily scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
-    writelog ("Running Client Scripts")
+    writelog ("Running Client Scripts",'bold')
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
     run_script(sroot,"sadm_create_sysinfo.sh")                          # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_client_housekeeping.sh")                     # Validate Owner/Grp/Perm
@@ -2137,7 +2139,7 @@ def mainflow(sroot):
     # Run First SADM Server Script to feed Web interface and Database
     if (stype == "S"):                                                  # If Server Installation
         writelog ('  ')
-        writelog ("Running Server Scripts")
+        writelog ("Running Server Scripts",'bold')
         run_script(sroot,"sadm_fetch_clients.sh")                       # Grab Status from clients
         run_script(sroot,"sadm_daily_farm_fetch.sh")                    # mv ClientData to ServerDir
         run_script(sroot,"sadm_server_housekeeping.sh")                 # Validate Owner/Grp/Perm
