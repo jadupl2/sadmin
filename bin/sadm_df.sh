@@ -30,13 +30,13 @@
 # --------------------------------------------------------------------------------------------------
 # CHANGELOG
 #
-# 2016_05_05    v1.0 Initial Version
-# 2018_06_04    v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
-# 2018_08_21    v1.2 Remove trailing space for data lines.
-# 2018_08_21    v1.3 Adapted to work on MacOS and Aix
-# 2018_09_03    v1.5 Option --total don't work on RHEL5, Total Line Removed for now
-#@2018_09_24    v1.6 Corrected Total Display Problem under Linux
-#
+# 2016_05_05 v1.0 Initial Version
+# 2018_06_04 v1.1 Include Filesystem Type, Sorted by Mount Point, Better, clearer Output.
+# 2018_08_21 v1.2 Remove trailing space for data lines.
+# 2018_08_21 v1.3 Adapted to work on MacOS and Aix
+# 2018_09_03 v1.5 Option --total don't work on RHEL 5, Total Line Removed for now
+# 2018_09_24 v1.6 Corrected Total Display Problem under Linux
+#@2019_03_17 Improve: v1.7 Background Don't change and brighter color were change.
 # --------------------------------------------------------------------------------------------------
 #set -x
 
@@ -45,7 +45,7 @@
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-export SADM_VER='1.6'                                       # Current Script Version
+export SADM_VER='1.7'                                       # Current Script Version
 SADM_DASH=`printf %100s |tr " " "="`                        # 100 equals sign line
 DEBUG_LEVEL=0                                               # 0=NoDebug Higher=+Verbose
 file="/tmp/sdf_tmp1.$$"                                     # File Contain Result of df
@@ -53,7 +53,18 @@ data="/tmp/sdf_tmp2.$$"                                     # Contain df data (N
 export SADM_PN=${0##*/}                                     # Current Script name
 
 
-# Color Foreground Text
+# Screen related variables
+clreol=$(tput el)                               ; export clreol         # Clr to end of lne
+clreos=$(tput ed)                               ; export clreos         # Clr to end of scr
+bold=$(tput bold)                               ; export bold           # bold attribute
+bell=$(tput bel)                                ; export bell           # Ring the bell
+reverse=$(tput rev)                             ; export reverse        # rev. video attrib.
+underline=$(tput sgr 0 1)                       ; export underline      # UnderLine
+clr=$(tput clear)                               ; export clr            # clear the screen
+blink=$(tput blink)                             ; export blink          # turn blinking on
+reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
+
+# Foreground Color
 black=$(tput setaf 0)                           ; export black          # Black color
 red=$(tput setaf 1)                             ; export red            # Red color
 green=$(tput setaf 2)                           ; export green          # Green color
@@ -63,15 +74,15 @@ magenta=$(tput setaf 5)                         ; export magenta        # Magent
 cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
 white=$(tput setaf 7)                           ; export white          # White color
 
-# Color Background Text
-bblack=$(tput setab 0)                           ; export bblack          # Black color
-bred=$(tput setab 1)                             ; export bred            # Red color
-bgreen=$(tput setab 2)                           ; export bgreen          # Green color
-byellow=$(tput setab 3)                          ; export byellow         # Yellow color
-bblue=$(tput setab 4)                            ; export bblue           # Blue color
-bmagenta=$(tput setab 5)                         ; export bmagenta        # Magenta color
-bcyan=$(tput setab 6)                            ; export bcyan           # Cyan color
-
+# Background Color
+bblack=$(tput setab 0)                          ; export bblack         # Black color
+bred=$(tput setab 1)                            ; export bred           # Red color
+bgreen=$(tput setab 2)                          ; export bgreen         # Green color
+byellow=$(tput setab 3)                         ; export byellow        # Yellow color
+bblue=$(tput setab 4)                           ; export bblue          # Blue color
+bmagenta=$(tput setab 5)                        ; export bmagenta       # Magenta color
+bcyan=$(tput setab 6)                           ; export bcyan          # Cyan color
+bwhite=$(tput setab 7)                          ; export bwhite         # White color
 
 #===================================================================================================
 #                                       Script Start HERE
@@ -106,13 +117,13 @@ fi
 
 # Print DF Information
 tput clear                                                              # Clear Screen
-printf "${bblack}${green}${SADM_PN} - v${SADM_VER}${white}\n"           # Print Script Name & Ver.
-printf "${bblack}${blue}${SADM_DASH}${white}\n"                         # Print dash line
-printf "${bblack}${yellow}%s${white}\n" "${title}"                      # Print title line
-printf "${bblack}${blue}${SADM_DASH}${white}\n"                         # Print dash line
+printf "${green}${bold}${SADM_PN} - v${SADM_VER}${reset}\n"             # Print Script Name & Ver.
+printf "${magenta}${bold}${SADM_DASH}${reset}\n"                        # Print dash line
+printf "${yellow}${bold}%s${reset}\n" "${title}"                        # Print title line
+printf "${magenta}${bold}${SADM_DASH}${reset}\n"                        # Print dash line
 cat ${data}                                                             # Output df sort by MntPoint
-printf "${bblack}${blue}${SADM_DASH}${white}\n"                         # Print dash line
-printf "${bblack}${yellow}%s${white}\n" "$total"                        # Print total line
+printf "${magenta}${bold}${SADM_DASH}${reset}\n"                        # Print dash line
+printf "${yellow}${bold}%s${reset}\n" "$total"                          # Print total line
 
 # Remove work files
 rm -f $file >/dev/null 2>&1                                             # Remove tmp full df file
