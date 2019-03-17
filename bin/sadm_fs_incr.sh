@@ -117,7 +117,7 @@ LVTYPE=""                                       ; export LVTYPE         # LV typ
 LVMOUNT=""                                      ; export LVMOUNT        # LV Mount point
 LVOWNER=""                                      ; export LVOWNER        # LV Mount point owner
 LVGROUP=""                                      ; export LVGROUP        # LV Mount point group
-LVPROT=""                                       ; export LVPROT         # LV Mount point protection
+LVPROT=""                                       ; export LVPROT         # LV Mount point Permission
 
 
 
@@ -235,7 +235,7 @@ main_process()
     sadm_writelog "Filesystem Size in MB ........: ...$LVSIZE..."
     sadm_writelog "Filesystem Owner .............: ...$LVOWNER..."
     sadm_writelog "Filesystem Group .............: ...$LVGROUP..."
-    sadm_writelog "Filesystem Protection ........: ...$LVPROT..."
+    sadm_writelog "Filesystem Permission ........: ...$LVPROT..."
     sadm_writelog "Filesystem Increase Pct.......: ...$INCR_PCT..."
 
     # Check if Filesystem Type is Supported
