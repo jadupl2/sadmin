@@ -12,7 +12,8 @@
 # 2018_05_14    v1.3 Fix Display Problem under MacOS
 # 2018_09_20    v1.4 Show SADM Version instead of Release No.
 # 2019_02_25 Change: v1.5 Code revamp and new menu design.
-#@2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
+# 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
+#@2019_03_17 Improve: v1.7 Show time to menu heading.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -23,7 +24,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-lib_screen_ver=1.6                              ; export lib_screen_ver
+lib_screen_ver=1.7                              ; export lib_screen_ver
 
 # Screen related variables
 clreol=$(tput el)                               ; export clreol         # Clr to end of lne
@@ -172,8 +173,8 @@ sadm_display_heading()
     # Display Line 1 (Hostname + Menu Name + Date)
     sadm_writexy 01 01 "${bold}${green}$(sadm_get_fqdn)"                # Top Left Show HostName 
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "${magenta}$titre"                           # Display Title Centered
-    sadm_writexy 01 71 "${green}`date +%Y/%m/%d`"                       # Top Right Show Current Date 
+    sadm_writexy 01 $wpos "${magenta}$titre"                            # Display Title Centered
+    sadm_writexy 01 65 "${green}`date '+%Y/%m/%d %H:%M'`"               # Top Right Show Current Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
@@ -416,8 +417,8 @@ sadm_accept_data()
               a=$(($a+1))                                               # Incr Counter by 1
               done                                                      # Next iteration
         if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
-        sadm_writexy $WLINE $WCOL "${reverse}${WMASK}"                      # Display Mask in Rvs Video
-        sadm_writexy $WLINE $WCOL "${WDEFAULT}${reset}"                   # Display Default Value
+        sadm_writexy $WLINE $WCOL "${reverse}${WMASK}"                  # Display Mask in Rvs Video
+        sadm_writexy $WLINE $WCOL "${WDEFAULT}${reset}"                 # Display Default Value
 
         # Accept the Data
         sadm_writexy $WLINE $WCOL ""                                    # Pos. Cursor Ready to Input
@@ -434,7 +435,7 @@ sadm_accept_data()
 
         # Test if length of data exceed what was requested
         if [ ${#WDATA} -gt ${WLEN} ]                                    # Data Entered Exceed Max.
-           then mess "Maximum of ${WLEN} characters are accepted for this field"
+           then mess "A maximum of ${WLEN} characters is accepted for this field"
                 continue                                                # Restart Loop
         fi
 
