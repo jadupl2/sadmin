@@ -52,6 +52,7 @@
 #@2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
 #@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
 #@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
+#@2019_03_17 Change: v3.18 If not already install, 'curl' package will be intall by setup.
 # 
 # ==================================================================================================
 #
@@ -68,7 +69,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.17"                                            # Setup Version Number
+sver                = "3.18"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -126,6 +127,8 @@ req_client = {
                     'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
+    'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
+                    'deb':'curl',                           'drepo':'base'},
     'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
