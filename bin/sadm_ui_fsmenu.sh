@@ -291,7 +291,7 @@ enlarge_filesystem()
                 sadm_writexy 09 08 "Filesystem Size in MB ...............: ${LVSIZE}"
                 sadm_writexy 10 08 "Filesystem Owner ....................: $LVOWNER"
                 sadm_writexy 11 08 "Filesystem Group ....................: $LVGROUP"
-                sadm_writexy 12 08 "Filesystem Protection ...............: $LVPROT"
+                sadm_writexy 12 08 "Filesystem Permission ...............: $LVPROT"
         fi
         sadm_show_menuitem 05 03 1 "Filesystem mount point to increase...: $RM_MP "
         sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${bold}${RM_MB}${nrm}"
