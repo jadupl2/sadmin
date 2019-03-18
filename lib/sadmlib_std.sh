@@ -64,7 +64,7 @@
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
 # 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 # 2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
-# 2018_10_29 v2.49 Correct Type Error causing occasionnal crash
+# 2018_10_29 v2.49 Correct Type Error causing occasional crash
 # 2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
 # 2018_11_09 v2.51 Add Link in Slack Message to view script log.
 # 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
@@ -188,7 +188,7 @@ SADM_SSH=""                                 ; export SADM_SSH           # Path t
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
-# SADMIN CONFIG FILE VARIABLES (Default Values here will be overrridden by SADM CONFIG FILE Content)
+# SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
