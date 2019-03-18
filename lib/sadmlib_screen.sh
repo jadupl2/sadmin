@@ -13,7 +13,7 @@
 # 2018_09_20    v1.4 Show SADM Version instead of Release No.
 # 2019_02_25 Change: v1.5 Code revamp and new menu design.
 # 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
-#@2019_03_17 Improve: v1.7 Show time to menu heading.
+#@2019_03_17 Improve: v1.7 Show time in menu heading.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
