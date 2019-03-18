@@ -81,6 +81,7 @@
 # 2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
 # 2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
 #@2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
+#@2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -90,7 +91,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.65"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.66"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -351,7 +352,26 @@ sadm_get_command_path() {
     return 1                                                            # Return 1 if Cmd not Found
 }
 
+# ----------------------------------------------------------------------------------------------
+# DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S 
+# ----------------------------------------------------------------------------------------------
+sadm_get_packagetype() {
+    packtype=""                                                     # Initial Package None
+    found=$(sadm_get_command_path 'rpm')                            # Is command rpm available 
+    if [ "$found" != "" ] ; then packtype="rpm"  ; echo "$packtype" ; return 0 ; fi 
+    
+    found=$(sadm_get_command_path 'dpkg')                           # Is command dpkg available 
+    if [ "$found" != "" ] ; then packtype="deb"  ; echo "$packtype" ; return 0 ; fi 
+    
+    found=$(sadm_get_command_path 'lslpp')                          # Is command lslpp available 
+    if [ "$found" != "" ] ; then packtype="aix"  ; echo "$packtype" ; return 0 ; fi 
 
+    found=$(sadm_get_command_path 'launchctl')                      # Is command lslpp available 
+    if [ "$found" != "" ] ; then packtype="dmg"  ; echo "$packtype" ; return 0 ; fi 
+    
+    echo "$packtype"                                                # Return Package Type
+    return 1                                                        # Error - Return code 1
+}
 
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
