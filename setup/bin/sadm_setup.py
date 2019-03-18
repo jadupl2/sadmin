@@ -48,11 +48,11 @@
 # 2019_01_25 Fix: v3.11 Fix problem with crash and multiple change to simplify process.
 # 2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
-#@2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
-#@2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
+# 2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
+# 2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
 #@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
 #@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
-#@2019_03_17 Change: v3.18 If not already install, 'curl' package will be intall by setup.
+#@2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
 # 
 # ==================================================================================================
 #
