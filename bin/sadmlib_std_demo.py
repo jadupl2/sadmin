@@ -34,8 +34,9 @@
 # 2018_06_04    v2.8 Added User Directory Environment Variables in SADMIN Client Section
 # 2018_06_05    v2.9 Added setup, www/tmp/perf Directory Environment Variables 
 # 2018_12_03    v3.0 Remove dot before and after the result column and minor changes.
-#@2019_01_19    v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
-#@2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
+# 2019_01_19    v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
+# 2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
+#@2019_03_18 Added: v3.3 Add demo call to function get_packagetype()
 #===================================================================================================
 #
 try :
@@ -72,7 +73,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.2"                 # Current Script Version
+    st.ver              = "3.3"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -222,6 +223,12 @@ def print_functions(st):
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=st.elapse_time(DATE1,DATE2)                                 # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.get_packagetype()"                                     # Example Calling Function
+    pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
+    presult=st.get_packagetype()                                        # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
 
 
 
