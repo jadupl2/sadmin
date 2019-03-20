@@ -31,9 +31,10 @@
 # 2019_01_27 V1.7 Change: v1.7 Make sure /etc/hosts contains the IP and FQDN of current server
 # 2019_01_28 V1.8 Fix: v1.8 Fix crash problem related to EPEL repository installation.
 # 2019_01_28 Fix: v1.9 problem installing EPEL Repo on CentOS/RHEL. 
-#@2019_03_01 Updated: v2.0 Bug Fix and updated for RHEL/CensOS 8 
-#@2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
-#@2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
+# 2019_03_01 Updated: v2.0 Bug Fix and updated for RHEL/CensOS 8 
+# 2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
+# 2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
+#@2019_03_30 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -42,7 +43,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.2'                              ; export SADM_VER           # Your Script Version
+SADM_VER='2.3'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -292,7 +293,7 @@ EOF
     #echo "SLOGDIR = $SLOGDIR & Log file is $SLOG" | tee -a $SLOG 
 
     # Make sure lsb_release exist, if not install it
-    if [ "$SADM_OSTYPE" == LINUX ]                                      # Under Linux install lsb_release
+    if [ "$SADM_OSTYPE" = LINUX ]                                      # Under Linux install lsb_release
         then check_lsb_release                                          # lsb_release must be found
              if [ $? -ne 0 ]                                            # Error installing lsb_release
                 then echo "Was unable to install lsb_release"           # Inform user
@@ -312,13 +313,13 @@ EOF
     
 
     # # Support only Redhat/CentOS or Debian/Ubuntu
-    # if [ "${SADM_OSNAME}" == "REDHAT" ] || [ "${SADM_OSNAME}" == "CENTOS" ]
+    # if [ "${SADM_OSNAME}" = "REDHAT" ] || [ "${SADM_OSNAME}" = "CENTOS" ]
     #     then if [ "${SADM_OSVERSION}" -lt "6" ]
     #             then echo "O/S Version ${SADM_OSNAME} too low - upport Version 6 and up" | tee -a $SLOG
     #                  exit 1
     #          fi
     # fi 
-    # if [ "$SADM_OSNAME" == "DEBIAN" ] || [ "$SADM_OSNAME" == "UBUNTU" ] 
+    # if [ "$SADM_OSNAME" = "DEBIAN" ] || [ "$SADM_OSNAME" = "UBUNTU" ] 
     #     then if [ "${SADM_OSVERSION}" -lt "8" ]
     #             then echo "O/S Version ${SADM_OSNAME} too low - Support Version 8 and up" | tee -a $SLOG
     #                  exit 1
@@ -326,7 +327,7 @@ EOF
     # fi 
 
     # Add EPEL Repository on RedHat, CentOS 
-    if [ "${SADM_OSNAME}" == "REDHAT" ] || [ "${SADM_OSNAME}" == "CENTOS" ]
+    if [ "${SADM_OSNAME}" = "REDHAT" ] || [ "${SADM_OSNAME}" = "CENTOS" ]
         then add_epel_repo
     fi 
 
