@@ -288,7 +288,7 @@ def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin' to /etc/hosts file",'bold')
+    writelog ("Adding 'sadmin.${wdomain}' to /etc/hosts file",'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -849,7 +849,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
     writelog('')
-    writelog("Inserting server '%s' in Database ... " % (sname),'bold') # Show User adding Server
+    writelog("Inserting server '%s' in SADMIN Database ... " % (sname),'bold') # Show adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
@@ -1025,7 +1025,6 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
 
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
-    writelog ('')                                                       # Space line
     uname = "sadmin"                                                    # User to check in DB
     rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
     writelog(' ')                                                       # Blank Line
@@ -1802,7 +1801,7 @@ def setup_sadmin_config_file(sroot,wostype):
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
     #if (stype == "S"): sdefault = socket.getfqdn()                      # Server Install=Hostname
-    sprompt  = "Enter SADMIN (FQDN) server name"                        # Prompt for Answer
+    sprompt  = "Enter SADMIN server name (FQDN)"                        # Prompt for Answer
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
