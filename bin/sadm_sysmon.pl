@@ -30,6 +30,7 @@
 # 2018_12_29 v2.27 Enhance Performance checking service, chown & chmod only if running as root.
 # 2018_12_30 v2.28 Fix: problem when checking service using Sys V method.
 #@2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
+#@2019_03_20 nolog: v2.29 Mail message change
 #===================================================================================================
 #
 use English;
@@ -1497,7 +1498,7 @@ sub write_rpt_file {
         ($myear,$mmonth,$mday,$mhour,$mmin,$msec,$mepoch) = Today_and_Now(); # Get Date,Time, Epoch
         my $mail_mess0 = sprintf("Today %04d/%02d/%02d at %02d:%02d, ",$myear,$mmonth,$mday,$mhour,$mmin);
         my $mail_mess1 = "Daemon $daemon_name wasn't running on ${HOSTNAME}.\n";
-        my $mail_mess2 = "SysMon executed the script : $SADM_RECORD->{SADM_SCRIPT} $daemon_name to restart it.\n";
+        my $mail_mess2 = "SysMon executed the script : '$SADM_RECORD->{SADM_SCRIPT} $daemon_name' to restart it.\n";
         my $mail_mess3 = "This is the first time SysMon is restarting this service today.";
         my $mail_message = "${mail_mess0}${mail_mess1}${mail_mess2}${mail_mess3}";
         my $mail_subject = "SADM: INFO $HOSTNAME daemon $daemon_name restarted";

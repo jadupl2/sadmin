@@ -18,7 +18,8 @@
 # 2018_06_11    v3.1 Change Name to sadm_cfg2html.sh
 # 2018_09_16    v3.2 Added Alert Group Script default
 # 2018_09_16    v3.3 Added prefix 'cfg2html_' to files produced by cfg2html in $SADMIN/dat/dr.
-#@2018_11_13    v3.4 Chown & Chmod of cfh2html produced files.
+# 2018_11_13    v3.4 Chown & Chmod of cfh2html produced files.
+#@2019_03_18 Fix: v3.5 Fix problem that prevent running on Fedora.
 #===================================================================================================
 #
 # --------------------------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.4'                               # Current Script Version
+    export SADM_VER='3.5'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -141,13 +142,6 @@ show_version()
 # Script not supported on MacOS
     if [ "$(sadm_get_ostype)" = "DARWIN" ]                              # If on MacOS 
        then sadm_writelog "This script is not supported on MacOS"       # Advise User
-             sadm_stop 0                                                # Close and Trim Log
-             exit 0                                                     # Exit To O/S
-    fi
-
-# Bug - Hang on Fedora 27 and Up - Skip Execution
-    if [ "$(sadm_get_osname)" = "FEDORA" ] && [ "$(sadm_get_osmajorversion)" > "26" ] 
-       then sadm_writelog "This script is not supported on Fedora higher than 26"  # Advise User
              sadm_stop 0                                                # Close and Trim Log
              exit 0                                                     # Exit To O/S
     fi

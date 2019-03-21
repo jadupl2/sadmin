@@ -22,8 +22,9 @@
 # 2018_06_05    v3.4 Add dat/dbb,usr/bin,usr/doc,usr/lib,usr/mon,setup and www/tmp/perf Display
 # 2018_09_04    v3.5 Show SMON Alert type, curl, mutt and Alert Group
 # 2018_09_25    v3.6 Show SMON Alert Group, Channel and History Files
-#@2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
-#@2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
+# 2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
+# 2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
+#@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -45,7 +46,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.8'                               # Current Script Version
+    export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -285,7 +286,12 @@ print_functions()
     pdesc="Elapse Time between two timestamps"                          # Function Description
     presult=$(sadm_elapse "$DATE1" "$DATE2")                            # Return Value(s)
     printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
-
+     
+    pexample="\$(sadm_get_packagetype)"                                 # Example Calling Function
+    pdesc="Get package type (rpm,deb,aix,dmg)"                          # Function Description
+    presult="$(sadm_get_packagetype)"                                   # Return Value(s)
+    printline "$pexample" "$pdesc" "$presult"                           # Print Example Line
+     
 }
 
 

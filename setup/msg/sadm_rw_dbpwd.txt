@@ -1,5 +1,5 @@
 # sadmin.cfg SADM_RW_DBPWD Documentation
 # Revise 2018_03_18
 #----------------------------------------------------------------------------
-This is the read/write user ("sadmin") password  in the SADMIN database.
+This is the read/write user ("sadmin") password in the SADMIN database.
 Give this password to people who you want to update server information.

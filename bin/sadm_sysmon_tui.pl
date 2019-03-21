@@ -8,12 +8,13 @@
 #   Requires :  sh
 #===================================================================================================
 # Change Log
-# 2016_01_04    v1.1 Initial Version
-# 2017_02_02    v1.2 Initial Working Version
-# 2018_06_03    v1.3 Changes made to output format
-# 2018_06_21    v1.4 Added comments
-# 2018_07_19    v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
-#@ 2018_07_20   v1.6 Wasn't Deleting work file at the end
+# 2016_01_04 v1.1 Initial Version
+# 2017_02_02 v1.2 Initial Working Version
+# 2018_06_03 v1.3 Changes made to output format
+# 2018_06_21 v1.4 Added comments
+# 2018_07_19 v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
+# 2018_07_20 Fix: v1.6 Wasn't Deleting work file at the end
+#@2019_03_17 Fix: v1.7 Wasn't reporting error coming from result code history (rch) file.
 #===================================================================================================
 use English;
 
@@ -25,12 +26,12 @@ my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
 my $SADM_WDATA_DIR      = "${SADM_BASE_DIR}/www/dat";                   # Dir where all *.rpt reside
 $XDISPLAY= "$ENV{'DISPLAY'}";                                           # Variable ENV DIsplay
-$VERSION_NUMBER = "1.6";                                                # SADM Version Number
+$VERSION_NUMBER = "1.7";                                                # SADM Version Number
 $CLEAR=`tput clear`;
 $RPT_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rpt.$$";
 $RCH_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rch.$$";
 $CMD_RPT="find $SADM_WDATA_DIR -type f -name *.rpt -exec cat {} > $RPT_FILE \\;" ;
-$CMD_RCH="find $SADM_WDATA_DIR -type f -name *.rch -exec tail -1 {} \\;| awk 'match(\$8,/[1-2]/) { print }' >$RCH_FILE";
+$CMD_RCH="find $SADM_WDATA_DIR -type f -name *.rch -exec tail -1 {} \\;| awk 'match(\$9,/[1-2]/) { print }' >$RCH_FILE";
   
 # --------------------------------------------------------------------------------------------------
 #                               Display System Report file from all host
@@ -53,25 +54,30 @@ sub display_report {
     # Display Scripts Error (Code 1) or Running (Code 2) by reading last line of every *.rch files 
     #print "$CMD_RCH";
     system ("$CMD_RCH");
+    system ("cp $RCH_FILE /tmp/coco.txt");
     open (SADMRCH,"<$RCH_FILE") or die "Can't open $RCH_FILE: $!\n";
+    $noreport=1;
     while ($line = <SADMRCH>) {
         ($RNode,$RSDate,$RSTime,$REDate,$RETime,$RElapse,$RScript,$RCode) = split ' ',$line;
         if ($RCode == 1) { 
             $RType = "Error"; 
             $RDate = $REDate;
             $RTime = substr($RETime,0,5);
-            $RDesc = "$RScript Ended with Error"
+            $RDesc = "$RScript Ended with Error";
+            $noreport=0;
         }else{
             $RType = "Running";
             $RDate = $RSDate;
-            $RTime = substr($RSTime,0,5);;
-            $RDesc = "Script $RScript Running"
+            $RTime = substr($RSTime,0,5);
+            $RDesc = "Script $RScript Running";
+            $noreport=0;
         }
         printf "%-7s %-10s %-9s %-5s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,"Linux","Script",$RDesc;
     }
     close (SADMRCH);
-    unlink($RCH_FILE);
-    unlink($RPT_FILE);
+    if ($noreport) { print "Nothing to report..." ; }
+    #unlink($RCH_FILE);
+    #unlink($RPT_FILE);
 }
 
 

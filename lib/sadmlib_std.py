@@ -36,8 +36,8 @@
 # 2018_11_13 v2.23 Change for support of MacOS Mojave
 # 2019_01_19 v2.24 Added: Added Backup List & Exclude List Var. in Class & curl,mutt cmd. path.
 # 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
-#@2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
-# 
+# 2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
+#@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -109,7 +109,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.25"                                # This Library Version
+        self.libver             = "2.27"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -552,6 +552,23 @@ class sadmtools():
         return wrelease
 
 
+    # ----------------------------------------------------------------------------------------------
+    # DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S 
+    # ----------------------------------------------------------------------------------------------
+    def get_packagetype(self):
+        packtype=""                                                     # Initial Packaging is None
+        if (self.locate_command('rpm')   != "") : packtype="rpm"        # Is rpm command on system ?
+        if (self.locate_command('dpkg')  != "") : packtype="deb"        # is deb command on system ?
+        if (self.locate_command('lslpp') != "") : packtype="aix"        # Is lslpp cmd on system ?
+        if (self.locate_command('launchctl') != "") : packtype="dmg"    # launchctl MacOS on system?
+        if (packtype == ""):                                            # If unknow/unsupported O/S
+            self.writelog ('None of these commands are found (rpm, pkg, dmg or lslpp absent)')
+            self.writelog ('No supported package type is detected')
+            self.writelog ('Process aborted')
+            sys.exit(1)                                                     # Exit to O/S  
+        return packtype
+
+
     # # ----------------------------------------------------------------------------------------------
     # #                                 RETURN THE HOSTNAME (SHORT)
     # # ----------------------------------------------------------------------------------------------
@@ -926,10 +943,10 @@ class sadmtools():
     def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
-            print ("\n[WARNING] Command '%s' couldn't be found" % (cmd))# Display Warning for User
-            print ("If available, it should be install")                # Advise user should install
-            print ("You may want to run 'sadm_prereq_install.sh' to list any missing commands")
-            print ("After that you can run 'sadm_prereq_install.sh -y' to install them")
+#            print ("\n[WARNING] Command '%s' couldn't be found" % (cmd))# Display Warning for User
+#            print ("If available, it should be install")                # Advise user should install
+#            print ("You may want to run 'sadm_prereq_install.sh' to list any missing commands")
+#            print ("After that you can run 'sadm_prereq_install.sh -y' to install them")
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path

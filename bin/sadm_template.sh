@@ -30,9 +30,10 @@
 # Version Change Log 
 #
 # 2018_MM_DD    V1.0 Initial Version
+#@2019_03_17 Fix: v1.1 Fix 'trap: SIGHUP: bad trap' warning message.
 #
 # --------------------------------------------------------------------------------------------------
-trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIGINT SIGTERM received
+trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
      
 
@@ -59,7 +60,7 @@ trap 'sadm_stop 0; exit 0' SIGHUP SIGINT SIGTERM       # if signals - SIGHUP SIG
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.0'                               # Your Current Script Version
+    export SADM_VER='1.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header

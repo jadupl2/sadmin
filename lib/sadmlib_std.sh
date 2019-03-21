@@ -8,6 +8,11 @@
 # --------------------------------------------------------------------------------------------------
 # Description
 # This file is not a stand-alone shell script; it provides functions to your scripts that source it.
+#
+# Note : All scripts (Shell,Python,php), configuration file and screen output are formatted to 
+#        have and use a 100 characters per line. Comments in script always begin at column 73. 
+#        You will have a better experience, if you set screen width to have at least 100 Characters.
+# 
 # --------------------------------------------------------------------------------------------------
 # CHANGE LOG
 # 2016_11_05 V2.0 Create log file earlier to prevent error message
@@ -59,7 +64,7 @@
 # 2018_10_15 v2.46 Remove repetitive lines in Slack Message and Email Alert
 # 2018_10_20 v2.47 Alert not sent by client anymore,all alert are send by SADMIN Server(Avoid Dedup)
 # 2018_10_28 v2.48 Only assign a Reference Number to 'Error' alert (Warning & Info not anymore)
-# 2018_10_29 v2.49 Correct Type Error causing occasionnal crash
+# 2018_10_29 v2.49 Correct Type Error causing occasional crash
 # 2018_10_30 v2.50 Use dnsdomainname to get current domainname if host cmd don't return it.
 # 2018_11_09 v2.51 Add Link in Slack Message to view script log.
 # 2018_11_09 v2.52 Update For Calculate CPU SPeed & for MacOS Mojave.
@@ -71,10 +76,12 @@
 # 2018_12_29 v2.58 Default logging ([B]oth) is now set to screen and log.
 # 2019_01_11 Added: v2.59 Include definitions for backup & exclude list, avail to user.
 # 2019_01_29 Change: v2.60 Improve the sadm_get_domainname function.
-#@2019_02_05 Fix: v2.61 Correct type error. 
-#@2019_02_06 Fix: v2.62 break error when finding system domain name.
+# 2019_02_05 Fix: v2.61 Correct type error. 
+# 2019_02_06 Fix: v2.62 break error when finding system domain name.
 # 2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
-#@2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
+# 2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
+#@2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
+#@2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -84,16 +91,16 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
+SADM_LIB_VER="2.66"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
 SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES      # 80 spaces 
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
-SADM_VAR1=""                                ; export SADM_VAR1          # Temp Dummy Variable
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
 SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
-SADM_LIB_VER="2.64"                         ; export SADM_LIB_VER       # This Library Version
+LIB_DEBUG=0                                 ; export LIB_DEBUG          # Library Debug Level
 
 # SADMIN DIRECTORIES STRUCTURES DEFINITIONS
 SADM_BASE_DIR=${SADMIN:="/sadmin"}          ; export SADM_BASE_DIR      # Script Root Base Dir.
@@ -182,7 +189,7 @@ SADM_SSH=""                                 ; export SADM_SSH           # Path t
 SADM_MYSQL=""                               ; export SADM_MYSQL         # Default mysql FQDN
 SADM_FACTER=""                              ; export SADM_FACTER        # Default facter Cmd Path
 
-# SADMIN CONFIG FILE VARIABLES (Default Values here will be overrridden by SADM CONFIG FILE Content)
+# SADMIN CONFIG FILE VARIABLES (Default Values here will be overridden by SADM CONFIG FILE Content)
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
@@ -238,7 +245,6 @@ SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP    
 
 # Local to Library Variable - Can't be use elsewhere outside this script
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
-LIB_DEBUG=0                                 ; export LIB_DEBUG          # Libr. Debug Level
 
 
 # --------------------------------------------------------------------------------------------------
@@ -286,7 +292,7 @@ sadm_writelog() {
 
 
 # --------------------------------------------------------------------------------------------------
-#                TRIM THE FILE RECEIVED AS FIRST PARAMETER (MAX LINES IN LOG AS 2ND PARAMATER)
+# TRIM THE FILE RECEIVED AS FIRST PARAMETER (MAX LINES IN LOG AS 2ND PARAMATER)
 # --------------------------------------------------------------------------------------------------
 sadm_trimfile() {
     wfile=$1 ; maxline=$2                                               # Save FileName et Nb Lines
@@ -332,86 +338,40 @@ sadm_trimfile() {
 
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
-# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST RETURN 1
+# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST, RETURN 1
 # --------------------------------------------------------------------------------------------------
-sadm_check_command_availibility() {
+sadm_get_command_path() {
     SADM_CMD=$1                                                         # Save Parameter received
-    if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # command is found ?
-        then SADM_VAR1=`${SADM_WHICH} ${SADM_CMD}`                      # Store Path of command
-             return 0                                                   # Return 0 if cmd found
-        else SADM_VAR1=""                                               # Clear Path of command
+    if ${SADM_WHICH} ${SADM_CMD} >/dev/null 2>&1                        # Command is found ?
+        then CMD_PATH=`${SADM_WHICH} ${SADM_CMD}`                       # Store Path in Cmd path
+             echo "$CMD_PATH"                                           # Return Command Path 
+             return 0                                                   # Return 0 if Cmd found
+        else CMD_PATH=""                                                # Clear Command Path 
+             echo "$CMD_PATH"                                           # Return empty str as path
     fi
-    return 1
+    return 1                                                            # Return 1 if Cmd not Found
 }
 
+# ----------------------------------------------------------------------------------------------
+# DETERMINE THE INSTALLATION PACKAGE TYPE OF CURRENT O/S 
+# ----------------------------------------------------------------------------------------------
+sadm_get_packagetype() {
+    packtype=""                                                     # Initial Package None
+    found=$(sadm_get_command_path 'rpm')                            # Is command rpm available 
+    if [ "$found" != "" ] ; then packtype="rpm"  ; echo "$packtype" ; return 0 ; fi 
+    
+    found=$(sadm_get_command_path 'dpkg')                           # Is command dpkg available 
+    if [ "$found" != "" ] ; then packtype="deb"  ; echo "$packtype" ; return 0 ; fi 
+    
+    found=$(sadm_get_command_path 'lslpp')                          # Is command lslpp available 
+    if [ "$found" != "" ] ; then packtype="aix"  ; echo "$packtype" ; return 0 ; fi 
 
-# --------------------------------------------------------------------------------------------------
-# THIS FUNCTION IS USED TO INSTALL A MISSING PACKAGE THAT IS REQUIRED BY SADMIN TOOLS
-#                       THE PACKAGE TO INSTALL IS RECEIVED AS A PARAMETER
-# --------------------------------------------------------------------------------------------------
-sadm_install_package()
-{
-    # Check if we received at least a parameter
-    if [ $# -ne 2 ]                                                      # Should have rcv 1 Param
-        then sadm_writelog "Nb. Parameter received by $FUNCNAME function is incorrect"
-             sadm_writelog "Please correct your script - Script Aborted" # Advise User to Correct
-             sadm_stop 1                                                 # Prepare exit gracefully
-             exit 1                                                      # Terminate the script
-    fi
-    PACKAGE_RPM=$1                                                       # RedHat/CentOS/Fedora Pkg
-    PACKAGE_DEB=$2                                                       # Ubuntu/Debian/Raspian Deb
-
-
-    # Install the Package under RedHat/CentOS/Fedora
-    if [ "$(sadm_get_osname)" = "REDHAT" ] || [ "$(sadm_get_osname)" = "CENTOS" ] ||
-       [ "$(sadm_get_osname)" = "FEDORA" ]
-        then lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
-             lmess="${lmess} Version $(sadm_get_osmajorversion)"
-             sadm_writelog "$lmess"
-             case "$(sadm_get_osmajorversion)" in
-                [34])  sadm_writelog "Running \"up2date --nox -i ${PACKAGE_RPM}\""
-                       up2date --nox -i ${PACKAGE_RPM} >>$SADM_LOG 2>&1
-                       rc=$?
-                       sadm_writelog "Return Code after installing ${PACKAGE_RPM} is $rc"
-                       break
-                       ;;
-              [567])   sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
-                       yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
-                       rc=$?                                            # Save Exit Code
-                       sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
-                       break
-                       ;;
-              *)       lmess="The version $(sadm_get_osmajorversion) of"
-                       lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
-                       sadm_writelog "$lmess"
-                       rc=1                                             # Save Exit Code
-                       break
-                       ;;
-             esac
-    fi
-
-    # Install the Package under Debian/*Ubuntu/RaspberryPi
-    if [ "$(sadm_get_osname)" = "UBUNTU" ] || [ "$(sadm_get_osname)" = "RASPBIAN" ] ||
-       [ "$(sadm_get_osname)" = "DEBIAN" ] || [ "$(sadm_get_osname)" = "LINUXMINT" ]
-        then sadm_writelog "Resynchronize package index files from their sources via Internet"
-             sadm_writelog "Running \"apt-get update\""                 # Msg Get package list
-             apt-get update > /dev/null 2>&1                            # Get Package List From Repo
-             rc=$?                                                      # Save Exit Code
-             if [ "$rc" -ne 0 ]
-                then sadm_writelog "We had problem running the \"apt-get update\" command"
-                     sadm_writelog "We had a return code $rc"
-                else sadm_writelog "Return Code after apt-get update is $rc"  # Show  Return Code
-                     sadm_writelog "Installing the Package ${PACKAGE_DEB} now"
-                     sadm_writelog "apt-get -y install ${PACKAGE_DEB}"
-                     apt-get -y install ${PACKAGE_DEB}
-                     rc=$?                                              # Save Exit Code
-                     sadm_writelog "Return Code after installation of ${PACKAGE_DEB} is $rc"
-             fi
-    fi
-    sadm_writelog " "
-    return $rc                                                          # 0=Installed 1=Error
+    found=$(sadm_get_command_path 'launchctl')                      # Is command lslpp available 
+    if [ "$found" != "" ] ; then packtype="dmg"  ; echo "$packtype" ; return 0 ; fi 
+    
+    echo "$packtype"                                                # Return Package Type
+    return 1                                                        # Error - Return code 1
 }
-
 
 # --------------------------------------------------------------------------------------------------
 # THIS FUNCTION MAKE SURE THAT ALL SADM SHELL LIBRARIES (LIB/SADM_*) REQUIREMENTS ARE MET BEFORE USE
@@ -423,7 +383,7 @@ sadm_check_requirements() {
 
     # The 'which' command is needed to determine presence of command - Return Error if not found
     if which which >/dev/null 2>&1                                      # Try the command which
-        then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save the Path of Which
+        then SADM_WHICH=`which which`  ; export SADM_WHICH              # Save Path of Which Command
         else sadm_writelog "[ERROR] The command 'which' couldn't be found"
              sadm_writelog "        This program is often used by the SADMIN tools"
              sadm_writelog "        Please install it and re-run this script"
@@ -431,96 +391,45 @@ sadm_check_requirements() {
              return 1                                                   # Return Error to Caller
     fi
 
-    # Commands available on Linux O/S --------------------------------------------------------------
+    # Get Command path for Linux O/S ---------------------------------------------------------------
     if [ "$(sadm_get_ostype)" = "LINUX" ]                               # Under Linux O/S
-       then sadm_check_command_availibility "lsb_release"               # lsb_release cmd available?
-            SADM_LSB_RELEASE=$SADM_VAR1
-            sadm_check_command_availibility "dmidecode"                 # dmidecode cmd available?
-            SADM_DMIDECODE=$SADM_VAR1
-            sadm_check_command_availibility "nmon"                      # Command available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "nmon" "nmon"                 # Go Install Missing Package
-                     if [ $? -eq 0 ] ; then sadm_check_command_availibility nmon ;fi
-            fi
-            SADM_NMON=$SADM_VAR1                                        # Save Command Path
-
-            sadm_check_command_availibility "ethtool"                   # Command available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "ethtool" "ethtool"           # Go Install Missing Package
-                    if [ $? -eq 0 ] ;then sadm_check_command_availibility ethtool ;fi
-            fi
-            SADM_ETHTOOL=$SADM_VAR1                                     # Save Command Path
-
-            sadm_check_command_availibility "parted"                    # Command available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "parted" "parted"             # Go Install Missing Package
-                    if [ $? -eq 0 ] ;then sadm_check_command_availibility "parted" ;fi
-            fi
-            SADM_PARTED=$SADM_VAR1                                      # Save Command Path
-
-            sadm_check_command_availibility "mail"                      # Mail cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "mailx" "mailutils"            # Go Install Missing Package
-                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mail" ; fi
-            fi
-            SADM_MAIL=$SADM_VAR1                                        # Save Command Path
-
-            sadm_check_command_availibility "mutt"                      # mutt cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "mutt" "mutt"                 # Go Install Missing Package
-                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mutt" ; fi
-            fi
-            SADM_MUTT=$SADM_VAR1                                        # Save Command Path
-
-            sadm_check_command_availibility "curl"                      # mutt cmd available?
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-                then sadm_install_package "curl" "curl"                 # Go Install Missing Package
-                     if [ $? -eq 0 ] ;then sadm_check_command_availibility "mutt" ; fi
-            fi
-            SADM_CURL=$SADM_VAR1                                        # Save Command Path
-
-            sadm_check_command_availibility lscpu                       # lscpu cmd available?
-            SADM_LSCPU=$SADM_VAR1                                       # Save Command Path
+       then SADM_LSB_RELEASE=$(sadm_get_command_path "lsb_release")     # Get lsb_release cmd path
+            SADM_DMIDECODE=$(sadm_get_command_path "dmidecode")         # Get dmidecode cmd path
+            SADM_NMON=$(sadm_get_command_path "nmon")                   # Get nmon cmd path   
+            SADM_ETHTOOL=$(sadm_get_command_path "ethtool")             # Get ethtool cmd path   
+            SADM_PARTED=$(sadm_get_command_path "parted")               # Get parted cmd path   
+            SADM_MUTT=$(sadm_get_command_path "mutt")                   # Get mutt cmd path   
+            SADM_CURL=$(sadm_get_command_path "curl")                   # Get curl cmd path   
+            SADM_LSCPU=$(sadm_get_command_path "lscpu")                 # Get lscpu cmd path   
+            SADM_FDISK=$(sadm_get_command_path "fdisk")                 # Get fdisk cmd path   
     fi
 
-    # Commands on Aix O/S --------------------------------------------------------------------------
+    # Special consideration for nmon on Aix 5.x & 6.x (After that it is included as part of O/S ----
     if [ "$(sadm_get_ostype)" = "AIX" ]                                 # Under Aix O/S
-       then sadm_check_command_availibility "nmon"                      # nmon cmd available?
-            SADM_NMON=$SADM_VAR1
-            if [ "$SADM_VAR1" = "" ]                                    # If Command not found
-               then NMON_WDIR="${SADM_PKG_DIR}/nmon/aix/"
+       then SADM_NMON=$(sadm_get_command_path "nmon")                   # Get nmon cmd path   
+            if [ "$SADM_NMON" = "" ]                                    # If Command not found
+               then NMON_WDIR="${SADM_PKG_DIR}/nmon/aix/"               # Where Aix nmon exec are
                     NMON_EXE="nmon_aix$(sadm_get_osmajorversion)$(sadm_get_osminorversion)"
-                    NMON_USE="${NMON_WDIR}${NMON_EXE}"
-                    if [ ! -x "$NMON_USE" ]
-                        then sadm_writelog "The nmon for AIX $(sadm_get_osversion) isn't available"
+                    NMON_USE="${NMON_WDIR}${NMON_EXE}"                  # Use exec. of your version
+                    if [ ! -x "$NMON_USE" ]                             # nmon exist and executable
+                        then sadm_writelog "'nmon' for AIX $(sadm_get_osversion) isn't available"
                              sadm_writelog "The nmon executable we need is $NMON_USE"
-                       else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon"
-                             ln -s ${NMON_USE} /usr/bin/nmon
-                             if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi
+                        else sadm_writelog "ln -s ${NMON_USE} /usr/bin/nmon"
+                             ln -s ${NMON_USE} /usr/bin/nmon            # Link nmon avail to user
+                             if [ $? -eq 0 ] ; then SADM_NMON="/usr/bin/nmon" ; fi # Set SADM_NMON
                     fi
             fi
     fi
 
-    # Commands require on ALL platform -------------------------------------------------------------
-    sadm_check_command_availibility "perl"                              # perl needed (epoch time)
-    SADM_PERL=$SADM_VAR1                                                # Save perl path
-    sadm_check_command_availibility "ssh"                               # ssh needed (epoch time)
-    SADM_SSH=$SADM_VAR1                                                 # Save ssh path
-    sadm_check_command_availibility "bc"                                # bc cmd available?
-    SADM_BC=$SADM_VAR1                                                  # Save Command Path
-    sadm_check_command_availibility "mail"                              # Mail cmd available?
-    SADM_MAIL=$SADM_VAR1                                                # Save Command Path
-    sadm_check_command_availibility "fdisk"                             # FDISK cmd available?
-    SADM_FDISK=$SADM_VAR1                                               # Save Command Path
-    sadm_check_command_availibility "facter"                            # facter cmd available?
-    SADM_FACTER=$SADM_VAR1                                              # Save Command Path
-
-    # If on the SADMIN Server mysql MUST be present - Check Availibility of the mysql command.
-    SADM_MYSQL=""                                                       # Default mysql Location
-    if [ "$(sadm_get_fqdn)" = "$SADM_SERVER" ]                          # Only Check on SADMIN Srv
-        then sadm_check_command_availibility "mysql"                    # Command available?
-             SADM_MYSQL=$SADM_VAR1                                      # Save Command Path
-    fi
+    # Get Command path for All supported O/S -------------------------------------------------------
+    SADM_PERL=$(sadm_get_command_path "perl")                           # Get perl cmd path   
+    SADM_SSH=$(sadm_get_command_path "ssh")                             # Get ssh cmd path   
+    SADM_BC=$(sadm_get_command_path "bc")                               # Get bc cmd path   
+    SADM_MAIL=$(sadm_get_command_path "mail")                           # Get mail cmd path   
+    SADM_FACTER=$(sadm_get_command_path "facter")                       # Get facter cmd path   
+    SADM_CURL=$(sadm_get_command_path "curl")                           # Get curl cmd path   
+    SADM_FACTER=$(sadm_get_command_path "facter")                       # Get facter cmd path   
+    SADM_MYSQL=$(sadm_get_command_path "mysql")                         # Get mysql cmd path  
     return 0
 }
 

@@ -48,8 +48,11 @@
 # 2019_01_25 Fix: v3.11 Fix problem with crash and multiple change to simplify process.
 # 2019_01_28 Added: v3.12 For security reason, assign SADM_USER a password during installation.
 # 2019_01_29 Added: v3.13 SADM_USER Home Directory is /home/SADM_USER no longer the install Dir.
-#@2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
-#@2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
+# 2019_02_25 Added: v3.14 Reduce output on initial execution of daily scripts.
+# 2019_03_08 Change: v3.15 Change related to RHEL/CentOS 8 and change some text messages.
+#@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
+#@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
+#@2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
 # 
 # ==================================================================================================
 #
@@ -66,7 +69,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.15"                                            # Setup Version Number
+sver                = "3.18"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -124,6 +127,8 @@ req_client = {
                     'deb':'ruby-full',                      'drepo':'base'},
     'bc'         :{ 'rpm':'bc',                             'rrepo':'base',  
                     'deb':'bc',                             'drepo':'base'},
+    'curl'       :{ 'rpm':'curl',                           'rrepo':'base',  
+                    'deb':'curl',                           'drepo':'base'},
     'ssh'        :{ 'rpm':'openssh-clients',                'rrepo':'base',
                     'deb':'openssh-client',                 'drepo':'base'},
     'dmidecode'  :{ 'rpm':'dmidecode',                      'rrepo':'base',
@@ -134,8 +139,8 @@ req_client = {
                     'deb':'perl-base',                      'drepo':'base'},
     'iostat'     :{ 'rpm':'sysstat',                        'rrepo':'base',  
                     'deb':'sysstat',                        'drepo':'base'},
-    'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
-                    'deb':'libdatetime-perl ',              'drepo':'base'},
+    #'datetime'   :{ 'rpm':'perl-DateTime ',                 'rrepo':'base',
+    #                'deb':'libdatetime-perl ',              'drepo':'base'},
     'libwww'     :{ 'rpm':'perl-libwww-perl ',              'rrepo':'base',
                     'deb':'libwww-perl ',                   'drepo':'base'},
     'lscpu'      :{ 'rpm':'util-linux',                     'rrepo':'base',  
@@ -283,7 +288,7 @@ def update_host_file(wdomain,wip) :
 
     writelog('')
     writelog('----------')
-    writelog ("Adding 'sadmin' to /etc/hosts file",'bold')
+    writelog ("Adding 'sadmin.${wdomain}' to /etc/hosts file",'bold')
     try : 
         hf = open('/etc/hosts','r+')                                    # Open /etc/hosts file
     except :
@@ -844,7 +849,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     server    = sserver.split('.')                                      # Split FQDN Server Name
     sname     = server[0]                                               # Only Keep Server Name
     writelog('')
-    writelog("Inserting server '%s' in Database ... " % (sname),'bold') # Show User adding Server
+    writelog("Inserting server '%s' in SADMIN Database ... " % (sname),'bold') # Show adding Server
     #
     cnow    = datetime.datetime.now()                                   # Get Current Time
     curdate = cnow.strftime("%Y-%m-%d")                                 # Format Current date
@@ -864,7 +869,7 @@ def add_server_to_db(sserver,dbroot_pwd,sdomain):
     sql = "use sadmin; "
     sql += "insert into server set srv_name='%s', srv_domain='%s'," % (sname,sdomain);
     sql += " srv_desc='SADMIN Server', srv_active='1', srv_date_creation='%s'," % (dbdate);
-    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Service', ";
+    sql += " srv_sporadic='0', srv_monitor='1', srv_cat='Prod', srv_group='Regular', ";
     sql += " srv_backup='0', srv_update_auto='0', srv_tag='SADMin Server', ";
     sql += " srv_osname='%s'," % (osdist);
     sql += " srv_osversion='%s'," % (osver);
@@ -1020,7 +1025,6 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
 
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
-    writelog ('')                                                       # Space line
     uname = "sadmin"                                                    # User to check in DB
     rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
     writelog(' ')                                                       # Blank Line
@@ -1797,7 +1801,7 @@ def setup_sadmin_config_file(sroot,wostype):
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
     #if (stype == "S"): sdefault = socket.getfqdn()                      # Server Install=Hostname
-    sprompt  = "Enter SADMIN (FQDN) server name"                        # Prompt for Answer
+    sprompt  = "Enter SADMIN server name (FQDN)"                        # Prompt for Answer
     while True:                                                         # Accept until valid server
         wcfg_server = accept_field(sroot,"SADM_SERVER",sdefault,sprompt)# Accept SADMIN Server Name
         writelog ("Validating server name ...")                         # Advise User Validating
@@ -2126,7 +2130,7 @@ def mainflow(sroot):
     writelog ('--------------------')
     writelog ("Run Initial SADMIN Daily scripts to feed Database and Web Interface",'bold')
     writelog ('  ')
-    writelog ("Running Client Scripts")
+    writelog ("Running Client Scripts",'bold')
     os.environ['SADMIN'] = sroot                                        # Define SADMIN For Scripts
     run_script(sroot,"sadm_create_sysinfo.sh")                          # Server Spec in dat/dr dir.
     run_script(sroot,"sadm_client_housekeeping.sh")                     # Validate Owner/Grp/Perm
@@ -2137,7 +2141,7 @@ def mainflow(sroot):
     # Run First SADM Server Script to feed Web interface and Database
     if (stype == "S"):                                                  # If Server Installation
         writelog ('  ')
-        writelog ("Running Server Scripts")
+        writelog ("Running Server Scripts",'bold')
         run_script(sroot,"sadm_fetch_clients.sh")                       # Grab Status from clients
         run_script(sroot,"sadm_daily_farm_fetch.sh")                    # mv ClientData to ServerDir
         run_script(sroot,"sadm_server_housekeeping.sh")                 # Validate Owner/Grp/Perm
