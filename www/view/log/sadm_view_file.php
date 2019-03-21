@@ -56,11 +56,13 @@ div.data_frame {
     border-radius   :   10px;
 }
 code {
-    font-size:0.9em;
+    /* font-size:0.9em; */
     margin: 10px;
     background: #2f3743;
     text-align: left;
     color           : white;
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 12px;
 }
 </style>
 <?php

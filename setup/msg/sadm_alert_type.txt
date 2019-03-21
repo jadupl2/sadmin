@@ -7,4 +7,3 @@ Can be overridden by changing SADM_ALERT_TYPE in SADMIN section of your script.
 [1] = Send alert when script terminate with error (Default).
 [2] = Send alert when script terminate with success.
 [3] = Always send alert when script finish.
-
