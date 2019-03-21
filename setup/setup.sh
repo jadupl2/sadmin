@@ -34,7 +34,8 @@
 # 2019_03_01 Updated: v2.0 Bug Fix and updated for RHEL/CensOS 8 
 # 2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
 # 2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
-#@2019_03_30 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
+#@2019_03_17 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
+#@2019_03_21 Nolog: v.2.4 Minor typo change.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -43,7 +44,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.3'                              ; export SADM_VER           # Your Script Version
+SADM_VER='2.4'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -81,7 +82,7 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 6 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 6 ] 
-        then echo "Adding CentOS/Redhat V6 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+        then echo "Adding CentOS/Redhat V6 EPEL repository (Disable by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
                 then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
@@ -98,16 +99,16 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 7 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 7 ] 
-        then echo "Adding CentOS/Redhat V7 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+        then echo "Adding CentOS/Redhat V7 EPEL repository (Disable by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "${yellow}[Error] Adding EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
                      return 1
              fi 
              echo "Disabling EPEL Repository, will activate it only when needed" |tee -a $SLOG
              yum-config-manager --disable epel >/dev/null 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION" | tee -a $SLOG
+                then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}" | tee -a $SLOG
                      return 1
              fi 
              return 0
@@ -115,10 +116,10 @@ add_epel_repo()
 
     # Add EPEL Repository on Redhat / CentOS 8 (but do not enable it)
     if [ "$SADM_OSVERSION" -eq 8 ] 
-        then echo "Adding CentOS/Redhat V8 EPEL repository (Disabled by default) ..." |tee -a $SLOG
+        then echo "Adding CentOS/Redhat V8 EPEL repository (Disable by default) ..." |tee -a $SLOG
              yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm >>$SLOG 2>&1
              if [ $? -ne 0 ]
-                then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
+                then echo "${yellow}[Error] Adding EPEL repository for version $SADM_OSVERSION${reset}" | tee -a $SLOG
                      return 1
              fi 
              #
@@ -216,7 +217,7 @@ check_lsb_release()
     if [ "$SADM_OSTYPE" != LINUX ] ; then return 1 ; fi                 # Only available on Linux
 
     # Make sure lsb_release is installed
-    echo -n "Checking if 'lsb_release' is installed ... " | tee -a $SLOG
+    echo -n "Checking if 'lsb_release' is available ... " | tee -a $SLOG
     which lsb_release > /dev/null 2>&1
     if [ $? -eq 0 ] ; then echo " Done " | tee -a $SLOG ; return ; fi 
 
