@@ -1,8 +1,8 @@
 #! /usr/bin/env sh
 #---------------------------------------------------------------------------------------------------
-#   Author      :   Your Name
+#   Author      :   Jacques Duplessis
 #   Script Name :   XXXXXXXX.sh
-#   Date        :   YYYY/MM/DD
+#   Date        :   2019/MM/DD
 #   Requires    :   sh and SADMIN Shell Library
 #   Description :
 #
@@ -29,8 +29,7 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-# 2018_MM_DD    V1.0 Initial Version
-#@2019_03_17 Fix: v1.1 Fix 'trap: SIGHUP: bad trap' warning message.
+# 2019_MM_DD New: v1.0 Initial Version
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
