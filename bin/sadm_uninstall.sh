@@ -29,7 +29,8 @@
 # --------------------------------------------------------------------------------------------------
 # Version Change Log 
 #
-#@2019_03_23 New: v1.0 Beta - Test Initial version.
+# 2019_03_23 New: v1.0 Beta - Test Initial version.
+#@2019_03_26 New: v1.1 Beta - Ready to Test 
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -59,7 +60,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.0'                               # Your Current Script Version
+    export SADM_VER='1.1'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -86,9 +87,14 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 # Scripts Variables 
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-DRYRUN=0                                    ; export DRYRUN             # 0=NotDryRun 1=YesDryRun
-
-
+DRYRUN=1                                    ; export DRYRUN             # default Dryrun activated  
+TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
+TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
+#
+command -v systemctl > /dev/null 2>&1                                   # Using sysinit or systemd ?
+if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SYSTEMD Accordingly
+export SYSTEMD                                                          # Export Result        
+#
 
 
 # --------------------------------------------------------------------------------------------------
@@ -97,7 +103,7 @@ DRYRUN=0                                    ; export DRYRUN             # 0=NotD
 show_usage()
 {
     printf "\n${SADM_PN} usage :"
-    printf "\n\t-t   (Dry Run Test- See what uninstall would do)"
+    printf "\n\t-y   (Yes really remove SADMIN from this system)"
     printf "\n\t-d   (Debug Level [0-9])"
     printf "\n\t-h   (Display this help message)"
     printf "\n\t-v   (Show Script Version Info)"
@@ -114,25 +120,150 @@ show_version()
 }
 
 
+#---------------------------------------------------------------------------------------------------
+#  ASK USER THE QUESTION RECEIVED  -  RETURN 0 (FOR NO) OR  1 (FOR YES)
+#---------------------------------------------------------------------------------------------------
+ask_user()
+{
+    wmess="$1 [y,n] ? "                                                 # Save MEssage Received
+    wreturn=0                                                           # Function Default Value
+    while :
+        do
+        echo -n "$wmess"                                                # Write mess rcv + [ Y/N ] ?
+        read answer                                                     # Read User answer
+        case "$answer" in                                               # Test Answer
+           Y|y ) wreturn=1                                              # Yes = Return Value of 1
+                 break                                                  # Break of the loop
+                 ;;
+           n|N ) wreturn=0                                              # No = Return Value of 0
+                 break                                                  # Break of the loop
+                 ;;
+             * ) ;;                                                     # Other stay in the loop
+         esac
+    done
+   return $wreturn                                                      # Return 0=No 1=Yes
+}
 
 #===================================================================================================
 # Script Main Processing Function
 #===================================================================================================
 main_process()
 {
-    sadm_writelog "Starting Main Process ... "                          # Inform User Starting Main
 
-    # - Remove files 'rm -f /etc/cron.d/sadm*'
-    # - Remove lines with 'SADMIN' in /etc/environment.
-    # - Remove sadmin.sh in /etc/profile.d
-    # - Remove Directory structure 'rm -fr $SADMIN'
-    # - Remove user 'sadmin' ...
-    # - Remove group 'sadmin' ...
-    # - Remove SADMIN Database
-    # - Remove lines with 'sadmin' in /etc/hosts
-    # - Remove /etc/sudoers.d/033_sadmin-nopasswd
+    # Remove Backup crontab file in /etc/cron.d
+    cfile="/etc/cron.d/sadm_backup" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving crontab file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
 
-    return $SADM_EXIT_CODE                                              # Return ErrorCode to Caller
+    # Remove Backup crontab file in /etc/cron.d
+    cfile="/etc/cron.d/sadm_backup" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving crontab file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove Client crontab file in /etc/cron.d
+    cfile="/etc/cron.d/sadm_client" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving crontab file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove Server crontab file in /etc/cron.d
+    cfile="/etc/cron.d/sadm_server" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving crontab file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove Server OSupdate file in /etc/cron.d
+    cfile="/etc/cron.d/sadm_osupdate" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving crontab file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove Login SADMIN environment script
+    cfile="/etc/profile.d/sadmin.sh" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving script $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove sadmin user sudo file
+    cfile="/etc/sudoers.d/033_sadmin-nopasswd" ; 
+    if [ -f "$cfile" ]   
+        then printf "\nRemoving sudo file $cfile ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
+    fi
+
+    # Remove SADMIN line in /etc/hosts
+    if [ -f /etc/hosts ] 
+        then printf "\nRemoving 'SADMIN' line in /etc/hosts" 
+             grep -iv "sadmin" /etc/hosts > $TMP_FILE2
+             if [ "$DRYRUN" -ne 1 ] ; then cp $TMP_FILE2 /etc/hosts ; fi
+    fi
+
+    # Remove sadmin user $SADM_USER
+    id "$SADM_USER" >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then printf "\nRemoving sadmin user $SADM_USER ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then userdel -r $SADM_USER >/dev/null 2>&1 ; fi
+    fi
+
+     # Remove sadmin Group $SADM_GROUP
+    id -g "$SADM_GROUP" >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then printf "\nRemoving sadmin group $SADM_GROUP ..." 
+             if [ "$DRYRUN" -ne 1 ] ; then groupdel -r $SADM_GROUP >/dev/null 2>&1 ; fi
+    fi
+
+ 
+   # Remove Directory structure 'rm -fr $SADMIN'
+   if [ -r "$SADMIN/lib/sadmlib_std.sh" ]                   # SADMIN Shell Library readable ?
+        then cd /
+             printf "\nRemoving directory structure $SADMIN ..."
+             if [ "$DRYRUN" -ne 1 ] ; then rm -fr "$SADMIN" >/dev/null 2>&1 ; fi
+    fi
+
+
+    # Make sure Database is accessible before trying to drop SADMIN database
+    printf "\nMaking sure database is up - Restarting it ..." 
+    if [ "$DRYRUN" -ne 1 ] ; then 
+        if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
+            then systemctl restart mariadb.service  >/dev/null 2>&1         # Systemd Restart MariaDB
+                 RC=$?                                                      # Save Return Code
+            else /etc/init.d/mysql restart >/dev/null 2>&1                  # SystemV Restart MariabDB
+                 RC=$?                                                      # Save Return Code
+        fi
+        if [ $RC -eq 0 ] 
+            then SQL="DROP DATABASE SADMIN;" 
+                 CMDLINE="$SADM_MYSQL -u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "
+                 if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
+                 printf "\nDropping 'sadmin' database ..." 
+                 if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -h $SADM_DBHOST -Ne "$SQL" ; fi
+                 #
+                 #printf "\nRemoving database user '$SADM_RW_DBUSER' ..."
+                 #SQL="DELETE FROM mysql.user WHERE user = '$SADM_RW_DBUSER';"
+                 #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
+                 #
+                 printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
+                 SQL="DELETE FROM mysql.user WHERE user = '$SADM_RO_DBUSER';" 
+                 if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" ; fi
+        fi
+    fi
+    
+    # Remove SADMIN line in /etc/environment
+    if [ -f /etc/environment ] 
+        then printf "\nRemoving 'SADMIN' line in /etc/environment" 
+             grep -iv "sadmin" /etc/environment > $TMP_FILE2
+             if [ "$DRYRUN" -ne 1 ] ; then cp $TMP_FILE2 /etc/environment ; fi
+    fi
+
+    return 0                                                             # Return ErrorCode to Caller
+
 }
 
 
@@ -142,7 +273,7 @@ main_process()
 
 # Evaluate Command Line Switch Options Upfront
 # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+    while getopts "hvyd:" opt ; do                                      # Loop to process Switch
         case $opt in
             d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
                num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
@@ -152,7 +283,7 @@ main_process()
                        exit 0
                fi
                ;;                                                       # No stop after each page
-            t) DRYRUN=1                                                 # Activate DryRun/Test Run
+            y) DRYRUN=0                                                 # DeActivate DryRun
                ;;                                                       # No stop after each page
             h) show_usage                                               # Show Help Usage
                exit 0                                                   # Back to shell
@@ -167,12 +298,12 @@ main_process()
         esac                                                            # End of case
     done                                                                # End of while
     if [ $DEBUG_LEVEL -gt 0 ]   ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
-    if [ $DRYRUN -eq 1 ]        ; then printf "\nDry Ryn activated\n" ; fi
+
 
     # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
-
+    
     # If current user is not 'root', exit to O/S with error code 1 (Optional)
     if ! [ $(id -u) -eq 0 ]                                             # If Cur. user is not root 
         then sadm_writelog "Script can only be run by the 'root' user"  # Advise User Message
@@ -181,6 +312,17 @@ main_process()
              exit 1                                                     # Exit To O/S with Error
     fi
 
+    if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
+        then printf "Dry Run activated"                                 # Inform User
+             printf "\nUse '-y' to really remove 'SADMIN' from this system\n"
+        else ask_user "This will remove 'SADMIN TOOLS' from this system, are you sure" # Not DryRun
+             if [ $? -eq 0 ]                                            # don't want to Del SADMIN
+                then sadm_stop 0                                        # Close log,rch - rm tmp&pid
+                     exit $SADM_EXIT_CODE                               # Exit to O/S
+             fi
+    fi 
+
+    # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Del PID
