@@ -61,8 +61,8 @@ code {
     background: #2f3743;
     text-align: left;
     color           : white;
-    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    font-size: 12px;
+    font-family: Menlo, Consolas, "Liberation Mono",  Courier, monospace;
+    font-size: 13px;
 }
 </style>
 <?php
