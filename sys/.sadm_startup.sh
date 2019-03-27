@@ -26,7 +26,8 @@
 # 2018_09_19    V3.5 Updated to include the Alert Group
 # 2018_10_16    V3.6 Suppress Header and footer from the log (Cleaner Status display).
 # 2018_10_18    V3.7 Only send alert when exit with error.
-#@2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
+# 2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
+#@2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
@@ -50,11 +51,11 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.8'                               # Current Script Version
+    export SADM_VER='3.9'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
-    export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
-    export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
+    export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
+    export SADM_LOG_FOOTER="Y"                          # Show/Generate Script Footer 
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
 
@@ -68,7 +69,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
 #---------------------------------------------------------------------------------------------------
 #
     # Default Value for these Global variables are defined in $SADMIN/cfg/sadmin.cfg file.
-    # But they can be overriden here on a per script basis.
+    # But they can be overridden here on a per script basis.
     #export SADM_ALERT_TYPE=1                           # 0=None 1=AlertOnErr 2=AlertOnOK 3=Allways
     #export SADM_ALERT_GROUP="default"                  # AlertGroup Used to Alert (alert_group.cfg)
     #export SADM_MAIL_ADDR="your_email@domain.com"      # Email to send log (To Override sadmin.cfg)
@@ -95,6 +96,7 @@ NTP_SERVER="0.ca.pool.ntp.org"              ; export NTP_SERVER         # Canada
 main_process()
 {
     ERROR_COUNT=0
+    #sadm_writelog "$SADM_80_DASH"                                       # 80 Equal Sign Line
     sadm_writelog "*** Running SADM System Startup Script on $(sadm_get_fqdn)  ***"
     sadm_writelog " "
     
@@ -107,13 +109,14 @@ main_process()
 
     sadm_writelog "  Synchronize System Clock with NTP server $NTP_SERVER"
     sleep 2
-    ntpdate -u $NTP_SERVER >> /dev/null 2>&1
+    ntpdate -u $NTP_SERVER >$SADM_TMP_FILE1 2>&1
     if [ $? -ne 0 ] 
         then sadm_writelog "  NTP Error Synchronizing Time with $NTP_SERVER" 
+             cat $SADM_TMP_FILE1 | while read wline ; do sadm_writelog "$wline"; done
              ERROR_COUNT=$(($ERROR_COUNT+1))
     fi
              
-    sadm_writelog "  Start 'nmon' System Monitor"
+    sadm_writelog "  Start 'nmon' performance system monitor tool"
     ${SADM_BIN_DIR}/sadm_nmon_watcher.sh > /dev/null 2>&1
     if [ $? -ne 0 ] 
         then sadm_writelog "  Error starting 'nmon' System Monitor." 
@@ -152,5 +155,6 @@ main_process()
     fi
     main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
+    sadm_writelog "End of startup script."                              # End of Script Message
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log
     exit $SADM_EXIT_CODE                                                # Exit With Global Err (0/1)
