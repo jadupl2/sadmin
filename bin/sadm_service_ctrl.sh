@@ -44,7 +44,8 @@
 # 2018_02_08    v1.12 Correct compatibility problem with 'dash' shell (Debian, Ubuntu, Raspbian)
 # 2018_06_06    v2.0 Restructure Code & Adapt to new SADMIN Shell Libr.
 # 2018_06_23    v2.1 Change Location of default file for Systemd and InitV SADMIN service to cfg
-#@2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
+# 2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
+#@2019_03_27 Fix: v2.3 Making sure InitV sadmin service script is executable.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -69,7 +70,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.2'                               # Current Script Version
+    export SADM_VER='2.3'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -181,6 +182,8 @@ service_enable()
              systemctl enable "${1}.service" | tee -a $SADM_LOG 2>&1    # use systemctl
         else sadm_writelog "cp $SADM_INI_IFILE $SADM_INI_OFILE"         # write cmd to log
              cp $SADM_INI_IFILE $SADM_INI_OFILE >> $SADM_LOG 2>&1       # Put in Place Service file
+             chmod 755 $SADM_INI_OFILE >> $SADM_LOG 2>&1                # Make service script exec.
+             chown root:root $SADM_INI_OFILE >> $SADM_LOG 2>&1          # Make service owned by root
              sadm_writelog "chkconfig $1 on"                            # write cmd to log
              chkconfig $1 on    >> $SADM_LOG 2>&1                       # enable service
     fi
