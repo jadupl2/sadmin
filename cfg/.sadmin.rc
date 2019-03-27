@@ -20,15 +20,14 @@
 # V2.0 June 2017 - Update
 # V2.1 July 2017 - Added LSB tags to correct warning on Debian 7
 # V2.2 January 2018 - Run /etc/profile.d/sadmin.sh to make SADMIN Env. Variable Available to script
+#@2019_03_27 Update: v2.3 Redirect output from startup/shutdown script to /dev/null (Already log).
 #
 # --------------------------------------------------------------------------------------------------
 . /etc/profile.d/sadmin.sh                                              # Get SADMIN Var. Defined
 #
-SADM_DIR="${SADMIN:="/sadmin"}/sys"             ; export SADM_DIR
+SADM_DIR="${SADMIN:="/opt/sadmin"}/sys"         ; export SADM_DIR
 SADM_START="${SADM_DIR}/sadm_startup.sh"        ; export SADM_START
 SADM_STOP="${SADM_DIR}/sadm_shutdown.sh"        ; export SADM_STOP
-SADM_START_LOG="${SADMIN}/log/sadm_startup.log" ; export SADM_START_LOG
-SADM_STOP_LOG="${SADMIN}/log/sadm_shutdown.log" ; export SADM_STOP_LOG
 
 # If startup script is not found - exit script
 if [ ! -f "$SADM_START" ] ; then echo "The script $SADM_START cannot be found" ; exit 1 ; fi
@@ -43,12 +42,12 @@ chmod 700 ${SADM_START} ; chmod 700 ${SADM_STOP}
 case "$1" in
     start)
     	echo -n "Starting sadmin : "
-       	$SADM_START >> ${SADM_START_LOG} 2>&1
+       	$SADM_START >/dev/null 2>&1
        	echo "OK"
        	;;
     stop)
        	echo -n "Shutdown sadmin : "
-        $SADM_STOP >> ${SADM_STOP_LOG} 2>&1
+        $SADM_STOP >/dev/null 2>&1
        	echo "OK"
         ;;
     restart)
