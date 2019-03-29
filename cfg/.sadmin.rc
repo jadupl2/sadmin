@@ -1,64 +1,69 @@
 #!/bin/sh
+#
+# chkconfig: 345 72 19
+# description: SADMIN init script
+#
 # --------------------------------------------------------------------------------------------------
 # SysV SADMIN Service Definition 
 # If you modify this file, Run these commands to make your change effective
-#   Enter   $SADMIN/bin/sadm_service_ctrl.sh -d
-#           $SADMIN/bin/sadm_service_ctrl.sh -e 
+#   Enter   $SADMIN/bin/sadm_service_ctrl.sh -d     # Disable SADMIN Service
+#           $SADMIN/bin/sadm_service_ctrl.sh -e     # Enable SADMIN Service
+#           $SADMIN/bin/sadm_service_ctrl.sh -s     # Show Status of SADMIN Service
 # --------------------------------------------------------------------------------------------------
-#
-# Run-level Startup script for the SADMIN Applications
-# Provides:          sadmin
-# Required-Start:    $local_fs $network
-# Required-Stop:     $local_fs
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: sadmin
 # Description:       sadmin startup and shutdown script
 #
-# chkconfig: 345 98 19
 # --------------------------------------------------------------------------------------------------
 # V2.0 June 2017 - Update
 # V2.1 July 2017 - Added LSB tags to correct warning on Debian 7
 # V2.2 January 2018 - Run /etc/profile.d/sadmin.sh to make SADMIN Env. Variable Available to script
-#@2019_03_27 Update: v2.3 Redirect output from startup/shutdown script to /dev/null (Already log).
+#@2019_03_27 Fix: v2.3 Bug fixes Under SysV system & Optimization.
 #
 # --------------------------------------------------------------------------------------------------
-. /etc/profile.d/sadmin.sh                                              # Get SADMIN Var. Defined
 #
-SADM_DIR="${SADMIN:="/opt/sadmin"}/sys"         ; export SADM_DIR
-SADM_START="${SADM_DIR}/sadm_startup.sh"        ; export SADM_START
-SADM_STOP="${SADM_DIR}/sadm_shutdown.sh"        ; export SADM_STOP
+ACTION=$1                                       ; export ACTION         # start/stop/status/restart
+SADM_HOSTNAME=`hostname -s`                     ; export HOSTNAME       # Current Host name 
+export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
+if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
+    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
+         printf "SADMIN service script aborted."                        # Advise what to fix
+         exit 1                                                         # Exit Script with error
+fi
+SADM_SYS_DIR="${SADMIN}/sys"                    ; export SADM_SYS_DIR   # Startup/Shutdown Dir.
+SADM_START="${SADM_SYS_DIR}/sadm_startup.sh"    ; export SADM_START     # Startup Script
+SADM_STOP="${SADM_SYS_DIR}/sadm_shutdown.sh"    ; export SADM_STOP      # Shutdown Script
+USAGE="Usage: $0 start|stop|restart|status\n"   ; export USAGE          # Script Usage 
+
+# Create SADMIN service lock file
+if [ -d /var/lock/subsys ] ; then SADM_LOCKFILE=/var/lock/subsys/sadmin ; fi 
 
 # If startup script is not found - exit script
-if [ ! -f "$SADM_START" ] ; then echo "The script $SADM_START cannot be found" ; exit 1 ; fi
+if [ ! -f "$SADM_START" ] ; then printf "The script $SADM_START cannot be found" ; exit 1 ; fi
 
 # If shutdown script is not found - exit script
-if [ ! -f "$SADM_STOP"  ] ; then echo "The script $SADM_STOP cannot be found"  ; exit 1 ; fi
+if [ ! -f "$SADM_STOP"  ] ; then printf "The script $SADM_STOP cannot be found"  ; exit 1 ; fi
 
 # Make sure the script are executable and only by root 
 chmod 700 ${SADM_START} ; chmod 700 ${SADM_STOP}
 
 # depending on parameter -- startup, shutdown, restart or usage display
-case "$1" in
-    start)
-    	echo -n "Starting sadmin : "
-       	$SADM_START >/dev/null 2>&1
-       	echo "OK"
-       	;;
-    stop)
-       	echo -n "Shutdown sadmin : "
-        $SADM_STOP >/dev/null 2>&1
-       	echo "OK"
-        ;;
-    restart)
-       	$0 stop
-       	$0 start
-       	;;
-    status)
-       	chkconfig --list | grep sadmin
-       	;;
-    *)
-       	echo "Usage: $0 start|stop|restart|status"
-       	exit 1
+case "$ACTION" in
+    "start")    printf "Starting sadmin : "
+                $SADM_START >/dev/null 2>&1
+                touch $SADM_LOCKFILE 
+                printf "[OK]\n"
+                ;;
+    "stop")     printf "Shutdown sadmin : "
+                $SADM_STOP >/dev/null 2>&1
+                rm -f $SADM_LOCKFILE >/dev/null 2>&1
+                printf "[OK]\n"
+                ;;
+    "restart")  $0 stop
+                $0 start
+                ;;
+    "status")   chkconfig --list | grep sadmin
+                ;;
+    *)          printf "${USAGE}\n" 
+                exit 1
+                ;;
 esac
 exit 0
