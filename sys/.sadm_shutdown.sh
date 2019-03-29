@@ -14,9 +14,17 @@
 # 2018_01_31    V2.7 Added execution of /etc/profile.d/sadmin.sh to have SADMIN Env. Var. Defined
 # 2018_09_19    V2.8 Added Alert Group Utilisation
 # 2018_10_18    v2.9 Remove execution of /etc/profile.d/sadmin.sh (Don't need anymore)
+#@2019_03_29 Update: v2.10 Get SADMIN Directory Location from /etc/environment
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
+
+export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
+if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
+    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
+         printf "SADMIN service script aborted."                        # Advise what to fix
+         exit 1                                                         # Exit Script with error
+fi
 
 
 #===================================================================================================
@@ -36,7 +44,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.9'                               # Current Script Version
+    export SADM_VER='2.10'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
