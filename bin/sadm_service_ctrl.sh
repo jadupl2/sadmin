@@ -46,6 +46,8 @@
 # 2018_06_23    v2.1 Change Location of default file for Systemd and InitV SADMIN service to cfg
 # 2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
 #@2019_03_27 Fix: v2.3 Making sure InitV sadmin service script is executable.
+#@2019_03_28 Fix: v2.4 Was not executing shutdown script under RHEL/CentOS 4,5
+#@2019_03_29 Optimize: v2.5 Major Revamp - Re-Tested - SysV and SystemD
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -70,8 +72,8 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.3'                               # Current Script Version
-    export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
+    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
     export SADM_LOG_FOOTER="N"                          # Show/Generate Script Footer 
@@ -146,25 +148,122 @@ show_version()
 }
 
 
+# --------------------------------------------------------------------------------------------------
+# THIS FUNCTION VERIFY IF THE COMMAND RECEIVED IN PARAMETER IS AVAILABLE ON THE SYSTEM
+# IF THE COMMAND EXIST, RETURN 0  -  IF IT DOESN'T EXIST RETURN 1
+# --------------------------------------------------------------------------------------------------
+command_available() {
+    CMD=$1                                                              # Save Parameter received
+    printf "Checking availability of command $CMD ... "
+    if which ${CMD} >/dev/null 2>&1                                     # Locate command found ?
+        then SPATH=`which ${CMD}`                                       # Save Path of command
+             echo "$SPATH ${green}[OK]${reset}"                         # Show Path to user and OK
+             return 0                                                   # Return 0 if cmd found
+        else SPATH=""                                                   # PATH empty when Not Avail.
+             echo "Command missing ${bold}${magenta}[Warning]${reset}"  # Show user Warning
+    fi
+    return 1
+}
+
+
+# --------------------------------------------------------------------------------------------------
+# THIS FUNCTION IS USED TO INSTALL A MISSING PACKAGE THAT IS REQUIRED BY SADMIN TOOLS
+#                       THE PACKAGE TO INSTALL IS RECEIVED AS A PARAMETER
+# --------------------------------------------------------------------------------------------------
+install_package()
+{
+    # Check if we received at least a parameter
+    if [ $# -ne 2 ]                                                      # Should have rcv 2 Param
+        then sadm_writelog "Nb. Parameter received by $FUNCNAME function is incorrect"
+             sadm_writelog "Please correct your script - Script Aborted" # Advise User to Correct
+             sadm_stop 1                                                 # Prepare exit gracefully
+             exit 1                                                      # Terminate the script
+    fi
+    PACKAGE_RPM=$1                                                       # RedHat/CentOS/Fedora Pkg
+    PACKAGE_DEB=$2                                                       # Ubuntu/Debian/Raspian Deb
+
+    case "$package_type"  in
+        "rpm" )
+                lmess="Starting installation of ${PACKAGE_RPM} under $(sadm_get_osname)"
+                lmess="${lmess} Version $(sadm_get_osmajorversion)"
+                sadm_writelog "$lmess"
+                case "$(sadm_get_osmajorversion)" in
+                    [567])  sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
+                            yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
+                            rc=$?                                            # Save Exit Code
+                            sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
+                            break
+                            ;;
+                    [8])    sadm_writelog "Running \"yum -y install ${PACKAGE_RPM}\"" # Install Command
+                            yum -y install ${PACKAGE_RPM} >> $SADM_LOG 2>&1  # List Available update
+                            rc=$?                                            # Save Exit Code
+                            sadm_writelog "Return Code after in installation of ${PACKAGE_RPM} is $rc"
+                            break
+                            ;;
+                    *)      lmess="The version $(sadm_get_osmajorversion) of"
+                            lmess="${lmess} $(sadm_get_osname) isn't supported at the moment"
+                            sadm_writelog "$lmess"
+                            rc=1                                             # Save Exit Code
+                            break
+                            ;;
+                esac
+                break
+                ;;
+        "deb" )
+                sadm_writelog "Synchronize package index files"
+                sadm_writelog "Running \"apt-get update\""                 # Msg Get package list
+                apt-get update > /dev/null 2>&1                            # Get Package List From Repo
+                rc=$?                                                      # Save Exit Code
+                if [ "$rc" -ne 0 ]
+                    then sadm_writelog "We had problem running the \"apt-get update\" command"
+                         sadm_writelog "We had a return code $rc"
+                    else sadm_writelog "Return Code after apt-get update is $rc"  # Show  Return Code
+                         sadm_writelog "Installing the Package ${PACKAGE_DEB} now"
+                         sadm_writelog "apt-get -y install ${PACKAGE_DEB}"
+                         apt-get -y install ${PACKAGE_DEB} >>$SADM_LOG 2>&1
+                         rc=$?                                              # Save Exit Code
+                         sadm_writelog "Return Code after installation of ${PACKAGE_DEB} is $rc"
+                fi
+                break
+                ;;
+    esac
+
+    sadm_writelog " "
+    return $rc                                                          # 0=Installed 1=Error
+}
 
 # ==================================================================================================
 #                               Disable SADM Service
 # ==================================================================================================
 service_disable()
 {
-    sadm_writelog "--- Disabling Service $1 ..."                        # Advise User
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then sadm_writelog "systemctl disable ${1}.service"             # write cmd to log
-             systemctl disable "${1}.service" | tee -a $SADM_LOG 2>&1   # use systemctl to disable
-             sadm_writelog "Remove Service file $SADM_SRV_OFILE" 
-             rm -f $SADM_SRV_OFILE >> $SADM_LOG 2>&1
+        then printf "systemctl disable ${1}.service"                    # Show User cmd executed
+             systemctl disable "${1}.service" >>$SADM_LOG 2>&1          # use systemctl to disable
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+             
+             printf "rm -f $SADM_SRV_OFILE ..."                         # Show user cmd executed
+             rm -f $SADM_SRV_OFILE >> $SADM_LOG 2>&1         # rm /etc/systemd/system/sadmin.service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
              systemctl list-unit-files | grep $1 >> $SADM_LOG 2>&1      # Display Service Status
-        else sadm_writelog "chkconfig $1 off"                           # write cmd to log
-             chkconfig $1 off    >> $SADM_LOG 2>&1                      # disable service
-             sadm_writelog "Remove Service file $SADM_INI_OFILE" 
-             rm -f $SADM_INI_OFILE >> $SADM_LOG 2>&1
+             return
     fi
-    sadm_writelog ""                                                    # Blank LIne
+
+    if [ $SYSTEMD -ne 1 ]                                               # Using Sysinit
+        then printf "chkconfig $1 off ... "
+             chkconfig $1 off    >> $SADM_LOG 2>&1                      # disable service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+             
+             printf "chkconfig --del $1 ... "
+             chkconfig --del $1     >> $SADM_LOG 2>&1                   # disable service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+             
+             printf "Remove service file $SADM_INI_OFILE ... " 
+             rm -f $SADM_INI_OFILE >> $SADM_LOG 2>&1
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+    fi
+    return 0
 }
 
 
@@ -174,20 +273,38 @@ service_disable()
 # ==================================================================================================
 service_enable()
 {
-    sadm_writelog "--- Enabling service '$1' ..."                       # Action to log
-    if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then sadm_writelog "cp $SADM_SRV_IFILE $SADM_SRV_OFILE"         # write cmd to log
+    if [ $SYSTEMD -eq 1 ]                                               # Using systemd 
+        then printf "cp $SADM_SRV_IFILE $SADM_SRV_OFILE ... "           # write cmd to execute
              cp $SADM_SRV_IFILE $SADM_SRV_OFILE >> $SADM_LOG 2>&1       # Put in Place Service file
-             sadm_writelog "systemctl enable ${1}.service"              # write cmd to log
-             systemctl enable "${1}.service" | tee -a $SADM_LOG 2>&1    # use systemctl
-        else sadm_writelog "cp $SADM_INI_IFILE $SADM_INI_OFILE"         # write cmd to log
-             cp $SADM_INI_IFILE $SADM_INI_OFILE >> $SADM_LOG 2>&1       # Put in Place Service file
-             chmod 755 $SADM_INI_OFILE >> $SADM_LOG 2>&1                # Make service script exec.
-             chown root:root $SADM_INI_OFILE >> $SADM_LOG 2>&1          # Make service owned by root
-             sadm_writelog "chkconfig $1 on"                            # write cmd to log
-             chkconfig $1 on    >> $SADM_LOG 2>&1                       # enable service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+             printf "systemctl enable ${1}.service ... "                # write cmd to execute
+             systemctl enable "${1}.service" >> $SADM_LOG 2>&1          # use systemctl
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
     fi
-    sadm_writelog ""                                                    # Blank LIne
+
+    if [ $SYSTEMD -ne 1 ]                                               # Using Sysinit
+        then printf "cp $SADM_INI_IFILE $SADM_INI_OFILE ... "           # write cmd to log
+             cp $SADM_INI_IFILE $SADM_INI_OFILE >> $SADM_LOG 2>&1       # Put in Place Service file
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+             printf "chmod 755 $SADM_INI_OFILE ... "                    # Make service script exec.
+             chmod 755 $SADM_INI_OFILE >> $SADM_LOG 2>&1                # Make service script exec.
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+             printf "chown root:root $SADM_INI_OFILE ..."
+             chown root:root $SADM_INI_OFILE >> $SADM_LOG 2>&1          # Make service owned by root
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+             printf "chkconfig -add ${1} ..."                           # write cmd to log
+             chkconfig --add ${1}  >> $SADM_LOG 2>&1                    # enable service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+             printf "chkconfig $1 on ..."                               # write cmd to log
+             chkconfig $1 on    >> $SADM_LOG 2>&1                       # enable service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+    fi
+    return
 }
 
 
@@ -197,13 +314,20 @@ service_enable()
 # ==================================================================================================
 service_status()
 {
-    sadm_writelog "--- Status of service '$1' ..."                      # write action to log
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then sadm_writelog "systemctl status ${1}.service"              # write cmd to log
-             systemctl status ${1}.service | tee -a $SADM_LOG 2>&1      # use systemctl
-             systemctl list-unit-files | grep $1 >> $SADM_LOG 2>&1      # Display Service Status
-        else sadm_writelog "service $1 status"                          # write cmd to log
-             service $1 status | tee -a $SADM_LOG 2>&1                  # Show service status
+        then printf "systemctl status ${1}.service ... "                # write cmd to log
+             systemctl status ${1}.service >> $SADM_LOG 2>&1            # use systemctl
+             if [ $? -eq 0 ] 
+                then printf "[OK]\n" 
+                else printf "[ERROR] Service '$1' may not be enable\n" 
+             fi
+             systemctl list-unit-files | grep $1                        # Display Service Status
+        else printf "service $1 status ... \n"                          # write cmd to log
+             service $1 status                                          # Show service status
+             if [ $? -eq 0 ] 
+                then printf "[OK]\n" 
+                else printf "[ERROR] Service '$1' may not be enable\n" 
+             fi
     fi
 }
 
@@ -213,12 +337,14 @@ service_status()
 # ==================================================================================================
 service_stop()
 {
-    sadm_writelog "--- Stopping service '$1' ..."                       # write action to log
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then sadm_writelog "systemctl stop ${1}.service"                # write cmd to log
+        then printf "systemctl stop ${1}.service ... "                  # write cmd to log
              systemctl stop "${1}.service" | tee -a $SADM_LOG 2>&1      # use systemctl
-        else sadm_writelog "service $1 stop"                            # write cmd to log
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+        else printf "service $1 stop ..."                               # write cmd to log
              service $1 stop >> $SADM_LOG 2>&1                          # stop the service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
     fi
 }
 
@@ -228,12 +354,14 @@ service_stop()
 # ==================================================================================================
 service_start()
 {
-    sadm_writelog "--- Start service '$1' ..."                          # write action to log
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then sadm_writelog "systemctl start ${1}.service"               # write cmd to log
+        then printf "systemctl start ${1}.service ... "                 # write cmd to log
              systemctl start "${1}.service" | tee -a $SADM_LOG 2>&1     # use systemctl
-        else sadm_writelog "service $1 start"                           # write cmd to log
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
+
+        else printf "service $1 start ... "                             # write cmd to log
              service $1 stop >> $SADM_LOG 2>&1                          # stop the service
+             if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
     fi
 }
 
@@ -248,6 +376,29 @@ service_start()
              sadm_stop 1                                                # Close and Trim Log
              exit 1                                                     # Exit To O/S
     fi
+
+    # Script can only run under Linux
+    if [ "$(sadm_get_ostype)" != "LINUX" ]                              # if not Under Linux O/S
+        then sadm_writelog "This script can only run under Linux O/S"   # Advise user
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close and Trim Log
+             exit 1                                                     # Exit To O/S
+    fi
+
+    # If Running under a SysV Init System (Not systemd) this script need 'chkconfig' command
+    if [ $SYSTEMD -ne 1 ]                                               # Using Sysinit
+        then command_available "chkconfig" ; CHKCONFIG=$SPATH           # Save Cmd Path Returned
+             if [ "$CHKCONFIG" = "" ]                                   # Not found = Inst Req. 
+                then install_package "chkconfig" "chkconfig"            # Install Pack (rpm,deb)
+                     command_available "chkconfig"                      # Recheck 
+             fi
+             if [ "$CHKCONFIG" = "" ]                                   # Not found = Inst Req. 
+                then sadm_writelog "Command chkconfig not found"
+                     sadm_writelog "Process aborted"                    # Abort advise message
+                     sadm_stop 1                                        # Close and Trim Log
+                     exit 1                                             # Exit To O/S
+             fi
+    fi 
 
     # For Systemd - Check existance of service file in $SADMIN/sys directory
     if [ $SYSTEMD -eq 1 ] && [ ! "${SADM_SRV_IFILE}" ]                  # Using systemd not Sysinit
@@ -266,13 +417,12 @@ service_start()
     fi
 
     # Optional Command line switches    
-    P_DISABLE="OFF" ; P_ENABLE="OFF"                                    # Set Switch Default Value
+    P_DISABLE="OFF" ; P_ENABLE="OFF" ; P_STATUS="OFF"                   # Set Switch Default Value
     while getopts "devsh " opt ; do                                     # Loop to process Switch
         case $opt in
             d) P_DISABLE="ON"                                           # Disable SADM Service 
                service_stop    sadmin                                   # Stop sadmin Service
                service_disable sadmin                                   # Enable sadmin Service
-               #service_status  sadmin                                   # Status of sadmin Service
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
@@ -281,20 +431,13 @@ service_start()
                service_stop   sadmin                                    # Stop sadmin Service
                service_start  sadmin                                    # Start sadmin Service
                service_status sadmin                                    # Status of sadmin Service
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
                ;;                                                      
-            s) service_status sadmin                                    # Status of sadmin Service
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
+            s) P_STATUS="ON"                                            # Status Option Selected
+               service_status sadmin                                    # Status of sadmin Service
                ;;                                                      
             h) show_usage                                               # Display Help Usage
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
                ;;
             v) show_version                                             # Display Script Version
-               sadm_stop 0                                              # Close the shop
-               exit 0                                                   # Back to shell 
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2                      # Invalid Option Message
                show_usage                                               # Display Help Usage
@@ -303,10 +446,8 @@ service_start()
         esac                                                            # End of case
     done  
 
-    if [ "$P_DISABLE" = "OFF" ] && [ "$P_ENABLE" = "OFF" ]              # Set Switch Default Value
+    if [ "$P_DISABLE" = "OFF" ] && [ "$P_ENABLE" = "OFF" ] && [ "$P_STATUS" = "OFF" ] 
        then show_usage
-            sadm_stop 0                                                 # Close the shop
-            exit 0                                                      # Back to shell 
     fi 
 
     # Go Write Log Footer - Send email if needed - Trim the Log - Update the Recode History File
