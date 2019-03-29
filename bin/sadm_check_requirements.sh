@@ -31,6 +31,7 @@
 #
 #2019_03_17 New: v1.0 Initial Version.
 #@2019_03_20 New: v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
+#@2019_03_29 Update: v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -60,7 +61,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.1'                               # Your Current Script Version
+    export SADM_VER='1.2'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -91,7 +92,11 @@ SPATH=""                                    ; export SPATH              # Full P
 INSTREQ=0                                   ; export INSTREQ            # Install Mode default OFF
 SADM_OSVERSION=`lsb_release -sr |awk -F. '{ print $1 }'| tr -d ' '` ; export SADM_OSVERSION 
 package_type="$(sadm_get_packagetype)"      ; export package_type       # System Pack Type (rpm,deb)
-
+#
+command -v systemctl > /dev/null 2>&1                                   # Using sysinit or systemd ?
+if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SYSTEMD Accordingly
+export SYSTEMD                                                          # Export Result        
+#
 
 # Screen related variable
 clr=$(tput clear)                               ; export clr            # clear the screen
@@ -396,6 +401,14 @@ check_sadmin_requirements() {
             if [ "$SADM_NMON" = "" ] && [ "$INSTREQ" -eq 1 ]            # Cmd not found & Inst Req. 
                 then install_package "ethtool" "ethtool"                # Install Package (rpm,deb)
                      command_available "ethtool" ; SADM_ETHTOOL=$SPATH  # Recheck Should be install
+            fi
+
+            if [ $SYSTEMD -ne 1 ]                                       # Using Sysinit
+                then command_available "chkconfig" ; SADM_CHKCONFIG=$SPATH # Save Cmd Path Returned
+                     if [ "$SADM_CHKCONFIG" = "" ] && [ "$INSTREQ" -eq 1 ] # Not found = Inst Req. 
+                        then install_package "chkconfig" "chkconfig"       # Install Pack (rpm,deb)
+                             command_available "chkconfig" ; SADM_CHKCONFIG=$SPATH  # Recheck 
+                     fi
             fi
 
             command_available "sudo"     ; SADM_SUDO=$SPATH             # Save Command Path Returned
