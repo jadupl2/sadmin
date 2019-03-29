@@ -28,10 +28,17 @@
 # 2018_10_18    V3.7 Only send alert when exit with error.
 # 2018_11_02    V3.8 Added sleep before updating time clock (Raspbian Problem)
 #@2019_03_27 Update: v3.9 If 'ntpdate' report an error, show error message and add cosmetic messages
-#
+#@2019_03_29 Update: v3.10 Get SADMIN Directory Location from /etc/environment
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x 
+
+export SADMIN=`grep "^SADMIN=" /etc/environment |awk -F= '{print $2}'`  # Get SADMIN Install Dir
+if [ "$SADMIN" = "" ]                                                   # Couldn't get Install Dir.
+    then printf "Couldn't get SADMIN variable in /etc/environment"      # Advise User What's wrong
+         printf "SADMIN service script aborted."                        # Advise what to fix
+         exit 1                                                         # Exit Script with error
+fi
 
 
 #===================================================================================================
@@ -51,7 +58,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.9'                               # Current Script Version
+    export SADM_VER='3.10'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
