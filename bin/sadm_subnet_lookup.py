@@ -22,7 +22,8 @@
 # 2018-06_06    v1.8 Small Corrections
 # 2018-06_09    v1.9 Change Script name to sadm_subnet_lookup
 # 2018-09_22    v2.0 Fix Problem with Updating Last Ping Date
-#@2018-11_09    v2.1 DataBase Connect/Disconnect revised.
+# 2018-11_09    v2.1 DataBase Connect/Disconnect revised.
+#@2019_03_30 Fix: v2.2 Fix problem reading the fping result, database update fix.
 # --------------------------------------------------------------------------------------------------
 #
 try :
@@ -62,7 +63,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "2.1"                 # Current Script Version
+    st.ver              = "2.2"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = False                 # Append Existing Log or Create New One
@@ -78,7 +79,7 @@ def setup_sadmin():
     #st.cfg_alert_group  = "default"            # Valid Alert Group are defined in alert_group.cfg
     #st.cfg_mail_addr    = ""                   # This Override Default Email Address in sadmin.cfg
     #st.cfg_cie_name     = ""                   # This Override Company Name specify in sadmin.cfg
-    #st.cfg_max_logline  = 1000                 # When Script End Trim log file to 1000 Lines
+    st.cfg_max_logline  = 5000                  # When Script End Trim log file to 1000 Lines
     #st.cfg_max_rchline  = 125                  # When Script End Trim rch file to 125 Lines
     #st.ssh_cmd = "%s -qnp %s " % (st.ssh,st.cfg_ssh_port) # SSH Command to Access Server
 
@@ -266,7 +267,7 @@ def scan_network(st,snet,wconn,wcur) :
     (ip1,ip2,ip3,ip4) = wnet.split('.')                                 # Split Network IP
     arpfile = "%s/arp-scan.txt" % (st.net_dir)                          # arp result file name
     cmd  = "arp-scan --interface=%s %s | " % (netdev,snet)              # arp-scan command
-    cmd += "awk -F'\t' '{ print $1,$2,$3 }' | tr -d ',' |grep '^%s'> %s" % (ip1,arpfile)  # Format Result output
+    cmd += "awk -F'\t' '{ print $1,$2,$3 }' | tr -d ',' |grep '^%s'> %s" % (ip1,arpfile)  
     st.writelog ("The arp-scan output file        : %s" % (arpfile))    # Show arp-scan IP+Mac Addr.
     ccode,cstdout,cstderr = oscommand(cmd)                              # Run the arp-scan command
     if (ccode != 0):                                                    # If Error running command
@@ -276,8 +277,10 @@ def scan_network(st,snet,wconn,wcur) :
 
     # Run fping on Subnet and generate a file containing that IP of servers alive.
     fpingfile = "%s/fping.txt" % (st.net_dir)                           # fping result file name
-    cmd  = "fping -g %s 2>/dev/null | grep -i alive "  % (snet)         # fping command
+    cmd  = "fping -i 1 -g %s 2>/dev/null | grep -i alive | tee %s"  % (snet,fpingfile) # fping cmd
     st.writelog ("The fping output file           : %s" % (fpingfile))  # Show fping output filename
+    if (DEBUG) :
+        st.writelog ("Command : %s" % (cmd))   
     ccode,fpinglist,cstderr = oscommand(cmd)                            # Run the fping command
 
     # Opening Arp file, read all file into memory
@@ -295,11 +298,11 @@ def scan_network(st,snet,wconn,wcur) :
     for ip in NET4.hosts():                                             # Loop through possible IP
         hip = str(ipaddress.ip_address(ip))                             # Save processing IP
         if (DEBUG) :
-            print ("\n----------\nProcessing IP %s" % (hip))
+            st.writelog ("\n----------\nProcessing IP %s" % (hip))
         try :                                                           # Try Get Hostname of the IP
             (hname,halias,hiplist)   = socket.gethostbyaddr(hip)        # Get IP DNS Name
             if (DEBUG) :
-                print ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
+                st.writelog ("hname = %s, Alias = %s, IPList = %s" % (hname,halias,hiplist))
         except socket.herror as e:                                      # If IP has no Name
             hname = ""                                                  # Clear IP Hostname
         hmac = ''                                                       # Clear Work Mac Address
@@ -312,8 +315,17 @@ def scan_network(st,snet,wconn,wcur) :
                 hmanu = arpline.split(',')[2]                           # Save Manufacturer
                 hmanu = hmanu.rstrip(',\n')                             # Remove command & NewLine
                 break                                                   # Break out of loop
+
+        if (DEBUG) :
+            st.writelog ("Is ip %s alive in fpinglist ?" % (hip))
         hactive = 0                                                     # Default Card is inactive
-        if (hip in fpinglist) : hactive = 1                             # Ip Is Pingable
+        if ("%s is alive" % (hip) in fpinglist) : hactive = 1                             # Ip Is Pingable
+        if (DEBUG) :
+            if (hactive != 0) : 
+                st.writelog ("Yes it is")
+            else:
+                st.writelog ("Not it isn't")
+
         (ip1,ip2,ip3,ip4) = hip.split('.')                              # Split IP
         zip = "%03d.%03d.%03d.%03d" % (int(ip1),int(ip2),int(ip3),int(ip4)) # Build Ip Addr with ZeroIP
         WLINE = "%s,%s,%s,%s,%d" % (zip, hname, hmac, hmanu, hactive)   # Format Output file Line
