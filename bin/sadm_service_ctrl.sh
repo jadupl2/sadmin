@@ -48,6 +48,7 @@
 #@2019_03_27 Fix: v2.3 Making sure InitV sadmin service script is executable.
 #@2019_03_28 Fix: v2.4 Was not executing shutdown script under RHEL/CentOS 4,5
 #@2019_03_29 Optimize: v2.5 Major Revamp - Re-Tested - SysV and SystemD
+#@2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -72,7 +73,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.5'                               # Current Script Version
+    export SADM_VER='2.6'                               # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -238,7 +239,7 @@ install_package()
 service_disable()
 {
     if [ $SYSTEMD -eq 1 ]                                               # Using systemd not Sysinit
-        then printf "systemctl disable ${1}.service"                    # Show User cmd executed
+        then printf "systemctl disable ${1}.service..."                 # Show User cmd executed
              systemctl disable "${1}.service" >>$SADM_LOG 2>&1          # use systemctl to disable
              if [ $? -eq 0 ] ; then printf "[OK]\n" ; else printf "[ERROR]\n" ; fi
              
@@ -423,6 +424,9 @@ service_start()
             d) P_DISABLE="ON"                                           # Disable SADM Service 
                service_stop    sadmin                                   # Stop sadmin Service
                service_disable sadmin                                   # Enable sadmin Service
+               printf "\nConsequence of disabling SADMIN service :"
+               printf "\n${SADMIN}/sys/sadm_startup.sh, will not be executed at system startup."
+               printf "\n${SADMIN}/sys/sadm_shutdown.sh will not be executed on system shutdown.\n\n"
                sadm_stop 0                                              # Close the shop
                exit 0                                                   # Back to shell 
                ;;                                                      
@@ -431,6 +435,10 @@ service_start()
                service_stop   sadmin                                    # Stop sadmin Service
                service_start  sadmin                                    # Start sadmin Service
                service_status sadmin                                    # Status of sadmin Service
+               printf "\nConsequence of enabling SADMIN service :"
+               printf "\n${SADMIN}/sys/sadm_startup.sh, will be executed at system startup."
+               printf "\n${SADMIN}/sys/sadm_shutdown.sh will be executed on system shutdown."
+               printf "\nWe encourage you to customize these two scripts to your need.\n\n"
                ;;                                                      
             s) P_STATUS="ON"                                            # Status Option Selected
                service_status sadmin                                    # Status of sadmin Service
