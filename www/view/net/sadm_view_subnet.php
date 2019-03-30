@@ -24,7 +24,8 @@
 #   2018_04_14 JDuplessis
 #       V1.1  First Working Version
 # 2018_04_19 v1.2  Release Version 
-#@2018_09_21 v1.3  Compact Page Layout  
+# 2018_09_21 v1.3  Compact Page Layout  
+#@2019_03_30 nolog: v1.4  Small heading change
 #
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -56,7 +57,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # </head
 #===================================================================================================
 #
 $DEBUG           = False ;                                               # Debug Activated True/False
-$SVER            = "1.3" ;                                              # Current version number
+$SVER            = "1.4" ;                                              # Current version number
 $URL_HOST_INFO   = '/view/srv/sadm_view_server_info.php';               # Display Host Info URL
 $CREATE_FILE_PGM = "sadm_subnet_lookup.py";                             # Script to create in file
 $URL_IPVIEW      = '/view/net/sadm_view_subnet.php';                    # Display Subnet Network URL
@@ -164,7 +165,7 @@ function show_heading() {
     echo "\n<th class='dt-head-center'>Ping</th>";
     echo "\n<th class='dt-head-center'>Hostname</th>";
     #echo "\n<th class='dt-head-center'>State</th>";
-    echo "\n<th class='dt-head-center'>LastPing</th>";
+    echo "\n<th class='dt-head-center'>Last Ping</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
     #echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n<th class='dt-head-center'>Mac/Hostname Change</th>";
@@ -179,7 +180,7 @@ function show_heading() {
     echo "\n<th class='dt-head-center'>Ping</th>";
     echo "\n<th class='dt-head-center'>Hostname</th>";
     #echo "\n<th class='dt-head-center'>State</th>";
-    echo "\n<th class='dt-head-center'>LastPing</th>";
+    echo "\n<th class='dt-head-center'>Last Ping</th>";
     echo "\n<th class='dt-head-center'>Mac Address</th>";
     #echo "\n<th class='dt-head-center'>Manufacturer</th>";
     echo "\n<th class='dt-head-center'>Mac/Hostname Change</th>";
