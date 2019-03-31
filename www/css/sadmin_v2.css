@@ -4,7 +4,19 @@
         V 2.1 Added Bottom Button on Server Update Page
 --------------------------------------------------------------------------------------------------*/
 
-/* ---------------------------------------------------------------------------------------------- */
+/* Datatable Item per page box color
+  .dataTables_length select {
+    background-color: #2375a4;
+ }
+ */
+ 
+ /* Datatable Search box color
+ .dataTables_filter input {
+    background-color: #2375a4;
+ }
+ */
+
+ /* ---------------------------------------------------------------------------------------------- */
 /*                      WRAPPER CSS FOR THE WHOLE SADMIN PAGE (EVERY PAGE)                        */
 /* ---------------------------------------------------------------------------------------------- */
 
