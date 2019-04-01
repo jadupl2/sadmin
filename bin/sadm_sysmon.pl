@@ -31,10 +31,12 @@
 # 2018_12_30 v2.28 Fix: problem when checking service using Sys V method.
 #@2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
 #@2019_03_20 nolog: v2.29 Mail message change
+#@2019_04_01 nolog: v2.30 Include color on status output.
 #===================================================================================================
 #
 use English;
 #use DateTime;  # Comment on 9 March 2019
+use Term::ANSIColor qw(:constants);
 use File::Basename;
 use POSIX qw(strftime);
 use Time::Local;
@@ -46,7 +48,7 @@ system "export TERM=xterm";
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.29";                                       # Version Number
+my $VERSION_NUMBER      = "2.30";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -241,7 +243,7 @@ sub load_smon_file {
     # For debug purpose - Display Important Data
     if ($SYSMON_DEBUG >= 5) {
         print "------------------------------------------------------------------------------\n";
-        print "SADMIN SYStem MONitor Tools - Version ${VERSION_NUMBER}\n";
+        print BOLD, BLUE, "SADMIN SYStem MONitor Tools - Version ", BOLD, RED, "${VERSION_NUMBER}\n", RESET;
         print "------------------------------------------------------------------------------\n";
         print "O/S Name                 = ${OSNAME}\n" ;
         print "Debugging Level          = ${SYSMON_DEBUG}\n" ;
@@ -440,7 +442,9 @@ sub filesystem_increase {
     if ( $src == -1 ) {                                                 # If FS Enlarge Failed
         print "\n  - [ERROR] Command failed: $!";                       # Advise USer
     }else{                                                              # If FS Enlarge Succeeded
-        printf "\n  - [OK] Return Code: %d", $? >> 8;
+        print BOLD, GREEN, "\n  - [OK]", RESET;
+        #printf "\n  - [OK] Return Code: %d", $? >> 8;
+        #printf "\n  - %s,%s[OK]%s Return Code: %d", BOLD, GREEN, RESET, $? >> 8;
     }
     return $src ;                                                       # Return Err. Code to Caller
 }
@@ -771,7 +775,8 @@ sub check_http {
     if ($http_status == 0) {                                            # If no response for URL
         printf "\n[ERROR] Web site not responding" ;                    # Show error to user
     }else{                                                              # If URL Response
-        printf "\n[OK] Web site is responding";                         # Show URL responded
+        #printf "\n[OK] Web site is responding";                         # Show URL responded
+        print BOLD, GREEN, "\n[OK] ", RESET, "Web site is responding";
     }
 
     #----- Put current value in sadm array and check for error.
@@ -828,7 +833,8 @@ sub check_service {
 
     # Show Service Check Result
     if ($service_count >= 1) {                                          # At least 1 service running
-        printf "\n[OK] Service is running - Total returned (%d)",$service_count;
+        #printf "\n[OK] Service is running - Total returned (%d)",$service_count;
+        printf "\n%s%s[OK]%s Service is running - Total returned (%d)", BOLD, GREEN, RESET, $service_count;
     }else{                                                              # No Service are running
         printf "\n[ERROR] Service isn't running - Total returned (%d)",$service_count;
     }
@@ -880,7 +886,8 @@ sub check_daemon {
     $SMOD = "PROCESS"                   ;                               # Sub-Module Category
     $STAT = $pname                      ;                               # Name of deamon
     if ($CVAL > 0) {                                                    # At least 1 process running
-        printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
+        #printf "\n[OK] Number of %s running is %d",$pname, $CVAL;       # Show number of Process
+        printf "\n%s%s[OK]%s Number of %s running is %d", BOLD, GREEN, RESET, $pname, $CVAL;
     }else{                                                              # No Process running
         printf "\n[ERROR] No process named %s are running",$pname;      # Show No process are running
     }
@@ -1132,9 +1139,11 @@ sub check_filesystems_usage  {
             $MOD  = "$OSNAME"                   ;                       # Module Category
             $SMOD = "FILESYSTEM"                ;                       # Sub-Module Category
             $STAT = $fname                      ;                       # Current Value Returned
-            $FSTAT = "[OK]";                                            # Default Status
-            if ($CVAL >= $WVAL) { $FSTAT = "[WARNING]" ;}               # If % Used >= to Warning
-            if ($CVAL >= $EVAL) { $FSTAT = "[ERROR]"   ;}               # If % Used >= to Error Val.
+            $FSTAT = sprintf "%s%s[OK]%s", BOLD, GREEN, RESET;          # Default Status
+            #if ($CVAL >= $WVAL) { $FSTAT = "[WARNING]" ;}               # If % Used >= to Warning
+            #if ($CVAL >= $EVAL) { $FSTAT = "[ERROR]"   ;}               # If % Used >= to Error Val.
+            if ($CVAL >= $WVAL) { sprintf "%s%s[WARNING]%s", BOLD, YELLOW, RESET; ;} # % Used >= Warning
+            if ($CVAL >= $EVAL) { sprintf "%s%s[ERROR]%s", BOLD, RED, RESET;   ;} # % Used >= Error Val.
             print "\n$FSTAT Filesystem $fname at ${CVAL}% ... Warning: $WVAL - Error: $EVAL";
             check_for_error($CVAL,$WVAL,$EVAL,$TEST,$MOD,$SMOD,$STAT);  # Go Evaluate Error/Alert
             last;
