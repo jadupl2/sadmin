@@ -82,6 +82,7 @@
 # 2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
 #@2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
 #@2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
+#@2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -91,7 +92,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.66"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.67"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1932,8 +1933,10 @@ sadm_stop() {
     # Trim the Log
     cat $SADM_LOG > /dev/null                                           # Force buffer to flush
     sadm_trimfile "$SADM_LOG" "$SADM_MAX_LOGLINE"                       # Trim file to Desired Nb.
-    chmod 664 ${SADM_LOG}                                               # Owner/Group Write Else Read
-    chgrp ${SADM_GROUP} ${SADM_LOG}                                     # Change Log file Group
+    chmod 664 ${SADM_LOG} >>/dev/null 2>&1                              # Owner/Group Write Else Read
+    chgrp ${SADM_GROUP} ${SADM_LOG} >>/dev/null 2>&1                    # Change Log file Group
+    [ $(id -u) -eq 0 ] && chmod 664 ${SADM_LOG}                         # R/W Owner/Group R by World
+    [ $(id -u) -eq 0 ] && chown ${SADM_USER}:${SADM_GROUP} ${SADM_LOG}  # Change RCH Owner
 
     # Alert the Unix Admin. based on his selected choice
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "SADM_ALERT_TYPE = $SADM_ALERT_TYPE" ; fi
