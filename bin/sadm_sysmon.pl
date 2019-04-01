@@ -35,6 +35,7 @@
 #
 use English;
 #use DateTime;  # Comment on 9 March 2019
+use Term::ANSIColor qw(:constants);
 use File::Basename;
 use POSIX qw(strftime);
 use Time::Local;
@@ -440,7 +441,8 @@ sub filesystem_increase {
     if ( $src == -1 ) {                                                 # If FS Enlarge Failed
         print "\n  - [ERROR] Command failed: $!";                       # Advise USer
     }else{                                                              # If FS Enlarge Succeeded
-        printf "\n  - [OK] Return Code: %d", $? >> 8;
+        print BOLD, GREEN, "\n  - [OK]", RESET;
+        #printf "\n  - [OK] Return Code: %d", $? >> 8;
     }
     return $src ;                                                       # Return Err. Code to Caller
 }
@@ -771,7 +773,8 @@ sub check_http {
     if ($http_status == 0) {                                            # If no response for URL
         printf "\n[ERROR] Web site not responding" ;                    # Show error to user
     }else{                                                              # If URL Response
-        printf "\n[OK] Web site is responding";                         # Show URL responded
+        #printf "\n[OK] Web site is responding";                         # Show URL responded
+        print BOLD, GREEN, "\n[OK] ", RESET, "Web site is responding";
     }
 
     #----- Put current value in sadm array and check for error.
