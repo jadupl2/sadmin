@@ -29,7 +29,8 @@
 # 2018_06_06    v2.2 Correct problem with link to view the update log 
 # 2018_07_01    v2.3 Show Only Linux Server on this page (No Aix)
 # 2018_07_09    v2.4 Last Update time remove seconds & Change layout
-#@2018_07_09    v2.5 Change Layout of line (More Compact)
+# 2018_07_09    v2.5 Change Layout of line (More Compact)
+#@2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -59,7 +60,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.5" ;                                                # Current version number
+$WVER          = "2.6" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -90,13 +91,15 @@ function setup_table() {
     #echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Next Update</th>\n";
+    echo "<th class='text-center'>Update Occurrence</th>\n";
     echo "<th class='text-center'>View</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Month</th>\n";
-    echo "<th class='text-center'>Date</th>\n";
-    echo "<th class='text-center'>Day</th>\n";
-    echo "<th class='text-center'>Time</th>\n";
+    #echo "<th class='text-center'>Month</th>\n";
+    #echo "<th class='text-center'>Date</th>\n";
+    #echo "<th class='text-center'>Day</th>\n";
+    #echo "<th class='text-center'>Time</th>\n";
     echo "</tr>\n"; 
     echo "</thead>\n";
 
@@ -107,13 +110,15 @@ function setup_table() {
     #echo "<th>Cat.</th>\n";
     echo "<th class='text-center'>Last Update</th>\n";
     echo "<th class='text-center'>Status</th>\n";
+    echo "<th class='text-center'>Next Update</th>\n";
+    echo "<th class='text-center'>Update Occurrence</th>\n";
     echo "<th class='text-center'>View</th>\n";
     echo "<th class='text-center'>Auto</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
-    echo "<th class='text-center'>Month</th>\n";
-    echo "<th class='text-center'>Date</th>\n";
-    echo "<th class='text-center'>Day</th>\n";
-    echo "<th class='text-center'>Time</th>\n";
+    #echo "<th class='text-center'>Month</th>\n";
+    #echo "<th class='text-center'>Date</th>\n";
+    #echo "<th class='text-center'>Day</th>\n";
+    #echo "<th class='text-center'>Time</th>\n";
     echo "</tr>\n"; 
     echo "</tfoot>\n";
  
@@ -160,7 +165,33 @@ function display_data($count, $row) {
         default   : echo "Not Appl." ; break ;
     }
     echo "</td>\n";  
-        
+
+    
+    # Next Update Date
+    echo "<td class='dt-center'>";
+    list ($STR_SCHEDULE, $UPD_DATE_TIME) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+            $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
+    echo $UPD_DATE_TIME ;
+    echo "</td>\n";  
+
+
+    # Occurrence of the O/S Update
+    echo "<td class='dt-center'>";
+    #$STR_SCHEDULE = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+    #        $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
+    echo $STR_SCHEDULE ;
+    #$payment_date = '17 January 2017';
+    #echo $payment_date . '<br>';
+    #
+    #$payment_date = date('Y M D', strtotime('next Wednesday', strtotime($payment_date)));
+    #Every Wednesday at 01:45
+    #$payment_date = date('Y-m-d', strtotime('next Wednesday'));
+    #echo " " . $payment_date;
+    echo "</td>\n";  
+
+
+
+
     # Display Icon to View Last O/S Update Log
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
@@ -190,63 +221,63 @@ function display_data($count, $row) {
     }
 
     # Month that Update can occur
-    echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == True ) { 
-        $months = array('Any','Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
-        if (trim($row['srv_update_month']) == "YNNNNNNNNNNNN") {
-            echo "Any" ;
-        }else{
-            for ($i = 1; $i < 13; $i = $i + 1) {
-                if (substr($row['srv_update_month'],$i,1) == "Y") { echo $months[$i] . ","; }
-            }
-        }
-    }else{
-        echo "Manual";
-    }    
-    echo "</td>\n";  
+    // echo "<td class='dt-center'>";
+    // if ($row['srv_update_auto']   == True ) { 
+    //     $months = array('Any','Jan','Feb','Mar','Apr','May','Jun','Jul ','Aug','Sep','Oct','Nov','Dec');
+    //     if (trim($row['srv_update_month']) == "YNNNNNNNNNNNN") {
+    //         echo "Any" ;
+    //     }else{
+    //         for ($i = 1; $i < 13; $i = $i + 1) {
+    //             if (substr($row['srv_update_month'],$i,1) == "Y") { echo $months[$i] . ","; }
+    //         }
+    //     }
+    // }else{
+    //     echo "Manual";
+    // }    
+    // echo "</td>\n";  
     
-    # Date of the month (1-31) that update can occur
-    #echo "<td class='dt-center'>" . $row['srv_update_dom'] . "- ".
-    # strlen(trim($row['srv_update_dom'])) .  "</td>\n";  
-    echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == True ) { 
-        if (trim($row['srv_update_dom']) == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") {
-            echo "Any" ;
-        }else{
-            for ($i = 1; $i < 32; $i = $i + 1) {
-                if (substr($row['srv_update_dom'],$i,1) == "Y") { echo $i+1 . ","; }
-            }
-        }
-    }else{
-        echo "Manual";
-    }    
-    echo "</td>\n";
+    // # Date of the month (1-31) that update can occur
+    // #echo "<td class='dt-center'>" . $row['srv_update_dom'] . "- ".
+    // # strlen(trim($row['srv_update_dom'])) .  "</td>\n";  
+    // echo "<td class='dt-center'>";
+    // if ($row['srv_update_auto']   == True ) { 
+    //     if (trim($row['srv_update_dom']) == "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN") {
+    //         echo "Any" ;
+    //     }else{
+    //         for ($i = 1; $i < 32; $i = $i + 1) {
+    //             if (substr($row['srv_update_dom'],$i,1) == "Y") { echo $i+1 . ","; }
+    //         }
+    //     }
+    // }else{
+    //     echo "Manual";
+    // }    
+    // echo "</td>\n";
 
-    # Day of the week that update can occur
-    echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == True ) { 
-        $days = array('Any','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
-        if (trim($row['srv_update_dow']) == "YNNNNNNN") {
-            echo "Any" ;
-        }else{
-            for ($i = 1; $i < 8; $i = $i + 1) {
-                if (substr($row['srv_update_dow'],$i,1) == "Y") { echo $days[$i] . ","; }
-            }
-        }
-    }else{
-        echo "Manual";
-    }    
-    echo "</td>\n";
+    // # Day of the week that update can occur
+    // echo "<td class='dt-center'>";
+    // if ($row['srv_update_auto']   == True ) { 
+    //     $days = array('Any','Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+    //     if (trim($row['srv_update_dow']) == "YNNNNNNN") {
+    //         echo "Any" ;
+    //     }else{
+    //         for ($i = 1; $i < 8; $i = $i + 1) {
+    //             if (substr($row['srv_update_dow'],$i,1) == "Y") { echo $days[$i] . ","; }
+    //         }
+    //     }
+    // }else{
+    //     echo "Manual";
+    // }    
+    // echo "</td>\n";
     
-    # Hour of the Update
-    echo "<td class='dt-center'>";
-    if ($row['srv_update_auto']   == True ) { 
-        echo sprintf("%02d",$row['srv_update_hour']) . ":";
-        echo sprintf("%02d",$row['srv_update_minute']) ;
-    }else{
-        echo "Man";
-    }    
-    echo "</td>\n";  
+    // # Hour of the Update
+    // echo "<td class='dt-center'>";
+    // if ($row['srv_update_auto']   == True ) { 
+    //     echo sprintf("%02d",$row['srv_update_hour']) . ":";
+    //     echo sprintf("%02d",$row['srv_update_minute']) ;
+    // }else{
+    //     echo "Man";
+    // }    
+    // echo "</td>\n";  
 
     echo "</tr>\n"; 
 }
