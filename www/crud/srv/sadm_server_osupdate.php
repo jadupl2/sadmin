@@ -471,7 +471,7 @@ function display_osschedule($con,$wrow,$mode) {
     echo "<center><strong><h3><i>" . $title . "</i></h3></strong></center>";
 
     # Convert Crontab entry data to Text.
-    $STR_SCHEDULE = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+    list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
     echo "<center><strong><h3><i>" . $STR_SCHEDULE . "</i></h3></strong></center>";
 
