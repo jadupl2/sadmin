@@ -31,7 +31,8 @@
 #   2018_07_22  v2.2 After updating a server browser will go back on page ready to edit another one.
 # 2019_01_11 Change: v2.3 Cancel button now bring you to update menu.
 # 2019_01_21 Change: v2.4 Added Dark Theme
-#@2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
+# 2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
+#@2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
 #
 # ==================================================================================================
 #
@@ -94,7 +95,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.5" ;                                                        # Current version number
+$SVER  = "2.6" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -323,7 +324,8 @@ function display_osschedule($con,$wrow,$mode) {
 # ==================================================================================================
 #                   SECOND EXECUTION OF PAGE AFTER THE UPDATE BUTTON IS PRESS
 # ==================================================================================================
-    # Form is submitted - Process the Update of the selected row
+
+# Form is submitted - Process the Update of the selected row
     if (isset($_POST['submitted'])) {
         if ($DEBUG) { echo "<br>Submitted for " . $_POST['scr_name'];}  # Debug Info Start Submit
         foreach($_POST AS $key => $value) { $_POST[$key] = $value; }    # Fill in Post Array 
@@ -380,6 +382,7 @@ function display_osschedule($con,$wrow,$mode) {
                 $wstr=substr_replace($wstr,'Y',intval($p),1);           # Replace N By Y for Sel.Day
             }                                                           # End of ForEach
         }                                                               # End of If
+        if (substr($pdom,0,1) != "Y") { $wstr = "NNNNNNNN" ; }          # If Specific Date Entered
         $pdow = trim($wstr) ;                                           # Remove Begin/End Space
         $sql = $sql . "srv_update_dow = '"  . $wstr  ."', ";            # Insert in SQL Statement
 
