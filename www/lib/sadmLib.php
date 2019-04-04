@@ -35,7 +35,8 @@
 #       V2.4 Added getEachIpInRange Function that return list of IP in a CIDR
 # 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # 2019_01_21 v2.6 Add function from From Schedule to Text.
-#@2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
+# 2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
+#@2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurence & Date of update)
 # ==================================================================================================
 #
 
@@ -44,14 +45,14 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.7" ;   
+$LIBVER = "2.8" ;   
     
 
 #===================================================================================================
 # DISPLAY HEADING LINES OF THE CONTENT PORTION OF THE WEB PAGE 
 #===================================================================================================
-function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,
-                            $CREATE_BUTTON=False,$CREATE_URL="",$CREATE_LABEL="Create") {
+function display_std_heading($BACK_URL,$LTITLE,$CTITLE,$RTITLE,$WVER,$CREATE_BUTTON=False,
+                             $CREATE_URL="",$CREATE_LABEL="Create") {
 
     $URL_HOME   = '/index.php';                                         # Site Main Page
     
@@ -212,7 +213,6 @@ function update_crontab ($pscript,$paction = "U",$pmonth = "YNNNNNNNNNNNNNNNNNNN
                         $pdom = "YNNNNNNNNNNNN",$pdow="NNNNNNNY",$phour=01,$pmin=00) {
 
     # To Display Parameters received - Used for Debugging Purpose ----------------------------------
-    $DEBUG = False;
     if ($DEBUG) { 
         echo "<BR>I'm in update crontab" ; 
         $wmsg1 = "\npscript = " . $pscript ;                            # Script to execute
@@ -496,45 +496,91 @@ function accept_key($server_key) {
 
 #===================================================================================================
 # Convert Data for a schedule to one line text
-# wdom =  Date of the month the schedule will run 
-#         Value receive is a string of 32 Char. 
-#         If 1st Char is "Y" then schedule can run at any date "YNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN". 
-#         If 1st Char isn't a "Y" the next chars represent the 31 days in a month (Y=Run N=Not Run).
+# wdom =  Date of the month the schedule will run, value receive is a string of 32 Char. 
+#         32 Characters (either a Y or a N) each representing a day (1-31) Y=Update N=No Update
+#            Position 0 = Y Then ALL Date in the month are Selected
+#            Position 1-31 Indicate (Y) date of the month that script will run or not (N)
+# wmth =  13 Characters (either a Y or a N) each representing a month (YNNNNNNNNNNNN)
+#           Position 0 = Y Then ALL Months are Selected
+#           Position 1-12 represent the month that are selected (Y or N)             
+#           Default is YNNNNNNNNNNNN meaning will run every month 
+# wdow =  8 Characters (either a Y or a N) 
+#            If Position 0 = Y then will run every day of the week
+#            Position 1-7 Indicate a week day () Starting with Sunday
+#            Default is all Week (YNNNNNNN)
+# whrs    Hour when the update should begin (00-23) - Default 1am
+# wmin    Minute when the update will begin (00-50) - Default 5min
 #
+# The function return 2 Values:
+#  First one is a string that specify when (Day,Time) and at what repetition the schedule occurs.
+#       Example of string returned : "Every Wednesday at 01:15"
+#  Second one is also a string containing the date and time the next O/S update will occur.
+#       Example of string returned : "2019-04-03 22:00"
 #===================================================================================================
 function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
 {
 
-    # Date in the month the Schedule will run
-    $part1 = "Run ";                                                    # Result Date to Run
-    if (substr($wdom,0,1) == "Y") {                                     # If DOM begin with Y=AnyDate
-        $part1 = "";                                                    # Backup run every date
-    }else{                                                              # If not Get date it Run
+    # Variables used to construct the next O/S Update Date
+    $sdate    = "";                                                     # Sel Day (1,3,31) empty now
+    $smth     = "";                                                     # Selected Mth empty for now
+    $sday     = "";                                                     # Selected Day empty for now
+    $selhrs   = sprintf("%02d", $whrs);                                 # Save & Format Selected Hrs
+    $selmin   = sprintf("%02d", $wmin);                                 # Save & Format Selected Min
+    $seltime  = "${selhrs}:${selmin}";                                  # Store Hrs:Min for
+    $curday   = sprintf("%02d", date("d"));                             # Get Current Date
+    $curmth   = sprintf("%02d", date("m"));                             # Get Current Month
+    $curyear  = sprintf("%04d", date("Y"));                             # Get Current Year
+    $curepoch = time();                                                 # Current Epoch Time
+    $selday   = $curday; $selmth=$curmth ; $selyear=$curyear;           # Set Default Selection Date
+
+    # Date in the month the Schedule will run 
+    # If any date part1 and sdate will be empty or sdate contains (Ex: 1,4,8) & part1 (1st,4th,8th)
+    $part1 = "";                                                        # Result Date to Run
+    if (substr($wdom,0,1) != "Y") {                                     # If DOM don't begin with Y
         for ($i = 1; $i < 32; $i = $i + 1) {
-            if ((substr($wdom,$i,1) == "Y") && ($i == 1)) { $part1 = $part1 . "1st," ;}
-            if ((substr($wdom,$i,1) == "Y") && ($i == 2)) { $part1 = $part1 . "2nd," ;}
-            if ((substr($wdom,$i,1) == "Y") && ($i == 3)) { $part1 = $part1 . "3rd," ;}
-            if ((substr($wdom,$i,1) == "Y") && ($i > 3))  { $part1 = $part1 . $i . "th," ;}
+            if ((substr($wdom,$i,1) == "Y") && ($i == 1)) {             # Is First Month is Yes
+                $part1 = $part1 . "1st," ;                              # Insert 1st, in part1
+                $sdate="${sdate}1,";                                    # Insert 1 in Selected Date
+            }
+            if ((substr($wdom,$i,1) == "Y") && ($i == 2)) {             # Is Second Month is Yes
+                $part1 = $part1 . "2nd," ;                              # Insert 2nd, in part1
+                 $sdate="${sdate}2,";                                   # Insert 2 in Selected Date
+            }
+            if ((substr($wdom,$i,1) == "Y") && ($i == 3)) {             # Is Third Month is Yes
+                $part1 = $part1 . "3rd," ;                              # Insert 3rd, in part1
+                $sdate="${sdate}3,";                                    # Insert 3 in Selected Date
+            }
+            if ((substr($wdom,$i,1) == "Y") && ($i > 3))  {             # For all months > than 3
+                $part1 = $part1 . $i . "th," ;                          # Insert day number  + "th,"
+                $sdate="${sdate}$i,";                                   # Insert Day Number in sdate
+            }
         }
-        $part1 = rtrim($part1, ',') ;                                   # Remove Trailing Comma
+        $part1 = rtrim($part1, ',') ;                                   # Del part1 trailing Comma 
+        $sdate = rtrim($sdate, ',') ;                                   # Del sdate trailing Comma
         if ($part1 != "") { $part1 = $part1 . " of " ; }                # At least one date specify
     }
 
     # Month that the Schedule will Run
-    $mth_name = array('any month, 
-                     ','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+    #   part2 will contains the months names (Jab,Apr,Aug) or nothing if every month (if 1st Char=Y)
+    #   smonth will contains the months selected (1,4,8) or nothing if every month is selected
     $part2 = "";
-    if (substr($wmth,0,1) == "Y") {                                     # If Mth begin with Y=AnyMth
-        $part2="";
-        if ($part1 != "") { $part2 = $mth_name[0]; }                    # Schedule
+    $mth_name = array('every month, 
+                ','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+    if (substr($wmth,0,1) == "Y") {                                     # 1st Letter is Y=EveryMonth
+        if ($part1 != "") { $part2 = $mth_name[0]; }                    # Any Mth ins. "every month"
     }else{                                                              # If Month No. is Specify
-        for ($i = 1; $i < 13; $i = $i + 1) {
-            if (substr($wmth,$i,1) == "Y") { $part2 = $part2 . $mth_name[$i] . "," ; }
+        for ($i = 1; $i < 13; $i = $i + 1) {                            # Loop through the 12 Months
+            if (substr($wmth,$i,1) == "Y") {                            # If month=Y=Selected
+                $part2 = $part2 . $mth_name[$i] . "," ;                 # Insert Mth Name in Part2
+                $smth  = $smth . $i . ",";                              # Insert Mth Num in Sel. Mth
+            }
         }
     }
-    $part2 = rtrim($part2, ',') . " " ;                                 # Remove Trailing Comma
+    $part2 = rtrim($part2, ',') . " " ;                                 # Del part2 trailing Comma
+    $smth  = rtrim($smth, ',') ;                                        # Del smth trailing Comma
     
-
+    # If Every Date of the month and Every month was selected then insert "Every" in part2.
+    # Finally, it's going to be Every Day of the week or a particular day of the week. 
     if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = "Every "; }
 
 
@@ -545,25 +591,178 @@ function SCHEDULE_TO_TEXT($wdom,$wmth,$wdow,$whrs,$wmin)
         if ((substr($wdom,0,1) == "Y") and (substr($wmth,0,1) == "Y")) { $part2 = ""; }
 
     }else{                                                              # If not Get Days it Run
-        if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;}
-        if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;}
-        if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;}
-        if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;}
-        if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;}
-        if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;}
-        if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;}
+        if (substr($wdow,1,1) == "Y") { $part3 = $part3 . "Sunday,"    ;  $sday="1,"; }
+        if (substr($wdow,2,1) == "Y") { $part3 = $part3 . "Monday,"    ;  $sday = $sday . "2," ;}
+        if (substr($wdow,3,1) == "Y") { $part3 = $part3 . "Tuesday,"   ;  $sday = $sday . "3," ;}
+        if (substr($wdow,4,1) == "Y") { $part3 = $part3 . "Wednesday," ;  $sday = $sday . "4," ;}
+        if (substr($wdow,5,1) == "Y") { $part3 = $part3 . "Thursday,"  ;  $sday = $sday . "5," ;}
+        if (substr($wdow,6,1) == "Y") { $part3 = $part3 . "Friday,"    ;  $sday = $sday . "6," ;}
+        if (substr($wdow,7,1) == "Y") { $part3 = $part3 . "Saturday,"  ;  $sday = $sday . "7," ;}
     }
-    $part3 = rtrim($part3, ',') ." " ;                                  # Remove Trailing Comma
+    $part3 = rtrim($part3, ',') ." " ;                                  # Del part3 trailing Comma
+    $sday  = rtrim($sday, ',');                                         # Del sday trailing Comma
 
-    # Insert Hours and Minutes
+
+    # Part4 is the hours and minutes of the schedule, just format them and put them in part4.
     $part4a = sprintf("%02d", $whrs);
     $part4b = sprintf("%02d", $wmin);
     $part4 = "at ${part4a}:${part4b}";
 
-    # Combine the three part
-    #return ("1=" . $part1 . " 2=". $part2 . " 3=".$part3 . " 4=".$part4);
-    return ($part1 . $part2 . $part3 . $part4);
+    # Combine the Four part to define the schedule event occurence 
+    #print ("1=" . $part1 . " 2=". $part2 . " 3=".$part3 . " 4=".$part4);
+    $event_occurence = "$part1" . "$part2" . "$part3" . "$part4";
+    
+    # Now let's construct the date and time of the next O/S Update.
+    #print ("<br>sdate='" . $sdate . "' smth='". $smth . "' sday='" .$sday . "' seltime='".$seltime."'");
+    if (($sdate == "") and ($smth == "") and ($sday == "")) {
+        $update_date_time = date('Y-m-d', strtotime('tomorrow'))        . " $seltime";
+        return array ($event_occurence , $update_date_time) ;
+    }
+
+    if (($sdate == "") and ($smth == "")) { 
+        $aday = array ($sday);
+        foreach($aday as $wday)                                        # Process each Date Selected
+            {
+                $pos = strpos($wday,"1") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Sunday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Sunday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Sunday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Sunday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }
+                $pos = strpos($wday,"2") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Monday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Monday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Monday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Monday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }
+                $pos = strpos($wday,"3") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Tuesday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Tuesday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Tuesday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Tuesday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }
+                $pos = strpos($wday,"4") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Wednesday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Wednesday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Wednesday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Wednesday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }
+                $pos = strpos($wday,"5") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Thursday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Thursday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Thursday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Thursday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }                                                
+                $pos = strpos($wday,"6") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Friday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Friday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Friday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Friday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }                                                
+                $pos = strpos($wday,"7") ;
+                if ($pos !== false) {
+                    $tyear  = date('Y', strtotime('next Saturday'));            # Year of next update
+                    $tmonth = date('m', strtotime('next Saturday'));            # Month of next update
+                    $tdate  = date('d', strtotime('next Saturday'));            # Day of next update
+                    $tepoch = mktime($whrs, $wmin, 0, $tmonth, $tdate, $tyear);
+                    if ($tepoch >= $curepoch) {
+                        $update_date_time = date('Y-m-d', strtotime('next Saturday'))    . " $seltime";
+                        return array ($event_occurence , $update_date_time) ;
+                    }
+                }                                                
+    }
 }
+
+    # If a Date was specify and can occur every month.
+    # Example : sdate='2' smth='' sday='' seltime='01:44'
+    if (($sdate != "") and ($smth == "")) {
+        $adate = array ($sdate);                                        # Convert Str Date in Array
+        foreach($adate as $tdate) {                                     # Try all Date in Cur Mth
+            $tepoch = mktime($whrs, $wmin, 0, $curmth, $tdate, $curyear);
+            if ($tepoch >= $curepoch) {
+                $update_date_time = $curyear ."-". $curmth ."-".$tdate . " $seltime";
+                return array ($event_occurence , $update_date_time) ;
+            }
+        }
+        foreach($adate as $tdate) {                                     # Try all Date for Nxt Mth
+            $tepoch = mktime($whrs,$wmin,0,date('m',strtotime('next month')),$tdate,$curyear);
+            if ($tepoch >= $curepoch) {
+                $update_date_time = $curyear ."-". date('m',strtotime('next month')) ."-". sprintf("%02d",$tdate) . " $seltime";
+                return array ($event_occurence , $update_date_time) ;
+            }
+        }
+    }
+
+    # If a Date was specify and specific month is specified.
+    # Example : sdate='3,5' smth='3,6' sday='' seltime='01:15'
+    if (($sdate != "") and ($smth != "")) {
+        $amth = explode(",",$smth);                                         # Convert Str Mth in Array
+        $adate = explode(",",$sdate);                                        # Convert Str Date in Array
+        foreach($amth as $tmth) {                                       # Try all Mth Specify
+            foreach($adate as $tdate) {                                 # Try all Date Specify
+                $tepoch = mktime($whrs, $wmin, 0, $tmth, $tdate, $curyear);
+                if ($tepoch >= $curepoch) {
+                    $update_date_time = $curyear ."-". sprintf("%02d",$tmth) ."-".sprintf("%02d",$tdate) . " $seltime";
+                    return array ($event_occurence , $update_date_time) ;
+                }
+            }
+        }
+    }
+
+
+    #print "Function Returned : $update_date_time - $event_occurence"; 
+    return array ($event_occurence , $update_date_time) ;
+}
+
+
+
+# ==================================================================================================
+# Test if a string begin with another string. Return True or False.
+#
+#   $ExampleText = 'Hello world!';
+#   if (StartsWith($ExampleText, 'Hello')){
+#       print 'The text starts with hello!';
+#   }
+#   $ExampleText = 'Evil monkey.';
+#   if (!StartsWith($ExampleText, 'monkey')){
+#       print 'The text does not start with monkey!';
+#   }
+# ==================================================================================================
+function StartsWith($MainString, $searchString) {
+    return strpos($MainString, $searchString) === 0;
+}
+
+
 
 // ================================================================================================
 //                   Display Content of file receive as parameter
