@@ -177,7 +177,7 @@ function display_data($count, $row) {
 
     # Occurrence of the O/S Update
     echo "<td class='dt-center'>";
-    #$STR_SCHEDULE = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
+    #list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
     #        $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
     echo $STR_SCHEDULE ;
     #$payment_date = '17 January 2017';
