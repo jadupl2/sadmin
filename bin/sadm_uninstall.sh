@@ -30,7 +30,8 @@
 # Version Change Log 
 #
 # 2019_03_23 New: v1.0 Beta - Test Initial version.
-#@2019_03_26 New: v1.1 Beta - Ready to Test 
+# 2019_03_26 New: v1.1 Beta - Ready to Test 
+#@2019_04_06 New: v1.2 Version after testing client removal.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
