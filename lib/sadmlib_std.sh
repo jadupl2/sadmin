@@ -83,6 +83,7 @@
 #@2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
 #@2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
 #@2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
+#@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -92,7 +93,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.67"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.68"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -235,8 +236,7 @@ SADM_DAILY_BACKUP_TO_KEEP=3                 ; export SADM_DAILY_BACKUP_TO_KEEP  
 SADM_WEEKLY_BACKUP_TO_KEEP=3                ; export SADM_WEEKLY_BACKUP_TO_KEEP  # Weekly to Keep
 SADM_MONTHLY_BACKUP_TO_KEEP=2               ; export SADM_MONTHLY_BACKUP_TO_KEEP # Monthly to Keep
 SADM_YEARLY_BACKUP_TO_KEEP=1                ; export SADM_YEARLY_BACKUP_TO_KEEP  # Yearly to Keep
-# Day of the week to do a weekly backup (1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat,7=Sun)
-SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY      # Weekly Backup Day
+SADM_WEEKLY_BACKUP_DAY=5                    ; export SADM_WEEKLY_BACKUP_DAY      # 1=Mon, ... ,7=Sun
 SADM_MONTHLY_BACKUP_DATE=1                  ; export SADM_MONTHLY_BACKUP_DATE    # Monthly Back Date
 SADM_YEARLY_BACKUP_MONTH=12                 ; export SADM_YEARLY_BACKUP_MONTH    # Yearly Backup Mth
 SADM_YEARLY_BACKUP_DATE=31                  ; export SADM_YEARLY_BACKUP_DATE     # Yearly Backup Day
@@ -246,6 +246,42 @@ SADM_MKSYSB_NFS_TO_KEEP=2                   ; export SADM_MKSYSB_NFS_TO_KEEP    
 
 # Local to Library Variable - Can't be use elsewhere outside this script
 LOCAL_TMP="$SADM_TMP_DIR/sadmlib_tmp.$$"    ; export LOCAL_TMP          # Local Temp File
+
+# Screen related variables
+SADM_CLREOL=$(tput el)                      ; export SADM_CLREOL        # Clr to end of lne
+SADM_CLREOS=$(tput ed)                      ; export SADM_CLREOS        # Clr to end of scr
+SADM_BOLD=$(tput bold)                      ; export SADM_BOLD          # Bold Attribute
+SADM_BELL=$(tput bel)                       ; export SADM_BELL          # Ring the Bell
+SADM_RVS=$(tput rev)                        ; export SADM_RVS           # Reverse Video Attribute
+SADM_UND=$(tput sgr 0 1)                    ; export SADM_UND           # UnderLine
+SADM_HOMECUR=$(tput home)                   ; export SADM_HOMECUR       # Home Cursor
+SADM_UP=$(tput cuu1)                        ; export SADM_UP            # Cursor up
+SADM_DOWN=$(tput cud1)                      ; export SADM_DOWN          # Cursor down
+SADM_RIGHT=$(tput cub1)                     ; export SADM_RIGHT         # Cursor right
+SADM_LEFT=$(tput cuf1)                      ; export SADM_LEFT          # Cursor left
+SADM_CLR=$(tput clear)                      ; export SADM_CLR           # Clear the screen
+SADM_BLINK=$(tput blink)                    ; export SADM_BLINK         # Turn blinking on
+SADM_RESET=$(tput sgr0)                     ; export SADM_RESET         # Reset Screen Attribute
+
+# Foreground Color
+SADM_BLACK=$(tput setaf 0)                  ; export SADM_BLACK         # Black color
+SADM_RED=$(tput setaf 1)                    ; export SADM_RED           # Red color
+SADM_GREEN=$(tput setaf 2)                  ; export SADM_GREEN         # Green color
+SADM_YELLOW=$(tput setaf 3)                 ; export SADM_YELLOW        # Yellow color
+SADM_BLUE=$(tput setaf 4)                   ; export SADM_BLUE          # Blue color
+SADM_MAGENTA=$(tput setaf 5)                ; export SADM_MAGENTA       # Magenta color
+SADM_CYAN=$(tput setaf 6)                   ; export SADM_CYAN          # Cyan color
+SADM_WHITE=$(tput setaf 7)                  ; export SADM_WHITE         # White color
+
+# Background Color
+SADM_BBLACK=$(tput setab 0)                 ; export SADM_BBLACK        # Black color
+SADM_BRED=$(tput setab 1)                   ; export SADM_BRED          # Red color
+SADM_BGREEN=$(tput setab 2)                 ; export SADM_BGREEN        # Green color
+SADM_BYELLOW=$(tput setab 3)                ; export SADM_BYELLOW       # Yellow color
+SADM_BBLUE=$(tput setab 4)                  ; export SADM_BBLUE         # Blue color
+SADM_BMAGENTA=$(tput setab 5)               ; export SADM_BMAGENTA      # Magenta color
+SADM_BCYAN=$(tput setab 6)                  ; export SADM_BCYAN         # Cyan color
+SADM_BWHITE=$(tput setab 7)                 ; export SADM_BWHITE        # White color
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1823,7 +1859,7 @@ sadm_start() {
     fi
 
     # Feed the Return Code History File stating the script is Running
-    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
+    #SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
         then [ ! -e "$SADM_RCHLOG" ] && touch $SADM_RCHLOG              # Create RCH If not exist
              [ $(id -u) -eq 0 ] && chmod 664 $SADM_RCHLOG               # Change protection on RCH
@@ -2255,6 +2291,8 @@ write_alert_history() {
 # --------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------
 #
+    SADM_STIME=`date "+%C%y.%m.%d %H:%M:%S"`  ; export SADM_STIME       # Statup Time of Script
+
     if [ "$LIB_DEBUG" -gt 4 ] ;then sadm_writelog "main: grepping /etc/environment" ; fi
     grep "^SADMIN" /etc/environment >/dev/null 2>&1                     # Do Env.File include SADMIN
     if [ $? -ne 0 ]                                                     # SADMIN missing in /etc/env
