@@ -25,6 +25,7 @@
 # 2019_01_19    v3.7 Added: Added Backup List & Backup Exclude File Name available to User.
 # 2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
 #@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
+#@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -46,7 +47,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.9'                               # Current Script Version
+    export SADM_VER='3.10'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -747,26 +748,28 @@ print_sadmin_cfg()
     presult="$SADM_DBPORT"                                              # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_RW_DBUSER"                                         # Directory Variable Name
-    pdesc="SADMIN Database Read/Write User"                             # Directory Description
-    presult="$SADM_RW_DBUSER"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    if [ "$SADM_HOST_TYPE" = "S" ] 
+        then pexample="\$SADM_RW_DBUSER"                                # Directory Variable Name
+             pdesc="SADMIN Database Read/Write User"                    # Directory Description
+             presult="$SADM_RW_DBUSER"                                  # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-    pexample="\$SADM_RW_DBPWD"                                          # Directory Variable Name
-    pdesc="SADMIN Database Read/Write User Pwd"                         # Directory Description
-    presult="$SADM_RW_DBPWD"                                            # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+             pexample="\$SADM_RW_DBPWD"                                 # Directory Variable Name
+             pdesc="SADMIN Database Read/Write User Pwd"                # Directory Description
+             presult="$SADM_RW_DBPWD"                                   # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-    pexample="\$SADM_RO_DBUSER"                                         # Directory Variable Name
-    pdesc="SADMIN Database Read Only User"                              # Directory Description
-    presult="$SADM_RO_DBUSER"                                           # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+             pexample="\$SADM_RO_DBUSER"                                # Directory Variable Name
+             pdesc="SADMIN Database Read Only User"                     # Directory Description
+             presult="$SADM_RO_DBUSER"                                  # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-    pexample="\$SADM_RO_DBPWD"                                          # Directory Variable Name
-    pdesc="SADMIN Database Read Only User Pwd"                          # Directory Description
-    presult="$SADM_RO_DBPWD"                                            # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
+             pexample="\$SADM_RO_DBPWD"                                 # Directory Variable Name
+             pdesc="SADMIN Database Read Only User Pwd"                 # Directory Description
+             presult="$SADM_RO_DBPWD"                                   # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    fi
+
     pexample="\$SADM_RRDTOOL"                                           # Directory Variable Name
     pdesc="RRDTOOL Binary Location"                                     # Directory Description
     presult="$SADM_RRDTOOL"                                             # Actual Content of Variable
