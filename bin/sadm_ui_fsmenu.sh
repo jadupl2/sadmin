@@ -22,6 +22,7 @@
 #   2.2      Correct cannot change filesystem type (always goes back to xfs)
 #   2.3      Fix problem with filesystem increase
 #@2019_02_25 Improvement: v2.4 SysAdmin Menu - (sadm command) Code revamp and add color to menu.
+#@2019_04_07 Update: v2.5 Use color variables from SADMIN Libr.
 #===================================================================================================
 
 # Load Filesystem Library Tools
@@ -80,8 +81,8 @@ create_filesystem()
         sadm_show_menuitem 10 03 5 "Filesystem Type (ext3,ext4,xfs).......... $CR_FT "
         sadm_show_menuitem 14 03 "P" "Proceed with creation ..................."
         sadm_show_menuitem 15 03 "Q" "Quit this menu..........................."
-        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"                # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in       
@@ -178,8 +179,8 @@ filesystem_check()
         sadm_show_menuitem 05 05 1   "Mount Point to check................... $RM_MP "
         sadm_show_menuitem 16 05 "P" "Proceed with the filesystem check......"
         sadm_show_menuitem 17 05 "Q" "Quit this menu........................."
-        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
@@ -199,7 +200,7 @@ filesystem_check()
                         filesystem_fsck
                         RC=$?
                         if [ "$RC" -ne 0 ]
-                           then sadm_mess "Error ($RC) occured while checking the filesystem"
+                           then sadm_mess "Error ($RC) occurred while checking the filesystem"
                            else sadm_mess "Filesystem check ran with success !"
                                 RM_MP="" ; export RM_MP
                                 RM_ST="" ; export RM_ST
@@ -238,8 +239,8 @@ delete_filesystem()
         sadm_show_menuitem 05 04 01  "Mount Point to delete......... $RM_MP "
         sadm_show_menuitem 16 04 "P" "Proceed with the delete......."
         sadm_show_menuitem 17 04 "Q" "Quit this menu................"
-        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
@@ -260,7 +261,7 @@ delete_filesystem()
                         remove_fs 
                         RC=$?
                         if [ "$RC" -ne 0 ]
-                           then sadm_mess "Error ($RC) occured while deleting the filesystem"
+                           then sadm_mess "Error ($RC) occurred while deleting the filesystem"
                            else sadm_mess "Filesystem deleted with success !"
                                 RM_MP="" 
                         fi
@@ -294,11 +295,11 @@ enlarge_filesystem()
                 sadm_writexy 12 08 "Filesystem Permission ...............: $LVPROT"
         fi
         sadm_show_menuitem 05 03 1 "Filesystem mount point to increase...: $RM_MP "
-        sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${bold}${RM_MB}${nrm}"
+        sadm_show_menuitem 15 03 2 "New Filesystem Size in MB............: ${SADM_BOLD}${RM_MB}${SADM_RESET}"
         sadm_show_menuitem 17 03 "P" "Proceed with increasing the size......"
         sadm_show_menuitem 18 03 "Q" "Quit this menu........................"
-        sadm_writexy 21 01 "${green}${reverse}${SADM_80_SPACES}\c"      # Line 21 - Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display "Option ? "
+        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${SADM_80_SPACES}\c" # Line 21 - Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display "Option ? "
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read option
         case $option in
@@ -330,7 +331,7 @@ enlarge_filesystem()
                          extend_fs                                      # Call Extend FS Function
                          RC=$?
                          if [ "$RC" -ne 0 ]
-                            then sadm_mess "Error ($RC) occured while increasing the filesystem"
+                            then sadm_mess "Error ($RC) occurred while increasing the filesystem"
                             else sadm_mess "Filesystem increased with success !"
                                  RM_MP="" ; export RM_MP
                                  RM_MB="" ; export RM_MB
