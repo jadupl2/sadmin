@@ -49,6 +49,7 @@
 #@2019_03_28 Fix: v2.4 Was not executing shutdown script under RHEL/CentOS 4,5
 #@2019_03_29 Optimize: v2.5 Major Revamp - Re-Tested - SysV and SystemD
 #@2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
+#@2019_04_07 Update: v2.7 Use color variables from SADMIN Library.
 #--------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -73,7 +74,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.6'                               # Current Script Version
+    export SADM_VER='2.7'                               # Current Script Version
     export SADM_LOG_TYPE="L"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -158,10 +159,10 @@ command_available() {
     printf "Checking availability of command $CMD ... "
     if which ${CMD} >/dev/null 2>&1                                     # Locate command found ?
         then SPATH=`which ${CMD}`                                       # Save Path of command
-             echo "$SPATH ${green}[OK]${reset}"                         # Show Path to user and OK
+             echo "$SPATH ${SADM_GREEN}[OK]${SADM_RESET}"               # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Command missing ${bold}${magenta}[Warning]${reset}"  # Show user Warning
+             echo "Command missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
     fi
     return 1
 }
