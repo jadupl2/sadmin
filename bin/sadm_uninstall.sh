@@ -33,6 +33,7 @@
 # 2019_03_26 New: v1.1 Beta - Ready to Test 
 # 2019_04_06 New: v1.2 Version after testing client removal.
 #@2019_04_07 New: v1.3 Uninstall script production release.
+#@2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -62,7 +63,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.3'                               # Your Current Script Version
+    export SADM_VER='1.4'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -199,12 +200,6 @@ main_process()
              if [ "$DRYRUN" -ne 1 ] ; then rm -f $cfile >/dev/null 2>&1 ; fi 
     fi
 
-    # Remove SADMIN line in /etc/hosts
-    if [ -f /etc/hosts ] 
-        then printf "\nRemoving 'SADMIN' line in /etc/hosts" 
-             grep -iv "sadmin" /etc/hosts > $TMP_FILE2
-             if [ "$DRYRUN" -ne 1 ] ; then cp $TMP_FILE2 /etc/hosts ; fi
-    fi
 
     # Remove sadmin user $SADM_USER
     id "$SADM_USER" >/dev/null 2>&1
@@ -246,6 +241,13 @@ main_process()
                      printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
                      SQL="DELETE FROM mysql.user WHERE user = '$SADM_RO_DBUSER';" 
                      if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" ;fi
+             fi
+
+            # Remove SADMIN line in /etc/hosts
+             if [ -f /etc/hosts ] 
+                then printf "\nRemoving 'SADMIN' line in /etc/hosts" 
+                     grep -iv "sadmin" /etc/hosts > $TMP_FILE2
+                     if [ "$DRYRUN" -ne 1 ] ; then cp $TMP_FILE2 /etc/hosts ; fi
              fi
     fi
     
