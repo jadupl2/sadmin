@@ -3,8 +3,9 @@
 #   Project Name:   SADMIN 
 #   Date        :   2015/08/09
 #
-# Change Log
-# 2018_09_28   v2.5  Restucture for GitHub 
+#   Change Log
+#   2018_09_28   v2.5  Restucture for GitHub 
+#   2019_04_08   v2.6  Revise for user who want to update SADMIN with a pull request
 # --------------------------------------------------------------------------------------------------
 #
 # Ignored Compress Files Extensions, it's better to unpack these files and commit the raw source.
@@ -15,10 +16,8 @@
 *.jar
 *.rar
 *.tar
-
-# Allow 
+# Allow zip (have some in package directory pkg)
 #*.zip
-
 
 # Ignore these files extensions
 *.obj
@@ -28,7 +27,6 @@
 *.cache
 *.org
 *.tmp
-
 
 # Ignore Python Related files and directories
 __pycache__/
@@ -50,11 +48,12 @@ __pycache__/
 .Trash-*/
 .vscode/
 
+
 # --------------------------------------
 # SADMIN PROJECT 
 # --------------------------------------
 
-# Exclude these files related to SADMIN Project
+# Exclude the SADMIN System monitor lock file.
 sysmon.lock
 
 # Want theses directories to be part of the project (but empty)
@@ -69,11 +68,8 @@ sys/*
 !sys/.sadm_shutdown.sh
 !sys/.sadm_startup.sh
 
-# Exclude $SADMIN/usr except $SADMIN/usr/bin,lib,sysmon_scripts and doc
-usr/cfg/*
-usr/pkg/*
-usr/dat/*
-usr/wip/*
+# Exclude $SADMIN/usr, except $SADMIN/usr/bin, $SADMIN/usr/lib, $SADMIN/usr/doc, 
+#         $SADMIN/mon (Only some scripts in it).
 usr/bin/*
 !usr/bin/.gitkeep
 usr/doc/*
@@ -86,9 +82,13 @@ usr/mon/*
 !usr/mon/stemplate.txt
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
+#
+usr/cfg/*
+usr/pkg/*
+usr/dat/*
+usr/wip/*
 
 # Want these WebSite directories to be part of project (but empty)
-www/test/*
 www/dat/*
 !www/dat/.gitkeep
 www/tmp/*
@@ -96,7 +96,7 @@ www/tmp/*
 !www/tmp/perf/.gitkeep
 www/rrd/*
 !www/rrd/.gitkeep
-
+www/test/*
 
 # Template Configuration Files to be included
 cfg/*
@@ -116,4 +116,3 @@ cfg/*
 # Setup Directory
 setup/update/*
 !setup/update/.gitkeep
-

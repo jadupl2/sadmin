@@ -53,6 +53,7 @@
 #@2019_03_17 Change: v3.16 Perl DateTime module no longer a requirement.
 #@2019_03_17 Change: v3.17 Default installation server group is 'Regular' instead of 'Service'.
 #@2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
+#@2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
 # 
 # ==================================================================================================
 #
@@ -69,7 +70,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.18"                                            # Setup Version Number
+sver                = "3.19"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1903,29 +1904,36 @@ def setup_sadmin_config_file(sroot,wostype):
         if (DEBUG):                                                     # If Debug Activated
             writelog ("Return code is %d" % (ccode))                    # Show AddGroup Cmd Error #
     else:
-        writelog ("Creating user %s ... " % (wcfg_user),'nonl')         # Create user on system
+        writelog ("Creating user %s ... \n" % (wcfg_user),'nonl')       # Create user on system
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
-            #cmd += " -d %s "    % (os.environ.get('SADMIN'))            # Assign Home Directory
+            cmd += " -m -d /home/%s "    % (wcfg_user)                  # Assign Home Directory
             cmd += " -c'%s' %s -e ''" % ("SADMIN Tools User",wcfg_user) # Comment,user name,noexpire
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
-            cmd = "echo 'nimdas' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
+
+            # Under Debian/Ubuntu/Rasbian Home Directory not created
+            #uhome="/home/%s" % (wcfg_user)
+            #; mkdir $WHOME ; chown git.git $WHOME ; chmod 700 $WHOME
+
+            #cmd = "echo 'Gotham20!' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
+            cmd = "usermod -p '$6$gfz87SfX$XA2N1ZXl79D3Z2C/gtp1d1rba7TenH2XzweeF9oKGIMGzdabzxKF8f9SCsu7m304BoCjal.h/UGMJ4UUKMuF4/' %s" % (wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
-            writelog ("The password 'nimdas' have been assign to %s user." % (wcfg_user),'bold') 
+            writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
             writelog ("We suggest you change it after installation.",'bold') # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
             cmd += " home='%s' " % (os.environ.get('SADMIN'))           # Set Home Directory
             cmd += " gecos='%s' %s" % ("SADMIN Tools User",wcfg_user)   # Set comment and user name
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
-        if (ccode == 0) :                                               # If Group Creation went well
-            writelog ('Done')                                           # Show action action result
-        else:                                                           # If Error creating group
+        if (ccode != 0) :                                               # If Group Creation went well
             writelog ("Error %s creating user %s" % (ccode,wcfg_user))  # Show AddUser Cmd Error No 
+            writelog (cmd)
+            writelog (cstderr)                                          # Show Error msg returned
     update_sadmin_cfg(sroot,"SADM_USER",wcfg_user)                      # Update Value in sadmin.cfg
     
     # Change owner of all files in $SADMIN
     writelog (" ")
+    writelog ("----------")
     writelog ("Please wait while we set owner and group in %s directory ..." % (sroot))
     cmd = "find %s -exec chown %s.%s {} \;" % (sroot,wcfg_user,wcfg_group)
     if (DEBUG):
@@ -2058,16 +2066,21 @@ def end_message(sroot,sdomain,sserver,stype):
         writelog ("  - View your servers farm subnet utilization and see what IP are free to use.")
     writelog (" ")
     writelog ("CREATE YOUR OWN SCRIPT USING SADMIN LIBRARIES",'bold')
-    writelog ("  - copy %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
-    writelog ("  - copy %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template.sh %s/usr/bin/newscript.sh" % (sroot,sroot))
+    writelog ("  - cp %s/bin/sadm_template.py %s/usr/bin/newscript.py" % (sroot,sroot))
     writelog ("Modify it to your need, run it and see the result.") 
     writelog (" ")
     writelog ("SEE SADMIN FUNCTIONS IN ACTION AND LEARN HOW TO USE THEM BY RUNNING :",'bold')
-    writelog ("  - %s/bin/sadmlib_std_demo.sh " % (sroot))
-    writelog ("  - %s/bin/sadmlib_std_demo.py." % (sroot))
+    writelog ("  - %s/bin/sadmlib_std_demo.sh" % (sroot))
+    writelog ("  - %s/bin/sadmlib_std_demo.py" % (sroot))
     writelog (" ")
     writelog ("USE THE SADMIN WRAPPER TO RUN YOUR EXISTING SCRIPT",'bold')
-    writelog ("  - # $SADMIN/bin/sadm_wrapper.sh $SADMIN/usr/bin/yourscript.sh")
+    writelog ("  - # $SADMIN/bin/sadm_wrapper.sh yourscript.sh")
+    writelog (" ")
+    if (stype == "C") :
+        writelog ("BUT FIRST YOU NEED TO ADD THIS CLIENT ON THE SADMIN SERVER",'bold')
+        writelog ("  - See instruction on this page : https://www.sadmin.ca/www/client_add.php")
+        writelog (" ")
     writelog ("\n===========================================================================")
     writelog ("ENJOY !!",'bold')
 

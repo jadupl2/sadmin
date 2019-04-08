@@ -37,6 +37,7 @@
 # 2019_01_19    v3.1 Added: Added Backup List & Backup Exclude File Name available to User.
 # 2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
 #@2019_03_18 Added: v3.3 Add demo call to function get_packagetype()
+#@2019_04_07 Update: v3.4 Don't show Database user name if run on client.
 #===================================================================================================
 #
 try :
@@ -73,7 +74,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.3"                 # Current Script Version
+    st.ver              = "3.4"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -676,25 +677,26 @@ def print_sadmin_cfg(st):
     presult=st.cfg_dbport                                               # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_rw_dbuser"                                         # Variable Name
-    pdesc="SADMIN Database Read/Write User"                             # Function Description
-    presult=st.cfg_rw_dbuser                                            # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+    if st.cfg_host_type == "S" :
+        pexample="st.cfg_rw_dbuser"                                     # Variable Name
+        pdesc="SADMIN Database Read/Write User"                         # Function Description
+        presult=st.cfg_rw_dbuser                                        # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
-    pexample="st.cfg_rw_dbpwd"                                          # Variable Name
-    pdesc="SADMIN Database Read/Write User Pwd"                         # Function Description
-    presult=st.cfg_rw_dbpwd                                             # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        pexample="st.cfg_rw_dbpwd"                                      # Variable Name
+        pdesc="SADMIN Database Read/Write User Pwd"                     # Function Description
+        presult=st.cfg_rw_dbpwd                                         # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
-    pexample="st.cfg_ro_dbuser"                                         # Variable Name
-    pdesc="SADMIN Database Read Only User"                              # Function Description
-    presult=st.cfg_ro_dbuser                                            # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        pexample="st.cfg_ro_dbuser"                                     # Variable Name
+        pdesc="SADMIN Database Read Only User"                          # Function Description
+        presult=st.cfg_ro_dbuser                                        # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
-    pexample="st.cfg_ro_dbpwd"                                          # Variable Name
-    pdesc="SADMIN Database Read Only User Pwd"                          # Function Description
-    presult=st.cfg_ro_dbpwd                                             # Return Value(s)
-    printline (st,pexample,pdesc,presult)                               # Print Example Line
+        pexample="st.cfg_ro_dbpwd"                                      # Variable Name
+        pdesc="SADMIN Database Read Only User Pwd"                      # Function Description
+        presult=st.cfg_ro_dbpwd                                         # Return Value(s)
+        printline (st,pexample,pdesc,presult)                           # Print Example Line
 
     pexample="st.cfg_rrdtool"                                           # Variable Name
     pdesc="RRDTOOL Binary Location"                                     # Function Description

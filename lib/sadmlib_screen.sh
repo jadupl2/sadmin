@@ -14,6 +14,7 @@
 # 2019_02_25 Change: v1.5 Code revamp and new menu design.
 # 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
 #@2019_03_17 Improve: v1.7 Show time in menu heading.
+#@2019_04_07 Update: v1.8 Now use Color constant variable from standard SADMIN Libr.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
@@ -24,61 +25,7 @@
 # L O C A L    V A R I A B L E S    
 # --------------------------------------------------------------------------------------------------
 #
-lib_screen_ver=1.7                              ; export lib_screen_ver
-
-# Screen related variables
-clreol=$(tput el)                               ; export clreol         # Clr to end of lne
-clreos=$(tput ed)                               ; export clreos         # Clr to end of scr
-bold=$(tput bold)                               ; export bold           # bold attribute
-bell=$(tput bel)                                ; export bell           # Ring the bell
-reverse=$(tput rev)                             ; export reverse        # rev. video attrib.
-underline=$(tput sgr 0 1)                       ; export underline      # UnderLine
-home=$(tput home)                               ; export home           # home cursor
-up=$(tput cuu1)                                 ; export up             # cursor up
-down=$(tput cud1)                               ; export down           # cursor down
-right=$(tput cub1)                              ; export right          # cursor right
-left=$(tput cuf1)                               ; export left           # cursor left
-clr=$(tput clear)                               ; export clr            # clear the screen
-blink=$(tput blink)                             ; export blink          # turn blinking on
-reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
-
-# Foreground Color
-black=$(tput setaf 0)                           ; export black          # Black color
-red=$(tput setaf 1)                             ; export red            # Red color
-green=$(tput setaf 2)                           ; export green          # Green color
-yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
-blue=$(tput setaf 4)                            ; export blue           # Blue color
-magenta=$(tput setaf 5)                         ; export magenta        # Magenta color
-cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
-white=$(tput setaf 7)                           ; export white          # White color
-
-# Background Color
-bblack=$(tput setab 0)                          ; export bblack         # Black color
-bred=$(tput setab 1)                            ; export bred           # Red color
-bgreen=$(tput setab 2)                          ; export bgreen         # Green color
-byellow=$(tput setab 3)                         ; export byellow        # Yellow color
-bblue=$(tput setab 4)                           ; export bblue          # Blue color
-bmagenta=$(tput setab 5)                        ; export bmagenta       # Magenta color
-bcyan=$(tput setab 6)                           ; export bcyan          # Cyan color
-bwhite=$(tput setab 7)                          ; export bwhite         # White color
-
-# Headers and  Logging
-e_header()      { printf "\n${bold}${purple}==========  %s  ==========${reset}\n" "$@" 
-}
-e_arrow()       { printf "➜ $@\n"
-}
-e_success()     { printf "${green}✔ %s${reset}\n" "$@"
-}
-e_error()       { printf "${red}✖ %s${reset}\n" "$@"
-}
-e_warning()     { printf "${tan}➜ %s${reset}\n" "$@"
-}
-e_underline()   { printf "${underline}${bold}%s${reset}\n" "$@"
-}
-e_bold()        { printf "${bold}%s${reset}\n" "$@"
-}
-e_note()        { printf "${underline}${bold}${blue}Note:${reset}  ${blue}%s${reset}\n" "$@"
-}
+lib_screen_ver=1.8                              ; export lib_screen_ver
 
 
 
@@ -109,12 +56,12 @@ sadm_writexy()
 #---------------------------------------------------------------------------------------------------
 sadm_messok() {
     wline=$1 ; wpos=$2                                                  # Line & Position of Message
-    wmess="${bold}${white}${3} ${green}[${magenta}y,n${green}]${white} ? ${reset}" 
+    wmess="${SADM_BOLD}${SADM_WHITE}${3} ${SADM_GREEN}[${SADM_MAGENTA}y,n${SADM_GREEN}]${SADM_WHITE} ? ${SADM_RESET}" 
     wreturn=0                                                           # Function Return Value Default
     sadm_writexy $1 $2 "                                                "
     while :
         do
-        sadm_writexy $1 $2 "$wmess  ${right}${right}"                   # Write mess rcv + [ Y/N ] ?
+        sadm_writexy $1 $2 "$wmess  ${SADM_RIGHT}${SADM_RIGHT}"         # Write mess rcv + [ Y/N ] ?
         read answer                                                     # Read User answer
         case "$answer" in                                               # Test Answer
            Y|y ) wreturn=1                                              # Yes = Return Value of 1
@@ -135,10 +82,10 @@ sadm_messok() {
 # DISPLAY MESSAGE RECEIVE IN BOLD (AND SOUND BELL) AT LINE 22 & WAIT FOR RETURN
 #---------------------------------------------------------------------------------------------------
 sadm_mess() {
-   sadm_writexy 22 01 "${clreos}${bold}${magenta}${1}${reset}${bell}"  # Clr from lines 22 to EOS
-   sadm_writexy 23 01 "${bold}${white}Press [ENTER] to continue${reset}" # Ask user 2 press [RETURN]
+   sadm_writexy 22 01 "${SADM_CLREOS}${SADM_BOLD}${SADM_MAGENTA}${1}${SADM_RESET}${SADM_BELL}" 
+   sadm_writexy 23 01 "${SADM_BOLD}${SADM_WHITE}Press [ENTER] to continue${SADM_RESET}"
    read sadm_dummy                                                      # Wait for  [RETURN]
-   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
+   sadm_writexy 22 01 "${SADM_CLREOS}"                                  # Clear from lines 22 to EOS
 }
 
 
@@ -148,8 +95,8 @@ sadm_mess() {
 # DISPLAY MESSAGE ON LINE 22 WITH BELL SOUND
 #---------------------------------------------------------------------------------------------------
 sadm_display_message() {
-   sadm_writexy 22 01 "${clreos}"                                       # Clear from lines 22 to EOS
-   sadm_writexy 22 01 "${bold}${1}${reset}${bell}"                      # Display Mess. on Line 22
+   sadm_writexy 22 01 "${SADM_CLREOS}"                                       # Clear from lines 22 to EOS
+   sadm_writexy 22 01 "${SADM_BOLD}${1}${SADM_RESET}${SADM_BELL}"                      # Display Mess. on Line 22
 }
 
 
@@ -166,23 +113,23 @@ sadm_display_heading()
     eighty_spaces=`printf %80s " "`                                     # 80 white space
 
     # Clear screen and display line 21 in reverse video
-    sadm_writexy 01 01  "${clr}\c"                                      # ClrScr_ Activate. Rev. Video
-    #sadm_writexy 21 01 "${bgreen}${reverse}${eighty_spaces}${reset}"   # Line 21 in Reverse Video
-    #sadm_writexy 21 01 "${bgreen}${eighty_spaces}${reset}"             # Line 21 in Reverse Video
+    sadm_writexy 01 01  "${SADM_CLR}\c"                                 # ClrScr_ Activate. Rev. Video
+    #sadm_writexy 21 01 "${bgreen}${SADM_RVS}${eighty_spaces}${SADM_RESET}" # Line 21 in Reverse Video
+    #sadm_writexy 21 01 "${bgreen}${eighty_spaces}${SADM_RESET}"        # Line 21 in Reverse Video
 
     # Display Line 1 (Hostname + Menu Name + Date)
-    sadm_writexy 01 01 "${bold}${green}$(sadm_get_fqdn)"                # Top Left Show HostName 
+    sadm_writexy 01 01 "${SADM_BOLD}${SADM_GREEN}$(sadm_get_fqdn)"      # Top Left Show HostName 
     let wpos="((80 - ${#titre}) / 2)"                                   # Calc. Center Pos for Name
-    sadm_writexy 01 $wpos "${magenta}$titre"                            # Display Title Centered
-    sadm_writexy 01 65 "${green}`date '+%Y/%m/%d %H:%M'`"               # Top Right Show Current Date 
+    sadm_writexy 01 $wpos "${SADM_MAGENTA}$titre"                       # Display Title Centered
+    sadm_writexy 01 65 "${SADM_GREEN}`date '+%Y/%m/%d %H:%M'`"          # Top Right Show Current Date 
 
     # Display Line 2 - (OS Name and version + Cie Name and SADM Release No.
     sadm_writexy 02 01 "$(sadm_get_osname) $(sadm_get_osversion)"       # Display OSNAME + OS Ver.
     let wpos="((80 - ${#SADM_CIE_NAME}) / 2)"                           # Calc. Center Pos for Name
-    sadm_writexy 02 $wpos "${cyan}$SADM_CIE_NAME"                       # Display Cie Name Centered 
+    sadm_writexy 02 $wpos "${SADM_CYAN}$SADM_CIE_NAME"                  # Display Cie Name Centered 
     let wpos="74 - ${#SADM_VERSION}"                                    # Calc. Pos. Line 2 on Right
-    sadm_writexy 02 $wpos "${green}Ver $SADM_VER"                       # Display Script Version
-    sadm_writexy 04 01 "${reset}\c"                                     # Reset to Normal & Pos. Cur
+    sadm_writexy 02 $wpos "${SADM_GREEN}Ver $SADM_VER"                  # Display Script Version
+    sadm_writexy 04 01 "${SADM_RESET}\c"                                # Reset to Normal & Pos. Cur
 }
 
 
@@ -198,7 +145,7 @@ sadm_ask_password()
     rm /tmp/SAMPAS$$
 
     MPASSE=`date +%d%m%y` ; MPASSE=`echo "($MPASSE + 666) * 2" | bc `   # Construct Passwd
-    sadm_writexy 22 01 "${clreos}${bell}${bell}"                        # Clear Line 22 + Ring Bell
+    sadm_writexy 22 01 "${SADM_CLREOS}${SADM_BELL}${SADM_BELL}"         # Clear Line 22 + Ring Bell
     sadm_writexy 22 01 "Please enter the SADMIN password ...  ? "       # Inform user for Password
     stty -echo                                                          # Turn OFF Char. echo
     read REPONSE                                                        # Accept Password
@@ -224,10 +171,10 @@ sadm_show_menuitem()
     mdesc=$4                                                            # Item Menu Description
 
     if [ -n "$mno" ] && [ "$mno" -eq "$mno" ] 2>/dev/null
-        then menuno=`printf "${bold}${green}[${cyan}%02d${green}]" "$mno"` # Numeric Menu No. [xx] 
-        else menuno=`printf "${bold}${green}[${cyan}%s${green}] " "$mno"`  # Alpha Menu No. [x]
+        then menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%02d${SADM_GREEN}]" "$mno"` # Numeric Menu No. [xx] 
+        else menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%s${SADM_GREEN}] " "$mno"`  # Alpha Menu No. [x]
     fi 
-    witem=`printf "${bold}${magenta}%-s${reset}" "$mdesc"`             # Combine [xx] & Menu Desc
+    witem=`printf "${SADM_BOLD}${SADM_MAGENTA}%-s${SADM_RESET}" "$mdesc"`             # Combine [xx] & Menu Desc
     sadm_writexy $mrow $mcol "${menuno} ${witem}"                       # Display Menu Item
 }
 
@@ -249,16 +196,16 @@ sadm_print_status()
 
     case "$wst" in
         "ok"|"OK"|"Ok")    
-                    printf "${bold}${green}[${cyan}OK${green}]${reset} %s\n" "$wmsg"
-                    ;;
+            printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}OK${SADM_GREEN}]${SADM_RESET} %s\n" "$wmsg"
+            ;;
         "ERROR"|"Error"|"error")      
-                    printf "${bold}${green}[${red}ERROR${green}]${reset} %s\n" "$wmsg"
-                    ;;      
+            printf "${SADM_BOLD}${SADM_GREEN}[${SADM_RED}ERROR${SADM_GREEN}]${SADM_RESET} %s\n" "$wmsg"
+            ;;      
         "Warning"|"WARNING"|"warning")   
-                    printf "${bold}${green}[${yellow}WARNING${green}]${reset} %s\n" "$mwsg"
-                    ;;
-        *)          printf "${bold}${green}[${magenta}%s${green}]${reset} %s\n" "$wst" "$wmsg" 
-                    ;;
+            printf "${SADM_BOLD}${SADM_GREEN}[${SADM_YELLOW}WARNING${SADM_GREEN}]${SADM_RESET} %s\n" "$mwsg"
+            ;;
+        *)  printf "${SADM_BOLD}${SADM_GREEN}[${SADM_MAGENTA}%s${SADM_GREEN}]${SADM_RESET} %s\n" "$wst" "$wmsg" 
+            ;;
     esac    
 }
 
@@ -295,7 +242,7 @@ sadm_display_menu()
     # If from 1 to 8 items to display in the menu
     adm_choice=0                                                        # Initial menu item to zero
     if [ "$s_count" -lt 8 ]                                             # If less than 9 items
-        then for i in "${s_array[@]}"                                    # Loop through the array
+        then for i in "${s_array[@]}"                                   # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no. 
                 menu_item=$i
@@ -308,14 +255,14 @@ sadm_display_menu()
                 done                                                    # End of loop
             let adm_choice="$adm_choice + 1"                            # Increment menu option no. 
             let wline="2 + ($adm_choice * 2)"                           # Cacl. display Line Number
-            menuno=`printf "${bold}${green}[${cyan}Q${green}]"`
-            menuitem=`printf "${bold}${magenta}Quit............................${reset}"`
+            menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
             sadm_writexy $wline 22 "${menuno}  ${menuitem}" 
     fi
     
     # If from 8 to 15 items to display in the menu
      if [ "$s_count" -gt 7 ] && [ "$s_count" -lt 16 ]         # If from 8 to 15 Items
-        then for i in "${s_array[@]}"                                    # Loop through the array
+        then for i in "${s_array[@]}"                                   # Loop through the array
                 do                                                      # Start of loop
                 let adm_choice="$adm_choice + 1"                        # Increment menu option no.
                 menu_item=$i
@@ -323,16 +270,16 @@ sadm_display_menu()
                     do
                     menu_item="${menu_item}."
                     done    
-                menuno=`printf "${bold}${green}[${cyan}%02d${green}] " "$adm_choice"`
-                witem=`printf "${bold}${magenta}%-s${reset}" "$menuno" "$menu_item"` 
+                menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%02d${SADM_GREEN}] " "$adm_choice"`
+                witem=`printf "${SADM_BOLD}${SADM_MAGENTA}%-s${SADM_RESET}" "$menuno" "$menu_item"` 
                 #witem=`printf "[%s%02d%s] %-s" $bold $adm_choice $reset "$menu_item"` # Menu No. & Desc
                 let wline="3 + $adm_choice"                             # Cacl. display Line Number
                 sadm_writexy $wline 22 "$witem"                         # Display Item on screen
                 done                                                    # End of loop
-            menuno=`printf "${bold}${green}[${cyan}Q${green}]"`
-            menuitem=`printf "${bold}${magenta}Quit............................${reset}"`
+            menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
             sadm_writexy 19 22 "${menuno}  ${menuitem}" 
-            #sadm_writexy 19 22 "[${bold}Q${reset}]  Quit............................"
+            #sadm_writexy 19 22 "[${SADM_BOLD}Q${SADM_RESET}]  Quit............................"
     fi
 
     # If from 16 to 30 items to display in the menu
@@ -345,8 +292,8 @@ sadm_display_menu()
                     do
                     menu_item="${menu_item}."
                     done
-                menuno=`printf "${bold}${green}[${cyan}%02d${green}] " "$adm_choice"`
-                witem=`printf "${bold}${magenta}%-s${reset}" "$menuno" "$menu_item"` 
+                menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}%02d${SADM_GREEN}] " "$adm_choice"`
+                witem=`printf "${SADM_BOLD}${SADM_MAGENTA}%-s${SADM_RESET}" "$menuno" "$menu_item"` 
                 #witem=`printf "[%s%02d%s] %-s" $bold $adm_choice $reset "$menu_item"` 
                 let wline="3 + $adm_choice"                             # Cacl. display Line Number
                 if [ "$adm_choice" -lt 16 ]                             # Item 1to15 on left column
@@ -355,10 +302,10 @@ sadm_display_menu()
                          sadm_writexy $wline 43 "$witem"                # Display item on screen
                 fi                          
                 done                                                    # End of loop
-            menuno=`printf "${bold}${green}[${cyan}Q${green}]"`
-            menuitem=`printf "${bold}${magenta}Quit............................${reset}"`
+            menuno=`printf "${SADM_BOLD}${SADM_GREEN}[${SADM_CYAN}Q${SADM_GREEN}]"`
+            menuitem=`printf "${SADM_BOLD}${SADM_MAGENTA}Quit............................${SADM_RESET}"`
             sadm_writexy 19 43 "${menuno}  ${menuitem}" 
-            #sadm_writexy 19 43 "[${bold}Q${reset}]  Quit............................"
+            #sadm_writexy 19 43 "[${SADM_BOLD}Q${SADM_RESET}]  Quit............................"
     fi
     
     
@@ -366,8 +313,8 @@ sadm_display_menu()
     while :                                                             # Repeat Until good choice
         do                                                              # Begin of loop
         sadm_space_line=`printf %80s`                                   # 80 Spaces Line
-        sadm_writexy 21 01 "${green}${reverse}${sadm_space_line}\c"     # Display Rev. Video Line
-        sadm_writexy 21 29 "Option ? ${reset}  ${right}"                # Display Option 
+        sadm_writexy 21 01 "${SADM_GREEN}${SADM_RVS}${sadm_space_line}\c" # Display Rev. Video Line
+        sadm_writexy 21 29 "Option ? ${SADM_RESET}  ${SADM_RIGHT}"      # Display Option 
         sadm_writexy 21 38 " "                                          # Position to accept Choice
         read adm_choix                                                  # Accept User Choice
         if [ "$adm_choix" = "" ] ; then continue ; fi                   # [ENTER] Only = Re-Accept
@@ -386,7 +333,6 @@ sadm_display_menu()
         done
     return $adm_choix                                                   # Return Selected choice
 }
-
 
 
 #---------------------------------------------------------------------------------------------------
@@ -417,8 +363,8 @@ sadm_accept_data()
               a=$(($a+1))                                               # Incr Counter by 1
               done                                                      # Next iteration
         if [ "$WDEFAULT" = "NULL" ] ; then WDEFAULT="" ; fi             # Default is Clear if NULL 
-        sadm_writexy $WLINE $WCOL "${reverse}${WMASK}"                  # Display Mask in Rvs Video
-        sadm_writexy $WLINE $WCOL "${WDEFAULT}${reset}"                 # Display Default Value
+        sadm_writexy $WLINE $WCOL "${SADM_RVS}${WMASK}"                  # Display Mask in Rvs Video
+        sadm_writexy $WLINE $WCOL "${WDEFAULT}${SADM_RESET}"                 # Display Default Value
 
         # Accept the Data
         sadm_writexy $WLINE $WCOL ""                                    # Pos. Cursor Ready to Input
@@ -450,6 +396,3 @@ sadm_accept_data()
         fi
         done
 }
-
-
-

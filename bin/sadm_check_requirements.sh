@@ -32,6 +32,7 @@
 #2019_03_17 New: v1.0 Initial Version.
 #@2019_03_20 New: v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
 #@2019_03_29 Update: v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
+#@2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -61,7 +62,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.2'                               # Your Current Script Version
+    export SADM_VER='1.3'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -97,21 +98,6 @@ command -v systemctl > /dev/null 2>&1                                   # Using 
 if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SYSTEMD Accordingly
 export SYSTEMD                                                          # Export Result        
 #
-
-# Screen related variable
-clr=$(tput clear)                               ; export clr            # clear the screen
-blink=$(tput blink)                             ; export blink          # turn blinking on
-reset=$(tput sgr0)                              ; export reset          # Screen Reset Attribute
-
-# Foreground Color
-black=$(tput setaf 0)                           ; export black          # Black color
-red=$(tput setaf 1)                             ; export red            # Red color
-green=$(tput setaf 2)                           ; export green          # Green color
-yellow=$(tput setaf 3)                          ; export yellow         # Yellow color
-blue=$(tput setaf 4)                            ; export blue           # Blue color
-magenta=$(tput setaf 5)                         ; export magenta        # Magenta color
-cyan=$(tput setaf 6)                            ; export cyan           # Cyan color
-white=$(tput setaf 7)                           ; export white          # White color
 
 
 # --------------------------------------------------------------------------------------------------
@@ -216,13 +202,13 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
                      yum install -y $epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't add EPEL repos for version $SADM_OSVERSION${reset}" 
+                        then echo "${SADM_YELLOW}Couldn't add EPEL repos for version $SADM_OSVERSION${SADM_RESET}" 
                              return 1
                     fi 
-                    echo "${yellow}Disabling EPEL Repository, will activate it only when needed"
+                    echo "${SADM_YELLOW}Disabling EPEL Repository, will activate it only when needed"
                     yum-config-manager --disable epel >/dev/null 2>&1
                     if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}"
+                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION${SADM_RESET}"
                              return 1
                     fi 
                     return 0
@@ -237,13 +223,13 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
                      yum install -y $epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" 
+                        then echo "${SADM_YELLOW}Couldn't add EPEL repository for version $SADM_OSVERSION${SADM_RESET}" 
                              return 1
                      fi 
                      echo "Disabling EPEL Repository, will activate it only when needed" 
                      yum-config-manager --disable epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION" 
+                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION" 
                              return 1
                      fi 
                      return 0
@@ -258,7 +244,7 @@ add_epel_repo()
                      epel="https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
                      yum install -y $epel 
                      if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't add EPEL repository for version $SADM_OSVERSION${reset}" 
+                        then echo "${SADM_YELLOW}Couldn't add EPEL repository for version $SADM_OSVERSION${SADM_RESET}" 
                              return 1
                      fi 
                      #
@@ -271,7 +257,7 @@ add_epel_repo()
                      echo "Disabling EPEL Repository, will activate it only when needed" 
                      dnf config-manager --set-disabled epel >/dev/null 2>&1
                      if [ $? -ne 0 ]
-                        then echo "${yellow}Couldn't disable EPEL for version $SADM_OSVERSION${reset}"
+                        then echo "${SADM_YELLOW}Couldn't disable EPEL for version $SADM_OSVERSION${SADM_RESET}"
                              return 1
                      fi 
              fi
@@ -289,10 +275,10 @@ command_available() {
     printf "Checking availability of command $CMD ... "
     if ${SADM_WHICH} ${CMD} >/dev/null 2>&1                             # Locate command found ?
         then SPATH=`${SADM_WHICH} ${CMD}`                               # Save Path of command
-             echo "$SPATH ${green}[OK]${reset}"                         # Show Path to user and OK
+             echo "$SPATH ${SADM_GREEN}[OK]${SADM_RESET}"                         # Show Path to user and OK
              return 0                                                   # Return 0 if cmd found
         else SPATH=""                                                   # PATH empty when Not Avail.
-             echo "Command missing ${bold}${magenta}[Warning]${reset}"     # Show user Warning
+             echo "Command missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}"     # Show user Warning
     fi
     return 1
 }
@@ -310,27 +296,27 @@ package_available() {
     case "$package_type"  in
         "rpm" )     printf "Checking availability of rpm package $RPM_PACK ... " 
                     rpm -q $RPM_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${green}[OK]${reset}" ; return 0 ; fi
-                    echo "Package missing ${bold}${magenta}[Warning]${reset}" 
+                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
+                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
                     install_package "$RPM_PACK" "$DEB_PACK" 
                     #
                     printf "Check if install of $RPM_PACK was successful ... " 
                     rpm -q $RPM_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${green}[OK]${reset}" ; return 0 ; fi
-                    echo "Package missing ${bold}${magenta}[Warning]${reset}" 
+                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
+                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
                     return 1 
                     ;;
 
         "deb" )     printf "Checking availability of deb package $DEB_PACK ... " 
                     dpkg -s $DEB_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${green}[OK]${reset}" ; return 0 ; fi
-                    echo "Package missing ${bold}${magenta}[Warning]${reset}" 
+                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
+                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
                     install_package "$RPM_PACK" "$DEB_PACK" 
                     #
                     printf "Check if install of $DEB_PACK was successful ... " 
                     dpkg -s $DEB_PACK >/dev/null 2>&1
-                    if [ $? -eq 0 ] ; then echo "${green}[OK]${reset}" ; return 0 ; fi
-                    echo "Package missing ${bold}${magenta}[Warning]${reset}" 
+                    if [ $? -eq 0 ] ; then echo "${SADM_GREEN}[OK]${SADM_RESET}" ; return 0 ; fi
+                    echo "Package missing ${SADM_BOLD}${SADM_MAGENTA}[Warning]${SADM_RESET}" 
                     return 1 
                     ;;
         *)          printf "Package type $package+type is not supported yet" 

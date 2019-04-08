@@ -37,6 +37,7 @@
 # 2019_01_19 Fix: v2.8 Day,Date and time of Backup display according to schedule.
 # 2019_01_21 Change: v2.9 Dark Theme, new presentation, button , perf. graph ...
 #@2019_03_17 Change: v2.10 Volume Group Used & Free Size now show with GB unit.
+#@2019_04_04 Change: v2.11 Adapt for Schedule_text function change in library
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -70,7 +71,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.10" ;                                                       # Current version number
+$SVER  = "2.11" ;                                                       # Current version number
 $URL_CREATE = '/crud/srv/sadm_server_create.php';                       # Create Page URL
 $URL_UPDATE = '/crud/srv/sadm_server_update.php';                       # Update Page URL
 $URL_DELETE = '/crud/srv/sadm_server_delete.php';                       # Delete Page URL
@@ -376,7 +377,7 @@ function display_right_side ($wrow) {
     echo "\n\n<div class='server_right_label'>O/S Update Schedule</div>";
     echo "\n<div class='server_right_data'>";
     if ($wrow['srv_update_auto']) {
-        $STR_SCHEDULE = SCHEDULE_TO_TEXT($wrow['srv_update_dom'], $wrow['srv_update_month'],
+        list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($wrow['srv_update_dom'], $wrow['srv_update_month'],
                                      $wrow['srv_update_dow'], $wrow['srv_update_hour'],
                                      $wrow['srv_update_minute']);
         echo $STR_SCHEDULE;
@@ -422,7 +423,7 @@ function display_right_side ($wrow) {
     echo "\n\n<div class='server_right_label'>Backup Schedule</div>";
     echo "\n<div class='server_right_data'>\n";
     if ($wrow['srv_backup']) {
-        $STR_SCHEDULE = SCHEDULE_TO_TEXT($wrow['srv_backup_dom'], $wrow['srv_backup_month'],
+        list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($wrow['srv_backup_dom'], $wrow['srv_backup_month'],
                                      $wrow['srv_backup_dow'], $wrow['srv_backup_hour'],
                                      $wrow['srv_backup_minute']);
         echo $STR_SCHEDULE;

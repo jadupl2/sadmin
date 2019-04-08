@@ -26,7 +26,8 @@
 # 2018_09_24 v1.7 Change HTML layout of Email and multiples little changes
 # 2018_09_27 v1.8 Add list of scripts ran today in HTML page send in (-m) Mail option 
 # 2018_10_07 v1.9 Add message when searching for a particular server (-s option)
-#@2018_11_21 v1.10 Add Change some Email header Titles.
+# 2018_11_21 v1.10 Add Change some Email header Titles.
+#@2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -51,7 +52,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.10'                               # Current Script Version
+    export SADM_VER='1.11'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -217,9 +218,13 @@ load_array()
     while read wline                                                    # Read Line from TEMP3 file
         do                                                              # Start of loop
         WNB_FIELD=`echo $wline | wc -w`                                 # Check Nb. Of field in Line
+        if [ "$WNB_FIELD" -eq 0 ] ; then continue ; fi                  # Ignore Blank Line
         if [ "$WNB_FIELD" -ne "$FIELD_IN_RCH" ]                         # If NB.Field don't match
-            then echo $wline >> $SADM_TMP_FILE3                         # Save Line in TEMP3 file
-                 sadm_writelog "ERROR : Nb of field is not $FIELD_IN_RCH - Line was ignore : $wline"
+            then echo $wline >> $SADM_TMP_FILE3                         # Faulty Line to TMP3 file
+                 SMESS1="[ERROR] Lines in RCH file should have ${FIELD_IN_RCH} fields," 
+                 SMESS2="${SMESS1} line below have $WNB_FIELD and is ignore." 
+                 sadm_writelog "$SMESS2"                                # Advise User Line in Error
+                 sadm_writelog "'$wline'"                               # Show Faulty Line to User
                  continue                                               # Go on and read next line
         fi
         array[$xcount]="$wline"                                         # Put Line in Array
