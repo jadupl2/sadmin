@@ -1918,7 +1918,7 @@ def setup_sadmin_config_file(sroot,wostype):
             #cmd = "echo 'Gotham20!' | passwd --stdin %s" % (wcfg_user)     # Cmd to assign password
             cmd = "usermod -p '$6$gfz87SfX$XA2N1ZXl79D3Z2C/gtp1d1rba7TenH2XzweeF9oKGIMGzdabzxKF8f9SCsu7m304BoCjal.h/UGMJ4UUKMuF4/' %s" % (wcfg_user)
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Assign Password
-            writelog ("The password 'Gotham20!' have been assign to %s user." % (wcfg_user),'bold') 
+            writelog ("The password 'Gotham20!' have been assign to '%s' user." % (wcfg_user),'bold') 
             writelog ("We suggest you change it after installation.",'bold') # Inform user to change pwd
         if wostype == "AIX" :                                           # Under AIX
             cmd = "mkuser pgrp='%s' -s /bin/ksh " % (wcfg_group)        # Build mkuser command
