@@ -34,6 +34,7 @@
 # 2019_04_06 New: v1.2 Version after testing client removal.
 #@2019_04_07 New: v1.3 Uninstall script production release.
 #@2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
+#@2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -63,7 +64,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.4'                               # Your Current Script Version
+    export SADM_VER='1.5'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -322,7 +323,8 @@ main_process()
     if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
         then printf "${SADM_BOLD}${SADM_YELLOW}Dry Run activated"       # Inform User
              printf "\nUse '-y' to really remove 'SADMIN' from this system${SADM_RESET}\n"
-        else ask_user "This will remove 'SADMIN' from this system, Are you sure" # Not DryRun
+        else if [ "$SADM_HOST_TYPE" = "S" ] ;then STYPE="Server" ;else STYPE="Client" ;fi
+             ask_user "This will remove 'SADMIN ${STYPE}' from this system, Are you sure" # Not DryRun
              if [ $? -eq 0 ]                                            # don't want to Del SADMIN
                 then sadm_stop 0                                        # Close log,rch - rm tmp&pid
                      exit $SADM_EXIT_CODE                               # Exit to O/S
