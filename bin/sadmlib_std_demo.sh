@@ -26,6 +26,7 @@
 # 2019_01_28 Added: v3.8 Database info only show when running on SADMIN Server
 #@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
 #@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
+#@2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -47,7 +48,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.10'                               # Current Script Version
+    export SADM_VER='3.11'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -1040,7 +1041,7 @@ print_db_variables()
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
     printf "\n\nShow Server Table Content:\n"
-    SQL="select srv_name, srv_desc, srv_osname, srv_osversion from server ; "                                  # Show Table SQL
+    SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 }
 
