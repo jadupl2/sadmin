@@ -3,4 +3,3 @@
 #----------------------------------------------------------------------------
 Specify the Netmask of the network you just specified.
     - Netmask should specify the number bits use (1-30) (Default 24)
-    

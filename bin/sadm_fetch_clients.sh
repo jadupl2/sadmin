@@ -43,7 +43,8 @@
 # 2019_01_12  Feature: sadm_fetch_client.sh v2.29 - Now update Backup List and Exclude on Clients.
 # 2019_01_18  Fix: sadm_fetch_client.sh v2.30 - Fix O/S Update crontab generation.
 # 2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
-#@2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
+# 2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
+#@2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -80,7 +81,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.32'                              # Current Script Version
+    export SADM_VER='2.33'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -918,5 +919,12 @@ check_for_alert()
     check_for_alert                                                     # Report Alert if Any
 
     sadm_stop $SADM_EXIT_CODE                                           # Close/Trim Log & Upd. RCH
+
+    # Since fetch client in run regularely put a copy of the rch in dir. used for web interface
+    # Otherwise it shows as running most fo the times
+    if [ ! -d ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch ]                # If Web Dir. not exist
+        then mkdir -p ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch          # Create it
+    fi
     cp $SADM_RCHLOG ${SADM_WWW_DAT_DIR}/${SADM_HOSTNAME}/rch            # cp rch for instant Status
+
     exit $SADM_EXIT_CODE                                                # Exit With Error code (0/1)
