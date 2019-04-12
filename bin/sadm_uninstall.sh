@@ -90,7 +90,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 DRYRUN=1                                    ; export DRYRUN             # default Dryrun activated  
 TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
 TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
@@ -233,6 +233,9 @@ main_process()
                      CMDLINE="$SADM_MYSQL -u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "
                      if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
+                     if [ $DEBUG_LEVEL -gt 0 ] 
+                        then printf "\n$CMDLINE -h $SADM_DBHOST -Ne $SQL"
+                     fi
                      if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -h $SADM_DBHOST -Ne "$SQL" ; fi
                      #
                      #printf "\nRemoving database user '$SADM_RW_DBUSER' ..."
@@ -241,6 +244,9 @@ main_process()
                      #
                      printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
                      SQL="DELETE FROM mysql.user WHERE user = '$SADM_RO_DBUSER';" 
+                     if [ $DEBUG_LEVEL -gt 0 ] 
+                        then printf "\n$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne $SQL"
+                     fi
                      if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" ;fi
              fi
 
