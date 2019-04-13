@@ -325,7 +325,8 @@ class sadmtools():
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
         try:
-            if self.debug > 4 : print ("Closing Database %s" % (self.cfg_dbname))
+            if self.debug > 4 : print ("Closing Cursor & Database %s" % (self.cfg_dbname))
+            self.cursor.close()
             self.conn.close()
         except Exception as e:
             print ("type e = ",type(e))
