@@ -94,6 +94,7 @@ DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # 0=NoDe
 DRYRUN=1                                    ; export DRYRUN             # default Dryrun activated  
 TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
 TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
+ROOTPWD=""                                  ; export ROOTPWD            # MySQL Root Password
 #
 command -v systemctl > /dev/null 2>&1                                   # Using sysinit or systemd ?
 if [ $? -eq 0 ] ; then SYSTEMD=1 ; else SYSTEMD=0 ; fi                  # Set SYSTEMD Accordingly
@@ -147,6 +148,39 @@ ask_user()
     done
    return $wreturn                                                      # Return 0=No 1=Yes
 }
+
+
+
+#---------------------------------------------------------------------------------------------------
+#  Accept and validate MySQL Root Database access.
+#---------------------------------------------------------------------------------------------------
+validate_root_access()
+{
+    while :
+        do
+        print "\nEnter MySQL root password (to delete sadmin database or 'q' to Quit) : "
+        read ROOTPWD                                                    # Enter MySQL root Password 
+        if [ "$ROOTPWD" = "" ]  ; then continue ; fi                    # No blank password
+        if [ "$ROOTPWD" = "q" ] ; then exit 1   ; fi                    # Abort Script if 'q' input
+
+        SQL="show databases;"
+        CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
+        printf "\nVerifying access to Database ... "
+        if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;' " ; fi
+        if [ "$DRYRUN" -ne 1 ]                                          # If not in Dry Run Mode
+            then $CMDLINE -Ne 'show databases ;'                        # Try SQL see if access work
+                 if [ $? -ne 0 ]
+                    then printf "\nAccess to database with the password given, don't work."
+                         printf "\nPlease try again."
+                         continue
+                    else break
+                 fi
+        fi
+        done
+    return 0
+}
+
+
 
 #===================================================================================================
 # Script Main Processing Function
@@ -229,7 +263,7 @@ main_process()
                 fi
              fi
              if [ $RC -eq 0 ] 
-                then SQL="DROP DATABASE SADMIN;" 
+                then SQL="drop database sadmin;" 
                      CMDLINE="$SADM_MYSQL -u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "
                      if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
@@ -243,7 +277,7 @@ main_process()
                      #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
                      #
                      printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
-                     SQL="DELETE FROM mysql.user WHERE user = '$SADM_RO_DBUSER';" 
+                     SQL="delete from mysql.user where user = '$SADM_RO_DBUSER';" 
                      if [ $DEBUG_LEVEL -gt 0 ] 
                         then printf "\n$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne $SQL"
                      fi
@@ -337,8 +371,11 @@ main_process()
              fi
     fi 
 
+    validate_root_access
+    exit 
+
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    main_process                                                        # Main Process
+    #main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     
     if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
