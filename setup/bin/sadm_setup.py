@@ -1081,9 +1081,9 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
             writelog ("Updating 'sadmin' user password and grant ... ",'nonl')
-            sql = "ALTER USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
-            sql += " revoke all privileges on *.* from 'sadmin'@'localhost';"
-            sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
+            sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_rw_dbpwd)
+            sql += " revoke all privileges on *.* from '%s'@'localhost';" % (uname)
+            sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
             sql += " flush privileges;"                                 # Flush Buffer
             cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
             if (DEBUG):       
@@ -1097,8 +1097,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
         writelog ("Creating 'sadmin' user ... ",'nonl')                     # Show User Creating DB Usr
-        sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
-        sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
+        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
+        sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
@@ -1127,7 +1127,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
             wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
             writelog ("Updating 'squery' user password and grant ... ",'nonl')
-            sql = "ALTER USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
+            sql = " SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s');" % (uname,wcfg_ro_dbpwd)
             sql += " revoke all privileges on *.* from 'squery'@'localhost';"
             sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
             sql += " flush privileges;"                                 # Flush Buffer
