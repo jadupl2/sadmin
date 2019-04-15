@@ -35,6 +35,7 @@
 #@2019_04_07 New: v1.3 Uninstall script production release.
 #@2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
 #@2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
+#@2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -64,7 +65,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.5'                               # Your Current Script Version
+    export SADM_VER='1.6'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -90,7 +91,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
+DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 DRYRUN=1                                    ; export DRYRUN             # default Dryrun activated  
 TMP_FILE1="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE1  # Temp File 1
 TMP_FILE2="$(mktemp /tmp/sadm_uninstall.XXXXXXXXX)" ; export TMP_FILE2  # Temp File 2
@@ -158,23 +159,24 @@ validate_root_access()
 {
     while :
         do
-        print "\nEnter MySQL root password (to delete sadmin database or 'q' to Quit) : "
+        printf "\nEnter MySQL root password (to delete sadmin database or 'q' to Quit) : "
+        stty -echo                                                      # Hide Char Input
         read ROOTPWD                                                    # Enter MySQL root Password 
+        stty echo                                                       # Show Char Input
         if [ "$ROOTPWD" = "" ]  ; then continue ; fi                    # No blank password
-        if [ "$ROOTPWD" = "q" ] ; then exit 1   ; fi                    # Abort Script if 'q' input
+        if [ "$ROOTPWD" = "q" ] || [ "$ROOTPWD" = "Q" ] ;then exit 1 ;fi # Abort Script if 'q' input
 
         SQL="show databases;"
         CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
         printf "\nVerifying access to Database ... "
-        if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;' " ; fi
-        if [ "$DRYRUN" -ne 1 ]                                          # If not in Dry Run Mode
-            then $CMDLINE -Ne 'show databases ;'                        # Try SQL see if access work
-                 if [ $? -ne 0 ]
-                    then printf "\nAccess to database with the password given, don't work."
-                         printf "\nPlease try again."
-                         continue
-                    else break
-                 fi
+        if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\n$CMDLINE -Ne 'show databases ;'\n" ; fi
+        $CMDLINE -Ne 'show databases ;' >/dev/null 2>&1                 # Try SQL see if access work
+        if [ $? -ne 0 ]
+            then printf "\nAccess to database with the password given, don't work."
+                 printf "\nPlease try again."
+                 continue
+            else printf "\nDatabase access confirmed ..." 
+                 break
         fi
         done
     return 0
@@ -190,6 +192,7 @@ main_process()
     # Show what type of SADMIN we are removing 
     if [ "$SADM_HOST_TYPE" = "S" ] 
         then printf "\n${SADM_BOLD}${SADM_CYAN}Uninstalling a SADMIN server.${SADM_RESET}"
+             validate_root_access
         else printf "\n${SADM_BOLD}${SADM_CYAN}Uninstalling a SADMIN client.${SADM_RESET}"
     fi
 
@@ -264,13 +267,13 @@ main_process()
              fi
              if [ $RC -eq 0 ] 
                 then SQL="drop database sadmin;" 
-                     CMDLINE="$SADM_MYSQL -u $SADM_RW_DBUSER  -p$SADM_RW_DBPWD "
+                     CMDLINE="$SADM_MYSQL -u root  -p$ROOTPWD -h $SADM_DBHOST "
                      if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
                      if [ $DEBUG_LEVEL -gt 0 ] 
-                        then printf "\n$CMDLINE -h $SADM_DBHOST -Ne $SQL"
+                        then printf "\n$CMDLINE -Ne $SQL"
                      fi
-                     if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -h $SADM_DBHOST -Ne "$SQL" ; fi
+                     if [ "$DRYRUN" -ne 1 ] ; then $CMDLINE -Ne "$SQL" ; fi
                      #
                      #printf "\nRemoving database user '$SADM_RW_DBUSER' ..."
                      #SQL="DELETE FROM mysql.user WHERE user = '$SADM_RW_DBUSER';"
@@ -279,9 +282,9 @@ main_process()
                      printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
                      SQL="delete from mysql.user where user = '$SADM_RO_DBUSER';" 
                      if [ $DEBUG_LEVEL -gt 0 ] 
-                        then printf "\n$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne $SQL"
+                        then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
                      fi
-                     if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" ;fi
+                     if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
              fi
 
             # Remove SADMIN line in /etc/hosts
@@ -371,11 +374,8 @@ main_process()
              fi
     fi 
 
-    validate_root_access
-    exit 
-
     # MAIN SCRIPT PROCESS HERE ---------------------------------------------------------------------
-    #main_process                                                        # Main Process
+    main_process                                                        # Main Process
     SADM_EXIT_CODE=$?                                                   # Save Process Return Code 
     
     if [ $DRYRUN -eq 1 ]                                                # Dry Run Activated
