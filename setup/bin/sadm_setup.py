@@ -55,6 +55,7 @@
 #@2019_03_17 Change: v3.18 If not already install 'curl' package will be intall by setup.
 #@2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
 #@2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
+#@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
 # 
 # ==================================================================================================
 #
@@ -72,7 +73,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.20"                                            # Setup Version Number
+sver                = "3.21"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -825,12 +826,12 @@ def user_exist(uname,dbroot_pwd):
     return (userfound)
 
 
+
 #===================================================================================================
 # Test if user received (uname) can connect to Database with password in $SADMIN/cfg/.dbpass file
 #===================================================================================================
 #
 def user_can_connect(uname,sroot):
-    userconnect = False                                                 # Default Can't Connect
     userpwd = ""                                                        # Clear Default User Passwd
 
     # Get User password in Database password file
@@ -838,8 +839,8 @@ def user_can_connect(uname,sroot):
     try:    
         FH_DBPWD = open(dpfile,'r')                                     # Open DB Password File
     except IOError as e:                                                # If Can't open DB Pwd  file
-            print ("Database password file '%s' not found\n" % dpfile)  # Print DBPass FileName
-            return (userconnect)                                        # Return False to caller
+            #print ("Database password file '%s' not found\n" % dpfile)  # Print DBPass FileName
+            return (userpwd)                                            # Return Empty Pwd to caller
     for dbline in FH_DBPWD :                                            # Loop until on all lines
         wline = dbline.strip()                                          # Strip CR/LF & Trail spaces
         if (wline[0:1] == '#' or len(wline) == 0) :                     # If comment or blank line
@@ -856,11 +857,9 @@ def user_can_connect(uname,sroot):
         enum,emsg = error.args                                          # Get Error No. & Message
         print ("Error connecting to Database 'sadmin'")                 # Advise USer
         print (">>>>>>>>>>>>>",enum,emsg)                               # Print Error No. & Message
-        return (userconnect)                                            # Return False to caller
+        return (userpwd)                                                # Return Empty Password
     conn.close()                                                        # Close connection to DB
-    userfound = True                                                    # Ok Connection worked
-
-    return (userfound)
+    return (userpwd)                                                    # Return User Pwd to caller
 
 
 
@@ -1067,28 +1066,43 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
 
 
     # Check if 'sadmin' user exist in Database, if not create User and Grant permission ------------
-    uname = "sadmin"                                                    # User to check in DB
+    uname     = "sadmin"                                                # User to check in DB
+    sdefault  = "Nimdas2018"                                            # Default sadmin Password 
+    sprompt   = "Enter Read/Write 'sadmin' database user password"      # Prompt for Answer
     rw_passwd = ""                                                      # Clear dbpass sadmin Pwd
     writelog(' ')                                                       # Blank Line
     writelog('----------')                                              # Separation Line
-    writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl') # Show User
-    if (user_exist(uname,dbroot_pwd) and user_can_connect(uname,sroot)) :
-        print ("User '%s' exist and can connect to Database" % (uname)) # Show user was found
-    else:                                                               # User sadmin was not found
-        writelog ("User don't exist or invalid password")               # Inform User
-        sdefault = "Nimdas2018"                                         # Default sadmin Password 
-        sprompt  = "Enter Read/Write 'sadmin' database user password"   # Prompt for Answer
-        wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
-        if (user_exist(uname,dbroot_pwd)):                              # If user exist in MySql
+    if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
+        writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
+        if (user_can_connect(uname,sroot) != "" ) :                     # Can connect using .dbpass?
+            writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
+        else:                                                           # sadmin password is wrong
+            writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
+            wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
+            writelog ("Updating 'sadmin' user password and grant ... ",'nonl')
             sql = "ALTER USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
-            sql += " revoke all privileges on *.* from 'sadmin'@'local';"
+            sql += " revoke all privileges on *.* from 'sadmin'@'localhost';"
             sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
-        else:
-            writelog ("Creating 'sadmin' user ... ",'nonl')             # Show User Creating DB Usr
-            sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
-            sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
-        sql += " flush privileges;"                                 # Flush Buffer
-        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
+            sql += " flush privileges;"                                 # Flush Buffer
+            cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
+            if (DEBUG):       
+                writelog ("SQL executing : \n%s\n" % (cmd))
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
+            if (ccode != 0):                                            # If problem creating user
+                writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+                writelog ("Standard out is %s" % (cstdout))             # Print command stdout
+                writelog ("Standard error is %s" % (cstderr))           # Print command stderr
+            else:                                                       # If user created
+                rw_passwd = wcfg_rw_dbpwd                               # DBpwd R/W sadmin Password
+                writelog (" Done ")                                     # Advise User ok to proceed
+    else:                                                               # Database user don't exist
+        writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
+        wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
+        writelog ("Creating 'sadmin' user ... ",'nonl')                     # Show User Creating DB Usr
+        sql  = "CREATE USER 'sadmin'@'localhost' IDENTIFIED BY '%s';" % (wcfg_rw_dbpwd)
+        sql += " grant all privileges on sadmin.* to 'sadmin'@'localhost';"
+        sql += " flush privileges;"                                     # Flush Buffer
+        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
         if (ccode != 0):                                                # If problem creating user
             writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
@@ -1099,25 +1113,43 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog (" Done ")                                         # Advise User ok to proceed
 
 
+
     # Check if 'squery' user exist in Database, if not create User and Grant permission ------------
-    uname = "squery"                                                    # Default Query DB UserName
+    uname     = "squery"                                                # Default Query DB UserName
+    sdefault  = "Squery18"                                              # Default Password 
+    sprompt   = "Enter 'squery' database user password"                 # Prompt for Answer
     ro_passwd = ""                                                      # Clear dbpass squery Pwd
-    #writelog('----------')                                              # Separation Line
-    writelog ("Checking if '%s' user exist in MariaDB ... " % (uname),'nonl')    
-    if (user_exist(uname,dbroot_pwd) and user_can_connect(uname,sroot)) :
-        print ("User '%s' exist and can connect to Database" % (uname)) # Show user was found
-    else:                                                               # User sadmin was not found
-        writelog ("User '%s' don't exist or invalid password" % (uname))# Inform User
-        sdefault = "Squery18"                                           # Default Password 
-        sprompt  = "Enter 'squery' database user password"              # Prompt for Answer
-        wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P")# sadmin DB user pwd
-        if (user_exist(uname,dbroot_pwd)) :                             # If user exist in MySql
-            sql  = "ALTER USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
-            sql += " revoke all privileges on *.* from 'sadmin'@'local';"
+    writelog(' ')                                                       # Blank Line
+    writelog('----------')                                              # Separation Line
+    if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
+        writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
+        if (user_can_connect(uname,sroot) != "" ) :                     # Can connect using .dbpass?
+            writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
+        else:                                                           # sadmin password is wrong
+            writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
+            wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
+            writelog ("Updating 'squery' user password and grant ... ",'nonl')
+            sql = "ALTER USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
+            sql += " revoke all privileges on *.* from 'squery'@'localhost';"
             sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
-        else:                                                           # If user don't exist 
-            sql  = "CREATE USER 'squery'@'localhost' IDENTIFIED BY '%s';" % (wcfg_ro_dbpwd)
-            sql += " grant select, show view on sadmin.* to 'squery'@'localhost';"
+            sql += " flush privileges;"                                 # Flush Buffer
+            cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)     # Build Create User SQL
+            if (DEBUG):       
+                writelog ("SQL executing : \n%s\n" % (cmd))
+            ccode,cstdout,cstderr = oscommand(cmd)                      # Execute MySQL Command 
+            if (ccode != 0):                                            # If problem creating user
+                writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
+                writelog ("Standard out is %s" % (cstdout))             # Print command stdout
+                writelog ("Standard error is %s" % (cstderr))           # Print command stderr
+            else:                                                       # If user created
+                ro_passwd = wcfg_ro_dbpwd                               # DBpwd R/O sadmin Password
+                writelog (" Done ")                                     # Advise User ok to proceed
+    else:                                                                # Database user don't exist
+        writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
+        wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
+        writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
+        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
+        sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
@@ -1126,8 +1158,9 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
         else:                                                           # If user created
-            ro_passwd = wcfg_ro_dbpwd                                   # DBpwd R/O squery Password
+            ro_passwd = wcfg_ro_dbpwd                                   # DBpwd R/W sadmin Password
             writelog (" Done ")                                         # Advise User ok to proceed
+
 
     # Add current system to server table in MySQL Database
     if (load_db) :                                                      # If Load/Reload Database
@@ -1135,17 +1168,16 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         add_server_to_db(sserver,dbroot_pwd,sdomain)                    # Add current Server to DB
 
 
-    # Create $SADMIN/cfg/.dbpass (Database Password file) Only if it doesn't exist -----------------
+    # Create/Update $SADMIN/cfg/.dbpass (Database Password file) Only if it doesn't exist ----------
     dpfile = "%s/cfg/.dbpass" % (sroot)                                 # Database Password FileName
     if not os.path.isfile(dpfile):                                      # If .dbpass don't exist
         writelog ("Creating Database Password File (%s)" % (dpfile))    # Advise user create .dbpass
-        dbpwd  = open(dpfile,'w')                                       # Create Database Pwd File
-        dbpwd.write("sadmin,%s\n" % (rw_passwd))                        # Create R/W user & Password
-        dbpwd.write("squery,%s\n" % (ro_passwd))                        # Create R/O user & Password
-        dbpwd.close()                                                   # Close DB Password File
-    else:
-        writelog('----------')                                          # Separation Line
-        writelog ("Leaving Database Password File as it is (%s)" % (dpfile)) # Advise user 
+    else:                                                               # If file already exist
+        writelog ("Updating Database Password File (%s)" % (dpfile))    # Advise user create .dbpass
+    dbpwd  = open(dpfile,'w')                                           # Create Database Pwd File
+    dbpwd.write("sadmin,%s\n" % (rw_passwd))                            # Create R/W user & Password
+    dbpwd.write("squery,%s\n" % (ro_passwd))                            # Create R/O user & Password
+    dbpwd.close()                                                       # Close DB Password File
         
 
 
