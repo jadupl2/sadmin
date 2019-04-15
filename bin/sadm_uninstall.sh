@@ -36,6 +36,7 @@
 #@2019_04_08 Update: v1.4 Remove 'sadmin' line in /etc/hosts, only when uninstalling SADMIN server.
 #@2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
 #@2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
+#@2019_04_14 Fix: v1.7 Remove user before dropping database
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -65,7 +66,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.6'                               # Your Current Script Version
+    export SADM_VER='1.7'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -266,7 +267,21 @@ main_process()
                 fi
              fi
              if [ $RC -eq 0 ] 
-                then SQL="drop database sadmin;" 
+                then printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
+                     SQL="delete from mysql.user where user = '$SADM_RO_DBUSER';" 
+                     if [ $DEBUG_LEVEL -gt 0 ] 
+                        then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
+                     fi
+                     if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
+                     
+                     printf "\nRemoving database user '$SADM_RW_DBUSER' ..."
+                     SQL="delete from mysql.user where user = '$SADM_RW_DBUSER';" 
+                     if [ $DEBUG_LEVEL -gt 0 ] 
+                        then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
+                     fi
+                     if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
+                     
+                     SQL="drop database sadmin;" 
                      CMDLINE="$SADM_MYSQL -u root  -p$ROOTPWD -h $SADM_DBHOST "
                      if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi  
                      printf "\nDropping 'sadmin' database ..." 
@@ -279,12 +294,6 @@ main_process()
                      #SQL="DELETE FROM mysql.user WHERE user = '$SADM_RW_DBUSER';"
                      #$CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
                      #
-                     printf "\nRemoving database user '$SADM_RO_DBUSER' ..."
-                     SQL="delete from mysql.user where user = '$SADM_RO_DBUSER';" 
-                     if [ $DEBUG_LEVEL -gt 0 ] 
-                        then printf "\n$CMDLINE $SADM_DBNAME -Ne $SQL"
-                     fi
-                     if [ "$DRYRUN" -ne 1 ] ;then $CMDLINE $SADM_DBNAME -Ne "$SQL" ;fi
              fi
 
             # Remove SADMIN line in /etc/hosts
