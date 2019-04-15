@@ -1074,7 +1074,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     writelog('----------')                                              # Separation Line
     if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
         writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
-        if (user_can_connect(uname,sroot) != "" ) :                     # Can connect using .dbpass?
+        wcfg_rw_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
+        if (wcfg_rw_dbpwd != "" ) :                                     # No blank Pwd, connect ok
             writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
         else:                                                           # sadmin password is wrong
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
@@ -1092,9 +1093,6 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-            else:                                                       # If user created
-                rw_passwd = wcfg_rw_dbpwd                               # DBpwd R/W sadmin Password
-                writelog (" Done ")                                     # Advise User ok to proceed
     else:                                                               # Database user don't exist
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
@@ -1108,9 +1106,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
             writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
-        else:                                                           # If user created
-            rw_passwd = wcfg_rw_dbpwd                                   # DBpwd R/W sadmin Password
-            writelog (" Done ")                                         # Advise User ok to proceed
+    rw_passwd = wcfg_rw_dbpwd                                           # DBpwd R/W sadmin Password
+    writelog (" Done ")                                                 # Advise User ok to proceed
 
 
 
@@ -1123,7 +1120,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     writelog('----------')                                              # Separation Line
     if user_exist(uname,dbroot_pwd) :                                   # User Exist in Database ?
         writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
-        if (user_can_connect(uname,sroot) != "" ) :                     # Can connect using .dbpass?
+        wcfg_ro_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
+        if (wcfg_ro_dbpwd != "" ) :                                     # No blank Pwd, connect ok
             writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
         else:                                                           # sadmin password is wrong
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
@@ -1141,9 +1139,6 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-            else:                                                       # If user created
-                ro_passwd = wcfg_ro_dbpwd                               # DBpwd R/O sadmin Password
-                writelog (" Done ")                                     # Advise User ok to proceed
     else:                                                                # Database user don't exist
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
@@ -1157,9 +1152,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
             writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
             writelog ("Standard out is %s" % (cstdout))                 # Print command stdout
             writelog ("Standard error is %s" % (cstderr))               # Print command stderr
-        else:                                                           # If user created
-            ro_passwd = wcfg_ro_dbpwd                                   # DBpwd R/W sadmin Password
-            writelog (" Done ")                                         # Advise User ok to proceed
+    ro_passwd = wcfg_ro_dbpwd                                           # DBpwd R/W sadmin Password
+    writelog (" Done ")                                                 # Advise User ok to proceed
 
 
     # Add current system to server table in MySQL Database
