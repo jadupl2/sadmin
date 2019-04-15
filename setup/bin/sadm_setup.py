@@ -1076,7 +1076,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
         wcfg_rw_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
         if (wcfg_rw_dbpwd != "" ) :                                     # No blank Pwd, connect ok
-            writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
+            writelog ("User '%s' able to connect to Database using password file ..." % (uname))
         else:                                                           # sadmin password is wrong
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
             wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
@@ -1122,7 +1122,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' exist in Database ..." % (uname))          # Show user was found
         wcfg_ro_dbpwd = user_can_connect(uname,sroot)                   # Can connect? Return Pwd
         if (wcfg_ro_dbpwd != "" ) :                                     # No blank Pwd, connect ok
-            writelog ("User '%s' able to connect to Database using .dbpass password ..." % (uname))
+            writelog ("User '%s' able to connect to Database using password file ..." % (uname))
         else:                                                           # sadmin password is wrong
             writelog ("Not able to connect to Database using '%s' .dbpass password ..." % (uname))
             wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Enter Usr pwd
