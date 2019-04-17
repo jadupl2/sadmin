@@ -18,6 +18,7 @@
 # CHANGELOG
 # 2018_07_11    v1.0 - Initial Version
 # 2018_07_12    v1.1 - First Production release
+#@2019_04_17 Fix: v1.2 Bug fix that prevent some services to restart and Log reformat.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                         # INTERCEPT The Control-C
@@ -32,7 +33,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Hostname Without domain
 OSNAME=`uname -s | tr "[A-Z]" "[a-z]"`      ; export OSNAME             # (linux or aix)
 PN=${0##*/}                                 ; export PN                 # Script name
-VER='1.1'                                   ; export VER                # Script Version No.
+VER='1.2'                                   ; export VER                # Script Version No.
 INST=`echo "$PN" | awk -F\. '{ print $1 }'` ; export INST               # Script name without ext.
 WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`         ; export WDATE              # Today Date and Time
 DASH=`printf %80s |tr ' ' '-'`              ; export DASH               # 80 dashes
@@ -47,10 +48,10 @@ SRVNAME="atd"                               ; export SRVNAME            # Servic
 main_process()
 {
     # Show Script Name, Version and starting Date/Time.
-    echo -e "\n\n${DASH}\nStarting script $PN on ${HOSTNAME} `date`"    # Print Script Header
+    printf "\n\n${DASH}\nStarting script $PN on ${HOSTNAME} `date`"     # Print Script Header
     if [ "$SRV_NAME" != "" ]                                            # Service Name to restart
-       then echo "Service name to restart : $SRV_NAME"                  # SHow User we receive it
-       else echo "No Service name received - Script aborted"            # SHow User we abort
+       then printf "\nService name to restart : $SRV_NAME"              # SHow User we receive it
+       else printf "\nNo Service name received - Script aborted"        # SHow User we abort
             return 1                                                    # Return Error to Caller    
     fi
 
@@ -58,31 +59,35 @@ main_process()
     which systemctl >/dev/null 2>&1                                     # Cmd systemctl on system ?
     if [ $? -eq 0 ]                                                     # If systemctl cmd is found
         then SYSTEMD="Y"                                                # Set systemd to Yes
-             echo "System is using 'systemd'."                          # Show user using Systemd
+             printf "\nSystem is using 'systemd'."                      # Show user using Systemd
         else SYSTEMD="N"                                                # Set Systemd to No
-             echo "System is using 'SystemV Init'."                     # Show use using SystemV 
+             printf "\nSystem is using 'SystemV Init'."                 # Show use using SystemV 
         fi                                                              # Use Systemd or SysV Init
 
     # Restart Each Service name received (Comma delimited)
     STARTED="N"                                                         # No Restart Worked Default 
     for i in $(echo $SRV_NAME | sed "s/,/ /g")                          # For every Serv. comma del.
         do     
-        if [ "$SYSTEMD" == "Y" ]                                        # If System using SystemD
+        if [ "$SYSTEMD" = "Y" ]                                         # If System using SystemD
             then systemctl restart $i >/dev/null 2>&1                   # Restart using systemctl
                  if [ $? -eq 0 ]                                        # If restart worked
                     then STARTED="Y"                                    # At least one restart work
-                         echo "Service '$i' Started ..."                # Show user Service Started
+                         printf "\nService '$i' Started ..."            # Show user Service Started
                  fi                                                     
             else service $i restart >/dev/null 2>&1                     # Restart using service cmd
                  if [ $? -eq 0 ]                                        # If restart worked
                     then STARTED="Y"                                    # At least one restart work
-                         echo "Service '$i' Started ..."                # Show user Service Started
+                         printf "\nService '$i' Started ..."            # Show user Service Started
                  fi                                                     
         fi
         done
     
     # If One Service was Started successfully thenn Return 0 else 1.
-    if [ "$STARTED" != "Y" ] ; then RC=1 ; else RC=0 ; fi               # Set Return Code
+    if [ "$STARTED" != "Y" ]                                            # At least 1 service started
+        then RC=1                                                       # Error Return Code is 1
+             printf "\n[ERROR] None of the service (${SRV_NAME}) is installed."
+        else RC=0                                                       # OK Return Code is 0
+    fi               # Set Return Code
     return $RC                                                          # Return Status to Caller
 }
 
@@ -94,6 +99,6 @@ main_process()
     SRV_NAME=$1                                                         # Service Name to Restart
     main_process                                                        # Call Main Process Function
     SADM_EXIT_CODE=$?                                                   # Save Return Code 
-    echo -e "\nReturn code : $RC"                                       # Print Script return code
-    echo -e "End of script $PN on ${HOSTNAME} `date`\n${DASH}\n"        # Print Script Footer
-    exit $SADM_EXIT_CODE                                                # Exit With Return Code                                             # Exit With Global Error code (0/1)
+    printf "\nReturn code : $RC"                                        # Print Script return code
+    printf "\nEnd of script $PN on ${HOSTNAME} `date`\n${DASH}\n"       # Print Script Footer
+    exit $SADM_EXIT_CODE                                                # Exit With Return Code 
