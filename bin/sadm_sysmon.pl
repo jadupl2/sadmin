@@ -32,34 +32,50 @@
 #@2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
 #@2019_03_20 nolog: v2.29 Mail message change
 #@2019_04_01 nolog: v2.30 Include color on status output.
+#@2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
 #===================================================================================================
 #
 use English;
-#use DateTime;  # Comment on 9 March 2019
 use Term::ANSIColor qw(:constants);
 use File::Basename;
 use POSIX qw(strftime);
 use Time::Local;
-#use LWP::Simple;
 use LWP::Simple qw($ua get head);
-system "export TERM=xterm";
 
 
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.30";                                       # Version Number
+my $VERSION_NUMBER      = "2.31";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
-my $SADM_UID            = `id -u`      ; chomp($SADM_UID);              # Current User UID Number
 $OSNAME                 =~ tr/A-Z/a-z/;                                 # Make OSName in lowercase
+my $SADM_UID            = `id -u`      ; chomp($SADM_UID);              # Current User UID Number
 my $HOSTNAME            = `hostname -s`; chomp $HOSTNAME;               # HostName of current System
 my $SYSMON_DEBUG        = "$ENV{'SYSMON_DEBUG'}" || "5";                # debugging purpose set to 5
 my $start_time = $end_time = 0;                                         # Use to Calc execution Time
 my $WORK                = 0;                                            # For temp usage
 my $VM                  = "N" ;                                         # Are we a VM (No Default)
 my $SCRIPT_MAX_RUN_PER_DAY=2;                                           # Restart Script Max run/day
+system "export TERM=xterm";                                             # TERM Var. xterm-256color
+
+# Check if /etc/environment file exist and is readable
+my $ETC_ENVIRONMENT     = "/etc/environment";                           # O/S Environment file
+if ( ! -r "$ETC_ENVIRONMENT" ) {                                        # Env. File readable ?
+    print "File ${ETC_ENVIRONMENT} doesn't exist or isn't readable.\n"; # Advise User
+    print "System Monitor Aborted ...\n";                               # Abort Message
+    exit 1;                                                             # Exit with Error
+}
+
+# Get the SADMIN Variable content from /etc/environment and set SADM_BASE_DIR to it.
+my $SADM_BASE_DIR = `grep "^SADMIN" /etc/environment | awk -F= '{print \$2}'`; chomp $SADM_BASE_DIR;
+if ( ! -r "${SADM_BASE_DIR}/lib/sadmlib_std.sh") {                      # SADMIN Libr. Readable ? 
+    print "SADMIN variable not define in /etc/environment\n" ;          # Advise User 
+    print "System Monitor Aborted ...\n";                               # Abort Message
+    exit 1;                                                             # Exit with Error
+}
+
 
 # Maximum of second the SysMon Lock file can exist before it get recreated
 # Lock is normally created at the beginning of sysmon and deleted at the end.
@@ -70,8 +86,8 @@ my $SCRIPT_MAX_RUN_PER_DAY=2;                                           # Restar
 # can now to run normally.
 my $LOCKFILE_MAX_SEC    = 1800 ;                                        # Max Nb Sec. Lockfile
 
+
 # SADMIN DIRECTORY STRUCTURE DEFINITION
-my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN Root Dir.
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
 my $SADM_USR_DIR        = "$SADM_BASE_DIR/usr";                         # SADMIN usr Directory
 my $SADM_TMP_DIR        = "$SADM_BASE_DIR/tmp";                         # SADMIN Temp Directory
@@ -91,6 +107,7 @@ my $SYSMON_CFG_FILE     = "$SADM_CFG_DIR/$HOSTNAME.smon";               # SYSMON
 my $SYSMON_STD_FILE     = "$SADM_CFG_DIR/.template.smon";               # SYSMON Template file
 my $SYSMON_RPT_FILE     = "$SADM_RPT_DIR/$HOSTNAME.rpt";                # SYSMON Host Report File
 my $SYSMON_LOCK_FILE    = "$SADM_BASE_DIR/sysmon.lock";                 # SYSMON Lock file
+my $ETC_ENVIRONMENT     = "/etc/environment";                           # O/S Environment file
 
 # SADMIN FILES DEFINITIONS
 my $SADMIN_CFG_FILE     = "$SADM_CFG_DIR/sadmin.cfg";                   # SADMIN Configuration file
@@ -112,10 +129,7 @@ my $CMD_TOUCH           = `which touch`      ;chomp($CMD_TOUCH);        # Locati
 
 # Determine if system use SysInit or SystemD 
 system ("which systemctl >/dev/null 2>&1"); 
-if ( $? != 0 )  { 
-    my $CMD_SYSTEMCTL = "";                             
-}else{ 
-    my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`; }
+if ( $? != 0 ) { my $CMD_SYSTEMCTL = ""; }else{ my $CMD_SYSTEMCTL = `which systemctl 2>/dev/null`;}
 
 
 # `hostname`.smon file layout, fields are separated by space (be carefull)
@@ -1761,6 +1775,7 @@ sub end_of_sysmon {
         printf ("\n${xline1}${xline2}${xline3}\n\n");                       # SADM Stat Line
     }
 }
+
 
 
 #---------------------------------------------------------------------------------------------------
