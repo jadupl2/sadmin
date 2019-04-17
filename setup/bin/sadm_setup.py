@@ -56,6 +56,7 @@
 #@2019_04_04 Fix: v3.19 Fix 'sadmin' user home directory and default password creation on Debian.
 #@2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
 #@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
+#@2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
 # 
 # ==================================================================================================
 #
@@ -73,7 +74,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.21"                                            # Setup Version Number
+sver                = "3.22"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1434,6 +1435,7 @@ def set_sadmin_env(ver):
     # Ok now we can Set SADMIN Environnement Variable, for the moment
     os.environ['SADMIN'] = sadm_base_dir                                # Setting SADMIN Env. Dir.
 
+
     # Making sure that 'export SADMIN=' line is in /etc/profile.d/sadmin.sh (So it survive a reboot)
     SADM_PROFILE='/etc/profile.d/sadmin.sh'                             # SADMIN Environment File
     SADM_TMPFILE='/etc/profile.d/sadmin.tmp'                            # SADMIN New Env. Temp File
@@ -1445,10 +1447,10 @@ def set_sadmin_env(ver):
         try:
             shutil.copyfile(SADM_INIFILE,SADM_PROFILE)                  # Copy Template of sadmin.sh 
         except IOError as e:
-            writelog("Unable to copy %s to %s" % (SADM_INIFILE,SADM_PROFILE)) # Advise user 
+            print("Unable to copy %s to %s" % (SADM_INIFILE,SADM_PROFILE)) # Advise user 
             sys.exit(1)                                                 # Exit to O/S With Error
         except:
-            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            print("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
 
     # Form the two lines that need to be in /etc/profile.d/sadmin.sh file
@@ -1489,6 +1491,7 @@ def set_sadmin_env(ver):
         print ("Error removing or renaming %s" % (SADM_PROFILE))        # Show User if error
         sys.exit(1)                                                     # Exit to O/S with Error
 
+
     # Setup /etc/environnment Work Files 
     SADM_ENVFILE='/etc/environment'                                     # System Environment File
     SADM_TMPFILE='/etc/environment.tmp'                                 # System Env. Temp File
@@ -1499,10 +1502,10 @@ def set_sadmin_env(ver):
         try:
             shutil.copyfile(SADM_ENVFILE,SADM_ORGFILE)                  # Put Template in place
         except IOError as e:
-            writelog("Unable to copy %s to %s" % (SADM_ENVFILE,SADM_ORGFILE)) # Advise user 
+            print("Unable to copy %s to %s" % (SADM_ENVFILE,SADM_ORGFILE)) # Advise user 
             sys.exit(1)                                                 # Exit to O/S With Error
         except:
-            writelog("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
+            print("Unexpected error:", sys.exc_info())               # Advise Usr Show Error Msg
             sys.exit(1)                                                 # Exit to O/S with Error
 
     # Open the current /etc/environment
@@ -1514,18 +1517,23 @@ def set_sadmin_env(ver):
         fi.write (eline)                                                # Write SADMIN=Install Dir.
         fi.close()                                                      # Just to create file
         fi = open(SADM_ENVFILE,'r')                                     # Re-open in read mode
+    if (DEBUG) : 
+        print ("eline = %s" % (eline))
 
     # Make sure /etc/environment have line SADMIN= Installation Directory
     fo = open(SADM_TMPFILE,'w')                                         # Environment TMP File
-    fileEmpty=True                                                      # Env. file assume empty
+    fileUpdated=False                                                   # Env. file Updated
     for line in fi:                                                     # Read Input file until EOF
+        line = line.strip()                                             # Del trailing/heading space
         if line.startswith('SADMIN=') :                                 # line Start with 'SADMIN='?
            line = "%s" % (eline)                                        # Replace line with latest
-        fo.write (line)                                                 # Write line to output file
-        fileEmpty=False                                                 # File was not empty flag
+           fileUpdated=True                                             # SADMIN Line Found & Update
+        fo.write ("%s\n" % (line))                                      # Write line to output file
     fi.close()                                                          # File read now close it
-    if (fileEmpty) :                                                    # If Input file was empty
-        fo.write (eline)                                                # Write 'export SADMIN=' Line
+    if (not fileUpdated) :                                              # SADMIN Line not Updated
+        if (DEBUG) : 
+            print ("/etc/environment was empty, line '%s' added." % (eline))
+        fo.write ("%s\n" % (eline))                                     # Write 'SADMIN=' Line
     fo.close()                                                          # Close the output file
     try:                                                                # Will try rename env. file
         os.remove(SADM_ENVFILE)                                         # Remove current sadmin.cfg
