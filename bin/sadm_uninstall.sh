@@ -37,6 +37,7 @@
 #@2019_04_11 Update: v1.5 Show if we are uninstalling a 'client' or a 'server' on confirmation msg.
 #@2019_04_14 Fix: v1.6 Don't show password when entering it, correct problem dropping database.
 #@2019_04_14 Fix: v1.7 Remove user before dropping database
+#@2019_04_17 Update: v1.8 When quitting script, remove pid file and print abort message.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -66,7 +67,7 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.7'                               # Your Current Script Version
+    export SADM_VER='1.8'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
@@ -166,7 +167,8 @@ validate_root_access()
         stty echo                                                       # Show Char Input
         if [ "$ROOTPWD" = "" ]  ; then continue ; fi                    # No blank password
         if [ "$ROOTPWD" = "q" ] || [ "$ROOTPWD" = "Q" ]                 # Abort Script if 'q' input
-            then printf "\nUninstall aborted ...\n\n" 
+            then printf "\nUninstall aborted ...\n\n"                   
+                 rm -f $SADM_PID_FILE >/dev/null 2>&1                   # Remove PID FIle
                  exit 1 
         fi                                                              
 
