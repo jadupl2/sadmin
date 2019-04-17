@@ -45,6 +45,7 @@
 # 2019_01_26  Added: v2.31 Add to test if crontab file exist, when run for first time.
 # 2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
 #@2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
+#@2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -81,7 +82,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.33'                              # Current Script Version
+    export SADM_VER='2.34'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -460,9 +461,6 @@ rsync_function()
 process_servers()
 {
     WOSTYPE=$1                                                          # Should be aix or linux
-    sadm_writelog " "
-    sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
-    sadm_writelog " "
 
     # Select From Database Active Servers with selected O/s & output result in $SADM_TMP_FILE1
     # See rows available in 'table_structure_server.pdf' in $SADMIN/doc/pdf/database directory
@@ -494,6 +492,10 @@ process_servers()
         then sadm_writelog "No Active $WOSTYPE server were found."      # Not ACtive Server MSG
              return 0                                                   # Return Error to Caller
     fi 
+
+    sadm_writelog " "
+    sadm_writelog "Processing active '$WOSTYPE' server(s)"              # Display/Log O/S type
+    sadm_writelog " "
 
     # Create Crontab File Header 
     if [ "$WOSTYPE" = "linux" ] 
