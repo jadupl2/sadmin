@@ -1099,7 +1099,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
         writelog ("Creating 'sadmin' user ... ",'nonl')                     # Show User Creating DB Usr
-        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
+        sql =  "drop user 'sadmin'@'localhost'; flush privileges; "
+        sql += " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
@@ -1145,7 +1146,8 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
         writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
-        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
+        sql =  "drop user 'squery'@'localhost'; flush privileges; "
+        sql += " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
