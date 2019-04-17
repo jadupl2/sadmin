@@ -165,7 +165,10 @@ validate_root_access()
         read ROOTPWD                                                    # Enter MySQL root Password 
         stty echo                                                       # Show Char Input
         if [ "$ROOTPWD" = "" ]  ; then continue ; fi                    # No blank password
-        if [ "$ROOTPWD" = "q" ] || [ "$ROOTPWD" = "Q" ] ;then exit 1 ;fi # Abort Script if 'q' input
+        if [ "$ROOTPWD" = "q" ] || [ "$ROOTPWD" = "Q" ]                 # Abort Script if 'q' input
+            then printf "\nUninstall aborted ...\n\n" 
+                 exit 1 
+        fi                                                              
 
         SQL="show databases;"
         CMDLINE="$SADM_MYSQL -uroot -p$ROOTPWD -h $SADM_DBHOST"
