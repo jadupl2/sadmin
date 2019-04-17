@@ -57,6 +57,7 @@
 #@2019_04_12 Update: v3.20 Check DD connection for user 'sadmin' & 'squery' & ask pwd if failed
 #@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
 #@2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
+#@2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
 # 
 # ==================================================================================================
 #
@@ -74,7 +75,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.22"                                            # Setup Version Number
+sver                = "3.23"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1144,7 +1145,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
         writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
-        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
+        sql  = "CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
