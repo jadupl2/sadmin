@@ -2004,7 +2004,7 @@ def setup_sadmin_config_file(sroot,wostype):
         if wostype == "LINUX" :                                         # Under Linux
             cmd = "useradd -g %s -s /bin/bash " % (wcfg_group)          # Build Add user Command 
             cmd += " -m -d /home/%s "    % (wcfg_user)                  # Assign Home Directory
-            cmd += " -c'%s' %s -e ''" % ("SADMIN Tools User",wcfg_user) # Comment,user name,noexpire
+            cmd += " -c'%s' -e '' %s" % ("SADMIN Tools User",wcfg_user) # Comment,user name,noexpire
             ccode, cstdout, cstderr = oscommand(cmd)                    # Go Create User
 
             # Under Debian/Ubuntu/Rasbian Home Directory not created
