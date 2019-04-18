@@ -58,6 +58,7 @@
 #@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
 #@2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
 #@2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
+#@2019_04_18 Update: v3.24 Release 0.97 Re-tested version.
 # 
 # ==================================================================================================
 #
@@ -75,7 +76,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.23"                                            # Setup Version Number
+sver                = "3.24"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1825,6 +1826,7 @@ def setup_sadmin_config_file(sroot,wostype):
 #"""    
     global stype                                                        # C=Client S=Server Install
 
+
     # Is the current server a SADMIN [S]erver or a [C]lient
     sdefault = "C"                                                      # This is the default value
     sname    = "SADM_HOST_TYPE"                                         # Var. Name in sadmin.cfg
@@ -1836,6 +1838,7 @@ def setup_sadmin_config_file(sroot,wostype):
     update_sadmin_cfg(sroot,"SADM_HOST_TYPE",wcfg_host_type)            # Update Value in sadmin.cfg
     stype = wcfg_host_type                                              # Save Host Intallation type
 
+
     # Accept the Company Name
     sdefault = ""                                                       # This is the default value
     sprompt  = "Enter your Company Name"                                # Prompt for Answer
@@ -1843,6 +1846,7 @@ def setup_sadmin_config_file(sroot,wostype):
     while (wcfg_cie_name == ""):                                        # Until something entered
         wcfg_cie_name = accept_field(sroot,"SADM_CIE_NAME",sdefault,sprompt)# Accept Cie Name
     update_sadmin_cfg(sroot,"SADM_CIE_NAME",wcfg_cie_name)              # Update Value in sadmin.cfg
+
 
     # Accept SysAdmin Email address
     sdefault = ""                                                       # No default value
@@ -1864,12 +1868,14 @@ def setup_sadmin_config_file(sroot,wostype):
     if (wcfg_host_type == "S"):                                         # If Host is SADMIN Server
         update_alert_group_default(sroot,wcfg_mail_addr)                # Upd. AlertGroup Def. Email 
 
+
     # Accept the Alert type to use at the end of each script execution
     # 0=No Alert Sent, 1=On Error Only, 2=On Success Only, 3=Always send alert    
     sdefault = 1                                                        # Default value 1
     sprompt  = "Enter default alert type"                               # Prompt for Answer
     wcfg_mail_type = accept_field(sroot,"SADM_ALERT_TYPE",sdefault,sprompt,"I",0,3)
     update_sadmin_cfg(sroot,"SADM_ALERT_TYPE",wcfg_mail_type)           # Update Value in sadmin.cfg
+
 
     # Accept the Default Domain Name
     try :
@@ -1885,6 +1891,7 @@ def setup_sadmin_config_file(sroot,wostype):
             continue                                                    # Go Re-Accept Domain Name
         break                                                           # Ok Name pass the test
     update_sadmin_cfg(sroot,"SADM_DOMAIN",wcfg_domain)                  # Update Value in sadmin.cfg
+
 
     # Accept the SADMIN FQDN Server name
     sdefault = ""                                                       # No Default value 
@@ -1937,6 +1944,7 @@ def setup_sadmin_config_file(sroot,wostype):
     #wcfg_max_rchline = accept_field(sroot,"SADM_MAX_RCHLINE",sdefault,sprompt,"I",1,300)
     #update_sadmin_cfg(sroot,"SADM_MAX_RCHLINE",wcfg_max_rchline)        # Update Value in sadmin.cfg
 
+
     # Accept the Default User Group
     sdefault = "sadmin"                                                 # Set Default value 
     if wostype == "DARWIN" :                                            # Under MacOS
@@ -1965,6 +1973,7 @@ def setup_sadmin_config_file(sroot,wostype):
         else:                                                           # If Error creating group
             writelog ("Error %s creating group %s" % (ccode,wcfg_group))# Show AddGroup Cmd Error No
     update_sadmin_cfg(sroot,"SADM_GROUP",wcfg_group)                    # Update Value in sadmin.cfg
+
 
     # Accept the Default User Name
     sdefault = "sadmin"                                                 # Set Default value 
@@ -2204,7 +2213,8 @@ def mainflow(sroot):
     # (Return SADMIN ServerName and IP, Default Domain, SysAdmin Email, sadmin User and Group).
     (userver,uip,udomain,uemail,uuser,ugroup) = setup_sadmin_config_file(sroot,wostype) # Ask Config questions
 
-    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Install Client Req.
+    # Check and if needed install missing packages require.
+    satisfy_requirement('C',sroot,packtype,logfile,sosname,sosver,sosbits) # Chk/Install Client Req.
     special_install(packtype,sosname,logfile)                           # Install pymysql module
 
     # Create SADMIN user sudo file
