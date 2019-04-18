@@ -36,7 +36,8 @@
 # 2018_12_19    v1.24 Fix typo Error & Enhance log output
 # 2018_12_22    v1.25 Minor change - More Debug info.
 # 2019_01_28 Change: v1.26 Add readme.pdf and readme.html to housekeeping
-#@2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
+# 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
+#@2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -60,7 +61,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.27'                              # Current Script Version
+    export SADM_VER='1.28'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -136,6 +137,17 @@ check_sadmin_account()
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "Check status of account '$SADM_USER' ..." 
 
+    # Make sure sadmin account is not asking for password change and block crontab sudo.
+    # So we make sadmin account non-expirable and password non-expire
+    if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux Operating System
+        then sadm_writelog "Making sure account '$SADM_USER' doesn't expire." 
+             usermod -e '' $SADM_USER >/dev/null 2>&1                   # Make Account non-expirable
+             sadm_writelog "Making sure password for '$SADM_USER' doesn't expire."
+             chage -I -1 -m 0 -M 99999 -E -1 $SADM_USER >/dev/null 2>&1 # Make sadmin pwd non-expire
+             sadm_writelog "We recommend changing '$SADM_USER' password at regular interval."
+    fi
+
+    # Check if sadmin account is lock.
     if [ $(sadm_get_ostype) = "LINUX" ]                                 # On Linux Operating System
         then passwd -S $SADM_USER | grep -i 'locked' > /dev/null 2>&1   # Check if Account is locked
              if [ $? -eq 0 ]                                            # If Account is Lock
@@ -163,6 +175,7 @@ check_sadmin_account()
              fi
     fi
   
+    # Check if sadmin Aix account is locked.
     if [ $(sadm_get_ostype) = "AIX" ]
         then lsuser -a account_locked $SADM_USER | grep -i 'true' >/dev/null 2>&1
              if [ $? -eq 0 ] 
