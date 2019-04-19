@@ -9,7 +9,7 @@
 #   Description :   Make sure python 3 is installed and then execute sadm_setup.py
 #
 #   This code was originally written by Jacques Duplessis <duplessis.jacques@gmail.com>,
-#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - http://www.sadmin.ca
+#   Copyright (C) 2016-2018 Jacques Duplessis <jacques.duplessis@sadmin.ca> - https://www.sadmin.ca
 #
 #   The SADMIN Tool is free software; you can redistribute it and/or modify it under the terms
 #   of the GNU General Public License as published by the Free Software Foundation; either
@@ -46,7 +46,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.6'                              ; export SADM_VER           # Your Script Version
+SADM_VER='2.7'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -147,22 +147,19 @@ add_epel_repo()
 check_python()
 {
     # Check if python3 is installed 
-    echo -n "Checking if 'python3' is installed ... " | tee -a $SLOG
-    which python3 >/dev/null 2>&1
-    if [ $? -ne 0 ] 
-        then echo -n "Installing python3 ... " | tee -a $SLOG
-             which yum >/dev/null 2>&1
-             if [ $? -eq 0 ] 
-#                then yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
-                then yum --enablerepo=epel -y install python36 python36-setuptools python36-pip >>$SLOG 2>&1
-             fi 
-             which apt-get >/dev/null 2>&1
-             if [ $? -eq 0 ] 
-                then echo "Running 'apt-get update'" >> $SLOG
-                     apt-get update >> $SLOG 2>&1
-                     echo "Running apt-get -y install python3'" >>$SLOG
-                     apt-get -y install python3 >>$SLOG 2>&1
-             fi 
+    echo -n "Installing 'python3' required module, if they are not installed ... " | tee -a $SLOG
+
+    which yum >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then yum --enablerepo=epel -y install python36 python36-setuptools python36-pip >>$SLOG 2>&1
+    fi 
+
+    which apt-get >/dev/null 2>&1
+    if [ $? -eq 0 ] 
+        then echo "Running 'apt-get update'" >> $SLOG
+             apt-get update >> $SLOG 2>&1
+             echo "Running apt-get -y install python3'" >>$SLOG
+             apt-get -y install python3 >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
@@ -183,7 +180,7 @@ check_python()
         then echo " " | tee -a $SLOG
              echo "----------" | tee -a $SLOG
              echo "We have problem installing python module 'pymysql'." | tee -a $SLOG
-             echo "Please install pymusql package (pip3 install pymysql)" | tee -a $SLOG
+             echo "Please install pymysql package (pip3 install pymysql)" | tee -a $SLOG
              echo "Then run this script again." | tee -a $SLOG 
              echo "----------" | tee -a $SLOG
              exit 1
