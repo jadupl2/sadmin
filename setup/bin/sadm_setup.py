@@ -58,7 +58,8 @@
 #@2019_04_14 Update: v3.21 Password for User sadmin and squery wasn't updating properly .dbpass file.
 #@2019_04_15 Fix: v3.22 File /etc/environment was not properly updated under certain condition.
 #@2019_04_15 Fix: v3.23 Fix 'squery' database user password typo error.
-#@2019_04_18 Update: v3.24 Release 0.97 Re-tested version.
+#@2019_04_18 Update: v3.24 Release 0.97 Re-tested with Ubuntu version.
+#@2019_04_18 Fix: v3.25 Release 0.97 Re-tested with CentOS/RedHat version.
 # 
 # ==================================================================================================
 #
@@ -76,7 +77,7 @@ except ImportError as e:
 #===================================================================================================
 #                             Local Variables used by this script
 #===================================================================================================
-sver                = "3.24"                                            # Setup Version Number
+sver                = "3.25"                                            # Setup Version Number
 pn                  = os.path.basename(sys.argv[0])                     # Program name
 inst                = os.path.basename(sys.argv[0]).split('.')[0]       # Pgm name without Ext
 sadm_base_dir       = ""                                                # SADMIN Install Directory
@@ -1099,9 +1100,10 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
     else:                                                               # Database user don't exist
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
-        writelog ("Creating 'sadmin' user ... ",'nonl')                     # Show User Creating DB Usr
-        sql =  "drop user 'sadmin'@'localhost'; flush privileges; "
-        sql += " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
+        writelog ("Creating 'sadmin' user ... ",'nonl')                 # Show User Creating DB Usr
+        sql =  "drop user 'sadmin'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
+        sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
@@ -1143,12 +1145,13 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
                 writelog ("Error code returned is %d \n%s" % (ccode,cmd))   # Show Return Code No
                 writelog ("Standard out is %s" % (cstdout))             # Print command stdout
                 writelog ("Standard error is %s" % (cstderr))           # Print command stderr
-    else:                                                                # Database user don't exist
+    else:                                                               # Database user don't exist
         writelog ("User '%s' don't exist in Database ..." % (uname))    # Show user was found
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
         writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
-        sql =  "drop user 'squery'@'localhost'; flush privileges; "
-        sql += " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
+        sql =  "drop user 'squery'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
+        ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
+        sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
         sql += " flush privileges;"                                     # Flush Buffer
         cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
