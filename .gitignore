@@ -79,7 +79,6 @@ usr/lib/*
 usr/mon/*
 !usr/mon/srestart.sh
 !usr/mon/stemplate.sh
-!usr/mon/stemplate.txt
 !usr/mon/swatch_nmon.sh
 !usr/mon/swatch_nmon.txt
 #
