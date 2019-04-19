@@ -148,7 +148,7 @@ add_epel_repo()
 check_python()
 {
     # Check if python3 is installed 
-    echo -n "Installing 'python3' required module, if they are not installed ... " | tee -a $SLOG
+    echo "Installing 'python3' required module, if they are not installed ... " | tee -a $SLOG
 
     which yum >/dev/null 2>&1
     if [ $? -eq 0 ] 
@@ -157,9 +157,9 @@ check_python()
 
     which apt-get >/dev/null 2>&1
     if [ $? -eq 0 ] 
-        then echo "Running 'apt-get update'" >> $SLOG
+        then echo "Running 'apt-get update'"| tee -a $SLOG
              apt-get update >> $SLOG 2>&1
-             echo "Running apt-get -y install python3 python3-pip" >>$SLOG
+             echo "Running 'apt-get -y install python3 python3-pip'"| tee -a $SLOG
              apt-get -y install python3 python3-pip >>$SLOG 2>&1
     fi 
     
