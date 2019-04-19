@@ -148,15 +148,15 @@ display_heading()
 display_detail_line()
 {
     DLINE=$1                                                            # Save Line Received
-    WSERVER=`echo $DLINE | awk '{ print $1 }'`                          # Extract Server Name
-    WDATE1=` echo $DLINE | awk '{ print $2 }'`                          # Extract Date Started
-    WTIME1=` echo $DLINE | awk '{ print $3 }'`                          # Extract Time Started
-    WDATE2=` echo $DLINE | awk '{ print $4 }'`                          # Extract Date Started
-    WTIME2=` echo $DLINE | awk '{ print $5 }'`                          # Extract Time Ended
-    WELAPSE=`echo $DLINE | awk '{ print $6 }'`                          # Extract Time Ended
-    WSCRIPT=`echo $DLINE | awk '{ print $7 }'`                          # Extract Script Name
-    WALERT=` echo $DLINE | awk '{ print $8 }'`                          # Extract Alert Code
-    WRCODE=` echo $DLINE | awk '{ print $9 }'`                          # Extract Return Code 
+    WSERVER=` echo $DLINE | awk '{ print $1 }'`                         # Extract Server Name
+    WDATE1=`  echo $DLINE | awk '{ print $2 }'`                         # Extract Date Started
+    WTIME1=`  echo $DLINE | awk '{ print $3 }'`                         # Extract Time Started
+    WDATE2=`  echo $DLINE | awk '{ print $4 }'`                         # Extract Date Started
+    WTIME2=`  echo $DLINE | awk '{ print $5 }'`                         # Extract Time Ended
+    WELAPSE=` echo $DLINE | awk '{ print $6 }'`                         # Extract Time Ended
+    WSCRIPT=` echo $DLINE | awk '{ print $7 }'`                         # Extract Script Name
+    WALERT=`  echo $DLINE | awk '{ print $8 }'`                         # Extract Alert Code
+    WRCODE=`  echo $DLINE | awk '{ print $9 }'`                         # Extract Return Code 
     case "$WRCODE" in                                                   # Case on Return Code
         0 ) WRDESC="✔ Success"                                          # Code 0 = Success
             ;; 
