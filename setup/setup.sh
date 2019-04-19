@@ -34,8 +34,9 @@
 # 2019_03_01 Updated: v2.0 Bug Fix and updated for RHEL/CensOS 8 
 # 2019_03_04 Updated: v2.1 More changes for RHEL/CensOS 8 
 # 2019_03_08 Updated: v2.2 Add EPEL repository when installing RHEL or CENTOS 8
-#@2019_03_17 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
-#@2019_03_21 Nolog: v.2.4 Minor typo change.
+# 2019_03_17 Fix: v.2.3 Fix O/S detection for Redhat/CentOS
+# 2019_03_21 Nolog: v.2.4 Minor typo change.
+#@2019_04_19 Update: Will now install python 3.6 on CentOS/RedHat 7 instead of 3.4
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -44,7 +45,7 @@ trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERC
 #                               Script environment variables
 #===================================================================================================
 DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
-SADM_VER='2.4'                              ; export SADM_VER           # Your Script Version
+SADM_VER='2.5'                              ; export SADM_VER           # Your Script Version
 SADM_PN=${0##*/}                            ; export SADM_PN            # Script name
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
 SADM_INST=`echo "$SADM_PN" |cut -d'.' -f1`  ; export SADM_INST          # Script name without ext.
@@ -151,7 +152,8 @@ check_python()
         then echo -n "Installing python3 ... " | tee -a $SLOG
              which yum >/dev/null 2>&1
              if [ $? -eq 0 ] 
-                then yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
+#                then yum --enablerepo=epel -y install python34 python34-setuptools python34-pip >>$SLOG 2>&1
+                then yum --enablerepo=epel -y install python36 python36-setuptools python36-pip >>$SLOG 2>&1
              fi 
              which apt-get >/dev/null 2>&1
              if [ $? -eq 0 ] 
