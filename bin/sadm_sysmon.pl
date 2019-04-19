@@ -33,6 +33,7 @@
 #@2019_03_20 nolog: v2.29 Mail message change
 #@2019_04_01 nolog: v2.30 Include color on status output.
 #@2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
+#@2019_04_19 Enhance: v2.32 Produce customized Error Message, when running External Script.
 #===================================================================================================
 #
 use English;
@@ -46,7 +47,7 @@ use LWP::Simple qw($ua get head);
 #===================================================================================================
 #                                   Global Variables definition
 #===================================================================================================
-my $VERSION_NUMBER      = "2.31";                                       # Version Number
+my $VERSION_NUMBER      = "2.32";                                       # Version Number
 my @sysmon_array        = ();                                           # Array Contain sysmon.cfg
 my %df_array            = ();                                           # Array Contain FS info
 my $OSNAME              = `uname -s`   ; chomp $OSNAME;                 # Get O/S Name
@@ -1413,7 +1414,7 @@ sub check_multipath {
 
 
 #---------------------------------------------------------------------------------------------------
-# Function is called every time an error or a warning is detected.
+# Function is called every time when an error or a warning is detected.
 # The error/warning line is then written to the SysMon Report File ($SADMIN/dat/rpt/`hostname`.rpt).
 #
 # Example of line that could be received by this function
@@ -1436,6 +1437,7 @@ sub write_rpt_file {
     $ERR_TIME = `date +%H:%M`   ; chop $ERR_TIME;                       # Setup Time of Error
     if ($ERR_LEVEL eq "W") { $ERROR_TYPE = "Warning" ; }                # Setup Warning Type
     if ($ERR_LEVEL eq "E") { $ERROR_TYPE = "Error"   ; }                # Setup Error Type
+    if ($ERR_LEVEL eq "I") { $ERROR_TYPE = "Info"    ; }                # Setup Info Type
 
     # Create Line that we may write to the SysMon Report file (`hostname`.rpt)
     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
@@ -1443,21 +1445,31 @@ sub write_rpt_file {
                  $ERR_SUBSYSTEM,$ERR_MESSAGE,
                  $SADM_RECORD->{SADM_ALERT_GRP_WARNING},$SADM_RECORD->{SADM_ALERT_GRP_ERROR};
 
-    # If it's a Warning, write SysMon Report FIle Line & return to caller (Nothing more to do)
+    # If it's a WARNING, write SysMon Report FIle Line & return to caller (Nothing more to do)
     if ($ERR_LEVEL eq "W") { print SADMRPT $SADM_LINE; return; }
 
     # If it's a filesystem size error, it will be taken care - no script to execute
     if ($ERR_SUBSYSTEM eq "FILESYSTEM")  { print SADMRPT $SADM_LINE; return; }
 
-    # At This point we have an error and we may want to run a script that could correct the situation
-    my $script_name="$SADM_RECORD->{SADM_SCRIPT}";                      # Get Basename script to run
-    if ((length $script_name == 0 ) || ($script_name eq "-")) {         # If no script name given
+
+    # At this point we have an ERROR & we may want to run a script that could correct the situation
+    # Dow we have a Script Name Specify on this line in the smon file
+    if ((length $SADM_RECORD->{SADM_SCRIPT} == 0 ) || ($SADM_RECORD->{SADM_SCRIPT} eq "-")) {    
         printf SADMRPT $SADM_LINE;                                      # Write Error to SysMon rpt
         return;                                                         # Return to caller
     }
 
+    # Get of service Name
+    @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split smon ID
+    $daemon_name = $dummy[1];                                           # Get Daemon Name
+
     # We now have a script name that we want to run to resolve problem - does script exist on disk?
-    $script_name="${SADM_SCR_DIR}/$script_name";                        # Full path to script name
+    $script_name="${SADM_SCR_DIR}/$SADM_RECORD->{SADM_SCRIPT}";         # Full path to script name
+    my @parts = split /\./, $script_name;                               # Split Name & Extension
+    my $script_log = "${parts[0]}.log" ;                                # Script Log Name 
+    my $script_err = "${parts[0]}_${daemon_name}.txt" ;                 # Script Error File Name 
+    
+
     if (! -e $script_name) {                                            # If script doesn't exist
         print "\nThe requested script doesn't exist ($script_name)";    # Advise user
         printf SADMRPT $SADM_LINE;                                      # Write SysMon Report Line
@@ -1467,16 +1479,18 @@ sub write_rpt_file {
     # Make sure script is executable - if not return to caller
     if (( -e "$script_name" ) && ( ! -x "$script_name")) {              # Script not exist,not exec.
         print "\nScript $script_name exist, but is not executable";     # Inform user of error
-        printf SADMRPT $SADM_LINE;
-        return;
+        printf SADMRPT $SADM_LINE;                                      # Write SysMon Report Line
+        return;                                                         # Return to caller
     }
 
     # Get current date & time in epoch time
     ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();       # Get current epoch time
-    if ($SYSMON_DEBUG >= 5) {                                           # If Debug is ON
-        print "\nScript name is : $script_name ";                       # Print Script name
-        print "\nCurrent Time   : $year $month $day $hour $min $sec";   # Print current time
-        print "\nCurrent Epoch  : $epoch";                              # Print Epoch time
+    if ($SYSMON_DEBUG >= 6) {                                           # If Debug is ON
+        print "\nScript name      : $script_name ";                     # Script name
+        print "\nScript Log Name  : $script_log ";                      # Script log filename
+        print "\nScript Error File: $script_err ";                      # Script Error Filename
+        print "\nCurrent Time     : $year $month $day $hour $min $sec"; # Print current time
+        print "\nCurrent Epoch    : $epoch";                            # Print Epoch time
     }
 
     # Is this the first time the script is run - Update Last Execution Data/Time in Array Line
@@ -1494,13 +1508,13 @@ sub write_rpt_file {
 
     # Get epoch time of the last time script execution
     $last_epoch = get_epoch("$wyear","$wmonth","$wday","$whrs","$wmin","0"); # Epoch of last Exec.
-    if ($SYSMON_DEBUG >= 5) {                                           # If DEBUG if ON
-        print "\nLast execution of $script_name: $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
+    if ($SYSMON_DEBUG >= 6) {                                           # If DEBUG if ON
+        print "\nLast execution : $wyear $wmonth $wday $whrs $wmin 00 - $last_epoch";
     }
 
     # Calculate the number of seconds since the last execution in seconds
     $elapse_second = $epoch - $last_epoch;                              # Elapsed time in sec.
-    if ($SYSMON_DEBUG >= 5) {                                           # If DEBUG Activated
+    if ($SYSMON_DEBUG >= 6) {                                           # If DEBUG Activated
         print "\nSo $epoch - $last_epoch = $elapse_second seconds";     # Print Elapsed seconds
     }
 
@@ -1508,7 +1522,7 @@ sub write_rpt_file {
     @dummy = split /_/, $SADM_RECORD->{SADM_ID} ;                       # Split smon ID
     $daemon_name = $dummy[1];                                           # Get Daemon Name
 
-    # If Elapse seconds since last run time is greater than (86400Sec=1Day) what we decided
+    # If Elapse seconds since last run time is greater than (86400Sec=1Day) last 24 Hrs
     if ( $elapse_second >= $SCRIPT_MIN_SEC_BETWEEN_EXEC ) {             # Elapsed Sec>= 86400 =  ok
         ($year,$month,$day,$hour,$min,$sec,$epoch) = Today_and_Now();   # Get current date and time
         $SADM_RECORD->{SADM_DATE} = sprintf("%04d%02d%02d", $year,$month,$day); # Upd Last Exec DATE
@@ -1531,36 +1545,76 @@ sub write_rpt_file {
         }else{                                                          # If Mail Succeeded
             printf "\nCommand succeeded - Return Code: %d", $? >> 8;    # Show Mail Return Code
         }
-        $COMMAND = "$script_name $daemon_name >>${script_name}.log 2>&1";            # Build Script Exec. Command
-        print "\nCommand sent ${COMMAND}";                              # Show User command executed
+        $COMMAND = "$script_name $daemon_name >>${script_log} 2>&1";  
+        print "\nRunning: ${COMMAND}";                                  # Show User command executed
         @args = ("$COMMAND");                                           # Prepare to Execute
         system(@args) ;                                                 # Execute Restart Script
-        if ( $? == -1 ) {                                               # Error Executing the script
-            print "\nCommand failed: $!";                               # Show User Error Message
+        my $RC  = $? >> 8;                                              # Get REal Return Code
+        if ( $RC != 0 ) {                                               # Error Executing the script
+            print "\nScript failed - Return code $RC";                  # Show User Error Message
+            if ( -e "${script_err}" ) {                                 # If Script Error File Exist
+                print "\nUsing message in $script_err for rpt file";    # Message using text file
+                open SMESSAGE, "$script_err" or die $!;                 # Open Script txt Error File
+                while ($sline = <SMESSAGE>) {                           # Read txt Error Mess. file
+                    chomp $sline; $ERR_MESS="$sline ";                  # Get Text Message
+                }
+                close SMESSAGE;                                         # Close Script Message File
+                $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                    $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
+                    $ERR_SUBSYSTEM,$ERR_MESS,
+                    $SADM_RECORD->{SADM_ALERT_GRP_WARNING},$SADM_RECORD->{SADM_ALERT_GRP_ERROR};
+            }
+            print SADMRPT $SADM_LINE;                                   # Write SysMon Report Line 
         }else{                                                          # If Script Execution worked
-            printf "\nCommand Succeeded - Return Code :%d", $? >> 8;    # Command Succeeded SHow RC
+            printf "\Script succeeded - Return code %d", $RC ;          # Command Succeeded SHow RC
         }
     }else{
         if (($SADM_RECORD->{SADM_MINUTES} + 1) > $SCRIPT_MAX_RUN_PER_DAY){ # Ran more than twice today
-            print "\nScript $SADM_RECORD->{SADM_SCRIPT} as ran ";       # This script already ran
+            print "\nScript ran ";                                      # This script already ran
             print "$SADM_RECORD->{SADM_MINUTES} times in last 24 Hrs."; # twice in the last 24hrs.
             print "\nWill therefore not be executed.";                  # Inform user will not run
             $ERR_MESS = "Failed to restart daemon $daemon_name " ;      # Set up Error Message
             $alert_type="E";                                            # Now definitly an error now
-            print SADMRPT $SADM_LINE;
+            if ( -e "${script_err}" ) {                                 # If Script Error File Exist
+                print "\nUsing message in $script_err for rpt file";    # Message using text file
+                open SMESSAGE, "$script_err" or die $!;                 # Open Script txt Error File
+                while ($sline = <SMESSAGE>) {                           # Read txt Error Mess. file
+                    chomp $sline; $ERR_MESS="$sline ";                  # Get Text Message
+                }
+                close SMESSAGE;                                         # Close Script Message File
+                $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                    $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
+                    $ERR_SUBSYSTEM,$ERR_MESS,
+                    $SADM_RECORD->{SADM_ALERT_GRP_WARNING},$SADM_RECORD->{SADM_ALERT_GRP_ERROR};
+            }
+            print SADMRPT $SADM_LINE;                                   # Write SysMon Report Line
         }else{
             $WORK = $SADM_RECORD->{SADM_MINUTES} + 1;                   # Incr. Exec. script Counter
             $SADM_RECORD->{SADM_MINUTES} = sprintf("%03d",$WORK);       # Insert Counter in Array
             print "\nScript $SADM_RECORD->{SADM_SCRIPT} ran ";          # This script already ran
             print "$SADM_RECORD->{SADM_MINUTES} time(s) in last 24hrs.";# X times in the last 24hrs.
-            $COMMAND = "$script_name $daemon_name >>${script_name}.log 2>&1";        # Build Script Exec. Command
+            $COMMAND = "$script_name $daemon_name >>${script_log} 2>&1";
             print "\nCommand sent ${COMMAND}";                          # Show User command executed
             @args = ("$COMMAND");                                       # Prepare to Execute
             system(@args) ;                                             # Execute Restart Script
-            if ( $? == -1 ) {                                           # Error Executing the script
-                print "\nCommand failed: $!";                           # Show User Error Message
+            my $RC  =$? >> 8;                                           # Get REal Return Code
+            if ( $? =! 0 ) {                                            # Error Executing the script
+                print "\nScript failed - Return code $RC";              # Show User Error Message
+                if ( -e "${script_err}" ) {                             # If Script Error File Exist
+                    print "\nUsing message in $script_err for rpt file";
+                    open SMESSAGE, "$script_err" or die $!;             # Open Script txt Error File
+                    while ($sline = <SMESSAGE>) {                       # Read txt Error Mess. file
+                        chomp $sline; $ERR_MESS="$sline ";              # Get Text Message
+                    }
+                    close SMESSAGE;                                     # Close Error Mess. File
+                    $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
+                        $ERROR_TYPE,$HOSTNAME,$ERR_DATE,$ERR_TIME,$ERR_SOFT,
+                        $ERR_SUBSYSTEM,$ERR_MESS,
+                        $SADM_RECORD->{SADM_ALERT_GRP_WARNING},$SADM_RECORD->{SADM_ALERT_GRP_ERROR};
+                }
+                print SADMRPT $SADM_LINE;                               # Write SysMon Report Line
             }else{                                                      # If Script Execution worked
-                printf "\nCommand Succeeded - Return Code :%d",$? >> 8; # Command Succeeded SHow RC
+            printf "\nScript succeeded - Return code :%d", $RC ;        # Command Succeeded SHow RC
             }
         }
     }
