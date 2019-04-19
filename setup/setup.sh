@@ -38,6 +38,7 @@
 # 2019_03_21 Nolog: v.2.4 Minor typo change.
 #@2019_04_19 Update: v2.5 Will now install python 3.6 on CentOS/RedHat 7 instead of 3.4
 #@2019_04_19 Fix: v2.6 Solve problem with installing 'pymysql' module.
+#@2019_04_19 Fix: v2.7 Solve problem with pip3 on Ubuntu.
 # --------------------------------------------------------------------------------------------------
 trap 'echo "Process Aborted ..." ; exit 1' 2                            # INTERCEPT The Control-C
 #set -x
@@ -158,8 +159,8 @@ check_python()
     if [ $? -eq 0 ] 
         then echo "Running 'apt-get update'" >> $SLOG
              apt-get update >> $SLOG 2>&1
-             echo "Running apt-get -y install python3'" >>$SLOG
-             apt-get -y install python3 >>$SLOG 2>&1
+             echo "Running apt-get -y install python3 python3-pip" >>$SLOG
+             apt-get -y install python3 python3-pip >>$SLOG 2>&1
     fi 
     
     # python3 should now be installed, if not then abort installation
