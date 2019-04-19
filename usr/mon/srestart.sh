@@ -19,6 +19,7 @@
 # 2018_07_11    v1.0 - Initial Version
 # 2018_07_12    v1.1 - First Production release
 #@2019_04_17 Fix: v1.2 Bug fix that prevent some services to restart and Log reformat.
+#@2019_04_19 New: v1.3 Error Message can be written to txt file which is use afterward by sysmon.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'exit 0' 2                                                         # INTERCEPT The Control-C
@@ -33,7 +34,7 @@ if [ ! -r "$SADMIN/lib/sadmlib_std.sh" ] ;then echo "SADMIN Library can't be loc
 HOSTNAME=`hostname -s`                      ; export HOSTNAME           # Hostname Without domain
 OSNAME=`uname -s | tr "[A-Z]" "[a-z]"`      ; export OSNAME             # (linux or aix)
 PN=${0##*/}                                 ; export PN                 # Script name
-VER='1.2'                                   ; export VER                # Script Version No.
+VER='1.3'                                   ; export VER                # Script Version No.
 INST=`echo "$PN" | awk -F\. '{ print $1 }'` ; export INST               # Script name without ext.
 WDATE=`date "+%C%y.%m.%d;%H:%M:%S"`         ; export WDATE              # Today Date and Time
 DASH=`printf %80s |tr ' ' '-'`              ; export DASH               # 80 dashes
@@ -41,6 +42,9 @@ TMPFILE='/tmp/${PN}_$$.tmp'                 ; export TMPFILE            # Temp F
 SYSTEMD="Y"                                 ; export SYSTEMD            # Using SystemD Default
 DEBUG_LEVEL=5                               ; export DEBUG_LEVEL        # Level of Debug Info
 SRVNAME="atd"                               ; export SRVNAME            # Service name to restart
+SADM_UMON_DIR="${SADMIN}/usr/mon"           ; export SADM_UMON_DIR      # SysMon User Script Dir.
+
+
 
 #===================================================================================================
 #                             S c r i p t    M a i n     P r o c e s s
@@ -83,11 +87,16 @@ main_process()
         done
     
     # If One Service was Started successfully thenn Return 0 else 1.
+    EFILE="${SADM_UMON_DIR}/${INST}_${SRV_NAME}.txt"  ; export EFILE    # Script Error Mess File
     if [ "$STARTED" != "Y" ]                                            # At least 1 service started
         then RC=1                                                       # Error Return Code is 1
+             EMSG="Service (${SRV_NAME}) not installed."                # Error Message file Test
+             echo "$EMSG" > $EFILE                                      # Write to Error Msg File
+             echo "\n EFILE = $EFILE \n"                               
              printf "\n[ERROR] None of the service (${SRV_NAME}) is installed."
         else RC=0                                                       # OK Return Code is 0
-    fi               # Set Return Code
+             rm -f $EFILE >/dev/null 2>&1                               # Remove Error FIle when OK
+    fi              
     return $RC                                                          # Return Status to Caller
 }
 
