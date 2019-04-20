@@ -1,5 +1,5 @@
 ![SADMIN Tools][1] 
-# SADMIN Tools v0.96.0             <!-- omit in toc -->
+# SADMIN Tools v0.97.0             <!-- omit in toc -->
 
 ### Table of content
 - [Brief description](#brief-description)
@@ -7,8 +7,8 @@
 - [Download](#download)
 - [Before you install](#before-you-install)
 - [Installing SADMIN Tools](#installing-sadmin-tools)
-  - [Method 1 : Using the downloaded 'tgz' file](#method-1--using-the-downloaded-tgz-file)
-  - [Method 2 : Cloning our git repository](#method-2--cloning-our-git-repository)
+  - [Method 1 : Cloning our git repository (Recommended)](#method-1--cloning-our-git-repository-recommended)
+  - [Method 2 : Using the downloaded 'tgz' file](#method-2--using-the-downloaded-tgz-file)
   - [Running the setup script](#running-the-setup-script)
 - [SADMIN Support](#sadmin-support)
 - [Authors](#authors)
@@ -107,7 +107,25 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 
 ## Installing SADMIN Tools
 
-### Method 1 : Using the downloaded 'tgz' file
+
+### Method 1 : Cloning our git repository (Recommended)
+
+```bash
+    Change directory to /opt
+    # cd /opt
+
+    Clone the SADMIN repository from GitHub
+    # git clone https://github.com/jadupl2/sadmin.git  
+
+    Run the setup program
+    # /opt/sadmin/setup/setup.sh
+```
+
+[Back To The Top](#brief-description)
+
+
+### Method 2 : Using the downloaded 'tgz' file
+
 ```bash
     Change directory to /opt
     # cd /opt
@@ -123,19 +141,6 @@ Impatient user may want to read the [Quick start guide](https://www.sadmin.ca/ww
 
     Untar the file
     # tar -xvzf ../sadmin_xx.xx.xx.tgz
-
-    Run the setup program
-    # /opt/sadmin/setup/setup.sh
-```
-[Back To The Top](#brief-description)
-
-### Method 2 : Cloning our git repository
-```bash
-    Change directory to /opt
-    # cd /opt
-
-    Clone the SADMIN repository from GitHub
-    # git clone https://github.com/jadupl2/sadmin.git  
 
     Run the setup program
     # /opt/sadmin/setup/setup.sh

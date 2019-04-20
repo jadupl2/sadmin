@@ -2,7 +2,7 @@
     <html>
     <head>
         <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-        <title>SADMIN Tools v0.96.0             <!-- omit in toc --></title>
+        <title>SADMIN Tools v0.97.0             <!-- omit in toc --></title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
@@ -22,7 +22,7 @@
     </head>
     <body>
         <p><img src="https://www.sadmin.ca/img/sadmin_small_logo.png" alt="SADMIN Tools"></p>
-<h1 id="sadmin-tools-v0960-">SADMIN Tools v0.96.0             <!-- omit in toc --></h1>
+<h1 id="sadmin-tools-v0970-">SADMIN Tools v0.97.0             <!-- omit in toc --></h1>
 <h3 id="table-of-content">Table of content</h3>
 <ul>
 <li><a href="#brief-description">Brief description</a></li>
@@ -31,8 +31,8 @@
 <li><a href="#before-you-install">Before you install</a></li>
 <li><a href="#installing-sadmin-tools">Installing SADMIN Tools</a>
 <ul>
-<li><a href="#method-1--using-the-downloaded-tgz-file">Method 1 : Using the downloaded 'tgz' file</a></li>
-<li><a href="#method-2--cloning-our-git-repository">Method 2 : Cloning our git repository</a></li>
+<li><a href="#method-1--cloning-our-git-repository-recommended">Method 1 : Cloning our git repository (Recommended)</a></li>
+<li><a href="#method-2--using-the-downloaded-tgz-file">Method 2 : Using the downloaded 'tgz' file</a></li>
 <li><a href="#running-the-setup-script">Running the setup script</a></li>
 </ul>
 </li>
@@ -160,7 +160,18 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 <p><a href="#brief-description">Back To The Top</a></p>
 <hr>
 <h2 id="installing-sadmin-tools">Installing SADMIN Tools</h2>
-<h3 id="method-1--using-the-downloaded-tgz-file">Method 1 : Using the downloaded 'tgz' file</h3>
+<h3 id="method-1--cloning-our-git-repository-recommended">Method 1 : Cloning our git repository (Recommended)</h3>
+<pre><code class="language-bash"><div>    Change directory to /opt
+    <span class="hljs-comment"># cd /opt</span>
+
+    Clone the SADMIN repository from GitHub
+    <span class="hljs-comment"># git clone https://github.com/jadupl2/sadmin.git  </span>
+
+    Run the setup program
+    <span class="hljs-comment"># /opt/sadmin/setup/setup.sh</span>
+</div></code></pre>
+<p><a href="#brief-description">Back To The Top</a></p>
+<h3 id="method-2--using-the-downloaded-tgz-file">Method 2 : Using the downloaded 'tgz' file</h3>
 <pre><code class="language-bash"><div>    Change directory to /opt
     <span class="hljs-comment"># cd /opt</span>
 
@@ -175,17 +186,6 @@ Impatient user may want to read the <a href="https://www.sadmin.ca/www/quickstar
 
     Untar the file
     <span class="hljs-comment"># tar -xvzf ../sadmin_xx.xx.xx.tgz</span>
-
-    Run the setup program
-    <span class="hljs-comment"># /opt/sadmin/setup/setup.sh</span>
-</div></code></pre>
-<p><a href="#brief-description">Back To The Top</a></p>
-<h3 id="method-2--cloning-our-git-repository">Method 2 : Cloning our git repository</h3>
-<pre><code class="language-bash"><div>    Change directory to /opt
-    <span class="hljs-comment"># cd /opt</span>
-
-    Clone the SADMIN repository from GitHub
-    <span class="hljs-comment"># git clone https://github.com/jadupl2/sadmin.git  </span>
 
     Run the setup program
     <span class="hljs-comment"># /opt/sadmin/setup/setup.sh</span>
