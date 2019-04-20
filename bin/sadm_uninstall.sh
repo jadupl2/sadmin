@@ -261,7 +261,7 @@ main_process()
 
     # Make sure Database is accessible before trying to drop SADMIN database
     if [ "$SADM_HOST_TYPE" = "S" ] 
-        then printf "\nMaking sure database is up - Restarting it ..." 
+        then printf "\nMaking sure database is up ..." 
              RC=0
              if [ "$DRYRUN" -ne 1 ] ; then 
                 if [ $SYSTEMD -eq 1 ]                                   # Using systemd not Sysinit
