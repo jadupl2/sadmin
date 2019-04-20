@@ -1102,6 +1102,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         wcfg_rw_dbpwd = accept_field(sroot,"SADM_RW_DBPWD",sdefault,sprompt,"P") # Sadmin user pwd
         writelog ("Creating 'sadmin' user ... ",'nonl')                 # Show User Creating DB Usr
         sql =  "drop user 'sadmin'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
+        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
         sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_rw_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
@@ -1150,6 +1151,7 @@ def setup_mysql(sroot,sserver,sdomain,sosname):
         wcfg_ro_dbpwd = accept_field(sroot,"SADM_RO_DBPWD",sdefault,sprompt,"P") # Accept user pwd
         writelog ("Creating '%s' user ... " % (uname),'nonl')           # Show User Creating DB Usr
         sql =  "drop user 'squery'@'localhost'; flush privileges; "     # Drop User - ByPass Bug Deb
+        cmd = "mysql -u root -p%s -e \"%s\"" % (dbroot_pwd,sql)         # Build Create User SQL
         ccode,cstdout,cstderr = oscommand(cmd)                          # Execute MySQL Command 
         sql  = " CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';" % (uname,wcfg_ro_dbpwd)
         sql += " grant all privileges on sadmin.* to '%s'@'localhost';" % (uname)
