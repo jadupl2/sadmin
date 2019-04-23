@@ -36,7 +36,7 @@
 # 2018_08_21 v1.3 Adapted to work on MacOS and Aix
 # 2018_09_03 v1.5 Option --total don't work on RHEL 5, Total Line Removed for now
 # 2018_09_24 v1.6 Corrected Total Display Problem under Linux
-#@2019_03_17 Improve: v1.7 Background Don't change and brighter color were change.
+#@2019_03_17 Update: v1.7 No background color change, using brighter color.
 # --------------------------------------------------------------------------------------------------
 #set -x
 

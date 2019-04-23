@@ -22,10 +22,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 # ==================================================================================================
 # ChangeLog
-#@2019_01_01 Added: sadm_server_backup.php v1.1 Each server backup schedule, can now be changed using the web interface.
-#@2019_01_12 Feature: sadm_server_backup.php v1.2 Client Backup List and Exclude list can be modified with Web Interface.
-#@2019_01_18 Added: sadm_server_backup.php v1.3 Hash of Backup List & Exclude list to check if were modified.
-#@2019_01_22 Added: sadm_server_backup.php v1.4 Add Dark Theme
+# 2019_01_01 Added: sadm_server_backup.php v1.1 Each server backup schedule, can now be changed using the web interface.
+# 2019_01_12 Feature: sadm_server_backup.php v1.2 Client Backup List and Exclude list can be modified with Web Interface.
+# 2019_01_18 Added: v1.3 Hash of Backup List & Exclude list to check if were modified.
+#@2019_01_22 Added: v1.4 Add Dark Theme
 #
 # ==================================================================================================
 #

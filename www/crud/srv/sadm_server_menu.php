@@ -28,7 +28,7 @@
 # ChangeLog
 #   2017_12_09 - Jacques Duplessis
 #       V1.0 Initial version - Server Edit Menu to Split Server Table Edition Add lot of comments in code and enhance code performance 
-#@2019_01_11 Feature: v1.2 Add menu item for updating backup schedule,
+#@2019_01_11 Update: v1.2 Add menu item for updating backup schedule,
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE

@@ -33,7 +33,7 @@
 #@2019_03_20 nolog: v2.29 Mail message change
 #@2019_04_01 nolog: v2.30 Include color on status output.
 #@2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
-#@2019_04_19 Enhance: v2.32 Produce customized Error Message, when running External Script.
+#@2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
 #===================================================================================================
 #
 use English;

@@ -47,7 +47,7 @@
 # 2018_10_18    v2.2 Prevent Error Message don't display status after disabling the service
 #@2019_03_27 Fix: v2.3 Making sure InitV sadmin service script is executable.
 #@2019_03_28 Fix: v2.4 Was not executing shutdown script under RHEL/CentOS 4,5
-#@2019_03_29 Optimize: v2.5 Major Revamp - Re-Tested - SysV and SystemD
+#@2019_03_29 Update: v2.5 Major Revamp - Re-Tested - SysV and SystemD
 #@2019_03_30 Update: v2.6 Added message when enabling/disabling sadmin service.
 #@2019_04_07 Update: v2.7 Use color variables from SADMIN Library.
 #--------------------------------------------------------------------------------------------------

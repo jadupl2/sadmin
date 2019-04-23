@@ -13,8 +13,8 @@
 # 2018_09_20    v1.4 Show SADM Version instead of Release No.
 # 2019_02_25 Change: v1.5 Code revamp and new menu design.
 # 2019_03_03 Change: v1.6 Added color possibilities and cursor control to library.
-#@2019_03_17 Improve: v1.7 Show time in menu heading.
-#@2019_04_07 Update: v1.8 Now use Color constant variable from standard SADMIN Libr.
+#@2019_03_17 Update: v1.7 Add time in menu heading.
+#@2019_04_07 Update: v1.8 Use Color constant variable now available from standard SADMIN Shell Libr.
 # --------------------------------------------------------------------------------------------------
 #set -x
 # 
