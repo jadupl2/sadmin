@@ -38,6 +38,7 @@
 # 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
 # 2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
 #@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
+#@2019_04_25 Update: v2.28 Read and Load 2 news sadmin.cfg variable Alert_Repeat and Textbelt Key
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -109,7 +110,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.27"                                # This Library Version
+        self.libver             = "2.28"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -195,6 +196,8 @@ class sadmtools():
         # SADM Configuration file (sadmin.cfg) content loaded from configuration file
         self.cfg_alert_type             = 1                             # 0=No 1=Err 2=Succes 3=All
         self.cfg_alert_group            = "default"                     # Defined in alert_group.cfg
+        self.cfg_alert_repeat           = 43200                         # Alarm Repeat Wait Time Sec
+        self.cfg_textbelt               = "textbelt"                    # Textbelt.com API Key
         self.cfg_host_type              = ""                            # [C or S] Client or Server
         self.cfg_mail_addr              = ""                            # Default is in sadmin.cfg
         self.cfg_cie_name               = ""                            # Company Name
@@ -400,6 +403,8 @@ class sadmtools():
             if "SADM_CIE_NAME"               in CFG_NAME:  self.cfg_cie_name       = CFG_VALUE
             if "SADM_ALERT_TYPE"             in CFG_NAME:  self.cfg_alert_type     = int(CFG_VALUE)
             if "SADM_ALERT_GROUP"            in CFG_NAME:  self.cfg_alert_group    = CFG_VALUE
+            if "SADM_ALERT_REPEAT"           in CFG_NAME:  self.cfg_alert_repeat   = int(CFG_VALUE)
+            if "SADM_TEXTBELT"               in CFG_NAME:  self.cfg_textbelt       = CFG_VALUE
             if "SADM_HOST_TYPE"              in CFG_NAME:  self.cfg_host_type      = CFG_VALUE
             if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
             if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
