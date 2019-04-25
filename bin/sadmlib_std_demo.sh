@@ -27,6 +27,7 @@
 #@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
 #@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
 #@2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
+#@2019_04_25 Update: v3.12 Add Alert_Repeat and Textbelt API Key Variable in Output 
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.11'                               # Current Script Version
+    export SADM_VER='3.12'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -698,10 +699,20 @@ print_sadmin_cfg()
     pdesc="0=NoMail 1=OnError 2=OnSuccess 3=All"                        # Description
     presult="$SADM_ALERT_TYPE"                                          # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-                    
+    
     pexample="\$SADM_ALERT_GROUP"                                       # Variable Name
     pdesc="Default Alert Group"                                         # Description
     presult="$SADM_ALERT_GROUP"                                         # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_ALERT_REPEAT"                                      # Variable Name
+    pdesc="Seconds to wait before repeat alert"                         # Description
+    presult="$SADM_ALERT_REPEAT"                                        # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_TEXTBELT"                                          # Variable Name
+    pdesc="TextBelt.com API Key"                                        # Description
+    presult="$SADM_TEXTBELT"                                            # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
           
     pexample="\$SADM_CIE_NAME"                                          # Directory Variable Name
