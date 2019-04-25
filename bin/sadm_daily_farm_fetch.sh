@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env bash
 ####################################################################################################
 # Title      :  sadm_daily_farm_fetch.sh
 # Description:  Get Hardware/Software/Performance Info Data from all actives servers

@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #===================================================================================================
 # Title      :  sadm_menu_fs.sh - sadm - Menu for filesystems tools
 # Version    :  1.5

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh 
+#!/usr/bin/env bash 
 # --------------------------------------------------------------------------------------------------
 #   Title    : sadm_nmon_watcher.sh 
 #   Author   : Jacques Duplessis 

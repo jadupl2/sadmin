@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author:     Jacques Duplessis
 #   Title:      sadm_osupdate.sh _ Linux O/S Update script

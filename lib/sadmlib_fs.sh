@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 # Shellscript:	sadmlib_fs.sh - Contains SADM FileSystem Related functions
 # Version    :	2.0

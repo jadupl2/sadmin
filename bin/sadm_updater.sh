@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Title       :   sadm_updater.sh

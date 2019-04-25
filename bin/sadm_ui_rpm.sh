@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #===============================================================================
 # Title      :  sam_rpm_tools.sh - sam rpm database Tools
 # Version    :  1.0

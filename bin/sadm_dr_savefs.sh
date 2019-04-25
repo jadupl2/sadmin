@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env bash
 #===================================================================================================
 # Shellscript   :  sadm_dr_savefs.sh - 
 # Description   :  Collect Filesystem & VG Info in order to Recreate filesystem in case of Disaster

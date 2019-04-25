@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Your Name
 #   Script Name :   sadm_check_requirements.sh

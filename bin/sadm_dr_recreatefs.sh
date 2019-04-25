@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env bash
 #===================================================================================================
 # Shellscript   :  sadm_dr_fs_recreate.sh - 
 # Description   :  On Linux - Recreate all filesystems of the selected volume group

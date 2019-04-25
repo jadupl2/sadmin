@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #===================================================================================================
 # Title      :  sadm_ui.sh Systam ADMinistration Tool User Interface Main Menu
 # Version    :  1.5

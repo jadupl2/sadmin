@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author      :  Jacques Duplessis
 #   Script name :  sadm_rch_scr_summary.sh

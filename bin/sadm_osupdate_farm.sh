@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # ---------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_osupdate_farm.sh

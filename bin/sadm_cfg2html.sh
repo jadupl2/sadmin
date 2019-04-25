@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 #===================================================================================================
 #   Author   :  Jacques Duplessis
 #   Title    :  sadm_create_cfg2html.sh1

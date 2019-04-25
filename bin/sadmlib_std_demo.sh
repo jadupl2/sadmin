@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 # --------------------------------------------------------------------------------------------------
 #   Author   :  Jacques Duplessis
 #   Title    :  sadmlib_std_demo.sh

@@ -1,4 +1,4 @@
-#! /usr/bin/env sh
+#! /usr/bin/env bash
 #---------------------------------------------------------------------------------------------------
 #   Author      :   Jacques Duplessis
 #   Script Name :   sadm_uninstall.sh
