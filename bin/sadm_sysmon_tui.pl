@@ -15,6 +15,7 @@
 # 2018_07_19 v1.5 Added Scripts Error and Scripts Running in the Output (Same as Web Interface)
 # 2018_07_20 Fix: v1.6 Wasn't Deleting work file at the end
 #@2019_03_17 Fix: v1.7 Wasn't reporting error coming from result code history (rch) file.
+#@2019_04_25 Update: v1.8 Was showing 'Nothing to report' althought there was info displayed.
 #===================================================================================================
 use English;
 
@@ -25,14 +26,17 @@ use English;
 my $SADM_BASE_DIR       = "$ENV{'SADMIN'}" || "/sadmin";                # SADMIN Root Dir.
 my $SADM_BIN_DIR        = "$SADM_BASE_DIR/bin";                         # SADMIN bin Directory
 my $SADM_WDATA_DIR      = "${SADM_BASE_DIR}/www/dat";                   # Dir where all *.rpt reside
-$XDISPLAY= "$ENV{'DISPLAY'}";                                           # Variable ENV DIsplay
-$VERSION_NUMBER = "1.7";                                                # SADM Version Number
-$CLEAR=`tput clear`;
-$RPT_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rpt.$$";
-$RCH_FILE="$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rch.$$";
-$CMD_RPT="find $SADM_WDATA_DIR -type f -name *.rpt -exec cat {} > $RPT_FILE \\;" ;
-$CMD_RCH="find $SADM_WDATA_DIR -type f -name *.rch -exec tail -1 {} \\;| awk 'match(\$9,/[1-2]/) { print }' >$RCH_FILE";
-  
+my $XDISPLAY            = "$ENV{'DISPLAY'}";                            # Variable ENV Display
+my $VERSION_NUMBER      = "1.8";                                        # SADM Version Number
+my $CLEAR               = `tput clear`;                                 # Clear Screen escape code
+my $RPT_FILE            = "$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rpt.$$";  # Work for rpt files
+my $RCH_FILE            = "$SADM_BASE_DIR/tmp/sadm_sysmon_tui_rch.$$";  # Work for rch files
+my $CMD_RPT             = "find $SADM_WDATA_DIR -type f -name *.rpt -exec cat {} > $RPT_FILE \\;" ;
+my $CMD_RCH="find $SADM_WDATA_DIR -type f -name *.rch -exec tail -1 {} \\;| awk 'match(\$9,/[1-2]/) { print }' >$RCH_FILE";
+
+
+
+
 # --------------------------------------------------------------------------------------------------
 #                               Display System Report file from all host
 # --------------------------------------------------------------------------------------------------
@@ -40,44 +44,46 @@ sub display_report {
     $RDATE=`date`;
     $dash_line = "-";
     $dash_line x= 100;
-    print "${CLEAR}SADMIN System Monitor Viewer - $VERSION_NUMBER";
-    print "\nReport as of ${RDATE}${dash_line}\n\n";
-    #print "$CMD_RPT";
-    system ("$CMD_RPT");
-    open (SADMRPT,"<$RPT_FILE") or die "Can't open $RPT_FILE: $!\n";
-    while ($line = <SADMRPT>) {
-        ($EType,$ENode,$EDate,$ETime,$EModule,$ESub,$EDesc,$Epage,$Email,$Escript) = split ';',$line;
-        printf "%-7s %-10s %-9s %-5s %-15s %-13s %-30s\n",$EType,$ENode,$EDate,$ETime,$EModule,$ESub,$EDesc;
+    print "${CLEAR}SADMIN System Monitor Viewer - v${VERSION_NUMBER}";  # Heading Line
+    print "\nReport as of ${RDATE}${dash_line}\n";                      # Report Date
+    my $noreport = 0;                                                   # Nothing to report flag
+
+    # Show The Sysmon Report File Collected from all SADMIN clients.
+    system ("$CMD_RPT");                                                # Create List of *.rpt files
+    open (SADMRPT,"<$RPT_FILE") or die "Can't open $RPT_FILE: $!\n";    # Open Resulting file
+    while ($line = <SADMRPT>) {                                         # Read all alert line in file
+      ($EType,$ENode,$EDate,$ETime,$EMod,$ESub,$EDesc,$Epage,$Email,$Escript) = split ';',$line;
+      printf "%-8s %-10s %-10s %-5s %-15s %-13s %-30s\n",$EType,$ENode,$EDate,$ETime,$EMod,$ESub,$EDesc;
+      $noreport =  1;                                                   # We have reported Error
     }
-    close (SADMRPT);
+    close (SADMRPT);                                                    # Close RPT Work File.
+
 
     # Display Scripts Error (Code 1) or Running (Code 2) by reading last line of every *.rch files 
-    #print "$CMD_RCH";
-    system ("$CMD_RCH");
-    system ("cp $RCH_FILE /tmp/coco.txt");
-    open (SADMRCH,"<$RCH_FILE") or die "Can't open $RCH_FILE: $!\n";
-    $noreport=1;
-    while ($line = <SADMRCH>) {
+    system ("$CMD_RCH");                                                # Build Code 1,2 result file
+    #system ("cp $RCH_FILE /tmp/coco.txt");                             # For debugging copy file
+    open (SADMRCH,"<$RCH_FILE") or die "Can't open $RCH_FILE: $!\n";    # Open Code 1,2 work file 
+    while ($line = <SADMRCH>) {                                         # Read all Error/Running Line
         ($RNode,$RSDate,$RSTime,$REDate,$RETime,$RElapse,$RScript,$RCode) = split ' ',$line;
-        if ($RCode == 1) { 
-            $RType = "Error"; 
-            $RDate = $REDate;
-            $RTime = substr($RETime,0,5);
-            $RDesc = "$RScript Ended with Error";
-            $noreport=0;
+        if ($RCode == 1) {                                              # Error Line Code (1)
+            $RType  = "Error";                                          # Code 1 means Error
+            $RDate  = $REDate;                                          # Error Date
+            $RTime  = substr($RETime,0,5);                              # Error Time minus seconds
+            $RDesc  = "$RScript Ended with Error";                      # Error Description
         }else{
-            $RType = "Running";
-            $RDate = $RSDate;
-            $RTime = substr($RSTime,0,5);
-            $RDesc = "Script $RScript Running";
-            $noreport=0;
+            $RType  = "Running";                                        # Script Running code (2)
+            $RDate  = $RSDate;                                          # Start Date of script
+            $RTime  = substr($RSTime,0,5);                              # Start Time minus seconds
+            $RDesc  = "Script $RScript Running";                        # Name of the running script
         }
-        printf "%-7s %-10s %-9s %-5s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,"Linux","Script",$RDesc;
+        printf "%-8s %-10s %-10s %-5s %-15s %-13s %-30s\n",$RType,$RNode,$RDate,$RTime,"Linux","Script",$RDesc;
+        $noreport =  1;                                                 # Flag at least line in report
     }
-    close (SADMRCH);
-    if ($noreport) { print "Nothing to report..." ; }
-    #unlink($RCH_FILE);
-    #unlink($RPT_FILE);
+    close (SADMRCH);                                                    # Close RCH Work File
+
+    if ($noreport == 0) { print "Nothing to report ${noreport}..." ; }  # If nothing to report 
+    unlink($RCH_FILE);                                                  # Delete Work RCH File
+    unlink($RPT_FILE);                                                  # Delete Work RPT File
 }
 
 
@@ -85,8 +91,8 @@ sub display_report {
 #                       M A I N    P R O G R A M    S T A R T    H E R E 
 # --------------------------------------------------------------------------------------------------
     while (TRUE) {
-       display_report;
+       display_report;                                                  # Refreah Report
        print "\n${dash_line}\nReport will be refresh in 10 seconds\nPress CTRL-C to stop viewing\n";
-       sleep 10;
+       sleep 10;                                                        # Sleep 10 seconds
     }
 
