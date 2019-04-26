@@ -27,7 +27,7 @@
 #@2019_03_18 Added: v3.9 Add demo call to function 'sadm_get_packagetype'
 #@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
 #@2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
-#@2019_04_25 Update: v3.12 Add Alert_Repeat and Textbelt API Key Variable in Output 
+#@2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -710,9 +710,14 @@ print_sadmin_cfg()
     presult="$SADM_ALERT_REPEAT"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_TEXTBELT"                                          # Variable Name
+    pexample="\$SADM_TEXTBELT_KEY"                                      # Variable Name
     pdesc="TextBelt.com API Key"                                        # Description
-    presult="$SADM_TEXTBELT"                                            # Actual Content of Variable
+    presult="$SADM_TEXTBELT_KEY"                                        # Actual Content of Variable
+    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    
+    pexample="\$SADM_TEXTBELT_URL"                                      # Variable Name
+    pdesc="TextBelt.com API URL"                                        # Description
+    presult="$SADM_TEXTBELT_URL"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
           
     pexample="\$SADM_CIE_NAME"                                          # Directory Variable Name
