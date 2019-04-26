@@ -38,7 +38,7 @@
 # 2019_01_28 v2.25 Fix: DB Password file on read on SADMIN Server.
 # 2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
 #@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
-#@2019_04_25 Update: v2.28 Read and Load 2 news sadmin.cfg variable Alert_Repeat and Textbelt Key
+#@2019_04_25 Update: v2.28 Read and Load 3 news sadmin.cfg variable Alert_Repeat, Textbelt Key & URL
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -197,7 +197,8 @@ class sadmtools():
         self.cfg_alert_type             = 1                             # 0=No 1=Err 2=Succes 3=All
         self.cfg_alert_group            = "default"                     # Defined in alert_group.cfg
         self.cfg_alert_repeat           = 43200                         # Alarm Repeat Wait Time Sec
-        self.cfg_textbelt               = "textbelt"                    # Textbelt.com API Key
+        self.cfg_textbelt_key           = "textbelt"                    # Textbelt.com Def. API Key
+        self.cfg_textbelt_url           = "https://textbelt.com/text"   # Textbelt.com Def. API URL
         self.cfg_host_type              = ""                            # [C or S] Client or Server
         self.cfg_mail_addr              = ""                            # Default is in sadmin.cfg
         self.cfg_cie_name               = ""                            # Company Name
@@ -404,7 +405,8 @@ class sadmtools():
             if "SADM_ALERT_TYPE"             in CFG_NAME:  self.cfg_alert_type     = int(CFG_VALUE)
             if "SADM_ALERT_GROUP"            in CFG_NAME:  self.cfg_alert_group    = CFG_VALUE
             if "SADM_ALERT_REPEAT"           in CFG_NAME:  self.cfg_alert_repeat   = int(CFG_VALUE)
-            if "SADM_TEXTBELT"               in CFG_NAME:  self.cfg_textbelt       = CFG_VALUE
+            if "SADM_TEXTBELT_KEY"           in CFG_NAME:  self.cfg_textbelt_key   = CFG_VALUE
+            if "SADM_TEXTBELT_URL"           in CFG_NAME:  self.cfg_textbelt_url   = CFG_VALUE
             if "SADM_HOST_TYPE"              in CFG_NAME:  self.cfg_host_type      = CFG_VALUE
             if "SADM_SERVER"                 in CFG_NAME:  self.cfg_server         = CFG_VALUE
             if "SADM_DOMAIN"                 in CFG_NAME:  self.cfg_domain         = CFG_VALUE
