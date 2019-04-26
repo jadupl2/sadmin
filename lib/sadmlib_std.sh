@@ -85,7 +85,7 @@
 #@2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
 #@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
 #@2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
-#@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat and Textbelt Key
+#@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -198,7 +198,8 @@ SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Defaul
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
 SADM_ALERT_REPEAT=43200                     ; export SADM_ALERT_REPEAT  # Repeat Alarm wait time Sec
-SADM_TEXTBELT="textbelt"                    ; export SADM_TEXTBELT      # Textbelt.com API Key
+SADM_TEXTBELT_KEY="textbelt"                ; export SADM_TEXTBELT_KEY  # Textbelt.com API Key
+SADM_TEXTBELT_URL="https://textbelt.com/text" ;export SADM_TEXTBELT_URL # Textbelt.com API URL
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # [S]erver/[C]lient/[D]ev.
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
@@ -1469,8 +1470,11 @@ sadm_load_config_file() {
         echo "$wline" |grep -i "^SADM_ALERT_REPEAT" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_ALERT_REPEAT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
-        echo "$wline" |grep -i "^SADM_TEXTBELT" > /dev/null 2>&1
-        if [ $? -eq 0 ] ; then SADM_TEXTBELT=`echo "$wline"      |cut -d= -f2 |tr -d ' '` ;fi
+        echo "$wline" |grep -i "^SADM_TEXTBELT_KEY" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_TEXTBELT_KEY=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_TEXTBELT_URL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_TEXTBELT_URL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
