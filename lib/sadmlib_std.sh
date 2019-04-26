@@ -85,7 +85,8 @@
 #@2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
 #@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
 #@2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
-#@2019_04_25 Update: v2.70 Some situation the PID file was not deleted.
+#@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
+#===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
 
@@ -196,6 +197,9 @@ SADM_FACTER=""                              ; export SADM_FACTER        # Defaul
 SADM_MAIL_ADDR="your_email@domain.com"      ; export SADM_MAIL_ADDR     # Default is in sadmin.cfg
 SADM_ALERT_TYPE=1                           ; export SADM_ALERT_TYPE    # 0=No 1=Err 2=Succes 3=All
 SADM_ALERT_GROUP="default"                  ; export SADM_ALERT_GROUP   # Define in alert_group.cfg
+SADM_ALERT_REPEAT=43200                     ; export SADM_ALERT_REPEAT  # Repeat Alarm wait time Sec
+SADM_TEXTBELT_KEY="textbelt"                ; export SADM_TEXTBELT_KEY  # Textbelt.com API Key
+SADM_TEXTBELT_URL="https://textbelt.com/text" ;export SADM_TEXTBELT_URL # Textbelt.com API URL
 SADM_CIE_NAME="Your Company Name"           ; export SADM_CIE_NAME      # Company Name
 SADM_HOST_TYPE=""                           ; export SADM_HOST_TYPE     # [S]erver/[C]lient/[D]ev.
 SADM_USER="sadmin"                          ; export SADM_USER          # sadmin user account
@@ -998,17 +1002,16 @@ sadm_server_type() {
         "LINUX")    if [ "$SADM_FACTER" != "" ]                         # If facter is installed
                        then W=`facter |grep is_virtual |awk '{ print $3 }'`   # Get VM True or False
                             if [ "$W" = "false" ]
-                                then sadm_server_type="P"
-                                else sadm_server_type="V"
+                                then sadm_server_type="P"               # Physical Server
+                                else sadm_server_type="V"               # Virtual Server
                             fi
-                            break
-                    fi
-                    if [ "$SADM_DMIDECODE" != "" ]
-                        then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1    # Search vmware in dmidecode
-                             if [ $? -eq 0 ]                                     # If vmware was found
-                                 then sadm_server_type="V"                       # If VMware Server
-                                 else sadm_server_type="P"                       # Default Assume Physical
-                             fi
+                       else if [ "$SADM_DMIDECODE" != "" ]
+                                then $SADM_DMIDECODE |grep -i vmware >/dev/null 2>&1 # Search vmware
+                                     if [ $? -eq 0 ]                    # If vmware was found
+                                        then sadm_server_type="V"       # If VMware Server
+                                        else sadm_server_type="P"       # Default Assume Physical
+                                     fi
+                            fi
                     fi
                     ;;
         "AIX")      sadm_server_type="P"                                # Default Assume Physical
@@ -1463,6 +1466,15 @@ sadm_load_config_file() {
         #
         echo "$wline" |grep -i "^SADM_ALERT_GROUP" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_ALERT_GROUP=`echo "$wline"   |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_ALERT_REPEAT" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_ALERT_REPEAT=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_TEXTBELT_KEY" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_TEXTBELT_KEY=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
+        #
+        echo "$wline" |grep -i "^SADM_TEXTBELT_URL" > /dev/null 2>&1
+        if [ $? -eq 0 ] ; then SADM_TEXTBELT_URL=`echo "$wline"  |cut -d= -f2 |tr -d ' '` ;fi
         #
         echo "$wline" |grep -i "^SADM_SERVER" > /dev/null 2>&1
         if [ $? -eq 0 ] ; then SADM_SERVER=`echo "$wline"        |cut -d= -f2 |tr -d ' '` ;fi
@@ -2028,17 +2040,18 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 # Send an Alert
 #
-# 1st Parameter    : [S]     If it is a Script Alert (Alert Message will include Script Info)
-#                            For type [S] Default Group come from sadmin.cfg or user can modify it
-#                            by altering SADM_ALERT_GROUP variable in his script.
-#                            ** Alert issue from a script will not be assign a reference no.
+# 1st Parameter could be a 'S', 'E', 'W' or a 'I':
+#  [S]      If it is a SCRIPT ALERT (Alert Message will include Script Info)
+#           For type [S] Default Group come from sadmin.cfg or user can modify it
+#           by altering SADM_ALERT_GROUP variable in his script.
+#           ** Alert issue from a script will not be assign a reference no.
 #
-#                    [E/W/I] Error, Warning or Information Alert are detected by System Monitor.
-#                            For this type [M] Warning and Error Alert Group are taken from the host
-#                            System Monitor file ($SADMIN/cfg/hostname.smon).
-#                            In System monitor file Warning are at column 'J' and Error at col. 'K'.
-#                            ** Error and Warning (Not Info) Alert issue from SADMIN SysMon will be
-#                            assign a reference no. and will be included in the alert message.
+#  [E/W/I]  ERROR, WARNING OR INFORMATION ALERT are detected by System Monitor.
+#           For this type [M] Warning and Error Alert Group are taken from the host
+#           System Monitor file ($SADMIN/cfg/hostname.smon).
+#           In System monitor file Warning are at column 'J' and Error at col. 'K'.
+#           ** Error and Warning (Not Info) Alert issue from SADMIN SysMon will be
+#           assign a reference no. and will be included in the alert message.
 #
 # 2nd Parameter    : Server Name Where Alert come from
 # 3th Parameter    : Alert Group Name to send Message
@@ -2050,7 +2063,8 @@ sadm_stop() {
 # --------------------------------------------------------------------------------------------------
 #
 sadm_send_alert() {
-    #LIB_DEBUG=6
+    #LIB_DEBUG=6                                                        # If Debugging the Library
+
     # Validate the Number of parameter received.
     if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
         then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
@@ -2072,12 +2086,12 @@ sadm_send_alert() {
             debmes="$debmes alert_subject=\"$alert_subject\""           # Show Alert Subject/Title
             debmes="$debmes alert_message=\"$alert_message\""           # Show Alert Message
             debmes="$debmes alert_attachment=\"$alert_attach\""         # Show Alert Attachment File
-            sadm_writelog "$debmes"
+            sadm_writelog "$debmes"                                     # Show Debug LIne
     fi
 
     # Is there is an attachment and is the File Readable ?
     if [ "$alert_attach" != "" ] && [ ! -r "$alert_attach" ]            # Can't read Attachment File
-       then sadm_writelog "Error in ${FUNCNAME} - Attachment file '$alert_attach' missing"
+       then sadm_writelog "Error in ${FUNCNAME} - Can't read attachment file '$alert_attach'"
             return 1                                                    # Return Error to caller
     fi
 
@@ -2111,14 +2125,16 @@ sadm_send_alert() {
     fi
 
     # Define Search String to see if we already alerted the user (Want to alert Once a Day)
-    hsearch=`printf "%s,%s,%s" "$alert_server" "$alert_group" "$alert_subject"`
-    hdate=`date +"%Y/%m/%d"`                                            # Current Date
+    hsearch=`sprintf "%s,%s,%s,%s" "$alert_type" "$alert_server" "$alert_group" "$alert_subject"`
+    #hdate=`date +"%Y/%m/%d"`                                            # Current Date
 
     # Search For Today Message with the string "Server, Alert Group and Message"
     if [ "$LIB_DEBUG" -gt 4 ]
-        then sadm_writelog "Search History for \"$hdate\" and \"$hsearch\""
+        #then sadm_writelog "Search History for \"$hdate\" and \"$hsearch\""
+        then sadm_writelog "Search History for \"$hsearch\""
     fi
-    grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1   # GrepMessage with same Date
+    #grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1  # GrepMessage with same Date
+    grep "$hsearch" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
     if [ $? -eq 0 ]                                                     # String Found=Already Done
         then sadm_writelog "Not sending Alert below, already sent Today."
              sadm_writelog "$hdate - $hsearch"
@@ -2266,11 +2282,12 @@ sadm_send_alert() {
 #   3rd = Server Name       = Where the event happen
 #   4th = Alert Description = Alert Message
 #   5th = Alert Reference#  = Reference No.
-# write_alert_history "s" "alertGroup" "server" "mess"
+#
+# Example : write_alert_history "s" "alertGroup" "server" "mess"
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() {
-    htype=$1                                                  # [S]cript [E]rror [W]arning [I]nfo
+    htype=$1                                                            #[S]cr [E]rr [W]arning [I]nf
     htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     hgroup=`echo "$2"   | awk '{$1=$1;print}'`                          # SADM AlertGroup to Advise
     hserver=`echo "$3"  | awk '{$1=$1;print}'`                          # Save Server Name
@@ -2278,11 +2295,9 @@ write_alert_history() {
     href="$5"                                                           # Save Alert Reference No.
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
     htime=`date +"%H:%M:%S"`                                            # Current Time
-    hsearch=`printf "%s,%s,%s" "$hserver" "$hgroup" "$hmess"`           # Format Futur Search String
-    #href=`cat $SADM_ALERT_SEQ`                                          # Get Last Alert Ref. No.
-    #href=$(($href+1))                                                   # Increment Alert Ref. No.
-    #printf "%d" $href > $SADM_ALERT_SEQ                                 # Update Alert Ref. No. File
-    hline=`printf "%s,%1s,%-10s,%8s,%s\n" $href "$htype" "$hdate" "$htime" "$hsearch"`
+    hepoch=`date +%s`                                                   # Current Epoch Time
+    hline=`sprintf "%s,%10s,%8s,%11s" "$href"  "$hdate"   "$htime"  "$hepoch"` # Ref,Date,Time,Epoch
+    hline=`sprintf "%s,%1s,%s,%s,%s" "$hline" "$htype" "$hserver" "$hgroup" "$hmess"`  
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 

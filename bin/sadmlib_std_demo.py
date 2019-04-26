@@ -38,6 +38,7 @@
 # 2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
 #@2019_03_18 Added: v3.3 Add demo call to function get_packagetype()
 #@2019_04_07 Update: v3.4 Don't show Database user name if run on client.
+#@2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
 #===================================================================================================
 #
 try :
@@ -74,7 +75,7 @@ def setup_sadmin():
     st = sadm.sadmtools()                       # Create SADMIN Tools Instance (Setup Dir.,Var,...)
 
     # Change these values to your script needs.
-    st.ver              = "3.4"                 # Current Script Version
+    st.ver              = "3.5"                 # Current Script Version
     st.multiple_exec    = "N"                   # Allow running multiple copy at same time ?
     st.log_type         = 'B'                   # Output goes to [S]creen [L]ogFile [B]oth
     st.log_append       = True                  # Append Existing Log or Create New One
@@ -622,14 +623,29 @@ def print_sadmin_cfg(st):
     presult=st.cfg_mail_addr                                            # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_alert_type"                                         # Variable Name
+    pexample="st.cfg_alert_type"                                        # Variable Name
     pdesc="0=NoMail 1=OnError 3=OnSuccess 4=All"                        # Function Description
-    presult=st.cfg_alert_type                                            # Return Value(s)
+    presult=st.cfg_alert_type                                           # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_alert_group"                                         # Variable Name
+    pexample="st.cfg_alert_group"                                       # Variable Name
     pdesc="Default Alert Group"                                         # Function Description
-    presult=st.cfg_alert_group                                            # Return Value(s)
+    presult=st.cfg_alert_group                                          # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.cfg_alert_repeat"                                      # Variable Name
+    pdesc="Seconds to wait before repeat alert"                         # Function Description
+    presult=st.cfg_alert_repeat                                         # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.cfg_textbelt_key"                                      # Variable Name
+    pdesc="TextBelt.com API Key"                                        # Function Description
+    presult=st.cfg_textbelt_key                                         # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.cfg_textbelt_url"                                      # Variable Name
+    pdesc="TextBelt.com API URL"                                        # Function Description
+    presult=st.cfg_textbelt_url                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.cfg_cie_name"                                          # Variable Name
