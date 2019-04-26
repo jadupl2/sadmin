@@ -38,7 +38,7 @@
 # 2019_01_28 Added: v3.2 Database info only show when running on SADMIN Server
 #@2019_03_18 Added: v3.3 Add demo call to function get_packagetype()
 #@2019_04_07 Update: v3.4 Don't show Database user name if run on client.
-#@2019_04_25 Update: v3.5 Add Alert_Repeat and Textbelt API Key Variable in Output
+#@2019_04_25 Update: v3.5 Add Alert_Repeat, Textbelt API Key and URL Variable in Output
 #===================================================================================================
 #
 try :
@@ -638,9 +638,14 @@ def print_sadmin_cfg(st):
     presult=st.cfg_alert_repeat                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
-    pexample="st.cfg_textbelt"                                          # Variable Name
+    pexample="st.cfg_textbelt_key"                                      # Variable Name
     pdesc="TextBelt.com API Key"                                        # Function Description
-    presult=st.cfg_textbelt                                             # Return Value(s)
+    presult=st.cfg_textbelt_key                                         # Return Value(s)
+    printline (st,pexample,pdesc,presult)                               # Print Example Line
+
+    pexample="st.cfg_textbelt_url"                                      # Variable Name
+    pdesc="TextBelt.com API URL"                                        # Function Description
+    presult=st.cfg_textbelt_url                                         # Return Value(s)
     printline (st,pexample,pdesc,presult)                               # Print Example Line
 
     pexample="st.cfg_cie_name"                                          # Variable Name
