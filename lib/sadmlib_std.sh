@@ -2107,8 +2107,7 @@ sadm_send_alert() {
     fi
 
     # Does the Alert Group exist in the Group in alert File ?
-    #awk -F, '{ print $1 }' alert_group.cfg | grep -i "^sdev$"
-    grep -i "^$alert_group " $SADM_ALERT_FILE >/dev/null 2>&1           # Line beginning with group
+    grep -i "^$alert_group " $SADM_ALERT_FILE >/dev/null 2>&1           # Search Group in front line
     if [ $? -ne 0 ]                                                     # Group Missing in GrpFile
         then sadm_writelog " "                                          # White line Before
              sadm_writelog "----------"
@@ -2123,23 +2122,24 @@ sadm_send_alert() {
              sadm_writelog "----------"
     fi
 
-    # Define Search String to see if we already alerted the user (Want to alert Once a Day)
-    hsearch=`printf "%s,%s,%s,%s" "$alert_type" "$alert_server" "$alert_group" "$alert_subject"`
-    #hdate=`date +"%Y/%m/%d"`                                            # Current Date
+    # Define Search String (Alert ID) to see if we already alerted the user.
+    alertid=`printf "%s,%s,%s,%s" "$alert_type" "$alert_server" "$alert_group" "$alert_subject"`
 
-    # Search For Today Message with the string "Server, Alert Group and Message"
-    if [ "$LIB_DEBUG" -gt 4 ]
-        #then sadm_writelog "Search History for \"$hdate\" and \"$hsearch\""
-        then sadm_writelog "Search History for \"$hsearch\""
-    fi
-    #grep "$hdate" $SADM_ALERT_HIST | grep "$hsearch" >>/dev/null 2>&1  # GrepMessage with same Date
-    grep "$hsearch" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
-    if [ $? -eq 0 ]                                                     # String Found=Already Done
-        then sadm_writelog "Not sending Alert below, already sent Today."
-             sadm_writelog "$hdate - $hsearch"
-             return 2                                                   # Return 2 when alert exist
-#        else sadm_writelog "Alert Not in History - Sending Alert to $alert_group : $hdate - $hsearch"
-    fi
+    # Search History for the string "Alert Type (S,E,W,I),Server,Alert Group & Message"
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Searching History for \"$alertid\"" ; fi
+    grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
+    if [ $? -eq 0 ]                                                     # String Found=Already Done?
+        then lastEpoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F, '{print $1}'`
+             currentEpoch=`date +%s`                                    # Get Current Epoch
+             epochDiff=`expr $currentEpoch - $lastEpoch`                # Nb Sec. Since last alert
+             if [ $epochDiff -le $SADM_ALERT_REPEAT ]                   # Diff less than Wait Time
+                then sadm_writelog "The same alert was sent $epochDiff seconds ago." 
+                     mess="This is less than the alert repeat time defined in sadmin.cfg"
+                     mess="$mess ($SADM_ALERT_REPEAT)"
+                     sadm_writelog "$mess"                              # Show User Wait Time Sec.
+                     return 2                                           # Return 2 = Duplicate Alert
+             fi                                                         # WaitTime reach Send Alert
+    fi                                                                  # Alert Not Found in History
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
     alert_group_type=`grep -i "^$alert_group " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M/T/C] Group
@@ -2174,26 +2174,9 @@ sadm_send_alert() {
     # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
     # ----------------------------------------------------------------------------------------------
-    if [ "$alert_group_type" = "M" ]                                    # Alert by Mail
-        then adate=`date`                                               # Save Actual Date and Time
-             if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi
-             if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_subject}" ; fi
-             if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_subject}"    ; fi
-             if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT: ${alert_subject}"  ; fi
-             if [ "$alert_type" = "I" ]
-                then wm=`echo "${adate}\n${alert_message}\nOn server ${alert_server}."`
-                else wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
-             fi
-             if [ "$alert_attach" != "" ]                               # If Attachment Specified
-                then echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member" -a $alert_attach
-                else echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member"
-             fi
-             RC=$?                                                      # Save Error Number
-             if [ $RC -eq 0 ]                                           # If Error Sending Email
-                then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
-                else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
-             fi
-             return $RC                                                 # Return to Caller
+    if [ "$alert_group_type" = "M" ]                                    # Alert Group Type is [M]ail
+        then send_email_alert                                           # Send Alert by Mail
+             return $?                                                  # Return Exit Code to Caller
     fi
 
 
@@ -2281,24 +2264,25 @@ sadm_send_alert() {
         then
             LIB_DEBUG=0
              # Setting first line of Alert, based upon Alert Type.
-             if [ "$alert_type" = "E" ] ; then ws="SADM ERROR  ${alert_subject}"   ; fi
-             if [ "$alert_type" = "W" ] ; then ws="SADM WARNING  ${alert_subject}" ; fi
-             if [ "$alert_type" = "I" ] ; then ws="SADM INFO  ${alert_subject}"    ; fi
-             if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT ${alert_subject}"  ; fi
+             if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi
+             if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_subject}" ; fi
+             if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_subject}"    ; fi
+             if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT: ${alert_subject}"  ; fi
              #
-             mdate="`date`"                                             # Ready to Insert Date
-             text="${ws} ${mdate}"                                      # Insert Subject & Date/Time
+             mdate="`date +"%Y/%m/%d %H:%M:%S"`"                        # Ready to Insert Date
+             text="${ws}%0a${mdate}"                                      # Combine Subject & Date
 
-             # If Ref. Number is not 000000 then insert Reference No.
-             #if [ "$refno" != "000000" ]                                # If no Reference Number
-             #   then text="${text}\nReference No.${refno}"              # If Error insert Ref. No.
-             #fi
-             # Alert Provenance
-             text="${text} server ${alert_server}."                 # Insert Server with Alert
+             # Insert Alert Provenance Server Name
+             text="${text} on server ${alert_server}."                     # Insert Server with Alert
+
+             # If Ref. No. is not "000000" then insert Reference No.
+             if [ "$refno" != "000000" ] ; then text="${text}%0aReference No.${refno}" ; fi
+             
              # Alert Message
-             #if [ "${alert_subject}" != "${alert_message}" ]            # If Subject != Message
-             #   then text="${text}\n${alert_message}"                   # Insert Alert Message
-             #fi 
+             if [ "${alert_subject}" != "${alert_message}" ]            # If Subject != Message
+                then text="${text}%0a${alert_message}"                   # Insert Alert Message
+             fi 
+             
              # Test for attachment
              #if [ "$alert_attach" != "" ]                               # If Attachment Specified
              #   then text_tail=`tail -50 ${alert_attach}`
@@ -2306,37 +2290,85 @@ sadm_send_alert() {
              #fi
 
             # If Script Error include URL to script log in message
-            #if [ "$alert_type" = "S" ]                                  # If SMS concerning Script
-            #    then SNAME=`echo ${alert_subject} |awk '{ print $1 }'`  # Get Script Name
-            #         LOGFILE="${alert_server}_${SNAME}.log"             # Assemble log Script Name
-            #         LOGNAME="${SADM_WWW_DAT_DIR}/${alert_server}/log/${LOGFILE}"  # Add Dir. Path 
-            #         URL_VIEW_FILE='/view/log/sadm_view_file.php'       # View File Content URL
-            #         LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-            #         text="${text}\nLink to the script log:\n${LOGURL}" # Insert Log URL In Mess
-            #fi
+            if [ "$alert_type" = "S" ]                                  # If SMS concerning Script
+                then SNAME=`echo ${alert_subject} |awk '{ print $1 }'`  # Get Script Name
+                     LOGFILE="${alert_server}_${SNAME}.log"             # Assemble log Script Name
+                     LOGNAME="${SADM_WWW_DAT_DIR}/${alert_server}/log/${LOGFILE}"  # Add Dir. Path 
+                     URL_VIEW_FILE='/view/log/sadm_view_file.php'       # View File Content URL
+                     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+                     text="${text}%0aLink to the script log:%0a${LOGURL}" # Insert Log URL In Mess
+            fi
 
             # Construct TextBelt command to send SMS to selectedt Cellular Number 
-            #TCMD="${SADM_CURL} -s -X POST ${SADM_TEXTBELT_URL} "
-            #TCMD="$TCMD -d phone=${alert_group_member} "
-            #TCMD="$TCMD -d \"message=${text}\" "
-            #TCMD="$TCMD -d key=${SADM_TEXTBELT_KEY}"
-            #if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "TextBelt cmd: $TCMD" ; fi
-            RESPONSE=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$alert_group_member -d "message=$text" -d key=$SADM_TEXTBELT_KEY`
-            if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_writelog "Response from command: $RESPONSE" 
-            fi
-            echo "$RESPONSE" | grep -i "success" >/dev/null 2>&1
-            if [ $? -eq 0 ] 
-                then RC=0
-                     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Message sent with Success" ; fi
-                else RC=1
-                     sadm_writelog "Problem sending message to TextBelt: $RESPONSE"
-            fi
-             return $RC                                                 # Return to Caller
+            write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" 
+            # RESPONSE=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$alert_group_member -d "message=$text" -d key=$SADM_TEXTBELT_KEY`
+            # if [ "$LIB_DEBUG" -gt 4 ] 
+            #     then sadm_writelog "Response from command: $RESPONSE" 
+            # fi
+            # echo "$RESPONSE" | grep -i "success" >/dev/null 2>&1
+            # if [ $? -eq 0 ] 
+            #     then RC=0
+            #          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Message sent with Success" ; fi
+            #          write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
+            #     else RC=1
+            #          sadm_writelog "Problem sending message to TextBelt: $RESPONSE"
+            # fi
+            return $RC                                                 # Return to Caller
     fi
 
     return 0
 }
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Send Email Alert
+#
+# Example : 
+#   write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" "hmess"
+# --------------------------------------------------------------------------------------------------
+# 
+send_email_alert() {
+
+    adate=`date`                                                        # Save Actual Date and Time
+
+    # Construct Email Subject Line
+    case "$alert_type" in                                               # Depending on Alert Type
+      e|E) ws="SADM ERROR: ${alert_subject}"                            # Construct Mess. Subject
+           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+      w|W) ws="SADM WARNING: ${alert_subject}"                          # Build Warning Subject
+           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+      i|I) ws="SADM INFO: ${alert_subject}"                             # Build Info Mess Subject
+           wm=`echo "${adate}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+      S|S) ws="SADM SCRIPT: ${alert_subject}"                           # Build Script Msg Subject
+           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+      e|E) ws="SADM ERROR: ${alert_subject}"                            # Construct Mess. Subject
+           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+        *) ws="Invalid Alert Type ($alert_type): ${alert_subject}"      # Invalid Alert type Message
+           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+           ;;
+    esac
+
+    # Send the Email Now 
+    if [ "$alert_attach" != "" ]                                        # If Attachment Specified
+        then echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member" -a $alert_attach
+        else echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member"
+    fi
+
+    # Test Email Return Code
+    RC=$?                                                               # Save Error Number
+    if [ $RC -eq 0 ]                                                    # If Error Sending Email
+        then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
+        else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
+    fi
+    return $RC                                                          # Return Exit Code to Caller
+}   
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2347,8 +2379,10 @@ sadm_send_alert() {
 #   3rd = Server Name       = Where the event happen
 #   4th = Alert Description = Alert Message
 #   5th = Alert Reference#  = Reference No.
+#   6th = History Message   = Wait $elapse/$SADM_REPEAT
 #
-# Example : write_alert_history "s" "alertGroup" "server" "mess"
+# Example : 
+#   write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" "hmess"
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() {
@@ -2358,11 +2392,11 @@ write_alert_history() {
     hserver=`echo "$3"  | awk '{$1=$1;print}'`                          # Save Server Name
     hmess="$4"                                                          # Save Alert Message
     href="$5"                                                           # Save Alert Reference No.
+    hepoch=`date +%s`                                                   # Current Epoch Time
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
     htime=`date +"%H:%M:%S"`                                            # Current Time
-    hepoch=`date +%s`                                                   # Current Epoch Time
-    hline=`sprintf "%s,%10s,%8s,%11s" "$href"  "$hdate"   "$htime"  "$hepoch"` # Ref,Date,Time,Epoch
-    hline=`sprintf "%s,%1s,%s,%s,%s" "$hline" "$htype" "$hserver" "$hgroup" "$hmess"`  
+    hline=`printf "%s,%s,%s"  "$hepoch" "$hdate" "$htime"`         # Ref,Date,Time,Epoch
+    hline=`printf "%s,%s,%1s,%s,%s,%s" "$hline" "$href" "$htype" "$hserver" "$hgroup" "$hmess"`  
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
