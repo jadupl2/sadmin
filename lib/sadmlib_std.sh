@@ -2171,11 +2171,12 @@ sadm_send_alert() {
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
     fi
     
+
     # ----------------------------------------------------------------------------------------------
-    # If Alert Group Type is [M] then send ALERT BY EMAIL.------------------------------------------
+    # If Alert Group Type is [M]ail then send ALERT BY EMAIL.
     # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert Group Type is [M]ail
-        then send_email_alert                                           # Send Alert by Mail
+        then send_email_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
              return $?                                                  # Return Exit Code to Caller
     fi
 
@@ -2322,49 +2323,86 @@ sadm_send_alert() {
 
 
 # --------------------------------------------------------------------------------------------------
-# Send Email Alert
+# Send Email Alert Function
+#
+# 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
+# 2nd Parameter    : Server Name Where Alert come from
+# 3th Parameter    : Alert Group Name to send Message
+# 4th Parameter    : Subject/Title
+# 5th Parameter    : The Alert Message
+# 6th Parameter    : The Full Path Name of the attachment file (If used, else blank)
 #
 # Example : 
-#   write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" "hmess"
+#   send_email_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
 # --------------------------------------------------------------------------------------------------
-# 
 send_email_alert() {
 
-    adate=`date`                                                        # Save Actual Date and Time
+    # Validate the Number of parameter received.
+    if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Save Parameters Received (After Removing leading and trailing Spaces.
+    atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cr [E]rr [W]arn [I]nfo
+    atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
+    aserver=`echo "$2" | awk '{$1=$1;print}'`                           # Alert come from this Srv
+    agroup=`echo "$3"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$4"                                                       # Save Alert Subject
+    amessage="$5"                                                       # Save Alert Message
+    aattach="$6"                                                        # Save Attachment FileName
+
+    # Get the Member of the Alert Group (Could be Email(s), SlackChannel, SMS Group or Cellular No.)
+    aemail=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`  # Get Group Members (Email)
+    aemail=`echo $aemail | awk '{$1=$1;print}'`                         # Del Leading/Trailing Space
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+       then debmes="${FUNCNAME}: alert_type=$atype "                    # Show Alert Type
+            debmes="$debmes alert_group=$agroup "                       # Show Alert Group
+            debmes="$debmes alert_email=\"$aemail\""                    # Show Email(s) of Group
+            debmes="$debmes alert_subject=\"$asubject\""                # Show Alert Subject/Title
+            debmes="$debmes alert_message=\"$amessage\""                # Show Alert Message
+            debmes="$debmes alert_attachment=\"$aattach\""              # Show Alert Attachment File
+            sadm_writelog "$debmes"                                     # Show Debug LIne
+    fi
 
     # Construct Email Subject Line
-    case "$alert_type" in                                               # Depending on Alert Type
-      e|E) ws="SADM ERROR: ${alert_subject}"                            # Construct Mess. Subject
-           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+    adate=`date`                                                        # Save Actual Date and Time
+    case "$atype" in                                                    # Depending on Alert Type
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
            ;;
-      w|W) ws="SADM WARNING: ${alert_subject}"                          # Build Warning Subject
-           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+      w|W) ws="SADM WARNING: ${asubject}"                               # Build Warning Subject
            ;;
-      i|I) ws="SADM INFO: ${alert_subject}"                             # Build Info Mess Subject
-           wm=`echo "${adate}\n${alert_message}\nOn server ${alert_server}."`
+      i|I) ws="SADM INFO: ${asubject}"                                  # Build Info Mess Subject
            ;;
-      S|S) ws="SADM SCRIPT: ${alert_subject}"                           # Build Script Msg Subject
-           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+      S|S) ws="SADM SCRIPT: ${asubject}"                                # Build Script Msg Subject
            ;;
-      e|E) ws="SADM ERROR: ${alert_subject}"                            # Construct Mess. Subject
-           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
            ;;
-        *) ws="Invalid Alert Type ($alert_type): ${alert_subject}"      # Invalid Alert type Message
-           wm=`echo "${adate}\nReference No.${refno}\n${alert_message}\nOn server ${alert_server}."`
+        *) ws="Invalid Alert Type ($atype): ${asubject}"                # Invalid Alert type Message
            ;;
     esac
 
+    # Don't show Reference no. in Email if it is "000000"
+    if [ ${refno} = "000000" ] 
+        then wm=`echo "${adate}\n${amessage}\nOn server ${aserver}."`
+        else wm=`echo "${adate}\nReference No.${refno}\n${amessage}\nOn server ${aserver}."`
+    fi
+
     # Send the Email Now 
-    if [ "$alert_attach" != "" ]                                        # If Attachment Specified
-        then echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member" -a $alert_attach
-        else echo -e "$wm" |$SADM_MUTT -s "$ws" "$alert_group_member"
+    if [ "$aattach" != "" ]                                             # If Attachment Specified
+        then echo -e "$wm" |$SADM_MUTT -s "$ws" "$aemail" -a $aattach   # Email with Attachement
+        else echo -e "$wm" |$SADM_MUTT -s "$ws" "$aemail"               # Email with no Attachment
     fi
 
     # Test Email Return Code
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
-        then write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
-        else sadm_writelog "Error sending email to $alert_group_member" # Advise Usr
+        then wstatus="Email sent with success to $aemail" 
+             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
+        else wstatus="Error sending email to $aemail"
+             sadm_writelog "$wstatus"                                   # Advise USer
+             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
     fi
     return $RC                                                          # Return Exit Code to Caller
 }   
@@ -2374,29 +2412,41 @@ send_email_alert() {
 # --------------------------------------------------------------------------------------------------
 # Write Alert History File
 # Parameters:
-#   1st = Alert Type        = [S]cript [E]rror [W]arning [I]nfo
-#   2nd = Alert Group Name  = Alert Group Name to Advise (Must exist in $SADMIN/cfg/alert_group.cfg)
-#   3rd = Server Name       = Where the event happen
-#   4th = Alert Description = Alert Message
-#   5th = Alert Reference#  = Reference No.
-#   6th = History Message   = Wait $elapse/$SADM_REPEAT
+#   1st = Alert Type         = [S]cript [E]rror [W]arning [I]nfo
+#   2nd = Alert Group Name   = Alert Group Name to Advise (Must exist in $SADMIN/cfg/alert_group.cfg)
+#   3rd = Server Name        = Where the event happen
+#   4th = Alert Description  = Alert Message
+#   5th = Alert Reference#   = Reference No.
+#   6th = Alert Status Mess. = Status got afetr sending alert
+#                               - Wait $elapse/$SADM_REPEAT
 #
 # Example : 
-#   write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" "hmess"
+#   write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$aref" "$astatus"
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() {
-    htype=$1                                                            #[S]cr [E]rr [W]arning [I]nf
+      
+    # Validate the Number of parameter received.
+    if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    htype=$1                                                            # Script,Error,Warning,Info
     htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
     hgroup=`echo "$2"   | awk '{$1=$1;print}'`                          # SADM AlertGroup to Advise
     hserver=`echo "$3"  | awk '{$1=$1;print}'`                          # Save Server Name
-    hmess="$4"                                                          # Save Alert Message
+    hsub="$4"                                                           # Save Alert Subject
     href="$5"                                                           # Save Alert Reference No.
+    hstat="$6"                                                          # Save Alert Send Status
     hepoch=`date +%s`                                                   # Current Epoch Time
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
     htime=`date +"%H:%M:%S"`                                            # Current Time
-    hline=`printf "%s,%s,%s"  "$hepoch" "$hdate" "$htime"`         # Ref,Date,Time,Epoch
-    hline=`printf "%s,%s,%1s,%s,%s,%s" "$hline" "$href" "$htype" "$hserver" "$hgroup" "$hmess"`  
+    #
+    hline=`printf "%s,%s,%s"    "$hepoch" "$hdate"  "$htime"`           # Epoch, Date, Time
+    hline=`printf "%s,%s,%s,%s" "$hline" "$href" "$htype" "$hserver"`   # Ref#, Alert Type & Server
+    hline=`printf "%s,%s,%s,%s" "$hline" "$hgroup" "$hsub" "$hstat"`    # Alert Group,Subject,Status
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
