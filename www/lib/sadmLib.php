@@ -36,7 +36,8 @@
 # 2019_01_11 Add: v2.5 CLicking on logo bring you back to sadmin Home page.
 # 2019_01_21 v2.6 Add function from From Schedule to Text.
 # 2019_02_16 Change: v2.7 Convert schedule metadata to one text line (Easier to read in Sched. List)
-#@2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurence & Date of update)
+# 2019_04_04 Update: v2.8 Function SCHEDULE_TO_TEXT now return 2 values (Occurence & Date of update)
+#@2019_05_02 Update: v2.9 Function sadm_fatal_error - Insert back page link before showing alert.
 # ==================================================================================================
 #
 
@@ -45,7 +46,7 @@
 #===================================================================================================
 #
 $DEBUG  = False ;                                                        # Debug Activated True/False
-$LIBVER = "2.8" ;   
+$LIBVER = "2.9" ;   
     
 
 #===================================================================================================
@@ -389,6 +390,7 @@ function sadm_confirm($msg) {
 # ==================================================================================================
 function sadm_fatal_error($msg) {
     $message = preg_replace("/\r?\n/", "\\n", addslashes($msg));
+    echo "<a href='javascript:history.go(-1)'>Click to go back to previous page</a>";   
     echo "\n<script type=\"text/javascript\">";
     echo "\n alert(\"$message\");";
     echo "\n windows.history.back()";
