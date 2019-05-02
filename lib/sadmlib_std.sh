@@ -2353,7 +2353,7 @@ send_email_alert() {
     amessage="$5"                                                       # Save Alert Message
     aattach="$6"                                                        # Save Attachment FileName
 
-    # Get the Member of the Alert Group (Could be Email(s), SlackChannel, SMS Group or Cellular No.)
+    # Get the Member of the Alert Group (Email(s))
     aemail=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`  # Get Group Members (Email)
     aemail=`echo $aemail | awk '{$1=$1;print}'`                         # Del Leading/Trailing Space
     if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
@@ -2383,11 +2383,11 @@ send_email_alert() {
            ;;
     esac
 
-    # Don't show Reference no. in Email if it is "000000"
-    if [ ${refno} = "000000" ] 
-        then wm=`echo "${adate}\n${amessage}\nOn server ${aserver}."`
-        else wm=`echo "${adate}\nReference No.${refno}\n${amessage}\nOn server ${aserver}."`
-    fi
+    # Construct Message to send.
+    wm="${adate}\n"
+    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}\n" ; fi
+    vm="${wm}${amessage}\n"
+    vm="${wm}On server ${aserver}."
 
     # Send the Email Now 
     if [ "$aattach" != "" ]                                             # If Attachment Specified
@@ -2406,6 +2406,106 @@ send_email_alert() {
     fi
     return $RC                                                          # Return Exit Code to Caller
 }   
+
+
+
+
+# --------------------------------------------------------------------------------------------------
+# Send Cellular Alert Function
+#
+# 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
+# 2nd Parameter    : Server Name Where Alert come from
+# 3th Parameter    : Alert Group Name to send Message
+# 4th Parameter    : Subject/Title
+# 5th Parameter    : The Alert Message
+# 6th Parameter    : The Full Path Name of the attachment file (If used, else blank)
+#
+# Example : 
+#   send_email_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
+# --------------------------------------------------------------------------------------------------
+send_cellular_alert() {
+
+    # Validate the Number of parameter received.
+    if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Save Parameters Received (After Removing leading and trailing Spaces.
+    atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cr [E]rr [W]arn [I]nfo
+    atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
+    aserver=`echo "$2" | awk '{$1=$1;print}'`                           # Alert come from this Srv
+    agroup=`echo "$3"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$4"                                                       # Save Alert Subject
+    amessage="$5"                                                       # Save Alert Message
+    aattach="$6"                                                        # Save Attachment FileName
+
+    # Get the Telephone number of the Alert Group (Cellular No.)
+    acell=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`   # Get Group Members (Cell#)
+    acell=`echo $acell | awk '{$1=$1;print}'`                           # Del Leading/Trailing Space
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+       then debmes="${FUNCNAME}: alert_type=$atype "                    # Show Alert Type
+            debmes="$debmes alert_group=$agroup "                       # Show Alert Group
+            debmes="$debmes alert_cellular=\"$acell\""                  # Show Cellular No.
+            debmes="$debmes alert_subject=\"$asubject\""                # Show Alert Subject/Title
+            debmes="$debmes alert_message=\"$amessage\""                # Show Alert Message
+            debmes="$debmes alert_attachment=\"$aattach\""              # Show Alert Attachment File
+            sadm_writelog "$debmes"                                     # Show Debug LIne
+    fi
+
+    # Construct Cellular Subject Line
+    adate=`date`                                                        # Save Actual Date and Time
+    case "$atype" in                                                    # Depending on Alert Type
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+      w|W) ws="SADM WARNING: ${asubject}"                               # Build Warning Subject
+           ;;
+      i|I) ws="SADM INFO: ${asubject}"                                  # Build Info Mess Subject
+           ;;
+      S|S) ws="SADM SCRIPT: ${asubject}"                                # Build Script Msg Subject
+           ;;
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+        *) ws="Invalid Alert Type ($atype): ${asubject}"                # Invalid Alert type Message
+           ;;
+    esac
+
+    # Construct Message to send.
+    wm="${adate}%0a"
+    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}%0a" ; fi
+    vm="${wm}${amessage}%0a"
+    vm="${wm}On server ${aserver}."
+
+    # If Script Error include URL to view script log in message
+    if [ "$atype" = "S" ]                                               # If SMS concerning Script
+        then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
+             LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
+             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
+             URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
+             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+             wm="${wm}%0aLink to the script log:%0a${LOGURL}"           # Insert Log URL In Mess
+            fi
+
+
+    # Send the Email Now 
+    if [ "$aattach" != "" ]                                             # If Attachment Specified
+        then echo -e "$wm" |$SADM_MUTT -s "$ws" "$acell" -a $aattach   # Email with Attachement
+        else echo -e "$wm" |$SADM_MUTT -s "$ws" "$acell"               # Email with no Attachment
+    fi
+
+    # Test Email Return Code
+    RC=$?                                                               # Save Error Number
+    if [ $RC -eq 0 ]                                                    # If Error Sending Email
+        then wstatus="Email sent with success to $acell" 
+             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
+        else wstatus="Error sending email to $acell"
+             sadm_writelog "$wstatus"                                   # Advise USer
+             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
+    fi
+    return $RC                                                          # Return Exit Code to Caller
+}   
+
 
 
 
