@@ -2170,13 +2170,23 @@ sadm_send_alert() {
              printf "%d" $href > $SADM_ALERT_SEQ                        # Update Alert Ref. No. File
              refno=`printf "%06d" $href`                                # Alert Ref. No. with zero
     fi
-    
+
 
     # ----------------------------------------------------------------------------------------------
     # If Alert Group Type is [M]ail then send ALERT BY EMAIL.
     # ----------------------------------------------------------------------------------------------
     if [ "$alert_group_type" = "M" ]                                    # Alert Group Type is [M]ail
         then send_email_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
+             return $?                                                  # Return Exit Code to Caller
+    fi
+
+
+
+    # ----------------------------------------------------------------------------------------------
+    # If Alert Group Type is a [C]ellular then send SMS texto using TextBelt
+    # ----------------------------------------------------------------------------------------------
+    if [ "$alert_group_type" = "C" ]                                    # Alert Group Type is [M]ail
+        then send_cellular_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
              return $?                                                  # Return Exit Code to Caller
     fi
 
@@ -2254,67 +2264,6 @@ sadm_send_alert() {
              fi
              RC=0
              return $RC                                                 # Return to Caller
-    fi
-
-
-
-    # ----------------------------------------------------------------------------------------------
-    # If Alert Group Type is [C]ellular 
-    # ----------------------------------------------------------------------------------------------
-    if [ "$alert_group_type" = "C" ]                                    # If Alert Type is Cellular
-        then
-            LIB_DEBUG=0
-             # Setting first line of Alert, based upon Alert Type.
-             if [ "$alert_type" = "E" ] ; then ws="SADM ERROR: ${alert_subject}"   ; fi
-             if [ "$alert_type" = "W" ] ; then ws="SADM WARNING: ${alert_subject}" ; fi
-             if [ "$alert_type" = "I" ] ; then ws="SADM INFO: ${alert_subject}"    ; fi
-             if [ "$alert_type" = "S" ] ; then ws="SADM SCRIPT: ${alert_subject}"  ; fi
-             #
-             mdate="`date +"%Y/%m/%d %H:%M:%S"`"                        # Ready to Insert Date
-             text="${ws}%0a${mdate}"                                      # Combine Subject & Date
-
-             # Insert Alert Provenance Server Name
-             text="${text} on server ${alert_server}."                     # Insert Server with Alert
-
-             # If Ref. No. is not "000000" then insert Reference No.
-             if [ "$refno" != "000000" ] ; then text="${text}%0aReference No.${refno}" ; fi
-             
-             # Alert Message
-             if [ "${alert_subject}" != "${alert_message}" ]            # If Subject != Message
-                then text="${text}%0a${alert_message}"                   # Insert Alert Message
-             fi 
-             
-             # Test for attachment
-             #if [ "$alert_attach" != "" ]                               # If Attachment Specified
-             #   then text_tail=`tail -50 ${alert_attach}`
-             #        text="${text}\n\n*-----Attachment-----*\n${text_tail}"
-             #fi
-
-            # If Script Error include URL to script log in message
-            if [ "$alert_type" = "S" ]                                  # If SMS concerning Script
-                then SNAME=`echo ${alert_subject} |awk '{ print $1 }'`  # Get Script Name
-                     LOGFILE="${alert_server}_${SNAME}.log"             # Assemble log Script Name
-                     LOGNAME="${SADM_WWW_DAT_DIR}/${alert_server}/log/${LOGFILE}"  # Add Dir. Path 
-                     URL_VIEW_FILE='/view/log/sadm_view_file.php'       # View File Content URL
-                     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-                     text="${text}%0aLink to the script log:%0a${LOGURL}" # Insert Log URL In Mess
-            fi
-
-            # Construct TextBelt command to send SMS to selectedt Cellular Number 
-            write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno" 
-            # RESPONSE=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$alert_group_member -d "message=$text" -d key=$SADM_TEXTBELT_KEY`
-            # if [ "$LIB_DEBUG" -gt 4 ] 
-            #     then sadm_writelog "Response from command: $RESPONSE" 
-            # fi
-            # echo "$RESPONSE" | grep -i "success" >/dev/null 2>&1
-            # if [ $? -eq 0 ] 
-            #     then RC=0
-            #          if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Message sent with Success" ; fi
-            #          write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
-            #     else RC=1
-            #          sadm_writelog "Problem sending message to TextBelt: $RESPONSE"
-            # fi
-            return $RC                                                 # Return to Caller
     fi
 
     return 0
@@ -2399,11 +2348,10 @@ send_email_alert() {
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
         then wstatus="Email sent with success to $aemail" 
-             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
         else wstatus="Error sending email to $aemail"
              sadm_writelog "$wstatus"                                   # Advise USer
-             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
     fi
+    write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
     return $RC                                                          # Return Exit Code to Caller
 }   
 
@@ -2488,21 +2436,21 @@ send_cellular_alert() {
             fi
 
 
-    # Send the Email Now 
-    if [ "$aattach" != "" ]                                             # If Attachment Specified
-        then echo -e "$wm" |$SADM_MUTT -s "$ws" "$acell" -a $aattach   # Email with Attachement
-        else echo -e "$wm" |$SADM_MUTT -s "$ws" "$acell"               # Email with no Attachment
-    fi
+    # Send the SMS unsing TextBelt Now 
+    reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$wm" -d key=$SADM_TEXTBELT_KEY`
 
-    # Test Email Return Code
+    # Test Cellular Return Code
+    echo "$reponse" | grep -i "success" >/dev/null 2>&1                 # Success in Response ?
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
-        then wstatus="Email sent with success to $acell" 
-             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
-        else wstatus="Error sending email to $acell"
+        then wstatus="SMS message sent with success to $acell" 
+        else wstatus="Error sending SMS message to $acell"
              sadm_writelog "$wstatus"                                   # Advise USer
-             write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
+             RC=1                                                       # When Error Return Code 1
     fi
+
+    # Write alert to history file
+    write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$reponse"
     return $RC                                                          # Return Exit Code to Caller
 }   
 
