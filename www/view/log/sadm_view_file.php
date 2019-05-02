@@ -24,7 +24,8 @@
 # ChangeLog
 # 2018_01_04 JDuplessis V1.0 Initial Version 
 # 2018_05_06 JDuplessis V1.1 Change the look of the web page (Simplify code)
-#@2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
+# 2019_01_20 Improvement v1.2 Web Page revamp - New Dark Look
+#@2019_01_20 Update v1.3 Customize file not found message 
 # ==================================================================================================
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
 require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmInit.php');           # Load sadmin.cfg & Set Env.
@@ -74,7 +75,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "1.2" ;                                                         # Current version number
+$SVER  = "1.3" ;                                                         # Current version number
 $CREATE_BUTTON = False ;                                                # Yes Display Create Button
 
 
@@ -90,8 +91,17 @@ function display_file ($WNAME)
     echo "\n<center><h2><strong><i>" .$TITRE. "</i></strong></h2></center>";   # Print 1st Row Heading
 
     $count=0;                                                           # Set Line Counter to Zero
-    #echo file_get_contents($WNAME);
-    $fh = fopen($WNAME,"r") or exit("Unable to open file : " . $WNAME); # Load File In Memory
+    try
+    {
+      if ( !file_exists($WNAME) ) { throw new Exception('File not found.'); }
+      $fh = fopen($WNAME, "r");
+      if ( !$fh ) { throw new Exception('File open failed.'); } 
+    }
+    catch ( Exception $e ) {
+        sadm_fatal_error ("Unable to open file " . $WNAME);
+        exit();
+    } 
+
     echo "<code>";
     while(!feof($fh)) {                                                 # Read till End Of File
         $wline = fgets($fh);                                            # Read Line By Line    
@@ -120,8 +130,9 @@ function display_file ($WNAME)
     if ($DEBUG)  { echo "<br>Name of the file is $FILE"; }              # In Debug display Full Name
     if (! file_exists($FILENAME))  {                                    # If Log does not exist
         $msg = "The file " . $FILENAME . " does not exist.\n";          # Mess. to User
-        $msg = $msg . "Correct the situation and retry request";        # Add to Previous Message
+        #$msg = $msg . "Correct the situation and retry request";        # Add to Previous Message
         sadm_fatal_error($msg);                                         # Display Error & Go Back
+        exit();
     }
     
     # Display Standard Page Heading and Display Log ------------------------------------------------
