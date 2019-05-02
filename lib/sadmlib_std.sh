@@ -86,6 +86,7 @@
 #@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
 #@2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
 #@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
+#@2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -95,7 +96,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.70"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.71"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2296,8 +2297,8 @@ write_alert_history() {
     hdate=`date +"%Y/%m/%d"`                                            # Current Date
     htime=`date +"%H:%M:%S"`                                            # Current Time
     hepoch=`date +%s`                                                   # Current Epoch Time
-    hline=`sprintf "%s,%10s,%8s,%11s" "$href"  "$hdate"   "$htime"  "$hepoch"` # Ref,Date,Time,Epoch
-    hline=`sprintf "%s,%1s,%s,%s,%s" "$hline" "$htype" "$hserver" "$hgroup" "$hmess"`  
+    hline=`printf "%s,%10s,%8s,%11s" "$href"  "$hdate"   "$htime"  "$hepoch"` # Ref,Date,Time,Epoch
+    hline=`printf "%s,%1s,%s,%s,%s" "$hline" "$htype" "$hserver" "$hgroup" "$hmess"`  
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
