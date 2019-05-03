@@ -2172,103 +2172,139 @@ sadm_send_alert() {
     fi
 
 
-    # ----------------------------------------------------------------------------------------------
-    # If Alert Group Type is [M]ail then send ALERT BY EMAIL.
-    # ----------------------------------------------------------------------------------------------
+    # Email Alert - If Alert Group Type is [M]ail then send ALERT BY EMAIL.
     if [ "$alert_group_type" = "M" ]                                    # Alert Group Type is [M]ail
         then send_email_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
              return $?                                                  # Return Exit Code to Caller
     fi
 
-
-
-    # ----------------------------------------------------------------------------------------------
-    # If Alert Group Type is a [C]ellular then send SMS texto using TextBelt
-    # ----------------------------------------------------------------------------------------------
+    # Cellular Alert - If Alert Group Type is a [C]ellular then send SMS texto using TextBelt
     if [ "$alert_group_type" = "C" ]                                    # Alert Group Type is [M]ail
         then send_cellular_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
              return $?                                                  # Return Exit Code to Caller
     fi
 
-
-    # ----------------------------------------------------------------------------------------------
-    # If Alert Group Type is [S]lack then send ALERT TO SLACK with the WebHook.---------------------
-    # ----------------------------------------------------------------------------------------------
-    if [ "$alert_group_type" = "S" ]                                    # If Alert Type is Slack
-        then
-             # Search Slack Channel file for selected channel
-             grep -i "^$alert_group_member " $SADM_SLACK_FILE >/dev/null 2>&1 # Grep Channel Name
-             if [ $? -ne 0 ]                                            # Channel not in Chn File
-                then sadm_writelog "ERROR: Slack Channel '$alert_group_member' missing in $SADM_SLACK_FILE"
-                     return 1                                           # Return Error to caller
-             fi
-
-             # Get the WebHook for the selected Channel
-             slack_hook_url=`grep -i "^$alert_group_member " $SADM_SLACK_FILE |awk '{ print $2 }'`
-             if [ "$LIB_DEBUG" -gt 4 ]
-                then sadm_writelog "Slack Channel=$alert_group_member Slack Webhook=$slack_hook_url"
-             fi
-
-             # Setting first line of Alert, based upon Alert Type.
-             if [ "$alert_type" = "E" ] ; then ws="*SADM ERROR: ${alert_subject}*"   ; fi
-             if [ "$alert_type" = "W" ] ; then ws="*SADM WARNING: ${alert_subject}*" ; fi
-             if [ "$alert_type" = "I" ] ; then ws="*SADM INFO: ${alert_subject}*"    ; fi
-             if [ "$alert_type" = "S" ] ; then ws="*SADM SCRIPT: ${alert_subject}*"  ; fi
-             #
-             mdate="`date`"                                             # Ready to Insert Date
-             text="${ws}\n${mdate}"                                     # Insert Subject & Date/Time
-
-             # If Ref. Number is not 000000 then insert Reference No.
-             if [ "$refno" != "000000" ]                                # If no Reference Number
-                then text="${text}\nReference No.${refno}"              # If Error insert Ref. No.
-             fi
-             # Alert Provenance
-             text="${text}\nOn server ${alert_server}."                 # Insert Server with Alert
-             # Alert Message
-             if [ "${alert_subject}" != "${alert_message}"]             # If Subject != Message
-                then text="${text}\n${alert_message}"                   # Insert Alert Message
-             fi 
-             # Test for attachment
-             if [ "$alert_attach" != "" ]                               # If Attachment Specified
-                then text_tail=`tail -50 ${alert_attach}`
-                     text="${text}\n\n*-----Attachment-----*\n${text_tail}"
-             fi
-
-            if [ "$alert_type" = "S" ] 
-                then SNAME=`echo ${alert_subject} |awk '{ print $1 }'`   # Get Script Name
-                     LOGFILE="${alert_server}_${SNAME}.log"             # Assemble log Script Name
-                     LOGNAME="${SADM_WWW_DAT_DIR}/${alert_server}/log/${LOGFILE}"  # Add Dir. Path 
-                     URL_VIEW_FILE='/view/log/sadm_view_file.php'       # View File Content URL
-                     LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-                     text="${text}\nLink to the script log:\n${LOGURL}" # Insert Log URL In Mess
-            fi
-
-             slack_text="$text"                                         # Set Alert Text
-             escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
-             slack_text="\"text\": \"${escaped_msg}\""                  # Set Final Text Message
-             slack_icon="warning"
-             markdown="\"mrkdwn\": true,"
-             #json="{\"channel\": \"${alert_group_member}\", \"username\":\"${slack_username}\", \"icon_emoji\":\":${slack_icon}:\", ${markdown} ${slack_text}}"
-             json="{\"channel\": \"${alert_group_member}\", \"icon_emoji\": \":${slack_icon}:\", ${markdown} ${slack_text}}"
-             if [ "$LIB_DEBUG" -gt 4 ]
-                then sadm_writelog "$SADM_CURL -s -d \"payload=$json\" $slack_hook_url"
-             fi
-             #SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
-             SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
-             if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
-             if [ $SRC = "ok" ]
-                then RC=0
-                     write_alert_history "$alert_type" "$alert_group" "$alert_server" "$alert_subject" "$refno"
-                else RC=1
-                     sadm_writelog "Error message : $SRC"
-             fi
-             RC=0
-             return $RC                                                 # Return to Caller
+    # Slack Alert - If Alert Group Type is a [S]lack then send Slack Alert using webhook
+    if [ "$alert_group_type" = "S" ]                                    # Alert Group Type is [M]ail
+        then send_slack_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
+             return $?                                                  # Return Exit Code to Caller
     fi
 
-    return 0
+    # SMS Texto Alert - If Alert Group Type is a [T]exto then send SMS texto to a group of cellular 
+    if [ "$alert_group_type" = "T" ]                                    # Alert Group Type is [M]ail
+        then send_sms_alert "$alert_type" "$alert_server" "$alert_group" "$alert_subject" "$alert_message" "$alert_attach" 
+             return $?                                                  # Return Exit Code to Caller
+    fi
+
+    return 1                                                            # Not returned yet = Error 
 }
 
+
+# --------------------------------------------------------------------------------------------------
+# Send Slack Alert Function
+#
+# 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
+# 2nd Parameter    : Server Name Where Alert come from
+# 3th Parameter    : Alert Group Name to send Message
+# 4th Parameter    : Subject/Title
+# 5th Parameter    : The Alert Message
+# 6th Parameter    : The Full Path Name of the attachment file (If used, else blank)
+#
+# Example : 
+#   send_slack_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
+# --------------------------------------------------------------------------------------------------
+send_slack_alert() {
+
+    # Get the Slack Channel of the Alert Group 
+    aslack_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Member
+    aslack_channel=`echo $aslack_channel | awk '{$1=$1;print}'`         # Del Leading/Trailing Space
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # If Debugging Library
+       then debmes="sadm_send_alert: agroup= $alert_group "             # Show Alert Group
+            debmes="$debmes agroup_type   = $alert_group_type "         # Show Alert Group Type 
+            debmes="$debmes aslack_channel = ${aslack_channel}"         # Show Alert Slack Channel
+            debmes="$debmes alert_attachment   = ${alert_attach}"       # Show Alert Attachment File
+            sadm_writelog "$debmes"
+    fi
+
+    # Search Slack Channel file for selected channel
+    grep -i "^$aslack_channel " $SADM_SLACK_FILE >/dev/null 2>&1        # Grep Channel Name
+    if [ $? -ne 0 ]                                                     # Channel not in Chn File
+        then sadm_writelog "ERROR: Slack Channel '$aslack_channel' missing in $SADM_SLACK_FILE"
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Get the WebHook for the selected Channel
+    slack_hook_url=`grep -i "^$aslack_channel " $SADM_SLACK_FILE |awk '{ print $2 }'`
+    if [ "$LIB_DEBUG" -gt 4 ]
+        then sadm_writelog "Slack Channel=$aslack_channel got Slack Webhook=$slack_hook_url"
+    fi
+
+     # Construct Slack Subject Line
+    case "$atype" in                                                    # Depending on Alert Type
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+      w|W) ws="SADM WARNING: ${asubject}"                               # Build Warning Subject
+           ;;
+      i|I) ws="SADM INFO: ${asubject}"                                  # Build Info Mess Subject
+           ;;
+      S|S) ws="SADM SCRIPT: ${asubject}"                                # Build Script Msg Subject
+           ;;
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+        *) ws="Invalid Alert Type ($atype): ${asubject}"                # Invalid Alert type Message
+           ;;
+    esac
+
+    # Construct Message to send.
+    adate=`date`                                                        # Save Actual Date and Time
+    wm="${ws}\n${adate}\n"                                              # Combine Subject & Date
+    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}\n" ; fi
+    vm="${wm}On server ${aserver}\n"
+    if [ "${asubject}" != "${amessage}" ] ;then wm="${wm}\n${amessage}\n" ;fi 
+
+    # Included last 50 lines of attachment file (if specified)
+    if [ "$aattach" != "" ]                                             # If Attachment Specified
+        then logtail=`tail -50 ${aattach}`
+             wm="${wm}\n\n*-----Attachment-----*\n${logtail}"
+    fi
+
+    # If Script Error include URL to view script log in message
+    if [ "$atype" = "S" ]                                               # If SMS concerning Script
+        then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
+             LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
+             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
+             URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
+             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+             wm="${wm}\nLink to the script log:\n${LOGURL}"             # Insert Log URL In Mess
+    fi
+
+    slack_text="$wm"                                                    # Set Alert Text
+    escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
+    slack_text="\"text\": \"${escaped_msg}\""                           # Set Final Text Message
+    slack_icon="warning"
+    markdown="\"mrkdwn\": true,"
+    #json="{\"channel\": \"${aslack_channel}\", \"username\":\"${slack_username}\", \"icon_emoji\":\":${slack_icon}:\", ${markdown} ${slack_text}}"
+    json="{\"channel\": \"${aslack_channel}\", \"icon_emoji\": \":${slack_icon}:\", ${markdown} ${slack_text}}"
+    if [ "$LIB_DEBUG" -gt 4 ]
+        then sadm_writelog "$SADM_CURL -s -d \"payload=$json\" $slack_hook_url"
+    fi
+    #SLACK_CMD1="$SADM_CURL -X POST -H 'Content-type: application/json' --data"
+    SRC=`$SADM_CURL -s -d "payload=$json" $slack_hook_url`
+    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Status after send to Slack is $SRC" ;fi
+
+    # Test Slack Return Code
+    if [ $SRC = "ok" ]                                                  # If Sent Successfully
+        then RC=0                                                       # Set Return code to 0
+             wstatus="Slack message sent with success to $agroup ($SRC)" 
+        else wstatus="Error sending Slack message to $agroup ($SRC)"
+             sadm_writelog "$wstatus"                                   # Advise User
+             RC=1                                                       # When Error Return Code 1
+    fi
+
+    # Write alert to history file
+    write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$wstatus"
+    return $RC                                                          # Return Exit Code to Caller
+}
 
 
 # --------------------------------------------------------------------------------------------------
@@ -2359,6 +2395,127 @@ send_email_alert() {
 
 
 # --------------------------------------------------------------------------------------------------
+# Send SMS Group Alert Function
+#
+# 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
+# 2nd Parameter    : Server Name Where Alert come from
+# 3th Parameter    : Alert Group Name to send Message
+# 4th Parameter    : Subject/Title
+# 5th Parameter    : The Alert Message
+# 6th Parameter    : The Full Path Name of the attachment file (If used, else blank)
+#
+# Example : 
+#   send_sms_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
+# --------------------------------------------------------------------------------------------------
+send_sms_alert() {
+
+    # Validate the Number of parameter received.
+    if [ $# -ne 6 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
+             sadm_writelog "Should be 6, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Save Parameters Received (After Removing leading and trailing Spaces.
+    atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cr [E]rr [W]arn [I]nfo
+    atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
+    aserver=`echo "$2" | awk '{$1=$1;print}'`                           # Alert come from this Srv
+    agroup=`echo "$3"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$4"                                                       # Save Alert Subject
+    amessage="$5"                                                       # Save Alert Message
+    aattach="$6"                                                        # Save Attachment FileName
+
+    # Get the Group Member of the Alert Group (Cellular No.)
+    amember=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Get Group Members (Cell#)
+    amember=`echo $amember | awk '{$1=$1;print}'`                       # Del Leading/Trailing Space
+    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
+       then debmes="${FUNCNAME}: atype=$atype "                         # Show Alert Type
+            debmes="$debmes agroup=$agroup "                            # Show Alert Group
+            debmes="$debmes amember=\"$amember\""                       # Show SMS Group Member
+            debmes="$debmes asubject=\"$asubject\""                     # Show Alert Subject/Title
+            debmes="$debmes amessage=\"$amessage\""                     # Show Alert Message
+            debmes="$debmes aattach=\"$aattach\""                       # Show Alert Attachment File
+            sadm_writelog "$debmes"                                     # Show Debug LIne
+    fi
+
+    # Construct SMS Subject Line
+    adate=`date`                                                        # Save Actual Date and Time
+    case "$atype" in                                                    # Depending on Alert Type
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+      w|W) ws="SADM WARNING: ${asubject}"                               # Build Warning Subject
+           ;;
+      i|I) ws="SADM INFO: ${asubject}"                                  # Build Info Mess Subject
+           ;;
+      S|S) ws="SADM SCRIPT: ${asubject}"                                # Build Script Msg Subject
+           ;;
+      e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
+           ;;
+        *) ws="Invalid Alert Type ($atype): ${asubject}"                # Invalid Alert type Message
+           ;;
+    esac
+
+    # Construct Message to send.
+    wm="${adate}%0a"
+    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}%0a" ; fi
+    vm="${wm}${amessage}%0a"
+    vm="${wm}On server ${aserver}."
+
+    # If Script Error include URL to view script log in message
+    if [ "$atype" = "S" ]                                               # If SMS concerning Script
+        then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
+             LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
+             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
+             URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
+             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
+             wm="${wm}%0aLink to the script log:%0a${LOGURL}"           # Insert Log URL In Mess
+    fi
+
+    total_error=0                                                       # E
+    for i in $(echo $amember | tr ',' '\n')
+        do
+        if [ "$LIB_DEBUG" -gt 4 ] ;then printf "\nProcessing sms member $i" ;fi
+        
+        # Get the Group Member of the Alert Group (Cellular No.)
+        acell=`grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $3 }'`    # Get Group Members (Cell#)
+        agtype=`grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $2 }'`   # Get Group Type should be C
+        acell=`echo $acell   | awk '{$1=$1;print}'`                     # Del Leading/Trailing Space
+        agtype=`echo $agtype | awk '{$1=$1;print}'`                     # Del Leading/Trailing Space
+        agtype=`echo $agtype | tr "[:lower:]" "[:upper:]"`              # Make Grp Type is uppercase
+        if [ "$agtype" != "C" ]
+            then sadm_writelog "Member of $agroup $i is not a type 'C' alert"
+                 sadm_writelog "Alert not send to $i"
+                 total_error=`expr $total_error + 1`
+                 continue
+            else 
+                reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$wm" -d key=$SADM_TEXTBELT_KEY`
+                echo "$reponse" | grep -i "success" >/dev/null 2>&1     # Success in Response ?
+                RC=$?                                                   # Save Error Number
+                if [ $RC -eq 0 ]                                        # If Error Sending Email
+                    then wstatus="SMS message sent with success to $acell" 
+                    else wstatus="Error sending SMS message to $acell"
+                         sadm_writelog "$wstatus"                       # Advise USer
+                         total_error=`expr $total_error + 1`
+                         RC=1                                           # When Error Return Code 1
+                fi
+        fi
+        done
+
+    # Test Cellular Return Code
+    if [ $total_error -eq 0 ]                                           # If Error Sending SMS
+        then wstatus="SMS message sent with success to $agroup" 
+        else wstatus="Error sending SMS message to $agroup"
+             sadm_writelog "$wstatus"                                   # Advise USer
+             RC=1                                                       # When Error Return Code 1
+    fi
+
+    # Write alert to history file
+    write_alert_history "$atype" "$agroup" "$aserver" "$asubject" "$refno" "$reponse"
+    return $RC                                                          # Return Exit Code to Caller
+}   
+
+
+# --------------------------------------------------------------------------------------------------
 # Send Cellular Alert Function
 #
 # 1st Paramater    : [S]cript Alert [E]rror [W]arning [I]nfo
@@ -2369,7 +2526,7 @@ send_email_alert() {
 # 6th Parameter    : The Full Path Name of the attachment file (If used, else blank)
 #
 # Example : 
-#   send_email_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
+#   send_cellular_alert "$atype" "$aserver" "$agroup" "$asubject" "$amess" "$afile" 
 # --------------------------------------------------------------------------------------------------
 send_cellular_alert() {
 
@@ -2433,7 +2590,7 @@ send_cellular_alert() {
              URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
              LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
              wm="${wm}%0aLink to the script log:%0a${LOGURL}"           # Insert Log URL In Mess
-            fi
+    fi
 
 
     # Send the SMS unsing TextBelt Now 
