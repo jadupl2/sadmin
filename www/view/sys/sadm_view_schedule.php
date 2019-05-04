@@ -32,6 +32,7 @@
 # 2018_07_09    v2.5 Change Layout of line (More Compact)
 #@2019_04_04 Update v2.6 Show Calculated Next O/S Update Date & update occurrence.
 #@2019_04_17 Update v2.7 Minor code cleanup and show "Manual, no schedule" when not in auto update.
+# 2019_05_04 Update v2.8 Added link to view rch file content for each server.
 # ==================================================================================================
 #
 # REQUIREMENT COMMON TO ALL PAGE OF SADMIN SITE
@@ -60,7 +61,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/lib/sadmPageWrapper.php');    # Headin
 #                                       Local Variables
 #===================================================================================================
 $DEBUG         = False ;                                                # Debug Activated True/False
-$WVER          = "2.7" ;                                                # Current version number
+$WVER          = "2.8" ;                                                # Current version number
 $URL_CREATE    = '/crud/srv/sadm_server_create.php';                    # Create Page URL
 $URL_UPDATE    = '/crud/srv/sadm_server_update.php';                    # Update Page URL
 $URL_DELETE    = '/crud/srv/sadm_server_delete.php';                    # Delete Page URL
@@ -91,7 +92,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View log</th>\n";
+    echo "<th class='text-center'>View log/rch</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -105,7 +106,7 @@ function setup_table() {
     echo "<th class='text-center'>Status</th>\n";
     echo "<th class='text-center'>Next Update</th>\n";
     echo "<th class='text-center'>Update Occurrence</th>\n";
-    echo "<th class='text-center'>View log</th>\n";
+    echo "<th class='text-center'>View log/rch</th>\n";
     echo "<th class='text-center'>Auto Update</th>\n";
     echo "<th class='text-center'>Reboot</th>\n";
     echo "</tr>\n"; 
@@ -176,12 +177,19 @@ function display_data($count, $row) {
     }
     echo "</td>\n";  
 
-    # Display Icon to View Last O/S Update Log
+    # Display link to view o/s update log and rch file
     echo "<td class='dt-center'>";
     $log_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/log/" . $row['srv_name'] . "_sadm_osupdate.log";
     if (file_exists($log_name)) {
         echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $log_name . "'" ;
-        echo " title='View Update Log'>Log</a>";
+        echo " title='View Update Log'>log</a>&nbsp;&nbsp;&nbsp;";
+    }else{
+        echo "N/A";
+    }
+    $rch_name  = SADM_WWW_DAT_DIR . "/" . $row['srv_name'] . "/rch/" . $row['srv_name'] . "_sadm_osupdate.rch";
+    if (file_exists($rch_name)) {
+        echo "<a href='" . $URL_VIEW_FILE . "?&filename=" . $rch_name . "'" ;
+        echo " title='View Update rch file'>rch</a>";
     }else{
         echo "N/A";
     }
