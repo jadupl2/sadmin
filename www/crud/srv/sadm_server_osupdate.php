@@ -32,7 +32,8 @@
 # 2019_01_11 Change: v2.3 Cancel button now bring you to update menu.
 # 2019_01_21 Change: v2.4 Added Dark Theme
 # 2019_01_21 Change: v2.5 Show on one line next o/s update amd show server domain.
-#@2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
+# 2019_04_04 Update: v2.6 If a Date is used to schedule O/S Update then the day specify is not used.
+#@2019_05_04 Update: v2.7 When specific date(s) specified for update, day of week change to 'All'.
 #
 # ==================================================================================================
 #
@@ -95,7 +96,7 @@ require_once ($_SERVER['DOCUMENT_ROOT'].'/crud/srv/sadm_server_common.php');
 #===================================================================================================
 #
 $DEBUG = False ;                                                        # Debug Activated True/False
-$SVER  = "2.6" ;                                                        # Current version number
+$SVER  = "2.7" ;                                                        # Current version number
 $URL_MAIN   = '/crud/srv/sadm_server_menu.php?sel=';                    # Maintenance Menu Page URL
 $URL_HOME   = '/index.php';                                             # Site Main Page
 $CREATE_BUTTON = False ;                                                # Don't Show Create Button
@@ -231,6 +232,7 @@ function display_osschedule($con,$wrow,$mode) {
     echo "\n</select>";
     echo "\n</div>";
     echo "\n<div style='clear: both;'> </div>\n";                       # Clear Move Down Now
+    
     
     # ----------------------------------------------------------------------------------------------
     # Day in the week (dow) to update the O/S
@@ -373,16 +375,22 @@ function display_osschedule($con,$wrow,$mode) {
 
         # Day of the Week we want to run the O/S Update (0=All Day 1=Sun 2=Mon)---------------------
         $wdow=$_POST['scr_update_dow'];                                 # Save Choosen Day Choose
-        if (empty($wdow)) { for ($i = 0; $i < 8; $i = $i + 1) { $wdow[$i] = $i; } }
-        $wstr=str_repeat('N',8);                                        # Default All Week to No
-        if (in_array('0',$wdow)) {                                      # If Choose Every DayOfWeek
+        #if (empty($wdow)) { for ($i = 0; $i < 8; $i = $i + 1) { $wdow[$i] = $i; } }
+        if (empty($wdow)) { $wdow="YNNNNNNN" ;}                         # If Empty Array Set Default
+        $wstr=str_repeat('N',8);                                        # Default All Week Day to No
+        if (in_array('0',$wdow)) {                                      # If Choose Every DayOf Week
             $wstr="YNNNNNNN" ;                                          # Set String Accordingly
         }else{                                                          # If Choose specific Days
             foreach ($wdow as $p) {                                     # For Each Day Selected
                 $wstr=substr_replace($wstr,'Y',intval($p),1);           # Replace N By Y for Sel.Day
             }                                                           # End of ForEach
         }                                                               # End of If
-        if (substr($pdom,0,1) != "Y") { $wstr = "NNNNNNNN" ; }          # If Specific Date Entered
+        if ((substr($pdom,0,1) != "Y") and ($wstr != "YNNNNNNN")) {     # If a Date of Upd specified
+            $err_msg = "When specific date(s) are specified for the O/S update,\n";
+            $err_msg = "$err_msg the day of the week field is change to 'All' (Can't have both)";
+            sadm_alert ($err_msg) ;                                     # Display Error Msg. Box
+            $wstr = "YNNNNNNN" ;                                        # If Specific Date Entered
+        }
         $pdow = trim($wstr) ;                                           # Remove Begin/End Space
         $sql = $sql . "srv_update_dow = '"  . $wstr  ."', ";            # Insert in SQL Statement
 
@@ -470,11 +478,14 @@ function display_osschedule($con,$wrow,$mode) {
     $title="Schedule for operating system update on '" . $wserver . "' system";
     echo "<center><strong><h3><i>" . $title . "</i></h3></strong></center>";
 
-    # Convert Crontab entry data to Text.
+    # Take O/S Update Server Data and return next update to a one line text and date of next update.
     list ($STR_SCHEDULE, $DATE_SCHED) = SCHEDULE_TO_TEXT($row['srv_update_dom'], $row['srv_update_month'],
             $row['srv_update_dow'], $row['srv_update_hour'], $row['srv_update_minute']);
+    
+    # Show one line text as part of heading indicating the next update date occurrence 
     echo "<center><strong><h3><i>" . $STR_SCHEDULE . "</i></h3></strong></center>";
 
+    # Start of the Form - Show O/S Schedule Data for current server
     echo "\n\n<form action='" . htmlentities($_SERVER['PHP_SELF']) . "' method='POST'>"; 
     display_osschedule($con,$row,"Update");                             # Display Form Default Value
     
