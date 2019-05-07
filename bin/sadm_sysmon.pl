@@ -737,7 +737,7 @@ sub check_for_error {
             print "\nUsing message in ${SADM_SCR_DIR}/$smess for rpt file";
             open SMESSAGE, "${SADM_SCR_DIR}/$smess" or die $!;          # Open Script Message File
             while ($sline = <SMESSAGE>) {                               # Read Message file
-                chomp $sline; $ERR_MESS="$sline ";                      # Get Text Message
+                chomp $sline; $ERR_MESS="$sline";                       # Get Text Message
             }
             close SMESSAGE;                                             # Close Script Message File
         }
