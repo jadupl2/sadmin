@@ -28,6 +28,7 @@
 # 2018_10_07 v1.9 Add message when searching for a particular server (-s option)
 # 2018_11_21 v1.10 Add Change some Email header Titles.
 #@2019_04_02 Fix: v1.11 Doesn't report an error anymore when last line is blank.
+#@2019_05_07 Update: v1.12 Change send_alert calling parameters
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -52,7 +53,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.11'                               # Current Script Version
+    export SADM_VER='1.12'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="Y"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -571,14 +572,15 @@ main_process()
     fi
     SADM_EXIT_CODE=$?                                                   # Save Process Exit Code
 
-    # Record in rch file that didn't have 9 fields (Wrong format) were written to SADM_TMP_FILE3
+    # Record in rch file that didn't have 9 fields (Wrong format) were written to $SADM_TMP_FILE3
     if [ -s "$SADM_TMP_FILE3" ]                                         # If File size > than 0
         then wsubject="Invalid formatted line(s) in RCH file(s)"        # Mail Message
              echo "$wsubject"                                           # Display Msg to user
              nl $SADM_TMP_FILE3                                         # Display file content
-             wmess="$SADM_PN - `date`\nSee attachment for the list of lines without $FIELD_IN_RCH fields.\n"
-             alert_sysadmin 'M' 'W' "$SADM_HOSTNAME" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
-             #sadm_send_alert "W" "$SADM_HOSTNAME" "default" "$wsubject" ""
+             wmsg="See attachment for the list of lines without $FIELD_IN_RCH fields."
+             wmess="Script name: $SADM_PN\nEvent Date: `date`\n${wmsg}\n"
+             wtime=`date "+%Y.%m.%d %H:%M"`
+             sadm_send_alert "W" "$wtime" "$SADM_HOSTNAME" "default" "$wsubject" "$wmess" "$SADM_TMP_FILE3"
     fi
 
     sadm_stop $SADM_EXIT_CODE                                           # Upd. RCH File & Trim Log 
