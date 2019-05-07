@@ -46,6 +46,7 @@
 # 2019_02_19  Added: v2.32 Copy script rch file in global dir after each run.
 #@2019_04_12  Fix: v2.33 Create Web rch directory, if not exist when script run for the first time.
 #@2019_04_17  Update: v2.34 Show Processing message only when active servers are found.
+#@2019_05_07  Update: v2.35 Change Send Alert parameters for Library 
 # --------------------------------------------------------------------------------------------------
 #
 #   Copyright (C) 2016 Jacques Duplessis <duplessis.jacques@gmail.com>
@@ -82,7 +83,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.34'                              # Current Script Version
+    export SADM_VER='2.35'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -748,6 +749,9 @@ check_for_alert()
                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 ehost=`echo $line | awk -F\; '{ print $2 }'`            # Get Hostname for Event
                 emess=`echo $line | awk -F\; '{ print $7 }'`            # Get Event Error Message
+                wdate=`echo $line | awk -F\; '{ print $3 }'`            # Get Event Date
+                wtime=`echo $line | awk -F\; '{ print $4 }'`            # Get Event Time
+                etime="${wdate} ${wtime}"                               # Combine Event Date & Time
                 if [ ${line:0:1} = "W" ] || [ ${line:0:1} = "w" ]       # If it is a Warning
                     then etype="W"                                      # Set Event Type to Warning
                          egroup=`echo $line | awk -F\; '{ print $8 }'`  # Get Warning Alert Group
@@ -764,9 +768,9 @@ check_for_alert()
                          esubject="$emess"                              # Specify it is a Error
                 fi
                 if [ $DEBUG_LEVEL -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egroup $esubject $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" ""   # Send Alert 
+                sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""  
                 done 
         else sadm_writelog  "No error reported by SysMon report files (*.rpt)" 
     fi
@@ -789,16 +793,18 @@ check_for_alert()
                 if [ $DEBUG_LEVEL -gt 0 ] ; then sadm_writelog "Processing Line=$line" ; fi
                 etype="S"                                               # Set Script Event Type 
                 ehost=`echo $line   | awk '{ print $1 }'`               # Get Hostname for Event
-                edate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
-                etime=`echo $line   | awk '{ print $5 }'`               # Get Script Ending Time 
+                wdate=`echo $line   | awk '{ print $4 }'`               # Get Script Ending Date 
+                wtime=`echo $line   | awk '{ print $5 }' `              # Get Script Ending Time 
+                wtime=`echo ${wtime:0:5}`                               # Eliminate the Seconds
+                etime="${wdate} ${wtime}"                               # Combine Event Date & Time 
                 escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
                 egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
                 esubject="$escript reported an error on $ehost"
                 emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
                 if [ $DEBUG_LEVEL -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $ehost $egroup $esubject $emess" 
+                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egroup $esubject $emess" 
                 fi
-                sadm_send_alert "$etype" "$ehost" "$egroup" "$esubject" "$emess" "" # Send Alert 
+                sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""
                 done 
         else sadm_writelog  "No error reported by any scripts files (*.rch)" 
     fi
