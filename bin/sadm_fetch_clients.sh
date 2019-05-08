@@ -781,6 +781,7 @@ check_for_alert()
     # Process All Error encountered in scripts (last Line of rch that end with a 1)
     # Example of line in rch file
     #   holmes 2018.09.18 11:48:53 2018.09.18 11:48:53 00:00:00 sadm_template default 1
+    #   raspi2 2019.05.07 01:31:00 2019.05.07 01:34:25 00:03:25 sadm_osupdate default 1
     # ----------
     # Gather all last line of all *rch files that end with a 1 (Error)
     sadm_writelog " "
@@ -799,10 +800,10 @@ check_for_alert()
                 etime="${wdate} ${wtime}"                               # Combine Event Date & Time 
                 escript=`echo $line | awk '{ print $7 }'`               # Get Script Name 
                 egroup=`echo $line  | awk '{ print $8 }'`               # Get Script Alert Group
-                esubject="$escript reported an error on $ehost"
-                emess="Script $escript failed at $etime on $edate"      # Create Script Error Mess.
+                esubject="$escript reported an error on $ehost"         # Alert Subject
+                emess="Script '$escript' failed on '$ehost'"            # Create Script Error Mess.
                 if [ $DEBUG_LEVEL -gt 0 ] 
-                    then sadm_writelog "sadm_send_alert $etype $etime $ehost $egroup $esubject $emess" 
+                    then sadm_writelog "sadm_send_alert '$etype' '$etime' '$ehost' '$egroup' '$esubject' '$emess'" 
                 fi
                 sadm_send_alert "$etype" "$etime" "$ehost" "$egroup" "$esubject" "$emess" ""
                 done 

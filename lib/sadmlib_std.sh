@@ -2061,16 +2061,29 @@ sadm_send_alert() {
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Searching History for \"$alertid\"" ; fi
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
     if [ $? -eq 0 ]                                                     # String Found=Already Done?
-        then lastEpoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F, '{print $1}'`
-             currentEpoch=`date +%s`                                    # Get Current Epoch
-             epochDiff=`expr $currentEpoch - $lastEpoch`                # Nb Sec. Since last alert
+        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found" ; fi
+             alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F, '{print $1}'`
+             current_epoch=`date +%s`                                   # Get Current Epoch
+             epochDiff=`expr $current_epoch - $alert_epoch`             # Nb Sec. Since last alert
+             if [ "$LIB_DEBUG" -gt 4 ] 
+                then sadm_writelog "Histepoch: $lastEpoch Cur.epoch=$currentEpoch Diff=$epochDiff"
+                     sadm_writelog "SADM_ALERT_REPEAT=$SADM_ALERT_REPEAT"
+             fi
              if [ $epochDiff -le $SADM_ALERT_REPEAT ]                   # Diff less than Wait Time
                 then sadm_writelog "The same alert was sent $epochDiff seconds ago." 
                      mess="This is less than the alert repeat time defined in sadmin.cfg"
                      mess="$mess ($SADM_ALERT_REPEAT)"
                      sadm_writelog "$mess"                              # Show User Wait Time Sec.
                      return 2                                           # Return 2 = Duplicate Alert
+                else FINAL_REPEAT=`expr ${SADM_ALERT_REPEAT} + 420`     # Alert Repeat + 7 minutes
+                     if [ $epochDiff -gt $FINAL_REPEAT ]                # One last Repeat ?
+                        then sadm_writelog "Event too old, alert still not solve ? ($alertid)"
+                             return 0
+                        else amessage="Repeated Alert: $amessage" 
+                     fi
              fi                                                         # WaitTime reach Send Alert
+        else 
+            if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
     fi                                                                  # Alert Not Found in History
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
