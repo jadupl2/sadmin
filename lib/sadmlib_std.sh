@@ -88,6 +88,7 @@
 #@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
 #@2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
 #@2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
+#@2019_05_08 Fix: v2.73 Bug fix - Eliminate sending duplicate alert.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -97,7 +98,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.72"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.73"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2066,7 +2067,7 @@ sadm_send_alert() {
              current_epoch=`date +%s`                                   # Get Current Epoch
              epochDiff=`expr $current_epoch - $alert_epoch`             # Nb Sec. Since last alert
              if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_writelog "Histepoch: $lastEpoch Cur.epoch=$currentEpoch Diff=$epochDiff"
+                then sadm_writelog "Histepoch: $alert_epoch Cur.epoch=$current_epoch Diff=$epochDiff"
                      sadm_writelog "SADM_ALERT_REPEAT=$SADM_ALERT_REPEAT"
              fi
              if [ $epochDiff -le $SADM_ALERT_REPEAT ]                   # Diff less than Wait Time
