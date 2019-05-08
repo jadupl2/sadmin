@@ -1,0 +1,18 @@
+# SADMIN Alert History File v1.2
+# This file Record each Alert that was sent either by email or Slack.
+# --------------------------------------------------------------------
+# Format History Line
+#       1= Epoch Time of event
+#       2= Date & Time of Event/Alert (YYYY/MM/DD HH:MM)
+#       3= Reference Number (Increase each time an alert is sent)
+#           '000000' = No Reference number.
+#       4= S,E,W,I - Alert issue type 
+#           [S]cript, [I]nfo [W]arning [E]rror 
+#       5= Server where event happened
+#       6= Alert Group used to send alert
+#       7= Alert Subject/Title 
+#       8= History message 
+#           Alert not sent, wait time not reach $Elapse/$SADM_ALERT_REPEAT
+#
+# --------------------------------------------------------------------
+#
