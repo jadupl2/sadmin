@@ -89,6 +89,7 @@
 #@2019_05_01 Update: v2.71 Correct problem while writing to alert history log.
 #@2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
 #@2019_05_08 Fix: v2.73 Bug fix - Eliminate sending duplicate alert.
+#@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -98,7 +99,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.73"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.74"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1997,7 +1998,8 @@ sadm_send_alert() {
     # Save Parameters Received (After Removing leading and trailing Spaces.
     atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cript [E]rr [W]arn [I]nfo
     atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Alert Event Date and Time
+    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Alert Event Date AND Time
+    adate=`echo "$2" | awk '{ print $1 }'`                              # Alert Date without time
     aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Server where alert Come
     agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # SADM AlertGroup to Advise
     asubject="$5"                                                       # Save Alert Subject
@@ -2055,17 +2057,18 @@ sadm_send_alert() {
              sadm_writelog "----------"
     fi
 
-    # Define Search String (Alert ID) to see if we already alerted the user.
-    alertid=`printf "%s,%s,%s,%s" "$atype" "$aserver" "$agroup" "$asubject"`
 
-    # Search History for the string "Alert Type (S,E,W,I),Server,Alert Group & Message"
+    # To prevent duplicate alert, search History for the 'Alert ID' 
+    alertid=`printf "%s,%s,%s,%s,%s" "$adate" "$atype" "$aserver" "$agroup" "$asubject"`
     if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Searching History for \"$alertid\"" ; fi
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
-    if [ $? -eq 0 ]                                                     # String Found=Already Done?
-        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found" ; fi
+    if [ $? -ne 0 ]                                                     # Same Alert was not found
+        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
+        else if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found" ; fi
+             if [ $SADM_ALERT_REPEAT -eq 0 ] ; then return 2 ; fi       # User want norepeat sameday
              alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F, '{print $1}'`
              current_epoch=`date +%s`                                   # Get Current Epoch
-             epochDiff=`expr $current_epoch - $alert_epoch`             # Nb Sec. Since last alert
+             epochDiff=`expr $current_epoch - $alert_epoch`             # Nb Sec. Since alert
              if [ "$LIB_DEBUG" -gt 4 ] 
                 then sadm_writelog "Histepoch: $alert_epoch Cur.epoch=$current_epoch Diff=$epochDiff"
                      sadm_writelog "SADM_ALERT_REPEAT=$SADM_ALERT_REPEAT"
@@ -2076,15 +2079,9 @@ sadm_send_alert() {
                      mess="$mess ($SADM_ALERT_REPEAT)"
                      sadm_writelog "$mess"                              # Show User Wait Time Sec.
                      return 2                                           # Return 2 = Duplicate Alert
-                else FINAL_REPEAT=`expr ${SADM_ALERT_REPEAT} + 420`     # Alert Repeat + 7 minutes
-                     if [ $epochDiff -gt $FINAL_REPEAT ]                # One last Repeat ?
-                        then sadm_writelog "Event too old, alert still not solve ? ($alertid)"
-                             return 0
-                        else amessage="Repeated Alert: $amessage" 
-                     fi
+                else sadm_writelog "Last Alert Today for $alertid"
+                     amessage="Last Alert Today for : $amessage" 
              fi                                                         # WaitTime reach Send Alert
-        else 
-            if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
     fi                                                                  # Alert Not Found in History
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
@@ -2310,15 +2307,12 @@ send_email_alert() {
     esac
 
     # Construct Email Message to send.
+    mdate=`date "+%Y.%m.%d %H:%M"`                                      # Mail Date & Time
     if [ $arefno != "000000" ] 
-         then wm=`printf "Event Date & Time : %s\n%s\n%s\nEvent occured on server : %s" "$atime" "Reference No.$arefno" "$amessage" "$aserver"`
-         else wm=`printf "Event Date & Time : %s\n%s\nEvent occured on server : %s" "$atime" "$amessage" "$aserver"`
+         then wm=`printf "Email Date/Time : %s\nEvent Date/Time : %s\nEvent Ref. No.  : %s\nEvent Message   : %s\nEvent on server : %s" "$mdate" "$atime" "$arefno" "$amessage" "$aserver"`
+         else wm=`printf "Email Date/Time : %s\nEvent Date/Time : %s\nEvent Message   : %s\nEvent on server : %s" "$mdate" "$atime" "$amessage" "$aserver"`
     fi
-    if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
-        then sadm_writelog " " 
-             sadm_writelog "final message = $wm" 
-     fi
-    
+
     # Send the Email Now 
     if [ "$aattach" != "" ]                                             # If Attachment Specified
         then printf "%s\n" "$wm" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
@@ -2579,6 +2573,9 @@ send_cellular_alert() {
 #
 # Example : 
 #   write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$aref" "$astatus"
+#
+#1557207240,000000,01:34,2019.05.07,S,raspi2,default,sadm_osupdate reported an error on raspi2,Email sent with success to duplessis.jacques@gmail.com
+
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() {
@@ -2592,17 +2589,22 @@ write_alert_history() {
 
     htype=$1                                                            # Script,Error,Warning,Info
     htype=`echo $htype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
-    htime=`echo "$2"   | awk '{$1=$1;print}'`                           # Save Event Data & Time
-    hgroup=`echo "$3"   | awk '{$1=$1;print}'`                          # SADM AlertGroup to Advise
-    hserver=`echo "$4"  | awk '{$1=$1;print}'`                          # Save Server Name
+    hdatetime=`echo "$2"  | awk '{$1=$1;print}'`                        # Save Event Date & Time
+    hdate=`echo "$2"      | awk '{ print $1 }'`                         # Save Event Date
+    htime=`echo "$2"      | awk '{ print $2 }'`                         # Save Event Time
+    hgroup=`echo "$3"     | awk '{$1=$1;print}'`                        # SADM AlertGroup to Advise
+    hserver=`echo "$4"    | awk '{$1=$1;print}'`                        # Save Server Name
     hsub="$5"                                                           # Save Alert Subject
     href="$6"                                                           # Save Alert Reference No.
     hstat="$7"                                                          # Save Alert Send Status
-    hepoch=$(sadm_date_to_epoch "$htime")                               # Convert Event Time to Epoch
+    hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
     #
-    hline=`printf "%s,%s"    "$hepoch" "$htime"`                        # Epoch, Date, Time
-    hline=`printf "%s,%s,%s,%s" "$hline" "$href" "$htype" "$hserver"`   # Ref#, Alert Type & Server
-    hline=`printf "%s,%s,%s,%s" "$hline" "$hgroup" "$hsub" "$hstat"`    # Alert Group,Subject,Status
+    hline=`printf "%s,%s"    "$hepoch" "$href" `                        # Epoch, Reference No.
+    hline=`printf "%s,%s,%s,%s" "$hline" "$htime" "$hdate" "$htype"`    # Alert time,date,type
+    hline=`printf "%s,%s,%s,%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
+    hline=`printf "%s,%s" "$hline" "$hstat"`                            # Alert Status
+
+"$hstat"
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
