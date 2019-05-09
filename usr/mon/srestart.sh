@@ -92,7 +92,6 @@ main_process()
         then RC=1                                                       # Error Return Code is 1
              EMSG="Service (${SRV_NAME}) not installed."                # Error Message file Test
              echo "$EMSG" > $EFILE                                      # Write to Error Msg File
-             echo "\n EFILE = $EFILE \n"                               
              printf "\n[ERROR] None of the service (${SRV_NAME}) is installed."
         else RC=0                                                       # OK Return Code is 0
              rm -f $EFILE >/dev/null 2>&1                               # Remove Error FIle when OK
