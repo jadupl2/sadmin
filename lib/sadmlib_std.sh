@@ -2290,7 +2290,7 @@ send_email_alert() {
             sadm_writelog " " 
     fi
 
-    # Construct Email Subject Line
+    # Construct Email Subject of the email to send.
     case "$atype" in                                                    # Depending on Alert Type
       e|E) ws="SADM ERROR: ${asubject}"                                 # Construct Mess. Subject
            ;;
@@ -2306,14 +2306,19 @@ send_email_alert() {
            ;;
     esac
 
-    # Construct Email Message to send.
+    # Construct Body of the Email to send.
     mdate=`date "+%Y.%m.%d %H:%M"`                                      # Mail Date & Time
-    if [ $arefno != "000000" ] 
-         then wm=`printf "Email Date/Time : %s\nEvent Date/Time : %s\nEvent Ref. No.  : %s\nEvent Message   : %s\nEvent on server : %s" "$mdate" "$atime" "$arefno" "$amessage" "$aserver"`
-         else wm=`printf "Email Date/Time : %s\nEvent Date/Time : %s\nEvent Message   : %s\nEvent on server : %s" "$mdate" "$atime" "$amessage" "$aserver"`
+    vm1=`printf "Email Date/Time : %s" "$mdate"`                        # Date the Email was Sent
+    vm2=`printf "Event Date/Time : %s" "$atime"`                        # Date The event occured
+    vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
+    vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
+    vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
+        then wm=`printf "%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
+        else wm=`printf "%s\n%s\n%s\n%s"     "$vm1" "$vm2" "$vm4" "$vm5"` 
     fi
 
-    # Send the Email Now 
+    # Send the Email Now using 'mutt'.
     if [ "$aattach" != "" ]                                             # If Attachment Specified
         then printf "%s\n" "$wm" | $SADM_MUTT -s "$ws" "$aemail" -a "$aattach"  >>$SADM_LOG 2>&1 
         else printf "%s\n" "$wm" | $SADM_MUTT -s "$ws" "$aemail"  >>$SADM_LOG 2>&1 
@@ -2574,8 +2579,6 @@ send_cellular_alert() {
 # Example : 
 #   write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$aref" "$astatus"
 #
-#1557207240,000000,01:34,2019.05.07,S,raspi2,default,sadm_osupdate reported an error on raspi2,Email sent with success to duplessis.jacques@gmail.com
-
 # --------------------------------------------------------------------------------------------------
 #
 write_alert_history() {
@@ -2603,8 +2606,6 @@ write_alert_history() {
     hline=`printf "%s,%s,%s,%s" "$hline" "$htime" "$hdate" "$htype"`    # Alert time,date,type
     hline=`printf "%s,%s,%s,%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
     hline=`printf "%s,%s" "$hline" "$hstat"`                            # Alert Status
-
-"$hstat"
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
