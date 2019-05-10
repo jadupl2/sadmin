@@ -90,6 +90,7 @@
 #@2019_05_07 Update: v2.72 Function 'sadm_alert_sadmin' is removed, now using 'sadm_send_alert'
 #@2019_05_08 Fix: v2.73 Bug fix - Eliminate sending duplicate alert.
 #@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
+#@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -99,7 +100,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.74"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.75"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1804,10 +1805,10 @@ sadm_start() {
 
     # If PID File exist and User want to run only 1 copy of the script - Abort Script
     if [ -e "${SADM_PID_FILE}" ] && [ "$SADM_MULTIPLE_EXEC" != "Y" ]    # PIP Exist - Run One Copy
-       then sadm_writelog "Script is already running ... "              # Script already running
+       then sadm_writelog "$SADM_PN is already running ... "            # Script already running
             sadm_writelog "PID File ${SADM_PID_FILE} exist ..."         # Show PID File Name
             sadm_writelog "Won't launch a second copy of this script."  # Only one copy can run
-            sadm_writelog "Unless you remove the PID File."             # Del PID File to override
+            sadm_writelog "Unless you remove the PID File or set SADM_MULTIPLE_EXEC='Y' in the script."
             DELETE_PID="N"                                              # No Del PID Since running
             sadm_stop 1                                                 # Call SADM Close Function
             exit 1                                                      # Exit with Error
@@ -2059,30 +2060,39 @@ sadm_send_alert() {
 
 
     # To prevent duplicate alert, search History for the 'Alert ID' 
-    alertid=`printf "%s,%s,%s,%s,%s" "$adate" "$atype" "$aserver" "$agroup" "$asubject"`
-    if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Searching History for \"$alertid\"" ; fi
+    alertid=`printf "%s;%s;%s;%s" "$atype" "$aserver" "$agroup" "$asubject"`
     grep "$alertid" $SADM_ALERT_HIST  >>/dev/null 2>&1                  # Grep Message in History
     if [ $? -ne 0 ]                                                     # Same Alert was not found
-        then if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert wasn't found" ; fi
-        else if [ "$LIB_DEBUG" -gt 4 ] ; then sadm_writelog "Same alert was found" ; fi
-             if [ $SADM_ALERT_REPEAT -eq 0 ] ; then return 2 ; fi       # User want norepeat sameday
-             alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F, '{print $1}'`
-             current_epoch=`date +%s`                                   # Get Current Epoch
-             epochDiff=`expr $current_epoch - $alert_epoch`             # Nb Sec. Since alert
-             if [ "$LIB_DEBUG" -gt 4 ] 
-                then sadm_writelog "Histepoch: $alert_epoch Cur.epoch=$current_epoch Diff=$epochDiff"
-                     sadm_writelog "SADM_ALERT_REPEAT=$SADM_ALERT_REPEAT"
-             fi
-             if [ $epochDiff -le $SADM_ALERT_REPEAT ]                   # Diff less than Wait Time
-                then sadm_writelog "The same alert was sent $epochDiff seconds ago." 
-                     mess="This is less than the alert repeat time defined in sadmin.cfg"
-                     mess="$mess ($SADM_ALERT_REPEAT)"
-                     sadm_writelog "$mess"                              # Show User Wait Time Sec.
-                     return 2                                           # Return 2 = Duplicate Alert
-                else sadm_writelog "Last Alert Today for $alertid"
-                     amessage="Last Alert Today for : $amessage" 
-             fi                                                         # WaitTime reach Send Alert
-    fi                                                                  # Alert Not Found in History
+        then if [ "$LIB_DEBUG" -gt 4 ]                                  # Under Debug Mode > than 4
+                 then sadm_writelog "Search History for \"$alertid\""   # Search alert ID in History
+                      sadm_writelog "Same alert wasn't found"           # Show search result
+             fi                                                         # New Alert Proceed Normally
+        else if [ "$LIB_DEBUG" -gt 4 ]                                  # Under Debug Mode > than 4
+                 then sadm_writelog "Search History for \"$alertid\""   # Search alert ID in History
+                      sadm_writelog "Same alert was found"              # Show search result
+             fi                                                         # Same kind of alert found
+             alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F\; '{print $1}'`
+             current_epoch=`date +%s`                                   # Get Current Epoch Time
+             ediff=`expr $current_epoch - $alert_epoch`                 # Nb Sec. Since Same Alert
+             if [ $ediff -gt 86400 ]                                    # Same Alert more than 24hr ago
+                then sadm_writelog "EPOCH - Alert: $alert_epoch  Cur.:$current_epoch  Diff=$ediff"
+                     sadm_writelog "Same alert more than 24 hours ago, consider as a new alert."
+                else if [ $SADM_ALERT_REPEAT -eq 0 ]                    # User want norepeat sameday
+                        then wmsg="Don't repeat alert on the same day"  # No repeat - Advise user
+                             sadm_writelog "$wmsg (SADM_ALERT_REPEAT set to $SADM_ALERT_REPEATS)."
+                             return 0                                   # Return to Caller 
+                        else if [ $ediff -le $SADM_ALERT_REPEAT ]       # Diff less than Repeat Time
+                                then msg="Same alert was sent $ediff seconds ago," 
+                                     msg="$msg which is less than $SADM_ALERT_REPEAT set in sadmin.cfg"
+                                     sadm_writelog "$msg"               # Show User Wait Time Sec.
+                                     return 0                           # Return 2 = Duplicate Alert
+                                else sadm_writelog "Repeating alert $alert_epoch - ($alertid)"
+                                     amessage="Repeat alert for : $amessage" 
+                             fi                                         
+                     fi                                                 
+             fi 
+    fi
+
 
     # Determine if a [M]ail, [S]lack, [T]exto [C]ellular  Message need to be issued
     agroup_type=`grep -i "^$agroup " $SADM_ALERT_FILE |awk '{ print $2 }'` # [S/M/T/C] Group
@@ -2327,7 +2337,7 @@ send_email_alert() {
     # Test Email Return Code
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
-        then wstatus="Email sent with success to $aemail" 
+        then wstatus="Email sent to $aemail" 
         else wstatus="Error sending email to $aemail"
              sadm_writelog "$wstatus"                                   # Advise USer
     fi
@@ -2602,10 +2612,10 @@ write_alert_history() {
     hstat="$7"                                                          # Save Alert Send Status
     hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
     #
-    hline=`printf "%s,%s"    "$hepoch" "$href" `                        # Epoch, Reference No.
-    hline=`printf "%s,%s,%s,%s" "$hline" "$htime" "$hdate" "$htype"`    # Alert time,date,type
-    hline=`printf "%s,%s,%s,%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
-    hline=`printf "%s,%s" "$hline" "$hstat"`                            # Alert Status
+    hline=`printf "%s;%s"    "$hepoch" "$href" `                        # Epoch, Reference No.
+    hline=`printf "%s;%s;%s" "$hline" "$hdatetime" "$htype"`            # Alert time,date,type
+    hline=`printf "%s;%s;%s;%s" "$hline" "$hserver" "$hgroup" "$hsub"`  # Alert Server,Group,Subject
+    hline=`printf "%s;%s" "$hline" "$hstat"`                            # Alert Status
     echo "$hline" >>$SADM_ALERT_HIST                                    # Write Alert History File
 }
 
