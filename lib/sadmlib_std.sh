@@ -91,6 +91,7 @@
 #@2019_05_08 Fix: v2.73 Bug fix - Eliminate sending duplicate alert.
 #@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
 #@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
+#@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -100,7 +101,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.75"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.76"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2074,6 +2075,7 @@ sadm_send_alert() {
              alert_epoch=`grep "$alertid" $SADM_ALERT_HIST | tail -1 | awk -F\; '{print $1}'`
              current_epoch=`date +%s`                                   # Get Current Epoch Time
              ediff=`expr $current_epoch - $alert_epoch`                 # Nb Sec. Since Same Alert
+             sadm_writelog "EPOCH - Alert: $alert_epoch  Cur.:$current_epoch  Diff=$ediff"
              if [ $ediff -gt 86400 ]                                    # Same Alert more than 24hr ago
                 then sadm_writelog "EPOCH - Alert: $alert_epoch  Cur.:$current_epoch  Diff=$ediff"
                      sadm_writelog "Same alert more than 24 hours ago, consider as a new alert."
@@ -2610,7 +2612,8 @@ write_alert_history() {
     hsub="$5"                                                           # Save Alert Subject
     href="$6"                                                           # Save Alert Reference No.
     hstat="$7"                                                          # Save Alert Send Status
-    hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
+    #hepoch=$(sadm_date_to_epoch "$hdatetime")                           # Convert Event Time to Epoch
+    hepoch=`date +%s`                                                   # Get Current Epoch Time
     #
     hline=`printf "%s;%s"    "$hepoch" "$href" `                        # Epoch, Reference No.
     hline=`printf "%s;%s;%s" "$hline" "$hdatetime" "$htype"`            # Alert time,date,type
