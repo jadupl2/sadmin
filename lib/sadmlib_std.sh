@@ -92,6 +92,7 @@
 #@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
 #@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
 #@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
+#@2019_05_12 Update: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -101,7 +102,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.76"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.77"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2155,6 +2156,24 @@ sadm_send_alert() {
 # --------------------------------------------------------------------------------------------------
 send_slack_alert() {
 
+    # Validate the Number of parameter received.
+    if [ $# -ne 8 ]                                                     # Invalid No. of Parameter
+        then sadm_writelog "Invalid number of argument received by function ${FUNCNAME}"
+             sadm_writelog "Should be 8, we received $# : $*"           # Show what received
+             return 1                                                   # Return Error to caller
+    fi
+
+    # Save Parameters Received (After Removing leading and trailing Spaces.
+    atype=`echo "$1"   | awk '{$1=$1;print}'`                           # [S]cr [E]rr [W]arn [I]nfo
+    atype=`echo $atype |tr "[:lower:]" "[:upper:]"`                     # Make Alert Type Uppercase
+    atime=`echo "$2" | awk '{$1=$1;print}'`                             # Save Event Date/Time
+    aserver=`echo "$3" | awk '{$1=$1;print}'`                           # Alert come from this Srv
+    agroup=`echo "$4"  | awk '{$1=$1;print}'`                           # Alert Group to Advise
+    asubject="$5"                                                       # Save Alert Subject
+    amessage="$6"                                                       # Save Alert Message
+    aattach="$7"                                                        # Save Attachment FileName
+    arefno="$8"                                                         # Save Reference Number
+
     # Get the Slack Channel of the Alert Group 
     aslack_channel=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Grep Grp get Field3
     aslack_channel=`echo $aslack_channel | awk '{$1=$1;print}'`         # Del Leading/Trailing Space
@@ -2197,16 +2216,23 @@ send_slack_alert() {
            ;;
     esac
 
-    # Construct Message to send.
-    wm="${ws}\n${atime}\n"                                              # Combine Subject & Date
-    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}\n" ; fi
-    vm="${wm}Event occured on server : ${aserver}\n"
-    if [ "${asubject}" != "${amessage}" ] ;then wm="${wm}\n${amessage}\n" ;fi 
+    # Construct Slack Message to send.
+    mdate=`date "+%Y.%m.%d %H:%M"`                                      # SMS Date & Time
+    vm0="SADM Sysmon Alert"                                             # SMS Heading
+    vm1=`printf "SMS Date/Time   : %s" "$mdate"`                        # Date the SMS was Sent
+    vm2=`printf "Event Date/Time : %s" "$atime"`                        # Date The event occured
+    vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
+    vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
+    vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
+    fi
 
     # Included last 50 lines of attachment file (if specified)
     if [ "$aattach" != "" ]                                             # If Attachment Specified
         then logtail=`tail -50 ${aattach}`
-             wm="${wm}\n\n*-----Attachment-----*\n${logtail}"
+             vm="${wm}\n\n*-----Attachment-----*\n${logtail}"
     fi
 
     # If Script Error include URL to view script log in message
@@ -2216,10 +2242,10 @@ send_slack_alert() {
              LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
              URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
              LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-             wm="${wm}\nLink to the script log:\n${LOGURL}"             # Insert Log URL In Mess
+             vm="${vm}\nEvent log link  :\n${LOGURL}"                   # Insert Log URL In Mess
     fi
 
-    slack_text="$wm"                                                    # Set Alert Text
+    slack_text="$vm"                                                    # Set Alert Text
     escaped_msg=$(echo "${slack_text}" |sed 's/\"/\\"/g' |sed "s/'/\'/g" |sed 's/`/\`/g')
     slack_text="\"text\": \"${escaped_msg}\""                           # Set Final Text Message
     slack_icon="warning"
@@ -2389,12 +2415,15 @@ send_sms_alert() {
     amember=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'` # Get Group Members (Cell#)
     amember=`echo $amember | awk '{$1=$1;print}'`                       # Del Leading/Trailing Space
     if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
-       then debmes="${FUNCNAME}: atype=$atype "                         # Show Alert Type
-            debmes="$debmes agroup=$agroup "                            # Show Alert Group
-            debmes="$debmes amember=\"$amember\""                       # Show SMS Group Member
-            debmes="$debmes asubject=\"$asubject\""                     # Show Alert Subject/Title
-            debmes="$debmes amessage=\"$amessage\""                     # Show Alert Message
-            debmes="$debmes aattach=\"$aattach\""                       # Show Alert Attachment File
+       then debmes="${FUNCNAME}: "                                      # Show Function Name
+            debmes="$debmes atype    = $atype "                         # Show Alert Date/Time
+            debmes="$debmes atime    = $atime "                         # Show Alert Date/Time
+            debmes="$debmes agroup   = $agroup "                        # Show Alert Group
+            debmes="$debmes aserver  = $aserver "                       # Show Alert Server
+            debmes="$debmes amember  = $amember"                        # Show Cellular No.
+            debmes="$debmes asubject = \"$asubject\""                   # Show Alert Subject/Title
+            debmes="$debmes amessage = \"$amessage\""                   # Show Alert Message
+            debmes="$debmes aattach  = \"$aattach\""                    # Show Alert Attachment File
             sadm_writelog "$debmes"                                     # Show Debug LIne
     fi
 
@@ -2414,62 +2443,63 @@ send_sms_alert() {
            ;;
     esac
 
-    # Construct Message to send.
-    wm="Event Date & Time : ${atime}%0a"                                # Insert Event Time in Mess.
-    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}%0a" ; fi
-    vm="${wm}${amessage}%0a"
-    vm="${wm}Event occured on server : ${aserver}."
-
-    # If Script Error include URL to view script log in message
-    if [ "$atype" = "S" ]                                               # If SMS concerning Script
-        then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
-             LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
-             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
-             URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
-             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-             wm="${wm}%0aLink to the script log:%0a${LOGURL}"           # Insert Log URL In Mess
+    # Construct SMS Message to send.
+    mdate=`date "+%Y.%m.%d %H:%M"`                                      # SMS Date & Time
+    vm0="SADM Sysmon Alert"                                             # SMS Heading
+    vm1=`printf "SMS Date/Time   : %s" "$mdate"`                        # Date the SMS was Sent
+    vm2=`printf "Event Date/Time : %s" "$atime"`                        # Date The event occured
+    vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
+    vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
+    vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
     fi
 
-    total_error=0                                                       # E
-    for i in $(echo $amember | tr ',' '\n')
+
+    # Send SMS to Texto Group Member
+    total_error=0                                                       # Total Error Counter Reset
+    RC=0                                                                # Function Return Code Def.
+    for i in $(echo $amember | tr ',' '\n')                             # For each member of group
         do
-        if [ "$LIB_DEBUG" -gt 4 ] ;then printf "\nProcessing sms member $i" ;fi
+        if [ "$LIB_DEBUG" -gt 4 ]                                       # Under Debugging Mode
+            then printf "\nProcessing sms member $i"                    # Show Current Member 
+        fi
         
         # Get the Group Member of the Alert Group (Cellular No.)
-        acell=`grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $3 }'`    # Get Group Members (Cell#)
-        agtype=`grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $2 }'`   # Get Group Type should be C
+        acell=` grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $3 }'`   # Get Group Members (Cell#)
         acell=`echo $acell   | awk '{$1=$1;print}'`                     # Del Leading/Trailing Space
+
+        # Check Member Type (Should be 'C')
+        agtype=`grep -i "^$i " $SADM_ALERT_FILE | awk '{ print $2 }'`   # Get Group Type should be C
         agtype=`echo $agtype | awk '{$1=$1;print}'`                     # Del Leading/Trailing Space
         agtype=`echo $agtype | tr "[:lower:]" "[:upper:]"`              # Make Grp Type is uppercase
-        if [ "$agtype" != "C" ]
-            then sadm_writelog "Member of $agroup $i is not a type 'C' alert"
-                 sadm_writelog "Alert not send to $i"
+        if [ "$agtype" != "C" ]                                         # Member should be type [C]
+            then sadm_writelog "Member of $agroup $i is not a type 'C' alert."
+                 sadm_writelog "Alert not send to $i, proceeding with next member."
                  total_error=`expr $total_error + 1`
                  continue
-            else 
-                reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$wm" -d key=$SADM_TEXTBELT_KEY`
-                echo "$reponse" | grep -i "success" >/dev/null 2>&1     # Success in Response ?
-                RC=$?                                                   # Save Error Number
-                if [ $RC -eq 0 ]                                        # If Error Sending Email
-                    then wstatus="SMS message sent with success to $acell" 
-                    else wstatus="Error sending SMS message to $acell"
-                         sadm_writelog "$wstatus"                       # Advise USer
-                         total_error=`expr $total_error + 1`
-                         RC=1                                           # When Error Return Code 1
-                fi
+        fi
+
+        # Send SMS to Cell Member ($acell)
+        reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$vm" -d key=$SADM_TEXTBELT_KEY`
+        echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1  # Success Response ?
+        RC=$?                                                   # Save Error Number
+        if [ $RC -eq 0 ]                                        # If Error Sending Email
+            then wstatus="SMS message sent with success to $acell" 
+            else wstatus="Error ($RC) sending SMS message to $acell"
+                 sadm_writelog "$wstatus"                       # Advise USer
+                 sadm_writelog "$reponse"                       # Error msg from Textbelt
+                 total_error=`expr $total_error + 1`
+                 RC=1                                           # When Error Return Code 1
         fi
         done
 
     # Test Cellular Return Code
-    if [ $total_error -eq 0 ]                                           # If Error Sending SMS
-        then wstatus="SMS message sent with success to $agroup" 
-        else wstatus="Error sending SMS message to $agroup"
-             sadm_writelog "$wstatus"                                   # Advise USer
-             RC=1                                                       # When Error Return Code 1
-    fi
+    if [ $total_error -ne 0 ] ; then RC=1 ; else RC=0 ; fi              # If Error Sending SMS
 
     # Write alert to history file
-    write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$arefno" "$reponse"
+    write_alert_history "$atype" "$atime" "$agroup" "$aserver" "$asubject" "$arefno" "$wstatus"
     return $RC                                                          # Return Exit Code to Caller
 }   
 
@@ -2513,12 +2543,15 @@ send_cellular_alert() {
     acell=`grep -i "^$agroup " $SADM_ALERT_FILE | awk '{ print $3 }'`   # Get Group Members (Cell#)
     acell=`echo $acell | awk '{$1=$1;print}'`                           # Del Leading/Trailing Space
     if [ "$LIB_DEBUG" -gt 4 ]                                           # Debug Info List what Recv.
-       then debmes="${FUNCNAME}: atype=$atype "                    # Show Alert Type
-            debmes="$debmes alert_group=$agroup "                       # Show Alert Group
-            debmes="$debmes alert_cellular=\"$acell\""                  # Show Cellular No.
-            debmes="$debmes alert_subject=\"$asubject\""                # Show Alert Subject/Title
-            debmes="$debmes alert_message=\"$amessage\""                # Show Alert Message
-            debmes="$debmes aattachment=\"$aattach\""              # Show Alert Attachment File
+       then debmes="${FUNCNAME}: "                                      # Show Function Name
+            debmes="$debmes atype    = $atype "                         # Show Alert Date/Time
+            debmes="$debmes atime    = $atime "                         # Show Alert Date/Time
+            debmes="$debmes agroup   = $agroup "                        # Show Alert Group
+            debmes="$debmes aserver  = $aserver "                       # Show Alert Server
+            debmes="$debmes acell    = $acell"                          # Show Cellular No.
+            debmes="$debmes asubject = \"$asubject\""                   # Show Alert Subject/Title
+            debmes="$debmes amessage = \"$amessage\""                   # Show Alert Message
+            debmes="$debmes aattach  = \"$aattach\""                    # Show Alert Attachment File
             sadm_writelog "$debmes"                                     # Show Debug LIne
     fi
 
@@ -2538,33 +2571,30 @@ send_cellular_alert() {
            ;;
     esac
 
-    # Construct Message to send.
-    wm="Event Date & Time: ${atime}%0a"                                 # Insert Event DAte in Mess.
-    if [ ${refno} != "000000" ] ; then wm="${vm}Reference No.${refno}%0a" ; fi
-    vm="${wm}${amessage}%0a"
-    vm="${wm}Event occured on server : ${aserver}."
-
-    # If Script Error include URL to view script log in message
-    if [ "$atype" = "S" ]                                               # If SMS concerning Script
-        then SNAME=`echo ${asubject} |awk '{ print $1 }'`               # Get Script Name
-             LOGFILE="${aserver}_${SNAME}.log"                          # Assemble log Script Name
-             LOGNAME="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}"    # Add Dir. Path 
-             URL_VIEW_FILE='/view/log/sadm_view_file.php'               # View File Content URL
-             LOGURL="http://sadmin.${SADM_DOMAIN}/${URL_VIEW_FILE}?filename=${LOGNAME}" 
-             wm="${wm}%0aLink to the script log:%0a${LOGURL}"           # Insert Log URL In Mess
+    # Construct SMS Message to send.
+    mdate=`date "+%Y.%m.%d %H:%M"`                                      # SMS Date & Time
+    vm0="SADM Sysmon Alert"                                             # SMS Heading
+    vm1=`printf "SMS Date/Time   : %s" "$mdate"`                        # Date the SMS was Sent
+    vm2=`printf "Event Date/Time : %s" "$atime"`                        # Date The event occured
+    vm3=`printf "Event Ref. No.  : %s" "$arefno"`                       # Ref. No assign to alert
+    vm4=`printf "Event Message   : %s" "$amessage"`                     # Body of the message
+    vm5=`printf "Event on system : %s" "$aserver"`                      # Server where alert occured
+    if [ $arefno != "000000" ]                                          # If ref .no = 000000 = None
+        then vm=`printf "%s\n%s\n%s\n%s\n%s\n%s" "$vm0" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
+        else vm=`printf "%s\n%s\n%s\n%s\n%s"     "$vm0" "$vm1" "$vm2" "$vm4" "$vm5"` 
     fi
 
-
     # Send the SMS unsing TextBelt Now 
-    reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$wm" -d key=$SADM_TEXTBELT_KEY`
+    reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$vm" -d key=$SADM_TEXTBELT_KEY`
 
     # Test Cellular Return Code
-    echo "$reponse" | grep -i "success" >/dev/null 2>&1                 # Success in Response ?
+    echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1       # Success Response ?
     RC=$?                                                               # Save Error Number
     if [ $RC -eq 0 ]                                                    # If Error Sending Email
         then wstatus="SMS message sent with success to $acell" 
         else wstatus="Error sending SMS message to $acell"
-             sadm_writelog "$wstatus"                                   # Advise USer
+             sadm_writelog "$wstatus"                                   # Advise User
+             sadm_writelog "$reponse"                                   # Error msg from Textbelt
              RC=1                                                       # When Error Return Code 1
     fi
 
