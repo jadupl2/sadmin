@@ -92,7 +92,7 @@
 #@2019_05_09 Update: v2.74 Change Alert History file layout to facilitate search for duplicate alert
 #@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
 #@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
-#@2019_05_12 Update: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
+#@2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
