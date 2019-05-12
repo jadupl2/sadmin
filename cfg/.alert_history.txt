@@ -1,4 +1,4 @@
-# SADMIN Alert History File v1.7
+# SADMIN Alert History File v1.8
 #
 # This file Record each Alert that was sent either by mail,SMS & Slack
 #   Comment and blank line are ignored.
@@ -7,8 +7,8 @@
 # --------------------------------------------------------------------
 # Format History Line
 #   1= Epoch Time when alarm was sent.
-#   2= Reference Number (Increase each time an alert is sent)
-#      '000000' = No Reference number.
+#   2= Reference Number (Incr. each time an alert is sent - Future use)
+#      '000000' = No Reference number. 
 #   3= Date and Time of Event/Alert (YYYY/MM/DD HH:MM)    
 #   4= S,E,W,I - Alert issue type          -----|
 #       [S]cript, [I]nfo [W]arning [E]rror      |-- Use to search
