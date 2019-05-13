@@ -29,12 +29,12 @@
 # 2018_10_16 v2.26 Change email sent when smon configuration isn't found.
 # 2018_12_29 v2.27 Enhance Performance checking service, chown & chmod only if running as root.
 # 2018_12_30 v2.28 Fix: problem when checking service using Sys V method.
-#@2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
-#@2019_03_20 nolog: v2.29 Mail message change
-#@2019_04_01 nolog: v2.30 Include color on status output.
+# 2019_03_09 Removed: v2.29 Remove DateTime Module (Not needed anymore)
+# 2019_03_20 nolog: v2.29 Mail message change
+# 2019_04_01 nolog: v2.30 Include color on status output.
 #@2019_04_17 Update: v2.31 Get SADMIN Root Directory from /etc/environment.
 #@2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
-#@2019_05_09 #@2019_04_19 Update: v2.32 Produce customized Error Message, when running External Script.
+#@2019_05_13 Update: v2.33 Don't abort if can't create sysmon.lock file, happen during setup.
 
 #===================================================================================================
 #
@@ -1603,7 +1603,7 @@ sub write_rpt_file {
                     print "\nUsing message in $script_err for rpt file";
                     open SMESSAGE, "$script_err" or die $!;             # Open Script txt Error File
                     while ($sline = <SMESSAGE>) {                       # Read txt Error Mess. file
-                        chomp $sline; $ERR_MESS="$sline ";              # Get Text Message
+                        chomp $sline; $ERR_MESS="$sline";               # Get Text Message
                     }
                     close SMESSAGE;                                     # Close Error Mess. File
                     $SADM_LINE = sprintf "%s;%s;%s;%s;%s;%s;%s;%s;%s\n",
@@ -1640,7 +1640,8 @@ sub write_rpt_file {
 #---------------------------------------------------------------------------------------------------
 sub init_process {
 
-    # If you really want to prevent sysmon from running create this file /tmp/sadmlock.txt
+    # If you really want to prevent sysmon from running for a long period of time.
+    # Create this file /tmp/sadmlock.txt , BUT DON'T FORGET TO REMOVE IT, cause sysmon don't work.
     if ( -e "/tmp/sadmlock.txt") {                                      # If /tmp/sadmlock.txt exist
         print "/tmp/sadmlock.txt exist - SYSMON not executed";          # Advise User - Show Message
         exit 1;                                                         # Exit with Error
@@ -1685,7 +1686,8 @@ sub init_process {
     }else{
         print "\nCreating lock file $SYSMON_LOCK_FILE\n";               # Show user want we do
         @args = ("$CMD_TOUCH", "$SYSMON_LOCK_FILE");                    # Cmd to Create Lock File
-        system(@args) == 0   or die "system @args failed: $?";          # Execute the Touch Command
+#        system(@args) == 0   or die "system @args failed: $?";          # Execute the Touch Command
+        system(@args) == 0   ;                                          # Execute the Touch Command
     }
 
     # Execute the 'ps' command twice and save result to files
