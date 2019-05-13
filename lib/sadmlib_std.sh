@@ -93,6 +93,7 @@
 #@2019_05_10 Update: v2.75 Change to duplicate alert management, more efficient.
 #@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
 #@2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
+#@2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -102,7 +103,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.77"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.78"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2483,15 +2484,15 @@ send_sms_alert() {
 
         # Send SMS to Cell Member ($acell)
         reponse=`${SADM_CURL} -s -X POST $SADM_TEXTBELT_URL -d phone=$acell -d "message=$vm" -d key=$SADM_TEXTBELT_KEY`
-        echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1  # Success Response ?
-        RC=$?                                                   # Save Error Number
-        if [ $RC -eq 0 ]                                        # If Error Sending Email
-            then wstatus="SMS message sent with success to $acell" 
-            else wstatus="Error ($RC) sending SMS message to $acell"
-                 sadm_writelog "$wstatus"                       # Advise USer
-                 sadm_writelog "$reponse"                       # Error msg from Textbelt
+        echo "$reponse" | grep -i "\"success\":true," >/dev/null 2>&1   # Success Response ?
+        RC=$?                                                           # Save Error Number
+        if [ $RC -eq 0 ]                                                # If Error Sending Email
+            then wstatus="SMS message sent with success to group $agroup ($acell)" 
+            else wstatus="Error ($RC) sending SMS message to group $agroup ($acell)"
+                 sadm_writelog "$wstatus"                               # Advise USer
+                 sadm_writelog "$reponse"                               # Error msg from Textbelt
                  total_error=`expr $total_error + 1`
-                 RC=1                                           # When Error Return Code 1
+                 RC=1                                                   # When Error Return Code 1
         fi
         done
 
