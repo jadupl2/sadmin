@@ -80,9 +80,9 @@
 # 2019_02_06 Fix: v2.62 break error when finding system domain name.
 # 2019_02_25 Change: v2.63 Added SADM_80_SPACES variable available to user.
 # 2019_02_28 Change: v2.64 'lsb_release -si' return new string in RHEL/CentOS 8 Chg sadm_get_osname
-#@2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
-#@2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
-#@2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
+# 2019_03_18 Change: v2.65 Improve: Optimize code to reduce load time (125 lines removed).
+# 2019_03_18 New: v2.66 Function 'sadm_get_packagetype' that return package type (rpm,dev,aix,dmg).  
+# 2019_03_31 Update: v2.67 Set log file owner ($SADM_USER) and permission (664) if executed by root.
 #@2019_04_07 Update: v2.68 Optimize execution time & screen color variable now available.
 #@2019_04_09 Update: v2.69 Fix tput error when running in batch mode and TERM not set.
 #@2019_04_25 Update: v2.70 Read and Load 2 news sadmin.cfg variable Alert_Repeat,Textbelt Key & URL
@@ -94,6 +94,7 @@
 #@2019_05_11 Update: v2.76 Alert History epoch time (1st field) is always epoch the alert is sent.
 #@2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
 #@2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
+#@2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -103,7 +104,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.78"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="2.79"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -2119,7 +2120,13 @@ sadm_send_alert() {
 
     # Send the Alert Message using the type of alert requested
     case "$agroup_type" in
-        M)  send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
+        M)  # If Script Error include URL to view script log in message
+            if [ "$atype" = "S" ]                                       # If Mail concerning Script
+                then SNAME=`echo ${asubject} |awk '{ print $1 }'`       # Get Script Name
+                     LOGFILE="${aserver}_${SNAME}.log"                  # Build Log Script Name
+                     aattach="${SADM_WWW_DAT_DIR}/${aserver}/log/${LOGFILE}" # Whereis Log File
+            fi
+            send_email_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
             RC=$?                                                       # Save Return Code 
             ;;
         C)  send_cellular_alert "$atype" "$atime" "$aserver" "$agroup" "$asubject" "$amessage" "$aattach" "$arefno"
@@ -2356,6 +2363,8 @@ send_email_alert() {
         then wm=`printf "%s\n%s\n%s\n%s\n%s" "$vm1" "$vm2" "$vm3" "$vm4" "$vm5"` 
         else wm=`printf "%s\n%s\n%s\n%s"     "$vm1" "$vm2" "$vm4" "$vm5"` 
     fi
+
+
 
     # Send the Email Now using 'mutt'.
     if [ "$aattach" != "" ]                                             # If Attachment Specified
