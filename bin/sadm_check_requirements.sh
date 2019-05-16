@@ -30,9 +30,10 @@
 # Version Change Log 
 #
 #2019_03_17 New: v1.0 Initial Version.
-#@2019_03_20 New: v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
-#@2019_03_29 Update: v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
-#@2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
+# 2019_03_20 New: v1.1 Verify if SADMIN requirement are met and -i to install missing requirement.
+# 2019_03_29 Update: v1.2 Add 'chkconfig' command requirement if running system using SYSV Init.
+# 2019_04_07 Update: v1.3 Use color variables from SADMIN Library.
+#@2019_05_16 Update: v1.4 Don't generate the RCH file & allow running multiple instance of script.
 #
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
@@ -62,13 +63,13 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.3'                               # Your Current Script Version
+    export SADM_VER='1.4'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
-    export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
-    export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_MULTIPLE_EXEC="Y"                       # Allow running multiple copy at same time ?
+    export SADM_USE_RCH="N"                             # Generate Entry in Result Code History file
 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 #---------------------------------------------------------------------------------------------------
