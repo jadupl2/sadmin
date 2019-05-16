@@ -95,6 +95,7 @@
 #@2019_05_12 Feature: v2.77 Alerting System with Mail, Slack and SMS now fullu working.
 #@2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
 #@2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
+#@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -104,7 +105,7 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="2.79"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.00"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
@@ -1864,7 +1865,15 @@ sadm_stop() {
 
     # Update RCH File and Trim It to $SADM_MAX_RCLINE lines define in sadmin.cfg
     if [ -z "$SADM_USE_RCH" ] || [ "$SADM_USE_RCH" = "Y" ]              # Want to Produce RCH File
-        then RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
+        then XCODE=`tail -1 ${SADM_RCHLOG}| awk '{ print $9 }'`         # Get RCH Code of last line
+             if [ "$XCODE" -eq 2 ]                                      # If last Line was code 2
+                then XLINE=`wc -l ${SADM_RCHLOG} | awk '{print $1}'`    # Actual Nb Line in RCH File
+                     XCOUNT=`expr $XLINE - 1`                           # Count without last line
+                     head -$XCOUNT ${SADM_RCHLOG} > ${SADM_TMP_DIR}/xrch.$$ # Create new rch file
+                     rm -f ${SADM_RCHLOG} >/dev/null 2>&1               # Remove old rch file
+                     mv ${SADM_TMP_DIR}/xrch.$$ ${SADM_RCHLOG}          # New RCH without code 2
+             fi                     
+             RCHLINE="${SADM_HOSTNAME} $SADM_STIME $sadm_end_time"      # Format Part1 of RCH File
              RCHLINE="$RCHLINE $sadm_elapse $SADM_INST"                 # Format Part2 of RCH File
              RCHLINE="$RCHLINE $SADM_ALERT_GROUP $SADM_EXIT_CODE"       # Format Part3 of RCH File
              echo "$RCHLINE" >>$SADM_RCHLOG                             # Append Line to  RCH File
