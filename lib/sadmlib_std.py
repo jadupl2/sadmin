@@ -39,6 +39,7 @@
 # 2019_03_08 Change: v2.26 'lsb_release -si' return new string in RHEL/CentOS 8, Change get_osname()
 #@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
 #@2019_04_25 Update: v2.28 Read and Load 3 news sadmin.cfg variable Alert_Repeat, Textbelt Key & URL
+#@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -110,7 +111,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "2.28"                                # This Library Version
+        self.libver             = "3.00"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -1234,6 +1235,19 @@ class sadmtools():
 
         # Update the [R]eturn [C]ode [H]istory File
         if (self.use_rch) :                                             # If Want to use RCH File
+            rch_exists = os.path.isfile(self.rch_file)                  # Do we have existing rch ?
+            if rch_exists :                                             # If we do, del code2 line?
+                with open(self.rch_file) as xrch:                       # Open rch file
+                    lastLine = (list(xrch)[-1])                         # Get Last Line of rch file
+                    rch_code = lastLine.split(' ')[8].strip()           # Get Last Line return Code
+                    if rch_code == "2" :                                # If Code 2 - want to del it
+                        rch_file = open(self.rch_file,'r')              # Open RCH File for reading
+                        lines = rch_file.readlines()                    # Read all Lines in Memory
+                        del lines[-1]                                   # Delete code 2 last line
+                        rch_file.close()                                # Write changes to disk
+                        rch_file = open(self.rch_file,'w')              # Open RCH to rewrite it
+                        rch_file.writelines(lines)                      # Write RCH without code2
+                        rch_file.close()                                # Close & Write change 
             i = datetime.datetime.now()                                 # Get Current Stop Time
             stop_time=i.strftime('%Y.%m.%d %H:%M:%S')                   # Format Stop Date & Time
             FH_RCH_FILE=open(self.rch_file,'a')                         # Open RCH Log - append mode
