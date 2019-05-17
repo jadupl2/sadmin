@@ -28,6 +28,7 @@
 #@2019_04_07 Update: v3.10 Don't show Database user name if run on client.
 #@2019_04_11 Update: v3.11 Add Database column "active","category" and "group" to server output.
 #@2019_04_25 Update: v3.12 Add Alert_Repeat, Textbelt API Key and URL Variables in Output.
+#@2019_05_17 Update: v3.13 Add option -p(Show DB password),-s(Show Storix Info),-t(Show TextBeltKey)
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPT The Control-C
 #set -x
@@ -49,7 +50,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='3.12'                               # Current Script Version
+    export SADM_VER='3.13'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="N"                          # Show/Generate Script Header
@@ -88,6 +89,29 @@ lcount=0                                                                # Print 
 
 
 
+
+# --------------------------------------------------------------------------------------------------
+#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# --------------------------------------------------------------------------------------------------
+show_usage()
+{
+    printf "\n${SADM_PN} usage :"
+    printf "\n\t-d   (Debug Level [0-9])"
+    printf "\n\t-p   (Show database password on output)"
+    printf "\n\t-s   (Show Storix Backup information)"
+    printf "\n\t-t   (Show TextBelt Key)"
+    printf "\n\t-h   (Display this help message)"
+    printf "\n\t-v   (Show Script Version Info)"
+    printf "\n\n" 
+}
+show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
+}
 
 #===================================================================================================
 # Standardize Print Line Function 
@@ -710,11 +734,13 @@ print_sadmin_cfg()
     presult="$SADM_ALERT_REPEAT"                                        # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
-    pexample="\$SADM_TEXTBELT_KEY"                                      # Variable Name
-    pdesc="TextBelt.com API Key"                                        # Description
-    presult="$SADM_TEXTBELT_KEY"                                        # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
-    
+    if [ "$show_textbelt" = "Y" ] 
+        then pexample="\$SADM_TEXTBELT_KEY"                             # Variable Name
+             pdesc="TextBelt.com API Key"                               # Description
+             presult="$SADM_TEXTBELT_KEY"                               # TextBelt API Key
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    fi
+
     pexample="\$SADM_TEXTBELT_URL"                                      # Variable Name
     pdesc="TextBelt.com API URL"                                        # Description
     presult="$SADM_TEXTBELT_URL"                                        # Actual Content of Variable
@@ -774,6 +800,7 @@ print_sadmin_cfg()
              pexample="\$SADM_RW_DBPWD"                                 # Directory Variable Name
              pdesc="SADMIN Database Read/Write User Pwd"                # Directory Description
              presult="$SADM_RW_DBPWD"                                   # Actual Content of Variable
+             if [ "$show_password" = "N" ] ; then presult=" " ;fi       # Don't show DB Password
              printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
              pexample="\$SADM_RO_DBUSER"                                # Directory Variable Name
@@ -784,6 +811,7 @@ print_sadmin_cfg()
              pexample="\$SADM_RO_DBPWD"                                 # Directory Variable Name
              pdesc="SADMIN Database Read Only User Pwd"                 # Directory Description
              presult="$SADM_RO_DBPWD"                                   # Actual Content of Variable
+             if [ "$show_password" = "N" ] ; then presult=" " ;fi       # Don't show DB Password
              printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     fi
 
@@ -923,24 +951,26 @@ print_sadmin_cfg()
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
     
     pexample="\$SADM_YEARLY_BACKUP_DATE"                                # Directory Variable Name
-    pdesc="Date to do Yearly Backup(1-DayInMth)"                         # Directory Description
+    pdesc="Date to do Yearly Backup(1-DayInMth)"                        # Directory Description
     presult="$SADM_YEARLY_BACKUP_DATE"                                  # Actual Content of Variable
     printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
 
-    pexample="\$SADM_STORIX_NFS_SERVER"                                 # Directory Variable Name
-    pdesc="Storix NFS Server IP or Name"                                # Directory Description
-    presult="$SADM_STORIX_NFS_SERVER"                                   # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+    if [ "$show_storix" = "Y" ]                                         # Option -s was specified
+        then pexample="\$SADM_STORIX_NFS_SERVER"                        # Directory Variable Name
+             pdesc="Storix NFS Server IP or Name"                       # Directory Description
+             presult="$SADM_STORIX_NFS_SERVER"                          # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-    pexample="\$SADM_STORIX_NFS_MOUNT_POINT"                            # Directory Variable Name
-    pdesc="Storix NFS Mount Point"                                      # Directory Description
-    presult="$SADM_STORIX_NFS_MOUNT_POINT"                              # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+             pexample="\$SADM_STORIX_NFS_MOUNT_POINT"                   # Directory Variable Name
+             pdesc="Storix NFS Mount Point"                             # Directory Description
+             presult="$SADM_STORIX_NFS_MOUNT_POINT"                     # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
     
-    pexample="\$SADM_STORIX_BACKUP_TO_KEEP"                             # Directory Variable Name
-    pdesc="Storix NFS Backup - Nb. to Keep"                             # Directory Description
-    presult="$SADM_STORIX_BACKUP_TO_KEEP"                               # Actual Content of Variable
-    printline "$pexample" "$pdesc" "$presult"                           # Print Variable Line
+             pexample="\$SADM_STORIX_BACKUP_TO_KEEP"                    # Directory Variable Name
+             pdesc="Storix NFS Backup - Nb. to Keep"                    # Directory Description
+             presult="$SADM_STORIX_BACKUP_TO_KEEP"                      # Actual Content of Variable
+             printline "$pexample" "$pdesc" "$presult"                  # Print Variable Line
+    fi
 
 }
 
@@ -1048,16 +1078,19 @@ print_db_variables()
     SQL="show tables; "                                                 # Show Table SQL
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\nShow Category Table Content:\n"
+    printf "\n\nCategory Table:\n"
     SQL="select * from server_category; "                               # Show Table SQL
+    SQL="describe server_category; "                                    # Show Table Format/colums
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\nShow Group Table Content:\n"
-    SQL="select * from server_group; "                               # Show Table SQL
+    printf "\n\nGroup Table:\n"
+    SQL="select * from server_group; "                                  # Show Table SQL
+    SQL="describe server_group; "                                       # Show Table Format/columns
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 
-    printf "\n\nShow Server Table Content:\n"
+    printf "\n\nServer Table:\n"
     SQL="select srv_name, srv_desc, srv_osname, srv_osversion, srv_active, srv_cat, srv_group from server ; "
+    SQL="describe server; "
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" 
 }
 
@@ -1069,7 +1102,7 @@ print_start_stop()
 {
     printheader "Overview of sadm_start and sadm_stop function"
 
-    printf "\nExample of utilisation:\n\n"
+    printf "\nExample of utilization:\n\n"
     printf " # sadm_start                                         # Init Env Dir & RC/Log File\n"
     printf " # if [ \$? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi    # Exit if Problem\n" 
     printf " # main_process                                       # Main Process\n"
@@ -1118,6 +1151,41 @@ print_start_stop()
              printf "\nProcess aborted\n\n"                             # Abort advise message
              exit 1                                                     # Exit To O/S with error
     fi
+
+    # Evaluate Command Line Switch Options Upfront
+    # (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level, 
+    # (-p) Show Database Password
+    show_password="N"                                                   # Don't show DB Password
+    show_storix="N"                                                     # Don't show Storix Info
+    show_textbelt="N"                                                   # Don't show TextBelt Key
+    DEBUG_LEVEL=0                                                       # Lowest DEBUG Level
+    while getopts "htspvd:" opt ; do                                    # Loop to process Switch
+        case $opt in
+            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
+               ;;                                                       
+            p) show_password="Y"                                        # Flag to Show DB Password
+               ;;                                                       
+            t) show_textbelt="Y"                                        # Flag to Show TextBelt Key
+               ;;                                                       
+            s) show_storix="Y"                                          # Show Storix Backup Info
+               ;;                                                       
+            h) show_usage                                               # Show Help Usage
+               exit 0                                                   # Back to shell
+               ;;
+            v) show_version                                             # Show Script Version Info
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
+
+
+
+
     sadm_start                                                          # Init Env. Dir. & RCH/Log
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # If Problem during init
     
