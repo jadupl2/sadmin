@@ -26,7 +26,8 @@
 # 2018_06_05    v2.0 Added www/tmp/perf removal of *.png files older than 5 days.
 # 2018_06_09    v2.1 Add Help and version function, change script name & Change startup order
 # 2018_08_28    v2.2 Delete rch and log older than the number of days specified in sadmin.cfg
-#@2018_11_29    v2.3 Restructure for performance and don't delete rch/log files anymore.
+# 2018_11_29    v2.3 Restructure for performance and don't delete rch/log files anymore.
+#@2019_05_19    v2.4 Add server crontab file to housekeeping
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 0; exit 0' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -48,7 +49,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='2.3'                               # Current Script Version
+    export SADM_VER='2.4'                               # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -188,7 +189,48 @@ file_housekeeping()
     sadm_writelog " "
     sadm_writelog "${yellow}Server Files HouseKeeping.${white}"
 
+    # Make sure crontab for SADMIN server have proper permission and owner
+    afile="/etc/cron.d/sadm_server"
+    if [ -f "$afile" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for SADMIN server have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline"
+    fi
+
+    # Make sure crontab for O/S Update have proper permission and owner
+    afile="/etc/cron.d/sadm_osupdate"
+    if [ -f "$afile" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for O/S Update have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline"
+    fi
+
+    # Make sure crontab for Backup have proper permission and owner
+    afile="/etc/cron.d/sadm_backup"
+    if [ -f "$afile" ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure crontab for Backup have proper permission and owner"
+             sadm_writelog "chmod 0644 $afile"
+             chmod 0644 $afile
+             sadm_writelog "chown root:root $afile"
+             chown root:root $afile
+             lsline=`ls -l $afile`
+             sadm_writelog "$lsline"
+    fi
+
     # Set Permission on all files in the images directory.
+    sadm_writelog " " 
+    sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog "find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \;"
     find $SADM_WWW_IMG_DIR -type f -exec chmod 664 {} \; >/dev/null 2>&1
     if [ $? -ne 0 ]
