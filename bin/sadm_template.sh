@@ -30,7 +30,7 @@
 # Version Change Log 
 #
 # 2019_MM_DD New: v1.0 Initial Version
-#
+#@2019_05_19 Update: v2.0 New debug variable, and sadm_show_version function.
 # --------------------------------------------------------------------------------------------------
 trap 'sadm_stop 1; exit 1' 2                                            # INTERCEPTE LE ^C
 #set -x
@@ -59,13 +59,14 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
     export SADM_HOSTNAME=`hostname -s`                  # Current Host name with Domain Name
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.1'                               # Your Current Script Version
+    export SADM_VER='2.0'                               # Your Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # [Y]=Append Existing Log [N]=Create New One
     export SADM_LOG_HEADER="Y"                          # [Y]=Include Log Header [N]=No log Header
     export SADM_LOG_FOOTER="Y"                          # [Y]=Include Log Footer [N]=No log Footer
     export SADM_MULTIPLE_EXEC="N"                       # Allow running multiple copy at same time ?
     export SADM_USE_RCH="Y"                             # Generate Entry in Result Code History file
+    export SADM_DEBUG=0                                 # Debug Level - 0=NoDebug Higher=+Verbose
 
     . ${SADMIN}/lib/sadmlib_std.sh                      # Load SADMIN Shell Standard Library
 #---------------------------------------------------------------------------------------------------
@@ -85,13 +86,12 @@ trap 'sadm_stop 1; exit 1' 2                                            # INTERC
 #===================================================================================================
 # Scripts Variables 
 #===================================================================================================
-DEBUG_LEVEL=0                               ; export DEBUG_LEVEL        # 0=NoDebug Higher=+Verbose
 
 
 
 
 # --------------------------------------------------------------------------------------------------
-#       H E L P      U S A G E   A N D     V E R S I O N     D I S P L A Y    F U N C T I O N
+# Show Script command line option
 # --------------------------------------------------------------------------------------------------
 show_usage()
 {
@@ -101,14 +101,7 @@ show_usage()
     printf "\n\t-v   (Show Script Version Info)"
     printf "\n\n" 
 }
-show_version()
-{
-    printf "\n${SADM_PN} - Version $SADM_VER"
-    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
-    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
-    printf " - Kernel Version $(sadm_get_kernel_version)"
-    printf "\n\n" 
-}
+
 
 
 
@@ -131,7 +124,7 @@ process_servers()
     
     # Execute SQL Query to Create CSV in SADM Temporary work file ($SADM_TMP_FILE1)
     CMDLINE="$SADM_MYSQL -u $SADM_RO_DBUSER  -p$SADM_RO_DBPWD "         # MySQL Auth/Read Only User
-    if [ $DEBUG_LEVEL -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug Show Auth cmdline
+    if [ $SADM_DEBUG -gt 5 ] ; then sadm_writelog "$CMDLINE" ; fi      # Debug Show Auth cmdline
     $CMDLINE -h $SADM_DBHOST $SADM_DBNAME -Ne "$SQL" | tr '/\t/' '/,/' >$SADM_TMP_FILE1
     # If File was not created or has a zero lenght then No Actives Servers were found
     if [ ! -s "$SADM_TMP_FILE1" ] || [ ! -r "$SADM_TMP_FILE1" ]         # File not readable or 0 len
@@ -166,13 +159,13 @@ process_servers()
         fi
 
         # Try a SSH to the Server
-        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "$SADM_SSH_CMD $fqdn_server date" ; fi 
+        if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "$SADM_SSH_CMD $fqdn_server date" ; fi 
         if [ "$fqdn_server" != "$SADM_SERVER" ]                         # If Not on SADMIN Server
             then $SADM_SSH_CMD $fqdn_server date > /dev/null 2>&1       # SSH to Server & Run 'date'
                  RC=$?                                                  # Save Return Code Number
             else RC=0                                                   # No SSH to SADMIN Server
         fi
-        if [ $DEBUG_LEVEL -gt 0 ] ;then sadm_writelog "Return Code: $RC" ;fi # Show SSH Status
+        if [ $SADM_DEBUG -gt 0 ] ;then sadm_writelog "Return Code: $RC" ;fi # Show SSH Status
 
         # If SSH failed and it's a Sporadic Server, Show Warning and continue with next system.
         if [ $RC -ne 0 ] &&  [ "$server_sporadic" = "1" ]               # SSH don't work & Sporadic
@@ -229,32 +222,6 @@ main_process()
 #                                       Script Start HERE
 #===================================================================================================
 
-# Evaluate Command Line Switch Options Upfront
-# By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
-    while getopts "hvd:" opt ; do                                       # Loop to process Switch
-        case $opt in
-            d) DEBUG_LEVEL=$OPTARG                                      # Get Debug Level Specified
-               num=`echo "$DEBUG_LEVEL" | grep -E ^\-?[0-9]?\.?[0-9]+$` # Valid is Level is Numeric
-               if [ "$num" = "" ]                                       # No it's not numeric 
-                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
-                       show_usage                                       # Display Help Usage
-                       exit 0
-               fi
-               ;;                                                       # No stop after each page
-            h) show_usage                                               # Show Help Usage
-               exit 0                                                   # Back to shell
-               ;;
-            v) show_version                                             # Show Script Version Info
-               exit 0                                                   # Back to shell
-               ;;
-           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
-               show_usage                                               # Display Help Usage
-               exit 1                                                   # Exit with Error
-               ;;
-        esac                                                            # End of case
-    done                                                                # End of while
-    if [ $DEBUG_LEVEL -gt 0 ] ; then printf "\nDebug activated, Level ${DEBUG_LEVEL}\n" ; fi
-
     # Call SADMIN Initialization Procedure
     sadm_start                                                          # Init Env Dir & RC/Log File
     if [ $? -ne 0 ] ; then sadm_stop 1 ; exit 1 ;fi                     # Exit if Problem 
@@ -267,13 +234,44 @@ main_process()
              exit 1                                                     # Exit To O/S with Error
     fi
 
-# If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
-#    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
-#        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
-#             sadm_writelog "Process aborted"                            # Abort advise message
-#             sadm_stop 1                                                # Close/Trim Log & Del PID
-#             exit 1                                                     # Exit To O/S with error
-#    fi
+    # If we are not on the SADMIN Server, exit to O/S with error code 1 (Optional)
+    if [ "$(sadm_get_fqdn)" != "$SADM_SERVER" ]                         # Only run on SADMIN 
+        then sadm_writelog "Script can run only on SADMIN server (${SADM_SERVER})"
+             sadm_writelog "Process aborted"                            # Abort advise message
+             sadm_stop 1                                                # Close/Trim Log & Del PID
+             exit 1                                                     # Exit To O/S with error
+    fi
+
+    # Evaluate Command Line Switch Options Upfront
+    # By Default (-h) Show Help Usage, (-v) Show Script Version,(-d0-9] Set Debug Level 
+    while getopts "hvd:" opt ; do                                       # Loop to process Switch
+        case $opt in
+            d) SADM_DEBUG=$OPTARG                                       # Get Debug Level Specified
+               num=`echo "$SADM_DEBUG" | grep -E ^\-?[0-9]?\.?[0-9]+$`  # Valid is Level is Numeric
+               if [ "$num" = "" ]                                       # No it's not numeric 
+                  then printf "\nDebug Level specified is invalid\n"    # Inform User Debug Invalid
+                       show_usage                                       # Display Help Usage
+                       sadm_stop 1                                      # Close/Trim Log & Del PID
+                       exit 1
+               fi
+               ;;                                                       # No stop after each page
+            h) show_usage                                               # Show Help Usage
+               sadm_stop 0                                              # Close/Trim Log & Del PID
+               exit 0                                                   # Back to shell
+               ;;
+            v) sadm_show_version                                        # Show Script Version Info
+               sadm_stop 0                                              # Close/Trim Log & Del PID
+               exit 0                                                   # Back to shell
+               ;;
+           \?) printf "\nInvalid option: -$OPTARG"                      # Invalid Option Message
+               show_usage                                               # Display Help Usage
+               sadm_stop 1                                              # Close/Trim Log & Del PID
+               exit 1                                                   # Exit with Error
+               ;;
+        esac                                                            # End of case
+    done                                                                # End of while
+    if [ $SADM_DEBUG -gt 0 ] ; then printf "\nDebug activated, Level ${SADM_DEBUG}\n" ; fi
+
 
 # Your Main process procedure
     main_process                                                        # Main Process
