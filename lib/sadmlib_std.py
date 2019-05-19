@@ -40,6 +40,8 @@
 #@2019_03_18 New: v2.27 Function 'get_packagetype()' that return package type (rpm,dev,aix,dmg).
 #@2019_04_25 Update: v2.28 Read and Load 3 news sadmin.cfg variable Alert_Repeat, Textbelt Key & URL
 #@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
+#@2019_05_16 Update: v3.01 New 'st.show_version()' function, libr. debug variable (st.lib_debug), 
+#                    script alert not send by script anymore but by SADMIN master.
 #==================================================================================================
 try :
     import errno, time, socket, subprocess, smtplib, pwd, grp, glob, fnmatch, linecache
@@ -111,7 +113,7 @@ class sadmtools():
             self.base_dir = os.environ.get('SADMIN')                    # Set SADM Base Directory
 
         # Set Default Values for Script Related Variables
-        self.libver             = "3.00"                                # This Library Version
+        self.libver             = "3.01"                                # This Library Version
         self.log_type           = "B"                                   # 4Logger S=Scr L=Log B=Both
         self.log_append         = True                                  # Append to Existing Log ?
         self.log_header         = True                                  # True = Produce Log Header
@@ -123,7 +125,8 @@ class sadmtools():
         self.inst               = os.path.basename(sys.argv[0]).split('.')[0] # Pgm name without Ext
         self.tpid               = str(os.getpid())                      # Get Current Process ID.
         self.exit_code          = 0                                     # Set Default Return Code
-        self.debug              = 0                                     # Debug Level (0-9)
+        self.debug              = 0                                     # Script Debug Level (0-9)
+        self.lib_debug          = 0                                     # Library Debug Level (0-9)
         self.dbsilent           = False                                 # True or False Show ErrMsg
         self.usedb              = False                                 # Use or Not MySQL DB
 
@@ -271,6 +274,18 @@ class sadmtools():
         self.ssh_cmd = "%s -qnp %s " % (self.ssh,self.cfg_ssh_port)     # Build SSH Command we use
 
 
+
+    #-----------------------------------------------------------------------------------------------
+    # Function called when the '-v --version' command line argument are used.
+    #-----------------------------------------------------------------------------------------------
+    def show_version(self):
+        print ("Script Name",os.path.basename(sys.argv[0]),"- Version",self.ver)
+        print ("SADMIN Shell Library Version",self.libver)
+        print ("O/S is",self.get_osname(),"- Version ",self.get_osversion())
+        print ("Kernel Version ",self.get_kernel_version())
+        print ("\n")
+
+
     #-----------------------------------------------------------------------------------------------
     # CONNECT TO THE DATABASE ----------------------------------------------------------------------
     # return (0) if no error - return (1) if error encountered
@@ -294,7 +309,7 @@ class sadmtools():
         conn_string += "'%s', " % (self.cfg_rw_dbuser)
         conn_string += "'%s', " % (self.cfg_rw_dbpwd)
         conn_string += "'%s'"   % (self.cfg_dbname)
-        if (self.debug > 3) :                                           # Debug Display Conn. Info
+        if (self.lib_debug > 3) :                                       # Debug Display Conn. Info
             print ("Connect(%s)" % (conn_string))
 
         # Try to connect to Database
@@ -330,7 +345,7 @@ class sadmtools():
         self.enum = 0                                                   # Reset Error Number
         self.emsg = ""                                                  # Reset Error Message
         try:
-            if self.debug > 4 : print ("Closing Cursor & Database %s" % (self.cfg_dbname))
+            if self.lib_debug > 4 : print ("Closing Cursor & Database %s" % (self.cfg_dbname))
             self.cursor.close()
             self.conn.close()
         except Exception as e:
@@ -351,7 +366,7 @@ class sadmtools():
     def load_config_file(self,sadmcfg):
 
         # Debug Level Higher than 4 , inform that entering Load configuration file
-        if self.debug > 4 :                                             # If Debug Run Level 4
+        if self.lib_debug > 4 :                                         # If Debug Run Level 4
             print ("Load Configuration file %s" % (self.cfg_file))      # Inform user in Debug
 
         # Configuration file MUST be present :
@@ -397,7 +412,7 @@ class sadmtools():
             CFG_NAME   = split_line[0].upper().strip()                  # Param Name Uppercase Trim
             CFG_VALUE  = str(split_line[1]).strip()                     # Get Param Value Trimmed
 
-            if (self.debug) :                                           # Debug = Print Line
+            if (self.lib_debug) :                                       # Debug = Print Line
                 print("cfgline = ..." + CFG_NAME + "...  ..." + CFG_VALUE + "...")
 
             # Save Each Parameter found in Sadmin Configuration File
@@ -521,12 +536,12 @@ class sadmtools():
     #                RETURN THE OS TYPE (LINUX, AIX) -- ALWAYS RETURNED IN UPPERCASE
     # ----------------------------------------------------------------------------------------------
     def oscommand(self,command) :
-        if self.debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
+        if self.lib_debug > 8 : self.writelog ("In sadm_oscommand function to run command : %s" % (command))
         p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         out = p.stdout.read().strip().decode()
         err = p.stderr.read().strip().decode()
         returncode = p.wait()
-        if self.debug > 8 :
+        if self.lib_debug > 8 :
             self.writelog ("In sadm_oscommand function stdout is      : %s" % (out))
             self.writelog ("In sadm_oscommand function stderr is      : %s " % (err))
             self.writelog ("In sadm_oscommand function returncode is  : %s" % (returncode))
@@ -852,7 +867,7 @@ class sadmtools():
             smtpserver.ehlo()
             smtpserver.starttls()
             smtpserver.ehlo()
-            if self.debug > 4 :
+            if self.lib_debug > 4 :
                 self.writelog ("Connect to %s:%s Successfully" % (wserver,wport))
             try:
                 smtpserver.login (wuser, wpwd)
@@ -860,7 +875,7 @@ class sadmtools():
                 self.writelog ("Authentication for %s Failed %s" % (wuser))
                 smtpserver.close()
                 return 1
-            if self.debug > 4 :
+            if self.lib_debug > 4 :
                 self.writelog ("Login Successfully using %s" % (wuser))
             header = "To: " + wuser + '\n' + 'From: ' + wfrom + '\n' + 'Subject: ' + wsub + '\n'
             msg = header + '\n' + wbody + '\n\n'
@@ -874,7 +889,7 @@ class sadmtools():
             self.writelog ("Connection to %s %s Failed" % (wserver,wport))
             self.writelog ("%s" % e)
             return 1
-        if self.debug > 4 :
+        if self.lib_debug > 4 :
             self.writelog ("Mail was sent successfully")
             smtpserver.close()
         return 0
@@ -889,7 +904,7 @@ class sadmtools():
         nlines = int(nlines)                                                # Making sure nlines=integer
 
         # Debug Information
-        if self.debug > 8 : print ("Trim %s to %s lines." %  (fname, str(nlines)))
+        if self.lib_debug > 8 : print ("Trim %s to %s lines." %  (fname, str(nlines)))
 
         # Check if fileName to trim exist
         if (not os.path.exists(fname)):                                     # If fileName doesn't exist
@@ -915,7 +930,7 @@ class sadmtools():
         FN.close()                                                          # Close tempFile
 
         # Debug Information
-        if self.debug > 8 :
+        if self.lib_debug > 8 :
             print ("Original Filename %s" % (fname))
             print ("TmpFileName %s" % (self.tmpfile))
             print ("Removing file %s" % (fname))
@@ -1122,15 +1137,15 @@ class sadmtools():
 
         # Make sure all SADM User Directories Exist
         if not os.path.exists(self.usr_dir)  : os.mkdir(self.usr_dir,0o0775)    # User Dir.
-        os.chown(self.usr_dir, uid, gid)                                        # Change owner/group
+        if os.getuid() == 0: os.chown(self.usr_dir, uid, gid)                   # Change owner/group
         if not os.path.exists(self.ubin_dir) : os.mkdir(self.ubin_dir,0o0775)   # User Bin Dir.
-        os.chown(self.ubin_dir,uid,gid)                                         # Change owner/group
+        if os.getuid() == 0: os.chown(self.ubin_dir,uid,gid)                    # Change owner/group
         if not os.path.exists(self.ulib_dir) : os.mkdir(self.ulib_dir,0o0775)   # User Libr Dir.
-        os.chown(self.ulib_dir,uid,gid)                                         # Change owner/group
+        if os.getuid() == 0: os.chown(self.ulib_dir,uid,gid)                    # Change owner/group
         if not os.path.exists(self.udoc_dir) : os.mkdir(self.udoc_dir,0o0775)   # User Doc. Dir.
-        os.chown(self.udoc_dir, uid, gid)                                       # Change owner/group
+        if os.getuid() == 0: os.chown(self.udoc_dir, uid, gid)                  # Change owner/group
         if not os.path.exists(self.umon_dir) : os.mkdir(self.umon_dir,0o0775)   # SysMon Scripts Dir
-        os.chown(self.umon_dir, uid, gid)                                       # Change owner/group
+        if os.getuid() == 0: os.chown(self.umon_dir, uid, gid)                  # Change owner/group
 
         # These Directories are only created on the SADM Server (Web Directories)
         if self.hostname == self.cfg_server :
@@ -1260,31 +1275,25 @@ class sadmtools():
 
         # Write in Log the email choice the user as requested (via the sadmin.cfg file)
         # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
-        if self.cfg_alert_type == 0 :                                    # User don't want any email
-            MailMess="No mail is requested when script end - No mail sent" # Message User Email Choice
+        if self.cfg_alert_type == 0 :                                   # User don't want any email
+            MailMess="No alert is requested when script end."           # Message User Email Choice
 
-        if self.cfg_alert_type == 1 :                                    # Want Email on Error Only
-            if self.exit_code != 0 :                                    # If Script Failed = Email
-                MailMess="Mail requested if script fail - Mail sent"    # Message User Email Choice
-            else :                                                      # Script Success = No Email
-                MailMess="Mail requested if script fail - No mail sent" # Message User Email Choice
+        if self.cfg_alert_type == 1 :                                   # Want Email on Error Only
+                MailMess="Alert requested if script fail."              # Message User Email Choice
 
-        if self.cfg_alert_type == 2 :                                    # Email on Success Only
-            if not self.exit_code == 0 :                                # If script is a Success
-                MailMess="Mail requested on Success only - Mail sent"   # Message User Email Choice
-            else :                                                      # If Script not a Success
-                MailMess="Mail requested on Success only - No mail sent"# Message User Email Choice
+        if self.cfg_alert_type == 2 :                                   # Email on Success Only
+                MailMess="Alert requested on success only."             # Message User Email Choice
 
-        if self.cfg_alert_type == 3 :                                    # User always Want email
-            MailMess="Mail requested on Success or Error - Mail sent"   # Message User Email Choice
+        if self.cfg_alert_type == 3 :                                   # User always Want email
+            MailMess="Alert requested on Success or Error."             # Message User Email Choice
 
-        if self.cfg_alert_type > 3 or self.cfg_alert_type < 0 :           # User Email Choice Invalid
+        if self.cfg_alert_type > 3 or self.cfg_alert_type < 0 :         # User Email Choice Invalid
             MailMess="SADM_ALERT_TYPE is not set properly [0-3] Now at %s",(str(cfg_alert_type))
 
-        if self.mail == "" :                                            # If Mail Program not found
-            MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice
+#        if self.mail == "" :                                            # If Mail Program not found
+#            MailMess="No Mail can be send - Until mail command is install"  # Msg User Email Choice
         if (self.log_footer) :                                          # Want to Produce log Footer
-            self.writelog ("%s" % (MailMess))                           # Write user choice to log
+            self.writelog ("%s" % (MailMess))                           # User alert choice to log
 
 
         # Advise user the Log will be trimm
@@ -1301,29 +1310,29 @@ class sadmtools():
         # Inform UnixAdmin By Email based on his selected choice
         # Now that the user email choice is written to the log, let's send the email now, if needed
         # 0 = No Mail Sent      1 = On Error Only   2 = On Success Only   3 = Always send email
-        wsubject=""                                                     # Clear Email Subject
-        wsub_success="SADM : SUCCESS of %s on %s" % (self.pn,self.hostname) # Format Success Subject
-        wsub_error="SADM : ERROR of %s on %s" % (self.pn,self.hostname) # Format Failed Subject
+        #wsubject=""                                                     # Clear Email Subject
+        #wsub_success="SADM : SUCCESS of %s on %s" % (self.pn,self.hostname) # Format Success Subject
+        #wsub_error="SADM : ERROR of %s on %s" % (self.pn,self.hostname) # Format Failed Subject
 
         # If Error & User want email
-        if self.exit_code != 0 and (self.cfg_alert_type == 1 or self.cfg_alert_type == 3):
-            wsubject=wsub_error                                         # Build the Subject Line
+        #if self.exit_code != 0 and (self.cfg_alert_type == 1 or self.cfg_alert_type == 3):
+        #    wsubject=wsub_error                                         # Build the Subject Line
 
-        if self.cfg_alert_type == 2 and self.exit_code == 0 :            # Success & User Want Email
-            wsubject=wsub_success                                       # Format Subject Line
+        #if self.cfg_alert_type == 2 and self.exit_code == 0 :            # Success & User Want Email
+        #    wsubject=wsub_success                                       # Format Subject Line
 
-        if self.cfg_alert_type == 3 :                                    # USer Always want Email
-            if self.exit_code == 0 :                                    # If Script is a Success
-                wsubject=wsub_success                                   # Build the Subject Line
-            else :                                                      # If Script Failed
-                wsubject=wsub_error                                     # Build the Subject Line
+        #if self.cfg_alert_type == 3 :                                    # USer Always want Email
+        #    if self.exit_code == 0 :                                    # If Script is a Success
+        #        wsubject=wsub_success                                   # Build the Subject Line
+        #    else :                                                      # If Script Failed
+        #        wsubject=wsub_error                                     # Build the Subject Line
 
-        if wsubject != "" :                                             # subject Then Email Needed
-            time.sleep(1)                                               # Sleep 1 seconds
-            cmd = "cat %s | %s -s '%s' %s" % (self.log_file,self.mail,wsubject,self.cfg_mail_addr)
-            ccode, cstdout, cstderr = self.oscommand("%s" % (cmd))      # Go send email
-            if ccode != 0 :                                             # If Cmd Fail
-                self.writelog ("ERROR : Problem sending mail to %s" % (self.cfg_mail_addr))
+        #if wsubject != "" :                                             # subject Then Email Needed
+        #    time.sleep(1)                                               # Sleep 1 seconds
+        #    cmd = "cat %s | %s -s '%s' %s" % (self.log_file,self.mail,wsubject,self.cfg_mail_addr)
+        #    ccode, cstdout, cstderr = self.oscommand("%s" % (cmd))      # Go send email
+        #    if ccode != 0 :                                             # If Cmd Fail
+        #        self.writelog ("ERROR : Problem sending mail to %s" % (self.cfg_mail_addr))
 
         FH_LOG_FILE.flush()                                             # Got to do it - Missing end
         FH_LOG_FILE.close()                                             # Close the Log File
