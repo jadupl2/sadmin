@@ -443,9 +443,7 @@ class sadmtools():
             if "SADM_DBHOST"                 in CFG_NAME:  self.cfg_dbhost         = CFG_VALUE
             if "SADM_DBPORT"                 in CFG_NAME:  self.cfg_dbport         = int(CFG_VALUE)
             if "SADM_RW_DBUSER"              in CFG_NAME:  self.cfg_rw_dbuser      = CFG_VALUE
-#            if "SADM_RW_DBPWD"               in CFG_NAME:  self.cfg_rw_dbpwd       = CFG_VALUE
             if "SADM_RO_DBUSER"              in CFG_NAME:  self.cfg_ro_dbuser      = CFG_VALUE
-#            if "SADM_RO_DBPWD"               in CFG_NAME:  self.cfg_ro_dbpwd       = CFG_VALUE
             #
             if "SADM_BACKUP_NFS_SERVER"      in CFG_NAME: self.cfg_backup_nfs_server     = CFG_VALUE
             if "SADM_BACKUP_NFS_MOUNT_POINT" in CFG_NAME: self.cfg_backup_nfs_mount_point= CFG_VALUE
@@ -488,11 +486,9 @@ class sadmtools():
                 wline = dbline.strip()                                  # Strip CR/LF & Trail spaces
                 if (wline[0:1] == '#' or len(wline) == 0) :             # If comment or blank line
                     continue                                            # Go read the next line
-#                if wline.startswith('sadmin,') :                        # Line begin with 'sadmin,'
                 if wline.startswith(self.cfg_rw_dbuser) :               # LineStart with RW UserName
                     split_line = wline.split(',')                       # Split Line based on comma
                     self.cfg_rw_dbpwd  = split_line[1]                  # Set DB R/W 'sadmin' Passwd
-#                if wline.startswith('squery,') :                        # Line begin with 'squery,'
                 if wline.startswith(self.cfg_ro_dbuser) :               # Line begin with 'squery,'
                     split_line = wline.split(',')                       # Split Line based on comma
                     self.cfg_ro_dbpwd  = split_line[1]                  # Set DB R/O 'squery' Passwd
@@ -967,10 +963,6 @@ class sadmtools():
     def locate_command(self,cmd) :
         ccode,cstdout,cstderr = self.oscommand("%s %s" % (self.which,cmd))  # Try to Locate Command
         if ccode is not 0 :                                             # Command was not Found
-#            print ("\n[WARNING] Command '%s' couldn't be found" % (cmd))# Display Warning for User
-#            print ("If available, it should be install")                # Advise user should install
-#            print ("You may want to run 'sadm_prereq_install.sh' to list any missing commands")
-#            print ("After that you can run 'sadm_prereq_install.sh -y' to install them")
             cmd_path=""                                                 # Cmd Path Null when Not fnd
         else :                                                          # If command Path is Found
             cmd_path = cstdout                                          # Save command Path
