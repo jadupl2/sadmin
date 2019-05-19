@@ -37,7 +37,8 @@
 # 2018_12_22    v1.25 Minor change - More Debug info.
 # 2019_01_28 Change: v1.26 Add readme.pdf and readme.html to housekeeping
 # 2019_03_03 Change: v1.27 Make sure .gitkeep files exist in important directories
-#@2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
+# 2019_04_17 Update: v1.28 Make 'sadmin' account & password never expire (Solve Acc. & sudo Lock)
+#@2019_05_19 Update: v1.29 Change for lowercase readme.md,license,changelog.md files and bug fixes.
 #
 # --------------------------------------------------------------------------------------------------
 #
@@ -61,7 +62,7 @@ trap 'sadm_stop 0; exit 0' 2                                            # INTERC
     fi
 
     # CHANGE THESE VARIABLES TO YOUR NEEDS - They influence execution of SADMIN standard library.
-    export SADM_VER='1.28'                              # Current Script Version
+    export SADM_VER='1.29'                              # Current Script Version
     export SADM_LOG_TYPE="B"                            # Writelog goes to [S]creen [L]ogFile [B]oth
     export SADM_LOG_APPEND="N"                          # Append Existing Log or Create New One
     export SADM_LOG_HEADER="Y"                          # Show/Generate Script Header
@@ -470,43 +471,43 @@ file_housekeeping()
              sadm_writelog "$lsline"
     fi
 
-    # Set Owner and Permission for Readme file
-    if [ -f ${SADM_BASE_DIR}/README.md ]
+    # Set Owner and Permission for readme.md file
+    if [ -f ${SADM_BASE_DIR}/readme.md ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Make sure README.md have proper permission and owner"
-             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
-             chmod 664 ${SADM_BASE_DIR}/README.md
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
-             lsline=`ls -l ${SADM_BASE_DIR}/README.md`
+             sadm_writelog "Make sure readme.md have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/readme.md"
+             chmod 664 ${SADM_BASE_DIR}/readme.md
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/readme.md
+             lsline=`ls -l ${SADM_BASE_DIR}/readme.md`
              sadm_writelog "$lsline"
     fi
 
-    # Set Owner and Permission for Readme.html file
-    if [ -f ${SADM_BASE_DIR}/README.html ]
+    # Set Owner and Permission for readme.html file
+    if [ -f ${SADM_BASE_DIR}/readme.html ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Make sure README.html have proper permission and owner"
-             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
-             chmod 664 ${SADM_BASE_DIR}/README.md
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
-             lsline=`ls -l ${SADM_BASE_DIR}/README.md`
+             sadm_writelog "Make sure 'readme.html' have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/readme.html"
+             chmod 664 ${SADM_BASE_DIR}/readme.html
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/readme.html
+             lsline=`ls -l ${SADM_BASE_DIR}/readme.html`
              sadm_writelog "$lsline"
     fi
     
     # Set Owner and Permission for Readme.pdf file
-    if [ -f ${SADM_BASE_DIR}/README.pdf ]
+    if [ -f ${SADM_BASE_DIR}/readme.pdf ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Make sure README.pdf have proper permission and owner"
-             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/README.md"
-             chmod 664 ${SADM_BASE_DIR}/README.md
-             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/README.md
-             lsline=`ls -l ${SADM_BASE_DIR}/README.md`
+             sadm_writelog "Make sure 'readme.pdf' have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/readme.pdf"
+             chmod 664 ${SADM_BASE_DIR}/readme.pdf
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/readme.pdf
+             lsline=`ls -l ${SADM_BASE_DIR}/readme.pdf`
              sadm_writelog "$lsline"
     fi
     
     # Set Owner and Permission for license file
     if [ -f ${SADM_BASE_DIR}/LICENSE ]
         then sadm_writelog "${SADM_TEN_DASH}"
-             sadm_writelog "Make sure LICENSE have proper permission and owner"
+             sadm_writelog "Make sure 'LICENSE' have proper permission and owner"
              sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/LICENSE"
              chmod 664 ${SADM_BASE_DIR}/LICENSE
              chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/LICENSE
@@ -515,6 +516,34 @@ file_housekeeping()
     fi
     sadm_writelog "${SADM_TEN_DASH}"
     sadm_writelog " "
+
+    # Set Owner and Permission for license file
+    if [ -f ${SADM_BASE_DIR}/license ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure 'license' have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/license"
+             chmod 664 ${SADM_BASE_DIR}/license
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/license
+             lsline=`ls -l ${SADM_BASE_DIR}/license`
+             sadm_writelog "$lsline"
+    fi
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
+
+
+    # Set Owner and Permission for 'changelog.md' file
+    if [ -f ${SADM_BASE_DIR}/changelog.md ]
+        then sadm_writelog "${SADM_TEN_DASH}"
+             sadm_writelog "Make sure 'changelog.md' have proper permission and owner"
+             sadm_writelog "chmod 0644 ${SADM_BASE_DIR}/changelog.md"
+             chmod 664 ${SADM_BASE_DIR}/changelog.md
+             chown ${SADM_USER}:${SADM_GROUP} ${SADM_BASE_DIR}/changelog.md
+             lsline=`ls -l ${SADM_BASE_DIR}/changelog.md`
+             sadm_writelog "$lsline"
+    fi
+    sadm_writelog "${SADM_TEN_DASH}"
+    sadm_writelog " "
+
 
     # Make sure DAT Directory $SADM_DAT_DIR Directory files is own by sadmin
     if [ -d "$SADM_DAT_DIR" ]
