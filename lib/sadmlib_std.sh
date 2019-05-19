@@ -96,6 +96,7 @@
 #@2019_05_13 Update: v2.78 Minor adjustment of message format for history file and log.
 #@2019_05_14 Update: v2.79 Alert via mail while now have the script log attach to the email.
 #@2019_05_16 Update: v3.00 Only one summary line is now added to RCH file when scripts are executed.
+#@2019_05_19 Update: v3.01 SADM_DEBUG_LEVEL change to SADM_DEBUG for consistency with Python Libr.
 #===================================================================================================
 trap 'exit 0' 2                                                         # Intercepte The ^C
 #set -x
@@ -105,14 +106,14 @@ trap 'exit 0' 2                                                         # Interc
 # --------------------------------------------------------------------------------------------------
 #
 SADM_HOSTNAME=`hostname -s`                 ; export SADM_HOSTNAME      # Current Host name
-SADM_LIB_VER="3.00"                         ; export SADM_LIB_VER       # This Library Version
+SADM_LIB_VER="3.01"                         ; export SADM_LIB_VER       # This Library Version
 SADM_DASH=`printf %80s |tr " " "="`         ; export SADM_DASH          # 80 equals sign line
 SADM_FIFTY_DASH=`printf %50s |tr " " "="`   ; export SADM_FIFTY_DASH    # 50 equals sign line
 SADM_80_DASH=`printf %80s |tr " " "="`      ; export SADM_80_DASH       # 80 equals sign line
 SADM_80_SPACES=`printf %80s  " "`           ; export SADM_80_SPACES      # 80 spaces 
 SADM_TEN_DASH=`printf %10s |tr " " "-"`     ; export SADM_TEN_DASH      # 10 dashes line
 SADM_STIME=""                               ; export SADM_STIME         # Store Script Start Time
-SADM_DEBUG_LEVEL=0                          ; export SADM_DEBUG_LEVEL   # 0=NoDebug Higher=+Verbose
+SADM_DEBUG=0                                ; export SADM_DEBUG         # 0=NoDebug Higher=+Verbose
 DELETE_PID="Y"                              ; export DELETE_PID         # Default Delete PID On Exit
 LIB_DEBUG=0                                 ; export LIB_DEBUG          # Library Debug Level
 
@@ -340,6 +341,18 @@ sadm_writelog() {
         *)   printf "Wrong value in \$SADM_LOG_TYPE ($SADM_LOG_TYPE)\n" # Advise User if Incorrect
              ;;
     esac
+}
+
+# --------------------------------------------------------------------------------------------------
+# Show Script Name, version, Library Version, O/S Name/Version and Kernel version.
+# --------------------------------------------------------------------------------------------------
+sadm_show_version()
+{
+    printf "\n${SADM_PN} - Version $SADM_VER"
+    printf "\nSADMIN Shell Library Version $SADM_LIB_VER"
+    printf "\n$(sadm_get_osname) - Version $(sadm_get_osversion)"
+    printf " - Kernel Version $(sadm_get_kernel_version)"
+    printf "\n\n" 
 }
 
 
